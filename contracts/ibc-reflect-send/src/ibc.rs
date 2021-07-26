@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg,
+    entry_point, from_slice, to_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError, StdResult, SubMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError, StdResult,
 };
 
 use crate::ibc_msg::{
@@ -65,14 +65,10 @@ pub fn ibc_channel_connect(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    Ok(IbcBasicResponse {
-        messages: vec![SubMsg::new(msg)],
-        attributes: vec![
-            attr("action", "ibc_connect"),
-            attr("channel_id", channel_id),
-        ],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new()
+        .add_message(msg)
+        .add_attribute("action", "ibc_connect")
+        .add_attribute("channel_id", channel_id))
 }
 
 #[entry_point]
@@ -88,11 +84,9 @@ pub fn ibc_channel_close(
     let channel_id = &channel.endpoint.channel_id;
     accounts(deps.storage).remove(channel_id.as_bytes());
 
-    Ok(IbcBasicResponse {
-        attributes: vec![attr("action", "ibc_close"), attr("channel_id", channel_id)],
-        messages: vec![],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new()
+        .add_attribute("action", "ibc_close")
+        .add_attribute("channel_id", channel_id))
 }
 
 #[entry_point]
@@ -102,12 +96,9 @@ pub fn ibc_packet_receive(
     _env: Env,
     _packet: IbcPacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
-    Ok(IbcReceiveResponse {
-        acknowledgement: b"{}".into(),
-        messages: vec![],
-        attributes: vec![attr("action", "ibc_packet_ack")],
-        ..IbcReceiveResponse::default()
-    })
+    Ok(IbcReceiveResponse::new()
+        .set_ack(b"{}")
+        .add_attribute("action", "ibc_packet_ack"))
 }
 
 #[entry_point]
@@ -144,11 +135,7 @@ fn acknowledge_dispatch(
     _ack: AcknowledgementMsg<DispatchResponse>,
 ) -> StdResult<IbcBasicResponse> {
     // TODO: actually handle success/error?
-    Ok(IbcBasicResponse {
-        messages: vec![],
-        attributes: vec![attr("action", "acknowledge_dispatch")],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_dispatch"))
 }
 
 // receive PacketMsg::WhoAmI response
@@ -162,11 +149,9 @@ fn acknowledge_who_am_i(
     let WhoAmIResponse { account } = match ack {
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
-            return Ok(IbcBasicResponse {
-                messages: vec![],
-                attributes: vec![attr("action", "acknowledge_who_am_i"), attr("error", e)],
-                ..IbcBasicResponse::default()
-            })
+            return Ok(IbcBasicResponse::new()
+                .add_attribute("action", "acknowledge_who_am_i")
+                .add_attribute("error", e))
         }
     };
 
@@ -183,11 +168,7 @@ fn acknowledge_who_am_i(
         }
     })?;
 
-    Ok(IbcBasicResponse {
-        messages: vec![],
-        attributes: vec![attr("action", "acknowledge_who_am_i")],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_who_am_i"))
 }
 
 // receive PacketMsg::Balances response
@@ -201,11 +182,9 @@ fn acknowledge_balances(
     let BalancesResponse { account, balances } = match ack {
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
-            return Ok(IbcBasicResponse {
-                messages: vec![],
-                attributes: vec![attr("action", "acknowledge_balances"), attr("error", e)],
-                ..IbcBasicResponse::default()
-            })
+            return Ok(IbcBasicResponse::new()
+                .add_attribute("action", "acknowledge_balances")
+                .add_attribute("error", e))
         }
     };
 
@@ -230,11 +209,7 @@ fn acknowledge_balances(
         }
     })?;
 
-    Ok(IbcBasicResponse {
-        messages: vec![],
-        attributes: vec![attr("action", "acknowledge_balances")],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_balances"))
 }
 
 #[entry_point]
@@ -244,11 +219,7 @@ pub fn ibc_packet_timeout(
     _env: Env,
     _msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse {
-        messages: vec![],
-        attributes: vec![attr("action", "ibc_packet_timeout")],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_packet_timeout"))
 }
 
 #[cfg(test)]
@@ -395,7 +366,7 @@ mod tests {
         let res = ibc_packet_ack(deps.as_mut(), mock_env(), msg).unwrap();
         // no actions expected, but let's check the events to see it was dispatched properly
         assert_eq!(0, res.messages.len());
-        assert_eq!(vec![attr("action", "acknowledge_dispatch")], res.attributes)
+        assert_eq!(vec![("action", "acknowledge_dispatch")], res.attributes)
     }
 
     #[test]

@@ -1,9 +1,9 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response,
-    StdError, StdResult, SubMsg, SubMsgExecutionResponse, WasmMsg,
+    entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult, CosmosMsg,
+    Deps, DepsMut, Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response, StdError, StdResult,
+    SubMsg, SubMsgExecutionResponse, WasmMsg,
 };
 
 use crate::msg::{
@@ -29,19 +29,15 @@ pub fn instantiate(
     };
     config(deps.storage).save(&cfg)?;
 
-    Ok(Response {
-        attributes: vec![attr("action", "instantiate")],
-        ..Response::default()
-    })
+    Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
 #[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
     match (reply.id, reply.result) {
-        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => Ok(Response {
-            data: Some(encode_ibc_error(err)),
-            ..Response::default()
-        }),
+        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => {
+            Ok(Response::new().set_data(encode_ibc_error(err)))
+        }
         (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
         _ => Err(StdError::generic_err("invalid reply id or result")),
     }
@@ -87,10 +83,7 @@ pub fn handle_init_callback(
         }
     })?;
 
-    Ok(Response {
-        attributes: vec![attr("action", "execute_init_callback")],
-        ..Response::default()
-    })
+    Ok(Response::new().add_attribute("action", "execute_init_callback"))
 }
 
 #[entry_point]
@@ -174,11 +167,11 @@ pub fn ibc_channel_connect(
     // store the channel id for the reply handler
     pending_channel(deps.storage).save(&chan_id)?;
 
-    Ok(IbcBasicResponse {
-        messages: vec![msg],
-        attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
-        events: vec![Event::new("ibc").attr("channel", "connect")],
-    })
+    Ok(IbcBasicResponse::new()
+        .add_submessage(msg)
+        .add_attribute("action", "ibc_connect")
+        .add_attribute("channel_id", chan_id)
+        .add_event(Event::new("ibc").attr("channel", "connect")))
 }
 
 #[entry_point]
@@ -212,15 +205,11 @@ pub fn ibc_channel_close(
     };
     let steal_funds = !messages.is_empty();
 
-    Ok(IbcBasicResponse {
-        messages,
-        attributes: vec![
-            attr("action", "ibc_close"),
-            attr("channel_id", channel_id),
-            attr("steal_funds", steal_funds.to_string()),
-        ],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new()
+        .add_submessages(messages)
+        .add_attribute("action", "ibc_close")
+        .add_attribute("channel_id", channel_id)
+        .add_attribute("steal_funds", steal_funds.to_string()))
 }
 
 /// this is a no-op just to test how this integrates with wasmd
@@ -260,12 +249,9 @@ pub fn ibc_packet_receive(
         // we try to capture all app-level errors and convert them into
         // acknowledgement packets that contain an error code.
         let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
-        Ok(IbcReceiveResponse {
-            acknowledgement,
-            messages: vec![],
-            attributes: vec![],
-            events: vec![Event::new("ibc").attr("packet", "receive")],
-        })
+        Ok(IbcReceiveResponse::new()
+            .set_ack(acknowledgement)
+            .add_event(Event::new("ibc").attr("packet", "receive")))
     })
 }
 
@@ -277,12 +263,9 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     };
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
-    Ok(IbcReceiveResponse {
-        acknowledgement,
-        messages: vec![],
-        attributes: vec![attr("action", "receive_who_am_i")],
-        ..IbcReceiveResponse::default()
-    })
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_attribute("action", "receive_who_am_i"))
 }
 
 // processes PacketMsg::Balances variant
@@ -295,12 +278,9 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     };
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
-    Ok(IbcReceiveResponse {
-        acknowledgement,
-        messages: vec![],
-        attributes: vec![attr("action", "receive_balances")],
-        ..IbcReceiveResponse::default()
-    })
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_attribute("action", "receive_balances"))
 }
 
 // processes PacketMsg::Dispatch variant
@@ -321,12 +301,10 @@ fn receive_dispatch(
     // we wrap it in a submessage to properly report errors
     let msg = SubMsg::reply_on_error(wasm_msg, RECEIVE_DISPATCH_ID);
 
-    Ok(IbcReceiveResponse {
-        acknowledgement,
-        messages: vec![msg],
-        attributes: vec![attr("action", "receive_dispatch")],
-        ..IbcReceiveResponse::default()
-    })
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_submessage(msg)
+        .add_attribute("action", "receive_dispatch"))
 }
 
 #[entry_point]
@@ -336,11 +314,7 @@ pub fn ibc_packet_ack(
     _env: Env,
     _msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse {
-        messages: vec![],
-        attributes: vec![attr("action", "ibc_packet_ack")],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_packet_ack"))
 }
 
 #[entry_point]
@@ -350,11 +324,7 @@ pub fn ibc_packet_timeout(
     _env: Env,
     _msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse {
-        messages: vec![],
-        attributes: vec![attr("action", "ibc_packet_timeout")],
-        ..IbcBasicResponse::default()
-    })
+    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_packet_timeout"))
 }
 
 #[cfg(test)]
@@ -365,7 +335,7 @@ mod tests {
         mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
         mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
+    use cosmwasm_std::{attr, coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
