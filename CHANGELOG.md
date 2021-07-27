@@ -56,15 +56,15 @@ and this project adheres to
 - cosmwasm-std: `attr` (and `Attribute::new`) will now panic in debug builds if
   the attribute's key starts with an underscore. These names are reserved and
   could cause problems further down the line.
-- cosmwasm-std: `Response` can no longer be constructed using a struct literal.
-  Use `Response::new()` and appropriate builder-style functions instead
-  (`response.add_message`, `response.set_data`, etc).
+- cosmwasm-std: `Response`, `IbcBasicResponse` and `IbcReceiveResponse` can no
+  longer be constructed using struct literals. Use constructors like
+  `Response::new` to construct empty structs and appropriate builder-style
+  methods to set fields (`response.add_message`, `response.set_data`, etc).
 - cosmwasm-std: `Event`, `IbcChannel`, `IbcPacket`, `IbcAcknowledgement` have
   been marked `non_exhaustive` (can't be constructed using a struct literal by
   downstream code).
 - cosmwasm-std: `Event::attr` has been renamed to `Event::add_attribute` for
   consistency with other types like `Response`.
--
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
