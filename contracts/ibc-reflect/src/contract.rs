@@ -171,7 +171,7 @@ pub fn ibc_channel_connect(
         .add_submessage(msg)
         .add_attribute("action", "ibc_connect")
         .add_attribute("channel_id", chan_id)
-        .add_event(Event::new("ibc").attr("channel", "connect")))
+        .add_event(Event::new("ibc").add_attribute("channel", "connect")))
 }
 
 #[entry_point]
@@ -251,7 +251,7 @@ pub fn ibc_packet_receive(
         let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
         Ok(IbcReceiveResponse::new()
             .set_ack(acknowledgement)
-            .add_event(Event::new("ibc").attr("packet", "receive")))
+            .add_event(Event::new("ibc").add_attribute("packet", "receive")))
     })
 }
 
@@ -355,16 +355,13 @@ mod tests {
     }
 
     fn fake_events(reflect_addr: &str) -> Vec<Event> {
-        let event = Event {
-            ty: "message".into(),
-            attributes: vec![
-                attr("module", "wasm"),
-                attr("signer", MOCK_CONTRACT_ADDR),
-                attr("code_id", "17"),
-                // We have to force this one to avoid the debug assertion against _
-                mock_wasmd_attr("_contract_address", reflect_addr),
-            ],
-        };
+        let event = Event::new("message").add_attributes(vec![
+            attr("module", "wasm"),
+            attr("signer", MOCK_CONTRACT_ADDR),
+            attr("code_id", "17"),
+            // We have to force this one to avoid the debug assertion against _
+            mock_wasmd_attr("_contract_address", reflect_addr),
+        ]);
         vec![event]
     }
 
@@ -383,7 +380,10 @@ mod tests {
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
         assert_eq!(1, res.messages.len());
         assert_eq!(1, res.events.len());
-        assert_eq!(Event::new("ibc").attr("channel", "connect"), res.events[0]);
+        assert_eq!(
+            Event::new("ibc").add_attribute("channel", "connect"),
+            res.events[0]
+        );
         let id = res.messages[0].id;
 
         // fake a reply and ensure this works
@@ -517,7 +517,10 @@ mod tests {
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
         assert_eq!(1, res.events.len());
-        assert_eq!(Event::new("ibc").attr("packet", "receive"), res.events[0]);
+        assert_eq!(
+            Event::new("ibc").add_attribute("packet", "receive"),
+            res.events[0]
+        );
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(

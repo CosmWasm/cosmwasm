@@ -428,7 +428,7 @@ mod tests {
 
         let id = 123u64;
         let data = Binary::from(b"foobar");
-        let events = vec![Event::new("message").attr("signer", "caller-addr")];
+        let events = vec![Event::new("message").add_attribute("signer", "caller-addr")];
         let result = ContractResult::Ok(SubMsgExecutionResponse {
             events: events.clone(),
             data: Some(data.clone()),

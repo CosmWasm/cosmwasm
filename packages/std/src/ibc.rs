@@ -115,6 +115,7 @@ impl From<IbcTimeoutBlock> for IbcTimeout {
 /// IbcChannel defines all information on a channel.
 /// This is generally used in the hand-shake process, but can be queried directly.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
@@ -123,6 +124,25 @@ pub struct IbcChannel {
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
     pub connection_id: String,
+}
+
+impl IbcChannel {
+    /// Construct a new IbcChannel.
+    pub fn new(
+        endpoint: IbcEndpoint,
+        counterparty_endpoint: IbcEndpoint,
+        order: IbcOrder,
+        version: impl Into<String>,
+        connection_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            endpoint,
+            counterparty_endpoint,
+            order,
+            version: version.into(),
+            connection_id: connection_id.into(),
+        }
+    }
 }
 
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
@@ -172,6 +192,7 @@ impl Ord for IbcTimeoutBlock {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcPacket {
     /// The raw data send from the other side in the packet
     pub data: Binary,
@@ -184,7 +205,27 @@ pub struct IbcPacket {
     pub timeout: IbcTimeout,
 }
 
+impl IbcPacket {
+    /// Construct a new IbcPacket.
+    pub fn new(
+        data: impl Into<Binary>,
+        src: IbcEndpoint,
+        dest: IbcEndpoint,
+        sequence: u64,
+        timeout: IbcTimeout,
+    ) -> Self {
+        Self {
+            data: data.into(),
+            src,
+            dest,
+            sequence,
+            timeout,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcAcknowledgement {
     pub data: Binary,
     // we may add more info here in the future (meta-data from the acknowledgement)
@@ -206,6 +247,7 @@ impl IbcAcknowledgement {
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum IbcChannelOpenMsg {
     /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     OpenInit { channel: IbcChannel },
@@ -258,6 +300,7 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 /// The message that is passed into `ibc_channel_connect`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum IbcChannelConnectMsg {
     /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     OpenAck {
@@ -310,6 +353,7 @@ impl From<IbcChannelConnectMsg> for IbcChannel {
 /// The message that is passed into `ibc_channel_close`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum IbcChannelCloseMsg {
     /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     CloseInit { channel: IbcChannel },
@@ -345,6 +389,7 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 
 /// The message that is passed into `ibc_packet_receive`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
 }
@@ -357,6 +402,7 @@ impl IbcPacketReceiveMsg {
 
 /// The message that is passed into `ibc_packet_ack`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
     pub original_packet: IbcPacket,
@@ -373,6 +419,7 @@ impl IbcPacketAckMsg {
 
 /// The message that is passed into `ibc_packet_timeout`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
 }

@@ -224,7 +224,7 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
 /// Creates an IbcChannel for testing. You set a few key parameters for handshaking,
 /// If you want to set more, use this as a default and mutate other fields
 #[cfg(feature = "stargate")]
-fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
+pub fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
     IbcChannel {
         endpoint: IbcEndpoint {
             port_id: "my_port".to_string(),

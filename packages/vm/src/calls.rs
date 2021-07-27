@@ -715,16 +715,16 @@ mod tests {
             .unwrap()
             .unwrap();
             assert_eq!(1, res.messages.len());
-            assert_eq!(res.events, [Event::new("ibc").attr("channel", "connect")]);
+            assert_eq!(
+                res.events,
+                [Event::new("ibc").add_attribute("channel", "connect")]
+            );
             assert_eq!(ReplyOn::Success, res.messages[0].reply_on);
             let id = res.messages[0].id;
-            let event = Event {
-                ty: "message".into(),
-                attributes: vec![
-                    // We have to force this one to avoid the debug assertion against _
-                    mock_wasmd_attr("_contract_address", account),
-                ],
-            };
+            let event = Event::new("message").add_attributes(vec![
+                // We have to force this one to avoid the debug assertion against _
+                mock_wasmd_attr("_contract_address", account),
+            ]);
             // which creates a reflect account. here we get the callback
             let response = Reply {
                 id,

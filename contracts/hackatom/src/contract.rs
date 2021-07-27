@@ -89,7 +89,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         let resp = Response::new()
             .add_attribute("action", "release")
             .add_attribute("destination", to_addr.clone())
-            .add_event(Event::new("hackatom").attr("action", "release"))
+            .add_event(Event::new("hackatom").add_attribute("action", "release"))
             .add_message(BankMsg::Send {
                 to_address: to_addr.into(),
                 amount: balance,
