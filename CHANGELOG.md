@@ -24,6 +24,8 @@ and this project adheres to
   an `Attribute` with a key starting with `_` in test code.
 - cosmwasm-std: Renamed `IBCAcknowledgementWithPacket` -> `IbcPacketAckMsg` to
   remove an unneeded level of indirection.
+- cosmwasm-std: Added `Event::add_attributes` for bulk adding attributes to an
+  `Event` struct.
 
 ### Changed
 
@@ -57,6 +59,12 @@ and this project adheres to
 - cosmwasm-std: `Response` can no longer be constructed using a struct literal.
   Use `Response::new()` and appropriate builder-style functions instead
   (`response.add_message`, `response.set_data`, etc).
+- cosmwasm-std: `Event`, `IbcChannel`, `IbcPacket`, `IbcAcknowledgement` have
+  been marked `non_exhaustive` (can't be constructed using a struct literal by
+  downstream code).
+- cosmwasm-std: `Event::attr` has been renamed to `Event::add_attribute` for
+  consistency with other types like `Response`.
+-
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
