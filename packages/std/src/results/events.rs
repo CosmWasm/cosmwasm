@@ -134,9 +134,7 @@ mod tests {
             ty: "test".to_string(),
             attributes: vec![attr("foo", "bar"), attr("bar", "baz")],
         };
-        let event_builder = Event::new("test")
-            .add_attribute("foo", "bar")
-            .add_attribute("bar", "baz");
+        let event_builder = Event::new("test").add_attributes(vec![("foo", "bar"), ("bar", "baz")]);
 
         assert_eq!(event_direct, event_builder);
     }
