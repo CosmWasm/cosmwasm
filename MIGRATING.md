@@ -46,6 +46,14 @@ major releases of `cosmwasm`. Note that you can also view the
   + cosmwasm-std = { version = "0.16.0", default-features = false }
   ```
 
+- The `Event::attr` setter has been renamed to `Event::add_attribute` - this is
+  for consistency with other types, like `Response`.
+
+  ```diff
+  - let event = Event::new("ibc").attr("channel", "connect");
+  + let event = Event::new("ibc").add_attribute("channel", "connect");
+  ```
+
 - `Response` can no longer be built using a struct literal. Please use
   `Response::new` as well as relevant
   [builder-style setters](https://github.com/CosmWasm/cosmwasm/blob/402e3281ff5bc1cd7b4b3e36c2bb9914f07eaaf6/packages/std/src/results/response.rs#L103-L167)
@@ -97,6 +105,29 @@ major releases of `cosmwasm`. Note that you can also view the
   + Ok(Response::new()
   +     .add_attribute("action", "reflect_subcall")
   +     .add_submessages(msgs))
+  ```
+
+- For IBC-enabled contracts only: constructing `IbcReceiveResponse` and
+  `IbcBasicResponse` follows the same principles now as `Response` above.
+
+  ```diff
+    pub fn ibc_packet_receive(
+        deps: DepsMut,
+        env: Env,
+        msg: IbcPacketReceiveMsg,
+    ) -> StdResult<IbcReceiveResponse> {
+        // ...
+
+  -     Ok(IbcReceiveResponse {
+  -         acknowledgement,
+  -         messages: vec![],
+  -         attributes: vec![],
+  -         events: vec![Event::new("ibc").attr("packet", "receive")],
+  -     })
+  +     Ok(IbcReceiveResponse::new()
+  +         .set_ack(acknowledgement)
+  +         .add_event(Event::new("ibc").add_attribute("packet", "receive")))
+    }
   ```
 
 - For IBC-enabled contracts only: IBC entry points have different signatures.
