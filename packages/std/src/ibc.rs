@@ -126,6 +126,25 @@ pub struct IbcChannel {
     pub connection_id: String,
 }
 
+impl IbcChannel {
+    /// Construct a new IbcChannel.
+    pub fn new(
+        endpoint: IbcEndpoint,
+        counterparty_endpoint: IbcEndpoint,
+        order: IbcOrder,
+        version: impl Into<String>,
+        connection_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            endpoint,
+            counterparty_endpoint,
+            order,
+            version: version.into(),
+            connection_id: connection_id.into(),
+        }
+    }
+}
+
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
 /// Naming comes from the protobuf files and go translations.
@@ -184,6 +203,25 @@ pub struct IbcPacket {
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
     pub timeout: IbcTimeout,
+}
+
+impl IbcPacket {
+    /// Construct a new IbcPacket.
+    pub fn new(
+        data: impl Into<Binary>,
+        src: IbcEndpoint,
+        dest: IbcEndpoint,
+        sequence: u64,
+        timeout: IbcTimeout,
+    ) -> Self {
+        Self {
+            data: data.into(),
+            src,
+            dest,
+            sequence,
+            timeout,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
