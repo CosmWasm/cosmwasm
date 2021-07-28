@@ -8,6 +8,9 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
 license = "Apache-2.0"
 readme = "README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 default = ["iterator"]
 # iterator allows us to iterate over all DB items in a given range
