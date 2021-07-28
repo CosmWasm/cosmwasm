@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["stargate", "staking"]
 
 [features]
 default = ["iterator"]
