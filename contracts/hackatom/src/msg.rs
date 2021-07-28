@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Binary, Coin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstantiateMsg {
-    pub verifier: String,
-    pub beneficiary: String,
+pub struct InstantiateMsg<'a> {
+    pub verifier: &'a str,
+    pub beneficiary: &'a str,
 }
 
 /// MigrateMsg allows a privileged contract administrator to run

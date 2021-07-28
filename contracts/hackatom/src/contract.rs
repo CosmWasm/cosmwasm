@@ -23,8 +23,8 @@ pub fn instantiate(
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
-            verifier: deps.api.addr_validate(&msg.verifier)?,
-            beneficiary: deps.api.addr_validate(&msg.beneficiary)?,
+            verifier: deps.api.addr_validate(msg.verifier)?,
+            beneficiary: deps.api.addr_validate(msg.beneficiary)?,
             funder: info.sender,
         })?,
     );
