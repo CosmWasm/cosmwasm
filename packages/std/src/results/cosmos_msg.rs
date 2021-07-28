@@ -27,7 +27,7 @@ where
     Staking(StakingMsg),
     #[cfg(feature = "staking")]
     Distribution(DistributionMsg),
-    /// A Stargate message encoded the same way as a protobof [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
+    /// A Stargate message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
     /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
     #[cfg(feature = "stargate")]
     Stargate {
