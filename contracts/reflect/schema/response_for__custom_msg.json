@@ -10,13 +10,14 @@
   ],
   "properties": {
     "attributes": {
-      "description": "The attributes that will be emitted as part of a \"wasm\" event",
+      "description": "The attributes that will be emitted as part of a \"wasm\" event.\n\nMore info about events (and their attributes) can be found in [*Cosmos SDK* docs].\n\n[*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html",
       "type": "array",
       "items": {
         "$ref": "#/definitions/Attribute"
       }
     },
     "data": {
+      "description": "The binary payload to include in the response.",
       "anyOf": [
         {
           "$ref": "#/definitions/Binary"
@@ -27,6 +28,7 @@
       ]
     },
     "events": {
+      "description": "Extra, custom events separate from the main `wasm` one. These will have `wasm-` prepended to the type.\n\nMore info about events can be found in [*Cosmos SDK* docs].\n\n[*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html",
       "type": "array",
       "items": {
         "$ref": "#/definitions/Event"
@@ -325,7 +327,7 @@
       ]
     },
     "Event": {
-      "description": "A full Cosmos SDK event as documented in https://docs.cosmos.network/v0.42/core/events.html.\n\nThis version uses string attributes (similar to https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70), which then get magically converted to bytes for Tendermint somewhere between the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.",
+      "description": "A full [*Cosmos SDK* event].\n\nThis version uses string attributes (similar to [*Cosmos SDK* StringEvent]), which then get magically converted to bytes for Tendermint somewhere between the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.\n\n[*Cosmos SDK* event]: https://docs.cosmos.network/v0.42/core/events.html [*Cosmos SDK* StringEvent]: https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70",
       "type": "object",
       "required": [
         "attributes",
@@ -333,6 +335,7 @@
       ],
       "properties": {
         "attributes": {
+          "description": "The attributes to be included in the event.\n\nYou can learn more about these from [*Cosmos SDK* docs].\n\n[*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Attribute"
