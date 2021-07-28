@@ -11,7 +11,7 @@ use std::fmt;
 use std::vec::Vec;
 
 use schemars::JsonSchema;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::deps::OwnedDeps;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
@@ -71,14 +71,14 @@ macro_rules! r#try_into_contract_result {
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_instantiate<M, C, E>(
+pub fn do_instantiate<'a, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
-    M: DeserializeOwned + JsonSchema,
+    M: Deserialize<'a> + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -194,14 +194,14 @@ where
     release_buffer(v) as u32
 }
 
-fn _do_instantiate<M, C, E>(
+fn _do_instantiate<'a, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<Response<C>>
 where
-    M: DeserializeOwned + JsonSchema,
+    M: Deserialize<'a> + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
