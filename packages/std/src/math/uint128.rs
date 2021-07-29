@@ -299,10 +299,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
         formatter.write_str("string-encoded integer")
     }
 
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, impl de::Error> {
         match v.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
             Err(e) => Err(E::custom(format!("invalid Uint128 '{}' - {}", v, e))),

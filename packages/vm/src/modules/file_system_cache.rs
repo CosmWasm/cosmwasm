@@ -31,7 +31,7 @@ impl FileSystemCache {
     ///
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
-    pub unsafe fn new<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
+    pub unsafe fn new(path: impl Into<PathBuf>) -> io::Result<Self> {
         let path: PathBuf = path.into();
         if path.exists() {
             let metadata = path.metadata()?;
