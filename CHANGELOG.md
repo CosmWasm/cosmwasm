@@ -26,6 +26,7 @@ and this project adheres to
   remove an unneeded level of indirection.
 - cosmwasm-std: Added `Event::add_attributes` for bulk adding attributes to an
   `Event` struct.
+- cosmwasm-std: Added `Addr::into_string` for explicit conversion
 
 ### Changed
 
