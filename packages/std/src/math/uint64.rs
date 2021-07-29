@@ -265,7 +265,7 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
-        E: de::Error
+        E: de::Error,
     {
         match v.parse::<u64>() {
             Ok(u) => Ok(Uint64(u)),
