@@ -116,13 +116,39 @@ If you haven't worked with WebAssembly before, please read an overview on
 The required exports provided by the cosmwasm smart contract are:
 
 ```rust
+// signal for 0.16 compatibility
+extern "C" fn interface_version_7() -> () {}
+
+// copy memory to/from host, so we can pass in/out Vec<u8>
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
+// main contract entry points
 extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
+```
+
+Contracts may also implement one or more of the following to extend their
+functionality:
+
+```rust
+// in-place contract migrations
 extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+
+// support submessage callbacks
+extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
+
+// expose privileged entry points to Cosmos SDK modules, not external accounts
+extern "C" fn sudo(env_ptr: u32, msg_ptr: u32) -> u32;
+
+// and to write an IBC application as a contract, implement these:
+extern "C" fn ibc_channel_open(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_channel_connect(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_channel_close(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_packet_receive(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
