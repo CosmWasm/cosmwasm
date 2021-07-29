@@ -252,7 +252,10 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
         formatter.write_str("string-encoded decimal")
     }
 
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, impl de::Error> {
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error
+    {
         match Decimal::from_str(v) {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),

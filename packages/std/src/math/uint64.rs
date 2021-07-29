@@ -263,7 +263,10 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
         formatter.write_str("string-encoded integer")
     }
 
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, impl de::Error> {
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error
+    {
         match v.parse::<u64>() {
             Ok(u) => Ok(Uint64(u)),
             Err(e) => Err(E::custom(format!("invalid Uint64 '{}' - {}", v, e))),
