@@ -254,7 +254,7 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
-        E: de::Error
+        E: de::Error,
     {
         match Decimal::from_str(v) {
             Ok(d) => Ok(d),

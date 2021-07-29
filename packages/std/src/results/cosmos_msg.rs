@@ -203,7 +203,7 @@ pub fn wasm_instantiate(
 pub fn wasm_execute(
     contract_addr: impl Into<String>,
     msg: &impl Serialize,
-    funds: Vec<Coin>
+    funds: Vec<Coin>,
 ) -> StdResult<WasmMsg> {
     let payload = to_binary(msg)?;
     Ok(WasmMsg::Execute {

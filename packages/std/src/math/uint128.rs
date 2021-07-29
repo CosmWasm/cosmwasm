@@ -301,7 +301,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
-        E: de::Error
+        E: de::Error,
     {
         match v.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
