@@ -32,7 +32,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 /// Other optional exports exist, e.g. "execute", "migrate" and "query".
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
 const REQUIRED_EXPORTS: &[&str] = &[
-    "interface_version_6",
+    "interface_version_7",
     "instantiate",
     "allocate",
     "deallocate",
@@ -169,7 +169,7 @@ mod tests {
     fn check_wasm_old_contract() {
         match check_wasm(CONTRACT_0_7, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
-                "Wasm contract doesn't have required export: \"interface_version_6\""
+                "Wasm contract doesn't have required export: \"interface_version_7\""
             )),
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
@@ -177,7 +177,7 @@ mod tests {
 
         match check_wasm(CONTRACT_0_6, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
-                "Wasm contract doesn't have required export: \"interface_version_6\""
+                "Wasm contract doesn't have required export: \"interface_version_7\""
             )),
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
@@ -291,7 +291,7 @@ mod tests {
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
-                    "Wasm contract doesn't have required export: \"interface_version_6\""
+                    "Wasm contract doesn't have required export: \"interface_version_7\""
                 ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
@@ -305,7 +305,7 @@ mod tests {
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
-                    "Wasm contract doesn't have required export: \"interface_version_6\""
+                    "Wasm contract doesn't have required export: \"interface_version_7\""
                 ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),

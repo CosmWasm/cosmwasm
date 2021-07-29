@@ -124,7 +124,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_6" (func 0))
+                (export "interface_version_7" (func 0))
                 (export "instantiate" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
@@ -132,7 +132,7 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        assert_eq!(has_ibc_entry_points(&module), false);
+        assert!(!has_ibc_entry_points(&module));
 
         // IBC contract
         let wasm = wat::parse_str(
@@ -142,7 +142,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_6" (func 0))
+                (export "interface_version_7" (func 0))
                 (export "instantiate" (func 0))
                 (export "execute" (func 0))
                 (export "allocate" (func 0))
@@ -157,7 +157,7 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        assert_eq!(has_ibc_entry_points(&module), true);
+        assert!(has_ibc_entry_points(&module));
 
         // Missing packet ack
         let wasm = wat::parse_str(
@@ -167,7 +167,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_6" (func 0))
+                (export "interface_version_7" (func 0))
                 (export "instantiate" (func 0))
                 (export "execute" (func 0))
                 (export "allocate" (func 0))
@@ -181,6 +181,6 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        assert_eq!(has_ibc_entry_points(&module), false);
+        assert!(!has_ibc_entry_points(&module));
     }
 }

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
+    entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
     MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
     SystemResult,
 };
@@ -53,14 +53,10 @@ pub fn try_reflect(
     if msgs.is_empty() {
         return Err(ReflectError::MessagesEmpty);
     }
-    let messages = msgs.into_iter().map(SubMsg::new).collect();
-    let res = Response {
-        messages,
-        attributes: vec![attr("action", "reflect")],
-        events: vec![],
-        data: None,
-    };
-    Ok(res)
+
+    Ok(Response::new()
+        .add_attribute("action", "reflect")
+        .add_messages(msgs))
 }
 
 pub fn try_reflect_subcall(
@@ -80,13 +76,10 @@ pub fn try_reflect_subcall(
     if msgs.is_empty() {
         return Err(ReflectError::MessagesEmpty);
     }
-    let res = Response {
-        messages: msgs,
-        attributes: vec![attr("action", "reflect_subcall")],
-        events: vec![],
-        data: None,
-    };
-    Ok(res)
+
+    Ok(Response::new()
+        .add_attribute("action", "reflect_subcall")
+        .add_submessages(msgs))
 }
 
 pub fn try_change_owner(
@@ -106,10 +99,9 @@ pub fn try_change_owner(
         state.owner = api.addr_validate(&new_owner)?;
         Ok(state)
     })?;
-    Ok(Response {
-        attributes: vec![attr("action", "change_owner"), attr("owner", new_owner)],
-        ..Response::default()
-    })
+    Ok(Response::new()
+        .add_attribute("action", "change_owner")
+        .add_attribute("owner", new_owner))
 }
 
 /// This just stores the result for future query
@@ -436,7 +428,7 @@ mod tests {
 
         let id = 123u64;
         let data = Binary::from(b"foobar");
-        let events = vec![Event::new("message").attr("signer", "caller-addr")];
+        let events = vec![Event::new("message").add_attribute("signer", "caller-addr")];
         let result = ContractResult::Ok(SubMsgExecutionResponse {
             events: events.clone(),
             data: Some(data.clone()),

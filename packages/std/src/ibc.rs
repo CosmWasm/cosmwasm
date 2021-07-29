@@ -10,7 +10,7 @@ use std::fmt;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
-use crate::results::{Attribute, Empty, SubMsg};
+use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
@@ -115,16 +115,34 @@ impl From<IbcTimeoutBlock> for IbcTimeout {
 /// IbcChannel defines all information on a channel.
 /// This is generally used in the hand-shake process, but can be queried directly.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
     pub order: IbcOrder,
     pub version: String,
-    /// CounterpartyVersion can be None when not known this context, yet
-    pub counterparty_version: Option<String>,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
     pub connection_id: String,
+}
+
+impl IbcChannel {
+    /// Construct a new IbcChannel.
+    pub fn new(
+        endpoint: IbcEndpoint,
+        counterparty_endpoint: IbcEndpoint,
+        order: IbcOrder,
+        version: impl Into<String>,
+        connection_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            endpoint,
+            counterparty_endpoint,
+            order,
+            version: version.into(),
+            connection_id: connection_id.into(),
+        }
+    }
 }
 
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
@@ -174,6 +192,7 @@ impl Ord for IbcTimeoutBlock {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcPacket {
     /// The raw data send from the other side in the packet
     pub data: Binary,
@@ -186,13 +205,27 @@ pub struct IbcPacket {
     pub timeout: IbcTimeout,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcAcknowledgementWithPacket {
-    pub acknowledgement: IbcAcknowledgement,
-    pub original_packet: IbcPacket,
+impl IbcPacket {
+    /// Construct a new IbcPacket.
+    pub fn new(
+        data: impl Into<Binary>,
+        src: IbcEndpoint,
+        dest: IbcEndpoint,
+        sequence: u64,
+        timeout: IbcTimeout,
+    ) -> Self {
+        Self {
+            data: data.into(),
+            src,
+            dest,
+            sequence,
+            timeout,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcAcknowledgement {
     pub data: Binary,
     // we may add more info here in the future (meta-data from the acknowledgement)
@@ -211,6 +244,192 @@ impl IbcAcknowledgement {
     }
 }
 
+/// The message that is passed into `ibc_channel_open`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum IbcChannelOpenMsg {
+    /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenInit { channel: IbcChannel },
+    /// The ChanOpenTry step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenTry {
+        channel: IbcChannel,
+        counterparty_version: String,
+    },
+}
+
+impl IbcChannelOpenMsg {
+    pub fn new_init(channel: IbcChannel) -> Self {
+        Self::OpenInit { channel }
+    }
+
+    pub fn new_try(channel: IbcChannel, counterparty_version: impl Into<String>) -> Self {
+        Self::OpenTry {
+            channel,
+            counterparty_version: counterparty_version.into(),
+        }
+    }
+
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            Self::OpenInit { channel } => channel,
+            Self::OpenTry { channel, .. } => channel,
+        }
+    }
+
+    pub fn counterparty_version(&self) -> Option<&str> {
+        match self {
+            Self::OpenTry {
+                counterparty_version,
+                ..
+            } => Some(counterparty_version),
+            _ => None,
+        }
+    }
+}
+
+impl From<IbcChannelOpenMsg> for IbcChannel {
+    fn from(msg: IbcChannelOpenMsg) -> IbcChannel {
+        match msg {
+            IbcChannelOpenMsg::OpenInit { channel } => channel,
+            IbcChannelOpenMsg::OpenTry { channel, .. } => channel,
+        }
+    }
+}
+
+/// The message that is passed into `ibc_channel_connect`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum IbcChannelConnectMsg {
+    /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenAck {
+        channel: IbcChannel,
+        counterparty_version: String,
+    },
+    /// The ChanOpenConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenConfirm { channel: IbcChannel },
+}
+
+impl IbcChannelConnectMsg {
+    pub fn new_ack(channel: IbcChannel, counterparty_version: impl Into<String>) -> Self {
+        Self::OpenAck {
+            channel,
+            counterparty_version: counterparty_version.into(),
+        }
+    }
+
+    pub fn new_confirm(channel: IbcChannel) -> Self {
+        Self::OpenConfirm { channel }
+    }
+
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            Self::OpenAck { channel, .. } => channel,
+            Self::OpenConfirm { channel } => channel,
+        }
+    }
+
+    pub fn counterparty_version(&self) -> Option<&str> {
+        match self {
+            Self::OpenAck {
+                counterparty_version,
+                ..
+            } => Some(counterparty_version),
+            _ => None,
+        }
+    }
+}
+
+impl From<IbcChannelConnectMsg> for IbcChannel {
+    fn from(msg: IbcChannelConnectMsg) -> IbcChannel {
+        match msg {
+            IbcChannelConnectMsg::OpenAck { channel, .. } => channel,
+            IbcChannelConnectMsg::OpenConfirm { channel } => channel,
+        }
+    }
+}
+
+/// The message that is passed into `ibc_channel_close`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum IbcChannelCloseMsg {
+    /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    CloseInit { channel: IbcChannel },
+    /// The ChanCloseConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    CloseConfirm { channel: IbcChannel }, // pub channel: IbcChannel,
+}
+
+impl IbcChannelCloseMsg {
+    pub fn new_init(channel: IbcChannel) -> Self {
+        Self::CloseInit { channel }
+    }
+
+    pub fn new_confirm(channel: IbcChannel) -> Self {
+        Self::CloseConfirm { channel }
+    }
+
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            Self::CloseInit { channel } => channel,
+            Self::CloseConfirm { channel } => channel,
+        }
+    }
+}
+
+impl From<IbcChannelCloseMsg> for IbcChannel {
+    fn from(msg: IbcChannelCloseMsg) -> IbcChannel {
+        match msg {
+            IbcChannelCloseMsg::CloseInit { channel } => channel,
+            IbcChannelCloseMsg::CloseConfirm { channel } => channel,
+        }
+    }
+}
+
+/// The message that is passed into `ibc_packet_receive`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
+pub struct IbcPacketReceiveMsg {
+    pub packet: IbcPacket,
+}
+
+impl IbcPacketReceiveMsg {
+    pub fn new(packet: IbcPacket) -> Self {
+        Self { packet }
+    }
+}
+
+/// The message that is passed into `ibc_packet_ack`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
+pub struct IbcPacketAckMsg {
+    pub acknowledgement: IbcAcknowledgement,
+    pub original_packet: IbcPacket,
+}
+
+impl IbcPacketAckMsg {
+    pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
+        Self {
+            acknowledgement,
+            original_packet,
+        }
+    }
+}
+
+/// The message that is passed into `ibc_packet_timeout`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
+pub struct IbcPacketTimeoutMsg {
+    pub packet: IbcPacket,
+}
+
+impl IbcPacketTimeoutMsg {
+    pub fn new(packet: IbcPacket) -> Self {
+        Self { packet }
+    }
+}
+
 /// This is the return value for the majority of the ibc handlers.
 /// That are able to dispatch messages / events on their own,
 /// but have no meaningful return value to the calling code.
@@ -219,6 +438,7 @@ impl IbcAcknowledgement {
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -228,8 +448,11 @@ where
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
     pub messages: Vec<SubMsg<T>>,
-    /// The attributes that will be emitted as part of a "wasm" event
+    /// The attributes that will be emitted as part of a `wasm` event.
     pub attributes: Vec<Attribute>,
+    /// Extra, custom events separate from the main `wasm` one. These will have
+    /// `wasm-` prepended to the type.
+    pub events: Vec<Event>,
 }
 
 impl<T> Default for IbcBasicResponse<T>
@@ -240,7 +463,114 @@ where
         IbcBasicResponse {
             messages: vec![],
             attributes: vec![],
+            events: vec![],
         }
+    }
+}
+
+impl<T> IbcBasicResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Add an attribute included in the main `wasm` event.
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute::new(key, value));
+        self
+    }
+
+    /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
+    /// and adds it to the list of messages to process.
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+        self.messages.push(SubMsg::new(msg));
+        self
+    }
+
+    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// and adds it to the list of messages to process.
+    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+        self.messages.push(msg);
+        self
+    }
+
+    /// Adds an extra event to the response, separate from the main `wasm` event
+    /// that is always created.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided type
+    /// of event.
+    pub fn add_event(mut self, event: Event) -> Self {
+        self.events.push(event);
+        self
+    }
+
+    /// Bulk add attributes included in the main `wasm` event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{attr, IbcBasicResponse};
+    ///
+    /// let attrs = vec![
+    ///     ("action", "reaction"),
+    ///     ("answer", "42"),
+    ///     ("another", "attribute"),
+    /// ];
+    /// let res: IbcBasicResponse = IbcBasicResponse::new().add_attributes(attrs.clone());
+    /// assert_eq!(res.attributes, attrs);
+    /// ```
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
+        self
+    }
+
+    /// Bulk add "fire and forget" messages to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{CosmosMsg, IbcBasicResponse};
+    ///
+    /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcBasicResponse {
+    ///     IbcBasicResponse::new().add_messages(msgs)
+    /// }
+    /// ```
+    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+        self.add_submessages(msgs.into_iter().map(SubMsg::new))
+    }
+
+    /// Bulk add explicit SubMsg structs to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{SubMsg, IbcBasicResponse};
+    ///
+    /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcBasicResponse {
+    ///     IbcBasicResponse::new().add_submessages(msgs)
+    /// }
+    /// ```
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+        self.messages.extend(msgs.into_iter());
+        self
+    }
+
+    /// Bulk add custom events to the response. These are separate from the main
+    /// `wasm` event.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided types
+    /// of events.
+    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
+        self.events.extend(events.into_iter());
+        self
     }
 }
 
@@ -250,6 +580,7 @@ where
 // the calling chain. (Returning ContractResult::Err will abort processing of this packet
 // and not inform the calling chain).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -264,6 +595,9 @@ where
     pub messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
+    /// Extra, custom events separate from the main `wasm` one. These will have
+    /// `wasm-` prepended to the type.
+    pub events: Vec<Event>,
 }
 
 impl<T> Default for IbcReceiveResponse<T>
@@ -275,7 +609,120 @@ where
             acknowledgement: Binary(vec![]),
             messages: vec![],
             attributes: vec![],
+            events: vec![],
         }
+    }
+}
+
+impl<T> IbcReceiveResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the acknowledgement for this response.
+    pub fn set_ack(mut self, ack: impl Into<Binary>) -> Self {
+        self.acknowledgement = ack.into();
+        self
+    }
+
+    /// Add an attribute included in the main `wasm` event.
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute::new(key, value));
+        self
+    }
+
+    /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
+    /// and adds it to the list of messages to process.
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+        self.messages.push(SubMsg::new(msg));
+        self
+    }
+
+    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// and adds it to the list of messages to process.
+    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+        self.messages.push(msg);
+        self
+    }
+
+    /// Adds an extra event to the response, separate from the main `wasm` event
+    /// that is always created.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided type
+    /// of event.
+    pub fn add_event(mut self, event: Event) -> Self {
+        self.events.push(event);
+        self
+    }
+
+    /// Bulk add attributes included in the main `wasm` event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{attr, IbcReceiveResponse};
+    ///
+    /// let attrs = vec![
+    ///     ("action", "reaction"),
+    ///     ("answer", "42"),
+    ///     ("another", "attribute"),
+    /// ];
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().add_attributes(attrs.clone());
+    /// assert_eq!(res.attributes, attrs);
+    /// ```
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
+        self
+    }
+
+    /// Bulk add "fire and forget" messages to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{CosmosMsg, IbcReceiveResponse};
+    ///
+    /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcReceiveResponse {
+    ///     IbcReceiveResponse::new().add_messages(msgs)
+    /// }
+    /// ```
+    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+        self.add_submessages(msgs.into_iter().map(SubMsg::new))
+    }
+
+    /// Bulk add explicit SubMsg structs to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{SubMsg, IbcReceiveResponse};
+    ///
+    /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcReceiveResponse {
+    ///     IbcReceiveResponse::new().add_submessages(msgs)
+    /// }
+    /// ```
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+        self.messages.extend(msgs.into_iter());
+        self
+    }
+
+    /// Bulk add custom events to the response. These are separate from the main
+    /// `wasm` event.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided types
+    /// of events.
+    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
+        self.events.extend(events.into_iter());
+        self
     }
 }
 

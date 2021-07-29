@@ -9,9 +9,9 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_remove, do_db_write, do_debug,
-    do_ed25519_batch_verify, do_ed25519_verify, do_query_chain, do_secp256k1_recover_pubkey,
-    do_secp256k1_verify, native_db_read,
+    do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
+    do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
+    do_secp256k1_recover_pubkey, do_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_scan};
@@ -86,7 +86,7 @@ where
         // Ownership of the value pointer is transferred to the contract.
         env_imports.insert(
             "db_read",
-            Function::new_native_with_env(store, env.clone(), native_db_read),
+            Function::new_native_with_env(store, env.clone(), do_db_read),
         );
 
         // Writes the given value into the database entry at the given key.
@@ -390,7 +390,7 @@ mod tests {
         let instance = mock_instance(&CONTRACT, &[]);
 
         instance
-            .call_function0("interface_version_6", &[])
+            .call_function0("interface_version_7", &[])
             .expect("error calling function");
     }
 
@@ -533,7 +533,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_6" (func 0))
+                (export "interface_version_7" (func 0))
                 (export "instantiate" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
@@ -551,7 +551,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_6" (func 0))
+                (export "interface_version_7" (func 0))
                 (export "instantiate" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
@@ -617,16 +617,16 @@ mod tests {
     fn set_storage_readonly_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(instance.env.is_storage_readonly(), true);
+        assert!(instance.env.is_storage_readonly());
 
         instance.set_storage_readonly(false);
-        assert_eq!(instance.env.is_storage_readonly(), false);
+        assert!(!instance.env.is_storage_readonly());
 
         instance.set_storage_readonly(false);
-        assert_eq!(instance.env.is_storage_readonly(), false);
+        assert!(!instance.env.is_storage_readonly());
 
         instance.set_storage_readonly(true);
-        assert_eq!(instance.env.is_storage_readonly(), true);
+        assert!(instance.env.is_storage_readonly());
     }
 
     #[test]

@@ -4,7 +4,21 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.15 -> 1.0 (unreleased)
+## 0.15 -> 0.16 (unreleased)
+
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.16.0"
+  cosmwasm-storage = "0.16.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.16.0"
+  cosmwasm-vm = "0.16.0"
+  # ...
+  ```
 
 - The `attr` function now accepts arguments that implement `Into<String>` rather
   than `ToString`. This means that "stringly" types like `&str` are still
@@ -29,10 +43,194 @@ major releases of `cosmwasm`. Note that you can also view the
 
   ```diff
   - cosmwasm-std = { version = "0.15.0" }
-  + cosmwasm-std = { version = "0.15.0", default-features = false }
+  + cosmwasm-std = { version = "0.16.0", default-features = false }
+  ```
+
+- The `Event::attr` setter has been renamed to `Event::add_attribute` - this is
+  for consistency with other types, like `Response`.
+
+  ```diff
+  - let event = Event::new("ibc").attr("channel", "connect");
+  + let event = Event::new("ibc").add_attribute("channel", "connect");
+  ```
+
+- `Response` can no longer be built using a struct literal. Please use
+  `Response::new` as well as relevant
+  [builder-style setters](https://github.com/CosmWasm/cosmwasm/blob/402e3281ff5bc1cd7b4b3e36c2bb9914f07eaaf6/packages/std/src/results/response.rs#L103-L167)
+  to set the data.
+
+  This is a step toward better API stability.
+
+  ```diff
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
+        // ...
+
+        let send = BankMsg::Send {
+            to_address: msg.payout.clone(),
+            amount: balance,
+        };
+        let data_msg = format!("burnt {} keys", count).into_bytes();
+
+  -     Ok(Response {
+  -         messages: vec![SubMsg::new(send)],
+  -         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
+  -         events: vec![],
+  -         data: Some(data_msg.into()),
+  -     })
+  +     Ok(Response::new()
+  +         .add_message(send)
+  +         .add_attribute("action", "burn")
+  +         .add_attribute("payout", msg.payout)
+  +         .set_data(data_msg))
+    }
+  ```
+
+  ```diff
+  - Ok(Response {
+  -     data: Some((old_size as u32).to_be_bytes().into()),
+  -     ..Response::default()
+  - })
+  + Ok(Response::new().set_data((old_size as u32).to_be_bytes()))
+  ```
+
+  ```diff
+  - let res = Response {
+  -     messages: msgs,
+  -     attributes: vec![attr("action", "reflect_subcall")],
+  -     events: vec![],
+  -     data: None,
+  - };
+  - Ok(res)
+  + Ok(Response::new()
+  +     .add_attribute("action", "reflect_subcall")
+  +     .add_submessages(msgs))
+  ```
+
+- For IBC-enabled contracts only: constructing `IbcReceiveResponse` and
+  `IbcBasicResponse` follows the same principles now as `Response` above.
+
+  ```diff
+    pub fn ibc_packet_receive(
+        deps: DepsMut,
+        env: Env,
+        msg: IbcPacketReceiveMsg,
+    ) -> StdResult<IbcReceiveResponse> {
+        // ...
+
+  -     Ok(IbcReceiveResponse {
+  -         acknowledgement,
+  -         messages: vec![],
+  -         attributes: vec![],
+  -         events: vec![Event::new("ibc").attr("packet", "receive")],
+  -     })
+  +     Ok(IbcReceiveResponse::new()
+  +         .set_ack(acknowledgement)
+  +         .add_event(Event::new("ibc").add_attribute("packet", "receive")))
+    }
+  ```
+
+- For IBC-enabled contracts only: IBC entry points have different signatures.
+  Instead of accepting bare packets, channels and acknowledgements, all of those
+  are wrapped in a `Msg` type specific to the given entry point. Channels,
+  packets and acknowledgements have to be unpacked from those.
+
+  ```diff
+    #[entry_point]
+  - pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
+  + pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
+  +     let channel = msg.channel();
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_channel_connect(
+        deps: DepsMut,
+        env: Env,
+  -     channel: IbcChannel,
+  +     msg: IbcChannelConnectMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let channel = msg.channel();
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_channel_close(
+        deps: DepsMut,
+        env: Env,
+  -     channel: IbcChannel,
+  +     msg: IbcChannelCloseMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let channel = msg.channel();
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_packet_receive(
+        deps: DepsMut,
+        env: Env,
+  -     packet: IbcPacket,
+  +     msg: IbcPacketReceiveMsg,
+    ) -> StdResult<IbcReceiveResponse> {
+  +     let packet = msg.packet;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_packet_receive(
+        deps: DepsMut,
+        env: Env,
+  -     ack: IbcAcknowledgementWithPacket,
+  +     msg: IbcPacketReceiveMsg,
+    ) -> StdResult<IbcBasicResponse> {
+        // They are the same struct just a different name
+        let ack = msg;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_packet_timeout(
+        deps: DepsMut,
+        env: Env,
+  -     packet: IbcPacket,
+  +     msg: IbcPacketTimeoutMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let packet = msg.packet;
+
+        // do things
+    }
   ```
 
 ## 0.14 -> 0.15
+
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.15.0"
+  cosmwasm-storage = "0.15.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.15.0"
+  cosmwasm-vm = "0.15.0"
+  # ...
+  ```
 
 - Combine `messages` and `submessages` on the `Response` object. The new format
   uses `messages: Vec<SubMsg<T>>`, so copy `submessages` content, and wrap old

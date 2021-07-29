@@ -34,8 +34,9 @@ pub use crate::errors::{
 };
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
-    IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcEndpoint,
-    IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
+    IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
@@ -58,6 +59,8 @@ pub use crate::results::{
 };
 #[cfg(feature = "staking")]
 pub use crate::results::{DistributionMsg, StakingMsg};
+#[cfg(feature = "stargate")]
+pub use crate::results::{GovMsg, VoteOption};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
@@ -97,11 +100,16 @@ pub mod testing {
     pub use crate::mock::StakingQuerier;
     pub use crate::mock::{
         digit_sum, mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info,
-        riffle_shuffle, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
-        MockStorage, MOCK_CONTRACT_ADDR,
+        mock_wasmd_attr, riffle_shuffle, BankQuerier, MockApi, MockQuerier,
+        MockQuerierCustomHandlerResult, MockStorage, MOCK_CONTRACT_ADDR,
     };
     #[cfg(feature = "stargate")]
-    pub use crate::mock::{mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv};
+    pub use crate::mock::{
+        mock_ibc_channel, mock_ibc_channel_close_confirm, mock_ibc_channel_close_init,
+        mock_ibc_channel_connect_ack, mock_ibc_channel_connect_confirm, mock_ibc_channel_open_init,
+        mock_ibc_channel_open_try, mock_ibc_packet_ack, mock_ibc_packet_recv,
+        mock_ibc_packet_timeout,
+    };
 }
 
 // Re-exports

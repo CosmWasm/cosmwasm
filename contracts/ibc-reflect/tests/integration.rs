@@ -17,7 +17,10 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_recv};
+use cosmwasm_std::testing::{
+    mock_ibc_channel_connect_ack, mock_ibc_channel_open_init, mock_ibc_channel_open_try,
+    mock_ibc_packet_recv, mock_wasmd_attr,
+};
 use cosmwasm_std::{
     attr, coins, BankMsg, ContractResult, CosmosMsg, Event, IbcBasicResponse, IbcOrder,
     IbcReceiveResponse, Reply, Response, SubMsgExecutionResponse, WasmMsg,
@@ -57,15 +60,13 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 }
 
 fn fake_events(reflect_addr: &str) -> Vec<Event> {
-    let event = Event {
-        ty: "message".into(),
-        attributes: vec![
-            attr("module", "wasm"),
-            attr("signer", MOCK_CONTRACT_ADDR),
-            attr("code_id", "17"),
-            attr("contract_address", reflect_addr),
-        ],
-    };
+    let event = Event::new("message").add_attributes(vec![
+        attr("module", "wasm"),
+        attr("signer", MOCK_CONTRACT_ADDR),
+        attr("code_id", "17"),
+        // We have to force this one to avoid the debug assertion against _
+        mock_wasmd_attr("_contract_address", reflect_addr),
+    ]);
     vec![event]
 }
 
@@ -78,14 +79,19 @@ fn connect(
 ) {
     let account: String = account.into();
     // first we try to open with a valid handshake
-    let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    handshake_open.counterparty_version = None;
+    let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
     ibc_channel_open(deps, mock_env(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)
-    let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+    let handshake_connect =
+        mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
     let res: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
     assert_eq!(1, res.messages.len());
+    assert_eq!(1, res.events.len());
+    assert_eq!(
+        Event::new("ibc").add_attribute("channel", "connect"),
+        res.events[0]
+    );
     let id = res.messages[0].id;
 
     // fake a reply and ensure this works
@@ -116,13 +122,13 @@ fn instantiate_works() {
 fn enforce_version_in_handshake() {
     let mut deps = setup();
 
-    let wrong_order = mock_ibc_channel("channel-1234", IbcOrder::Unordered, IBC_VERSION);
+    let wrong_order = mock_ibc_channel_open_try("channel-1234", IbcOrder::Unordered, IBC_VERSION);
     ibc_channel_open(&mut deps, mock_env(), wrong_order).unwrap_err();
 
-    let wrong_version = mock_ibc_channel("channel-1234", IbcOrder::Ordered, "reflect");
+    let wrong_version = mock_ibc_channel_open_try("channel-1234", IbcOrder::Ordered, "reflect");
     ibc_channel_open(&mut deps, mock_env(), wrong_version).unwrap_err();
 
-    let valid_handshake = mock_ibc_channel("channel-1234", IbcOrder::Ordered, IBC_VERSION);
+    let valid_handshake = mock_ibc_channel_open_try("channel-1234", IbcOrder::Ordered, IBC_VERSION);
     ibc_channel_open(&mut deps, mock_env(), valid_handshake).unwrap();
 }
 
@@ -132,12 +138,12 @@ fn proper_handshake_flow() {
     let channel_id = "channel-432";
 
     // first we try to open with a valid handshake
-    let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    handshake_open.counterparty_version = None;
+    let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
     ibc_channel_open(&mut deps, mock_env(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)
-    let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+    let handshake_connect =
+        mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
     let res: IbcBasicResponse =
         ibc_channel_connect(&mut deps, mock_env(), handshake_connect).unwrap();
     // and set up a reflect account
@@ -216,10 +222,15 @@ fn handle_dispatch_packet() {
     let ibc_msg = PacketMsg::Dispatch {
         msgs: msgs_to_dispatch.clone(),
     };
-    let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
+    let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
+    assert_eq!(1, res.events.len());
+    assert_eq!(
+        Event::new("ibc").add_attribute("packet", "receive"),
+        res.events[0]
+    );
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> =
         from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
@@ -232,8 +243,8 @@ fn handle_dispatch_packet() {
     connect(&mut deps, channel_id, account);
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-    let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
+    let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
 
     // assert app-level success
     let ack: AcknowledgementMsg<DispatchResponse> =
@@ -269,8 +280,8 @@ fn handle_dispatch_packet() {
     let bad_data = InstantiateMsg {
         reflect_code_id: 12345,
     };
-    let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
+    let msg = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error

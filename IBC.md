@@ -102,11 +102,11 @@ enforce other constraints as well:
 ```rust
 #[entry_point]
 /// enforces ordering and versioning constraints
-pub fn ibc_channel_open(deps: DepsMut, env: Env, channel: IbcChannel) -> StdResult<()> { }
+pub fn ibc_channel_open(deps: DepsMut, env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> { }
 ```
 
 This is the
-[IbcChannel structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L70-L81)
+[IbcChannel structure](https://github.com/CosmWasm/cosmwasm/blob/v0.15.0/packages/std/src/ibc.rs#L117-L128)
 used heavily in the handshake process:
 
 ```rust
@@ -128,6 +128,14 @@ pub struct IbcEndpoint {
     pub port_id: String,
     pub channel_id: String,
 }
+```
+
+This `IbcChannel` value has to be wrapped in the `IbcChannelOpenMsg` type.
+
+```rust
+let msg = IbcChannelOpenMsg::new_init(channel);
+// or
+let msg = IbcChannelOpenMsg::new_try(channel, counterparty_version);
 ```
 
 Note that neither `counterparty_version` nor `counterparty_endpoint` is set in
@@ -155,7 +163,7 @@ second step of the handshake, which is equivalent to `ChanOpenAck` and
 pub fn ibc_channel_connect(
     deps: DepsMut,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> { }
 ```
 
@@ -192,7 +200,7 @@ allows it to take appropriate cleanup action:
 pub fn ibc_channel_close(
     deps: DepsMut,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> { }
 ```
 
@@ -255,7 +263,7 @@ the following entry point on chain B:
 pub fn ibc_packet_receive(
     deps: DepsMut,
     env: Env,
-    packet: IbcPacket,
+    msg: IbcPacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> { }
 ```
 
@@ -270,7 +278,7 @@ return an encoded `Acknowledgement` response in this field, that can be parsed
 by the sending chain.
 
 The
-[`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L129-L146)
+[`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.15.0/packages/std/src/ibc.rs#L176-L187)
 contains all information needed to process the receipt. This info has already
 been verified by the core IBC modules via light client and merkle proofs. It
 guarantees all metadata in the `IbcPacket` structure is valid, and the `data`
@@ -303,6 +311,8 @@ pub struct IbcPacket {
     pub timeout: IbcTimeout,
 }
 ```
+
+`IbcPacketReceiveMsg` is currently a wrapper around `IbcPacket`.
 
 ##### Acknowledging Errors
 
@@ -500,16 +510,16 @@ error message), chain A will eventually get an acknowledgement:
 pub fn ibc_packet_ack(
     deps: DepsMut,
     env: Env,
-    ack: IbcAcknowledgement,
+    msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> { }
 ```
 
 The
-[`IbcAcknowledgement` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L148-L152)
+[`IbcAcknowledgement` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.15.0/packages/std/src/ibc.rs#L195-L200)
 contains both the original packet that was sent as well as the acknowledgement
 bytes returned from executing the remote contract. You can use the
 `original_packet` to
-[map it the proper handler](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/contracts/ibc-reflect-send/src/ibc.rs#L114-L138)
+[map it the proper handler](https://github.com/CosmWasm/cosmwasm/blob/378b029707ebaed4505b3666c620bed69ff9a682/contracts/ibc-reflect-send/src/ibc.rs#L111-L136)
 (after parsing your custom data format), and parse the `acknowledgement` there,
 to determine how to respond:
 
@@ -552,7 +562,7 @@ The timeout callback looks like this:
 pub fn ibc_packet_timeout(
     deps: DepsMut,
     env: Env,
-    packet: IbcPacket,
+    msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {}
 ```
 

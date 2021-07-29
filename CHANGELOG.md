@@ -6,21 +6,85 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Added the `IbcChannelOpenMsg`, `IbcChannelConnectMsg`,
+  `IbcChannelCloseMsg`, `IbcPacketReceiveMsg`, `IbcPacketAckMsg`, and
+  `IbcPacketTimeoutMsg` types for use with corresponding IBC entrypoints.
+- cosmwasm-std::testing: New mocking helpers for IBC channel msg types:
+  `mock_ibc_channel_open_init`, `mock_ibc_channel_open_try`,
+  `mock_ibc_channel_connect_ack`, `mock_ibc_channel_connect_confirm`,
+  `mock_ibc_channel_close_init`, `mock_ibc_channel_close_confirm`.
+- cosmwasm-std::testing: Added `mock_ibc_packet_timeout` since
+  `mock_ibc_packet_ack` is no longer usable for creating mock data for
+  `ibc_packet_timeout`.
+- cosmwasm-std: New `Attribute::new` constructor that does the same thing as
+  `attr`.
+- cosmwasm-std::testing: Added `mock_wasm_attr` when you really need to create
+  an `Attribute` with a key starting with `_` in test code.
+- cosmwasm-std: Renamed `IBCAcknowledgementWithPacket` -> `IbcPacketAckMsg` to
+  remove an unneeded level of indirection.
+- cosmwasm-std: Added `Event::add_attributes` for bulk adding attributes to an
+  `Event` struct.
+
 ### Changed
 
+- cosmwasm-vm: The `Checksum::to_hex` function signature was changed from
+  `to_hex(&self) -> String` to `to_hex(self) -> String`.
 - cosmwasm-std: The `attr` function now accepts types that implement
   `Into<String>` rather than `ToString`.
 - cosmwasm-std, cosmwasm-vm, cosmwasm-storage: The `iterator` feature is now
   enabled by default.
 - cosmwasm-std: Make `MockApi::canonical_length` private.
 - cosmwasm-vm: Make `MockApi::canonical_length` private.
+- cosmwasm-vm: Bump required marker export `interface_version_6` to
+  `interface_version_7`.
+- cosmwasm-std, cosmwasm-vm: Entrypoints `ibc_channel_open`,
+  `ibc_channel_connect`, `ibc_channel_close`, `ibc_packet_receive`,
+  `ibc_packet_ack`, `ibc_packet_timeout` now each accept a corresponding `Msg`
+  value that wraps around channels, packets and acknowledgements.
 - cosmwasm-std/cosmwasm-vm: Increase canonical address lengths up to 64 bytes.
 - cosmwasm-std/cosmwasm-vm: In `MockApi`, increase max length of supported human
   addresses from 24 bytes to 54 bytes by using a longer canonical
   representation. This allows you to insert typical bech32 addresses in tests.
   ([#995])
+- cosmwasm-std::testing: `mock_ibc_packet_recv` function now returns an
+  `IbcPacketReceiveMsg`, `mock_ibc_packet_ack` requires an acknowledgement to be
+  passed and returns an `IbcPacketAckMsg`.
+- cosmwasm-std: `IbcBasicResponse` and `IbcReceiveResponse` now both support
+  custom events via the `events` field.
+- cosmwasm-std: `attr` (and `Attribute::new`) will now panic in debug builds if
+  the attribute's key starts with an underscore. These names are reserved and
+  could cause problems further down the line.
+- cosmwasm-std: `Response`, `IbcBasicResponse` and `IbcReceiveResponse` can no
+  longer be constructed using struct literals. Use constructors like
+  `Response::new` to construct empty structs and appropriate builder-style
+  methods to set fields (`response.add_message`, `response.set_data`, etc).
+- cosmwasm-std: `Event`, `IbcChannel`, `IbcPacket`, `IbcAcknowledgement` have
+  been marked `non_exhaustive` (can't be constructed using a struct literal by
+  downstream code).
+- cosmwasm-std: `Event::attr` has been renamed to `Event::add_attribute` for
+  consistency with other types like `Response`.
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
+
+### Removed
+
+- cosmwasm-std::testing: `mock_ibc_channel` is now private. Use
+  `mock_ibc_channel_open`, `mock_ibc_channel_connect`, or
+  `mock_ibc_channel_close` instead.
+
+## [0.15.2] - 2021-07-21
+
+### Fixed
+
+- cosmwasm-std: Export `VoteOption` as a top-level type.
+
+## [0.15.1] - 2021-07-20
+
+### Fixed
+
+- cosmwasm-std: Export `GovMsg` as a top-level type of the crate.
 
 ## [0.15.0] - 2021-06-24
 
@@ -999,7 +1063,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.2...HEAD
+[0.15.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.1...v0.15.2
+[0.15.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.14.0

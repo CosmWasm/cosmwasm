@@ -95,7 +95,7 @@ fn bench_crypto(c: &mut Criterion) {
 
         let expected = SigningKey::from_bytes(&private_key)
             .unwrap()
-            .verify_key()
+            .verifying_key()
             .to_encoded_point(false)
             .as_bytes()
             .to_vec();

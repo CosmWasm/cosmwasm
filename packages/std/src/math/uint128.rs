@@ -388,11 +388,11 @@ mod tests {
 
     #[test]
     fn uint128_is_zero_works() {
-        assert_eq!(Uint128::zero().is_zero(), true);
-        assert_eq!(Uint128(0).is_zero(), true);
+        assert!(Uint128::zero().is_zero());
+        assert!(Uint128(0).is_zero());
 
-        assert_eq!(Uint128(1).is_zero(), false);
-        assert_eq!(Uint128(123).is_zero(), false);
+        assert!(!Uint128(1).is_zero());
+        assert!(!Uint128(123).is_zero());
     }
 
     #[test]

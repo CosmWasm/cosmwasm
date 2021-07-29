@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    attr, entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
-    SubMsg,
+    entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
 };
 
 use crate::msg::{InstantiateMsg, MigrateMsg};
@@ -39,19 +38,18 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
 
     let data_msg = format!("burnt {} keys", count).into_bytes();
 
-    Ok(Response {
-        messages: vec![SubMsg::new(send)],
-        attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
-        events: vec![],
-        data: Some(data_msg.into()),
-    })
+    Ok(Response::new()
+        .add_message(send)
+        .add_attribute("action", "burn")
+        .add_attribute("payout", msg.payout)
+        .set_data(data_msg))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, StdError, Storage};
+    use cosmwasm_std::{coins, StdError, Storage, SubMsg};
 
     #[test]
     fn instantiate_fails() {

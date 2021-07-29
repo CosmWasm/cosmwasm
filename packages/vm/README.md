@@ -16,6 +16,7 @@ compatibility list:
 
 | cosmwasm-vm | Supported interface versions | cosmwasm-std |
 | ----------- | ---------------------------- | ------------ |
+| 1.0         | `interface_version_7`        | 1.0          |
 | 0.15        | `interface_version_6`        | 0.15         |
 | 0.14        | `interface_version_5`        | 0.14         |
 | 0.13        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
@@ -52,13 +53,13 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.11.4 ./contracts/hackatom \
-  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_0.15.wasm
+  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_0.16.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_reflect",target=/code/contracts/ibc-reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.11.4 ./contracts/ibc-reflect \
-  && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_0.15.wasm
+  && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_0.16.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \

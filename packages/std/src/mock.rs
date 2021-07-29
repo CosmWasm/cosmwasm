@@ -9,7 +9,11 @@ use crate::coins::Coin;
 use crate::deps::OwnedDeps;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
-use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutBlock};
+use crate::ibc::{
+    IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcTimeoutBlock,
+};
 use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
@@ -24,6 +28,7 @@ use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
+use crate::Attribute;
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -216,9 +221,9 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
     }
 }
 
-#[cfg(feature = "stargate")]
 /// Creates an IbcChannel for testing. You set a few key parameters for handshaking,
 /// If you want to set more, use this as a default and mutate other fields
+#[cfg(feature = "stargate")]
 pub fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
     IbcChannel {
         endpoint: IbcEndpoint {
@@ -231,16 +236,78 @@ pub fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> 
         },
         order,
         version: version.to_string(),
-        counterparty_version: Some(version.to_string()),
         connection_id: "connection-2".to_string(),
     }
 }
 
+/// Creates a IbcChannelOpenMsg::OpenInit for testing ibc_channel_open.
 #[cfg(feature = "stargate")]
-/// Creates a IbcPacket for testing ibc_packet_receive. You set a few key parameters that are
+pub fn mock_ibc_channel_open_init(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelOpenMsg {
+    IbcChannelOpenMsg::new_init(mock_ibc_channel(my_channel_id, order, version))
+}
+
+/// Creates a IbcChannelOpenMsg::OpenTry for testing ibc_channel_open.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_open_try(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelOpenMsg {
+    IbcChannelOpenMsg::new_try(mock_ibc_channel(my_channel_id, order, version), version)
+}
+
+/// Creates a IbcChannelConnectMsg::ConnectAck for testing ibc_channel_connect.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_connect_ack(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelConnectMsg {
+    IbcChannelConnectMsg::new_ack(mock_ibc_channel(my_channel_id, order, version), version)
+}
+
+/// Creates a IbcChannelConnectMsg::ConnectConfirm for testing ibc_channel_connect.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_connect_confirm(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelConnectMsg {
+    IbcChannelConnectMsg::new_confirm(mock_ibc_channel(my_channel_id, order, version))
+}
+
+/// Creates a IbcChannelCloseMsg::CloseInit for testing ibc_channel_close.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_close_init(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelCloseMsg {
+    IbcChannelCloseMsg::new_init(mock_ibc_channel(my_channel_id, order, version))
+}
+
+/// Creates a IbcChannelCloseMsg::CloseConfirm for testing ibc_channel_close.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_close_confirm(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelCloseMsg {
+    IbcChannelCloseMsg::new_confirm(mock_ibc_channel(my_channel_id, order, version))
+}
+
+/// Creates a IbcPacketReceiveMsg for testing ibc_packet_receive. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields
-pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
-    Ok(IbcPacket {
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_packet_recv<T: Serialize>(
+    my_channel_id: &str,
+    data: &T,
+) -> StdResult<IbcPacketReceiveMsg> {
+    Ok(IbcPacketReceiveMsg::new(IbcPacket {
         data: to_binary(data)?,
         src: IbcEndpoint {
             port_id: "their-port".to_string(),
@@ -256,16 +323,14 @@ pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdR
             height: 12345678,
         }
         .into(),
-    })
+    }))
 }
 
-#[cfg(feature = "stargate")]
 /// Creates a IbcPacket for testing ibc_packet_{ack,timeout}. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
-/// The difference between mock_ibc_packet_recv is if `my_channel_id` is src or dest.
-pub fn mock_ibc_packet_ack<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
-    use serde::Serialize;
-
+/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+#[cfg(feature = "stargate")]
+fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
     Ok(IbcPacket {
         data: to_binary(data)?,
         src: IbcEndpoint {
@@ -283,6 +348,31 @@ pub fn mock_ibc_packet_ack<T: Serialize>(my_channel_id: &str, data: &T) -> StdRe
         }
         .into(),
     })
+}
+
+/// Creates a IbcPacketAckMsg for testing ibc_packet_ack. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields.
+/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_packet_ack<T: Serialize>(
+    my_channel_id: &str,
+    data: &T,
+    ack: IbcAcknowledgement,
+) -> StdResult<IbcPacketAckMsg> {
+    let packet = mock_ibc_packet(my_channel_id, data)?;
+
+    Ok(IbcPacketAckMsg::new(ack, packet))
+}
+
+/// Creates a IbcPacketTimeoutMsg for testing ibc_packet_timeout. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields.
+/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest./
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_packet_timeout<T: Serialize>(
+    my_channel_id: &str,
+    data: &T,
+) -> StdResult<IbcPacketTimeoutMsg> {
+    mock_ibc_packet(my_channel_id, data).map(IbcPacketTimeoutMsg::new)
 }
 
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
@@ -578,6 +668,15 @@ pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
 
 pub fn digit_sum(input: &[u8]) -> usize {
     input.iter().fold(0, |sum, val| sum + (*val as usize))
+}
+
+/// Only for test code. This bypasses assertions in new, allowing us to create _*
+/// Attributes to simulate responses from the blockchain
+pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
+    Attribute {
+        key: key.into(),
+        value: value.into(),
+    }
 }
 
 #[cfg(test)]

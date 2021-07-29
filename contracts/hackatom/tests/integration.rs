@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult,
-    Empty, Response, SubMsg,
+    coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult, Empty,
+    Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
@@ -71,9 +71,7 @@ fn proper_initialization() {
     let info = mock_info(&creator, &coins(1000, "earth"));
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(res.messages.len(), 0);
-    assert_eq!(res.attributes.len(), 1);
-    assert_eq!(res.attributes[0].key, "Let the");
-    assert_eq!(res.attributes[0].value, "hacking begin");
+    assert_eq!(res.attributes, [("Let the", "hacking begin")]);
 
     // it worked, let's check the state
     let state: State = deps
@@ -249,7 +247,7 @@ fn execute_release_works() {
     );
     assert_eq!(
         execute_res.attributes,
-        vec![attr("action", "release"), attr("destination", "benefits")],
+        vec![("action", "release"), ("destination", "benefits")],
     );
     assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
 }

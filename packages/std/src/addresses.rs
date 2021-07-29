@@ -480,9 +480,9 @@ mod tests {
     #[test]
     fn human_addr_is_empty() {
         let human_addr = HumanAddr::from("Hello, world!");
-        assert_eq!(false, human_addr.is_empty());
+        assert!(!human_addr.is_empty());
         let empty_human_addr = HumanAddr::from("");
-        assert_eq!(true, empty_human_addr.is_empty());
+        assert!(empty_human_addr.is_empty());
     }
 
     // Test CanonicalAddr as_slice() for each CanonicalAddr::from input type
@@ -544,9 +544,9 @@ mod tests {
     fn canonical_addr_is_empty() {
         let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
         let canonical_addr = CanonicalAddr::from(bytes);
-        assert_eq!(false, canonical_addr.is_empty());
+        assert!(!canonical_addr.is_empty());
         let empty_canonical_addr = CanonicalAddr::from(vec![]);
-        assert_eq!(true, empty_canonical_addr.is_empty());
+        assert!(empty_canonical_addr.is_empty());
     }
 
     #[test]

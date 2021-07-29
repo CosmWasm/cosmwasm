@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::{Binary, Event};
+use crate::Binary;
 
-use super::{Attribute, CosmosMsg, Empty, SubMsg};
+use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 
 /// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
@@ -30,12 +30,7 @@ use super::{Attribute, CosmosMsg, Empty, SubMsg};
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
-///     Ok(Response {
-///         messages: vec![],
-///         attributes: vec![attr("action", "instantiate")],
-///         events: vec![],
-///         data: None,
-///     })
+///     Ok(Response::new().add_attribute("action", "instantiate"))
 /// }
 /// ```
 ///
@@ -54,21 +49,19 @@ use super::{Attribute, CosmosMsg, Empty, SubMsg};
 ///     info: MessageInfo,
 ///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
-///     let mut response = Response::new();
-///     // ...
-///     response.add_attribute("Let the", "hacking begin");
-///     // ...
-///     response.add_message(BankMsg::Send {
-///         to_address: String::from("recipient"),
-///         amount: coins(128, "uint"),
-///     });
-///     response.add_attribute("foo", "bar");
-///     // ...
-///     response.set_data(Binary::from(b"the result data"));
+///     let mut response = Response::new()
+///         .add_attribute("Let the", "hacking begin")
+///         .add_message(BankMsg::Send {
+///             to_address: String::from("recipient"),
+///             amount: coins(128, "uint"),
+///         })
+///         .add_attribute("foo", "bar")
+///         .set_data(b"the result data");
 ///     Ok(response)
 /// }
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct Response<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -108,23 +101,23 @@ where
     }
 
     /// Add an attribute included in the main `wasm` event.
-    pub fn add_attribute<K: Into<String>, V: Into<String>>(&mut self, key: K, value: V) {
-        self.attributes.push(Attribute {
-            key: key.into(),
-            value: value.into(),
-        });
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute::new(key, value));
+        self
     }
 
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
         self.messages.push(SubMsg::new(msg));
+        self
     }
 
     /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
     /// and adds it to the list of messages to process.
-    pub fn add_submessage(&mut self, msg: SubMsg<T>) {
+    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
         self.messages.push(msg);
+        self
     }
 
     /// Adds an extra event to the response, separate from the main `wasm` event
@@ -132,12 +125,82 @@ where
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided type
     /// of event.
-    pub fn add_event(&mut self, event: Event) {
+    pub fn add_event(mut self, event: Event) -> Self {
         self.events.push(event);
+        self
     }
 
-    pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
+    /// Bulk add attributes included in the main `wasm` event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{attr, Response};
+    ///
+    /// let attrs = vec![
+    ///     ("action", "reaction"),
+    ///     ("answer", "42"),
+    ///     ("another", "attribute"),
+    /// ];
+    /// let res: Response = Response::new().add_attributes(attrs.clone());
+    /// assert_eq!(res.attributes, attrs);
+    /// ```
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
+        self
+    }
+
+    /// Bulk add "fire and forget" messages to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{CosmosMsg, Response};
+    ///
+    /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> Response {
+    ///     Response::new().add_messages(msgs)
+    /// }
+    /// ```
+    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+        self.add_submessages(msgs.into_iter().map(SubMsg::new))
+    }
+
+    /// Bulk add explicit SubMsg structs to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{SubMsg, Response};
+    ///
+    /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> Response {
+    ///     Response::new().add_submessages(msgs)
+    /// }
+    /// ```
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+        self.messages.extend(msgs.into_iter());
+        self
+    }
+
+    /// Bulk add custom events to the response. These are separate from the main
+    /// `wasm` event.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided types
+    /// of events.
+    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
+        self.events.extend(events.into_iter());
+        self
+    }
+
+    /// Set the binary data included in the response.
+    pub fn set_data(mut self, data: impl Into<Binary>) -> Self {
         self.data = Some(data.into());
+        self
     }
 }
 
