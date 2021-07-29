@@ -114,7 +114,7 @@ impl StdError {
         }
     }
 
-    pub fn generic_err<S: Into<String>>(msg: S) -> Self {
+    pub fn generic_err(msg: impl Into<String>) -> Self {
         StdError::GenericErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -148,7 +148,7 @@ impl StdError {
         }
     }
 
-    pub fn not_found<S: Into<String>>(kind: S) -> Self {
+    pub fn not_found(kind: impl Into<String>) -> Self {
         StdError::NotFound {
             kind: kind.into(),
             #[cfg(feature = "backtraces")]
@@ -165,7 +165,7 @@ impl StdError {
         }
     }
 
-    pub fn serialize_err<S: Into<String>, M: ToString>(source: S, msg: M) -> Self {
+    pub fn serialize_err(source: impl Into<String>, msg: impl ToString) -> Self {
         StdError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),

@@ -182,10 +182,10 @@ impl<'a> QuerierWrapper<'a> {
         }
     }
 
-    pub fn query_balance<U: Into<String>, V: Into<String>>(
+    pub fn query_balance(
         &self,
-        address: U,
-        denom: V,
+        address: impl Into<String>,
+        denom: impl Into<String>,
     ) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
@@ -196,7 +196,7 @@ impl<'a> QuerierWrapper<'a> {
         Ok(res.amount)
     }
 
-    pub fn query_all_balances<U: Into<String>>(&self, address: U) -> StdResult<Vec<Coin>> {
+    pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -268,7 +268,7 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_validator<U: Into<String>>(&self, address: U) -> StdResult<Option<Validator>> {
+    pub fn query_validator(&self, address: impl Into<String>) -> StdResult<Option<Validator>> {
         let request = StakingQuery::Validator {
             address: address.into(),
         }
@@ -285,9 +285,9 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_all_delegations<U: Into<String>>(
+    pub fn query_all_delegations(
         &self,
-        delegator: U,
+        delegator: impl Into<String>,
     ) -> StdResult<Vec<Delegation>> {
         let request = StakingQuery::AllDelegations {
             delegator: delegator.into(),
@@ -298,10 +298,10 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_delegation<U: Into<String>, V: Into<String>>(
+    pub fn query_delegation(
         &self,
-        delegator: U,
-        validator: V,
+        delegator: impl Into<String>,
+        validator: impl Into<String>,
     ) -> StdResult<Option<FullDelegation>> {
         let request = StakingQuery::Delegation {
             delegator: delegator.into(),

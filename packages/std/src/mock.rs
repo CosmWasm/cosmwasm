@@ -303,9 +303,9 @@ pub fn mock_ibc_channel_close_confirm(
 /// Creates a IbcPacketReceiveMsg for testing ibc_packet_receive. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields
 #[cfg(feature = "stargate")]
-pub fn mock_ibc_packet_recv<T: Serialize>(
+pub fn mock_ibc_packet_recv(
     my_channel_id: &str,
-    data: &T,
+    data: &impl Serialize,
 ) -> StdResult<IbcPacketReceiveMsg> {
     Ok(IbcPacketReceiveMsg::new(IbcPacket {
         data: to_binary(data)?,
@@ -330,7 +330,7 @@ pub fn mock_ibc_packet_recv<T: Serialize>(
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
 #[cfg(feature = "stargate")]
-fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
+fn mock_ibc_packet(my_channel_id: &str, data: &impl Serialize) -> StdResult<IbcPacket> {
     Ok(IbcPacket {
         data: to_binary(data)?,
         src: IbcEndpoint {
@@ -354,9 +354,9 @@ fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<Ibc
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
 #[cfg(feature = "stargate")]
-pub fn mock_ibc_packet_ack<T: Serialize>(
+pub fn mock_ibc_packet_ack(
     my_channel_id: &str,
-    data: &T,
+    data: &impl Serialize,
     ack: IbcAcknowledgement,
 ) -> StdResult<IbcPacketAckMsg> {
     let packet = mock_ibc_packet(my_channel_id, data)?;
@@ -368,9 +368,9 @@ pub fn mock_ibc_packet_ack<T: Serialize>(
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest./
 #[cfg(feature = "stargate")]
-pub fn mock_ibc_packet_timeout<T: Serialize>(
+pub fn mock_ibc_packet_timeout(
     my_channel_id: &str,
-    data: &T,
+    data: &impl Serialize,
 ) -> StdResult<IbcPacketTimeoutMsg> {
     mock_ibc_packet(my_channel_id, data).map(IbcPacketTimeoutMsg::new)
 }
@@ -411,9 +411,9 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 
     // set a new balance for the given address and return the old balance
-    pub fn update_balance<U: Into<String>>(
+    pub fn update_balance(
         &mut self,
-        addr: U,
+        addr: impl Into<String>,
         balance: Vec<Coin>,
     ) -> Option<Vec<Coin>> {
         self.bank.balances.insert(addr.into(), balance)
@@ -1112,9 +1112,9 @@ mod tests {
 
     #[cfg(feature = "staking")]
     // gets delegators from query or panic
-    fn get_all_delegators<U: Into<String>>(
+    fn get_all_delegators(
         staking: &StakingQuerier,
-        delegator: U,
+        delegator: impl Into<String>,
     ) -> Vec<Delegation> {
         let raw = staking
             .query(&StakingQuery::AllDelegations {
@@ -1128,10 +1128,10 @@ mod tests {
 
     #[cfg(feature = "staking")]
     // gets full delegators from query or panic
-    fn get_delegator<U: Into<String>, V: Into<String>>(
+    fn get_delegator(
         staking: &StakingQuerier,
-        delegator: U,
-        validator: V,
+        delegator: impl Into<String>,
+        validator: impl Into<String>,
     ) -> Option<FullDelegation> {
         let raw = staking
             .query(&StakingQuery::Delegation {

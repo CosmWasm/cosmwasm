@@ -150,7 +150,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn cache_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn cache_err(msg: impl Into<String>) -> Self {
         VmError::CacheErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -158,7 +158,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn compile_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn compile_err(msg: impl Into<String>) -> Self {
         VmError::CompileErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -166,10 +166,10 @@ impl VmError {
         }
     }
 
-    pub(crate) fn conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
-        from_type: S,
-        to_type: T,
-        input: U,
+    pub(crate) fn conversion_err(
+        from_type: impl Into<String>,
+        to_type: impl Into<String>,
+        input: impl Into<String>,
     ) -> Self {
         VmError::ConversionErr {
             from_type: from_type.into(),
@@ -195,7 +195,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn generic_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn generic_err(msg: impl Into<String>) -> Self {
         VmError::GenericErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -203,7 +203,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn instantiation_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn instantiation_err(msg: impl Into<String>) -> Self {
         VmError::InstantiationErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -236,7 +236,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn serialize_err<S: Into<String>, M: Display>(source: S, msg: M) -> Self {
+    pub(crate) fn serialize_err(source: impl Into<String>, msg: impl Display) -> Self {
         VmError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),
@@ -245,7 +245,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn resolve_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn resolve_err(msg: impl Into<String>) -> Self {
         VmError::ResolveErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -253,8 +253,8 @@ impl VmError {
         }
     }
 
-    pub(crate) fn result_mismatch<S: Into<String>>(
-        function_name: S,
+    pub(crate) fn result_mismatch(
+        function_name: impl Into<String>,
         expected: usize,
         actual: usize,
     ) -> Self {
@@ -267,7 +267,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn runtime_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn runtime_err(msg: impl Into<String>) -> Self {
         VmError::RuntimeErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -275,7 +275,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn static_validation_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn static_validation_err(msg: impl Into<String>) -> Self {
         VmError::StaticValidationErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -283,7 +283,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn uninitialized_context_data<S: Into<String>>(kind: S) -> Self {
+    pub(crate) fn uninitialized_context_data(kind: impl Into<String>) -> Self {
         VmError::UninitializedContextData {
             kind: kind.into(),
             #[cfg(feature = "backtraces")]
