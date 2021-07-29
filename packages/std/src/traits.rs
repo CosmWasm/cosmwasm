@@ -84,7 +84,9 @@ pub trait Api {
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
 
     /// Takes a canonical address and returns a human readble address.
-    /// This is the inverse of [addr_canonicalize].
+    /// This is the inverse of [`addr_canonicalize`].
+    ///
+    /// [`addr_canonicalize`]: Api::addr_canonicalize
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr>;
 
     fn secp256k1_verify(
