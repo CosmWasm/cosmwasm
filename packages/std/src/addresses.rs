@@ -44,7 +44,7 @@ impl Addr {
     /// let address = Addr::unchecked("foobar");
     /// assert_eq!(address, "foobar");
     /// ```
-    pub fn unchecked<T: Into<String>>(input: T) -> Addr {
+    pub fn unchecked(input: impl Into<String>) -> Addr {
         Addr(input.into())
     }
 

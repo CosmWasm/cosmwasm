@@ -73,10 +73,10 @@ fn connect(deps: &mut Instance<MockApi, MockStorage, MockQuerier>, channel_id: &
     };
 }
 
-fn who_am_i_response<T: Into<String>>(
+fn who_am_i_response(
     deps: &mut Instance<MockApi, MockStorage, MockQuerier>,
     channel_id: &str,
-    account: T,
+    account: impl Into<String>,
 ) {
     let packet = PacketMsg::WhoAmI {};
     let response = AcknowledgementMsg::Ok(WhoAmIResponse {

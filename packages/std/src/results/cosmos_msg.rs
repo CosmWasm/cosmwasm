@@ -183,15 +183,12 @@ pub enum VoteOption {
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
 ///
 /// When using this, `admin` is always unset. If you need more flexibility, create the message directly.
-pub fn wasm_instantiate<T>(
+pub fn wasm_instantiate(
     code_id: u64,
-    msg: &T,
+    msg: &impl Serialize,
     funds: Vec<Coin>,
     label: String,
-) -> StdResult<WasmMsg>
-where
-    T: Serialize,
-{
+) -> StdResult<WasmMsg> {
     let payload = to_binary(msg)?;
     Ok(WasmMsg::Instantiate {
         admin: None,

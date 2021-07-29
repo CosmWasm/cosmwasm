@@ -224,7 +224,7 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
 }
 
 // this encode an error or error message into a proper acknowledgement to the recevier
-fn encode_ibc_error<T: Into<String>>(msg: T) -> Binary {
+fn encode_ibc_error(msg: impl Into<String>) -> Binary {
     // this cannot error, unwrap to keep the interface simple
     to_binary(&AcknowledgementMsg::<()>::Err(msg.into())).unwrap()
 }
@@ -385,7 +385,7 @@ mod tests {
 
     // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
-    fn connect<T: Into<String>>(mut deps: DepsMut, channel_id: &str, account: T) {
+    fn connect(mut deps: DepsMut, channel_id: &str, account: impl Into<String>) {
         let account: String = account.into();
 
         // open packet has no counterparty versin, connect does

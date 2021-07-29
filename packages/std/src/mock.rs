@@ -239,7 +239,7 @@ pub fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> 
 #[cfg(feature = "stargate")]
 /// Creates a IbcPacket for testing ibc_packet_receive. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields
-pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
+pub fn mock_ibc_packet_recv(my_channel_id: &str, data: &impl Serialize) -> StdResult<IbcPacket> {
     Ok(IbcPacket {
         data: to_binary(data)?,
         src: IbcEndpoint {
@@ -263,7 +263,9 @@ pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdR
 /// Creates a IbcPacket for testing ibc_packet_{ack,timeout}. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference between mock_ibc_packet_recv is if `my_channel_id` is src or dest.
-pub fn mock_ibc_packet_ack<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
+pub fn mock_ibc_packet_ack(my_channel_id: &str, data: &impl Serialize) -> StdResult<IbcPacket> {
+    use serde::Serialize;
+
     Ok(IbcPacket {
         data: to_binary(data)?,
         src: IbcEndpoint {

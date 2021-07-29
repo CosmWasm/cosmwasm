@@ -156,7 +156,7 @@ impl StdError {
         }
     }
 
-    pub fn parse_err<T: Into<String>, M: ToString>(target: T, msg: M) -> Self {
+    pub fn parse_err(target: impl Into<String>, msg: impl ToString) -> Self {
         StdError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),

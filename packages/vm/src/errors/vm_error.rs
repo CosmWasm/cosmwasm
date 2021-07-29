@@ -218,7 +218,7 @@ impl VmError {
         }
     }
 
-    pub(crate) fn parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> Self {
+    pub(crate) fn parse_err(target: impl Into<String>, msg: impl Display) -> Self {
         VmError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),
