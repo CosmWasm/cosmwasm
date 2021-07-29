@@ -32,16 +32,25 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 - [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage) -
   A crate in this workspace. This optional addition to `cosmwasm-std` includes
   convenience helpers for interacting with storage.
+- [cw-storage-plus](https://github.com/CosmWasm/cosmwasm-plus/tree/main/packages/storage-plus) -
+  A crate in `cosmwasm-plus`, which fills the same role as `cosmwasm-storage`, but with much
+  more powerful types supporting composite primary keys, secondary indexes, automatic
+  snapshotting, and more. This is newer and a bit less stable than `cosmwasm-storage` but used
+  in most modern contracts.
 
 **Building contracts:**
 
 - [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A
   starter-pack to get you quickly building your custom contract compatible with
   the cosmwasm system.
-- [cosmwasm-examples](https://github.com/CosmWasm/cosmwasm-examples) - Some
-  sample contracts (build with cosmwasm-template) for use and inspiration.
-  Please submit your contract via PR.
-- [cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt) - A docker image and
+- [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus) - Some
+  sample contracts for use and inspiration.
+  These provide usable primitives and interfaces for many use cases, such as
+  fungible tokens, NFTs, multisigs, governance votes, staking derivatives, and more.
+  Look in `packages` for docs on the various standard interfaces, and
+  `contracts` for the implementations.
+  Please submit your contract or interface via PR.
+- [rust-optimizer](https://github.com/cosmwasm/rust-optimizer) - A docker image and
   scripts to take your Rust code and produce the smallest possible Wasm output,
   deterministically. This is designed both for preparing contracts for
   deployment as well as validating that a given deployed contract is based on
@@ -59,16 +68,14 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   crate in this workspace. Uses the [wasmer](https://github.com/wasmerio/wasmer)
   engine to execute a given smart contract. Also contains code for gas metering,
   storing, and caching wasm artifacts.
-- [go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm) - High-level go
+- [wasmvm](https://github.com/CosmWasm/wasmvm) - High-level go
   bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload,
   instantiate and execute contracts, making use of all the optimizations and
   caching available inside `cosmwasm-vm`.
 - [wasmd](https://github.com/CosmWasm/wasmd) - A basic Cosmos SDK app to host
-  WebAssembly smart contracts.
-
-Ongoing work is currently tracked
-[on this project board](https://github.com/orgs/CosmWasm/projects/1) for all of
-the blockchain / contract work.
+  WebAssembly smart contracts. It can be run as is, or you can import the `x/wasm`
+  module from it and use it in your blockchain. It is designed to be imported
+  and customized for other blockchains, rather than forked.
 
 ## Creating a Smart Contract
 
