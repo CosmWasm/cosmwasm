@@ -122,7 +122,7 @@ impl StdError {
         }
     }
 
-    pub fn invalid_base64<S: ToString>(msg: S) -> Self {
+    pub fn invalid_base64(msg: impl ToString) -> Self {
         StdError::InvalidBase64 {
             msg: msg.to_string(),
             #[cfg(feature = "backtraces")]
@@ -140,7 +140,7 @@ impl StdError {
         }
     }
 
-    pub fn invalid_utf8<S: ToString>(msg: S) -> Self {
+    pub fn invalid_utf8(msg: impl ToString) -> Self {
         StdError::InvalidUtf8 {
             msg: msg.to_string(),
             #[cfg(feature = "backtraces")]
@@ -462,7 +462,7 @@ pub struct DivideByZeroError {
 }
 
 impl DivideByZeroError {
-    pub fn new<U: ToString>(operand: U) -> Self {
+    pub fn new(operand: impl ToString) -> Self {
         Self {
             operand: operand.to_string(),
         }

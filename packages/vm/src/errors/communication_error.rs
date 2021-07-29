@@ -50,7 +50,7 @@ impl CommunicationError {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn invalid_utf8<S: ToString>(msg: S) -> Self {
+    pub(crate) fn invalid_utf8(msg: impl ToString) -> Self {
         CommunicationError::InvalidUtf8 {
             msg: msg.to_string(),
         }
