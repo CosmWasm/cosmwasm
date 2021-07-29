@@ -60,6 +60,12 @@ impl Addr {
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
+
+    /// Utility for explicit conversion to `String`.
+    #[inline]
+    pub fn into_string(self) -> String {
+        self.0
+    }
 }
 
 impl fmt::Display for Addr {
