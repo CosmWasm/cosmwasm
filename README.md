@@ -244,32 +244,27 @@ defining your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your
 custom message types (as json):
 
 ```rust
-pub fn instantiate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
-) -> StdResult<Response> {}
+#[entry_point]
+pub fn instantiate(
+  deps: DepsMut,
+  env: Env,
+  info: MessageInfo,
+  msg: InstantiateMsg,
+) -> Result<Response, ContractError> {}
 
-pub fn execute<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> { }
+#[entry_point]
+pub fn execute(
+  deps: DepsMut,
+  env: Env,
+  info: MessageInfo,
+  msg: ExecuteMsg,
+) -> Result<Response, ContractError> {}
 
-pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, MigrateError> { }
+#[entry_point]
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {}
 
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
-    env: Env,
-    msg: QueryMsg,
-) -> StdResult<Binary> { }
+#[entry_point]
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {}
 ```
 
 The low-level `c_read` and `c_write` imports are nicely wrapped for you by a
@@ -280,8 +275,18 @@ determine which data you want to store here:
 
 ```rust
 pub trait Storage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
-    fn set(&mut self, key: &[u8], value: &[u8]);
+  fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
+  fn set(&mut self, key: &[u8], value: &[u8]);
+  fn remove(&mut self, key: &[u8]);
+
+  // and for iterating over a range of values
+  #[cfg(feature = "iterator")]
+  fn range<'a>(
+    &'a self,
+    start: Option<&[u8]>,
+    end: Option<&[u8]>,
+    order: Order,
+  ) -> Box<dyn Iterator<Item = Pair> + 'a>;
 }
 ```
 
