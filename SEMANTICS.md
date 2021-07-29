@@ -106,6 +106,9 @@ where
     pub messages: Vec<CosmosMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
+    // Events that were triggered by the exexution of the respective message
+    pub events: Vec<Event>,
+    // Data that was modified by the contract
     pub data: Option<Binary>,
 }
 ```

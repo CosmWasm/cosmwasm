@@ -74,7 +74,9 @@ where
     pub messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
+    // Events that were triggered by the respective message
     pub events: Vec<Event>,
+    // Data that was modified by the contract
     pub data: Option<Binary>,
 }
 

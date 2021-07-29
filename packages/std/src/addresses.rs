@@ -132,7 +132,7 @@ impl From<&Addr> for HumanAddr {
 
 #[deprecated(
     since = "0.14.0",
-    note = "HumanAddr is not much more than an alias to String and it does not provide significant safety advantages. With CosmWasm 0.14, we now use String when there was HumanAddr before. There is also the new Addr, which holds a validated immutable human readable address."
+    note = "HumanAddr is not much more than an alias to String and it does not provide significant safety advantages. With CosmWasm 0.14, we now use String when there was HumanAddr before. There is also the new Addr, which holds a validated immutable human readable address. Use Addr if you know the input is valid, and String if it is not yet decided."
 )]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);
