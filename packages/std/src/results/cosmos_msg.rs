@@ -200,7 +200,11 @@ pub fn wasm_instantiate(
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
-pub fn wasm_execute(contract_addr: impl Into<String>, msg: &impl Serialize, funds: Vec<Coin>) -> StdResult<WasmMsg> {
+pub fn wasm_execute(
+    contract_addr: impl Into<String>,
+    msg: &impl Serialize,
+    funds: Vec<Coin>
+) -> StdResult<WasmMsg> {
     let payload = to_binary(msg)?;
     Ok(WasmMsg::Execute {
         contract_addr: contract_addr.into(),
