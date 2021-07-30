@@ -184,10 +184,10 @@ impl<'a> QuerierWrapper<'a> {
         }
     }
 
-    pub fn query_balance<U: Into<String>, V: Into<String>>(
+    pub fn query_balance(
         &self,
-        address: U,
-        denom: V,
+        address: impl Into<String>,
+        denom: impl Into<String>,
     ) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
@@ -198,7 +198,7 @@ impl<'a> QuerierWrapper<'a> {
         Ok(res.amount)
     }
 
-    pub fn query_all_balances<U: Into<String>>(&self, address: U) -> StdResult<Vec<Coin>> {
+    pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -209,10 +209,10 @@ impl<'a> QuerierWrapper<'a> {
 
     // this queries another wasm contract. You should know a priori the proper types for T and U
     // (response and request) based on the contract API
-    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<String>>(
+    pub fn query_wasm_smart<T: DeserializeOwned>(
         &self,
-        contract_addr: V,
-        msg: &U,
+        contract_addr: impl Into<String>,
+        msg: &impl Serialize,
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
             contract_addr: contract_addr.into(),
@@ -229,10 +229,10 @@ impl<'a> QuerierWrapper<'a> {
     //
     // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
     // It only returns error on some runtime issue, not on any data cases.
-    pub fn query_wasm_raw<T: Into<String>, U: Into<Binary>>(
+    pub fn query_wasm_raw(
         &self,
-        contract_addr: T,
-        key: U,
+        contract_addr: impl Into<String>,
+        key: impl Into<Binary>,
     ) -> StdResult<Option<Vec<u8>>> {
         let request: QueryRequest<Empty> = WasmQuery::Raw {
             contract_addr: contract_addr.into(),
@@ -270,7 +270,7 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_validator<U: Into<String>>(&self, address: U) -> StdResult<Option<Validator>> {
+    pub fn query_validator(&self, address: impl Into<String>) -> StdResult<Option<Validator>> {
         let request = StakingQuery::Validator {
             address: address.into(),
         }
@@ -287,9 +287,9 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_all_delegations<U: Into<String>>(
+    pub fn query_all_delegations(
         &self,
-        delegator: U,
+        delegator: impl Into<String>,
     ) -> StdResult<Vec<Delegation>> {
         let request = StakingQuery::AllDelegations {
             delegator: delegator.into(),
@@ -300,10 +300,10 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_delegation<U: Into<String>, V: Into<String>>(
+    pub fn query_delegation(
         &self,
-        delegator: U,
-        validator: V,
+        delegator: impl Into<String>,
+        validator: impl Into<String>,
     ) -> StdResult<Option<FullDelegation>> {
         let request = StakingQuery::Delegation {
             delegator: delegator.into(),

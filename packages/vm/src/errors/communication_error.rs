@@ -37,7 +37,7 @@ pub enum CommunicationError {
 }
 
 impl CommunicationError {
-    pub(crate) fn deref_err<S: Into<String>>(offset: u32, msg: S) -> Self {
+    pub(crate) fn deref_err(offset: u32, msg: impl Into<String>) -> Self {
         CommunicationError::DerefErr {
             offset,
             msg: msg.into(),
@@ -50,7 +50,7 @@ impl CommunicationError {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn invalid_utf8<S: ToString>(msg: S) -> Self {
+    pub(crate) fn invalid_utf8(msg: impl ToString) -> Self {
         CommunicationError::InvalidUtf8 {
             msg: msg.to_string(),
         }

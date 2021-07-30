@@ -269,7 +269,7 @@ mod tests {
         };
     }
 
-    fn who_am_i_response<T: Into<String>>(deps: DepsMut, channel_id: &str, account: T) {
+    fn who_am_i_response(deps: DepsMut, channel_id: &str, account: impl Into<String>) {
         let packet = PacketMsg::WhoAmI {};
         let response = AcknowledgementMsg::Ok(WhoAmIResponse {
             account: account.into(),

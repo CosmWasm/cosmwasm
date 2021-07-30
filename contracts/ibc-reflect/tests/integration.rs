@@ -72,10 +72,10 @@ fn fake_events(reflect_addr: &str) -> Vec<Event> {
 
 // connect will run through the entire handshake to set up a proper connect and
 // save the account (tested in detail in `proper_handshake_flow`)
-fn connect<T: Into<String>>(
+fn connect(
     deps: &mut Instance<MockApi, MockStorage, MockQuerier>,
     channel_id: &str,
-    account: T,
+    account: impl Into<String>,
 ) {
     let account: String = account.into();
     // first we try to open with a valid handshake

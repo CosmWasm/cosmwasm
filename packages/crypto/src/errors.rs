@@ -42,7 +42,7 @@ pub enum CryptoError {
 }
 
 impl CryptoError {
-    pub fn batch_err<S: Into<String>>(msg: S) -> Self {
+    pub fn batch_err(msg: impl Into<String>) -> Self {
         CryptoError::BatchErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -50,7 +50,7 @@ impl CryptoError {
         }
     }
 
-    pub fn generic_err<S: Into<String>>(msg: S) -> Self {
+    pub fn generic_err(msg: impl Into<String>) -> Self {
         CryptoError::GenericErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]

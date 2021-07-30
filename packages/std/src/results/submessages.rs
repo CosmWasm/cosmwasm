@@ -49,7 +49,7 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     /// new creates a "fire and forget" message with the pre-0.14 semantics
-    pub fn new<M: Into<CosmosMsg<T>>>(msg: M) -> Self {
+    pub fn new(msg: impl Into<CosmosMsg<T>>) -> Self {
         SubMsg {
             id: UNUSED_MSG_ID,
             msg: msg.into(),
@@ -59,17 +59,17 @@ where
     }
 
     /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Ok`
-    pub fn reply_on_success<M: Into<CosmosMsg<T>>>(msg: M, id: u64) -> Self {
+    pub fn reply_on_success(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Success)
     }
 
     /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Err`
-    pub fn reply_on_error<M: Into<CosmosMsg<T>>>(msg: M, id: u64) -> Self {
+    pub fn reply_on_error(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Error)
     }
 
     /// create a `SubMsg` that will always provide a `reply` with the given id
-    pub fn reply_always<M: Into<CosmosMsg<T>>>(msg: M, id: u64) -> Self {
+    pub fn reply_always(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Always)
     }
 

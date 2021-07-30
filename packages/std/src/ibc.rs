@@ -233,11 +233,11 @@ pub struct IbcAcknowledgement {
 }
 
 impl IbcAcknowledgement {
-    pub fn new<T: Into<Binary>>(data: T) -> Self {
+    pub fn new(data: impl Into<Binary>) -> Self {
         IbcAcknowledgement { data: data.into() }
     }
 
-    pub fn encode_json<T: Serialize>(data: &T) -> StdResult<Self> {
+    pub fn encode_json(data: &impl Serialize) -> StdResult<Self> {
         Ok(IbcAcknowledgement {
             data: to_binary(data)?,
         })

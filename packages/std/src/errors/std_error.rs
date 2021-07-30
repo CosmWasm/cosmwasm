@@ -114,7 +114,7 @@ impl StdError {
         }
     }
 
-    pub fn generic_err<S: Into<String>>(msg: S) -> Self {
+    pub fn generic_err(msg: impl Into<String>) -> Self {
         StdError::GenericErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
@@ -122,7 +122,7 @@ impl StdError {
         }
     }
 
-    pub fn invalid_base64<S: ToString>(msg: S) -> Self {
+    pub fn invalid_base64(msg: impl ToString) -> Self {
         StdError::InvalidBase64 {
             msg: msg.to_string(),
             #[cfg(feature = "backtraces")]
@@ -140,7 +140,7 @@ impl StdError {
         }
     }
 
-    pub fn invalid_utf8<S: ToString>(msg: S) -> Self {
+    pub fn invalid_utf8(msg: impl ToString) -> Self {
         StdError::InvalidUtf8 {
             msg: msg.to_string(),
             #[cfg(feature = "backtraces")]
@@ -148,7 +148,7 @@ impl StdError {
         }
     }
 
-    pub fn not_found<S: Into<String>>(kind: S) -> Self {
+    pub fn not_found(kind: impl Into<String>) -> Self {
         StdError::NotFound {
             kind: kind.into(),
             #[cfg(feature = "backtraces")]
@@ -156,7 +156,7 @@ impl StdError {
         }
     }
 
-    pub fn parse_err<T: Into<String>, M: ToString>(target: T, msg: M) -> Self {
+    pub fn parse_err(target: impl Into<String>, msg: impl ToString) -> Self {
         StdError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),
@@ -165,7 +165,7 @@ impl StdError {
         }
     }
 
-    pub fn serialize_err<S: Into<String>, M: ToString>(source: S, msg: M) -> Self {
+    pub fn serialize_err(source: impl Into<String>, msg: impl ToString) -> Self {
         StdError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),
@@ -462,7 +462,7 @@ pub struct DivideByZeroError {
 }
 
 impl DivideByZeroError {
-    pub fn new<U: ToString>(operand: U) -> Self {
+    pub fn new(operand: impl ToString) -> Self {
         Self {
             operand: operand.to_string(),
         }

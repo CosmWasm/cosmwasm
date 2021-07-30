@@ -11,7 +11,7 @@ pub struct Coin {
 }
 
 impl Coin {
-    pub fn new<S: Into<String>>(amount: u128, denom: S) -> Self {
+    pub fn new(amount: u128, denom: impl Into<String>) -> Self {
         Coin {
             amount: Uint128::new(amount),
             denom: denom.into(),
@@ -46,7 +46,7 @@ impl fmt::Display for Coin {
 ///   amount: tip,
 /// })];
 /// ```
-pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
+pub fn coins(amount: u128, denom: impl Into<String>) -> Vec<Coin> {
     vec![coin(amount, denom)]
 }
 
@@ -70,7 +70,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 ///     amount: tip,
 /// })];
 /// ```
-pub fn coin<S: Into<String>>(amount: u128, denom: S) -> Coin {
+pub fn coin(amount: u128, denom: impl Into<String>) -> Coin {
     Coin::new(amount, denom)
 }
 
