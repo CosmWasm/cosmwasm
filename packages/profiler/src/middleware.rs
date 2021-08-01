@@ -1,13 +1,23 @@
-use loupe::MemoryUsage;
+use std::collections::HashMap;
+use std::mem;
+use std::sync::{Arc, Mutex};
+
+use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{FunctionMiddleware, ModuleMiddleware};
+
+use crate::operators::OperatorSymbol;
 
 #[non_exhaustive]
 #[derive(Debug, MemoryUsage)]
-pub struct Profiling;
+pub struct Profiling {
+    block_map: Arc<Mutex<Option<BlockStore>>>,
+}
 
 impl Profiling {
-    pub fn new() -> Profiling {
-        Profiling
+    pub fn new() -> Self {
+        Self {
+            block_map: Arc::new(Mutex::new(None)),
+        }
     }
 }
 
@@ -31,6 +41,46 @@ impl FunctionMiddleware for FunctionProfiling {
     ) -> Result<(), wasmer::MiddlewareError> {
         state.push_operator(operator);
         Ok(())
+    }
+}
+
+use std::hash::Hash;
+
+/// Stores the non-branching Wasm code blocks so that the exact
+/// list of operators can be looked up by hash later.
+#[derive(Debug)]
+struct BlockStore {
+    inner: HashMap<u64, Vec<OperatorSymbol>>,
+}
+
+impl BlockStore {
+    fn register_block(&mut self, v: Vec<OperatorSymbol>) -> u64 {
+        let hash = calculate_hash(&v);
+        self.inner.insert(hash, v);
+        hash
+    }
+
+    fn get_block(&self, hash: u64) -> Option<&Vec<OperatorSymbol>> {
+        self.inner.get(&hash)
+    }
+}
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    use std::hash::Hasher as _;
+
+    let mut s = std::collections::hash_map::DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
+
+impl MemoryUsage for BlockStore {
+    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
+        mem::size_of_val(self)
+            + self
+                .inner
+                .iter()
+                .map(|(key, value)| key.size_of_val(tracker) + mem::size_of_val(value))
+                .sum::<usize>()
     }
 }
 
