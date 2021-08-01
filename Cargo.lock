@@ -193,6 +193,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-profiler"
+version = "0.16.0-rc5"
+dependencies = [
+ "loupe",
+ "wasmer",
+ "wasmer-types",
+ "wasmer-vm",
+]
+
+[[package]]
 name = "cosmwasm-schema"
 version = "1.0.0-soon2"
 dependencies = [
@@ -1722,6 +1732,7 @@ dependencies = [
  "wasmer-engine-universal",
  "wasmer-types",
  "wasmer-vm",
+ "wat",
  "winapi",
 ]
 
