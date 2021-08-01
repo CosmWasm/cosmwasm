@@ -46,7 +46,7 @@ impl FunctionMiddleware for FunctionProfiling {
 
 use std::hash::Hash;
 
-/// Stores the non-branching Wasm code blocks so that the exact
+/// Stores non-branching Wasm code blocks so that the exact
 /// list of operators can be looked up by hash later.
 #[derive(Debug)]
 struct BlockStore {
@@ -54,14 +54,25 @@ struct BlockStore {
 }
 
 impl BlockStore {
-    fn register_block(&mut self, v: Vec<OperatorSymbol>) -> u64 {
+    fn new() -> Self {
+        Self {
+            inner: HashMap::new(),
+        }
+    }
+
+    fn register_block<'b, Op>(&mut self, block: &'b [Op]) -> u64
+    where
+        &'b Op: Into<OperatorSymbol>,
+    {
+        let v: Vec<OperatorSymbol> = block.iter().map(|item| item.into()).collect();
+
         let hash = calculate_hash(&v);
         self.inner.insert(hash, v);
         hash
     }
 
-    fn get_block(&self, hash: u64) -> Option<&Vec<OperatorSymbol>> {
-        self.inner.get(&hash)
+    fn get_block(&self, hash: u64) -> Option<&[OperatorSymbol]> {
+        self.inner.get(&hash).map(|x| x.as_slice())
     }
 }
 
@@ -89,6 +100,7 @@ mod tests {
     use super::*;
 
     use std::sync::Arc;
+    use wasmer::wasmparser::{Operator, Type, TypeOrFuncType};
     use wasmer::{
         imports, wat2wasm, CompilerConfig, Cranelift, Instance, Module, Store, Universal,
     };
@@ -96,6 +108,59 @@ mod tests {
     const WAT: &[u8] = br#"
 (module)
 "#;
+
+    #[test]
+    fn block_store() {
+        let mut store = BlockStore::new();
+
+        let code_block1 = [
+            Operator::GlobalGet { global_index: 333 },
+            Operator::I64Const { value: 555 as i64 },
+            Operator::I64LtU,
+            Operator::If {
+                ty: TypeOrFuncType::Type(Type::EmptyBlockType),
+            },
+            Operator::I32Const { value: 1 },
+            Operator::GlobalSet { global_index: 222 },
+            Operator::Unreachable,
+            Operator::End,
+        ];
+        let code_block2 = [
+            Operator::GlobalGet { global_index: 333 },
+            Operator::I64Const { value: 222 },
+            Operator::I64Sub,
+            Operator::GlobalSet { global_index: 333 },
+        ];
+
+        let code_block1_hash = store.register_block(&code_block1);
+        let code_block2_hash = store.register_block(&code_block2);
+        let code_block1_another_hash = store.register_block(&code_block1);
+
+        assert_eq!(code_block1_hash, code_block1_another_hash);
+        assert_ne!(code_block1_hash, code_block2_hash);
+
+        let cb1_expected = [
+            OperatorSymbol::GlobalGet,
+            OperatorSymbol::I64Const,
+            OperatorSymbol::I64LtU,
+            OperatorSymbol::If,
+            OperatorSymbol::I32Const,
+            OperatorSymbol::GlobalSet,
+            OperatorSymbol::Unreachable,
+            OperatorSymbol::End,
+        ];
+
+        let cb2_expected = [
+            OperatorSymbol::GlobalGet,
+            OperatorSymbol::I64Const,
+            OperatorSymbol::I64Sub,
+            OperatorSymbol::GlobalSet,
+        ];
+
+        assert_eq!(store.get_block(code_block1_hash), Some(&cb1_expected[..]));
+        assert_eq!(store.get_block(code_block2_hash), Some(&cb2_expected[..]));
+        assert_eq!(store.get_block(234), None);
+    }
 
     #[test]
     fn middleware_runs() {
