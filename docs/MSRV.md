@@ -39,14 +39,14 @@ development, you will depends on the cosmwasm-vm MSRV.
 
 **cosmwasm-std MSRV**
 
-- Is always be at least one minor version behind latest stable. E.g. with stable
-  Rust 1.33.3 it must not exceed 1.32.0.
-- Can be bumped without a semver major release. However, a minor version bump is
-  required.
+- It must always be at least one minor version behind latest stable. E.g. with
+  stable Rust 1.33.3 it must not exceed 1.32.0.
+- It can be bumped without a semver major release of the crates. However, a
+  minor version bump is required.
 
 **cosmwasm-vm MSRV**
 
-- Can be bumped without a semver major release. However, a minor version bump is
-  required.
-- Is always higher or equal to cosmwasm-std MSRV because the VM depends on
+- It can be bumped without a semver major release of the crate. However, a minor
+  version bump is required.
+- It is always higher or equal to cosmwasm-std MSRV because the VM depends on
   cosmwasm-std and related packages.
