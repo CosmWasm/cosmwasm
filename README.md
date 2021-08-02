@@ -102,6 +102,10 @@ also do public workshops on various topics about once a month. You can find
 [past recordings under the "Videos" section](https://cosmwasm.com/resources), or
 [join our Discord server](https://docs.cosmwasm.com/chat) to ask for help.
 
+## Minimum Supported Rust Version (MSRV)
+
+See [Minimum Supported Rust Version (MSRV)](./docs/MSRV.md).
+
 ## API entry points
 
 WebAssembly contracts are basically black boxes. The have no default entry
