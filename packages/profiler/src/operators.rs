@@ -1,8 +1,9 @@
 use std::hash::Hash;
 
+use loupe::MemoryUsage;
 use wasmer::wasmparser::Operator;
 
-#[derive(Debug, Clone, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq, MemoryUsage)]
 pub enum OperatorSymbol {
     Unreachable,
     Nop,
