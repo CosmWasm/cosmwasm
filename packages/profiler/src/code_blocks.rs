@@ -34,6 +34,10 @@ impl BlockStore {
     pub fn get_block(&self, hash: u64) -> Option<&CodeBlock> {
         self.inner.get(&hash)
     }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
 }
 
 /// Represents a non-branching Wasm code block.
@@ -47,7 +51,7 @@ impl CodeBlock {
         self.inner.as_slice()
     }
 
-    fn get_hash(&self) -> u64 {
+    pub fn get_hash(&self) -> u64 {
         use std::hash::Hasher as _;
 
         let mut s = std::collections::hash_map::DefaultHasher::new();
