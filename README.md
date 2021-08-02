@@ -32,18 +32,26 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 - [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage) -
   A crate in this workspace. This optional addition to `cosmwasm-std` includes
   convenience helpers for interacting with storage.
+- [cw-storage-plus](https://github.com/CosmWasm/cosmwasm-plus/tree/main/packages/storage-plus) -
+  A crate in `cosmwasm-plus`, which fills the same role as `cosmwasm-storage`,
+  but with much more powerful types supporting composite primary keys, secondary
+  indexes, automatic snapshotting, and more. This is newer and a bit less stable
+  than `cosmwasm-storage` but used in most modern contracts.
 
 **Building contracts:**
 
 - [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A
   starter-pack to get you quickly building your custom contract compatible with
   the cosmwasm system.
-- [cosmwasm-examples](https://github.com/CosmWasm/cosmwasm-examples) - Some
-  sample contracts (build with cosmwasm-template) for use and inspiration.
-  Please submit your contract via PR.
-- [cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt) - A docker image and
-  scripts to take your Rust code and produce the smallest possible Wasm output,
-  deterministically. This is designed both for preparing contracts for
+- [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus) - Some sample
+  contracts for use and inspiration. These provide usable primitives and
+  interfaces for many use cases, such as fungible tokens, NFTs, multisigs,
+  governance votes, staking derivatives, and more. Look in `packages` for docs
+  on the various standard interfaces, and `contracts` for the implementations.
+  Please submit your contract or interface via PR.
+- [rust-optimizer](https://github.com/cosmwasm/rust-optimizer) - A docker image
+  and scripts to take your Rust code and produce the smallest possible Wasm
+  output, deterministically. This is designed both for preparing contracts for
   deployment as well as validating that a given deployed contract is based on
   some given source code, allowing a
   [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945)
@@ -59,27 +67,40 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   crate in this workspace. Uses the [wasmer](https://github.com/wasmerio/wasmer)
   engine to execute a given smart contract. Also contains code for gas metering,
   storing, and caching wasm artifacts.
-- [go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm) - High-level go
-  bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload,
-  instantiate and execute contracts, making use of all the optimizations and
-  caching available inside `cosmwasm-vm`.
+- [wasmvm](https://github.com/CosmWasm/wasmvm) - High-level go bindings to all
+  the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and
+  execute contracts, making use of all the optimizations and caching available
+  inside `cosmwasm-vm`.
 - [wasmd](https://github.com/CosmWasm/wasmd) - A basic Cosmos SDK app to host
-  WebAssembly smart contracts.
-
-Ongoing work is currently tracked
-[on this project board](https://github.com/orgs/CosmWasm/projects/1) for all of
-the blockchain / contract work.
+  WebAssembly smart contracts. It can be run as is, or you can import the
+  `x/wasm` module from it and use it in your blockchain. It is designed to be
+  imported and customized for other blockchains, rather than forked.
 
 ## Creating a Smart Contract
 
 You can see some examples of contracts under the `contracts` directory, which
-you can look at.
+you can look at. They are simple and self-contained, primarily meant for testing
+purposes, but that also makes them easier to understand.
 
-If you want to get started building you own, the simplest way is to go to the
-[cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) repository
-and follow the instructions. This will give you a simple contract along with
-tests, and a properly configured build environment. From there you can edit the
-code to add your desired logic and publish it as an independent repo.
+You can also look at [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus)
+for examples and inspiration on more production-like contracts and also how we
+call one contract from another. If you are working on DeFi or Tokens, please
+look at the `cw20`, `cw721` and/or `cw1155` packages that define standard
+interfaces as analogues to some popular ERC designs. (`cw20` is also inspired by
+`erc777`).
+
+If you want to get started building you own contract, the simplest way is to go
+to the [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template)
+repository and follow the instructions. This will give you a simple contract
+along with tests, and a properly configured build environment. From there you
+can edit the code to add your desired logic and publish it as an independent
+repo.
+
+We also recommend you review our [documentation site](https://docs.cosmwasm.com)
+which contains a few tutorials to guide you in building your first contracts. We
+also do public workshops on various topics about once a month. You can find
+[past recordings under the "Videos" section](https://cosmwasm.com/resources), or
+[join our Discord server](https://docs.cosmwasm.com/chat) to ask for help.
 
 ## API entry points
 
@@ -95,13 +116,39 @@ If you haven't worked with WebAssembly before, please read an overview on
 The required exports provided by the cosmwasm smart contract are:
 
 ```rust
+// signal for 0.16 compatibility
+extern "C" fn interface_version_7() -> () {}
+
+// copy memory to/from host, so we can pass in/out Vec<u8>
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
+// main contract entry points
 extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
+```
+
+Contracts may also implement one or more of the following to extend their
+functionality:
+
+```rust
+// in-place contract migrations
 extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+
+// support submessage callbacks
+extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
+
+// expose privileged entry points to Cosmos SDK modules, not external accounts
+extern "C" fn sudo(env_ptr: u32, msg_ptr: u32) -> u32;
+
+// and to write an IBC application as a contract, implement these:
+extern "C" fn ibc_channel_open(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_channel_connect(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_channel_close(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_packet_receive(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
@@ -197,32 +244,27 @@ defining your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your
 custom message types (as json):
 
 ```rust
-pub fn instantiate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
-) -> StdResult<Response> {}
+#[entry_point]
+pub fn instantiate(
+  deps: DepsMut,
+  env: Env,
+  info: MessageInfo,
+  msg: InstantiateMsg,
+) -> Result<Response, ContractError> {}
 
-pub fn execute<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> { }
+#[entry_point]
+pub fn execute(
+  deps: DepsMut,
+  env: Env,
+  info: MessageInfo,
+  msg: ExecuteMsg,
+) -> Result<Response, ContractError> {}
 
-pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, MigrateError> { }
+#[entry_point]
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {}
 
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
-    env: Env,
-    msg: QueryMsg,
-) -> StdResult<Binary> { }
+#[entry_point]
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {}
 ```
 
 The low-level `c_read` and `c_write` imports are nicely wrapped for you by a
@@ -233,8 +275,18 @@ determine which data you want to store here:
 
 ```rust
 pub trait Storage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
-    fn set(&mut self, key: &[u8], value: &[u8]);
+  fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
+  fn set(&mut self, key: &[u8], value: &[u8]);
+  fn remove(&mut self, key: &[u8]);
+
+  // and for iterating over a range of values
+  #[cfg(feature = "iterator")]
+  fn range<'a>(
+    &'a self,
+    start: Option<&[u8]>,
+    end: Option<&[u8]>,
+    order: Order,
+  ) -> Box<dyn Iterator<Item = Pair> + 'a>;
 }
 ```
 
