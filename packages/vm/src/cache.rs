@@ -9,6 +9,7 @@ use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
+use crate::features::required_features_from_module;
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
@@ -72,8 +73,10 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_querier: PhantomData<Q>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct AnalysisReport {
     pub has_ibc_entry_points: bool,
+    pub required_features: HashSet<String>,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -185,6 +188,7 @@ where
         let module = deserialize_wasm(&wasm)?;
         Ok(AnalysisReport {
             has_ibc_entry_points: has_ibc_entry_points(&module),
+            required_features: required_features_from_module(&module),
         })
     }
 
@@ -355,6 +359,7 @@ mod tests {
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;
     use std::io::Write;
+    use std::iter::FromIterator;
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 4_000_000;
@@ -366,6 +371,7 @@ mod tests {
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
 
     fn default_features() -> HashSet<String> {
         features_from_csv("staking")
@@ -375,6 +381,15 @@ mod tests {
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
             supported_features: default_features(),
+            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit: TESTING_MEMORY_LIMIT,
+        }
+    }
+
+    fn make_stargate_testing_options() -> CacheOptions {
+        CacheOptions {
+            base_dir: TempDir::new().unwrap().into_path(),
+            supported_features: features_from_csv("staking,stargate"),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
@@ -941,6 +956,35 @@ mod tests {
 
         let loaded = load_wasm_from_disk(&path, &checksum).unwrap();
         assert_eq!(code, loaded);
+    }
+
+    #[test]
+    fn analyze_works() {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_stargate_testing_options()).unwrap() };
+
+        let checksum1 = cache.save_wasm(CONTRACT).unwrap();
+        let report1 = cache.analyze(&checksum1).unwrap();
+        assert_eq!(
+            report1,
+            AnalysisReport {
+                has_ibc_entry_points: false,
+                required_features: HashSet::new(),
+            }
+        );
+
+        let checksum2 = cache.save_wasm(IBC_CONTRACT).unwrap();
+        let report2 = cache.analyze(&checksum2).unwrap();
+        assert_eq!(
+            report2,
+            AnalysisReport {
+                has_ibc_entry_points: true,
+                required_features: HashSet::from_iter(vec![
+                    "staking".to_string(),
+                    "stargate".to_string()
+                ]),
+            }
+        );
     }
 
     #[test]
