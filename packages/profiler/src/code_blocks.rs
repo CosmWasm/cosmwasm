@@ -5,11 +5,32 @@ use loupe::MemoryUsage;
 
 use crate::operators::OperatorSymbol;
 
+#[derive(Debug, Hash, PartialEq, Eq, MemoryUsage, Copy, Clone)]
+pub struct BlockId(pub u64);
+
+impl From<u64> for BlockId {
+    fn from(hash: u64) -> Self {
+        Self(hash)
+    }
+}
+
+impl PartialEq<u64> for BlockId {
+    fn eq(&self, rhs: &u64) -> bool {
+        self.0 == *rhs
+    }
+}
+
+impl PartialEq<BlockId> for u64 {
+    fn eq(&self, rhs: &BlockId) -> bool {
+        rhs.0 == *self
+    }
+}
+
 /// Stores non-branching Wasm code blocks so that the exact
 /// list of operators can be looked up by hash later.
 #[derive(Debug, MemoryUsage)]
 pub struct BlockStore {
-    inner: HashMap<u64, CodeBlock>,
+    inner: HashMap<BlockId, CodeBlock>,
 }
 
 impl BlockStore {
@@ -21,7 +42,7 @@ impl BlockStore {
 
     /// Register a new code block in the store. Returns a hash that can be later
     /// used to get the code block.
-    pub fn register_block(&mut self, block: impl Into<CodeBlock>) -> u64 {
+    pub fn register_block(&mut self, block: impl Into<CodeBlock>) -> BlockId {
         let block = block.into();
         let hash = block.get_hash();
 
@@ -31,8 +52,8 @@ impl BlockStore {
     }
 
     /// Get a code block by hash.
-    pub fn get_block(&self, hash: u64) -> Option<&CodeBlock> {
-        self.inner.get(&hash)
+    pub fn get_block(&self, hash: impl Into<BlockId>) -> Option<&CodeBlock> {
+        self.inner.get(&hash.into())
     }
 
     pub fn len(&self) -> usize {
@@ -51,12 +72,12 @@ impl CodeBlock {
         self.inner.as_slice()
     }
 
-    pub fn get_hash(&self) -> u64 {
+    pub fn get_hash(&self) -> BlockId {
         use std::hash::Hasher as _;
 
         let mut s = std::collections::hash_map::DefaultHasher::new();
         self.hash(&mut s);
-        s.finish()
+        BlockId(s.finish())
     }
 }
 
