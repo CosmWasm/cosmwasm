@@ -1,6 +1,7 @@
-use parity_wasm::elements::{Internal, Module};
 use std::collections::HashSet;
-use wasmer::{ExternType, Instance as WasmerInstance};
+use wasmer::Instance as WasmerInstance;
+
+use crate::static_analysis::ExportInfo;
 
 const REQUIRES_PREFIX: &str = "requires_";
 
@@ -15,47 +16,30 @@ pub fn features_from_csv(csv: &str) -> HashSet<String> {
 
 pub fn required_features_from_wasmer_instance(wasmer_instance: &WasmerInstance) -> HashSet<String> {
     let module = wasmer_instance.module();
-    module
-        .exports()
-        .filter_map(|export| {
-            if let ExternType::Function { .. } = export.ty() {
-                let name = export.name();
-                if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
-                    let required_feature = name.to_string().split_off(REQUIRES_PREFIX.len());
-                    return Some(required_feature);
-                }
-            }
-            None
-        })
-        .collect()
+    required_features_from_module(module)
 }
 
 /// Implementation for check_wasm, based on static analysis of the bytecode.
 /// This is used for code upload, to perform check before compiling the Wasm.
-pub fn required_features_from_module(module: &Module) -> HashSet<String> {
-    match module.export_section() {
-        None => HashSet::new(),
-        Some(export_section) => export_section
-            .entries()
-            .iter()
-            .filter_map(|entry| {
-                if let Internal::Function(_) = entry.internal() {
-                    let name = entry.field();
-                    if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
-                        let (_, required_feature) = name.split_at(REQUIRES_PREFIX.len());
-                        return Some(required_feature.to_string());
-                    }
-                }
+pub fn required_features_from_module(module: &impl ExportInfo) -> HashSet<String> {
+    module
+        .exported_function_names(Some(REQUIRES_PREFIX))
+        .into_iter()
+        .filter_map(|name| {
+            if name.len() > REQUIRES_PREFIX.len() {
+                let (_, required_feature) = name.split_at(REQUIRES_PREFIX.len());
+                Some(required_feature.to_string())
+            } else {
                 None
-            })
-            .collect(),
-    }
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use parity_wasm::elements::deserialize_buffer;
+    use crate::static_analysis::deserialize_wasm;
 
     #[test]
     fn features_from_csv_works() {
@@ -95,7 +79,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_buffer(&wasm).unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
 
         let required_features = required_features_from_module(&module);
         assert_eq!(required_features.len(), 3);
@@ -107,7 +91,7 @@ mod tests {
     #[test]
     fn required_features_from_module_works_without_exports_section() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_buffer(&wasm).unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
         let required_features = required_features_from_module(&module);
         assert_eq!(required_features.len(), 0);
     }
