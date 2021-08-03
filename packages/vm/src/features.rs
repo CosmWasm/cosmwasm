@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use wasmer::Instance as WasmerInstance;
 
 use crate::static_analysis::ExportInfo;
 
@@ -12,11 +11,6 @@ pub fn features_from_csv(csv: &str) -> HashSet<String> {
         .map(|x| x.trim().to_string())
         .filter(|f| !f.is_empty())
         .collect()
-}
-
-pub fn required_features_from_wasmer_instance(wasmer_instance: &WasmerInstance) -> HashSet<String> {
-    let module = wasmer_instance.module();
-    required_features_from_module(module)
 }
 
 /// Implementation for check_wasm, based on static analysis of the bytecode.

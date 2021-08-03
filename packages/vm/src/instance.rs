@@ -7,7 +7,7 @@ use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
-use crate::features::required_features_from_wasmer_instance;
+use crate::features::required_features_from_module;
 use crate::imports::{
     do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
     do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
@@ -207,7 +207,7 @@ where
             },
         )?);
 
-        let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
+        let required_features = required_features_from_module(wasmer_instance.module());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
