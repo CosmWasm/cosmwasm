@@ -1,7 +1,10 @@
 use std::sync::{Arc, Mutex};
 
 use loupe::MemoryUsage;
-use wasmer::{wasmparser::Operator, FunctionMiddleware, ModuleMiddleware};
+use wasmer::{
+    wasmparser::Operator, FunctionMiddleware, FunctionType, ModuleMiddleware, Type, ValueType,
+};
+use wasmer_types::{FunctionIndex, ImportIndex};
 
 use crate::{code_blocks::BlockStore, operators::OperatorSymbol};
 
@@ -9,12 +12,14 @@ use crate::{code_blocks::BlockStore, operators::OperatorSymbol};
 #[derive(Debug, MemoryUsage)]
 pub struct Profiling {
     block_store: Arc<Mutex<BlockStore>>,
+    indexes: Mutex<Option<ProfilingIndexes>>,
 }
 
 impl Profiling {
     pub fn new() -> Self {
         Self {
             block_store: Arc::new(Mutex::new(BlockStore::new())),
+            indexes: Mutex::new(None),
         }
     }
 }
@@ -24,7 +29,51 @@ impl ModuleMiddleware for Profiling {
         &self,
         _local_function_index: wasmer::LocalFunctionIndex,
     ) -> Box<dyn wasmer::FunctionMiddleware> {
-        Box::new(FunctionProfiling::new(self.block_store.clone()))
+        Box::new(FunctionProfiling::new(
+            self.block_store.clone(),
+            self.indexes.lock().unwrap().clone().unwrap(),
+        ))
+    }
+
+    fn transform_module_info(&self, module_info: &mut wasmer_vm::ModuleInfo) {
+        let mut indexes = self.indexes.lock().unwrap();
+
+        if indexes.is_some() {
+            panic!("Profiling::transform_module_info: Attempting to use a `Profiling` middleware from multiple modules.");
+        }
+
+        let sig = module_info
+            .signatures
+            .push(FunctionType::new([], [Type::I32]));
+        let fn1 = module_info.functions.push(sig);
+        let import_index = module_info.imports().len();
+        module_info.imports.insert(
+            (
+                "profiling".to_string(),
+                "start_measurement".to_string(),
+                import_index as u32,
+            ),
+            ImportIndex::Function(fn1),
+        );
+
+        let sig = module_info
+            .signatures
+            .push(FunctionType::new([Type::I32, Type::I64], []));
+        let fn2 = module_info.functions.push(sig);
+        let import_index = module_info.imports().len();
+        module_info.imports.insert(
+            (
+                "profiling".to_string(),
+                "take_measurement".to_string(),
+                import_index as u32,
+            ),
+            ImportIndex::Function(fn2),
+        );
+
+        *indexes = Some(ProfilingIndexes {
+            start_measurement: fn1,
+            take_measurement: fn2,
+        });
     }
 }
 
@@ -32,13 +81,15 @@ impl ModuleMiddleware for Profiling {
 struct FunctionProfiling {
     block_store: Arc<Mutex<BlockStore>>,
     accumulated_ops: Vec<OperatorSymbol>,
+    indexes: ProfilingIndexes,
 }
 
 impl FunctionProfiling {
-    fn new(block_store: Arc<Mutex<BlockStore>>) -> Self {
+    fn new(block_store: Arc<Mutex<BlockStore>>, indexes: ProfilingIndexes) -> Self {
         Self {
             block_store,
             accumulated_ops: Vec::new(),
+            indexes,
         }
     }
 }
@@ -76,6 +127,12 @@ impl FunctionMiddleware for FunctionProfiling {
     }
 }
 
+#[derive(Debug, MemoryUsage, Clone)]
+struct ProfilingIndexes {
+    start_measurement: FunctionIndex,
+    take_measurement: FunctionIndex,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -84,7 +141,7 @@ mod tests {
 
     use std::sync::Arc;
     use wasmer::{
-        imports, wat2wasm, CompilerConfig, Cranelift, Instance, Module, Store, Universal,
+        imports, wat2wasm, CompilerConfig, Cranelift, Function, Instance, Module, Store, Universal,
     };
     use wasmer_types::Value;
 
@@ -119,8 +176,16 @@ mod tests {
         let wasm = wat2wasm(WAT).unwrap();
         let module = Module::new(&store, wasm).unwrap();
 
-        // Instantiate the module with our imports.
-        let imports = imports! {};
+        // println!("{:?}", module.info());
+        // panic!();
+
+        // Mock imports that do nothing.
+        let imports = imports! {
+            "profiling" => {
+                "start_measurement" => Function::new_native(&store, || 0),
+                "take_measurement" => Function::new_native(&store, |_: u32, _: u64| {}),
+            }
+        };
         let instance = Instance::new(&module, &imports).unwrap();
 
         let add_one = instance.exports.get_function("add_one").unwrap();
