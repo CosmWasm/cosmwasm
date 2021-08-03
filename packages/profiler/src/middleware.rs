@@ -44,7 +44,7 @@ impl ModuleMiddleware for Profiling {
 
         let sig = module_info
             .signatures
-            .push(FunctionType::new([], [Type::I32]));
+            .push(FunctionType::new([Type::I32, Type::I32], []));
         let fn1 = module_info.functions.push(sig);
         let import_index = module_info.imports().len();
         module_info.imports.insert(
@@ -58,7 +58,7 @@ impl ModuleMiddleware for Profiling {
 
         let sig = module_info
             .signatures
-            .push(FunctionType::new([Type::I32, Type::I64], []));
+            .push(FunctionType::new([Type::I32, Type::I32, Type::I64], []));
         let fn2 = module_info.functions.push(sig);
         let import_index = module_info.imports().len();
         module_info.imports.insert(
@@ -114,10 +114,20 @@ impl FunctionMiddleware for FunctionProfiling {
             => {
                 if !self.accumulated_ops.is_empty() {
                     let mut store = self.block_store.lock().unwrap();
-                    store.register_block(std::mem::take(&mut self.accumulated_ops));
+                    let block_id = store.register_block(std::mem::take(&mut self.accumulated_ops));
+
+                    // We're at the end of a code block. Finalize the measurement.
                 }
             }
             _ => {
+                if self.accumulated_ops.is_empty() {
+                    // We know we're at the beginning of a code block.
+                    // Call start_measurement before executing it.
+                    // state.extend(&[
+                    //     Operator::I64Const { value:  },
+                    //     Operator::Call{ function_index: self.indexes.start_measurement.as_u32() },
+                    // ]);
+                }
                 self.accumulated_ops.push((&operator).into());
             }
         }
@@ -182,8 +192,8 @@ mod tests {
         // Mock imports that do nothing.
         let imports = imports! {
             "profiling" => {
-                "start_measurement" => Function::new_native(&store, || 0),
-                "take_measurement" => Function::new_native(&store, |_: u32, _: u64| {}),
+                "start_measurement" => Function::new_native(&store, |_: u32, _: u32| {}),
+                "take_measurement" => Function::new_native(&store, |_: u32, _: u32, _: u64| {}),
             }
         };
         let instance = Instance::new(&module, &imports).unwrap();
