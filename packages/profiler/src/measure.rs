@@ -13,18 +13,16 @@ impl Measurements {
         Self::default()
     }
 
-    pub fn start_measurement(&mut self) -> MeasurementId {
+    pub fn start_measurement(&mut self) -> usize {
         self.data.push(Measurement::Started(time::Instant::now()));
-        MeasurementId(self.data.len() - 1)
+        self.data.len() - 1
     }
 
     // TODO: Error handling? This will be called from Wasm code probably.
-    pub fn take_measurement(&mut self, id: impl Into<MeasurementId>, block: impl Into<BlockId>) {
-        let id = id.into().0;
-
+    pub fn take_measurement(&mut self, measurement_id: usize, block: impl Into<BlockId>) {
         // We're not sure if this id exists.
-        if let Measurement::Started(start) = self.data[id] {
-            self.data[id] = Measurement::Taken(start.elapsed(), block.into());
+        if let Measurement::Started(start) = self.data[measurement_id] {
+            self.data[measurement_id] = Measurement::Taken(start.elapsed(), block.into());
         }
     }
 }
@@ -33,26 +31,6 @@ impl Measurements {
 pub enum Measurement {
     Started(time::Instant),
     Taken(time::Duration, BlockId),
-}
-
-pub struct MeasurementId(usize);
-
-impl From<usize> for MeasurementId {
-    fn from(num: usize) -> Self {
-        Self(num)
-    }
-}
-
-impl PartialEq<usize> for MeasurementId {
-    fn eq(&self, rhs: &usize) -> bool {
-        self.0 == *rhs
-    }
-}
-
-impl PartialEq<MeasurementId> for usize {
-    fn eq(&self, rhs: &MeasurementId) -> bool {
-        rhs.0 == *self
-    }
 }
 
 #[cfg(test)]
