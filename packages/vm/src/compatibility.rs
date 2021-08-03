@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use crate::errors::{VmError, VmResult};
 use crate::features::required_features_from_module;
 use crate::limited::LimitedDisplay;
-use crate::static_analysis::{deserialize_wasm, exported_functions};
+use crate::static_analysis::{deserialize_wasm, ExportInfo};
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
@@ -87,7 +87,7 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
 }
 
 fn check_wasm_exports(module: &Module) -> VmResult<()> {
-    let available_exports: HashSet<String> = exported_functions(module);
+    let available_exports: HashSet<String> = module.exported_function_names(None);
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.contains(*required_export) {
             return Err(VmError::static_validation_err(format!(
