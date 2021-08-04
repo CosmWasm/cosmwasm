@@ -47,7 +47,7 @@ sha2 = "0.9.1"
 thiserror = "1.0"
 wasmer = { version = "2.0.0", default-features = false, features = ["cranelift", "universal", "singlepass"] }
 wasmer-middlewares = "2.0.0"
-loupe = "0.1.2"
+loupe = "0.1.3"
 
 # Wasmer git/local (used for quick local debugging or patching)
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.2", default-features = false, features = ["jit", "singlepass"] }

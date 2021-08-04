@@ -64,8 +64,7 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    /// The serialized module size is a good approximation (~100.06 %) of the in-memory module size.
-    /// It should not be considered as the exact in-memory module size.
+    /// Uses loupe to get a value for the module size (artifact + store) in bytes.
     pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.latest_modules_path().join(filename);
@@ -73,13 +72,8 @@ impl FileSystemCache {
         let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
             Ok(module) => {
-                let module_size = file_path
-                    .metadata()
-                    .map_err(|e| {
-                        VmError::cache_err(format!("Error getting module file size: {}", e))
-                    })?
-                    .len();
-                Ok(Some((module, module_size as usize)))
+                let module_size = loupe::size_of_val(&module);
+                Ok(Some((module, module_size)))
             }
             Err(DeserializeError::Io(err)) => match err.kind() {
                 io::ErrorKind::NotFound => Ok(None),
@@ -96,8 +90,7 @@ impl FileSystemCache {
     }
 
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
-    /// The serialized module size is a good approximation (~100.06 %) of the in-memory module size.
-    /// It should not be considered as the exact in-memory module size.
+    /// Uses loupe to get a value for the module size (artifact + store) in bytes.
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
         let modules_dir = self.latest_modules_path();
         fs::create_dir_all(&modules_dir)
@@ -107,11 +100,8 @@ impl FileSystemCache {
         module
             .serialize_to_file(path.clone())
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-        let module_size = path
-            .metadata()
-            .map_err(|e| VmError::cache_err(format!("Error getting module file size: {}", e)))?
-            .len();
-        Ok(module_size as usize)
+        let module_size = loupe::size_of_val(&module);
+        Ok(module_size)
     }
 
     /// The path to the latest version of the modules.
@@ -168,7 +158,7 @@ mod tests {
         // This is not really testing the cache API but better safe than sorry.
         {
             let (cached_module, module_size) = cached.unwrap();
-            assert_eq!(module_size, module.serialize().unwrap().len());
+            assert!(module_size > module.serialize().unwrap().len());
             let import_object = imports! {};
             let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
             set_remaining_points(&instance, TESTING_GAS_LIMIT);
