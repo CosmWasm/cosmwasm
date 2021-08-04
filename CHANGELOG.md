@@ -70,6 +70,9 @@ and this project adheres to
   method.
 - cosmwasm-vm: Add `required_features` field to `AnalysisReport` which is
   returned by `Cache::analyze`.
+- cosmwasm-vm: The VM now checks that exactly one `interface_version_*` marker
+  export is set. For `interface_version_5` and `interface_version_6` (CosmWasm
+  0.14–0.15) more specific error messages were added.
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
