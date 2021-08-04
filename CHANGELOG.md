@@ -66,6 +66,10 @@ and this project adheres to
   downstream code).
 - cosmwasm-std: `Event::attr` has been renamed to `Event::add_attribute` for
   consistency with other types like `Response`.
+- cosmwasm-vm: `Instance::required_features` changed from a property to a getter
+  method.
+- cosmwasm-vm: Add `required_features` field to `AnalysisReport` which is
+  returned by `Cache::analyze`.
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 

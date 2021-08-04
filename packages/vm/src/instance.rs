@@ -7,7 +7,7 @@ use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
-use crate::features::required_features_from_wasmer_instance;
+use crate::features::required_features_from_module;
 use crate::imports::{
     do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
     do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
@@ -46,7 +46,6 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     /// This instance should only be accessed via the Environment, which provides safe access.
     _inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
-    pub required_features: HashSet<String>,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -207,7 +206,6 @@ where
             },
         )?);
 
-        let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
@@ -215,7 +213,6 @@ where
         let instance = Instance {
             _inner: wasmer_instance,
             env,
-            required_features,
         };
         Ok(instance)
     }
@@ -237,6 +234,15 @@ where
         } else {
             None
         }
+    }
+
+    /// Returns the features required by this contract.
+    ///
+    /// This is not needed for production because we can do static analysis
+    /// on the Wasm file before instatiation to obtain this information. It's
+    /// only kept because it can be handy for integration testing.
+    pub fn required_features(&self) -> HashSet<String> {
+        required_features_from_module(self._inner.module())
     }
 
     /// Returns the size of the default memory in pages.
@@ -357,7 +363,7 @@ mod tests {
         let (instance_options, memory_limit) = mock_instance_options();
         let instance =
             Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
-        assert_eq!(instance.required_features.len(), 0);
+        assert_eq!(instance.required_features().len(), 0);
     }
 
     #[test]
@@ -379,10 +385,10 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let instance = Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
-        assert_eq!(instance.required_features.len(), 3);
-        assert!(instance.required_features.contains("nutrients"));
-        assert!(instance.required_features.contains("sun"));
-        assert!(instance.required_features.contains("water"));
+        assert_eq!(instance.required_features().len(), 3);
+        assert!(instance.required_features().contains("nutrients"));
+        assert!(instance.required_features().contains("sun"));
+        assert!(instance.required_features().contains("water"));
     }
 
     #[test]
