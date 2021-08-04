@@ -95,19 +95,18 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
 }
 
 fn check_interface_version(module: &Module) -> VmResult<()> {
-    let mut interface_version_exports: Vec<String> = module
+    let mut interface_version_exports = module
         .exported_function_names(Some(INTERFACE_VERSION_PREFIX))
-        .into_iter()
-        .collect();
-    if let Some(interface_version_export) = interface_version_exports.pop() {
-        if !interface_version_exports.is_empty() {
+        .into_iter();
+    if let Some(first_interface_version_export) = interface_version_exports.next() {
+        if interface_version_exports.next().is_some() {
             Err(VmError::static_validation_err(
                 "Wasm contract contains more than one marker export: interface_version_*",
             ))
         } else {
             // Exactly one interface version found
 
-            match interface_version_export.as_str() {
+            match first_interface_version_export.as_str() {
                 // Ok
                 SUPPORTED_INTERFACE_VERSION => Ok(()),
                 // Well known old versions for better error messages
