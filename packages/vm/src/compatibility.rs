@@ -135,7 +135,7 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.contains(*required_export) {
             return Err(VmError::static_validation_err(format!(
-                "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
+                "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}.",
                 required_export, REQUIRED_EXPORTS
             )));
         }
