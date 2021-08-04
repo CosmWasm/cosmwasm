@@ -40,6 +40,11 @@ const REQUIRED_EXPORTS: &[&str] = &[
     "instantiate",
 ];
 
+const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
+/// Only one version is supported right now. This could potentially turn into a list
+/// later, but maybe this never happens and new functionality is only added via features.
+const SUPPORTED_INTERFACE_VERSION: &str = "interface_version_7";
+
 const MEMORY_LIMIT: u32 = 512; // in pages
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
@@ -91,7 +96,7 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
 
 fn check_interface_version(module: &Module) -> VmResult<()> {
     let mut interface_version_exports: Vec<String> = module
-        .exported_function_names(Some("interface_version_"))
+        .exported_function_names(Some(INTERFACE_VERSION_PREFIX))
         .into_iter()
         .collect();
     if let Some(interface_version_export) = interface_version_exports.pop() {
@@ -104,7 +109,7 @@ fn check_interface_version(module: &Module) -> VmResult<()> {
 
             match interface_version_export.as_str() {
                 // Ok
-                "interface_version_7" => Ok(()),
+                SUPPORTED_INTERFACE_VERSION => Ok(()),
                 // Well known old versions for better error messages
                 "interface_version_6" => Err(VmError::static_validation_err(
                     "Wasm contract has incompatible CosmWasm 0.15 marker export interface_version_6 (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
