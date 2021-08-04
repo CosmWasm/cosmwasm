@@ -341,6 +341,115 @@ mod tests {
     }
 
     #[test]
+    fn check_interface_version_works() {
+        // valid
+        let wasm = wat::parse_str(
+            r#"(module
+                (type (func))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "interface_version_7" (func 0))
+                (export "deallocate" (func 0))
+                (export "instantiate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        check_interface_version(&module).unwrap();
+
+        // missing
+        let wasm = wat::parse_str(
+            r#"(module
+                (type (func))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+                (export "instantiate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        match check_interface_version(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert_eq!(
+                    msg,
+                    "Wasm contract missing a required marker export: interface_version_*"
+                );
+            }
+            err => panic!("Unexpected error {:?}", err),
+        }
+
+        // multiple
+        let wasm = wat::parse_str(
+            r#"(module
+                (type (func))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "interface_version_7" (func 0))
+                (export "interface_version_8" (func 0))
+                (export "deallocate" (func 0))
+                (export "instantiate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        match check_interface_version(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert_eq!(
+                    msg,
+                    "Wasm contract contains more than one marker export: interface_version_*"
+                );
+            }
+            err => panic!("Unexpected error {:?}", err),
+        }
+
+        // CosmWasm 0.15
+        let wasm = wat::parse_str(
+            r#"(module
+                (type (func))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "interface_version_6" (func 0))
+                (export "deallocate" (func 0))
+                (export "instantiate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        match check_interface_version(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert_eq!(msg, "Wasm contract has incompatible CosmWasm 0.15 marker export interface_version_6 (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)");
+            }
+            err => panic!("Unexpected error {:?}", err),
+        }
+
+        // Unknown value
+        let wasm = wat::parse_str(
+            r#"(module
+                (type (func))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "interface_version_broken" (func 0))
+                (export "deallocate" (func 0))
+                (export "instantiate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        match check_interface_version(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert_eq!(msg, "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)");
+            }
+            err => panic!("Unexpected error {:?}", err),
+        }
+    }
+
+    #[test]
     fn check_wasm_exports_works() {
         // valid
         let wasm = wat::parse_str(
