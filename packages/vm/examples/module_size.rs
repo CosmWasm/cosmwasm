@@ -11,7 +11,7 @@ use wasmer::Module;
 
 pub fn main() {
     let matches = App::new("Module size estimation")
-        .version("0.0.2")
+        .version("0.0.3")
         .author("Mauro Lacy <mauro@lacy.com.es>")
         .arg(
             Arg::with_name("WASM")
@@ -41,6 +41,10 @@ pub fn main() {
     let module = module_compile(&wasm, memory_limit);
     mem::drop(wasm);
 
+    // Report loupe size
+    let loupe_size = loupe::size_of_val(&module);
+    println!("module size (loupe): {} bytes", loupe_size);
+
     let serialized = module.serialize().unwrap();
     mem::drop(module);
 
@@ -53,6 +57,10 @@ pub fn main() {
     mem::drop(module);
     let ser_size = serialized.len();
     println!("module size (serialized): {} bytes", ser_size);
+    println!(
+        "(loupe) module size ratio: {:.2}",
+        loupe_size as f32 / wasm_size as f32
+    );
     println!(
         "(serialized) module size ratio: {:.2}",
         ser_size as f32 / wasm_size as f32
