@@ -190,7 +190,6 @@ mod tests {
     use super::*;
     use crate::errors::VmError;
 
-    static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/hackatom_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
@@ -237,15 +236,6 @@ mod tests {
         };
 
         match check_wasm(CONTRACT_0_7, &default_features()) {
-            Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
-                msg,
-                "Wasm contract missing a required marker export: interface_version_*"
-            ),
-            Err(e) => panic!("Unexpected error {:?}", e),
-            Ok(_) => panic!("This must not succeeed"),
-        };
-
-        match check_wasm(CONTRACT_0_6, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract missing a required marker export: interface_version_*"
