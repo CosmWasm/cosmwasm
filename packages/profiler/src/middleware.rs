@@ -175,38 +175,57 @@ mod tests {
         i32.sub))
     "#;
 
+    struct Fixture {
+        profiling: Arc<Profiling>,
+        instance: Instance,
+    }
+
+    impl Fixture {
+        fn new() -> Self {
+            let profiling = Arc::new(Profiling::new());
+
+            // Create the module with our middleware.
+            let mut compiler_config = Cranelift::default();
+            compiler_config.push_middleware(profiling.clone());
+            let store = Store::new(&Universal::new(compiler_config).engine());
+            let wasm = wat2wasm(WAT).unwrap();
+            let module = Module::new(&store, wasm).unwrap();
+
+            // Mock imports that do nothing.
+            let imports = imports! {
+                "profiling" => {
+                    "start_measurement" => Function::new_native(&store, |_: u32, _: u32| {}),
+                    "take_measurement" => Function::new_native(&store, |_: u32, _: u32, _: u64| {}),
+                }
+            };
+            let instance = Instance::new(&module, &imports).unwrap();
+
+            Self {
+                profiling,
+                instance,
+            }
+        }
+
+        fn add_one(&self) -> &wasmer::Function {
+            self.instance.exports.get_function("add_one").unwrap()
+        }
+
+        fn multisub(&self) -> &wasmer::Function {
+            self.instance.exports.get_function("multisub").unwrap()
+        }
+    }
+
     #[test]
     fn middleware_registers_code_blocks() {
-        let profiling = Arc::new(Profiling::new());
+        let fixture = Fixture::new();
 
-        // Create the module with our middleware.
-        let mut compiler_config = Cranelift::default();
-        compiler_config.push_middleware(profiling.clone());
-        let store = Store::new(&Universal::new(compiler_config).engine());
-        let wasm = wat2wasm(WAT).unwrap();
-        let module = Module::new(&store, wasm).unwrap();
-
-        // println!("{:?}", module.info());
-        // panic!();
-
-        // Mock imports that do nothing.
-        let imports = imports! {
-            "profiling" => {
-                "start_measurement" => Function::new_native(&store, |_: u32, _: u32| {}),
-                "take_measurement" => Function::new_native(&store, |_: u32, _: u32, _: u64| {}),
-            }
-        };
-        let instance = Instance::new(&module, &imports).unwrap();
-
-        let add_one = instance.exports.get_function("add_one").unwrap();
-        let result = add_one.call(&[Value::I32(42)]).unwrap();
+        let result = fixture.add_one().call(&[Value::I32(42)]).unwrap();
         assert_eq!(result[0], Value::I32(43));
 
-        let multisub = instance.exports.get_function("multisub").unwrap();
-        let result = multisub.call(&[Value::I32(4)]).unwrap();
+        let result = fixture.multisub().call(&[Value::I32(4)]).unwrap();
         assert_eq!(result[0], Value::I32(6));
 
-        let block_store = profiling.block_store.lock().unwrap();
+        let block_store = fixture.profiling.block_store.lock().unwrap();
         assert_eq!(block_store.len(), 4);
 
         // The body of $add_one.
