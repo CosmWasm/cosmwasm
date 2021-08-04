@@ -214,8 +214,9 @@ where
 
         // Try to get module from file system cache
         let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
+        if let Some(module) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache += 1;
+            let module_size = loupe::size_of_val(&module);
             return cache
                 .pinned_memory_cache
                 .store(checksum, module, module_size);
@@ -225,7 +226,8 @@ where
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         let module = compile(&code, Some(cache.instance_memory_limit))?;
         // Store into the fs cache too
-        let module_size = cache.fs_cache.store(checksum, &module)?;
+        cache.fs_cache.store(checksum, &module)?;
+        let module_size = loupe::size_of_val(&module);
         cache
             .pinned_memory_cache
             .store(checksum, module, module_size)
@@ -274,10 +276,11 @@ where
 
         // Get module from file system cache
         let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
+        if let Some(module) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
+            let module_size = loupe::size_of_val(&module);
             cache.memory_cache.store(checksum, module, module_size)?;
             return Ok(instance);
         }
@@ -292,7 +295,8 @@ where
         let module = compile(&wasm, Some(cache.instance_memory_limit))?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
-        let module_size = cache.fs_cache.store(checksum, &module)?;
+        cache.fs_cache.store(checksum, &module)?;
+        let module_size = loupe::size_of_val(&module);
         cache.memory_cache.store(checksum, module, module_size)?;
         Ok(instance)
     }
