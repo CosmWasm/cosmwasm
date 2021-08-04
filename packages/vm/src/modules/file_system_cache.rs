@@ -98,7 +98,7 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let path = modules_dir.join(filename);
         module
-            .serialize_to_file(path.clone())
+            .serialize_to_file(path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
         let module_size = loupe::size_of_val(&module);
         Ok(module_size)
