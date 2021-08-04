@@ -64,17 +64,13 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    /// Uses loupe to get a value for the module size (artifact + store) in bytes.
-    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
+    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
         let file_path = self.latest_modules_path().join(filename);
 
         let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
-            Ok(module) => {
-                let module_size = loupe::size_of_val(&module);
-                Ok(Some((module, module_size)))
-            }
+            Ok(module) => Ok(Some(module)),
             Err(DeserializeError::Io(err)) => match err.kind() {
                 io::ErrorKind::NotFound => Ok(None),
                 _ => Err(VmError::cache_err(format!(
@@ -90,8 +86,7 @@ impl FileSystemCache {
     }
 
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
-    /// Uses loupe to get a value for the module size (artifact + store) in bytes.
-    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
+    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
         let modules_dir = self.latest_modules_path();
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating directory: {}", e)))?;
@@ -100,8 +95,7 @@ impl FileSystemCache {
         module
             .serialize_to_file(path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-        let module_size = loupe::size_of_val(&module);
-        Ok(module_size)
+        Ok(())
     }
 
     /// The path to the latest version of the modules.
@@ -157,8 +151,7 @@ mod tests {
         // Check the returned module is functional.
         // This is not really testing the cache API but better safe than sorry.
         {
-            let (cached_module, module_size) = cached.unwrap();
-            assert!(module_size > module.serialize().unwrap().len());
+            let cached_module = cached.unwrap();
             let import_object = imports! {};
             let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
             set_remaining_points(&instance, TESTING_GAS_LIMIT);
