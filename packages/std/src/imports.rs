@@ -157,7 +157,14 @@ impl ExternalApi {
 
 impl Api for ExternalApi {
     fn addr_validate(&self, human: &str) -> StdResult<Addr> {
-        let source = build_region(human.as_bytes());
+        let human = human.as_bytes();
+        if human.len() > 256 {
+            // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
+            // In this case, the VM will refuse to read the input from the contract.
+            // Stop here to allow handling the error in the contract.
+            return Err(StdError::generic_err("input too long for addr_validate"));
+        }
+        let source = build_region(human);
         let source_ptr = &*source as *const Region as u32;
 
         let result = unsafe { addr_validate(source_ptr) };
@@ -173,6 +180,15 @@ impl Api for ExternalApi {
     }
 
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
+        let human = human.as_bytes();
+        if human.len() > 256 {
+            // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
+            // In this case, the VM will refuse to read the input from the contract.
+            // Stop here to allow handling the error in the contract.
+            return Err(StdError::generic_err(
+                "input too long for addr_canonicalize",
+            ));
+        }
         let send = build_region(human.as_bytes());
         let send_ptr = &*send as *const Region as u32;
         let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);

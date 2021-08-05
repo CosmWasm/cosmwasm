@@ -6,6 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Increased max input length for `addr_validate` and
+  `addr_canonicalize` from 90 to 256 bytes to be more future-proof.
+- cosmwasm-std: In `ExternalApi::addr_validate` and `::addr_canonicalize` do not
+  send too long inputs to VM to avoid terminating contract execution. Errors are
+  returned instead now.
+
 ## [0.16.0] - 2021-08-05
 
 ### Added
