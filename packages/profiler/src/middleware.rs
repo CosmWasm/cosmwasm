@@ -70,6 +70,8 @@ impl ModuleMiddleware for Profiling {
             ImportIndex::Function(fn2),
         );
 
+        module_info.num_imported_functions += 2;
+
         *indexes = Some(ProfilingIndexes {
             start_measurement: fn1,
             take_measurement: fn2,
@@ -194,7 +196,7 @@ mod tests {
             // Mock imports that do nothing.
             let imports = imports! {
                 "profiling" => {
-                    "start_measurement" => Function::new_native(&store, |_: u32, _: u32| {}),
+                    "start_measurement" => Function::new_native(&store, |_: u32, _: u32| {println!("start measuring")}),
                     "take_measurement" => Function::new_native(&store, |_: u32, _: u32, _: u64| {}),
                 }
             };
