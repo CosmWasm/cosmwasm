@@ -10,6 +10,12 @@ and this project adheres to
 
 - Added `From<Addr>` and `From<&Addr>` conversions for `Cow<Addr>`.
 
+### Changed
+
+- cosmwasm-std: In `ExternalApi::addr_validate` and `::addr_canonicalize` do not
+  send too long inputs to VM to avoid terminating contract execution. Errors are
+  returned instead now.
+
 ## [0.16.0] - 2021-08-05
 
 ### Added
