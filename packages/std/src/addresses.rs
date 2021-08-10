@@ -2,6 +2,7 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::fmt;
 use std::ops::Deref;
 
@@ -133,6 +134,18 @@ impl From<Addr> for HumanAddr {
 impl From<&Addr> for HumanAddr {
     fn from(addr: &Addr) -> Self {
         HumanAddr(addr.0.clone())
+    }
+}
+
+impl From<Addr> for Cow<'_, Addr> {
+    fn from(addr: Addr) -> Self {
+        Cow::Owned(addr)
+    }
+}
+
+impl<'a> From<&'a Addr> for Cow<'a, Addr> {
+    fn from(addr: &'a Addr) -> Self {
+        Cow::Borrowed(addr)
     }
 }
 
@@ -622,5 +635,22 @@ mod tests {
         let set1 = HashSet::<CanonicalAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
         let set2 = HashSet::from_iter(vec![alice1, alice2, bob]);
         assert_eq!(set1, set2);
+    }
+
+    // helper to show we can handle Addr and &Addr equally
+    fn flexible<'a>(a: impl Into<Cow<'a, Addr>>) -> String {
+        a.into().into_owned().to_string()
+    }
+
+    #[test]
+    fn addr_into_cow() {
+        // owned Addr
+        let value = "wasmeucn0ur0ncny2308ry";
+        let addr = Addr::unchecked(value);
+
+        // pass by ref
+        assert_eq!(value, &flexible(&addr));
+        // pass by value
+        assert_eq!(value, &flexible(addr));
     }
 }
