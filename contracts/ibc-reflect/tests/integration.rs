@@ -27,7 +27,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::testing::{
     ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env, mock_info,
-    mock_instance, query, reply, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+    mock_instance, query, reply, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 
