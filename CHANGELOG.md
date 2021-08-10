@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Added `From<Addr>` and `From<&Addr>` conversions for `Cow<Addr>`.
+
 ## [0.16.0] - 2021-08-05
 
 ### Added
