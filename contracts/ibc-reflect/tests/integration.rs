@@ -27,7 +27,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::testing::{
     ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env, mock_info,
-    mock_instance, query, reply, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+    mock_instance, query, reply, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 
@@ -60,9 +60,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 }
 
 fn fake_events(reflect_addr: &str) -> Vec<Event> {
-    let event = Event::new("message").add_attributes(vec![
-        attr("module", "wasm"),
-        attr("signer", MOCK_CONTRACT_ADDR),
+    let event = Event::new("instantiate").add_attributes(vec![
         attr("code_id", "17"),
         // We have to force this one to avoid the debug assertion against _
         mock_wasmd_attr("_contract_address", reflect_addr),

@@ -43,11 +43,11 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
     }
 }
 
-// see https://github.com/CosmWasm/wasmd/blob/408bba14a5c6d583abe32ffb235a364130136298/x/wasm/keeper/msg_server.go#L63-L69
+// updated with https://github.com/CosmWasm/wasmd/pull/586 (emitted in keeper.Instantiate)
 fn parse_contract_from_event(events: Vec<Event>) -> Option<String> {
     events
         .into_iter()
-        .find(|e| e.ty == "message")
+        .find(|e| e.ty == "instantiate")
         .and_then(|ev| {
             ev.attributes
                 .into_iter()
@@ -355,9 +355,7 @@ mod tests {
     }
 
     fn fake_events(reflect_addr: &str) -> Vec<Event> {
-        let event = Event::new("message").add_attributes(vec![
-            attr("module", "wasm"),
-            attr("signer", MOCK_CONTRACT_ADDR),
+        let event = Event::new("instantiate").add_attributes(vec![
             attr("code_id", "17"),
             // We have to force this one to avoid the debug assertion against _
             mock_wasmd_attr("_contract_address", reflect_addr),
