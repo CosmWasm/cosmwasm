@@ -721,7 +721,7 @@ mod tests {
             );
             assert_eq!(ReplyOn::Success, res.messages[0].reply_on);
             let id = res.messages[0].id;
-            let event = Event::new("message").add_attributes(vec![
+            let event = Event::new("instantiate").add_attributes(vec![
                 // We have to force this one to avoid the debug assertion against _
                 mock_wasmd_attr("_contract_address", account),
             ]);
