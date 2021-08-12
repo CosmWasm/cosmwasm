@@ -655,10 +655,11 @@ mod tests {
     fn implements_debug() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
         let embedded = format!("Debug: {:?}", error);
-        assert_eq!(
-            embedded,
-            r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" } }"#
-        );
+        #[cfg(not(feature = "backtraces"))]
+        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" } }"#;
+        #[cfg(feature = "backtraces")]
+        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" }, backtrace: <disabled> }"#;
+        assert_eq!(embedded, expected);
     }
 
     #[test]
