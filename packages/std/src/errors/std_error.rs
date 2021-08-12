@@ -659,10 +659,7 @@ mod tests {
         let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" } }"#;
         #[cfg(feature = "backtraces")]
         let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" }, backtrace: <disabled> }"#;
-        assert_eq!(
-            embedded,
-            expected
-        );
+        assert_eq!(embedded, expected);
     }
 
     #[test]
