@@ -8,6 +8,12 @@ use crate::operators::OperatorSymbol;
 #[derive(Debug, Hash, PartialEq, Eq, MemoryUsage, Copy, Clone)]
 pub struct BlockId(pub u64);
 
+impl BlockId {
+    pub fn as_u64(&self) -> u64 {
+        self.0
+    }
+}
+
 impl From<u64> for BlockId {
     fn from(hash: u64) -> Self {
         Self(hash)

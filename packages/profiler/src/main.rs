@@ -1,6 +1,6 @@
 mod code_blocks;
+mod instrumentation;
 mod measure;
-mod middleware;
 mod operators;
 mod utils;
 
