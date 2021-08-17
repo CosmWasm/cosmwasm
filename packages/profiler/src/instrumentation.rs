@@ -2,11 +2,26 @@ use std::sync::{Arc, Mutex};
 
 use loupe::MemoryUsage;
 use wasmer::{
-    wasmparser::Operator, FunctionMiddleware, FunctionType, ModuleMiddleware, Type, ValueType,
+    wasmparser::Operator, FunctionMiddleware, FunctionType, LocalFunctionIndex, ModuleMiddleware,
+    Type, ValueType,
 };
 use wasmer_types::{FunctionIndex, ImportIndex};
 
 use crate::{code_blocks::BlockStore, operators::OperatorSymbol};
+
+/// Add the imports we need to make instrumentation work.
+/// Returns the ids for both fns.
+fn add_imports(module: &mut walrus::Module) -> (usize, usize) {
+    use walrus::ValType::*;
+
+    let start_type = module.types.add(&[I32, I32], &[]);
+    let take_type = module.types.add(&[I32, I32, I64], &[]);
+
+    let (fn1, _) = module.add_import_func("profiling", "start_measurement", start_type);
+    let (fn2, _) = module.add_import_func("profiling", "take_measurement", take_type);
+
+    (fn1.index(), fn2.index())
+}
 
 #[non_exhaustive]
 #[derive(Debug, MemoryUsage)]
@@ -27,11 +42,12 @@ impl Profiling {
 impl ModuleMiddleware for Profiling {
     fn generate_function_middleware(
         &self,
-        _local_function_index: wasmer::LocalFunctionIndex,
+        local_function_index: wasmer::LocalFunctionIndex,
     ) -> Box<dyn wasmer::FunctionMiddleware> {
         Box::new(FunctionProfiling::new(
             self.block_store.clone(),
             self.indexes.lock().unwrap().clone().unwrap(),
+            local_function_index,
         ))
     }
 
@@ -42,35 +58,33 @@ impl ModuleMiddleware for Profiling {
             panic!("Profiling::transform_module_info: Attempting to use a `Profiling` middleware from multiple modules.");
         }
 
-        let sig = module_info
-            .signatures
-            .push(FunctionType::new([Type::I32, Type::I32], []));
-        let fn1 = module_info.functions.push(sig);
-        let import_index = module_info.imports().len();
-        module_info.imports.insert(
-            (
-                "profiling".to_string(),
-                "start_measurement".to_string(),
-                import_index as u32,
-            ),
-            ImportIndex::Function(fn1),
-        );
+        let fn1 = module_info
+            .imports
+            .iter()
+            .find_map(|((module, field, _), index)| {
+                if (module.as_str(), field.as_str()) == ("profiling", "start_measurement") {
+                    if let ImportIndex::Function(fn_index) = index {
+                        return Some(fn_index);
+                    }
+                }
+                None
+            })
+            .unwrap()
+            .clone();
 
-        let sig = module_info
-            .signatures
-            .push(FunctionType::new([Type::I32, Type::I32, Type::I64], []));
-        let fn2 = module_info.functions.push(sig);
-        let import_index = module_info.imports().len();
-        module_info.imports.insert(
-            (
-                "profiling".to_string(),
-                "take_measurement".to_string(),
-                import_index as u32,
-            ),
-            ImportIndex::Function(fn2),
-        );
-
-        module_info.num_imported_functions += 2;
+        let fn2 = module_info
+            .imports
+            .iter()
+            .find_map(|((module, field, _), index)| {
+                if (module.as_str(), field.as_str()) == ("profiling", "take_measurement") {
+                    if let ImportIndex::Function(fn_index) = index {
+                        return Some(fn_index);
+                    }
+                }
+                None
+            })
+            .unwrap()
+            .clone();
 
         *indexes = Some(ProfilingIndexes {
             start_measurement: fn1,
@@ -84,14 +98,22 @@ struct FunctionProfiling {
     block_store: Arc<Mutex<BlockStore>>,
     accumulated_ops: Vec<OperatorSymbol>,
     indexes: ProfilingIndexes,
+    block_count: u32,
+    fn_index: LocalFunctionIndex,
 }
 
 impl FunctionProfiling {
-    fn new(block_store: Arc<Mutex<BlockStore>>, indexes: ProfilingIndexes) -> Self {
+    fn new(
+        block_store: Arc<Mutex<BlockStore>>,
+        indexes: ProfilingIndexes,
+        fn_index: LocalFunctionIndex,
+    ) -> Self {
         Self {
             block_store,
             accumulated_ops: Vec::new(),
             indexes,
+            block_count: 0,
+            fn_index,
         }
     }
 }
@@ -119,16 +141,23 @@ impl FunctionMiddleware for FunctionProfiling {
                     let block_id = store.register_block(std::mem::take(&mut self.accumulated_ops));
 
                     // We're at the end of a code block. Finalize the measurement.
+                    state.extend(&[
+                        Operator::I32Const { value: self.fn_index.as_u32() as i32 },
+                        Operator::I32Const { value: self.block_count as i32 },
+                        Operator::I64Const { value: block_id.as_u64() as i64 },
+                        Operator::Call{ function_index: self.indexes.take_measurement.as_u32() },
+                    ]);
                 }
             }
             _ => {
                 if self.accumulated_ops.is_empty() {
                     // We know we're at the beginning of a code block.
                     // Call start_measurement before executing it.
-                    // state.extend(&[
-                    //     Operator::I64Const { value:  },
-                    //     Operator::Call{ function_index: self.indexes.start_measurement.as_u32() },
-                    // ]);
+                    state.extend(&[
+                        Operator::I32Const { value: self.fn_index.as_u32() as i32 },
+                        Operator::I32Const { value: self.block_count as i32 },
+                        Operator::Call{ function_index: self.indexes.start_measurement.as_u32() },
+                    ]);
                 }
                 self.accumulated_ops.push((&operator).into());
             }
@@ -154,6 +183,7 @@ mod tests {
     use std::sync::Arc;
     use wasmer::{
         imports, wat2wasm, CompilerConfig, Cranelift, Function, Instance, Module, Store, Universal,
+        WasmerEnv,
     };
     use wasmer_types::Value;
 
@@ -180,6 +210,34 @@ mod tests {
     struct Fixture {
         profiling: Arc<Profiling>,
         instance: Instance,
+        start_env: StartEnv,
+        end_env: EndEnv,
+    }
+
+    #[derive(Debug, Clone, WasmerEnv)]
+    struct StartEnv {
+        calls: Arc<Mutex<Vec<(u32, u32)>>>,
+    }
+
+    impl StartEnv {
+        fn new() -> Self {
+            Self {
+                calls: Arc::new(Mutex::new(Vec::new())),
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, WasmerEnv)]
+    struct EndEnv {
+        calls: Arc<Mutex<Vec<(u32, u32, u64)>>>,
+    }
+
+    impl EndEnv {
+        fn new() -> Self {
+            Self {
+                calls: Arc::new(Mutex::new(Vec::new())),
+            }
+        }
     }
 
     impl Fixture {
@@ -191,13 +249,20 @@ mod tests {
             compiler_config.push_middleware(profiling.clone());
             let store = Store::new(&Universal::new(compiler_config).engine());
             let wasm = wat2wasm(WAT).unwrap();
+            let mut module = walrus::Module::from_buffer(&wasm).unwrap();
+            add_imports(&mut module);
+            let wasm = module.emit_wasm();
             let module = Module::new(&store, wasm).unwrap();
+
+            // Create counters of import calls.
+            let start_env = StartEnv::new();
+            let end_env = EndEnv::new();
 
             // Mock imports that do nothing.
             let imports = imports! {
                 "profiling" => {
-                    "start_measurement" => Function::new_native(&store, |_: u32, _: u32| {println!("start measuring")}),
-                    "take_measurement" => Function::new_native(&store, |_: u32, _: u32, _: u64| {}),
+                    "start_measurement" => Function::new_native_with_env(&store, start_env.clone(), |env: &StartEnv, fun: u32, block: u32| { env.calls.lock().unwrap().push((fun, block)); }),
+                    "take_measurement" => Function::new_native_with_env(&store, end_env.clone(), |env: &EndEnv, fun: u32, block: u32, hash: u64| { env.calls.lock().unwrap().push((fun, block, hash)); }),
                 }
             };
             let instance = Instance::new(&module, &imports).unwrap();
@@ -205,6 +270,8 @@ mod tests {
             Self {
                 profiling,
                 instance,
+                start_env,
+                end_env,
             }
         }
 
@@ -218,7 +285,7 @@ mod tests {
     }
 
     #[test]
-    fn middleware_registers_code_blocks() {
+    fn instrumentation_does_not_mess_up_local_fns() {
         let fixture = Fixture::new();
 
         let result = fixture.add_one().call(&[Value::I32(42)]).unwrap();
@@ -226,6 +293,11 @@ mod tests {
 
         let result = fixture.multisub().call(&[Value::I32(4)]).unwrap();
         assert_eq!(result[0], Value::I32(6));
+    }
+
+    #[test]
+    fn instrumentation_registers_code_blocks() {
+        let fixture = Fixture::new();
 
         let block_store = fixture.profiling.block_store.lock().unwrap();
         assert_eq!(block_store.len(), 4);
@@ -262,5 +334,27 @@ mod tests {
             CodeBlock::from(vec![OperatorSymbol::I32Const, OperatorSymbol::I32Sub]);
         let block = block_store.get_block(expected_block.get_hash());
         assert_eq!(block, Some(&expected_block));
+    }
+
+    #[test]
+    fn instrumentation_calls_imports() {
+        let fixture = Fixture::new();
+
+        fixture.add_one().call(&[Value::I32(42)]).unwrap();
+        fixture.multisub().call(&[Value::I32(4)]).unwrap();
+
+        let start_measurement_calls = fixture.start_env.calls.lock().unwrap();
+        let take_measurement_calls = fixture.end_env.calls.lock().unwrap();
+
+        assert_eq!(*start_measurement_calls, [(1, 0), (0, 0), (2, 0), (0, 0)]);
+        assert_eq!(
+            *take_measurement_calls,
+            [
+                (1, 0, 8893795678467789947),
+                (0, 0, 14205319683222620312),
+                (2, 0, 10205745157157101990),
+                (0, 0, 13601349546502136404)
+            ]
+        );
     }
 }
