@@ -1,13 +1,79 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use loupe::MemoryUsage;
 use wasmer::{
-    wasmparser::Operator, FunctionMiddleware, FunctionType, LocalFunctionIndex, ModuleMiddleware,
-    Type, ValueType,
+    imports, internals::WithEnv, wasmparser::Operator, CompilerConfig, Cranelift, Function,
+    FunctionMiddleware, HostFunction, Instance, LocalFunctionIndex, ModuleMiddleware, Store, Type,
+    Universal, ValueType, WasmerEnv,
 };
 use wasmer_types::{FunctionIndex, ImportIndex};
 
 use crate::{code_blocks::BlockStore, operators::OperatorSymbol};
+
+pub enum Module<'d> {
+    Path(&'d Path),
+    Bytes(&'d [u8]),
+}
+
+impl<'d> Module<'d> {
+    pub fn from_path(path: &'d impl AsRef<Path>) -> Self {
+        Self::Path(path.as_ref())
+    }
+
+    pub fn from_bytes(bytes: &'d [u8]) -> Self {
+        Self::Bytes(bytes)
+    }
+
+    pub fn instrument<Env, F1, F2>(
+        &self,
+        env: Env,
+        start_measurement_fn: F1,
+        take_measurement_fn: F2,
+    ) -> InstrumentedInstance<Env>
+    where
+        Env: WasmerEnv + 'static,
+        F1: HostFunction<(u32, u32), (), WithEnv, Env>,
+        F2: HostFunction<(u32, u32, u64), (), WithEnv, Env>,
+    {
+        let profiling = Arc::new(Profiling::new());
+
+        // Create the module with our middleware.
+        let mut compiler_config = Cranelift::default();
+        compiler_config.push_middleware(profiling.clone());
+        let store = Store::new(&Universal::new(compiler_config).engine());
+        let mut walrus_module = match self {
+            Module::Path(path) => walrus::Module::from_file(path).unwrap(),
+            Module::Bytes(bytes) => walrus::Module::from_buffer(bytes).unwrap(),
+        };
+        add_imports(&mut walrus_module);
+        let wasm = walrus_module.emit_wasm();
+        let wasmer_module = wasmer::Module::new(&store, wasm).unwrap();
+
+        // Mock imports that do nothing.
+        let imports = imports! {
+            "profiling" => {
+                "start_measurement" => Function::new_native_with_env(&store, env.clone(), start_measurement_fn),
+                "take_measurement" => Function::new_native_with_env(&store, env.clone(), take_measurement_fn),
+            }
+        };
+        let instance = Instance::new(&wasmer_module, &imports).unwrap();
+
+        InstrumentedInstance {
+            profiling,
+            instance,
+            env,
+        }
+    }
+}
+
+pub struct InstrumentedInstance<Env: WasmerEnv> {
+    profiling: Arc<Profiling>,
+    instance: Instance,
+    env: Env,
+}
 
 /// Add the imports we need to make instrumentation work.
 /// Returns the ids for both fns.
@@ -181,10 +247,7 @@ mod tests {
     use crate::code_blocks::CodeBlock;
 
     use std::sync::Arc;
-    use wasmer::{
-        imports, wat2wasm, CompilerConfig, Cranelift, Function, Instance, Module, Store, Universal,
-        WasmerEnv,
-    };
+    use wasmer::{wat2wasm, WasmerEnv};
     use wasmer_types::Value;
 
     const WAT: &[u8] = br#"
@@ -208,79 +271,56 @@ mod tests {
     "#;
 
     struct Fixture {
-        profiling: Arc<Profiling>,
-        instance: Instance,
-        start_env: StartEnv,
-        end_env: EndEnv,
+        instance: InstrumentedInstance<FixtureEnv>,
     }
 
     #[derive(Debug, Clone, WasmerEnv)]
-    struct StartEnv {
-        calls: Arc<Mutex<Vec<(u32, u32)>>>,
+    struct FixtureEnv {
+        start_calls: Arc<Mutex<Vec<(u32, u32)>>>,
+        end_calls: Arc<Mutex<Vec<(u32, u32, u64)>>>,
     }
 
-    impl StartEnv {
+    impl FixtureEnv {
         fn new() -> Self {
             Self {
-                calls: Arc::new(Mutex::new(Vec::new())),
-            }
-        }
-    }
-
-    #[derive(Debug, Clone, WasmerEnv)]
-    struct EndEnv {
-        calls: Arc<Mutex<Vec<(u32, u32, u64)>>>,
-    }
-
-    impl EndEnv {
-        fn new() -> Self {
-            Self {
-                calls: Arc::new(Mutex::new(Vec::new())),
+                start_calls: Arc::new(Mutex::new(Vec::new())),
+                end_calls: Arc::new(Mutex::new(Vec::new())),
             }
         }
     }
 
     impl Fixture {
         fn new() -> Self {
-            let profiling = Arc::new(Profiling::new());
-
-            // Create the module with our middleware.
-            let mut compiler_config = Cranelift::default();
-            compiler_config.push_middleware(profiling.clone());
-            let store = Store::new(&Universal::new(compiler_config).engine());
             let wasm = wat2wasm(WAT).unwrap();
-            let mut module = walrus::Module::from_buffer(&wasm).unwrap();
-            add_imports(&mut module);
-            let wasm = module.emit_wasm();
-            let module = Module::new(&store, wasm).unwrap();
+            let module = Module::from_bytes(&wasm);
 
-            // Create counters of import calls.
-            let start_env = StartEnv::new();
-            let end_env = EndEnv::new();
-
-            // Mock imports that do nothing.
-            let imports = imports! {
-                "profiling" => {
-                    "start_measurement" => Function::new_native_with_env(&store, start_env.clone(), |env: &StartEnv, fun: u32, block: u32| { env.calls.lock().unwrap().push((fun, block)); }),
-                    "take_measurement" => Function::new_native_with_env(&store, end_env.clone(), |env: &EndEnv, fun: u32, block: u32, hash: u64| { env.calls.lock().unwrap().push((fun, block, hash)); }),
-                }
+            let env = FixtureEnv::new();
+            let start_measurement_fn = |env: &FixtureEnv, fun: u32, block: u32| {
+                env.start_calls.lock().unwrap().push((fun, block));
             };
-            let instance = Instance::new(&module, &imports).unwrap();
+            let take_measurement_fn = |env: &FixtureEnv, fun: u32, block: u32, hash: u64| {
+                env.end_calls.lock().unwrap().push((fun, block, hash));
+            };
 
             Self {
-                profiling,
-                instance,
-                start_env,
-                end_env,
+                instance: module.instrument(env, start_measurement_fn, take_measurement_fn),
             }
         }
 
         fn add_one(&self) -> &wasmer::Function {
-            self.instance.exports.get_function("add_one").unwrap()
+            self.instance
+                .instance
+                .exports
+                .get_function("add_one")
+                .unwrap()
         }
 
         fn multisub(&self) -> &wasmer::Function {
-            self.instance.exports.get_function("multisub").unwrap()
+            self.instance
+                .instance
+                .exports
+                .get_function("multisub")
+                .unwrap()
         }
     }
 
@@ -299,7 +339,7 @@ mod tests {
     fn instrumentation_registers_code_blocks() {
         let fixture = Fixture::new();
 
-        let block_store = fixture.profiling.block_store.lock().unwrap();
+        let block_store = fixture.instance.profiling.block_store.lock().unwrap();
         assert_eq!(block_store.len(), 4);
 
         // The body of $add_one.
@@ -337,14 +377,14 @@ mod tests {
     }
 
     #[test]
-    fn instrumentation_calls_imports() {
+    fn instrumentation_works() {
         let fixture = Fixture::new();
 
         fixture.add_one().call(&[Value::I32(42)]).unwrap();
         fixture.multisub().call(&[Value::I32(4)]).unwrap();
 
-        let start_measurement_calls = fixture.start_env.calls.lock().unwrap();
-        let take_measurement_calls = fixture.end_env.calls.lock().unwrap();
+        let start_measurement_calls = fixture.instance.env.start_calls.lock().unwrap();
+        let take_measurement_calls = fixture.instance.env.end_calls.lock().unwrap();
 
         assert_eq!(*start_measurement_calls, [(1, 0), (0, 0), (2, 0), (0, 0)]);
         assert_eq!(
