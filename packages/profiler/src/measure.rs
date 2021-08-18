@@ -20,12 +20,6 @@ impl Measurements {
             .insert_push((fn_index, local_block_id), time::Instant::now());
     }
 
-    // TODO: This is... not thread-safe, is it? Should this be implemented
-    // on something like Mutex<Self>?
-    pub fn start_measurement_fn<'a>(&'a mut self) -> impl FnMut(u32, u32) + 'a {
-        move |fn_index, local_block_id| self.start_measurement(fn_index, local_block_id)
-    }
-
     // TODO: Error handling? This will be called from Wasm code probably.
     pub fn take_measurement(
         &mut self,
@@ -41,13 +35,6 @@ impl Measurements {
                 self.taken.insert_push(block_id.into(), start.elapsed());
             }
             None => panic!("trying to finalize a measurement that was never started"),
-        }
-    }
-
-    // TODO: This is... not thread-safe, is it?
-    pub fn take_measurement_fn<'a>(&'a mut self) -> impl FnMut(u32, u32, u64) + 'a {
-        move |fn_index, local_block_id, block_id| {
-            self.take_measurement(fn_index, local_block_id, block_id)
         }
     }
 }
