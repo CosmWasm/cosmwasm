@@ -1,7 +1,4 @@
-use std::{
-    path::Path,
-    sync::{Arc, Mutex},
-};
+use std::{path::Path, sync::{Arc, Mutex, MutexGuard}};
 
 use loupe::MemoryUsage;
 use wasmer::{
@@ -73,6 +70,12 @@ pub struct InstrumentedInstance<Env: WasmerEnv> {
     profiling: Arc<Profiling>,
     instance: Instance,
     env: Env,
+}
+
+impl<Env: WasmerEnv> InstrumentedInstance<Env> {
+    pub fn block_store(&self) -> MutexGuard<BlockStore> {
+        self.profiling.block_store.lock().unwrap()
+    }
 }
 
 /// Add the imports we need to make instrumentation work.

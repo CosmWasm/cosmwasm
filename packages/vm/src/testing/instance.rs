@@ -2,7 +2,9 @@
 //! They should be imported via full path to ensure there is no confusion
 //! use cosmwasm_vm::testing::X
 use cosmwasm_std::Coin;
+use wasmer::ModuleMiddleware;
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
@@ -75,6 +77,17 @@ pub fn mock_instance_with_gas_limit(
     )
 }
 
+pub fn mock_instance_with_middlewares(
+    wasm: &[u8],
+    middlewares: &[Arc<dyn ModuleMiddleware>],
+) -> Instance<MockApi, MockStorage, MockQuerier> {
+    mock_instance_with_options_and_middlewares(
+        wasm,
+        MockInstanceOptions::default(),
+        middlewares,
+    )
+}
+
 #[derive(Debug)]
 pub struct MockInstanceOptions<'a> {
     // dependencies
@@ -125,6 +138,14 @@ pub fn mock_instance_with_options(
     wasm: &[u8],
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
+    mock_instance_with_options_and_middlewares(wasm, options, &[])
+}
+
+pub fn mock_instance_with_options_and_middlewares(
+    wasm: &[u8],
+    options: MockInstanceOptions,
+    middlewares: &[Arc<dyn ModuleMiddleware>],
+) -> Instance<MockApi, MockStorage, MockQuerier> {
     check_wasm(wasm, &options.supported_features).unwrap();
     let contract_address = MOCK_CONTRACT_ADDR;
 
@@ -154,7 +175,7 @@ pub fn mock_instance_with_options(
         gas_limit: options.gas_limit,
         print_debug: options.print_debug,
     };
-    Instance::from_code(wasm, backend, options, memory_limit).unwrap()
+    Instance::from_code_with_middlewares(wasm, backend, options, memory_limit, middlewares).unwrap()
 }
 
 /// Creates InstanceOptions for testing

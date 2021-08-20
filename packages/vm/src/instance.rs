@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 use std::ptr::NonNull;
+use std::sync::Arc;
 
-use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
+use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, ModuleMiddleware, Val};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -17,7 +18,7 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::compile;
+use crate::wasm_backend::{compile, compile_with_middlewares};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -64,6 +65,17 @@ where
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
         let module = compile(code, memory_limit)?;
+        Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
+    }
+
+    pub fn from_code_with_middlewares(
+        code: &[u8],
+        backend: Backend<A, S, Q>,
+        options: InstanceOptions,
+        memory_limit: Option<Size>,
+        middlewares: &[Arc<dyn ModuleMiddleware>],
+    ) -> VmResult<Self> {
+        let module = compile_with_middlewares(code, memory_limit, middlewares)?;
         Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 

@@ -8,6 +8,12 @@ use crate::operators::OperatorSymbol;
 #[derive(Debug, Hash, PartialEq, Eq, MemoryUsage, Copy, Clone)]
 pub struct BlockId(pub u64);
 
+impl std::fmt::Display for BlockId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl BlockId {
     pub fn as_u64(&self) -> u64 {
         self.0

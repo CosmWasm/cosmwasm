@@ -10,12 +10,13 @@ use crate::{
 
 use wasmer::WasmerEnv;
 
-pub struct ProfiledInstance {
+pub struct InstanceRunner {
     instance: InstrumentedInstance<ProfilingEnv>,
     measurements: Arc<Mutex<Measurements>>,
+
 }
 
-impl ProfiledInstance {
+impl InstanceRunner {
     pub fn from_path(path: &impl AsRef<Path>) -> Self {
         Self::new(Module::from_path(path))
     }
@@ -46,6 +47,27 @@ impl ProfiledInstance {
         Self {
             instance,
             measurements,
+        }
+    }
+
+    pub fn print_results(&self) {
+        let measurements = self.measurements.lock().unwrap();
+        let store = self.instance.block_store();
+
+        for (block_hash, durations) in measurements.taken.iter() {
+            if let Some(block) = store.get_block(*block_hash) {
+                let sum: std::time::Duration = durations.iter().sum();
+                let average = sum/durations.len() as u32;
+                let execution_count = durations.len();
+
+                println!("-----");
+                println!("Block {} - avg {}ms - {} executions", block_hash, average.as_millis(), execution_count);
+                println!("");
+                println!("(ops go here)");
+                println!("-----");
+            } else {
+                println!("Warning: block {} not found", block_hash);
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
-use wasmer::Module;
+use std::sync::Arc;
+
+use wasmer::{Module, ModuleMiddleware};
 
 use crate::errors::VmResult;
 use crate::size::Size;
@@ -10,7 +12,13 @@ use super::store::make_compile_time_store;
 /// If no memory limit is passed, the resulting compiled module should
 /// not be used for execution.
 pub fn compile(code: &[u8], memory_limit: Option<Size>) -> VmResult<Module> {
-    let store = make_compile_time_store(memory_limit);
+    let store = make_compile_time_store(memory_limit, &[]);
+    let module = Module::new(&store, code)?;
+    Ok(module)
+}
+
+pub fn compile_with_middlewares(code: &[u8], memory_limit: Option<Size>, middlewares: &[Arc<dyn ModuleMiddleware>]) -> VmResult<Module> {
+    let store = make_compile_time_store(memory_limit, middlewares);
     let module = Module::new(&store, code)?;
     Ok(module)
 }
