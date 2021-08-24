@@ -160,12 +160,12 @@ pub fn ibc_channel_connect(
         code_id: cfg.reflect_code_id,
         msg: b"{}".into(),
         funds: vec![],
-        label: format!("ibc-reflect-{}", &chan_id),
+        label: format!("ibc-reflect-{}", chan_id),
     };
     let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
 
     // store the channel id for the reply handler
-    pending_channel(deps.storage).save(&chan_id)?;
+    pending_channel(deps.storage).save(chan_id)?;
 
     Ok(IbcBasicResponse::new()
         .add_submessage(msg)
@@ -463,7 +463,7 @@ mod tests {
         let response = Reply {
             id,
             result: ContractResult::Ok(SubMsgExecutionResponse {
-                events: fake_events(&REFLECT_ADDR),
+                events: fake_events(REFLECT_ADDR),
                 data: None,
             }),
         };
@@ -551,7 +551,7 @@ mod tests {
             assert_eq!(account, contract_addr.as_str());
             assert_eq!(0, funds.len());
             // parse the message - should callback with proper channel_id
-            let rmsg: ReflectExecuteMsg = from_slice(&msg).unwrap();
+            let rmsg: ReflectExecuteMsg = from_slice(msg).unwrap();
             assert_eq!(
                 rmsg,
                 ReflectExecuteMsg::ReflectMsg {

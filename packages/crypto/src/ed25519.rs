@@ -25,7 +25,7 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 
     // Verification
     match VerificationKey::try_from(pubkey)
-        .and_then(|vk| vk.verify(&Signature::from(signature), &message))
+        .and_then(|vk| vk.verify(&Signature::from(signature), message))
     {
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
@@ -184,7 +184,7 @@ mod tests {
         let message = MSG.as_bytes();
         // Signing
         let secret_key = SigningKey::new(&mut OsRng);
-        let signature = secret_key.sign(&message);
+        let signature = secret_key.sign(message);
 
         let public_key = VerificationKey::from(&secret_key);
 
@@ -193,7 +193,7 @@ mod tests {
         let public_key_bytes: [u8; 32] = public_key.into();
 
         // Verification
-        assert!(ed25519_verify(&message, &signature_bytes, &public_key_bytes).unwrap());
+        assert!(ed25519_verify(message, &signature_bytes, &public_key_bytes).unwrap());
 
         // Wrong message fails
         let bad_message = [message, b"\0"].concat();
@@ -203,7 +203,7 @@ mod tests {
         let other_secret_key = SigningKey::new(&mut OsRng);
         let other_public_key = VerificationKey::from(&other_secret_key);
         let other_public_key_bytes: [u8; 32] = other_public_key.into();
-        assert!(!ed25519_verify(&message, &signature_bytes, &other_public_key_bytes).unwrap());
+        assert!(!ed25519_verify(message, &signature_bytes, &other_public_key_bytes).unwrap());
     }
 
     #[test]
@@ -220,7 +220,7 @@ mod tests {
                 .as_slice(),
         )
         .unwrap();
-        let signature = secret_key.sign(&COSMOS_ED25519_MSG.as_bytes());
+        let signature = secret_key.sign(COSMOS_ED25519_MSG.as_bytes());
 
         let signature_bytes: [u8; 64] = signature.into();
         let public_key_bytes: [u8; 32] = public_key.into();
@@ -233,7 +233,7 @@ mod tests {
         );
 
         assert!(ed25519_verify(
-            &COSMOS_ED25519_MSG.as_bytes(),
+            COSMOS_ED25519_MSG.as_bytes(),
             &signature_bytes,
             &public_key_bytes
         )

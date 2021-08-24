@@ -180,7 +180,7 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
     let required_features = required_features_from_module(module);
     if !required_features.is_subset(supported_features) {
         // We switch to BTreeSet to get a sorted error message
-        let unsupported: BTreeSet<_> = required_features.difference(&supported_features).collect();
+        let unsupported: BTreeSet<_> = required_features.difference(supported_features).collect();
         return Err(VmError::static_validation_err(format!(
             "Wasm contract requires unsupported features: {}",
             unsupported.to_string_limited(200)

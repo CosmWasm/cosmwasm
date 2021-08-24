@@ -1,6 +1,6 @@
-version: 2
+version: 2.1
+
 workflows:
-  version: 2
   test:
     # Keep those job names in sync with .mergify.yml
     jobs:
@@ -20,7 +20,11 @@ workflows:
       - contract_staking
       - fmt
       - fmt_extra
-      - clippy
+      - clippy:
+          matrix:
+            parameters:
+              # Run with MSRV and some modern stable Rust
+              rust-version: ["1.51.0", "1.54.0"]
       - benchmarking:
           requires:
             - package_vm
@@ -746,10 +750,13 @@ jobs:
           command: devtools/format_yml.sh -c
 
   clippy:
+    parameters:
+      rust-version:
+        type: string
     docker:
       # In this job we use the latest Rust stable in order to check against the
       # most recent code style recommendations.
-      - image: rust:1.51.0
+      - image: rust:<< parameters.rust-version >>
     steps:
       - checkout
       - run:
@@ -757,7 +764,7 @@ jobs:
           command: rustc --version && cargo --version
       - restore_cache:
           keys:
-            - cargocache-v2-clippy-rust:1.51.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - cargocache-v2-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -892,7 +899,7 @@ jobs:
             - contracts/staking/target/debug/.fingerprint
             - contracts/staking/target/debug/build
             - contracts/staking/target/debug/deps
-          key: cargocache-v2-clippy-rust:1.51.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: cargocache-v2-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
 
   benchmarking:
     docker:
