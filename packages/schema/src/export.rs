@@ -26,14 +26,14 @@ pub fn export_schema_with_title(schema: &RootSchema, out_dir: &Path, title: &str
     if let Some(metadata) = &mut schema.schema.metadata {
         metadata.title = Some(title.to_string());
     }
-    write_schema(&schema, out_dir, &title);
+    write_schema(&schema, out_dir, title);
 }
 
 /// Writes schema to file. Overwrites existing file.
 /// Panics on any error writing out the schema.
 fn write_schema(schema: &RootSchema, out_dir: &Path, title: &str) {
     // first, we set the title as we wish
-    let path = out_dir.join(format!("{}.json", to_snake_case(&title)));
+    let path = out_dir.join(format!("{}.json", to_snake_case(title)));
     let json = serde_json::to_string_pretty(schema).unwrap();
     write(&path, json + "\n").unwrap();
     println!("Created {}", path.to_str().unwrap());

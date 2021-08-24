@@ -16,7 +16,7 @@ pub fn currval(seq: &Singleton<u64>) -> StdResult<u64> {
 /// nextval increments the counter by 1 and returns the new value.
 /// On the first time it is called (no sequence info in db) it will return 1.
 pub fn nextval(seq: &mut Singleton<u64>) -> StdResult<u64> {
-    let val = currval(&seq)? + 1;
+    let val = currval(seq)? + 1;
     seq.save(&val)?;
     Ok(val)
 }

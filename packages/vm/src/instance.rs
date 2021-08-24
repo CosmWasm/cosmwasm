@@ -393,7 +393,7 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let instance = mock_instance(&CONTRACT, &[]);
+        let instance = mock_instance(CONTRACT, &[]);
 
         instance
             .call_function0("interface_version_7", &[])
@@ -402,7 +402,7 @@ mod tests {
 
     #[test]
     fn call_function1_works() {
-        let instance = mock_instance(&CONTRACT, &[]);
+        let instance = mock_instance(CONTRACT, &[]);
 
         // can call function few times
         let result = instance
@@ -424,7 +424,7 @@ mod tests {
     #[test]
     fn allocate_deallocate_works() {
         let mut instance = mock_instance_with_options(
-            &CONTRACT,
+            CONTRACT,
             MockInstanceOptions {
                 memory_limit: Some(Size::mebi(500)),
                 ..Default::default()
@@ -451,7 +451,7 @@ mod tests {
 
     #[test]
     fn write_and_read_memory_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -484,7 +484,7 @@ mod tests {
     fn errors_in_imports() {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
-        let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
+        let mut instance = mock_instance_with_failing_api(CONTRACT, &[], error_message);
         let init_result = call_instantiate::<_, _, _, serde_json::Value>(
             &mut instance,
             &mock_env(),
@@ -502,7 +502,7 @@ mod tests {
     fn read_memory_errors_when_when_length_is_too_long() {
         let length = 6;
         let max_length = 5;
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // Allocate sets length to 0. Write some data to increase length.
         let region_ptr = instance.allocate(length).expect("error allocating");
@@ -570,7 +570,7 @@ mod tests {
 
     #[test]
     fn memory_pages_grows_with_usage() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         assert_eq!(instance.memory_pages(), 17);
 
@@ -586,7 +586,7 @@ mod tests {
 
     #[test]
     fn get_gas_left_works() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
+        let instance = mock_instance_with_gas_limit(CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
@@ -594,7 +594,7 @@ mod tests {
     #[test]
     fn create_gas_report_works() {
         const LIMIT: u64 = 7_000_000;
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
+        let mut instance = mock_instance_with_gas_limit(CONTRACT, LIMIT);
 
         let report1 = instance.create_gas_report();
         assert_eq!(report1.used_externally, 0);
@@ -621,7 +621,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         assert!(instance.env.is_storage_readonly());
 
@@ -637,7 +637,7 @@ mod tests {
 
     #[test]
     fn with_storage_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // initial check
         instance
@@ -668,7 +668,7 @@ mod tests {
     #[should_panic]
     fn with_storage_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
@@ -678,7 +678,7 @@ mod tests {
     fn with_querier_works_readonly() {
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance)]);
+        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance)]);
 
         // query one
         instance
@@ -734,7 +734,7 @@ mod tests {
         let rich_addr = String::from("foobar");
         let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
         let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance1)]);
+        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance1)]);
 
         // Get initial state
         instance
@@ -799,7 +799,7 @@ mod singlepass_tests {
 
     #[test]
     fn contract_deducts_gas_init() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
         let orig_gas = instance.get_gas_left();
 
         // init contract
@@ -815,7 +815,7 @@ mod singlepass_tests {
 
     #[test]
     fn contract_deducts_gas_execute() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -838,7 +838,7 @@ mod singlepass_tests {
 
     #[test]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, 20_000);
+        let mut instance = mock_instance_with_gas_limit(CONTRACT, 20_000);
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -849,7 +849,7 @@ mod singlepass_tests {
 
     #[test]
     fn query_works_with_gas_metering() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));

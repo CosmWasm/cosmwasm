@@ -599,7 +599,7 @@ mod tests {
 
     #[test]
     fn call_instantiate_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -611,7 +611,7 @@ mod tests {
 
     #[test]
     fn call_execute_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn call_migrate_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -655,7 +655,7 @@ mod tests {
 
     #[test]
     fn call_query_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -739,12 +739,12 @@ mod tests {
         const ACCOUNT: &str = "account-456";
         #[test]
         fn call_ibc_channel_open_and_connect_works() {
-            let mut instance = mock_instance(&CONTRACT, &[]);
+            let mut instance = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
         }
         #[test]
         fn call_ibc_channel_close_works() {
-            let mut instance = mock_instance(&CONTRACT, &[]);
+            let mut instance = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let handshake_close =
                 mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
@@ -754,7 +754,7 @@ mod tests {
         }
         #[test]
         fn call_ibc_packet_ack_works() {
-            let mut instance = mock_instance(&CONTRACT, &[]);
+            let mut instance = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let ack = IbcAcknowledgement::new(br#"{}"#);
             let msg = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap();
@@ -764,7 +764,7 @@ mod tests {
         }
         #[test]
         fn call_ibc_packet_timeout_works() {
-            let mut instance = mock_instance(&CONTRACT, &[]);
+            let mut instance = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
             call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
@@ -773,7 +773,7 @@ mod tests {
         }
         #[test]
         fn call_ibc_packet_receive_works() {
-            let mut instance = mock_instance(&CONTRACT, &[]);
+            let mut instance = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
             let msg = mock_ibc_packet_recv(CHANNEL_ID, who_am_i).unwrap();

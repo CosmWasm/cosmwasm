@@ -747,7 +747,7 @@ mod tests {
         api.addr_canonicalize(&input).unwrap();
 
         let input = "foobar456";
-        api.addr_canonicalize(&input).unwrap();
+        api.addr_canonicalize(input).unwrap();
     }
 
     #[test]
@@ -955,8 +955,8 @@ mod tests {
         let signature = hex::decode(ED25519_SIG_HEX).unwrap();
         let public_key: Vec<u8> = vec![0u8; 0];
 
-        let msgs: Vec<&[u8]> = vec![&msg.as_slice()];
-        let signatures: Vec<&[u8]> = vec![&signature.as_slice()];
+        let msgs: Vec<&[u8]> = vec![msg.as_slice()];
+        let signatures: Vec<&[u8]> = vec![signature.as_slice()];
         let public_keys: Vec<&[u8]> = vec![&public_key];
 
         let res = api.ed25519_batch_verify(&msgs, &signatures, &public_keys);
