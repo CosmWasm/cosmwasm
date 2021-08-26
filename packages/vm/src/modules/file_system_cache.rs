@@ -140,7 +140,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let module = compile(&wasm, None).unwrap();
+        let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module

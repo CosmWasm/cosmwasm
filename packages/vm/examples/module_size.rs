@@ -69,7 +69,7 @@ pub fn main() {
 
 #[inline(never)]
 fn module_compile(wasm: &[u8], memory_limit: Option<Size>) -> Module {
-    compile(wasm, memory_limit).unwrap()
+    compile(wasm, memory_limit, &[]).unwrap()
 }
 
 #[inline(never)]

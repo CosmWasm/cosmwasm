@@ -62,7 +62,7 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let module = compile(code, memory_limit)?;
+        let module = compile(code, memory_limit, &[])?;
         Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 

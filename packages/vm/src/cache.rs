@@ -151,7 +151,7 @@ where
 
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
-        let module = compile(wasm, None)?;
+        let module = compile(wasm, None, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
@@ -224,7 +224,7 @@ where
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
-        let module = compile(&code, Some(cache.instance_memory_limit))?;
+        let module = compile(&code, Some(cache.instance_memory_limit), &[])?;
         // Store into the fs cache too
         cache.fs_cache.store(checksum, &module)?;
         let module_size = loupe::size_of_val(&module);
@@ -292,7 +292,7 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses += 1;
-        let module = compile(&wasm, Some(cache.instance_memory_limit))?;
+        let module = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         cache.fs_cache.store(checksum, &module)?;
