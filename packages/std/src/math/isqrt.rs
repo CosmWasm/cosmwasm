@@ -1,6 +1,6 @@
 use std::{cmp, ops};
 
-use crate::Uint128;
+use crate::{Uint128, Uint64};
 
 /// A trait for calculating the
 /// [integer square root](https://en.wikipedia.org/wiki/Integer_square_root).
@@ -45,6 +45,7 @@ impl Unsigned for u16 {}
 impl Unsigned for u32 {}
 impl Unsigned for u64 {}
 impl Unsigned for u128 {}
+impl Unsigned for Uint64 {}
 impl Unsigned for Uint128 {}
 impl Unsigned for usize {}
 
@@ -68,6 +69,11 @@ mod tests {
         assert_eq!(26u32.isqrt(), 5);
         assert_eq!(26u64.isqrt(), 5);
         assert_eq!(26u128.isqrt(), 5);
+    }
+
+    #[test]
+    fn isqrt_uint64() {
+        assert_eq!(Uint64::new(24).isqrt(), Uint64::new(4));
     }
 
     #[test]
