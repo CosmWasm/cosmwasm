@@ -222,6 +222,38 @@ impl<'a> ops::Sub<&'a Uint128> for Uint128 {
     }
 }
 
+impl ops::Div<Uint128> for Uint128 {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self(self.u128().checked_div(rhs.u128()).unwrap())
+    }
+}
+
+impl<'a> ops::Div<&'a Uint128> for Uint128 {
+    type Output = Self;
+
+    fn div(self, rhs: &'a Uint128) -> Self::Output {
+        Self(self.u128().checked_div(rhs.u128()).unwrap())
+    }
+}
+
+impl ops::Shr<u32> for Uint128 {
+    type Output = Self;
+
+    fn shr(self, rhs: u32) -> Self::Output {
+        Self(self.u128().checked_shr(rhs).unwrap())
+    }
+}
+
+impl<'a> ops::Shr<&'a u32> for Uint128 {
+    type Output = Self;
+
+    fn shr(self, rhs: &'a u32) -> Self::Output {
+        Self(self.u128().checked_shr(*rhs).unwrap())
+    }
+}
+
 impl ops::AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         self.0 = self.0.checked_add(rhs.u128()).unwrap();
@@ -243,6 +275,30 @@ impl ops::SubAssign<Uint128> for Uint128 {
 impl<'a> ops::SubAssign<&'a Uint128> for Uint128 {
     fn sub_assign(&mut self, rhs: &'a Uint128) {
         self.0 = self.0.checked_sub(rhs.u128()).unwrap();
+    }
+}
+
+impl ops::DivAssign<Uint128> for Uint128 {
+    fn div_assign(&mut self, rhs: Self) {
+        self.0 = self.0.checked_div(rhs.u128()).unwrap();
+    }
+}
+
+impl<'a> ops::DivAssign<&'a Uint128> for Uint128 {
+    fn div_assign(&mut self, rhs: &'a Uint128) {
+        self.0 = self.0.checked_div(rhs.u128()).unwrap();
+    }
+}
+
+impl ops::ShrAssign<u32> for Uint128 {
+    fn shr_assign(&mut self, rhs: u32) {
+        self.0 = self.0.checked_shr(rhs).unwrap();
+    }
+}
+
+impl<'a> ops::ShrAssign<&'a u32> for Uint128 {
+    fn shr_assign(&mut self, rhs: &'a u32) {
+        self.0 = self.0.checked_shr(*rhs).unwrap();
     }
 }
 
