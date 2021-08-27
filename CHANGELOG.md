@@ -8,7 +8,11 @@ and this project adheres to
 
 ### Added
 
-- Added `From<Addr>` and `From<&Addr>` conversions for `Cow<Addr>`.
+- cosmwasm-std: Added `From<Addr>` and `From<&Addr>` conversions for
+  `Cow<Addr>`.
+- cosmwasm-std: Added a new `Uint256` type.
+- cosmwasm-std: Added implementations of `Isqrt` (integer square root) for
+  `Uint64`, `Uint128`, and `Uint256`.
 
 ## [0.16.0] - 2021-08-05
 
