@@ -36,7 +36,10 @@ const MAX_LENGTH_DB_KEY: usize = 64 * KI;
 const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 /// Typically 20 (Cosmos SDK, Ethereum), 32 (Nano, Substrate) or 54 (MockApi)
 const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
-/// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
+/// The max length of human address inputs (in bytes).
+/// The maximum allowed size for [bech32](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
+/// is 90 characters.
+/// This value will increase with https://github.com/CosmWasm/cosmwasm/issues/1056.
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Length of a serialized Ed25519  signature

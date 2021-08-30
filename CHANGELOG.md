@@ -16,6 +16,12 @@ and this project adheres to
 - cosmwasm-std: Exposed `Uint128::full_mul` for full multiplication that cannot
   overflow.
 
+### Changed
+
+- cosmwasm-std: In `ExternalApi::addr_validate` and `::addr_canonicalize` do not
+  send too long inputs to VM to avoid terminating contract execution. Errors are
+  returned instead now.
+
 ## [0.16.0] - 2021-08-05
 
 ### Added
