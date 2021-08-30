@@ -452,6 +452,7 @@ pub enum OverflowOperation {
     Sub,
     Mul,
     Pow,
+    Shr,
 }
 
 impl fmt::Display for OverflowOperation {
@@ -469,7 +470,11 @@ pub struct OverflowError {
 }
 
 impl OverflowError {
-    pub fn new<U: ToString>(operation: OverflowOperation, operand1: U, operand2: U) -> Self {
+    pub fn new(
+        operation: OverflowOperation,
+        operand1: impl ToString,
+        operand2: impl ToString,
+    ) -> Self {
         Self {
             operation,
             operand1: operand1.to_string(),

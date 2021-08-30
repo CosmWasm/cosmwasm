@@ -121,6 +121,14 @@ impl Uint256 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 256 {
+            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+        }
+
+        Ok(Self(self.0.shr(other)))
+    }
+
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
@@ -265,14 +273,12 @@ impl ops::Shr<u32> for Uint256 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
-        if rhs >= 256 {
+        self.checked_shr(rhs).unwrap_or_else(|_| {
             panic!(
                 "right shift error: {} is larger or equal than the number of bits in Uint256",
-                rhs
-            );
-        }
-
-        Self(self.0.shr(rhs))
+                rhs,
+            )
+        })
     }
 }
 
