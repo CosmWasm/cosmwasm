@@ -400,9 +400,37 @@ mod tests {
 
     #[test]
     fn uint256_construct() {
-        let original = Uint256::new([1; 32]);
-        let a: [u8; 32] = original.to_be_bytes();
+        let num = Uint256::new([1; 32]);
+        let a: [u8; 32] = num.to_be_bytes();
         assert_eq!(a, [1; 32]);
+
+        let be_bytes = [
+            0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
+        ];
+        let num = Uint256::new(be_bytes);
+        let resulting_bytes: [u8; 32] = num.to_be_bytes();
+        assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn uint256_endianness() {
+        let be_bytes = [
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
+        ];
+        let le_bytes = [
+            3u8, 2u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ];
+
+        // These should all be the same.
+        let num1 = Uint256::new(be_bytes);
+        let num2 = Uint256::from_be_bytes(be_bytes);
+        let num3 = Uint256::from_le_bytes(le_bytes);
+        assert_eq!(num1, Uint256::from(65536u32 + 512 + 3));
+        assert_eq!(num1, num2);
+        assert_eq!(num1, num3);
     }
 
     #[test]
