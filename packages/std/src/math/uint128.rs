@@ -6,7 +6,7 @@ use std::iter::Sum;
 use std::ops;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
-use crate::Uint256;
+use crate::{ConversionOverflowError, Uint256, Uint64};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -161,6 +161,16 @@ impl From<u16> for Uint128 {
 impl From<u8> for Uint128 {
     fn from(val: u8) -> Self {
         Uint128(val.into())
+    }
+}
+
+impl TryFrom<Uint128> for Uint64 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint128) -> Result<Self, Self::Error> {
+        Ok(Uint64::new(value.0.try_into().map_err(|_| {
+            ConversionOverflowError::new("Uint128", "Uint64", value.to_string())
+        })?))
     }
 }
 

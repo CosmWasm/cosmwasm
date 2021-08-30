@@ -6,6 +6,7 @@ use std::iter::Sum;
 use std::ops;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::Uint128;
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
 /// such that the full u64 range can be used for clients that convert JSON numbers to floats,
@@ -27,6 +28,8 @@ use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdErro
 pub struct Uint64(#[schemars(with = "String")] u64);
 
 impl Uint64 {
+    pub const MAX: Self = Self(u64::MAX);
+
     /// Creates a Uint64(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
@@ -278,15 +281,27 @@ impl Uint64 {
             panic!("Denominator must not be zero");
         }
 
-        let val: u64 = (self.full_mul(numerator) / denominator as u128)
+        (self.full_mul(numerator) / Uint128::from(denominator))
             .try_into()
-            .expect("multiplication overflow");
-        Uint64::from(val)
+            .expect("multiplication overflow")
     }
 
-    /// Multiplies two u64 values without overflow.
-    fn full_mul(self, rhs: impl Into<u64>) -> u128 {
-        self.u64() as u128 * rhs.into() as u128
+    /// Multiplies two `Uint64`/`u64` values without overflow, producing an
+    /// [`Uint128`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Uint64;
+    ///
+    /// let a = Uint64::MAX;
+    /// let result = a.full_mul(2u32);
+    /// assert_eq!(result.to_string(), "36893488147419103230");
+    /// ```
+    pub fn full_mul(self, rhs: impl Into<u64>) -> Uint128 {
+        Uint128::from(self.u64())
+            .checked_mul(Uint128::from(rhs.into()))
+            .unwrap()
     }
 }
 
