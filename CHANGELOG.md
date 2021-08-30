@@ -13,7 +13,8 @@ and this project adheres to
 - cosmwasm-std: Added a new `Uint256` type.
 - cosmwasm-std: Added implementations of `Isqrt` (integer square root) for
   `Uint64`, `Uint128`, and `Uint256`.
-- cosmwasm-std: Exposed `Uint128::full_mul` for full multiplication that cannot overflow.
+- cosmwasm-std: Exposed `Uint128::full_mul` for full multiplication that cannot
+  overflow.
 
 ## [0.16.0] - 2021-08-05
 
