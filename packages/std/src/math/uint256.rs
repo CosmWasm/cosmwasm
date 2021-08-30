@@ -1,11 +1,14 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::iter::Sum;
 use std::ops::{self, Shr};
 
-use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::errors::{
+    ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+};
+use crate::Uint128;
 
 /// This module is purely a workaround that lets us ignore lints for all the code
 /// the `construct_uint!` macro generates.
@@ -158,6 +161,16 @@ impl From<u16> for Uint256 {
 impl From<u8> for Uint256 {
     fn from(val: u8) -> Self {
         Uint256(val.into())
+    }
+}
+
+impl TryFrom<Uint256> for Uint128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
+        Ok(Uint128::new(value.0.try_into().map_err(|_| {
+            ConversionOverflowError::new("Uint256", "Uint128", value.to_string())
+        })?))
     }
 }
 
@@ -410,6 +423,24 @@ mod tests {
 
         let result = Uint256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint256_convert_to_uint128() {
+        let source = Uint256::from(42u128);
+        let target = Uint128::try_from(source);
+        assert_eq!(target, Ok(Uint128::new(42u128)));
+
+        let source = Uint256::MAX;
+        let target = Uint128::try_from(source);
+        assert_eq!(
+            target,
+            Err(ConversionOverflowError::new(
+                "Uint256",
+                "Uint128",
+                Uint256::MAX.to_string()
+            ))
+        );
     }
 
     #[test]

@@ -6,6 +6,7 @@ use std::iter::Sum;
 use std::ops;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::Uint256;
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -314,15 +315,16 @@ impl Uint128 {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        let val: u128 = (self.full_mul(numerator) / denominator)
+        (self.full_mul(numerator) / Uint256::from(denominator))
             .try_into()
-            .expect("multiplication overflow");
-        Uint128::from(val)
+            .expect("multiplication overflow")
     }
 
     /// Multiplies two u128 values without overflow.
-    fn full_mul(self, rhs: impl Into<u128>) -> U256 {
-        U256::from(self.u128()) * U256::from(rhs.into())
+    pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
+        Uint256::from(self.u128())
+            .checked_mul(Uint256::from(rhs.into()))
+            .unwrap()
     }
 }
 
@@ -377,19 +379,6 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
         iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
-
-/// This module is purely a workaround that lets us ignore lints for all the code
-/// the `construct_uint!` macro generates.
-#[allow(clippy::all)]
-mod uints {
-    uint::construct_uint! {
-        pub struct U256(4);
-    }
-}
-
-/// Only used internally - namely to store the intermediate result of
-/// multiplying two 128-bit uints.
-use uints::U256;
 
 #[cfg(test)]
 mod tests {

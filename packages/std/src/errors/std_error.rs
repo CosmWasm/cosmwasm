@@ -95,6 +95,13 @@ pub enum StdError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Conversion error: ")]
+    ConversionOverflow {
+        #[from]
+        source: ConversionOverflowError,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
 }
 
 impl StdError {
@@ -376,6 +383,22 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
+            StdError::ConversionOverflow {
+                source,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::ConversionOverflow {
+                    source: rhs_source,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
         }
     }
 }
@@ -451,6 +474,28 @@ impl OverflowError {
             operation,
             operand1: operand1.to_string(),
             operand2: operand2.to_string(),
+        }
+    }
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
+#[error("Error converting {source_type} to {target_type} for {value}")]
+pub struct ConversionOverflowError {
+    pub source_type: &'static str,
+    pub target_type: &'static str,
+    pub value: String,
+}
+
+impl ConversionOverflowError {
+    pub fn new(
+        source_type: &'static str,
+        target_type: &'static str,
+        value: impl Into<String>,
+    ) -> Self {
+        Self {
+            source_type,
+            target_type,
+            value: value.into(),
         }
     }
 }
