@@ -265,9 +265,9 @@ impl ops::Shr<u32> for Uint256 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
-        if rhs > 256 {
+        if rhs >= 256 {
             panic!(
-                "right shift error: {} is larger than the number of bits in Uint256",
+                "right shift error: {} is larger or equal than the number of bits in Uint256",
                 rhs
             );
         }
@@ -280,14 +280,7 @@ impl<'a> ops::Shr<&'a u32> for Uint256 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
-        if *rhs > 256 {
-            panic!(
-                "right shift error: {} is larger than the number of bits in Uint256",
-                rhs
-            );
-        }
-
-        Self(self.0.shr(*rhs))
+        Shr::<u32>::shr(self, *rhs)
     }
 }
 
@@ -341,27 +334,13 @@ impl<'a> ops::MulAssign<&'a Uint256> for Uint256 {
 
 impl ops::ShrAssign<u32> for Uint256 {
     fn shr_assign(&mut self, rhs: u32) {
-        if rhs > 256 {
-            panic!(
-                "right shift error: {} is larger than the number of bits in Uint256",
-                rhs
-            );
-        }
-
-        self.0 = self.0.shr(rhs);
+        *self = Shr::<u32>::shr(*self, rhs);
     }
 }
 
 impl<'a> ops::ShrAssign<&'a u32> for Uint256 {
     fn shr_assign(&mut self, rhs: &'a u32) {
-        if *rhs > 256 {
-            panic!(
-                "right shift error: {} is larger than the number of bits in Uint256",
-                rhs
-            );
-        }
-
-        self.0 = self.0.shr(*rhs);
+        *self = Shr::<u32>::shr(*self, *rhs);
     }
 }
 
@@ -556,6 +535,28 @@ mod tests {
     #[should_panic]
     fn uint256_sub_overflow_panics() {
         let _ = Uint256::from(1u32) - Uint256::from(2u32);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint256_shr_works() {
+        let original = Uint256::new([
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
+        ]);
+
+        let shifted = Uint256::new([
+            128u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
+        ]);
+
+        assert_eq!(original >> 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint256_shr_overflow_panics() {
+        let _ = Uint256::from(1u32) >> 256u32;
     }
 
     #[test]
