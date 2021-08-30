@@ -134,6 +134,12 @@ impl Uint128 {
 // of the conflict with `TryFrom<&str>` as described here
 // https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
 
+impl From<Uint64> for Uint128 {
+    fn from(val: Uint64) -> Self {
+        val.u64().into()
+    }
+}
+
 impl From<u128> for Uint128 {
     fn from(val: u128) -> Self {
         Uint128(val)

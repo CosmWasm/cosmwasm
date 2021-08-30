@@ -8,7 +8,7 @@ use std::ops::{self, Shr};
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::Uint128;
+use crate::{Uint128, Uint64};
 
 /// This module is purely a workaround that lets us ignore lints for all the code
 /// the `construct_uint!` macro generates.
@@ -139,6 +139,18 @@ impl Uint256 {
 
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
+    }
+}
+
+impl From<Uint128> for Uint256 {
+    fn from(val: Uint128) -> Self {
+        val.u128().into()
+    }
+}
+
+impl From<Uint64> for Uint256 {
+    fn from(val: Uint64) -> Self {
+        val.u64().into()
     }
 }
 
