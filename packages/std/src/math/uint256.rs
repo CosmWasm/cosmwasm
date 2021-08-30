@@ -52,7 +52,7 @@ impl Uint256 {
     /// Creates a Uint256(value) from a big endian representation. It's just an alias for
     /// `from_big_endian`.
     pub fn new(value: [u8; 32]) -> Self {
-        Self::from_big_endian(value)
+        Self::from_be_bytes(value)
     }
 
     /// Creates a Uint256(0)
@@ -60,23 +60,23 @@ impl Uint256 {
         Uint256(U256::zero())
     }
 
-    pub fn from_big_endian(value: [u8; 32]) -> Self {
+    pub fn from_be_bytes(value: [u8; 32]) -> Self {
         Uint256(U256::from_big_endian(&value))
     }
 
-    pub fn from_little_endian(value: [u8; 32]) -> Self {
+    pub fn from_le_bytes(value: [u8; 32]) -> Self {
         Uint256(U256::from_little_endian(&value))
     }
 
     /// Returns a copy of the number as big endian bytes.
-    pub fn big_endian(&self) -> [u8; 32] {
+    pub fn to_be_bytes(self) -> [u8; 32] {
         let mut result = [0u8; 32];
         self.0.to_big_endian(&mut result);
         result
     }
 
     /// Returns a copy of the number as little endian bytes.
-    pub fn little_endian(&self) -> [u8; 32] {
+    pub fn to_le_bytes(self) -> [u8; 32] {
         let mut result = [0u8; 32];
         self.0.to_little_endian(&mut result);
         result
@@ -422,7 +422,7 @@ mod tests {
     #[test]
     fn uint256_construct() {
         let original = Uint256::new([1; 32]);
-        let a: [u8; 32] = original.big_endian();
+        let a: [u8; 32] = original.to_be_bytes();
         assert_eq!(a, [1; 32]);
     }
 
