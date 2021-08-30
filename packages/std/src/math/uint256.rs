@@ -8,7 +8,7 @@ use std::ops::{self, Shr};
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{Uint128, Uint64};
+use crate::{Uint128, Uint512, Uint64};
 
 /// This module is purely a workaround that lets us ignore lints for all the code
 /// the `construct_uint!` macro generates.
@@ -362,6 +362,45 @@ impl<'a> ops::ShrAssign<&'a u32> for Uint256 {
     }
 }
 
+impl Uint256 {
+    /// Returns `self * numerator / denominator`
+    pub fn multiply_ratio<A: Into<Uint256>, B: Into<Uint256>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Uint256 {
+        let numerator: Uint256 = numerator.into();
+        let denominator: Uint256 = denominator.into();
+        if denominator.is_zero() {
+            panic!("Denominator must not be zero");
+        }
+        (self.full_mul(numerator) / Uint512::from(denominator))
+            .try_into()
+            .expect("multiplication overflow")
+    }
+
+    /// Multiplies two u256 values without overflow, producing an
+    /// [`Uint512`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Uint256;
+    ///
+    /// let a = Uint256::MAX;
+    /// let result = a.full_mul(2u32);
+    /// assert_eq!(
+    ///     result.to_string(),
+    ///     "231584178474632390847141970017375815706539969331281128078915168015826259279870",
+    /// );
+    /// ```
+    pub fn full_mul(self, rhs: impl Into<Uint256>) -> Uint512 {
+        Uint512::from(self)
+            .checked_mul(Uint512::from(rhs.into()))
+            .unwrap()
+    }
+}
+
 impl Serialize for Uint256 {
     /// Serializes as an integer string using base 10
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -581,6 +620,60 @@ mod tests {
     #[should_panic]
     fn uint256_sub_overflow_panics() {
         let _ = Uint256::from(1u32) - Uint256::from(2u32);
+    }
+
+    #[test]
+    fn uint256_multiply_ratio_works() {
+        let base = Uint256::from(500u32);
+
+        // factor 1/1
+        assert_eq!(base.multiply_ratio(1u128, 1u128), Uint256::from(500u32));
+        assert_eq!(base.multiply_ratio(3u128, 3u128), Uint256::from(500u32));
+        assert_eq!(
+            base.multiply_ratio(654321u128, 654321u128),
+            Uint256::from(500u32)
+        );
+
+        // factor 3/2
+        assert_eq!(base.multiply_ratio(3u128, 2u128), Uint256::from(750u32));
+        assert_eq!(
+            base.multiply_ratio(333333u128, 222222u128),
+            Uint256::from(750u32)
+        );
+
+        // factor 2/3 (integer devision always floors the result)
+        assert_eq!(base.multiply_ratio(2u128, 3u128), Uint256::from(333u32));
+        assert_eq!(
+            base.multiply_ratio(222222u128, 333333u128),
+            Uint256::from(333u32)
+        );
+
+        // factor 5/6 (integer devision always floors the result)
+        assert_eq!(base.multiply_ratio(5u128, 6u128), Uint256::from(416u32));
+        assert_eq!(base.multiply_ratio(100u128, 120u128), Uint256::from(416u32));
+    }
+
+    #[test]
+    fn uint256_multiply_ratio_does_not_overflow_when_result_fits() {
+        // Almost max value for Uint256.
+        let base = Uint256::MAX - Uint256::from(9u8);
+
+        assert_eq!(base.multiply_ratio(2u128, 2u128), base);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint256_multiply_ratio_panicks_on_overflow() {
+        // Almost max value for Uint256.
+        let base = Uint256::MAX - Uint256::from(9u8);
+
+        assert_eq!(base.multiply_ratio(2u128, 1u128), base);
+    }
+
+    #[test]
+    #[should_panic(expected = "Denominator must not be zero")]
+    fn uint256_multiply_ratio_panics_for_zero_denominator() {
+        Uint256::from(500u32).multiply_ratio(1u128, 0u128);
     }
 
     #[test]

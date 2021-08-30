@@ -196,6 +196,25 @@ impl From<u8> for Uint512 {
     }
 }
 
+impl TryFrom<Uint512> for Uint256 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
+        let bytes = value.to_be_bytes();
+        let (first_bytes, last_bytes) = bytes.split_at(32);
+
+        if first_bytes != [0u8; 32] {
+            return Err(ConversionOverflowError::new(
+                "Uint512",
+                "Uint256",
+                value.to_string(),
+            ));
+        }
+
+        Ok(Self::from_be_bytes(last_bytes.try_into().unwrap()))
+    }
+}
+
 impl TryFrom<Uint512> for Uint128 {
     type Error = ConversionOverflowError;
 
