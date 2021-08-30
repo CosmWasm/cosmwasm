@@ -178,7 +178,7 @@ impl TryFrom<&str> for Uint256 {
     type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
-        match val.parse::<U256>() {
+        match U256::from_dec_str(val) {
             Ok(u) => Ok(Uint256(u)),
             Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
         }
@@ -398,10 +398,7 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     where
         E: de::Error,
     {
-        match U256::from_dec_str(v) {
-            Ok(u) => Ok(Uint256(u)),
-            Err(e) => Err(E::custom(format!("invalid Uint256 '{}' - {}", v, e))),
-        }
+        Uint256::try_from(v).map_err(|e| E::custom(format!("invalid Uint256 '{}' - {}", v, e)))
     }
 }
 
@@ -447,7 +444,7 @@ mod tests {
         assert_eq!(a.0, U256::from(5));
 
         let result = Uint256::try_from("34567");
-        assert_eq!(result.unwrap().0, U256::from("34567"));
+        assert_eq!(result.unwrap().0, U256::from_dec_str("34567").unwrap());
 
         let result = Uint256::try_from("1.23");
         assert!(result.is_err());
