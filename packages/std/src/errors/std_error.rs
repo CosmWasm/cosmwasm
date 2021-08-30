@@ -478,6 +478,12 @@ impl OverflowError {
     }
 }
 
+/// The error returned by [`TryFrom`] conversions that overflow, for example
+/// when converting from [`Uint256`] to [`Uint128`].
+///
+/// [`TryFrom`]: std::convert::TryFrom
+/// [`Uint256`]: crate::Uint256
+/// [`Uint128`]: crate::Uint128
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Error converting {source_type} to {target_type} for {value}")]
 pub struct ConversionOverflowError {

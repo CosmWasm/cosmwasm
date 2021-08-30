@@ -31,6 +31,8 @@ use crate::Uint256;
 pub struct Uint128(#[schemars(with = "String")] u128);
 
 impl Uint128 {
+    pub const MAX: Self = Self(u128::MAX);
+
     /// Creates a Uint128(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
@@ -320,7 +322,18 @@ impl Uint128 {
             .expect("multiplication overflow")
     }
 
-    /// Multiplies two u128 values without overflow.
+    /// Multiplies two u128 values without overflow, producing an
+    /// [`Uint256`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Uint128;
+    ///
+    /// let a = Uint128::MAX;
+    /// let result = a.full_mul(2u32);
+    /// assert_eq!(result.to_string(), "680564733841876926926749214863536422910");
+    /// ```
     pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
         Uint256::from(self.u128())
             .checked_mul(Uint256::from(rhs.into()))
