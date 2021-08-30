@@ -245,6 +245,22 @@ impl<'a> ops::Div<&'a Uint256> for Uint256 {
     }
 }
 
+impl ops::Mul<Uint256> for Uint256 {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(self.0.checked_mul(rhs.0).unwrap())
+    }
+}
+
+impl<'a> ops::Mul<&'a Uint256> for Uint256 {
+    type Output = Self;
+
+    fn mul(self, rhs: &'a Uint256) -> Self::Output {
+        Self(self.0.checked_mul(rhs.0).unwrap())
+    }
+}
+
 impl ops::Shr<u32> for Uint256 {
     type Output = Self;
 
@@ -308,6 +324,18 @@ impl ops::DivAssign<Uint256> for Uint256 {
 impl<'a> ops::DivAssign<&'a Uint256> for Uint256 {
     fn div_assign(&mut self, rhs: &'a Uint256) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
+    }
+}
+
+impl ops::MulAssign<Uint256> for Uint256 {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.0 = self.0.checked_mul(rhs.0).unwrap();
+    }
+}
+
+impl<'a> ops::MulAssign<&'a Uint256> for Uint256 {
+    fn mul_assign(&mut self, rhs: &'a Uint256) {
+        self.0 = self.0.checked_mul(rhs.0).unwrap();
     }
 }
 

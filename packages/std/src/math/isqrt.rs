@@ -52,6 +52,8 @@ impl Unsigned for usize {}
 
 #[cfg(test)]
 mod tests {
+    use std::convert::TryFrom;
+
     use super::*;
 
     #[test]
@@ -85,5 +87,9 @@ mod tests {
     #[test]
     fn isqrt_uint256() {
         assert_eq!(Uint256::from(24u32).isqrt(), Uint256::from(4u32));
+        assert_eq!(
+            (Uint256::from(u128::MAX) * Uint256::from(u128::MAX)).isqrt(),
+            Uint256::try_from("340282366920938463463374607431768211455").unwrap()
+        );
     }
 }
