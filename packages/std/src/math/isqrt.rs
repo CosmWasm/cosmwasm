@@ -1,5 +1,7 @@
 use std::{cmp, ops};
 
+use crate::{Uint128, Uint256, Uint64};
+
 /// A trait for calculating the
 /// [integer square root](https://en.wikipedia.org/wiki/Integer_square_root).
 pub trait Isqrt {
@@ -12,7 +14,7 @@ where
     I: Unsigned
         + ops::Add<I, Output = I>
         + ops::Div<I, Output = I>
-        + ops::Shr<u8, Output = I>
+        + ops::Shr<u32, Output = I>
         + cmp::PartialOrd
         + Copy
         + From<u8>,
@@ -43,14 +45,19 @@ impl Unsigned for u16 {}
 impl Unsigned for u32 {}
 impl Unsigned for u64 {}
 impl Unsigned for u128 {}
+impl Unsigned for Uint64 {}
+impl Unsigned for Uint128 {}
+impl Unsigned for Uint256 {}
 impl Unsigned for usize {}
 
 #[cfg(test)]
 mod tests {
+    use std::convert::TryFrom;
+
     use super::*;
 
     #[test]
-    fn isqrts() {
+    fn isqrt_primitives() {
         // Let's check correctness.
         assert_eq!(0u8.isqrt(), 0);
         assert_eq!(1u8.isqrt(), 1);
@@ -65,5 +72,24 @@ mod tests {
         assert_eq!(26u32.isqrt(), 5);
         assert_eq!(26u64.isqrt(), 5);
         assert_eq!(26u128.isqrt(), 5);
+    }
+
+    #[test]
+    fn isqrt_uint64() {
+        assert_eq!(Uint64::new(24).isqrt(), Uint64::new(4));
+    }
+
+    #[test]
+    fn isqrt_uint128() {
+        assert_eq!(Uint128::new(24).isqrt(), Uint128::new(4));
+    }
+
+    #[test]
+    fn isqrt_uint256() {
+        assert_eq!(Uint256::from(24u32).isqrt(), Uint256::from(4u32));
+        assert_eq!(
+            (Uint256::from(u128::MAX) * Uint256::from(u128::MAX)).isqrt(),
+            Uint256::try_from("340282366920938463463374607431768211455").unwrap()
+        );
     }
 }

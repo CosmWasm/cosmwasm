@@ -197,6 +197,38 @@ impl<'a> ops::Add<&'a Uint64> for Uint64 {
     }
 }
 
+impl ops::Div<Uint64> for Uint64 {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self(self.u64().checked_div(rhs.u64()).unwrap())
+    }
+}
+
+impl<'a> ops::Div<&'a Uint64> for Uint64 {
+    type Output = Self;
+
+    fn div(self, rhs: &'a Uint64) -> Self::Output {
+        Self(self.u64().checked_div(rhs.u64()).unwrap())
+    }
+}
+
+impl ops::Shr<u32> for Uint64 {
+    type Output = Self;
+
+    fn shr(self, rhs: u32) -> Self::Output {
+        Self(self.u64().checked_shr(rhs).unwrap())
+    }
+}
+
+impl<'a> ops::Shr<&'a u32> for Uint64 {
+    type Output = Self;
+
+    fn shr(self, rhs: &'a u32) -> Self::Output {
+        Self(self.u64().checked_shr(*rhs).unwrap())
+    }
+}
+
 impl ops::AddAssign<Uint64> for Uint64 {
     fn add_assign(&mut self, rhs: Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
@@ -206,6 +238,30 @@ impl ops::AddAssign<Uint64> for Uint64 {
 impl<'a> ops::AddAssign<&'a Uint64> for Uint64 {
     fn add_assign(&mut self, rhs: &'a Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
+    }
+}
+
+impl ops::DivAssign<Uint64> for Uint64 {
+    fn div_assign(&mut self, rhs: Self) {
+        self.0 = self.0.checked_div(rhs.u64()).unwrap();
+    }
+}
+
+impl<'a> ops::DivAssign<&'a Uint64> for Uint64 {
+    fn div_assign(&mut self, rhs: &'a Uint64) {
+        self.0 = self.0.checked_div(rhs.u64()).unwrap();
+    }
+}
+
+impl ops::ShrAssign<u32> for Uint64 {
+    fn shr_assign(&mut self, rhs: u32) {
+        self.0 = self.0.checked_shr(rhs).unwrap();
+    }
+}
+
+impl<'a> ops::ShrAssign<&'a u32> for Uint64 {
+    fn shr_assign(&mut self, rhs: &'a u32) {
+        self.0 = self.0.checked_shr(*rhs).unwrap();
     }
 }
 

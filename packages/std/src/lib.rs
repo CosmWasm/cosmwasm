@@ -29,8 +29,8 @@ pub use crate::binary::Binary;
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{
-    OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
-    VerificationError,
+    ConversionOverflowError, OverflowError, OverflowOperation, RecoverPubkeyError, StdError,
+    StdResult, SystemError, VerificationError,
 };
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
@@ -41,7 +41,7 @@ pub use crate::ibc::{
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
 pub use crate::iterator::{Order, Pair, KV};
-pub use crate::math::{Decimal, Fraction, Uint128, Uint64};
+pub use crate::math::{Decimal, Fraction, Uint128, Uint256, Uint64};
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };

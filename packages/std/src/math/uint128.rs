@@ -6,6 +6,7 @@ use std::iter::Sum;
 use std::ops;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::Uint256;
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -30,6 +31,8 @@ use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdErro
 pub struct Uint128(#[schemars(with = "String")] u128);
 
 impl Uint128 {
+    pub const MAX: Self = Self(u128::MAX);
+
     /// Creates a Uint128(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
@@ -222,6 +225,38 @@ impl<'a> ops::Sub<&'a Uint128> for Uint128 {
     }
 }
 
+impl ops::Div<Uint128> for Uint128 {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self(self.u128().checked_div(rhs.u128()).unwrap())
+    }
+}
+
+impl<'a> ops::Div<&'a Uint128> for Uint128 {
+    type Output = Self;
+
+    fn div(self, rhs: &'a Uint128) -> Self::Output {
+        Self(self.u128().checked_div(rhs.u128()).unwrap())
+    }
+}
+
+impl ops::Shr<u32> for Uint128 {
+    type Output = Self;
+
+    fn shr(self, rhs: u32) -> Self::Output {
+        Self(self.u128().checked_shr(rhs).unwrap())
+    }
+}
+
+impl<'a> ops::Shr<&'a u32> for Uint128 {
+    type Output = Self;
+
+    fn shr(self, rhs: &'a u32) -> Self::Output {
+        Self(self.u128().checked_shr(*rhs).unwrap())
+    }
+}
+
 impl ops::AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         self.0 = self.0.checked_add(rhs.u128()).unwrap();
@@ -246,6 +281,30 @@ impl<'a> ops::SubAssign<&'a Uint128> for Uint128 {
     }
 }
 
+impl ops::DivAssign<Uint128> for Uint128 {
+    fn div_assign(&mut self, rhs: Self) {
+        self.0 = self.0.checked_div(rhs.u128()).unwrap();
+    }
+}
+
+impl<'a> ops::DivAssign<&'a Uint128> for Uint128 {
+    fn div_assign(&mut self, rhs: &'a Uint128) {
+        self.0 = self.0.checked_div(rhs.u128()).unwrap();
+    }
+}
+
+impl ops::ShrAssign<u32> for Uint128 {
+    fn shr_assign(&mut self, rhs: u32) {
+        self.0 = self.0.checked_shr(rhs).unwrap();
+    }
+}
+
+impl<'a> ops::ShrAssign<&'a u32> for Uint128 {
+    fn shr_assign(&mut self, rhs: &'a u32) {
+        self.0 = self.0.checked_shr(*rhs).unwrap();
+    }
+}
+
 impl Uint128 {
     /// Returns `self * numerator / denominator`
     pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
@@ -258,15 +317,27 @@ impl Uint128 {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        let val: u128 = (self.full_mul(numerator) / denominator)
+        (self.full_mul(numerator) / Uint256::from(denominator))
             .try_into()
-            .expect("multiplication overflow");
-        Uint128::from(val)
+            .expect("multiplication overflow")
     }
 
-    /// Multiplies two u128 values without overflow.
-    fn full_mul(self, rhs: impl Into<u128>) -> U256 {
-        U256::from(self.u128()) * U256::from(rhs.into())
+    /// Multiplies two u128 values without overflow, producing an
+    /// [`Uint256`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Uint128;
+    ///
+    /// let a = Uint128::MAX;
+    /// let result = a.full_mul(2u32);
+    /// assert_eq!(result.to_string(), "680564733841876926926749214863536422910");
+    /// ```
+    pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
+        Uint256::from(self.u128())
+            .checked_mul(Uint256::from(rhs.into()))
+            .unwrap()
     }
 }
 
@@ -321,19 +392,6 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
         iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
-
-/// This module is purely a workaround that lets us ignore lints for all the code
-/// the `construct_uint!` macro generates.
-#[allow(clippy::all)]
-mod uints {
-    uint::construct_uint! {
-        pub struct U256(4);
-    }
-}
-
-/// Only used internally - namely to store the intermediate result of
-/// multiplying two 128-bit uints.
-use uints::U256;
 
 #[cfg(test)]
 mod tests {
