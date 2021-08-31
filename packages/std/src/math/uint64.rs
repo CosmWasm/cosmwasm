@@ -475,11 +475,10 @@ mod tests {
         let base = Uint64(500);
 
         // factor 1/1
-        assert_eq!(base.multiply_ratio(1u64, 1u64), Uint64(500));
-        assert_eq!(base.multiply_ratio(3u64, 3u64), Uint64(500));
-        assert_eq!(base.multiply_ratio(654321u64, 654321u64), Uint64(500));
-        // Reactivate after https://github.com/CosmWasm/cosmwasm/issues/920
-        // assert_eq!(base.multiply_ratio(u64::MAX, u64::MAX), Uint64(500));
+        assert_eq!(base.multiply_ratio(1u64, 1u64), base);
+        assert_eq!(base.multiply_ratio(3u64, 3u64), base);
+        assert_eq!(base.multiply_ratio(654321u64, 654321u64), base);
+        assert_eq!(base.multiply_ratio(u64::MAX, u64::MAX), base);
 
         // factor 3/2
         assert_eq!(base.multiply_ratio(3u64, 2u64), Uint64(750));
