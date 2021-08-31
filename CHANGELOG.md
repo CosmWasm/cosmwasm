@@ -10,11 +10,11 @@ and this project adheres to
 
 - cosmwasm-std: Added `From<Addr>` and `From<&Addr>` conversions for
   `Cow<Addr>`.
-- cosmwasm-std: Added a new `Uint256` type.
+- cosmwasm-std: Added new `Uint256` and `Uint512` types.
 - cosmwasm-std: Added implementations of `Isqrt` (integer square root) for
-  `Uint64`, `Uint128`, and `Uint256`.
-- cosmwasm-std: Exposed `Uint128::full_mul` for full multiplication that cannot
-  overflow.
+  `Uint64`, `Uint128`, `Uint256`, and `Uint512`.
+- cosmwasm-std: Exposed `Uint{64, 128, 256}::full_mul` for full multiplication
+  that cannot overflow.
 
 ### Changed
 
