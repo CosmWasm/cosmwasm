@@ -627,12 +627,10 @@ mod tests {
         let base = Uint256::from(500u32);
 
         // factor 1/1
-        assert_eq!(base.multiply_ratio(1u128, 1u128), Uint256::from(500u32));
-        assert_eq!(base.multiply_ratio(3u128, 3u128), Uint256::from(500u32));
-        assert_eq!(
-            base.multiply_ratio(654321u128, 654321u128),
-            Uint256::from(500u32)
-        );
+        assert_eq!(base.multiply_ratio(1u128, 1u128), base);
+        assert_eq!(base.multiply_ratio(3u128, 3u128), base);
+        assert_eq!(base.multiply_ratio(654321u128, 654321u128), base);
+        assert_eq!(base.multiply_ratio(Uint256::MAX, Uint256::MAX), base);
 
         // factor 3/2
         assert_eq!(base.multiply_ratio(3u128, 2u128), Uint256::from(750u32));

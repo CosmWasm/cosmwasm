@@ -545,11 +545,10 @@ mod tests {
         let base = Uint128(500);
 
         // factor 1/1
-        assert_eq!(base.multiply_ratio(1u128, 1u128), Uint128(500));
-        assert_eq!(base.multiply_ratio(3u128, 3u128), Uint128(500));
-        assert_eq!(base.multiply_ratio(654321u128, 654321u128), Uint128(500));
-        // Reactivate after https://github.com/CosmWasm/cosmwasm/issues/920
-        // assert_eq!(base.multiply_ratio(u128::MAX, u128::MAX), Uint128(500));
+        assert_eq!(base.multiply_ratio(1u128, 1u128), base);
+        assert_eq!(base.multiply_ratio(3u128, 3u128), base);
+        assert_eq!(base.multiply_ratio(654321u128, 654321u128), base);
+        assert_eq!(base.multiply_ratio(u128::MAX, u128::MAX), base);
 
         // factor 3/2
         assert_eq!(base.multiply_ratio(3u128, 2u128), Uint128(750));
