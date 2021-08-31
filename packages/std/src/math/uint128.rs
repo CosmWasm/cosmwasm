@@ -4,6 +4,7 @@ use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
 use std::iter::Sum;
 use std::ops;
+use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
 use crate::{ConversionOverflowError, Uint256, Uint64};
@@ -191,6 +192,14 @@ impl TryFrom<&str> for Uint128 {
     }
 }
 
+impl FromStr for Uint128 {
+    type Err = StdError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
 impl From<Uint128> for String {
     fn from(original: Uint128) -> Self {
         original.to_string()
@@ -205,7 +214,7 @@ impl From<Uint128> for u128 {
 
 impl fmt::Display for Uint128 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        self.0.fmt(f)
     }
 }
 
@@ -213,7 +222,11 @@ impl ops::Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Uint128(self.u128().checked_add(rhs.u128()).unwrap())
+        Uint128(
+            self.u128()
+                .checked_add(rhs.u128())
+                .unwrap_or_else(|| panic!("attempt to add with overflow")),
+        )
     }
 }
 
@@ -221,7 +234,7 @@ impl<'a> ops::Add<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint128) -> Self {
-        Uint128(self.u128().checked_add(rhs.u128()).unwrap())
+        self + *rhs
     }
 }
 
@@ -229,7 +242,11 @@ impl ops::Sub<Uint128> for Uint128 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        Uint128(self.u128().checked_sub(rhs.u128()).unwrap())
+        Uint128(
+            self.u128()
+                .checked_sub(rhs.u128())
+                .unwrap_or_else(|| panic!("attempt to subtract with overflow")),
+        )
     }
 }
 
@@ -237,7 +254,27 @@ impl<'a> ops::Sub<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn sub(self, rhs: &'a Uint128) -> Self {
-        Uint128(self.u128().checked_sub(rhs.u128()).unwrap())
+        self - *rhs
+    }
+}
+
+impl ops::Mul<Uint128> for Uint128 {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(
+            self.u128()
+                .checked_mul(rhs.u128())
+                .unwrap_or_else(|| panic!("attempt to multiply with overflow")),
+        )
+    }
+}
+
+impl<'a> ops::Mul<&'a Uint128> for Uint128 {
+    type Output = Self;
+
+    fn mul(self, rhs: &'a Uint128) -> Self::Output {
+        self * *rhs
     }
 }
 
@@ -245,7 +282,11 @@ impl ops::Div<Uint128> for Uint128 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
-        Self(self.u128().checked_div(rhs.u128()).unwrap())
+        Self(
+            self.u128()
+                .checked_div(rhs.u128())
+                .unwrap_or_else(|| panic!("attempt to divide by zero")),
+        )
     }
 }
 
@@ -253,7 +294,7 @@ impl<'a> ops::Div<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint128) -> Self::Output {
-        Self(self.u128().checked_div(rhs.u128()).unwrap())
+        self / *rhs
     }
 }
 
@@ -261,7 +302,11 @@ impl ops::Shr<u32> for Uint128 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
-        Self(self.u128().checked_shr(rhs).unwrap())
+        Self(
+            self.u128()
+                .checked_shr(rhs)
+                .unwrap_or_else(|| panic!("attempt to shift right with overflow")),
+        )
     }
 }
 
@@ -269,55 +314,67 @@ impl<'a> ops::Shr<&'a u32> for Uint128 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
-        Self(self.u128().checked_shr(*rhs).unwrap())
+        self >> *rhs
     }
 }
 
 impl ops::AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
-        self.0 = self.0.checked_add(rhs.u128()).unwrap();
+        *self = *self + rhs;
     }
 }
 
 impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
-        self.0 = self.0.checked_add(rhs.u128()).unwrap();
+        *self = *self + rhs;
     }
 }
 
 impl ops::SubAssign<Uint128> for Uint128 {
     fn sub_assign(&mut self, rhs: Uint128) {
-        self.0 = self.0.checked_sub(rhs.u128()).unwrap();
+        *self = *self - rhs;
     }
 }
 
 impl<'a> ops::SubAssign<&'a Uint128> for Uint128 {
     fn sub_assign(&mut self, rhs: &'a Uint128) {
-        self.0 = self.0.checked_sub(rhs.u128()).unwrap();
+        *self = *self - rhs;
+    }
+}
+
+impl ops::MulAssign<Uint128> for Uint128 {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
+    }
+}
+
+impl<'a> ops::MulAssign<&'a Uint128> for Uint128 {
+    fn mul_assign(&mut self, rhs: &'a Uint128) {
+        *self = *self * rhs;
     }
 }
 
 impl ops::DivAssign<Uint128> for Uint128 {
     fn div_assign(&mut self, rhs: Self) {
-        self.0 = self.0.checked_div(rhs.u128()).unwrap();
+        *self = *self / rhs;
     }
 }
 
 impl<'a> ops::DivAssign<&'a Uint128> for Uint128 {
     fn div_assign(&mut self, rhs: &'a Uint128) {
-        self.0 = self.0.checked_div(rhs.u128()).unwrap();
+        *self = *self / rhs;
     }
 }
 
 impl ops::ShrAssign<u32> for Uint128 {
     fn shr_assign(&mut self, rhs: u32) {
-        self.0 = self.0.checked_shr(rhs).unwrap();
+        *self = *self >> rhs;
     }
 }
 
 impl<'a> ops::ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
-        self.0 = self.0.checked_shr(*rhs).unwrap();
+        *self = *self >> rhs;
     }
 }
 

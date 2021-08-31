@@ -4,6 +4,7 @@ use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::iter::Sum;
 use std::ops::{self, Shr};
+use std::str::FromStr;
 
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
@@ -236,6 +237,14 @@ impl TryFrom<&str> for Uint512 {
     }
 }
 
+impl FromStr for Uint64 {
+    type Err = StdError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
 impl From<Uint512> for String {
     fn from(original: Uint512) -> Self {
         original.to_string()
@@ -244,7 +253,7 @@ impl From<Uint512> for String {
 
 impl fmt::Display for Uint512 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        self.0.fmt(f)
     }
 }
 
