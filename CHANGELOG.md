@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.16.1] - 2021-08-31
+
 ### Added
 
 - cosmwasm-std: Added `From<Addr>` and `From<&Addr>` conversions for
