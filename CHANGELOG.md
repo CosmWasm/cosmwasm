@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Implement `Decimal::from_ratio` using full uint128
+  multiplication to support a wider range of input values.
+
 ## [0.16.1] - 2021-08-31
 
 ### Added

@@ -49,8 +49,13 @@ impl Decimal {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        // TODO: better algorithm with less rounding potential?
-        Decimal(numerator * DECIMAL_FRACTIONAL / denominator)
+
+        Decimal(
+            // numerator * DECIMAL_FRACTIONAL / denominator
+            Uint128::from(numerator)
+                .multiply_ratio(DECIMAL_FRACTIONAL, denominator)
+                .into(),
+        )
     }
 
     pub fn is_zero(&self) -> bool {
@@ -319,6 +324,15 @@ mod tests {
         assert_eq!(
             Decimal::from_ratio(2u64, 3u64),
             Decimal(666_666_666_666_666_666)
+        );
+
+        // large inputs
+        assert_eq!(Decimal::from_ratio(0u128, u128::MAX), Decimal::zero());
+        assert_eq!(Decimal::from_ratio(u128::MAX, u128::MAX), Decimal::one());
+        // 340282366920938463463 is the largest integer <= Decimal::MAX
+        assert_eq!(
+            Decimal::from_ratio(340282366920938463463u128, 1u128),
+            Decimal::from_str("340282366920938463463").unwrap()
         );
     }
 
