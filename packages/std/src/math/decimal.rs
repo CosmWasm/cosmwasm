@@ -53,9 +53,7 @@ impl Decimal {
 
         Decimal(
             // numerator * DECIMAL_FRACTIONAL / denominator
-            Uint128::from(numerator)
-                .multiply_ratio(Self::DECIMAL_FRACTIONAL, denominator)
-                .into(),
+            numerator.multiply_ratio(Self::DECIMAL_FRACTIONAL, denominator),
         )
     }
 
