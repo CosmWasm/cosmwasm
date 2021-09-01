@@ -88,7 +88,7 @@ impl Decimal256 {
         (0..=18)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
-            // The last step (i = 0) is guaranteed to succeed because `isqrt(u256::MAX) * 10^18` does not overflow
+            // The last step (i = 0) is guaranteed to succeed because `isqrt(Uint256::MAX) * 10^18` does not overflow
             .unwrap()
     }
 
@@ -139,7 +139,7 @@ impl FromStr for Decimal256 {
     /// Disallowed: "", ".23"
     ///
     /// This never performs any kind of rounding.
-    /// More than 18 fractional digits, even zeros, result in an error.
+    /// More than 36 fractional digits, even zeros, result in an error.
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut parts_iter = input.split('.');
 
@@ -163,7 +163,7 @@ impl FromStr for Decimal256 {
             atomics = atomics
                 .checked_add(
                     // The inner multiplication can't overflow because
-                    // fractional < 10^18 && fractional_factor <= 10^18
+                    // fractional < 10^36 && fractional_factor <= 10^36
                     fractional.checked_mul(fractional_factor).unwrap(),
                 )
                 .map_err(|_| StdError::generic_err("Value too big"))?;
@@ -757,7 +757,7 @@ mod tests {
         assert!(Decimal256::percent(1000).sqrt() < Decimal256::percent(317));
     }
 
-    /// sqrt(2) is an irrational number, i.e. all 18 decimal places should be used.
+    /// sqrt(2) is an irrational number, i.e. all 36 decimal places should be used.
     #[test]
     fn decimal_uint128_sqrt_is_precise() {
         assert_eq!(
