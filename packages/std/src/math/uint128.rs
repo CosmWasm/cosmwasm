@@ -225,7 +225,7 @@ impl ops::Add<Uint128> for Uint128 {
         Uint128(
             self.u128()
                 .checked_add(rhs.u128())
-                .unwrap_or_else(|| panic!("attempt to add with overflow")),
+                .expect("attempt to add with overflow"),
         )
     }
 }
@@ -245,7 +245,7 @@ impl ops::Sub<Uint128> for Uint128 {
         Uint128(
             self.u128()
                 .checked_sub(rhs.u128())
-                .unwrap_or_else(|| panic!("attempt to subtract with overflow")),
+                .expect("attempt to subtract with overflow"),
         )
     }
 }
@@ -265,7 +265,7 @@ impl ops::Mul<Uint128> for Uint128 {
         Self(
             self.u128()
                 .checked_mul(rhs.u128())
-                .unwrap_or_else(|| panic!("attempt to multiply with overflow")),
+                .expect("attempt to multiply with overflow"),
         )
     }
 }
@@ -274,7 +274,7 @@ impl<'a> ops::Mul<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn mul(self, rhs: &'a Uint128) -> Self::Output {
-        self * *rhs
+        self.mul(*rhs)
     }
 }
 
@@ -285,7 +285,7 @@ impl ops::Div<Uint128> for Uint128 {
         Self(
             self.u128()
                 .checked_div(rhs.u128())
-                .unwrap_or_else(|| panic!("attempt to divide by zero")),
+                .expect("attempt to divide by zero"),
         )
     }
 }
@@ -305,7 +305,7 @@ impl ops::Shr<u32> for Uint128 {
         Self(
             self.u128()
                 .checked_shr(rhs)
-                .unwrap_or_else(|| panic!("attempt to shift right with overflow")),
+                .expect("attempt to shift right with overflow"),
         )
     }
 }

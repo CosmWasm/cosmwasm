@@ -217,13 +217,13 @@ impl ops::Div<Uint128> for Decimal {
     type Output = Self;
 
     fn div(self, rhs: Uint128) -> Self::Output {
-        Decimal(self.0 / Uint128::from(rhs.u128()))
+        Decimal(self.0 / rhs)
     }
 }
 
 impl ops::DivAssign<Uint128> for Decimal {
     fn div_assign(&mut self, rhs: Uint128) {
-        self.0 /= Uint128::from(rhs.u128());
+        self.0 /= rhs;
     }
 }
 
@@ -704,7 +704,7 @@ mod tests {
         // Decimals
         assert_eq!(Decimal::percent(125).to_string(), "1.25");
         assert_eq!(Decimal::percent(42638).to_string(), "426.38");
-        //assert_eq!(Decimal::percent(1).to_string(), "0.01");
+        assert_eq!(Decimal::percent(3).to_string(), "0.03");
         assert_eq!(Decimal::permille(987).to_string(), "0.987");
 
         assert_eq!(
