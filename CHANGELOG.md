@@ -10,6 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: Implement `Decimal::from_ratio` using full uint128
   multiplication to support a wider range of input values.
+- cosmwasm-std: `Fraction` methods `numerator` and `denominator` now return a
+  `Uint128`.
 
 ## [0.16.1] - 2021-08-31
 
