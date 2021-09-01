@@ -40,6 +40,7 @@ and this project adheres to
   `Uint64`, `Uint128`, `Uint256`, and `Uint512`.
 - cosmwasm-std: Exposed `Uint{64, 128, 256}::full_mul` for full multiplication
   that cannot overflow.
+- cosmwasm-std: Added the `Decimal256` type with 36 decimal places.
 
 ### Changed
 
