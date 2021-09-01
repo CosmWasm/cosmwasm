@@ -46,18 +46,12 @@ impl Decimal256 {
 
     /// Convert x% into Decimal256
     pub fn percent(x: u64) -> Self {
-        Self(
-            (Uint256::from(x) * Uint256::from(10_000_000_000_000_000_000_000_000_000_000_000u128))
-                .into(),
-        )
+        Self(Uint256::from(x) * Uint256::from(10_000_000_000_000_000_000_000_000_000_000_000u128))
     }
 
     /// Convert permille (x/1000) into Decimal256
     pub fn permille(x: u64) -> Self {
-        Self(
-            (Uint256::from(x) * Uint256::from(1_000_000_000_000_000_000_000_000_000_000_000u128))
-                .into(),
-        )
+        Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000_000_000_000_000_000_000u128))
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal256
@@ -98,9 +92,9 @@ impl Decimal256 {
     /// Returns `None` if the internal multiplication overflows.
     fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = Uint256::from(100u128).pow(precision);
-        self.0.checked_mul(inner_mul.into()).ok().map(|inner| {
+        self.0.checked_mul(inner_mul).ok().map(|inner| {
             let outer_mul = Uint256::from(10u128).pow(18 - precision);
-            Self(inner.isqrt().checked_mul(Uint256::from(outer_mul)).unwrap())
+            Self(inner.isqrt().checked_mul(outer_mul).unwrap())
         })
     }
 }
