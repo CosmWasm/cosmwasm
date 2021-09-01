@@ -358,13 +358,13 @@ mod tests {
         // 1/3 (result floored)
         assert_eq!(
             Decimal256::from_ratio(1u64, 3u64),
-            Decimal256(Uint256::from(333_333_333_333_333_333u128))
+            Decimal256(Uint256::from_str("333333333333333333333333333333333333").unwrap())
         );
 
         // 2/3 (result floored)
         assert_eq!(
             Decimal256::from_ratio(2u64, 3u64),
-            Decimal256(Uint256::from(666_666_666_666_666_666u128))
+            Decimal256(Uint256::from_str("666666666666666666666666666666666666").unwrap())
         );
 
         // large inputs
@@ -391,11 +391,11 @@ mod tests {
         let fraction = Decimal256::from_str("1234.567").unwrap();
         assert_eq!(
             fraction.numerator(),
-            Uint256::from(1_234_567_000_000_000_000_000u128)
+            Uint256::from_str("1234567000000000000000000000000000000000").unwrap()
         );
         assert_eq!(
             fraction.denominator(),
-            Uint256::from(1_000_000_000_000_000_000u128)
+            Uint256::from_str("1000000000000000000000000000000000000").unwrap()
         );
     }
 
@@ -802,70 +802,141 @@ mod tests {
 
         assert_eq!(
             Decimal256(Uint256::from(1u128)).to_string(),
-            "0.000000000000000001"
+            "0.000000000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(10u128)).to_string(),
-            "0.00000000000000001"
+            "0.00000000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(100u128)).to_string(),
-            "0.0000000000000001"
+            "0.0000000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(1000u128)).to_string(),
-            "0.000000000000001"
+            "0.000000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(10000u128)).to_string(),
-            "0.00000000000001"
+            "0.00000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(100000u128)).to_string(),
-            "0.0000000000001"
+            "0.0000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(1000000u128)).to_string(),
-            "0.000000000001"
+            "0.000000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(10000000u128)).to_string(),
-            "0.00000000001"
+            "0.00000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(100000000u128)).to_string(),
-            "0.0000000001"
+            "0.0000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(1000000000u128)).to_string(),
-            "0.000000001"
+            "0.000000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(10000000000u128)).to_string(),
-            "0.00000001"
+            "0.00000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(100000000000u128)).to_string(),
-            "0.0000001"
+            "0.0000000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(10000000000000u128)).to_string(),
-            "0.00001"
+            "0.00000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(100000000000000u128)).to_string(),
-            "0.0001"
+            "0.0000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(1000000000000000u128)).to_string(),
-            "0.001"
+            "0.000000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(10000000000000000u128)).to_string(),
-            "0.01"
+            "0.00000000000000000001"
         );
         assert_eq!(
             Decimal256(Uint256::from(100000000000000000u128)).to_string(),
+            "0.0000000000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("1000000000000000000").unwrap()).to_string(),
+            "0.000000000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("10000000000000000000").unwrap()).to_string(),
+            "0.00000000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("100000000000000000000").unwrap()).to_string(),
+            "0.0000000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("1000000000000000000000").unwrap()).to_string(),
+            "0.000000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("10000000000000000000000").unwrap()).to_string(),
+            "0.00000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("100000000000000000000000").unwrap()).to_string(),
+            "0.0000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("1000000000000000000000000").unwrap()).to_string(),
+            "0.000000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("10000000000000000000000000").unwrap()).to_string(),
+            "0.00000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("100000000000000000000000000").unwrap()).to_string(),
+            "0.0000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("1000000000000000000000000000").unwrap()).to_string(),
+            "0.000000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("10000000000000000000000000000").unwrap()).to_string(),
+            "0.00000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("100000000000000000000000000000").unwrap()).to_string(),
+            "0.0000001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("10000000000000000000000000000000").unwrap()).to_string(),
+            "0.00001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("100000000000000000000000000000000").unwrap()).to_string(),
+            "0.0001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("1000000000000000000000000000000000").unwrap())
+                .to_string(),
+            "0.001"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("10000000000000000000000000000000000").unwrap())
+                .to_string(),
+            "0.01"
+        );
+        assert_eq!(
+            Decimal256(Uint256::from_str("100000000000000000000000000000000000").unwrap())
+                .to_string(),
             "0.1"
         );
     }
