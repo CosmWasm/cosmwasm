@@ -10,9 +10,11 @@ use super::Fraction;
 use super::Isqrt;
 use super::Uint256;
 
-/// A fixed-point decimal value with 18 fractional digits, i.e. Decimal256(1_000_000_000_000_000_000) == 1.0
+/// A fixed-point decimal value with 36 fractional digits, i.e. Decimal256(1_000_000_000_000_000_000) == 1.0
 ///
-/// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
+/// The greatest possible value that can be represented is
+/// 115792089237316195423570985008687907853269.984665640564039457584007913129639935
+/// (which is (2^256 - 1) / 10^36)
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
 
@@ -44,12 +46,18 @@ impl Decimal256 {
 
     /// Convert x% into Decimal256
     pub fn percent(x: u64) -> Self {
-        Self(((x as u128) * 10_000_000_000_000_000).into())
+        Self(
+            (Uint256::from(x) * Uint256::from(10_000_000_000_000_000_000_000_000_000_000_000u128))
+                .into(),
+        )
     }
 
     /// Convert permille (x/1000) into Decimal256
     pub fn permille(x: u64) -> Self {
-        Self(((x as u128) * 1_000_000_000_000_000).into())
+        Self(
+            (Uint256::from(x) * Uint256::from(1_000_000_000_000_000_000_000_000_000_000_000u128))
+                .into(),
+        )
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal256
@@ -77,21 +85,21 @@ impl Decimal256 {
         // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
         // We start with the highest precision possible and lower it until
         // there's no overflow.
-        (0..=9)
+        (0..=18)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
-            // The last step (i = 0) is guaranteed to succeed because `isqrt(u128::MAX) * 10^9` does not overflow
+            // The last step (i = 0) is guaranteed to succeed because `isqrt(u256::MAX) * 10^18` does not overflow
             .unwrap()
     }
 
     /// Lower precision means more aggressive rounding, but less risk of overflow.
-    /// Precision *must* be a number between 0 and 9 (inclusive).
+    /// Precision *must* be a number between 0 and 36 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
     fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
-        let inner_mul = 100u128.pow(precision);
+        let inner_mul = Uint256::from(100u128).pow(precision);
         self.0.checked_mul(inner_mul.into()).ok().map(|inner| {
-            let outer_mul = 10u128.pow(9 - precision);
+            let outer_mul = Uint256::from(10u128).pow(18 - precision);
             Self(inner.isqrt().checked_mul(Uint256::from(outer_mul)).unwrap())
         })
     }
@@ -147,11 +155,11 @@ impl FromStr for Decimal256 {
             let fractional = fractional_part
                 .parse::<Uint256>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp = (18usize.checked_sub(fractional_part.len())).ok_or_else(|| {
-                StdError::generic_err("Cannot parse more than 18 fractional digits")
+            let exp = (36usize.checked_sub(fractional_part.len())).ok_or_else(|| {
+                StdError::generic_err("Cannot parse more than 36 fractional digits")
             })?;
-            debug_assert!(exp <= 18);
-            let fractional_factor = Uint256::from(10u128.pow(exp as u32));
+            debug_assert!(exp <= 36);
+            let fractional_factor = Uint256::from(10u128).pow(exp as u32);
             atomics = atomics
                 .checked_add(
                     // The inner multiplication can't overflow because
@@ -177,7 +185,7 @@ impl fmt::Display for Decimal256 {
         if fractional.is_zero() {
             write!(f, "{}", whole)
         } else {
-            let fractional_string = format!("{:018}", fractional);
+            let fractional_string = format!("{:036}", fractional);
             f.write_str(&whole.to_string())?;
             f.write_char('.')?;
             f.write_str(fractional_string.trim_end_matches('0'))?;
@@ -450,19 +458,22 @@ mod tests {
             Decimal256::percent(4)
         );
 
-        // Can handle 18 fractional digits
+        // Can handle 36 fractional digits
         assert_eq!(
-            Decimal256::from_str("7.123456789012345678").unwrap(),
-            Decimal256(Uint256::from(7123456789012345678u128))
+            Decimal256::from_str("7.123456789012345678123456789012345678").unwrap(),
+            Decimal256(Uint256::from(7123456789012345678123456789012345678u128))
         );
         assert_eq!(
-            Decimal256::from_str("7.999999999999999999").unwrap(),
-            Decimal256(Uint256::from(7999999999999999999u128))
+            Decimal256::from_str("7.999999999999999999999999999999999999").unwrap(),
+            Decimal256(Uint256::from(7999999999999999999999999999999999999u128))
         );
 
         // Works for documented max value
         assert_eq!(
-            Decimal256::from_str("340282366920938463463.374607431768211455").unwrap(),
+            Decimal256::from_str(
+                "115792089237316195423570985008687907853269.984665640564039457584007913129639935"
+            )
+            .unwrap(),
             Decimal256::MAX
         );
     }
@@ -509,18 +520,18 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_more_than_18_fractional_digits() {
-        match Decimal256::from_str("7.1234567890123456789").unwrap_err() {
+    fn decimal_from_str_errors_for_more_than_36_fractional_digits() {
+        match Decimal256::from_str("7.1234567890123456789012345678901234567").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
+                assert_eq!(msg, "Cannot parse more than 36 fractional digits")
             }
             e => panic!("Unexpected error: {:?}", e),
         }
 
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
-        match Decimal256::from_str("7.1230000000000000000").unwrap_err() {
+        match Decimal256::from_str("7.1230000000000000000000000000000000000").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
+                assert_eq!(msg, "Cannot parse more than 36 fractional digits")
             }
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -542,17 +553,21 @@ mod tests {
     #[test]
     fn decimal_from_str_errors_for_more_than_max_value() {
         // Integer
-        match Decimal256::from_str("340282366920938463464").unwrap_err() {
+        match Decimal256::from_str("115792089237316195423570985008687907853270").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
 
         // Decimal
-        match Decimal256::from_str("340282366920938463464.0").unwrap_err() {
+        match Decimal256::from_str("115792089237316195423570985008687907853270.0").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
-        match Decimal256::from_str("340282366920938463463.374607431768211456").unwrap_err() {
+        match Decimal256::from_str(
+            "115792089237316195423570985008687907853269.984665640564039457584007913129639936",
+        )
+        .unwrap_err()
+        {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -598,11 +613,11 @@ mod tests {
         // d > 1 rounded
         assert_eq!(
             Decimal256::from_str("3").unwrap().inv(),
-            Some(Decimal256::from_str("0.333333333333333333").unwrap())
+            Some(Decimal256::from_str("0.333333333333333333333333333333333333").unwrap())
         );
         assert_eq!(
             Decimal256::from_str("6").unwrap().inv(),
-            Some(Decimal256::from_str("0.166666666666666666").unwrap())
+            Some(Decimal256::from_str("0.166666666666666666666666666666666666").unwrap())
         );
 
         // d < 1 exact
@@ -747,26 +762,28 @@ mod tests {
     fn decimal_uint128_sqrt_is_precise() {
         assert_eq!(
             Decimal256::from_str("2").unwrap().sqrt(),
-            Decimal256::from_str("1.414213562373095048").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
+            Decimal256::from_str("1.414213562373095048801688724209698078").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
         );
     }
 
     #[test]
     fn decimal_uint128_sqrt_does_not_overflow() {
         assert_eq!(
-            Decimal256::from_str("400").unwrap().sqrt(),
-            Decimal256::from_str("20").unwrap()
+            Decimal256::from_str("40000000000000000000000000000000000000000")
+                .unwrap()
+                .sqrt(),
+            Decimal256::from_str("200000000000000000000").unwrap()
         );
     }
 
     #[test]
     fn decimal_uint128_sqrt_intermediate_precision_used() {
         assert_eq!(
-            Decimal256::from_str("400001").unwrap().sqrt(),
-            // The last two digits (27) are truncated below due to the algorithm
+            Decimal256::from_str("400000000001").unwrap().sqrt(),
+            // The last four digits (8380) are truncated below due to the algorithm
             // we use. Larger numbers will cause less precision.
-            // https://www.wolframalpha.com/input/?i=sqrt%28400001%29
-            Decimal256::from_str("632.456322602596803200").unwrap()
+            // https://www.wolframalpha.com/input/?i=sqrt%28400000000001%29
+            Decimal256::from_str("632455.532034466435814820309613659029430000").unwrap()
         );
     }
 

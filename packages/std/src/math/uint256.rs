@@ -152,6 +152,18 @@ impl Uint256 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp.into())
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+    }
+
+    pub fn pow(self, exp: u32) -> Self {
+        self.checked_pow(exp)
+            .expect("attempt to raise to a power with overflow")
+    }
+
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
         if other >= 256 {
             return Err(OverflowError::new(OverflowOperation::Shr, self, other));
@@ -245,6 +257,10 @@ impl FromStr for Uint256 {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.is_empty() {
+            return Err(StdError::generic_err("Parsing u256: received empty string"));
+        }
+
         match U256::from_dec_str(s) {
             Ok(u) => Ok(Uint256(u)),
             Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
