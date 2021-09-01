@@ -44,7 +44,7 @@ impl Decimal {
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal
-    pub fn from_ratio<A: Into<Uint128>, B: Into<Uint128>>(numerator: A, denominator: B) -> Self {
+    pub fn from_ratio(numerator: impl Into<Uint128>, denominator: impl Into<Uint128>) -> Self {
         let numerator: Uint128 = numerator.into();
         let denominator: Uint128 = denominator.into();
         if denominator.is_zero() {
@@ -88,15 +88,15 @@ impl Decimal {
     }
 }
 
-impl Fraction<Uint128> for Decimal {
+impl Fraction<u128> for Decimal {
     #[inline]
-    fn numerator(&self) -> Uint128 {
-        self.0
+    fn numerator(&self) -> u128 {
+        self.0.u128()
     }
 
     #[inline]
-    fn denominator(&self) -> Uint128 {
-        Self::DECIMAL_FRACTIONAL
+    fn denominator(&self) -> u128 {
+        Self::DECIMAL_FRACTIONAL.u128()
     }
 
     /// Returns the multiplicative inverse `1/d` for decimal `d`.
@@ -348,14 +348,8 @@ mod tests {
     #[test]
     fn decimal_implements_fraction() {
         let fraction = Decimal::from_str("1234.567").unwrap();
-        assert_eq!(
-            fraction.numerator(),
-            Uint128::from(1_234_567_000_000_000_000_000u128)
-        );
-        assert_eq!(
-            fraction.denominator(),
-            Uint128::from(1_000_000_000_000_000_000u128)
-        );
+        assert_eq!(fraction.numerator(), 1_234_567_000_000_000_000_000u128);
+        assert_eq!(fraction.denominator(), 1_000_000_000_000_000_000u128);
     }
 
     #[test]

@@ -199,10 +199,7 @@ impl TryFrom<&str> for Uint256 {
     type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
-        match U256::from_dec_str(val) {
-            Ok(u) => Ok(Uint256(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
-        }
+        Self::from_str(val)
     }
 }
 
@@ -210,7 +207,10 @@ impl FromStr for Uint256 {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::try_from(s)
+        match U256::from_dec_str(s) {
+            Ok(u) => Ok(Uint256(u)),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
+        }
     }
 }
 

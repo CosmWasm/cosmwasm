@@ -185,10 +185,7 @@ impl TryFrom<&str> for Uint128 {
     type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
-        match val.parse::<u128>() {
-            Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {}", e))),
-        }
+        Self::from_str(val)
     }
 }
 
@@ -196,7 +193,10 @@ impl FromStr for Uint128 {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::try_from(s)
+        match s.parse::<u128>() {
+            Ok(u) => Ok(Uint128(u)),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {}", e))),
+        }
     }
 }
 

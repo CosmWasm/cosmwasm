@@ -230,18 +230,18 @@ impl TryFrom<&str> for Uint512 {
     type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
-        match U512::from_dec_str(val) {
-            Ok(u) => Ok(Uint512(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {}", e))),
-        }
+        Self::from_str(val)
     }
 }
 
-impl FromStr for Uint64 {
+impl FromStr for Uint512 {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::try_from(s)
+        match U512::from_dec_str(s) {
+            Ok(u) => Ok(Self(u)),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {}", e))),
+        }
     }
 }
 
