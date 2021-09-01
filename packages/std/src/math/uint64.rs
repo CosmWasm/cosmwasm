@@ -180,7 +180,7 @@ impl From<Uint64> for u64 {
 
 impl fmt::Display for Uint64 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        self.0.fmt(f)
     }
 }
 

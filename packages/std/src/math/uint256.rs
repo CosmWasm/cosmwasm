@@ -4,6 +4,7 @@ use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::iter::Sum;
 use std::ops::{self, Shr};
+use std::str::FromStr;
 
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
@@ -198,7 +199,15 @@ impl TryFrom<&str> for Uint256 {
     type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
-        match U256::from_dec_str(val) {
+        Self::from_str(val)
+    }
+}
+
+impl FromStr for Uint256 {
+    type Err = StdError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match U256::from_dec_str(s) {
             Ok(u) => Ok(Uint256(u)),
             Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
         }
@@ -213,7 +222,7 @@ impl From<Uint256> for String {
 
 impl fmt::Display for Uint256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        self.0.fmt(f)
     }
 }
 

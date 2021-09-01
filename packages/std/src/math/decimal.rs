@@ -14,52 +14,51 @@ use super::Uint128;
 ///
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal(#[schemars(with = "String")] u128);
-
-const DECIMAL_FRACTIONAL: u128 = 1_000_000_000_000_000_000; // 1*10**18
-const DECIMAL_FRACTIONAL_SQUARED: u128 = 1_000_000_000_000_000_000_000_000_000_000_000_000; // (1*10**18)**2 = 1*10**36
+pub struct Decimal(#[schemars(with = "String")] Uint128);
 
 impl Decimal {
-    pub const MAX: Decimal = Decimal(u128::MAX);
+    const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
+    const DECIMAL_FRACTIONAL_SQUARED: Uint128 =
+        Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000u128); // (1*10**18)**2 = 1*10**36
+
+    pub const MAX: Self = Self(Uint128::MAX);
 
     /// Create a 1.0 Decimal
-    pub const fn one() -> Decimal {
-        Decimal(DECIMAL_FRACTIONAL)
+    pub const fn one() -> Self {
+        Decimal(Self::DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal
-    pub const fn zero() -> Decimal {
-        Decimal(0)
+    pub const fn zero() -> Self {
+        Decimal(Uint128::zero())
     }
 
     /// Convert x% into Decimal
-    pub fn percent(x: u64) -> Decimal {
-        Decimal((x as u128) * 10_000_000_000_000_000)
+    pub fn percent(x: u64) -> Self {
+        Decimal(((x as u128) * 10_000_000_000_000_000).into())
     }
 
     /// Convert permille (x/1000) into Decimal
-    pub fn permille(x: u64) -> Decimal {
-        Decimal((x as u128) * 1_000_000_000_000_000)
+    pub fn permille(x: u64) -> Self {
+        Decimal(((x as u128) * 1_000_000_000_000_000).into())
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal
-    pub fn from_ratio<A: Into<u128>, B: Into<u128>>(numerator: A, denominator: B) -> Decimal {
-        let numerator: u128 = numerator.into();
-        let denominator: u128 = denominator.into();
-        if denominator == 0 {
+    pub fn from_ratio(numerator: impl Into<Uint128>, denominator: impl Into<Uint128>) -> Self {
+        let numerator: Uint128 = numerator.into();
+        let denominator: Uint128 = denominator.into();
+        if denominator.is_zero() {
             panic!("Denominator must not be zero");
         }
 
         Decimal(
             // numerator * DECIMAL_FRACTIONAL / denominator
-            Uint128::from(numerator)
-                .multiply_ratio(DECIMAL_FRACTIONAL, denominator)
-                .into(),
+            numerator.multiply_ratio(Self::DECIMAL_FRACTIONAL, denominator),
         )
     }
 
     pub fn is_zero(&self) -> bool {
-        self.0 == 0
+        self.0.is_zero()
     }
 
     /// Returns the approximate square root as a Decimal.
@@ -82,9 +81,9 @@ impl Decimal {
     /// Returns `None` if the internal multiplication overflows.
     fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = 100u128.pow(precision);
-        self.0.checked_mul(inner_mul).map(|inner| {
+        self.0.checked_mul(inner_mul.into()).ok().map(|inner| {
             let outer_mul = 10u128.pow(9 - precision);
-            Decimal(inner.isqrt() * outer_mul)
+            Decimal(inner.isqrt().checked_mul(Uint128::from(outer_mul)).unwrap())
         })
     }
 }
@@ -92,25 +91,25 @@ impl Decimal {
 impl Fraction<u128> for Decimal {
     #[inline]
     fn numerator(&self) -> u128 {
-        self.0
+        self.0.u128()
     }
 
     #[inline]
     fn denominator(&self) -> u128 {
-        DECIMAL_FRACTIONAL
+        Self::DECIMAL_FRACTIONAL.u128()
     }
 
     /// Returns the multiplicative inverse `1/d` for decimal `d`.
     ///
     /// If `d` is zero, none is returned.
-    fn inv(&self) -> Option<Decimal> {
+    fn inv(&self) -> Option<Self> {
         if self.is_zero() {
             None
         } else {
             // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL.
             // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL. Then
             // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
-            Some(Decimal(DECIMAL_FRACTIONAL_SQUARED / self.0))
+            Some(Decimal(Self::DECIMAL_FRACTIONAL_SQUARED / self.0))
         }
     }
 }
@@ -129,24 +128,28 @@ impl FromStr for Decimal {
 
         let whole_part = parts_iter.next().unwrap(); // split always returns at least one element
         let whole = whole_part
-            .parse::<u128>()
+            .parse::<Uint128>()
             .map_err(|_| StdError::generic_err("Error parsing whole"))?;
         let mut atomics = whole
-            .checked_mul(DECIMAL_FRACTIONAL)
-            .ok_or_else(|| StdError::generic_err("Value too big"))?;
+            .checked_mul(Self::DECIMAL_FRACTIONAL)
+            .map_err(|_| StdError::generic_err("Value too big"))?;
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part
-                .parse::<u128>()
+                .parse::<Uint128>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
             let exp = (18usize.checked_sub(fractional_part.len())).ok_or_else(|| {
                 StdError::generic_err("Cannot parse more than 18 fractional digits")
             })?;
             debug_assert!(exp <= 18);
-            let fractional_factor = 10u128.pow(exp as u32);
+            let fractional_factor = Uint128::from(10u128.pow(exp as u32));
             atomics = atomics
-                .checked_add(fractional * fractional_factor)
-                .ok_or_else(|| StdError::generic_err("Value too big"))?;
+                .checked_add(
+                    // The inner multiplication can't overflow because
+                    // fractional < 10^18 && fractional_factor <= 10^18
+                    fractional.checked_mul(fractional_factor).unwrap(),
+                )
+                .map_err(|_| StdError::generic_err("Value too big"))?;
         }
 
         if parts_iter.next().is_some() {
@@ -159,10 +162,10 @@ impl FromStr for Decimal {
 
 impl fmt::Display for Decimal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let whole = (self.0) / DECIMAL_FRACTIONAL;
-        let fractional = (self.0) % DECIMAL_FRACTIONAL;
+        let whole = (self.0) / Self::DECIMAL_FRACTIONAL;
+        let fractional = (self.0).checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
 
-        if fractional == 0 {
+        if fractional.is_zero() {
             write!(f, "{}", whole)
         } else {
             let fractional_string = format!("{:018}", fractional);
@@ -202,7 +205,7 @@ impl ops::Mul<Decimal> for Uint128 {
         if self.is_zero() || rhs.is_zero() {
             return Uint128::zero();
         }
-        self.multiply_ratio(rhs.0, DECIMAL_FRACTIONAL)
+        self.multiply_ratio(rhs.0, Decimal::DECIMAL_FRACTIONAL)
     }
 }
 
@@ -218,13 +221,13 @@ impl ops::Div<Uint128> for Decimal {
     type Output = Self;
 
     fn div(self, rhs: Uint128) -> Self::Output {
-        Decimal(self.0 / rhs.u128())
+        Decimal(self.0 / rhs)
     }
 }
 
 impl ops::DivAssign<Uint128> for Decimal {
     fn div_assign(&mut self, rhs: Uint128) {
-        self.0 /= rhs.u128();
+        self.0 /= rhs;
     }
 }
 
@@ -240,7 +243,7 @@ impl Serialize for Decimal {
 
 /// Deserializes as a base64 string
 impl<'de> Deserialize<'de> for Decimal {
-    fn deserialize<D>(deserializer: D) -> Result<Decimal, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -277,25 +280,25 @@ mod tests {
     #[test]
     fn decimal_one() {
         let value = Decimal::one();
-        assert_eq!(value.0, DECIMAL_FRACTIONAL);
+        assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL);
     }
 
     #[test]
     fn decimal_zero() {
         let value = Decimal::zero();
-        assert_eq!(value.0, 0);
+        assert!(value.0.is_zero());
     }
 
     #[test]
     fn decimal_percent() {
         let value = Decimal::percent(50);
-        assert_eq!(value.0, DECIMAL_FRACTIONAL / 2);
+        assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(2u8));
     }
 
     #[test]
     fn decimal_permille() {
         let value = Decimal::permille(125);
-        assert_eq!(value.0, DECIMAL_FRACTIONAL / 8);
+        assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(8u8));
     }
 
     #[test]
@@ -317,13 +320,13 @@ mod tests {
         // 1/3 (result floored)
         assert_eq!(
             Decimal::from_ratio(1u64, 3u64),
-            Decimal(333_333_333_333_333_333)
+            Decimal(Uint128::from(333_333_333_333_333_333u128))
         );
 
         // 2/3 (result floored)
         assert_eq!(
             Decimal::from_ratio(2u64, 3u64),
-            Decimal(666_666_666_666_666_666)
+            Decimal(Uint128::from(666_666_666_666_666_666u128))
         );
 
         // large inputs
@@ -345,8 +348,8 @@ mod tests {
     #[test]
     fn decimal_implements_fraction() {
         let fraction = Decimal::from_str("1234.567").unwrap();
-        assert_eq!(fraction.numerator(), 1_234_567_000_000_000_000_000);
-        assert_eq!(fraction.denominator(), 1_000_000_000_000_000_000);
+        assert_eq!(fraction.numerator(), 1_234_567_000_000_000_000_000u128);
+        assert_eq!(fraction.denominator(), 1_000_000_000_000_000_000u128);
     }
 
     #[test]
@@ -375,11 +378,11 @@ mod tests {
         // Can handle 18 fractional digits
         assert_eq!(
             Decimal::from_str("7.123456789012345678").unwrap(),
-            Decimal(7123456789012345678)
+            Decimal(Uint128::from(7123456789012345678u128))
         );
         assert_eq!(
             Decimal::from_str("7.999999999999999999").unwrap(),
-            Decimal(7999999999999999999)
+            Decimal(Uint128::from(7999999999999999999u128))
         );
 
         // Works for documented max value
@@ -549,7 +552,10 @@ mod tests {
     #[test]
     fn decimal_add() {
         let value = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(value.0, DECIMAL_FRACTIONAL * 3 / 2);
+        assert_eq!(
+            value.0,
+            Decimal::DECIMAL_FRACTIONAL * Uint128::from(3u8) / Uint128::from(2u8)
+        );
     }
 
     #[test]
@@ -561,7 +567,7 @@ mod tests {
     #[test]
     fn decimal_sub() {
         let value = Decimal::one() - Decimal::percent(50); // 0.5
-        assert_eq!(value.0, DECIMAL_FRACTIONAL / 2);
+        assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(2u8));
     }
 
     #[test]
@@ -696,26 +702,77 @@ mod tests {
         // Decimals
         assert_eq!(Decimal::percent(125).to_string(), "1.25");
         assert_eq!(Decimal::percent(42638).to_string(), "426.38");
-        assert_eq!(Decimal::percent(1).to_string(), "0.01");
+        assert_eq!(Decimal::percent(3).to_string(), "0.03");
         assert_eq!(Decimal::permille(987).to_string(), "0.987");
 
-        assert_eq!(Decimal(1).to_string(), "0.000000000000000001");
-        assert_eq!(Decimal(10).to_string(), "0.00000000000000001");
-        assert_eq!(Decimal(100).to_string(), "0.0000000000000001");
-        assert_eq!(Decimal(1000).to_string(), "0.000000000000001");
-        assert_eq!(Decimal(10000).to_string(), "0.00000000000001");
-        assert_eq!(Decimal(100000).to_string(), "0.0000000000001");
-        assert_eq!(Decimal(1000000).to_string(), "0.000000000001");
-        assert_eq!(Decimal(10000000).to_string(), "0.00000000001");
-        assert_eq!(Decimal(100000000).to_string(), "0.0000000001");
-        assert_eq!(Decimal(1000000000).to_string(), "0.000000001");
-        assert_eq!(Decimal(10000000000).to_string(), "0.00000001");
-        assert_eq!(Decimal(100000000000).to_string(), "0.0000001");
-        assert_eq!(Decimal(10000000000000).to_string(), "0.00001");
-        assert_eq!(Decimal(100000000000000).to_string(), "0.0001");
-        assert_eq!(Decimal(1000000000000000).to_string(), "0.001");
-        assert_eq!(Decimal(10000000000000000).to_string(), "0.01");
-        assert_eq!(Decimal(100000000000000000).to_string(), "0.1");
+        assert_eq!(
+            Decimal(Uint128::from(1u128)).to_string(),
+            "0.000000000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(10u128)).to_string(),
+            "0.00000000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(100u128)).to_string(),
+            "0.0000000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(1000u128)).to_string(),
+            "0.000000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(10000u128)).to_string(),
+            "0.00000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(100000u128)).to_string(),
+            "0.0000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(1000000u128)).to_string(),
+            "0.000000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(10000000u128)).to_string(),
+            "0.00000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(100000000u128)).to_string(),
+            "0.0000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(1000000000u128)).to_string(),
+            "0.000000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(10000000000u128)).to_string(),
+            "0.00000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(100000000000u128)).to_string(),
+            "0.0000001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(10000000000000u128)).to_string(),
+            "0.00001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(100000000000000u128)).to_string(),
+            "0.0001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(1000000000000000u128)).to_string(),
+            "0.001"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(10000000000000000u128)).to_string(),
+            "0.01"
+        );
+        assert_eq!(
+            Decimal(Uint128::from(100000000000000000u128)).to_string(),
+            "0.1"
+        );
     }
 
     #[test]
