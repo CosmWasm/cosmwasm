@@ -6,12 +6,24 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Fixed
+### Added
+
+- cosmwasm-std: Implement `Mul` and `MulAssign` for `Uint128`.
+- cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.`
+
+### Changed
 
 - cosmwasm-std: Implement `Decimal::from_ratio` using full uint128
   multiplication to support a wider range of input values.
 - cosmwasm-std: `Fraction` methods `numerator` and `denominator` now return a
   `Uint128`.
+- cosmwasm-std: `Decimal::from_ratio` now accepts any types that implement
+  `Into<Uint128>` rather than `Into<u128>`.
+
+### Fixed
+
+- cosmwasm-std: Fixed a bug where `Uint*` types wouldn't handle formatting
+  options when formatted with `std::fmt::Display`.
 
 ## [0.16.1] - 2021-08-31
 
