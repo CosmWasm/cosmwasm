@@ -1,6 +1,6 @@
 use std::{cmp, ops};
 
-use crate::{Uint128, Uint256, Uint512, Uint64};
+use crate::math::Unsigned;
 
 /// A trait for calculating the
 /// [integer square root](https://en.wikipedia.org/wiki/Integer_square_root).
@@ -38,24 +38,12 @@ where
     }
 }
 
-/// Marker trait for types that represent unsigned integers.
-pub trait Unsigned {}
-impl Unsigned for u8 {}
-impl Unsigned for u16 {}
-impl Unsigned for u32 {}
-impl Unsigned for u64 {}
-impl Unsigned for u128 {}
-impl Unsigned for Uint64 {}
-impl Unsigned for Uint128 {}
-impl Unsigned for Uint256 {}
-impl Unsigned for Uint512 {}
-impl Unsigned for usize {}
-
 #[cfg(test)]
 mod tests {
     use std::convert::TryFrom;
 
     use super::*;
+    use crate::{Uint128, Uint256, Uint512, Uint64};
 
     #[test]
     fn isqrt_primitives() {

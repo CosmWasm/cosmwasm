@@ -5,6 +5,7 @@ mod uint128;
 mod uint256;
 mod uint512;
 mod uint64;
+mod unsigned;
 
 pub use decimal::Decimal;
 pub use fraction::Fraction;
@@ -13,3 +14,4 @@ pub use uint128::Uint128;
 pub use uint256::Uint256;
 pub use uint512::Uint512;
 pub use uint64::Uint64;
+pub use unsigned::Unsigned;

@@ -380,14 +380,14 @@ impl<'a> ops::ShrAssign<&'a u32> for Uint128 {
 
 impl Uint128 {
     /// Returns `self * numerator / denominator`
-    pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
+    pub fn multiply_ratio<A: Into<Self>, B: Into<Self>>(
         &self,
         numerator: A,
         denominator: B,
-    ) -> Uint128 {
-        let numerator: u128 = numerator.into();
-        let denominator: u128 = denominator.into();
-        if denominator == 0 {
+    ) -> Self {
+        let numerator: Uint128 = numerator.into();
+        let denominator: Uint128 = denominator.into();
+        if denominator.is_zero() {
             panic!("Denominator must not be zero");
         }
         (self.full_mul(numerator) / Uint256::from(denominator))
