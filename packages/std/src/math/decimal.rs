@@ -144,7 +144,11 @@ impl FromStr for Decimal {
             debug_assert!(exp <= 18);
             let fractional_factor = Uint128::from(10u128.pow(exp as u32));
             atomics = atomics
-                .checked_add(fractional.checked_mul(fractional_factor)?)
+                .checked_add(
+                    // The inner multiplication can't overflow because
+                    // fractional < 10^18 && fractional_factor <= 10^18
+                    fractional.checked_mul(fractional_factor).unwrap(),
+                )
                 .map_err(|_| StdError::generic_err("Value too big"))?;
         }
 
