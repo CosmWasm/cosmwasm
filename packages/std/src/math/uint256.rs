@@ -65,8 +65,22 @@ impl Uint256 {
         Uint256(U256::from_big_endian(&value))
     }
 
-    pub fn from_le_bytes(value: [u8; 32]) -> Self {
-        Uint256(U256::from_little_endian(&value))
+    pub const fn from_le_bytes(data: [u8; 32]) -> Self {
+        let words: [u64; 4] = [
+            u64::from_le_bytes([
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+            ]),
+            u64::from_le_bytes([
+                data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15],
+            ]),
+            u64::from_le_bytes([
+                data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
+            ]),
+            u64::from_le_bytes([
+                data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
+            ]),
+        ];
+        Uint256(U256(words))
     }
 
     /// Returns a copy of the number as big endian bytes.
@@ -510,6 +524,142 @@ mod tests {
         let num = Uint256::new(be_bytes);
         let resulting_bytes: [u8; 32] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn uint256_from_le_bytes() {
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(0u128));
+        let a = Uint256::from_le_bytes([
+            42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(42u128));
+        let a = Uint256::from_le_bytes([
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128));
+        let a = Uint256::from_le_bytes([
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(256u128));
+        let a = Uint256::from_le_bytes([
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(65536u128));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(16777216u128));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(4294967296u128));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(72057594037927936u128));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(18446744073709551616u128));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1329227995784915872903807060280344576u128));
+
+        // Values > u128::MAX
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 16));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 17));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 18));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 19));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 20));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 21));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 22));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 23));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 24));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 25));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 26));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 27));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+            0, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 28));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            1, 0, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 29));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 0,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 30));
+        let a = Uint256::from_le_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 1,
+        ]);
+        assert_eq!(a, Uint256::from(1u128) << (8 * 31));
     }
 
     #[test]

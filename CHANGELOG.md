@@ -10,6 +10,7 @@ and this project adheres to
 
 - cosmwasm-std: Implement `Mul` and `MulAssign` for `Uint128`.
 - cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.
+- cosmwasm-std: Make `Uint256::from_le_bytes` const.
 
 ### Changed
 
