@@ -19,6 +19,8 @@ use super::Uint256;
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
 
 impl Decimal256 {
+    const DECIMAL_PLACES: usize = 36;
+
     fn decimal_fractional() -> Uint256 {
         // 1*10**36
         Uint256::from(1_000_000_000_000_000_000_000_000_000_000_000_000u128)
@@ -83,7 +85,7 @@ impl Decimal256 {
         // TODO: This could be made more efficient once log10 is in:
         // https://github.com/rust-lang/rust/issues/70887
         // The max precision is something like `18 - log10(self.0) / 2`.
-        (0..=18)
+        (0..=Self::DECIMAL_PLACES / 2)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
             // The last step (i = 0) is guaranteed to succeed because `isqrt(Uint256::MAX) * 10^18` does not overflow
@@ -91,13 +93,15 @@ impl Decimal256 {
     }
 
     /// Lower precision means more aggressive rounding, but less risk of overflow.
-    /// Precision *must* be a number between 0 and 36 (inclusive).
+    /// Precision *must* be a number between 0 and 18 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
-    fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
+    fn sqrt_with_precision(&self, precision: usize) -> Option<Self> {
+        let precision = precision as u32;
+
         let inner_mul = Uint256::from(100u128).pow(precision);
         self.0.checked_mul(inner_mul).ok().map(|inner| {
-            let outer_mul = Uint256::from(10u128).pow(18 - precision);
+            let outer_mul = Uint256::from(10u128).pow(Self::DECIMAL_PLACES as u32 / 2 - precision);
             Self(inner.isqrt().checked_mul(outer_mul).unwrap())
         })
     }
@@ -137,7 +141,7 @@ impl FromStr for Decimal256 {
     /// Disallowed: "", ".23"
     ///
     /// This never performs any kind of rounding.
-    /// More than 36 fractional digits, even zeros, result in an error.
+    /// More than DECIMAL_PLACES fractional digits, even zeros, result in an error.
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut parts_iter = input.split('.');
 
@@ -153,15 +157,19 @@ impl FromStr for Decimal256 {
             let fractional = fractional_part
                 .parse::<Uint256>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp = (36usize.checked_sub(fractional_part.len())).ok_or_else(|| {
-                StdError::generic_err("Cannot parse more than 36 fractional digits")
-            })?;
-            debug_assert!(exp <= 36);
+            let exp =
+                (Self::DECIMAL_PLACES.checked_sub(fractional_part.len())).ok_or_else(|| {
+                    StdError::generic_err(format!(
+                        "Cannot parse more than {} fractional digits",
+                        Self::DECIMAL_PLACES
+                    ))
+                })?;
+            debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint256::from(10u128).pow(exp as u32);
             atomics = atomics
                 .checked_add(
                     // The inner multiplication can't overflow because
-                    // fractional < 10^36 && fractional_factor <= 10^36
+                    // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
                     fractional.checked_mul(fractional_factor).unwrap(),
                 )
                 .map_err(|_| StdError::generic_err("Value too big"))?;
@@ -183,7 +191,8 @@ impl fmt::Display for Decimal256 {
         if fractional.is_zero() {
             write!(f, "{}", whole)
         } else {
-            let fractional_string = format!("{:036}", fractional);
+            let fractional_string =
+                format!("{:0>padding$}", fractional, padding = Self::DECIMAL_PLACES);
             f.write_str(&whole.to_string())?;
             f.write_char('.')?;
             f.write_str(fractional_string.trim_end_matches('0'))?;
