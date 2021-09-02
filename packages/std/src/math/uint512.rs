@@ -253,7 +253,11 @@ impl From<Uint512> for String {
 
 impl fmt::Display for Uint512 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        // The inner type doesn't work as expected with padding, so we
+        // work around that.
+        let unpadded = self.0.to_string();
+
+        f.pad_integral(true, "", &unpadded)
     }
 }
 
@@ -548,6 +552,12 @@ mod tests {
         let a = Uint512::zero();
         assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
+    }
+
+    #[test]
+    fn uint512_display_padding_works() {
+        let a = Uint512::from(123u64);
+        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
     }
 
     #[test]

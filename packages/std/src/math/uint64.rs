@@ -406,6 +406,12 @@ mod tests {
     }
 
     #[test]
+    fn uint64_display_padding_works() {
+        let a = Uint64::from(123u64);
+        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
     fn uint64_is_zero_works() {
         assert!(Uint64::zero().is_zero());
         assert!(Uint64(0).is_zero());
