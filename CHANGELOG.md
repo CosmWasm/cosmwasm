@@ -17,6 +17,7 @@ and this project adheres to
   multiplication to support a wider range of input values.
 - cosmwasm-std: `Decimal::from_ratio` now accepts any types that implement
   `Into<Uint128>` rather than `Into<u128>`.
+- cosmwasm-crypto: Update dependency `k256` to ^0.9.6.
 
 ### Fixed
 
