@@ -79,6 +79,10 @@ impl Decimal256 {
         // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
         // We start with the highest precision possible and lower it until
         // there's no overflow.
+        //
+        // TODO: This could be made more efficient once log10 is in:
+        // https://github.com/rust-lang/rust/issues/70887
+        // The max precision is something like `18 - log10(self.0) / 2`.
         (0..=18)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
