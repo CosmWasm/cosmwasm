@@ -551,6 +551,12 @@ mod tests {
     }
 
     #[test]
+    fn uint512_display_padding_works() {
+        let a = Uint512::from(123u64);
+        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
     fn uint512_is_zero_works() {
         assert!(Uint512::zero().is_zero());
         assert!(Uint512(U512::from(0)).is_zero());

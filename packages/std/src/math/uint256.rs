@@ -553,6 +553,12 @@ mod tests {
     }
 
     #[test]
+    fn uint256_display_padding_works() {
+        let a = Uint256::from(123u64);
+        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
     fn uint256_is_zero_works() {
         assert!(Uint256::zero().is_zero());
         assert!(Uint256(U256::from(0)).is_zero());
