@@ -958,7 +958,7 @@ jobs:
           name: Build development contracts
           command: |
             echo "Building all contracts under ./contracts"
-            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.11.4 ./contracts/*/
+            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.12.1 ./contracts/*/
       - run:
           name: Check development contracts
           command: |
