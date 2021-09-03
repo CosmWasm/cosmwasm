@@ -9,7 +9,7 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Implement `Mul` and `MulAssign` for `Uint128`.
-- cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.`
+- cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.
 
 ### Changed
 
