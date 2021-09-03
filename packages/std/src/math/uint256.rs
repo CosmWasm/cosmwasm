@@ -3,7 +3,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::iter::Sum;
-use std::ops::{self, Shr};
+use std::ops::{self, Shl, Shr};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -128,6 +128,14 @@ impl Uint256 {
         }
 
         Ok(Self(self.0.shr(other)))
+    }
+
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 256 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
     }
 
     pub fn saturating_add(self, other: Self) -> Self {
@@ -311,7 +319,28 @@ impl<'a> ops::Shr<&'a u32> for Uint256 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
-        Shr::<u32>::shr(self, *rhs)
+        self.shr(*rhs)
+    }
+}
+
+impl ops::Shl<u32> for Uint256 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        self.checked_shl(rhs).unwrap_or_else(|_| {
+            panic!(
+                "left shift error: {} is larger or equal than the number of bits in Uint256",
+                rhs,
+            )
+        })
+    }
+}
+
+impl<'a> ops::Shl<&'a u32> for Uint256 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
     }
 }
 

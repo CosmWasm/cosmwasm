@@ -18,6 +18,9 @@ and this project adheres to
 - cosmwasm-std: `Decimal::from_ratio` now accepts any types that implement
   `Into<Uint128>` rather than `Into<u128>`.
 - cosmwasm-crypto: Update dependency `k256` to ^0.9.6.
+- cosmwasm-std: Add enum cases `Shl` to `OverflowOperation` (breaking; [#1071]).
+
+[#1071]: https://github.com/CosmWasm/cosmwasm/pull/1071
 
 ### Fixed
 

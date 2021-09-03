@@ -453,6 +453,7 @@ pub enum OverflowOperation {
     Mul,
     Pow,
     Shr,
+    Shl,
 }
 
 impl fmt::Display for OverflowOperation {
