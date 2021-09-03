@@ -52,7 +52,7 @@ impl Uint256 {
 
     /// Creates a Uint256(value) from a big endian representation. It's just an alias for
     /// `from_big_endian`.
-    pub fn new(value: [u8; 32]) -> Self {
+    pub const fn new(value: [u8; 32]) -> Self {
         Self::from_be_bytes(value)
     }
 
