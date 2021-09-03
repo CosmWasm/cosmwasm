@@ -41,6 +41,9 @@ and this project adheres to
 - cosmwasm-std: In `ExternalApi::addr_validate` and `::addr_canonicalize` do not
   send too long inputs to VM to avoid terminating contract execution. Errors are
   returned instead now.
+- cosmwasm-std: Add enum cases `Shr` to `OverflowOperation` (breaking; [#1059]).
+
+[#1059]: https://github.com/CosmWasm/cosmwasm/pull/1059
 
 ## [0.16.0] - 2021-08-05
 
