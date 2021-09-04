@@ -51,7 +51,9 @@ impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
 
     /// Creates a Uint256(value) from a big endian representation. It's just an alias for
-    /// `from_big_endian`.
+    /// [`Uint256::from_be_bytes`].
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
     pub const fn new(value: [u8; 32]) -> Self {
         Self::from_be_bytes(value)
     }
