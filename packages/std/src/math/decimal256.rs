@@ -31,19 +31,11 @@ impl Decimal256 {
             75, 159, 16, 0, 0, 0, 0,
         ]);
 
-    const fn decimal_fractional() -> Uint256 {
-        Self::DECIMAL_FRACTIONAL
-    }
-
-    const fn decimal_fractional_squared() -> Uint256 {
-        Self::DECIMAL_FRACTIONAL_SQUARED
-    }
-
     pub const MAX: Self = Self(Uint256::MAX);
 
     /// Create a 1.0 Decimal256
     pub const fn one() -> Self {
-        Self(Self::decimal_fractional())
+        Self(Self::DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal256
@@ -71,7 +63,7 @@ impl Decimal256 {
 
         Self(
             // numerator * DECIMAL_FRACTIONAL / denominator
-            numerator.multiply_ratio(Self::decimal_fractional(), denominator),
+            numerator.multiply_ratio(Self::DECIMAL_FRACTIONAL, denominator),
         )
     }
 
@@ -120,7 +112,7 @@ impl Fraction<Uint256> for Decimal256 {
 
     #[inline]
     fn denominator(&self) -> Uint256 {
-        Self::decimal_fractional()
+        Self::DECIMAL_FRACTIONAL
     }
 
     /// Returns the multiplicative inverse `1/d` for decimal `d`.
@@ -133,7 +125,7 @@ impl Fraction<Uint256> for Decimal256 {
             // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL.
             // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL. Then
             // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
-            Some(Self(Self::decimal_fractional_squared() / self.0))
+            Some(Self(Self::DECIMAL_FRACTIONAL_SQUARED / self.0))
         }
     }
 }
@@ -155,7 +147,7 @@ impl FromStr for Decimal256 {
             .parse::<Uint256>()
             .map_err(|_| StdError::generic_err("Error parsing whole"))?;
         let mut atomics = whole
-            .checked_mul(Self::decimal_fractional())
+            .checked_mul(Self::DECIMAL_FRACTIONAL)
             .map_err(|_| StdError::generic_err("Value too big"))?;
 
         if let Some(fractional_part) = parts_iter.next() {
@@ -190,8 +182,8 @@ impl FromStr for Decimal256 {
 
 impl fmt::Display for Decimal256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let whole = (self.0) / Self::decimal_fractional();
-        let fractional = (self.0).checked_rem(Self::decimal_fractional()).unwrap();
+        let whole = (self.0) / Self::DECIMAL_FRACTIONAL;
+        let fractional = (self.0).checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
 
         if fractional.is_zero() {
             write!(f, "{}", whole)
@@ -234,7 +226,7 @@ impl ops::Mul<Decimal256> for Uint256 {
         if self.is_zero() || rhs.is_zero() {
             return Uint256::zero();
         }
-        self.multiply_ratio(rhs.0, Decimal256::decimal_fractional())
+        self.multiply_ratio(rhs.0, Decimal256::DECIMAL_FRACTIONAL)
     }
 }
 
@@ -309,7 +301,7 @@ mod tests {
     #[test]
     fn decimal_one() {
         let value = Decimal256::one();
-        assert_eq!(value.0, Decimal256::decimal_fractional());
+        assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL);
     }
 
     #[test]
@@ -321,19 +313,13 @@ mod tests {
     #[test]
     fn decimal_percent() {
         let value = Decimal256::percent(50);
-        assert_eq!(
-            value.0,
-            Decimal256::decimal_fractional() / Uint256::from(2u8)
-        );
+        assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(2u8));
     }
 
     #[test]
     fn decimal_permille() {
         let value = Decimal256::permille(125);
-        assert_eq!(
-            value.0,
-            Decimal256::decimal_fractional() / Uint256::from(8u8)
-        );
+        assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(8u8));
     }
 
     #[test]
@@ -660,7 +646,7 @@ mod tests {
         let value = Decimal256::one() + Decimal256::percent(50); // 1.5
         assert_eq!(
             value.0,
-            Decimal256::decimal_fractional() * Uint256::from(3u8) / Uint256::from(2u8)
+            Decimal256::DECIMAL_FRACTIONAL * Uint256::from(3u8) / Uint256::from(2u8)
         );
     }
 
@@ -673,10 +659,7 @@ mod tests {
     #[test]
     fn decimal_sub() {
         let value = Decimal256::one() - Decimal256::percent(50); // 0.5
-        assert_eq!(
-            value.0,
-            Decimal256::decimal_fractional() / Uint256::from(2u8)
-        );
+        assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(2u8));
     }
 
     #[test]
