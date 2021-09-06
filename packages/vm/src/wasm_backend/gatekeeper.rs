@@ -5,7 +5,8 @@ use wasmer::{
     ModuleMiddleware,
 };
 
-/// A middleware that ensures only deterministic operations are used (i.e. no floats)
+/// A middleware that ensures only deterministic operations are used (i.e. no floats).
+/// It also disallows the use of Wasm features that are not explicitly enabled.
 #[derive(Debug, MemoryUsage)]
 #[non_exhaustive]
 pub struct Gatekeeper {}
