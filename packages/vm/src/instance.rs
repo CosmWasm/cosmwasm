@@ -11,7 +11,8 @@ use crate::features::required_features_from_module;
 use crate::imports::{
     do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
     do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
-    do_secp256k1_recover_pubkey, do_secp256k1_verify,
+    do_secp256k1_recover_pubkey, do_secp256k1_verify, do_secp256r1_recover_pubkey,
+    do_secp256r1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_scan};
@@ -141,6 +142,19 @@ where
         env_imports.insert(
             "secp256k1_recover_pubkey",
             Function::new_native_with_env(store, env.clone(), do_secp256k1_recover_pubkey),
+        );
+
+        // Verifies message hashes against a signature with a public key, using the secp256r1 ECDSA parametrization.
+        // Returns 0 on verification success, 1 on verification failure, and values greater than 1 in case of error.
+        // Ownership of input pointers is not transferred to the host.
+        env_imports.insert(
+            "secp256r1_verify",
+            Function::new_native_with_env(store, env.clone(), do_secp256r1_verify),
+        );
+
+        env_imports.insert(
+            "secp256r1_recover_pubkey",
+            Function::new_native_with_env(store, env.clone(), do_secp256r1_recover_pubkey),
         );
 
         // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.

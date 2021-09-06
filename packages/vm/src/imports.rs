@@ -4,7 +4,8 @@ use std::cmp::max;
 use std::convert::TryInto;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
+    secp256r1_recover_pubkey, secp256r1_verify, CryptoError,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -237,6 +238,66 @@ pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
 
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
     let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_recover_pubkey_cost);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    match result {
+        Ok(pubkey) => {
+            let pubkey_ptr = write_to_contract::<A, S, Q>(env, pubkey.as_ref())?;
+            Ok(to_low_half(pubkey_ptr))
+        }
+        Err(err) => match err {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    }
+}
+
+pub fn do_secp256r1_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    pubkey_ptr: u32,
+) -> VmResult<u32> {
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+
+    let result = secp256r1_verify(&hash, &signature, &pubkey);
+    let gas_info = GasInfo::with_cost(env.gas_config.secp256r1_verify_cost);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    Ok(result.map_or_else(
+        |err| match err {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::GenericErr { .. } => err.code(),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+        |valid| if valid { 0 } else { 1 },
+    ))
+}
+
+pub fn do_secp256r1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    recover_param: u32,
+) -> VmResult<u64> {
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let recover_param: u8 = match recover_param.try_into() {
+        Ok(rp) => rp,
+        Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
+    };
+
+    let result = secp256r1_recover_pubkey(&hash, &signature, recover_param);
+    let gas_info = GasInfo::with_cost(env.gas_config.secp256r1_recover_pubkey_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(pubkey) => {

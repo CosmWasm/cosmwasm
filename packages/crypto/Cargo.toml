@@ -24,6 +24,7 @@ ed25519-zebra = "2"
 digest = "0.9"
 rand_core = { version = "0.5", features = ["getrandom"] }
 thiserror = "1.0"
+p256 = { version = "0.9.0", features = ["ecdsa"] }
 
 [dev-dependencies]
 criterion = "0.3"
