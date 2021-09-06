@@ -5,27 +5,92 @@ use wasmer::{
     ModuleMiddleware,
 };
 
-/// A middleware that ensures only deterministic operations are used (i.e. no floats)
-#[derive(Debug, MemoryUsage)]
-pub struct Deterministic {}
+#[derive(Debug, MemoryUsage, Clone, Copy)]
+struct GatekeeperConfig {
+    /// True iff float operations are allowed.
+    ///
+    /// Note: there are float operations in the SIMD block as well and we do not yet handle
+    /// any combination of `allow_floats` and `allow_feature_simd` properly.
+    allow_floats: bool,
+    //
+    // Standardized features
+    //
+    /// True iff operations of the "Bulk memory operations" feature are allowed.
+    /// See <https://webassembly.org/roadmap/> and <https://github.com/WebAssembly/bulk-memory-operations/blob/master/proposals/bulk-memory-operations/Overview.md>.
+    allow_feature_bulk_memory_operations: bool,
+    /// True iff operations of the "Reference types" feature are allowed.
+    /// See <https://webassembly.org/roadmap/> and <https://github.com/WebAssembly/reference-types/blob/master/proposals/reference-types/Overview.md>.
+    allow_feature_reference_types: bool,
+    /// True iff operations of the "Fixed-width SIMD" feature are allowed.
+    /// See <https://webassembly.org/roadmap/> and <https://github.com/WebAssembly/simd/blob/master/proposals/simd/SIMD.md>.
+    allow_feature_simd: bool,
+    //
+    // In-progress proposals
+    //
+    /// True iff operations of the "Exception handling" feature are allowed.
+    /// Note, this feature is not yet standardized!
+    /// See <https://webassembly.org/roadmap/> and <https://github.com/WebAssembly/exception-handling/blob/master/proposals/exception-handling/Exceptions.md>.
+    allow_feature_exception_handling: bool,
+    /// True iff operations of the "Threads and atomics" feature are allowed.
+    /// Note, this feature is not yet standardized!
+    /// See <https://webassembly.org/roadmap/> and <https://github.com/WebAssembly/threads/blob/master/proposals/threads/Overview.md>.
+    allow_feature_threads: bool,
+}
 
-impl Deterministic {
-    pub fn new() -> Self {
-        Self {}
+/// A middleware that ensures only deterministic operations are used (i.e. no floats).
+/// It also disallows the use of Wasm features that are not explicitly enabled.
+#[derive(Debug, MemoryUsage)]
+#[non_exhaustive]
+pub struct Gatekeeper {
+    config: GatekeeperConfig,
+}
+
+impl Gatekeeper {
+    /// Creates a new Gatekeeper with a custom config.
+    ///
+    /// A costum configuration is potentially dangerous (non-final Wasm proposals, floats in SIMD operation).
+    /// For this reason, only [`Gatekeeper::default()`] is public.
+    fn new(config: GatekeeperConfig) -> Self {
+        Self { config }
     }
 }
 
-impl ModuleMiddleware for Deterministic {
+impl Default for Gatekeeper {
+    fn default() -> Self {
+        Self::new(GatekeeperConfig {
+            allow_floats: false,
+            allow_feature_bulk_memory_operations: false,
+            allow_feature_reference_types: false,
+            allow_feature_simd: false,
+            allow_feature_exception_handling: false,
+            allow_feature_threads: false,
+        })
+    }
+}
+
+impl ModuleMiddleware for Gatekeeper {
     /// Generates a `FunctionMiddleware` for a given function.
     fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
-        Box::new(FunctionDeterministic {})
+        Box::new(FunctionGatekeeper::new(self.config))
     }
 }
 
 #[derive(Debug)]
-pub struct FunctionDeterministic {}
+#[non_exhaustive]
+struct FunctionGatekeeper {
+    config: GatekeeperConfig,
+}
 
-impl FunctionMiddleware for FunctionDeterministic {
+impl FunctionGatekeeper {
+    fn new(config: GatekeeperConfig) -> Self {
+        Self { config }
+    }
+}
+
+/// The name used in errors
+const MIDDLEWARE_NAME: &str = "Gatekeeper";
+
+impl FunctionMiddleware for FunctionGatekeeper {
     fn feed<'a>(
         &mut self,
         operator: Operator<'a>,
@@ -154,11 +219,13 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::TableSet { .. }
             | Operator::TableGrow { .. }
             | Operator::TableSize { .. } => {
-                let msg = format!(
-                    "Reference type operation detected: {:?}. Reference types are not supported.",
-                    operator
-                );
-                Err(MiddlewareError::new("Deterministic", msg))
+                if self.config.allow_feature_reference_types {
+                    state.push_operator(operator);
+                    Ok(())
+                } else {
+                    let msg = format!("Reference type operation detected: {:?}. Reference types are not supported.", operator);
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+                }
             }
             Operator::MemoryAtomicNotify { .. }
             | Operator::MemoryAtomicWait32 { .. }
@@ -227,11 +294,13 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::I64AtomicRmw8CmpxchgU { .. }
             | Operator::I64AtomicRmw16CmpxchgU { .. }
             | Operator::I64AtomicRmw32CmpxchgU { .. } => {
-                let msg = format!(
-                    "Threads operator detected: {:?}. The Wasm Threads extension is not supported.",
-                    operator
-                );
-                Err(MiddlewareError::new("Deterministic", msg))
+                if self.config.allow_feature_threads {
+                    state.push_operator(operator);
+                    Ok(())
+                } else {
+                    let msg = format!("Threads operator detected: {:?}. The Wasm Threads extension is not supported.", operator);
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+                }
             }
             Operator::V128Load { .. }
             | Operator::V128Store { .. }
@@ -417,11 +486,16 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::F64x2ConvertLowI32x4U
             | Operator::F32x4DemoteF64x2Zero
             | Operator::F64x2PromoteLowF32x4 => {
-                let msg = format!(
-                    "SIMD operator detected: {:?}. The Wasm SIMD extension is not supported.",
-                    operator
-                );
-                Err(MiddlewareError::new("Deterministic", msg))
+                if self.config.allow_feature_simd {
+                    state.push_operator(operator);
+                    Ok(())
+                } else {
+                    let msg = format!(
+                        "SIMD operator detected: {:?}. The Wasm SIMD extension is not supported.",
+                        operator
+                    );
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+                }
             }
             Operator::F32Load { .. }
             | Operator::F64Load { .. }
@@ -551,8 +625,16 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::I32x4TruncSatF32x4U
             | Operator::F32x4ConvertI32x4S
             | Operator::F32x4ConvertI32x4U => {
-                let msg = format!("Non-deterministic operator detected: {:?}", operator);
-                Err(MiddlewareError::new("Deterministic", msg))
+                if self.config.allow_floats {
+                    state.push_operator(operator);
+                    Ok(())
+                } else {
+                    let msg = format!(
+                        "Float operator detected: {:?}. The use of floats is not supported.",
+                        operator
+                    );
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+                }
             }
             Operator::MemoryInit { .. }
             | Operator::DataDrop { .. }
@@ -562,11 +644,13 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::ElemDrop { .. }
             | Operator::TableCopy { .. }
             | Operator::TableFill { .. } => {
-                let msg = format!(
-                    "Bulk memory operation detected: {:?}. Bulk memory operations are not supported.",
-                    operator
-                );
-                Err(MiddlewareError::new("Deterministic", msg))
+                if self.config.allow_feature_bulk_memory_operations {
+                    state.push_operator(operator);
+                    Ok(())
+                } else {
+                    let msg = format!("Bulk memory operation detected: {:?}. Bulk memory operations are not supported.", operator);
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+                }
             }
             Operator::Try { .. }
             | Operator::Catch { .. }
@@ -575,11 +659,13 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::Unwind { .. }
             | Operator::Delegate { .. }
             | Operator::CatchAll => {
-                let msg = format!(
-                    "Exception handling operation detected: {:?}. Exception handling is not supported.",
-                    operator
-                );
-                Err(MiddlewareError::new("Deterministic", msg))
+                if self.config.allow_feature_exception_handling {
+                    state.push_operator(operator);
+                    Ok(())
+                } else {
+                    let msg = format!("Exception handling operation detected: {:?}. Exception handling is not supported.", operator);
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+                }
             }
         }
     }
@@ -605,7 +691,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::new());
+        let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
@@ -626,7 +712,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::new());
+        let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
@@ -634,7 +720,7 @@ mod tests {
         assert!(result
             .unwrap_err()
             .to_string()
-            .contains("Non-deterministic"));
+            .contains("Float operator detected:"));
     }
 
     #[test]
@@ -653,7 +739,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::new());
+        let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());

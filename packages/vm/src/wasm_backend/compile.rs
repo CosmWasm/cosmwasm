@@ -24,8 +24,6 @@ mod tests {
     #[test]
     fn contract_with_floats_fails_check() {
         let err = compile(CONTRACT, None).unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("Non-deterministic operator detected"));
+        assert!(err.to_string().contains("Float operator detected:"));
     }
 }
