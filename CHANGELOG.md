@@ -21,6 +21,7 @@ and this project adheres to
   `Into<Uint128>` rather than `Into<u128>`.
 - cosmwasm-crypto: Update dependency `k256` to ^0.9.6.
 - cosmwasm-std: Add enum cases `Shl` to `OverflowOperation` (breaking; [#1071]).
+- cosmwasm-std: `Decimal256` now has 18 decimal places.
 
 [#1071]: https://github.com/CosmWasm/cosmwasm/pull/1071
 
