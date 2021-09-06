@@ -611,7 +611,10 @@ impl FunctionMiddleware for FunctionDeterministic {
                     state.push_operator(operator);
                     Ok(())
                 } else {
-                    let msg = format!("Non-deterministic operator detected: {:?}", operator);
+                    let msg = format!(
+                        "Float operator detected: {:?}. The use of floats is not supported.",
+                        operator
+                    );
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
@@ -699,7 +702,7 @@ mod tests {
         assert!(result
             .unwrap_err()
             .to_string()
-            .contains("Non-deterministic"));
+            .contains("Float operator detected:"));
     }
 
     #[test]
