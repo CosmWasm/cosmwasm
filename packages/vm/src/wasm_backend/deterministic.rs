@@ -18,12 +18,19 @@ impl Deterministic {
 impl ModuleMiddleware for Deterministic {
     /// Generates a `FunctionMiddleware` for a given function.
     fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
-        Box::new(FunctionDeterministic {})
+        Box::new(FunctionDeterministic::default())
     }
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 struct FunctionDeterministic {}
+
+impl Default for FunctionDeterministic {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 impl FunctionMiddleware for FunctionDeterministic {
     fn feed<'a>(
