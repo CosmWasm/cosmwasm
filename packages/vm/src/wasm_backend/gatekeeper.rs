@@ -10,8 +10,8 @@ struct GatekeeperConfig {
     /// True iff float operations are allowed.
     ///
     /// Note: there are float operations in the SIMD block as well and we do not yet handle
-    /// any combination of `allow_float` and `allow_feature_simd` properly.
-    allow_float: bool,
+    /// any combination of `allow_floats` and `allow_feature_simd` properly.
+    allow_floats: bool,
     //
     // Standardized features
     //
@@ -58,7 +58,7 @@ impl Gatekeeper {
 impl Default for Gatekeeper {
     fn default() -> Self {
         Self::new(GatekeeperConfig {
-            allow_float: false,
+            allow_floats: false,
             allow_feature_bulk_memory_operations: false,
             allow_feature_reference_types: false,
             allow_feature_simd: false,
@@ -625,7 +625,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4TruncSatF32x4U
             | Operator::F32x4ConvertI32x4S
             | Operator::F32x4ConvertI32x4U => {
-                if self.config.allow_float {
+                if self.config.allow_floats {
                     state.push_operator(operator);
                     Ok(())
                 } else {
