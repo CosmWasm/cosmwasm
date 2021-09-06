@@ -69,6 +69,9 @@ impl Default for FunctionDeterministic {
     }
 }
 
+/// The name used in errors
+const MIDDLEWARE_NAME: &str = "Deterministic";
+
 impl FunctionMiddleware for FunctionDeterministic {
     fn feed<'a>(
         &mut self,
@@ -203,7 +206,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                     Ok(())
                 } else {
                     let msg = format!("Reference type operation detected: {:?}. Reference types are not supported.", operator);
-                    Err(MiddlewareError::new("Deterministic", msg))
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
             Operator::MemoryAtomicNotify { .. }
@@ -278,7 +281,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                     Ok(())
                 } else {
                     let msg = format!("Threads operator detected: {:?}. The Wasm Threads extension is not supported.", operator);
-                    Err(MiddlewareError::new("Deterministic", msg))
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
             Operator::V128Load { .. }
@@ -473,7 +476,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                         "SIMD operator detected: {:?}. The Wasm SIMD extension is not supported.",
                         operator
                     );
-                    Err(MiddlewareError::new("Deterministic", msg))
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
             Operator::F32Load { .. }
@@ -609,7 +612,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                     Ok(())
                 } else {
                     let msg = format!("Non-deterministic operator detected: {:?}", operator);
-                    Err(MiddlewareError::new("Deterministic", msg))
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
             Operator::MemoryInit { .. }
@@ -625,7 +628,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                     Ok(())
                 } else {
                     let msg = format!("Bulk memory operation detected: {:?}. Bulk memory operations are not supported.", operator);
-                    Err(MiddlewareError::new("Deterministic", msg))
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
             Operator::Try { .. }
@@ -640,7 +643,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                     Ok(())
                 } else {
                     let msg = format!("Exception handling operation detected: {:?}. Exception handling is not supported.", operator);
-                    Err(MiddlewareError::new("Deterministic", msg))
+                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
         }
