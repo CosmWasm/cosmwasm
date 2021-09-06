@@ -8,24 +8,24 @@ use wasmer::{
 /// A middleware that ensures only deterministic operations are used (i.e. no floats)
 #[derive(Debug, MemoryUsage)]
 #[non_exhaustive]
-pub struct Deterministic {}
+pub struct Gatekeeper {}
 
-impl Default for Deterministic {
+impl Default for Gatekeeper {
     fn default() -> Self {
         Self {}
     }
 }
 
-impl ModuleMiddleware for Deterministic {
+impl ModuleMiddleware for Gatekeeper {
     /// Generates a `FunctionMiddleware` for a given function.
     fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
-        Box::new(FunctionDeterministic::default())
+        Box::new(FunctionGatekeeper::default())
     }
 }
 
 #[derive(Debug)]
 #[non_exhaustive]
-struct FunctionDeterministic {
+struct FunctionGatekeeper {
     /// True iff float operations are allowed.
     ///
     /// Note: there are float operations in the SIMD block as well and we do not yet handle
@@ -56,7 +56,7 @@ struct FunctionDeterministic {
     allow_feature_threads: bool,
 }
 
-impl Default for FunctionDeterministic {
+impl Default for FunctionGatekeeper {
     fn default() -> Self {
         Self {
             allow_float: false,
@@ -70,9 +70,9 @@ impl Default for FunctionDeterministic {
 }
 
 /// The name used in errors
-const MIDDLEWARE_NAME: &str = "Deterministic";
+const MIDDLEWARE_NAME: &str = "Gatekeeper";
 
-impl FunctionMiddleware for FunctionDeterministic {
+impl FunctionMiddleware for FunctionGatekeeper {
     fn feed<'a>(
         &mut self,
         operator: Operator<'a>,
@@ -673,7 +673,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::default());
+        let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
@@ -694,7 +694,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::default());
+        let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
@@ -721,7 +721,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::default());
+        let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
