@@ -10,6 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: Implement `Mul` and `MulAssign` for `Uint128`.
 - cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.
+- cosmwasm-std: Make `Uint256::from_le_bytes`, `::from_be_bytes` and `::new`
+  const.
 
 ### Changed
 
@@ -18,6 +20,9 @@ and this project adheres to
 - cosmwasm-std: `Decimal::from_ratio` now accepts any types that implement
   `Into<Uint128>` rather than `Into<u128>`.
 - cosmwasm-crypto: Update dependency `k256` to ^0.9.6.
+- cosmwasm-std: Add enum cases `Shl` to `OverflowOperation` (breaking; [#1071]).
+
+[#1071]: https://github.com/CosmWasm/cosmwasm/pull/1071
 
 ### Fixed
 
