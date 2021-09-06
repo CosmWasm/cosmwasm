@@ -5,28 +5,8 @@ use wasmer::{
     ModuleMiddleware,
 };
 
-/// A middleware that ensures only deterministic operations are used (i.e. no floats).
-/// It also disallows the use of Wasm features that are not explicitly enabled.
-#[derive(Debug, MemoryUsage)]
-#[non_exhaustive]
-pub struct Gatekeeper {}
-
-impl Default for Gatekeeper {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl ModuleMiddleware for Gatekeeper {
-    /// Generates a `FunctionMiddleware` for a given function.
-    fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
-        Box::new(FunctionGatekeeper::default())
-    }
-}
-
-#[derive(Debug)]
-#[non_exhaustive]
-struct FunctionGatekeeper {
+#[derive(Debug, MemoryUsage, Clone, Copy)]
+struct GatekeeperConfig {
     /// True iff float operations are allowed.
     ///
     /// Note: there are float operations in the SIMD block as well and we do not yet handle
@@ -57,16 +37,53 @@ struct FunctionGatekeeper {
     allow_feature_threads: bool,
 }
 
-impl Default for FunctionGatekeeper {
+/// A middleware that ensures only deterministic operations are used (i.e. no floats).
+/// It also disallows the use of Wasm features that are not explicitly enabled.
+#[derive(Debug, MemoryUsage)]
+#[non_exhaustive]
+pub struct Gatekeeper {
+    config: GatekeeperConfig,
+}
+
+impl Gatekeeper {
+    /// Creates a new Gatekeeper with a custom config.
+    ///
+    /// A costum configuration is potentially dangerous (non-final Wasm proposals, floats in SIMD operation).
+    /// For this reason, only [`Gatekeeper::default()`] is public.
+    fn new(config: GatekeeperConfig) -> Self {
+        Self { config }
+    }
+}
+
+impl Default for Gatekeeper {
     fn default() -> Self {
-        Self {
+        Self::new(GatekeeperConfig {
             allow_float: false,
             allow_feature_bulk_memory_operations: false,
             allow_feature_reference_types: false,
             allow_feature_simd: false,
             allow_feature_exception_handling: false,
             allow_feature_threads: false,
-        }
+        })
+    }
+}
+
+impl ModuleMiddleware for Gatekeeper {
+    /// Generates a `FunctionMiddleware` for a given function.
+    fn generate_function_middleware(&self, _: LocalFunctionIndex) -> Box<dyn FunctionMiddleware> {
+        Box::new(FunctionGatekeeper::new(self.config))
+    }
+}
+
+#[derive(Debug)]
+#[non_exhaustive]
+struct FunctionGatekeeper {
+    config: GatekeeperConfig,
+}
+
+impl FunctionGatekeeper {
+    fn new(config: GatekeeperConfig) -> Self {
+        Self { config }
     }
 }
 
@@ -202,7 +219,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::TableSet { .. }
             | Operator::TableGrow { .. }
             | Operator::TableSize { .. } => {
-                if self.allow_feature_reference_types {
+                if self.config.allow_feature_reference_types {
                     state.push_operator(operator);
                     Ok(())
                 } else {
@@ -277,7 +294,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I64AtomicRmw8CmpxchgU { .. }
             | Operator::I64AtomicRmw16CmpxchgU { .. }
             | Operator::I64AtomicRmw32CmpxchgU { .. } => {
-                if self.allow_feature_threads {
+                if self.config.allow_feature_threads {
                     state.push_operator(operator);
                     Ok(())
                 } else {
@@ -469,7 +486,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::F64x2ConvertLowI32x4U
             | Operator::F32x4DemoteF64x2Zero
             | Operator::F64x2PromoteLowF32x4 => {
-                if self.allow_feature_simd {
+                if self.config.allow_feature_simd {
                     state.push_operator(operator);
                     Ok(())
                 } else {
@@ -608,7 +625,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4TruncSatF32x4U
             | Operator::F32x4ConvertI32x4S
             | Operator::F32x4ConvertI32x4U => {
-                if self.allow_float {
+                if self.config.allow_float {
                     state.push_operator(operator);
                     Ok(())
                 } else {
@@ -627,7 +644,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::ElemDrop { .. }
             | Operator::TableCopy { .. }
             | Operator::TableFill { .. } => {
-                if self.allow_feature_bulk_memory_operations {
+                if self.config.allow_feature_bulk_memory_operations {
                     state.push_operator(operator);
                     Ok(())
                 } else {
@@ -642,7 +659,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::Unwind { .. }
             | Operator::Delegate { .. }
             | Operator::CatchAll => {
-                if self.allow_feature_exception_handling {
+                if self.config.allow_feature_exception_handling {
                     state.push_operator(operator);
                     Ok(())
                 } else {
