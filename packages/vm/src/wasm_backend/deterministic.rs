@@ -23,7 +23,7 @@ impl ModuleMiddleware for Deterministic {
 }
 
 #[derive(Debug)]
-pub struct FunctionDeterministic {}
+struct FunctionDeterministic {}
 
 impl FunctionMiddleware for FunctionDeterministic {
     fn feed<'a>(
