@@ -10,34 +10,39 @@ use super::Fraction;
 use super::Isqrt;
 use super::Uint256;
 
-/// A fixed-point decimal value with 36 fractional digits, i.e. Decimal256(1_000_000_000_000_000_000) == 1.0
+/// A fixed-point decimal value with 18 fractional digits, i.e. Decimal256(1_000_000_000_000_000_000) == 1.0
 ///
 /// The greatest possible value that can be represented is
-/// 115792089237316195423570985008687907853269.984665640564039457584007913129639935
-/// (which is (2^256 - 1) / 10^36)
+/// 115792089237316195423570985008687907853269984665640564039457.584007913129639935
+/// (which is (2^256 - 1) / 10^18)
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
 
 impl Decimal256 {
-    const DECIMAL_PLACES: usize = 36;
+    const DECIMAL_PLACES: usize = 18;
+    const DECIMAL_FRACTIONAL: Uint256 = // 1*10**18
+        Uint256::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
+            179, 167, 100, 0, 0,
+        ]);
+    const DECIMAL_FRACTIONAL_SQUARED: Uint256 = // 1*10**36
+        Uint256::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
+            75, 159, 16, 0, 0, 0, 0,
+        ]);
 
-    fn decimal_fractional() -> Uint256 {
-        // 1*10**36
-        Uint256::from(1_000_000_000_000_000_000_000_000_000_000_000_000u128)
+    const fn decimal_fractional() -> Uint256 {
+        Self::DECIMAL_FRACTIONAL
     }
 
-    fn decimal_fractional_squared() -> Uint256 {
-        // 1*10**72
-        Uint256::new([
-            0, 0, 144, 228, 15, 190, 234, 29, 58, 74, 188, 137, 85, 233, 70, 254, 49, 205, 207,
-            102, 246, 52, 225, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        ])
+    const fn decimal_fractional_squared() -> Uint256 {
+        Self::DECIMAL_FRACTIONAL_SQUARED
     }
 
     pub const MAX: Self = Self(Uint256::MAX);
 
     /// Create a 1.0 Decimal256
-    pub fn one() -> Self {
+    pub const fn one() -> Self {
         Self(Self::decimal_fractional())
     }
 
@@ -48,12 +53,12 @@ impl Decimal256 {
 
     /// Convert x% into Decimal256
     pub fn percent(x: u64) -> Self {
-        Self(Uint256::from(x) * Uint256::from(10_000_000_000_000_000_000_000_000_000_000_000u128))
+        Self(Uint256::from(x) * Uint256::from(10_000_000_000_000_000u128))
     }
 
     /// Convert permille (x/1000) into Decimal256
     pub fn permille(x: u64) -> Self {
-        Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000_000_000_000_000_000_000u128))
+        Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000u128))
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal256
@@ -365,13 +370,13 @@ mod tests {
         // 1/3 (result floored)
         assert_eq!(
             Decimal256::from_ratio(1u64, 3u64),
-            Decimal256(Uint256::from_str("333333333333333333333333333333333333").unwrap())
+            Decimal256(Uint256::from_str("333333333333333333").unwrap())
         );
 
         // 2/3 (result floored)
         assert_eq!(
             Decimal256::from_ratio(2u64, 3u64),
-            Decimal256(Uint256::from_str("666666666666666666666666666666666666").unwrap())
+            Decimal256(Uint256::from_str("666666666666666666").unwrap())
         );
 
         // large inputs
@@ -398,11 +403,11 @@ mod tests {
         let fraction = Decimal256::from_str("1234.567").unwrap();
         assert_eq!(
             fraction.numerator(),
-            Uint256::from_str("1234567000000000000000000000000000000000").unwrap()
+            Uint256::from_str("1234567000000000000000").unwrap()
         );
         assert_eq!(
             fraction.denominator(),
-            Uint256::from_str("1000000000000000000000000000000000000").unwrap()
+            Uint256::from_str("1000000000000000000").unwrap()
         );
     }
 
@@ -465,20 +470,20 @@ mod tests {
             Decimal256::percent(4)
         );
 
-        // Can handle 36 fractional digits
+        // Can handle 18 fractional digits
         assert_eq!(
-            Decimal256::from_str("7.123456789012345678123456789012345678").unwrap(),
-            Decimal256(Uint256::from(7123456789012345678123456789012345678u128))
+            Decimal256::from_str("7.123456789012345678").unwrap(),
+            Decimal256(Uint256::from(7123456789012345678u128))
         );
         assert_eq!(
-            Decimal256::from_str("7.999999999999999999999999999999999999").unwrap(),
-            Decimal256(Uint256::from(7999999999999999999999999999999999999u128))
+            Decimal256::from_str("7.999999999999999999").unwrap(),
+            Decimal256(Uint256::from(7999999999999999999u128))
         );
 
         // Works for documented max value
         assert_eq!(
             Decimal256::from_str(
-                "115792089237316195423570985008687907853269.984665640564039457584007913129639935"
+                "115792089237316195423570985008687907853269984665640564039457.584007913129639935"
             )
             .unwrap(),
             Decimal256::MAX
@@ -528,17 +533,17 @@ mod tests {
 
     #[test]
     fn decimal_from_str_errors_for_more_than_36_fractional_digits() {
-        match Decimal256::from_str("7.1234567890123456789012345678901234567").unwrap_err() {
+        match Decimal256::from_str("7.1234567890123456789").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 36 fractional digits")
+                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
             }
             e => panic!("Unexpected error: {:?}", e),
         }
 
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
-        match Decimal256::from_str("7.1230000000000000000000000000000000000").unwrap_err() {
+        match Decimal256::from_str("7.1230000000000000000").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 36 fractional digits")
+                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
             }
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -560,18 +565,22 @@ mod tests {
     #[test]
     fn decimal_from_str_errors_for_more_than_max_value() {
         // Integer
-        match Decimal256::from_str("115792089237316195423570985008687907853270").unwrap_err() {
+        match Decimal256::from_str("115792089237316195423570985008687907853269984665640564039458")
+            .unwrap_err()
+        {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
 
         // Decimal
-        match Decimal256::from_str("115792089237316195423570985008687907853270.0").unwrap_err() {
+        match Decimal256::from_str("115792089237316195423570985008687907853269984665640564039458.0")
+            .unwrap_err()
+        {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
         match Decimal256::from_str(
-            "115792089237316195423570985008687907853269.984665640564039457584007913129639936",
+            "115792089237316195423570985008687907853269984665640564039457.584007913129639936",
         )
         .unwrap_err()
         {
@@ -620,11 +629,11 @@ mod tests {
         // d > 1 rounded
         assert_eq!(
             Decimal256::from_str("3").unwrap().inv(),
-            Some(Decimal256::from_str("0.333333333333333333333333333333333333").unwrap())
+            Some(Decimal256::from_str("0.333333333333333333").unwrap())
         );
         assert_eq!(
             Decimal256::from_str("6").unwrap().inv(),
-            Some(Decimal256::from_str("0.166666666666666666666666666666666666").unwrap())
+            Some(Decimal256::from_str("0.166666666666666666").unwrap())
         );
 
         // d < 1 exact
@@ -769,28 +778,30 @@ mod tests {
     fn decimal_uint128_sqrt_is_precise() {
         assert_eq!(
             Decimal256::from_str("2").unwrap().sqrt(),
-            Decimal256::from_str("1.414213562373095048801688724209698078").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
+            Decimal256::from_str("1.414213562373095048").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
         );
     }
 
     #[test]
     fn decimal_uint128_sqrt_does_not_overflow() {
         assert_eq!(
-            Decimal256::from_str("40000000000000000000000000000000000000000")
+            Decimal256::from_str("40000000000000000000000000000000000000000000000000000000000")
                 .unwrap()
                 .sqrt(),
-            Decimal256::from_str("200000000000000000000").unwrap()
+            Decimal256::from_str("200000000000000000000000000000").unwrap()
         );
     }
 
     #[test]
     fn decimal_uint128_sqrt_intermediate_precision_used() {
         assert_eq!(
-            Decimal256::from_str("400000000001").unwrap().sqrt(),
-            // The last four digits (8380) are truncated below due to the algorithm
+            Decimal256::from_str("40000000000000000000000000000000000000000000000001")
+                .unwrap()
+                .sqrt(),
+            // The last few digits (39110) are truncated below due to the algorithm
             // we use. Larger numbers will cause less precision.
-            // https://www.wolframalpha.com/input/?i=sqrt%28400000000001%29
-            Decimal256::from_str("632455.532034466435814820309613659029430000").unwrap()
+            // https://www.wolframalpha.com/input/?i=sqrt%2840000000000000000000000000000000000000000000000001%29
+            Decimal256::from_str("6324555320336758663997787.088865437067400000").unwrap()
         );
     }
 
@@ -809,141 +820,70 @@ mod tests {
 
         assert_eq!(
             Decimal256(Uint256::from(1u128)).to_string(),
-            "0.000000000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(10u128)).to_string(),
-            "0.00000000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(100u128)).to_string(),
-            "0.0000000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(1000u128)).to_string(),
-            "0.000000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(10000u128)).to_string(),
-            "0.00000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(100000u128)).to_string(),
-            "0.0000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(1000000u128)).to_string(),
-            "0.000000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(10000000u128)).to_string(),
-            "0.00000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(100000000u128)).to_string(),
-            "0.0000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(1000000000u128)).to_string(),
-            "0.000000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(10000000000u128)).to_string(),
-            "0.00000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(100000000000u128)).to_string(),
-            "0.0000000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(10000000000000u128)).to_string(),
-            "0.00000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(100000000000000u128)).to_string(),
-            "0.0000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(1000000000000000u128)).to_string(),
-            "0.000000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(10000000000000000u128)).to_string(),
-            "0.00000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from(100000000000000000u128)).to_string(),
-            "0.0000000000000000001"
-        );
-        assert_eq!(
-            Decimal256(Uint256::from_str("1000000000000000000").unwrap()).to_string(),
             "0.000000000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("10000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(10u128)).to_string(),
             "0.00000000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("100000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(100u128)).to_string(),
             "0.0000000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("1000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(1000u128)).to_string(),
             "0.000000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("10000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(10000u128)).to_string(),
             "0.00000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("100000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(100000u128)).to_string(),
             "0.0000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("1000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(1000000u128)).to_string(),
             "0.000000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("10000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(10000000u128)).to_string(),
             "0.00000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("100000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(100000000u128)).to_string(),
             "0.0000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("1000000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(1000000000u128)).to_string(),
             "0.000000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("10000000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(10000000000u128)).to_string(),
             "0.00000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("100000000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(100000000000u128)).to_string(),
             "0.0000001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("10000000000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(10000000000000u128)).to_string(),
             "0.00001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("100000000000000000000000000000000").unwrap()).to_string(),
+            Decimal256(Uint256::from(100000000000000u128)).to_string(),
             "0.0001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("1000000000000000000000000000000000").unwrap())
-                .to_string(),
+            Decimal256(Uint256::from(1000000000000000u128)).to_string(),
             "0.001"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("10000000000000000000000000000000000").unwrap())
-                .to_string(),
+            Decimal256(Uint256::from(10000000000000000u128)).to_string(),
             "0.01"
         );
         assert_eq!(
-            Decimal256(Uint256::from_str("100000000000000000000000000000000000").unwrap())
-                .to_string(),
+            Decimal256(Uint256::from(100000000000000000u128)).to_string(),
             "0.1"
         );
     }
