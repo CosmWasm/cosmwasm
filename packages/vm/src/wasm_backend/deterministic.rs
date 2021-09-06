@@ -7,10 +7,11 @@ use wasmer::{
 
 /// A middleware that ensures only deterministic operations are used (i.e. no floats)
 #[derive(Debug, MemoryUsage)]
+#[non_exhaustive]
 pub struct Deterministic {}
 
-impl Deterministic {
-    pub fn new() -> Self {
+impl Default for Deterministic {
+    fn default() -> Self {
         Self {}
     }
 }
@@ -612,7 +613,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::new());
+        let deterministic = Arc::new(Deterministic::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
@@ -633,7 +634,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::new());
+        let deterministic = Arc::new(Deterministic::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
@@ -660,7 +661,7 @@ mod tests {
         )
         .unwrap();
 
-        let deterministic = Arc::new(Deterministic::new());
+        let deterministic = Arc::new(Deterministic::default());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());

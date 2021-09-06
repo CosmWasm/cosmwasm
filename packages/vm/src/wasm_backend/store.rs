@@ -32,7 +32,7 @@ fn cost(_operator: &Operator) -> u64 {
 /// If memory_limit is None, no limit is applied.
 pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     let gas_limit = 0;
-    let deterministic = Arc::new(Deterministic::new());
+    let deterministic = Arc::new(Deterministic::default());
     let metering = Arc::new(Metering::new(gas_limit, cost));
 
     #[cfg(feature = "cranelift")]
