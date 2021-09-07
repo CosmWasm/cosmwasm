@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.16.2] - 2021-09-07
+
 ### Added
 
 - cosmwasm-std: Implement `Mul` and `MulAssign` for `Uint128`.
