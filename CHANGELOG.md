@@ -12,6 +12,7 @@ and this project adheres to
 - cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.
 - cosmwasm-std: Make `Uint256::from_le_bytes`, `::from_be_bytes` and `::new`
   const.
+- cosmwasm-std: Added the `Decimal256` type with 18 decimal places.
 
 ### Changed
 

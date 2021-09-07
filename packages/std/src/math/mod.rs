@@ -1,4 +1,5 @@
 mod decimal;
+mod decimal256;
 mod fraction;
 mod isqrt;
 mod uint128;
@@ -7,6 +8,7 @@ mod uint512;
 mod uint64;
 
 pub use decimal::Decimal;
+pub use decimal256::Decimal256;
 pub use fraction::Fraction;
 pub use isqrt::Isqrt;
 pub use uint128::Uint128;

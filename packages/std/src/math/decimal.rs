@@ -20,6 +20,7 @@ impl Decimal {
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
     const DECIMAL_FRACTIONAL_SQUARED: Uint128 =
         Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000u128); // (1*10**18)**2 = 1*10**36
+    const DECIMAL_PLACES: usize = 18; // This needs to be an even number.
 
     pub const MAX: Self = Self(Uint128::MAX);
 
@@ -68,7 +69,11 @@ impl Decimal {
         // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
         // We start with the highest precision possible and lower it until
         // there's no overflow.
-        (0..=9)
+        //
+        // TODO: This could be made more efficient once log10 is in:
+        // https://github.com/rust-lang/rust/issues/70887
+        // The max precision is something like `9 - log10(self.0) / 2`.
+        (0..=Self::DECIMAL_PLACES / 2)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
             // The last step (i = 0) is guaranteed to succeed because `isqrt(u128::MAX) * 10^9` does not overflow
@@ -79,10 +84,12 @@ impl Decimal {
     /// Precision *must* be a number between 0 and 9 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
-    fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
+    fn sqrt_with_precision(&self, precision: usize) -> Option<Self> {
+        let precision = precision as u32;
+
         let inner_mul = 100u128.pow(precision);
         self.0.checked_mul(inner_mul.into()).ok().map(|inner| {
-            let outer_mul = 10u128.pow(9 - precision);
+            let outer_mul = 10u128.pow(Self::DECIMAL_PLACES as u32 / 2 - precision);
             Decimal(inner.isqrt().checked_mul(Uint128::from(outer_mul)).unwrap())
         })
     }
@@ -122,7 +129,7 @@ impl FromStr for Decimal {
     /// Disallowed: "", ".23"
     ///
     /// This never performs any kind of rounding.
-    /// More than 18 fractional digits, even zeros, result in an error.
+    /// More than DECIMAL_PLACES fractional digits, even zeros, result in an error.
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut parts_iter = input.split('.');
 
@@ -138,15 +145,19 @@ impl FromStr for Decimal {
             let fractional = fractional_part
                 .parse::<Uint128>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp = (18usize.checked_sub(fractional_part.len())).ok_or_else(|| {
-                StdError::generic_err("Cannot parse more than 18 fractional digits")
-            })?;
-            debug_assert!(exp <= 18);
+            let exp =
+                (Self::DECIMAL_PLACES.checked_sub(fractional_part.len())).ok_or_else(|| {
+                    StdError::generic_err(format!(
+                        "Cannot parse more than {} fractional digits",
+                        Self::DECIMAL_PLACES
+                    ))
+                })?;
+            debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint128::from(10u128.pow(exp as u32));
             atomics = atomics
                 .checked_add(
                     // The inner multiplication can't overflow because
-                    // fractional < 10^18 && fractional_factor <= 10^18
+                    // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
                     fractional.checked_mul(fractional_factor).unwrap(),
                 )
                 .map_err(|_| StdError::generic_err("Value too big"))?;
@@ -168,7 +179,8 @@ impl fmt::Display for Decimal {
         if fractional.is_zero() {
             write!(f, "{}", whole)
         } else {
-            let fractional_string = format!("{:018}", fractional);
+            let fractional_string =
+                format!("{:0>padding$}", fractional, padding = Self::DECIMAL_PLACES);
             f.write_str(&whole.to_string())?;
             f.write_char('.')?;
             f.write_str(fractional_string.trim_end_matches('0'))?;
@@ -375,7 +387,7 @@ mod tests {
         assert_eq!(Decimal::from_str("00.40").unwrap(), Decimal::percent(40));
         assert_eq!(Decimal::from_str("00.04").unwrap(), Decimal::percent(4));
 
-        // Can handle 18 fractional digits
+        // Can handle DECIMAL_PLACES fractional digits
         assert_eq!(
             Decimal::from_str("7.123456789012345678").unwrap(),
             Decimal(Uint128::from(7123456789012345678u128))
@@ -437,7 +449,7 @@ mod tests {
     fn decimal_from_str_errors_for_more_than_18_fractional_digits() {
         match Decimal::from_str("7.1234567890123456789").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
+                assert_eq!(msg, "Cannot parse more than 18 fractional digits",)
             }
             e => panic!("Unexpected error: {:?}", e),
         }

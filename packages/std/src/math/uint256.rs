@@ -152,6 +152,18 @@ impl Uint256 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp.into())
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+    }
+
+    pub fn pow(self, exp: u32) -> Self {
+        self.checked_pow(exp)
+            .expect("attempt to raise to a power with overflow")
+    }
+
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
         if other >= 256 {
             return Err(OverflowError::new(OverflowOperation::Shr, self, other));
@@ -245,6 +257,10 @@ impl FromStr for Uint256 {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.is_empty() {
+            return Err(StdError::generic_err("Parsing u256: received empty string"));
+        }
+
         match U256::from_dec_str(s) {
             Ok(u) => Ok(Uint256(u)),
             Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
@@ -272,7 +288,11 @@ impl ops::Add<Uint256> for Uint256 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Uint256(self.0.checked_add(rhs.0).unwrap())
+        Self(
+            self.0
+                .checked_add(rhs.0)
+                .expect("attempt to add with overflow"),
+        )
     }
 }
 
@@ -280,7 +300,7 @@ impl<'a> ops::Add<&'a Uint256> for Uint256 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint256) -> Self {
-        Uint256(self.0.checked_add(rhs.0).unwrap())
+        self + *rhs
     }
 }
 
@@ -288,7 +308,11 @@ impl ops::Sub<Uint256> for Uint256 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        Uint256(self.0.checked_sub(rhs.0).unwrap())
+        Self(
+            self.0
+                .checked_sub(rhs.0)
+                .expect("attempt to subtract with overflow"),
+        )
     }
 }
 
@@ -296,7 +320,7 @@ impl<'a> ops::Sub<&'a Uint256> for Uint256 {
     type Output = Self;
 
     fn sub(self, rhs: &'a Uint256) -> Self {
-        Uint256(self.0.checked_sub(rhs.0).unwrap())
+        self - *rhs
     }
 }
 
@@ -304,7 +328,11 @@ impl ops::Div<Uint256> for Uint256 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
-        Self(self.0.checked_div(rhs.0).unwrap())
+        Self(
+            self.0
+                .checked_div(rhs.0)
+                .expect("attempt to divide by zero"),
+        )
     }
 }
 
@@ -312,7 +340,7 @@ impl<'a> ops::Div<&'a Uint256> for Uint256 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint256) -> Self::Output {
-        Self(self.0.checked_div(rhs.0).unwrap())
+        self / *rhs
     }
 }
 
@@ -320,7 +348,11 @@ impl ops::Mul<Uint256> for Uint256 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Self(self.0.checked_mul(rhs.0).unwrap())
+        Self(
+            self.0
+                .checked_mul(rhs.0)
+                .expect("attempt to multiply with overflow"),
+        )
     }
 }
 
@@ -328,7 +360,7 @@ impl<'a> ops::Mul<&'a Uint256> for Uint256 {
     type Output = Self;
 
     fn mul(self, rhs: &'a Uint256) -> Self::Output {
-        Self(self.0.checked_mul(rhs.0).unwrap())
+        self.mul(*rhs)
     }
 }
 
@@ -376,49 +408,49 @@ impl<'a> ops::Shl<&'a u32> for Uint256 {
 
 impl ops::AddAssign<Uint256> for Uint256 {
     fn add_assign(&mut self, rhs: Uint256) {
-        self.0 = self.0.checked_add(rhs.0).unwrap();
+        *self = *self + rhs;
     }
 }
 
 impl<'a> ops::AddAssign<&'a Uint256> for Uint256 {
     fn add_assign(&mut self, rhs: &'a Uint256) {
-        self.0 = self.0.checked_add(rhs.0).unwrap();
+        *self = *self + rhs;
     }
 }
 
 impl ops::SubAssign<Uint256> for Uint256 {
     fn sub_assign(&mut self, rhs: Uint256) {
-        self.0 = self.0.checked_sub(rhs.0).unwrap();
+        *self = *self - rhs;
     }
 }
 
 impl<'a> ops::SubAssign<&'a Uint256> for Uint256 {
     fn sub_assign(&mut self, rhs: &'a Uint256) {
-        self.0 = self.0.checked_sub(rhs.0).unwrap();
-    }
-}
-
-impl ops::DivAssign<Uint256> for Uint256 {
-    fn div_assign(&mut self, rhs: Self) {
-        self.0 = self.0.checked_div(rhs.0).unwrap();
-    }
-}
-
-impl<'a> ops::DivAssign<&'a Uint256> for Uint256 {
-    fn div_assign(&mut self, rhs: &'a Uint256) {
-        self.0 = self.0.checked_div(rhs.0).unwrap();
+        *self = *self - rhs;
     }
 }
 
 impl ops::MulAssign<Uint256> for Uint256 {
     fn mul_assign(&mut self, rhs: Self) {
-        self.0 = self.0.checked_mul(rhs.0).unwrap();
+        *self = *self * rhs;
     }
 }
 
 impl<'a> ops::MulAssign<&'a Uint256> for Uint256 {
     fn mul_assign(&mut self, rhs: &'a Uint256) {
-        self.0 = self.0.checked_mul(rhs.0).unwrap();
+        *self = *self * rhs;
+    }
+}
+
+impl ops::DivAssign<Uint256> for Uint256 {
+    fn div_assign(&mut self, rhs: Self) {
+        *self = *self / rhs;
+    }
+}
+
+impl<'a> ops::DivAssign<&'a Uint256> for Uint256 {
+    fn div_assign(&mut self, rhs: &'a Uint256) {
+        *self = *self / rhs;
     }
 }
 
