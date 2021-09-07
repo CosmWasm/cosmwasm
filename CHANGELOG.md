@@ -14,6 +14,10 @@ and this project adheres to
   support longer address formats than bech32.
 - cosmwasm-std: Make `CustomQuery` a subtrait of `Clone`, i.e. types that
   implement `CustomQuery` need to be `Clone`able.
+- cosmwasm-std: Remove `Copy` implementation from `QuerierWrapper` and `Deps`
+  which is not derived for custom non-`Copy` query type `C`. Both types are too
+  complex to guarantee `Copy` conformance long term, even if they are cheap to
+  clone right now.
 
 ### Removed
 

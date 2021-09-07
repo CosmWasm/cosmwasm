@@ -17,7 +17,7 @@ pub struct DepsMut<'a> {
     pub querier: QuerierWrapper<'a>,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Deps<'a> {
     pub storage: &'a dyn Storage,
     pub api: &'a dyn Api,
@@ -47,7 +47,7 @@ impl<'a> DepsMut<'a> {
         Deps {
             storage: self.storage,
             api: self.api,
-            querier: self.querier,
+            querier: self.querier.clone(),
         }
     }
 
@@ -55,7 +55,7 @@ impl<'a> DepsMut<'a> {
         DepsMut {
             storage: self.storage,
             api: self.api,
-            querier: self.querier,
+            querier: self.querier.clone(),
         }
     }
 }
@@ -74,7 +74,7 @@ mod tests {
     fn execute2(_deps: DepsMut) {}
 
     fn query(deps: Deps) {
-        query2(deps);
+        query2(deps.clone());
         query2(deps);
     }
     fn query2(_deps: Deps) {}

@@ -134,7 +134,7 @@ pub trait Querier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct QuerierWrapper<'a>(&'a dyn Querier);
 
 /// This allows us to use self.raw_query to access the querier.
