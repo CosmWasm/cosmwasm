@@ -18,6 +18,9 @@ and this project adheres to
   which is not derived for custom non-`Copy` query type `C`. Both types are too
   complex to guarantee `Copy` conformance long term, even if they are cheap to
   clone right now.
+- cosmwasm-std: Add generic for custom query type to `QuerierWrapper`, `Deps`,
+  `DepsMut` and `OwnedDeps`. Merge `QuerierWrapper::custom_query` into the now
+  fully typed `QuerierWrapper::query`.
 
 ### Removed
 

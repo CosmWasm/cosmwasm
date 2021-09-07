@@ -1,3 +1,7 @@
+use std::marker::PhantomData;
+
+use crate::query::CustomQuery;
+use crate::results::Empty;
 use crate::traits::{Api, Querier, Storage};
 use crate::QuerierWrapper;
 
@@ -5,27 +9,28 @@ use crate::QuerierWrapper;
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct OwnedDeps<S: Storage, A: Api, Q: Querier> {
+pub struct OwnedDeps<S: Storage, A: Api, Q: Querier, C: CustomQuery = Empty> {
     pub storage: S,
     pub api: A,
     pub querier: Q,
+    pub custom_query_type: PhantomData<C>,
 }
 
-pub struct DepsMut<'a> {
+pub struct DepsMut<'a, C: CustomQuery = Empty> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,
-    pub querier: QuerierWrapper<'a>,
+    pub querier: QuerierWrapper<'a, C>,
 }
 
 #[derive(Clone)]
-pub struct Deps<'a> {
+pub struct Deps<'a, C: CustomQuery = Empty> {
     pub storage: &'a dyn Storage,
     pub api: &'a dyn Api,
-    pub querier: QuerierWrapper<'a>,
+    pub querier: QuerierWrapper<'a, C>,
 }
 
-impl<S: Storage, A: Api, Q: Querier> OwnedDeps<S, A, Q> {
-    pub fn as_ref(&'_ self) -> Deps<'_> {
+impl<S: Storage, A: Api, Q: Querier, C: CustomQuery> OwnedDeps<S, A, Q, C> {
+    pub fn as_ref(&'_ self) -> Deps<'_, C> {
         Deps {
             storage: &self.storage,
             api: &self.api,
@@ -33,7 +38,7 @@ impl<S: Storage, A: Api, Q: Querier> OwnedDeps<S, A, Q> {
         }
     }
 
-    pub fn as_mut(&'_ mut self) -> DepsMut<'_> {
+    pub fn as_mut(&'_ mut self) -> DepsMut<'_, C> {
         DepsMut {
             storage: &mut self.storage,
             api: &self.api,
@@ -42,8 +47,8 @@ impl<S: Storage, A: Api, Q: Querier> OwnedDeps<S, A, Q> {
     }
 }
 
-impl<'a> DepsMut<'a> {
-    pub fn as_ref(&'_ self) -> Deps<'_> {
+impl<'a, C: CustomQuery> DepsMut<'a, C> {
+    pub fn as_ref(&'_ self) -> Deps<'_, C> {
         Deps {
             storage: self.storage,
             api: self.api,
@@ -51,7 +56,7 @@ impl<'a> DepsMut<'a> {
         }
     }
 
-    pub fn branch(&'_ mut self) -> DepsMut<'_> {
+    pub fn branch(&'_ mut self) -> DepsMut<'_, C> {
         DepsMut {
             storage: self.storage,
             api: self.api,
