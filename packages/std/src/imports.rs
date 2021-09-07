@@ -158,7 +158,7 @@ impl ExternalApi {
 impl Api for ExternalApi {
     fn addr_validate(&self, input: &str) -> StdResult<Addr> {
         let input_bytes = input.as_bytes();
-        if input_bytes.len() > 90 {
+        if input_bytes.len() > 256 {
             // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
             // In this case, the VM will refuse to read the input from the contract.
             // Stop here to allow handling the error in the contract.
@@ -181,7 +181,7 @@ impl Api for ExternalApi {
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
         let input_bytes = input.as_bytes();
-        if input_bytes.len() > 90 {
+        if input_bytes.len() > 256 {
             // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
             // In this case, the VM will refuse to read the input from the contract.
             // Stop here to allow handling the error in the contract.
