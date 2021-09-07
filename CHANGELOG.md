@@ -12,6 +12,7 @@ and this project adheres to
 - cosmwasm-std: Implement `FromStr` for `Uint128`, `Uint256`, and `Uint512`.
 - cosmwasm-std: Make `Uint256::from_le_bytes`, `::from_be_bytes` and `::new`
   const.
+- cosmwasm-std: Added the `Decimal256` type with 18 decimal places.
 
 ### Changed
 
@@ -21,7 +22,6 @@ and this project adheres to
   `Into<Uint128>` rather than `Into<u128>`.
 - cosmwasm-crypto: Update dependency `k256` to ^0.9.6.
 - cosmwasm-std: Add enum cases `Shl` to `OverflowOperation` (breaking; [#1071]).
-- cosmwasm-std: `Decimal256` now has 18 decimal places.
 
 [#1071]: https://github.com/CosmWasm/cosmwasm/pull/1071
 
@@ -41,7 +41,6 @@ and this project adheres to
   `Uint64`, `Uint128`, `Uint256`, and `Uint512`.
 - cosmwasm-std: Exposed `Uint{64, 128, 256}::full_mul` for full multiplication
   that cannot overflow.
-- cosmwasm-std: Added the `Decimal256` type with 18 decimal places.
 
 ### Changed
 
