@@ -984,6 +984,7 @@ mod tests {
             AnalysisReport {
                 has_ibc_entry_points: true,
                 required_features: HashSet::from_iter(vec![
+                    "iterator".to_string(),
                     "staking".to_string(),
                     "stargate".to_string()
                 ]),
