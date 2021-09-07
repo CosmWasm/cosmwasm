@@ -24,6 +24,11 @@ impl Decimal {
 
     pub const MAX: Self = Self(Uint128::MAX);
 
+    /// Creates a Decimal(value).
+    pub const fn new(value: Uint128) -> Self {
+        Decimal(value)
+    }
+
     /// Create a 1.0 Decimal
     pub const fn one() -> Self {
         Decimal(Self::DECIMAL_FRACTIONAL)

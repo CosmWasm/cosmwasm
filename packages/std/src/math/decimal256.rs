@@ -33,6 +33,11 @@ impl Decimal256 {
 
     pub const MAX: Self = Self(Uint256::MAX);
 
+    /// Creates a Decimal256(value).
+    pub const fn new(value: Uint256) -> Self {
+        Decimal256(value)
+    }
+
     /// Create a 1.0 Decimal256
     pub const fn one() -> Self {
         Self(Self::DECIMAL_FRACTIONAL)
