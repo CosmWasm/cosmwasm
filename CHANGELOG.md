@@ -17,6 +17,7 @@ and this project adheres to
 
 - cosmwasm-std: Remove `HumanAddr` (deprecated since 0.14). Use `String`
   instead.
+- cosmwasm-std: Remove `KV` (deprecated since 0.14). Use `Pair` instead.
 
 ## [0.16.2] - 2021-09-07
 
