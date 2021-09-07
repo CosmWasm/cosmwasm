@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Make `iterator` a required feature if the `iterator` feature
+  flag is set (enabled by default).
+
 ## [0.16.2] - 2021-09-07
 
 ### Added
