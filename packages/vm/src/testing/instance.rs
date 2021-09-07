@@ -93,14 +93,12 @@ pub struct MockInstanceOptions<'a> {
 }
 
 impl MockInstanceOptions<'_> {
-    #[cfg(feature = "stargate")]
     fn default_features() -> HashSet<String> {
-        features_from_csv("staking,stargate")
-    }
-
-    #[cfg(not(feature = "stargate"))]
-    fn default_features() -> HashSet<String> {
-        features_from_csv("staking")
+        #[allow(unused_mut)]
+        let mut out = features_from_csv("iterator,staking");
+        #[cfg(feature = "stargate")]
+        out.insert("stargate".to_string());
+        out
     }
 }
 

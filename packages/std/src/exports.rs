@@ -21,6 +21,10 @@ use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{Deps, DepsMut, MessageInfo};
 
+#[cfg(feature = "iterator")]
+#[no_mangle]
+extern "C" fn requires_iterator() -> () {}
+
 #[cfg(feature = "staking")]
 #[no_mangle]
 extern "C" fn requires_staking() -> () {}
