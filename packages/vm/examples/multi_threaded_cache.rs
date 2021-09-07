@@ -27,7 +27,7 @@ const THREADS: usize = SAVE_WASM_THREADS + INSTANTIATION_THREADS;
 pub fn main() {
     let options = CacheOptions {
         base_dir: TempDir::new().unwrap().into_path(),
-        supported_features: features_from_csv("staking"),
+        supported_features: features_from_csv("iterator,staking"),
         memory_cache_size: MEMORY_CACHE_SIZE,
         instance_memory_limit: DEFAULT_MEMORY_LIMIT,
     };

@@ -28,7 +28,7 @@ pub fn main() {
     file.read_to_end(&mut wasm).unwrap();
 
     // Check wasm
-    check_wasm(&wasm, &features_from_csv("staking,stargate")).unwrap();
+    check_wasm(&wasm, &features_from_csv("iterator,staking,stargate")).unwrap();
 
     // Compile module
     compile(&wasm, None).unwrap();

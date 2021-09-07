@@ -378,7 +378,7 @@ mod tests {
     static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
 
     fn default_features() -> HashSet<String> {
-        features_from_csv("staking")
+        features_from_csv("iterator,staking")
     }
 
     fn make_testing_options() -> CacheOptions {
@@ -393,7 +393,7 @@ mod tests {
     fn make_stargate_testing_options() -> CacheOptions {
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_features: features_from_csv("staking,stargate"),
+            supported_features: features_from_csv("iterator,staking,stargate"),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
