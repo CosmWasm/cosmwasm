@@ -85,12 +85,12 @@ impl Decimal256 {
         (0..=Self::DECIMAL_PLACES / 2)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
-            // The last step (i = 0) is guaranteed to succeed because `isqrt(Uint256::MAX) * 10^18` does not overflow
+            // The last step (i = 0) is guaranteed to succeed because `isqrt(Uint256::MAX) * 10^9` does not overflow
             .unwrap()
     }
 
     /// Lower precision means more aggressive rounding, but less risk of overflow.
-    /// Precision *must* be a number between 0 and 18 (inclusive).
+    /// Precision *must* be a number between 0 and 9 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
     fn sqrt_with_precision(&self, precision: usize) -> Option<Self> {
