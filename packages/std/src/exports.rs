@@ -221,13 +221,17 @@ where
 /// do_ibc_channel_open is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn does the protocol version negotiation during channel handshake phase
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_channel_open<E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcChannelOpenMsg) -> Result<(), E>,
+pub fn do_ibc_channel_open<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelOpenMsg) -> Result<(), E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
+    Q: CustomQuery,
     E: ToString,
 {
     let res = _do_ibc_channel_open(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -238,13 +242,18 @@ where
 /// do_ibc_channel_connect is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is a callback when a IBC channel is established (after both sides agree in open)
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_channel_connect<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_channel_connect<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -256,13 +265,18 @@ where
 /// do_ibc_channel_close is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is a callback when a IBC channel belonging to this contract is closed
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_channel_close<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_channel_close<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -275,13 +289,18 @@ where
 ///
 /// contract_fn is called when this chain receives an IBC Packet on a channel belonging
 /// to this contract
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_receive<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+pub fn do_ibc_packet_receive<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -294,13 +313,18 @@ where
 ///
 /// contract_fn is called when this chain receives an IBC Acknowledgement for a packet
 /// that this contract previously sent
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_ack<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_packet_ack<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -314,13 +338,18 @@ where
 /// contract_fn is called when a packet that this contract previously sent has provably
 /// timedout and will never be relayed to the calling chain. This generally behaves
 /// like ick_ack_fn upon an acknowledgement containing an error.
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_timeout<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_packet_timeout<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -460,12 +489,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_channel_open<E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcChannelOpenMsg) -> Result<(), E>,
+fn _do_ibc_channel_open<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelOpenMsg) -> Result<(), E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<()>
 where
+    Q: CustomQuery,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -479,12 +509,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_channel_connect<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_channel_connect<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -499,12 +530,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_channel_close<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_channel_close<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -519,12 +551,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_receive<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+fn _do_ibc_packet_receive<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcReceiveResponse<C>>
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -539,12 +572,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_ack<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_packet_ack<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
@@ -559,12 +593,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_timeout<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_packet_timeout<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
+    Q: CustomQuery,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {

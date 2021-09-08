@@ -18,8 +18,9 @@ and this project adheres to
   `DepsMut` and `OwnedDeps`. Merge `QuerierWrapper::custom_query` into the now
   fully typed `QuerierWrapper::query`.
 - cosmwasm-std: Add generic type `Q` for the custom query request type to
-  `do_instantiate`, `do_execute`, `do_migrate`, `do_sudo`, `do_reply` and
-  `do_query`.
+  `do_instantiate`, `do_execute`, `do_migrate`, `do_sudo`, `do_reply`,
+  `do_query`, `ibc_channel_open`, `ibc_channel_connect`, `ibc_channel_close`,
+  `ibc_packet_receive`, `ibc_packet_ack` and `ibc_packet_timeout`.
 
 ### Removed
 
