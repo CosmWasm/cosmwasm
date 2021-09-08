@@ -38,9 +38,8 @@ const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
 /// The max length of human address inputs (in bytes).
 /// The maximum allowed size for [bech32](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
-/// is 90 characters.
-/// This value will increase with https://github.com/CosmWasm/cosmwasm/issues/1056.
-const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
+/// is 90 characters and we're adding some safety margin around that for other formats.
+const MAX_LENGTH_HUMAN_ADDRESS: usize = 256;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Length of a serialized Ed25519  signature
 const MAX_LENGTH_ED25519_SIGNATURE: usize = 64;
@@ -889,7 +888,7 @@ mod tests {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 100]);
+        let source_ptr = write_data(&env, &[61; 333]);
 
         leave_default_data(&env);
 
@@ -902,8 +901,8 @@ mod tests {
                     },
                 ..
             } => {
-                assert_eq!(length, 100);
-                assert_eq!(max_length, 90);
+                assert_eq!(length, 333);
+                assert_eq!(max_length, 256);
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
@@ -982,7 +981,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 100]);
+        let source_ptr = write_data(&env, &[61; 333]);
         let dest_ptr = create_empty(&mut instance, 8);
 
         leave_default_data(&env);
@@ -996,8 +995,8 @@ mod tests {
                     },
                 ..
             } => {
-                assert_eq!(length, 100);
-                assert_eq!(max_length, 90);
+                assert_eq!(length, 333);
+                assert_eq!(max_length, 256);
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }

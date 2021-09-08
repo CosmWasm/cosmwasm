@@ -10,6 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: Make `iterator` a required feature if the `iterator` feature
   flag is set (enabled by default).
+- cosmwasm-vm: Increase `MAX_LENGTH_HUMAN_ADDRESS` from 90 to 256 in order to
+  support longer address formats than bech32.
 
 ## [0.16.2] - 2021-09-07
 
