@@ -17,6 +17,9 @@ and this project adheres to
 - cosmwasm-std: Add generic for custom query type to `QuerierWrapper`, `Deps`,
   `DepsMut` and `OwnedDeps`. Merge `QuerierWrapper::custom_query` into the now
   fully typed `QuerierWrapper::query`.
+- cosmwasm-std: Add generic type `Q` for the custom query request type to
+  `do_instantiate`, `do_execute`, `do_migrate`, `do_sudo`, `do_reply` and
+  `do_query`.
 
 ### Removed
 
