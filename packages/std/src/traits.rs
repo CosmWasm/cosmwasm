@@ -141,6 +141,12 @@ pub struct QuerierWrapper<'a, C: CustomQuery = Empty> {
     custom_query_type: PhantomData<C>,
 }
 
+// Use custom implementation on order to implement Copy in case `C` is not `Copy`.
+// See "There is a small difference between the two: the derive strategy will also
+// place a Copy bound on type parameters, which isn’t always desired."
+// https://doc.rust-lang.org/std/marker/trait.Copy.html
+impl<'a, C: CustomQuery> Copy for QuerierWrapper<'a, C> {}
+
 /// This allows us to use self.raw_query to access the querier.
 /// It also allows external callers to access the querier easily.
 impl<'a, C: CustomQuery> Deref for QuerierWrapper<'a, C> {

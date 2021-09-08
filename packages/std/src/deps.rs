@@ -29,6 +29,12 @@ pub struct Deps<'a, C: CustomQuery = Empty> {
     pub querier: QuerierWrapper<'a, C>,
 }
 
+// Use custom implementation on order to implement Copy in case `C` is not `Copy`.
+// See "There is a small difference between the two: the derive strategy will also
+// place a Copy bound on type parameters, which isn’t always desired."
+// https://doc.rust-lang.org/std/marker/trait.Copy.html
+impl<'a, C: CustomQuery> Copy for Deps<'a, C> {}
+
 impl<S: Storage, A: Api, Q: Querier, C: CustomQuery> OwnedDeps<S, A, Q, C> {
     pub fn as_ref(&'_ self) -> Deps<'_, C> {
         Deps {
@@ -52,7 +58,7 @@ impl<'a, C: CustomQuery> DepsMut<'a, C> {
         Deps {
             storage: self.storage,
             api: self.api,
-            querier: self.querier.clone(),
+            querier: self.querier,
         }
     }
 
@@ -60,7 +66,7 @@ impl<'a, C: CustomQuery> DepsMut<'a, C> {
         DepsMut {
             storage: self.storage,
             api: self.api,
-            querier: self.querier.clone(),
+            querier: self.querier,
         }
     }
 }
@@ -68,7 +74,8 @@ impl<'a, C: CustomQuery> DepsMut<'a, C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::mock_dependencies;
+    use crate::mock::{mock_dependencies, MockApi, MockQuerier, MockStorage};
+    use serde::{Deserialize, Serialize};
 
     // ensure we can call these many times, eg. as sub-calls
     fn execute(mut deps: DepsMut) {
@@ -79,7 +86,7 @@ mod tests {
     fn execute2(_deps: DepsMut) {}
 
     fn query(deps: Deps) {
-        query2(deps.clone());
+        query2(deps);
         query2(deps);
     }
     fn query2(_deps: Deps) {}
@@ -89,5 +96,35 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         execute(deps.as_mut());
         query(deps.as_ref())
+    }
+
+    #[test]
+    fn deps_implements_copy() {
+        impl CustomQuery for u64 {}
+        #[derive(Clone, Serialize, Deserialize)]
+        struct MyQuery;
+        impl CustomQuery for MyQuery {}
+
+        // With C: Copy
+        let owned = OwnedDeps::<_, _, _, u64> {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: MockQuerier::<u64>::new(&[]),
+            custom_query_type: PhantomData,
+        };
+        let deps: Deps<u64> = owned.as_ref();
+        let _copy1 = deps;
+        let _copy2 = deps;
+
+        // Without C: Copy
+        let owned = OwnedDeps::<_, _, _, MyQuery> {
+            storage: MockStorage::default(),
+            api: MockApi::default(),
+            querier: MockQuerier::<MyQuery>::new(&[]),
+            custom_query_type: PhantomData,
+        };
+        let deps: Deps<MyQuery> = owned.as_ref();
+        let _copy1 = deps;
+        let _copy2 = deps;
     }
 }
