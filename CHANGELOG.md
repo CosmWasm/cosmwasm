@@ -12,6 +12,8 @@ and this project adheres to
   flag is set (enabled by default).
 - cosmwasm-vm: Increase `MAX_LENGTH_HUMAN_ADDRESS` from 90 to 256 in order to
   support longer address formats than bech32.
+- cosmwasm-std: Make `CustomQuery` a subtrait of `Clone`, i.e. types that
+  implement `CustomQuery` need to be `Clone`able.
 
 ### Removed
 

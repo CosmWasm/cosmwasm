@@ -66,7 +66,9 @@ pub enum QueryRequest<C: CustomQuery> {
 ///
 /// impl CustomQuery for MyCustomQuery {}
 /// ```
-pub trait CustomQuery: Serialize {}
+pub trait CustomQuery: Serialize + Clone {}
+// We require `Clone` because `Clone` in `QueryRequest<C>` is only derived for
+// `C: Clone` and we want consistent behaviour for all `QueryRequest<C>`
 
 impl CustomQuery for Empty {}
 
