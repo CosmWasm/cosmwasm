@@ -13,6 +13,12 @@ and this project adheres to
 - cosmwasm-vm: Increase `MAX_LENGTH_HUMAN_ADDRESS` from 90 to 256 in order to
   support longer address formats than bech32.
 
+### Removed
+
+- cosmwasm-std: Remove `HumanAddr` (deprecated since 0.14). Use `String`
+  instead.
+- cosmwasm-std: Remove `KV` (deprecated since 0.14). Use `Pair` instead.
+
 ## [0.16.2] - 2021-09-07
 
 ### Added

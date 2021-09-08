@@ -23,8 +23,7 @@ mod timestamp;
 mod traits;
 mod types;
 
-#[allow(deprecated)]
-pub use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
+pub use crate::addresses::{Addr, CanonicalAddr};
 pub use crate::binary::Binary;
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
@@ -39,8 +38,7 @@ pub use crate::ibc::{
     IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
-#[allow(deprecated)]
-pub use crate::iterator::{Order, Pair, KV};
+pub use crate::iterator::{Order, Pair};
 pub use crate::math::{Decimal, Decimal256, Fraction, Uint128, Uint256, Uint512, Uint64};
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
