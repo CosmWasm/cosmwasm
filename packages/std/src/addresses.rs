@@ -1,5 +1,3 @@
-#![allow(deprecated)]
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -110,7 +108,7 @@ impl PartialEq<Addr> for String {
     }
 }
 
-// Addr->String and Addr->HumanAddr are safe conversions.
+// Addr->String is a safe conversion.
 // However, the opposite direction is unsafe and must not be implemented.
 
 impl From<Addr> for String {
@@ -125,18 +123,6 @@ impl From<&Addr> for String {
     }
 }
 
-impl From<Addr> for HumanAddr {
-    fn from(addr: Addr) -> Self {
-        HumanAddr(addr.0)
-    }
-}
-
-impl From<&Addr> for HumanAddr {
-    fn from(addr: &Addr) -> Self {
-        HumanAddr(addr.0.clone())
-    }
-}
-
 impl From<Addr> for Cow<'_, Addr> {
     fn from(addr: Addr) -> Self {
         Cow::Owned(addr)
@@ -146,99 +132,6 @@ impl From<Addr> for Cow<'_, Addr> {
 impl<'a> From<&'a Addr> for Cow<'a, Addr> {
     fn from(addr: &'a Addr) -> Self {
         Cow::Borrowed(addr)
-    }
-}
-
-#[deprecated(
-    since = "0.14.0",
-    note = "HumanAddr is not much more than an alias to String and it does not provide significant safety advantages. With CosmWasm 0.14, we now use String when there was HumanAddr before. There is also the new Addr, which holds a validated immutable human readable address."
-)]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
-pub struct HumanAddr(pub String);
-
-impl HumanAddr {
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl fmt::Display for HumanAddr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", &self.0)
-    }
-}
-
-impl From<&str> for HumanAddr {
-    fn from(addr: &str) -> Self {
-        HumanAddr(addr.to_string())
-    }
-}
-
-impl From<&HumanAddr> for HumanAddr {
-    fn from(addr: &HumanAddr) -> Self {
-        HumanAddr(addr.0.to_string())
-    }
-}
-
-impl From<&&HumanAddr> for HumanAddr {
-    fn from(addr: &&HumanAddr) -> Self {
-        HumanAddr(addr.0.to_string())
-    }
-}
-
-impl From<String> for HumanAddr {
-    fn from(addr: String) -> Self {
-        HumanAddr(addr)
-    }
-}
-
-impl From<HumanAddr> for String {
-    fn from(addr: HumanAddr) -> Self {
-        addr.0
-    }
-}
-
-/// Just like String, HumanAddr is a smart pointer to str.
-/// This implements `*human_address` for us, which is not very valuable directly
-/// because str has no known size and cannot be stored in variables. But it allows us to
-/// do `&*human_address`, returning a `&str` from a `&HumanAddr`.
-/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
-/// this allows us to use `&human_address` whenever a `&str` is required.
-impl Deref for HumanAddr {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        self.as_str()
-    }
-}
-
-/// Implement `HumanAddr == str`, which gives us `&HumanAddr == &str`.
-/// Do we really need &HumanAddr comparisons?
-impl PartialEq<str> for HumanAddr {
-    fn eq(&self, rhs: &str) -> bool {
-        self.0 == rhs
-    }
-}
-
-/// Implement `str == HumanAddr`, which gives us `&str == &HumanAddr`.
-/// Do we really need &HumanAddr comparisons?
-impl PartialEq<HumanAddr> for str {
-    fn eq(&self, rhs: &HumanAddr) -> bool {
-        self == rhs.0
-    }
-}
-
-/// Implement `HumanAddr == &str`
-impl PartialEq<&str> for HumanAddr {
-    fn eq(&self, rhs: &&str) -> bool {
-        self.0 == *rhs
-    }
-}
-
-/// Implement `&str == HumanAddr`
-impl PartialEq<HumanAddr> for &str {
-    fn eq(&self, rhs: &HumanAddr) -> bool {
-        *self == rhs.0
     }
 }
 
@@ -369,139 +262,6 @@ mod tests {
         let addr_ref = &addr;
         let string: String = addr_ref.into();
         assert_eq!(string, "cos934gh9034hg04g0h134");
-    }
-
-    #[test]
-    fn addr_implements_into_human_address() {
-        // owned Addr
-        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
-        let human: HumanAddr = addr.into();
-        assert_eq!(human, "cos934gh9034hg04g0h134");
-
-        // &Addr
-        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
-        let addr_ref = &addr;
-        let human: HumanAddr = addr_ref.into();
-        assert_eq!(human, "cos934gh9034hg04g0h134");
-    }
-
-    // Test HumanAddr as_str() for each HumanAddr::from input type
-    #[test]
-    fn human_addr_as_str() {
-        // literal string
-        let human_addr_from_literal_string = HumanAddr::from("literal-string");
-        assert_eq!("literal-string", human_addr_from_literal_string.as_str());
-
-        // String
-        let addr = String::from("Hello, world!");
-        let human_addr_from_string = HumanAddr::from(addr);
-        assert_eq!("Hello, world!", human_addr_from_string.as_str());
-
-        // &HumanAddr
-        let human_addr_from_borrow = HumanAddr::from(&human_addr_from_string);
-        assert_eq!(
-            human_addr_from_borrow.as_str(),
-            human_addr_from_string.as_str()
-        );
-
-        // &&HumanAddr
-        let human_addr_from_borrow_2 = HumanAddr::from(&&human_addr_from_string);
-        assert_eq!(
-            human_addr_from_borrow_2.as_str(),
-            human_addr_from_string.as_str()
-        );
-    }
-
-    #[test]
-    fn human_addr_implements_display() {
-        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
-        let embedded = format!("Address: {}", human_addr);
-        assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
-        assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
-    }
-
-    #[test]
-    fn human_addr_implements_deref() {
-        // We cannot test *human_addr directly since the resulting type str has no known size
-        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
-        assert_eq!(&*human_addr, "cos934gh9034hg04g0h134");
-
-        // This checks deref coercions from &HumanAddr to &str works
-        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
-        assert_eq!(human_addr.len(), 22);
-        let human_addr_str: &str = &human_addr;
-        assert_eq!(human_addr_str, "cos934gh9034hg04g0h134");
-    }
-
-    #[test]
-    fn human_addr_implements_partial_eq_with_str() {
-        let addr = HumanAddr::from("cos934gh9034hg04g0h134");
-
-        // Owned HumanAddr
-        assert_eq!(addr, "cos934gh9034hg04g0h134");
-        assert_eq!("cos934gh9034hg04g0h134", addr);
-        assert_ne!(addr, "mos973z7z");
-        assert_ne!("mos973z7z", addr);
-
-        // HumanAddr reference (do we really need those?)
-        assert_eq!(&addr, "cos934gh9034hg04g0h134");
-        assert_eq!("cos934gh9034hg04g0h134", &addr);
-        assert_ne!(&addr, "mos973z7z");
-        assert_ne!("mos973z7z", &addr);
-    }
-
-    #[test]
-    fn human_addr_implements_hash() {
-        let alice1 = HumanAddr::from("alice");
-        let mut hasher = DefaultHasher::new();
-        alice1.hash(&mut hasher);
-        let alice1_hash = hasher.finish();
-
-        let alice2 = HumanAddr::from("alice");
-        let mut hasher = DefaultHasher::new();
-        alice2.hash(&mut hasher);
-        let alice2_hash = hasher.finish();
-
-        let bob = HumanAddr::from("bob");
-        let mut hasher = DefaultHasher::new();
-        bob.hash(&mut hasher);
-        let bob_hash = hasher.finish();
-
-        assert_eq!(alice1_hash, alice2_hash);
-        assert_ne!(alice1_hash, bob_hash);
-    }
-
-    /// This requires Hash and Eq to be implemented
-    #[test]
-    fn human_addr_can_be_used_in_hash_set() {
-        let alice1 = HumanAddr::from("alice");
-        let alice2 = HumanAddr::from("alice");
-        let bob = HumanAddr::from("bob");
-
-        let mut set = HashSet::new();
-        set.insert(alice1.clone());
-        set.insert(alice2.clone());
-        set.insert(bob.clone());
-        assert_eq!(set.len(), 2);
-
-        let set1 = HashSet::<HumanAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
-        let set2 = HashSet::from_iter(vec![alice1, alice2, bob]);
-        assert_eq!(set1, set2);
-    }
-
-    #[test]
-    fn human_addr_len() {
-        let addr = "Hello, world!";
-        let human_addr = HumanAddr::from(addr);
-        assert_eq!(addr.len(), human_addr.len());
-    }
-
-    #[test]
-    fn human_addr_is_empty() {
-        let human_addr = HumanAddr::from("Hello, world!");
-        assert!(!human_addr.is_empty());
-        let empty_human_addr = HumanAddr::from("");
-        assert!(empty_human_addr.is_empty());
     }
 
     // Test CanonicalAddr as_slice() for each CanonicalAddr::from input type
