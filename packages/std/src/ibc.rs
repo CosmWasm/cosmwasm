@@ -786,6 +786,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::eq_op)]
     fn ibc_timeout_block_ord() {
         let epoch1a = IbcTimeoutBlock {
             revision: 1,
