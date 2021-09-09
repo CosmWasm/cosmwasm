@@ -77,7 +77,7 @@ where
         backend: Backend<A, S, Q>,
         gas_limit: u64,
         print_debug: bool,
-        extra_imports: Option<HashMap<&str, HashMap<&str, Function>>>,
+        extra_imports: Option<HashMap<&str, Exports>>,
     ) -> VmResult<Self> {
         let store = module.store();
 
@@ -208,13 +208,7 @@ where
         import_obj.register("env", env_imports);
 
         if let Some(extra_imports) = extra_imports {
-            for (namespace, imports) in extra_imports {
-                let mut exports_obj = Exports::new();
-
-                for (name, fun) in imports {
-                    exports_obj.insert(name, fun)
-                }
-
+            for (namespace, exports_obj) in extra_imports {
                 import_obj.register(namespace, exports_obj);
             }
         }
@@ -362,7 +356,7 @@ pub fn instance_from_module<A, S, Q>(
     backend: Backend<A, S, Q>,
     gas_limit: u64,
     print_debug: bool,
-    extra_imports: Option<HashMap<&str, HashMap<&str, Function>>>,
+    extra_imports: Option<HashMap<&str, Exports>>,
 ) -> VmResult<Instance<A, S, Q>>
 where
     A: BackendApi + 'static, // 'static is needed here to allow copying API instances into closures
@@ -458,10 +452,10 @@ mod tests {
         let fun = Function::new_native_with_env(module.store(), my_env.clone(), |env: &MyEnv| {
             env.called.store(true, Ordering::Relaxed);
         });
-        let mut foo_namespace = HashMap::new();
-        foo_namespace.insert("bar", fun);
+        let mut exports = Exports::new();
+        exports.insert("bar", fun);
         let mut extra_imports = HashMap::new();
-        extra_imports.insert("foo", foo_namespace);
+        extra_imports.insert("foo", exports);
         let instance = Instance::from_module(
             &module,
             backend,
