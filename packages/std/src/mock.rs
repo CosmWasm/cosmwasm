@@ -2,6 +2,7 @@ use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
@@ -36,11 +37,12 @@ pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 /// It sets the given balance for the contract itself, nothing else
 pub fn mock_dependencies(
     contract_balance: &[Coin],
-) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)]),
+        custom_query_type: PhantomData,
     }
 }
 
@@ -53,6 +55,7 @@ pub fn mock_dependencies_with_balances(
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(balances),
+        custom_query_type: PhantomData,
     }
 }
 

@@ -12,6 +12,15 @@ and this project adheres to
   flag is set (enabled by default).
 - cosmwasm-vm: Increase `MAX_LENGTH_HUMAN_ADDRESS` from 90 to 256 in order to
   support longer address formats than bech32.
+- cosmwasm-std: Make `CustomQuery` a subtrait of `Clone`, i.e. types that
+  implement `CustomQuery` need to be `Clone`able.
+- cosmwasm-std: Add generic for custom query type to `QuerierWrapper`, `Deps`,
+  `DepsMut` and `OwnedDeps`. Merge `QuerierWrapper::custom_query` into the now
+  fully typed `QuerierWrapper::query`.
+- cosmwasm-std: Add generic type `Q` for the custom query request type to
+  `do_instantiate`, `do_execute`, `do_migrate`, `do_sudo`, `do_reply`,
+  `do_query`, `ibc_channel_open`, `ibc_channel_connect`, `ibc_channel_close`,
+  `ibc_packet_receive`, `ibc_packet_ack` and `ibc_packet_timeout`.
 
 ### Removed
 
