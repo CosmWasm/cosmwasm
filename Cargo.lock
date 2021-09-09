@@ -202,6 +202,7 @@ dependencies = [
 name = "cosmwasm-profiler"
 version = "0.16.0-rc5"
 dependencies = [
+ "cosmwasm-vm",
  "loupe",
  "walrus",
  "wasmer",
