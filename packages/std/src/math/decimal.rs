@@ -661,6 +661,70 @@ mod tests {
         assert_eq!(Decimal::percent(10) * half, Decimal::percent(5));
         assert_eq!(Decimal::percent(100) * half, Decimal::percent(50));
         assert_eq!(Decimal::percent(1000) * half, Decimal::percent(500));
+
+        fn dec(input: &str) -> Decimal {
+            Decimal::from_str(input).unwrap()
+        }
+
+        // Move left
+        let a = dec("123.127726548762582");
+        assert_eq!(a * dec("1"), dec("123.127726548762582"));
+        assert_eq!(a * dec("10"), dec("1231.27726548762582"));
+        assert_eq!(a * dec("100"), dec("12312.7726548762582"));
+        assert_eq!(a * dec("1000"), dec("123127.726548762582"));
+        assert_eq!(a * dec("1000000"), dec("123127726.548762582"));
+        assert_eq!(a * dec("1000000000"), dec("123127726548.762582"));
+        assert_eq!(a * dec("1000000000000"), dec("123127726548762.582"));
+        assert_eq!(a * dec("1000000000000000"), dec("123127726548762582"));
+        assert_eq!(a * dec("1000000000000000000"), dec("123127726548762582000"));
+        assert_eq!(dec("1") * a, dec("123.127726548762582"));
+        assert_eq!(dec("10") * a, dec("1231.27726548762582"));
+        assert_eq!(dec("100") * a, dec("12312.7726548762582"));
+        assert_eq!(dec("1000") * a, dec("123127.726548762582"));
+        assert_eq!(dec("1000000") * a, dec("123127726.548762582"));
+        assert_eq!(dec("1000000000") * a, dec("123127726548.762582"));
+        assert_eq!(dec("1000000000000") * a, dec("123127726548762.582"));
+        assert_eq!(dec("1000000000000000") * a, dec("123127726548762582"));
+        assert_eq!(dec("1000000000000000000") * a, dec("123127726548762582000"));
+
+        // Move right
+        let max = Decimal::MAX;
+        assert_eq!(
+            max * dec("1.0"),
+            dec("340282366920938463463.374607431768211455")
+        );
+        assert_eq!(
+            max * dec("0.1"),
+            dec("34028236692093846346.337460743176821145")
+        );
+        assert_eq!(
+            max * dec("0.01"),
+            dec("3402823669209384634.633746074317682114")
+        );
+        assert_eq!(
+            max * dec("0.001"),
+            dec("340282366920938463.463374607431768211")
+        );
+        assert_eq!(
+            max * dec("0.000001"),
+            dec("340282366920938.463463374607431768")
+        );
+        assert_eq!(
+            max * dec("0.000000001"),
+            dec("340282366920.938463463374607431")
+        );
+        assert_eq!(
+            max * dec("0.000000000001"),
+            dec("340282366.920938463463374607")
+        );
+        assert_eq!(
+            max * dec("0.000000000000001"),
+            dec("340282.366920938463463374")
+        );
+        assert_eq!(
+            max * dec("0.000000000000000001"),
+            dec("340.282366920938463463")
+        );
     }
 
     #[test]
