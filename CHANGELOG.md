@@ -21,6 +21,8 @@ and this project adheres to
   `do_instantiate`, `do_execute`, `do_migrate`, `do_sudo`, `do_reply`,
   `do_query`, `ibc_channel_open`, `ibc_channel_connect`, `ibc_channel_close`,
   `ibc_packet_receive`, `ibc_packet_ack` and `ibc_packet_timeout`.
+- cosmwasm-std: In `Decimal` change `Fraction<u128>` to `Fraction<Uint128>`,
+  such that `Decimal::numerator` and `::denominator` now return `Uint128`.
 
 ### Removed
 
