@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
@@ -62,8 +62,14 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let module = compile(code, memory_limit)?;
-        Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
+        let module = compile(code, memory_limit, &[])?;
+        Instance::from_module(
+            &module,
+            backend,
+            options.gas_limit,
+            options.print_debug,
+            None,
+        )
     }
 
     pub(crate) fn from_module(
@@ -71,6 +77,7 @@ where
         backend: Backend<A, S, Q>,
         gas_limit: u64,
         print_debug: bool,
+        extra_imports: Option<HashMap<&str, Exports>>,
     ) -> VmResult<Self> {
         let store = module.store();
 
@@ -199,6 +206,12 @@ where
         );
 
         import_obj.register("env", env_imports);
+
+        if let Some(extra_imports) = extra_imports {
+            for (namespace, exports_obj) in extra_imports {
+                import_obj.register(namespace, exports_obj);
+            }
+        }
 
         let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
             |original| {
@@ -336,8 +349,28 @@ where
     }
 }
 
+/// This exists only to be exported through `internals` for use by crates that are
+/// part of Cosmwasm.
+pub fn instance_from_module<A, S, Q>(
+    module: &Module,
+    backend: Backend<A, S, Q>,
+    gas_limit: u64,
+    print_debug: bool,
+    extra_imports: Option<HashMap<&str, Exports>>,
+) -> VmResult<Instance<A, S, Q>>
+where
+    A: BackendApi + 'static, // 'static is needed here to allow copying API instances into closures
+    S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
+    Q: Querier + 'static,
+{
+    Instance::from_module(module, backend, gas_limit, print_debug, extra_imports)
+}
+
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
     use super::*;
     use crate::backend::Storage;
     use crate::call_instantiate;
@@ -389,6 +422,53 @@ mod tests {
         assert!(instance.required_features().contains("nutrients"));
         assert!(instance.required_features().contains("sun"));
         assert!(instance.required_features().contains("water"));
+    }
+
+    #[test]
+    fn extra_imports_get_added() {
+        let wasm = wat::parse_str(
+            r#"(module
+            (import "foo" "bar" (func $bar))
+            (func (export "main") (call $bar))
+            )"#,
+        )
+        .unwrap();
+
+        let backend = mock_backend(&[]);
+        let (instance_options, memory_limit) = mock_instance_options();
+        let module = compile(&wasm, memory_limit, &[]).unwrap();
+
+        #[derive(wasmer::WasmerEnv, Clone)]
+        struct MyEnv {
+            // This can be mutated across threads safely. We initialize it as `false`
+            // and let our imported fn switch it to `true` to confirm it works.
+            called: Arc<AtomicBool>,
+        }
+
+        let my_env = MyEnv {
+            called: Arc::new(AtomicBool::new(false)),
+        };
+
+        let fun = Function::new_native_with_env(module.store(), my_env.clone(), |env: &MyEnv| {
+            env.called.store(true, Ordering::Relaxed);
+        });
+        let mut exports = Exports::new();
+        exports.insert("bar", fun);
+        let mut extra_imports = HashMap::new();
+        extra_imports.insert("foo", exports);
+        let instance = Instance::from_module(
+            &module,
+            backend,
+            instance_options.gas_limit,
+            false,
+            Some(extra_imports),
+        )
+        .unwrap();
+
+        let main = instance._inner.exports.get_function("main").unwrap();
+        main.call(&[]).unwrap();
+
+        assert!(my_env.called.load(Ordering::Relaxed));
     }
 
     #[test]

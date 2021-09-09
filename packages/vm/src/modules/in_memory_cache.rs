@@ -142,7 +142,7 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let original = compile(&wasm, None).unwrap();
+        let original = compile(&wasm, None, &[]).unwrap();
 
         // Ensure original module can be executed
         {
@@ -213,19 +213,19 @@ mod tests {
 
         // Add 1
         cache
-            .store(&checksum1, compile(&wasm1, None).unwrap(), 900_000)
+            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 900_000)
             .unwrap();
         assert_eq!(cache.len(), 1);
 
         // Add 2
         cache
-            .store(&checksum2, compile(&wasm2, None).unwrap(), 900_000)
+            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 900_000)
             .unwrap();
         assert_eq!(cache.len(), 2);
 
         // Add 3 (pushes out the previous two)
         cache
-            .store(&checksum3, compile(&wasm3, None).unwrap(), 1_500_000)
+            .store(&checksum3, compile(&wasm3, None, &[]).unwrap(), 1_500_000)
             .unwrap();
         assert_eq!(cache.len(), 1);
     }
@@ -273,19 +273,19 @@ mod tests {
 
         // Add 1
         cache
-            .store(&checksum1, compile(&wasm1, None).unwrap(), 900_000)
+            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 900_000)
             .unwrap();
         assert_eq!(cache.size(), 900_000);
 
         // Add 2
         cache
-            .store(&checksum2, compile(&wasm2, None).unwrap(), 800_000)
+            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 800_000)
             .unwrap();
         assert_eq!(cache.size(), 1_700_000);
 
         // Add 3 (pushes out the previous two)
         cache
-            .store(&checksum3, compile(&wasm3, None).unwrap(), 1_500_000)
+            .store(&checksum3, compile(&wasm3, None, &[]).unwrap(), 1_500_000)
             .unwrap();
         assert_eq!(cache.size(), 1_500_000);
     }

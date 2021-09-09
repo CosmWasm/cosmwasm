@@ -31,6 +31,6 @@ pub fn main() {
     check_wasm(&wasm, &features_from_csv("iterator,staking,stargate")).unwrap();
 
     // Compile module
-    compile(&wasm, None).unwrap();
+    compile(&wasm, None, &[]).unwrap();
     println!("contract checks passed.")
 }
