@@ -213,6 +213,7 @@ impl ops::Sub for Decimal {
 impl ops::Mul for Decimal {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, other: Self) -> Self {
         // Decimals are fractions. We can multiplby two decimals a and b
         // via
