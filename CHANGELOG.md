@@ -12,6 +12,7 @@ and this project adheres to
   the contract, like `code_id` and `admin`.
 - cosmwasm-std: New field `Env::transaction` containing info of the transaction
   the contract call was executed in.
+- cosmwasm-std: Implement `ops::Mul for Decimal`.
 
 ### Changed
 
