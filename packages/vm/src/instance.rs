@@ -355,6 +355,23 @@ where
     }
 }
 
+/// This exists only to be exported through `internals` for use by crates that are
+/// part of Cosmwasm.
+pub fn instance_from_module<A, S, Q>(
+    module: &Module,
+    backend: Backend<A, S, Q>,
+    gas_limit: u64,
+    print_debug: bool,
+    extra_imports: Option<HashMap<&str, HashMap<&str, Function>>>,
+) -> VmResult<Instance<A, S, Q>>
+where
+    A: BackendApi + 'static, // 'static is needed here to allow copying API instances into closures
+    S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
+    Q: Querier + 'static,
+{
+    Instance::from_module(module, backend, gas_limit, print_debug, extra_imports)
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
