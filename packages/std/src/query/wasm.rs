@@ -21,4 +21,21 @@ pub enum WasmQuery {
         /// Key is the raw key used in the contracts Storage
         key: Binary,
     },
+    /// returns a ContractInfoResponse with metadata on the contract from the runtime
+    ContractInfo { contract_addr: String },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ContractInfoResponse {
+    pub code_id: u64,
+    /// address that instantiated this contract
+    pub creator: String,
+    /// admin who can run migrations (if any)
+    pub admin: Option<String>,
+    /// if set, the contract is pinned to the cache, and thus uses less gas when called
+    pub pinned: bool,
+    /// block height this was created at
+    pub created_at: u64,
+    /// set if this contract has bound an IBC port
+    pub ibc_port: Option<String>,
 }
