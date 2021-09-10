@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryRequest",
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "bank"
+      ],
+      "properties": {
+        "bank": {
+          "$ref": "#/definitions/BankQuery"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "custom"
+      ],
+      "properties": {
+        "custom": {
+          "$ref": "#/definitions/Empty"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "wasm"
+      ],
+      "properties": {
+        "wasm": {
+          "$ref": "#/definitions/WasmQuery"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "BankQuery": {
+      "anyOf": [
+        {
+          "description": "This calls into the native bank module for one denomination Return value is BalanceResponse",
+          "type": "object",
+          "required": [
+            "balance"
+          ],
+          "properties": {
+            "balance": {
+              "type": "object",
+              "required": [
+                "address",
+                "denom"
+              ],
+              "properties": {
+                "address": {
+                  "type": "string"
+                },
+                "denom": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "This calls into the native bank module for all denominations. Note that this may be much more expensive than Balance and should be avoided if possible. Return value is AllBalanceResponse.",
+          "type": "object",
+          "required": [
+            "all_balances"
+          ],
+          "properties": {
+            "all_balances": {
+              "type": "object",
+              "required": [
+                "address"
+              ],
+              "properties": {
+                "address": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Empty": {
+      "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+      "type": "object"
+    },
+    "WasmQuery": {
+      "anyOf": [
+        {
+          "description": "this queries the public API of another contract at a known address (with known ABI) return value is whatever the contract returns (caller should know)",
+          "type": "object",
+          "required": [
+            "smart"
+          ],
+          "properties": {
+            "smart": {
+              "type": "object",
+              "required": [
+                "contract_addr",
+                "msg"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "type": "string"
+                },
+                "msg": {
+                  "description": "msg is the json-encoded QueryMsg struct",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key, which may be an empty vector if not present",
+          "type": "object",
+          "required": [
+            "raw"
+          ],
+          "properties": {
+            "raw": {
+              "type": "object",
+              "required": [
+                "contract_addr",
+                "key"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "type": "string"
+                },
+                "key": {
+                  "description": "Key is the raw key used in the contracts Storage",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "returns a ContractInfoResponse with metadata on the contract from the runtime",
+          "type": "object",
+          "required": [
+            "contract_info"
+          ],
+          "properties": {
+            "contract_info": {
+              "type": "object",
+              "required": [
+                "contract_addr"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
