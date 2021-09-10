@@ -41,7 +41,8 @@ pub use crate::ibc::{
 pub use crate::iterator::{Order, Pair};
 pub use crate::math::{Decimal, Decimal256, Fraction, Uint128, Uint256, Uint512, Uint64};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, ContractInfoResponse, CustomQuery,
+    QueryRequest, WasmQuery,
 };
 #[cfg(feature = "staking")]
 pub use crate::query::{

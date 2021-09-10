@@ -25,6 +25,7 @@ pub enum WasmQuery {
     ContractInfo { contract_addr: String },
 }
 
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ContractInfoResponse {
     pub code_id: u64,
@@ -34,8 +35,6 @@ pub struct ContractInfoResponse {
     pub admin: Option<String>,
     /// if set, the contract is pinned to the cache, and thus uses less gas when called
     pub pinned: bool,
-    /// block height this was created at
-    pub created_at: u64,
     /// set if this contract has bound an IBC port
     pub ibc_port: Option<String>,
 }
