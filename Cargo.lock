@@ -202,7 +202,10 @@ dependencies = [
 name = "cosmwasm-profiler"
 version = "0.16.0-rc5"
 dependencies = [
+ "cosmwasm-std",
  "cosmwasm-vm",
+ "csv",
+ "hackatom",
  "loupe",
  "walrus",
  "wasmer",
@@ -723,6 +726,17 @@ dependencies = [
  "ff",
  "rand_core 0.6.3",
  "subtle",
+]
+
+[[package]]
+name = "hackatom"
+version = "0.0.0"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+ "sha2",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,10 +1,11 @@
 use std::collections::{HashMap, VecDeque};
+use std::sync::{Arc, Mutex};
 use std::time;
 
-use crate::code_blocks::BlockId;
+use crate::code_blocks::{BlockId, BlockStore};
 use crate::utils::InsertPush as _;
 
-#[derive(Default, Debug)]
+#[derive(wasmer::WasmerEnv, Default, Debug, Clone)]
 pub struct Measurements {
     started: HashMap<(u32, u32), VecDeque<time::Instant>>,
     pub taken: HashMap<BlockId, VecDeque<time::Duration>>,
@@ -36,6 +37,22 @@ impl Measurements {
             }
             None => panic!("trying to finalize a measurement that was never started"),
         }
+    }
+
+    pub fn compile_csv(&self, block_store: Arc<Mutex<BlockStore>>, sink: impl std::io::Write) {
+        let block_store = block_store.lock().unwrap();
+        let mut wtr = csv::Writer::from_writer(sink);
+
+        for (block_id, timings) in &self.taken {
+            let block = format!("{:?}", block_store.get_block(*block_id).unwrap());
+            wtr.write_record(
+                vec![block]
+                    .into_iter()
+                    .chain(timings.into_iter().map(|t| t.as_nanos().to_string())),
+            );
+        }
+
+        wtr.flush().unwrap();
     }
 }
 

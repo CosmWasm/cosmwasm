@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 use cosmwasm_vm::{
@@ -23,7 +23,7 @@ pub enum Module<'d> {
 }
 
 impl<'d> Module<'d> {
-    pub fn from_path(path: &'d impl AsRef<Path>) -> Self {
+    pub fn from_path<P: AsRef<Path> + ?Sized>(path: &'d P) -> Self {
         Self::Path(path.as_ref())
     }
 
@@ -33,6 +33,7 @@ impl<'d> Module<'d> {
 
     pub fn instrument<Env, F1, F2>(
         &self,
+        block_store: Arc<Mutex<BlockStore>>,
         env: Env,
         start_measurement_fn: F1,
         take_measurement_fn: F2,
@@ -42,7 +43,7 @@ impl<'d> Module<'d> {
         F1: HostFunction<(u32, u32), (), WithEnv, Env>,
         F2: HostFunction<(u32, u32, u64), (), WithEnv, Env>,
     {
-        let profiling = Arc::new(Profiling::new());
+        let profiling = Arc::new(Profiling::new(block_store));
 
         // Create the module with our middleware.
         // let mut compiler_config = Cranelift::default();
@@ -95,10 +96,22 @@ impl<'d> Module<'d> {
     }
 }
 
+type MockInstance = Instance<MockApi, MockStorage, MockQuerier>;
+
 pub struct InstrumentedInstance<Env: WasmerEnv> {
     profiling: Arc<Profiling>,
-    instance: Instance<MockApi, MockStorage, MockQuerier>,
+    instance: MockInstance,
     env: Env,
+}
+
+impl<Env: WasmerEnv> InstrumentedInstance<Env> {
+    pub fn env(&self) -> Env {
+        self.env.clone()
+    }
+
+    pub fn vm_instance(&mut self) -> &mut MockInstance {
+        &mut self.instance
+    }
 }
 
 /// Add the imports we need to make instrumentation work.
@@ -123,11 +136,15 @@ pub struct Profiling {
 }
 
 impl Profiling {
-    pub fn new() -> Self {
+    pub fn new(block_store: Arc<Mutex<BlockStore>>) -> Self {
         Self {
-            block_store: Arc::new(Mutex::new(BlockStore::new())),
+            block_store,
             indexes: Mutex::new(None),
         }
+    }
+
+    pub fn block_store(&self) -> Arc<Mutex<BlockStore>> {
+        self.block_store.clone()
     }
 }
 
@@ -298,6 +315,7 @@ mod tests {
 
     struct Fixture {
         instance: InstrumentedInstance<FixtureEnv>,
+        block_store: Arc<Mutex<BlockStore>>,
     }
 
     #[derive(Debug, Clone, WasmerEnv)]
@@ -328,8 +346,16 @@ mod tests {
                 env.end_calls.lock().unwrap().push((fun, block, hash));
             };
 
+            let block_store = Arc::new(Mutex::new(BlockStore::new()));
+
             Self {
-                instance: module.instrument(env, start_measurement_fn, take_measurement_fn),
+                instance: module.instrument(
+                    block_store.clone(),
+                    env,
+                    start_measurement_fn,
+                    take_measurement_fn,
+                ),
+                block_store,
             }
         }
     }
