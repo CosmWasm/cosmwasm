@@ -8,8 +8,8 @@ and this project adheres to
 
 ### Added
 
-- cosmwasm-std: Add new `WasmQuery::ContractInfo` variant to get metadata
-  about the contract, like code_id and admin.
+- cosmwasm-std: Add new `WasmQuery::ContractInfo` variant to get metadata about
+  the contract, like `code_id` and `admin`.
 
 ### Changed
 
