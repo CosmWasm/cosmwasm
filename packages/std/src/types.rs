@@ -7,7 +7,22 @@ use crate::timestamp::Timestamp;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Env {
     pub block: BlockInfo,
+    /// Information on the transaction this message was executed in.
+    /// The field is unset when the `MsgExecuteContract`/`MsgInstantiateContract`/`MsgMigrateContract`
+    /// is not executed as part of a transaction.
+    pub transaction: Option<TransactionInfo>,
     pub contract: ContractInfo,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct TransactionInfo {
+    /// The position of this transaction in the block. The first
+    /// transaction has index 0.
+    ///
+    /// This allows you to get a unique transaction indentifier in this chain
+    /// using the pair (`env.block.height`, `env.transaction.index`).
+    ///
+    pub index: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -24,13 +39,14 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
+    /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },
@@ -45,13 +61,14 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
+    /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },

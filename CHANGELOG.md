@@ -10,6 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: Add new `WasmQuery::ContractInfo` variant to get metadata about
   the contract, like `code_id` and `admin`.
+- cosmwasm-std: New field `Env::transaction` containing info of the transaction
+  the contract call was executed in.
 
 ### Changed
 

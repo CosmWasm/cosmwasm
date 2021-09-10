@@ -28,7 +28,7 @@ use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
-use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
+use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 use crate::Attribute;
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
@@ -209,6 +209,7 @@ pub fn mock_env() -> Env {
             time: Timestamp::from_nanos(1_571_797_419_879_305_533),
             chain_id: "cosmos-testnet-14002".to_string(),
         },
+        transaction: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
         },
