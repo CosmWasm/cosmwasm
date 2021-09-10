@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add new `WasmQuery::ContractInfo` variant to get metadata
+  about the contract, like code_id and admin.
+
 ### Changed
 
 - cosmwasm-std: Make `iterator` a required feature if the `iterator` feature

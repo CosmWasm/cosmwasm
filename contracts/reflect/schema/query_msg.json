@@ -517,6 +517,27 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "description": "returns a ContractInfoResponse with metadata on the contract from the runtime",
+          "type": "object",
+          "required": [
+            "contract_info"
+          ],
+          "properties": {
+            "contract_info": {
+              "type": "object",
+              "required": [
+                "contract_addr"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
         }
       ]
     }

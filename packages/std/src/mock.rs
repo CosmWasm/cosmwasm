@@ -486,6 +486,7 @@ impl NoWasmQuerier {
         let addr = match request {
             WasmQuery::Smart { contract_addr, .. } => contract_addr,
             WasmQuery::Raw { contract_addr, .. } => contract_addr,
+            WasmQuery::ContractInfo { contract_addr, .. } => contract_addr,
         }
         .clone();
         SystemResult::Err(SystemError::NoSuchContract { addr })
