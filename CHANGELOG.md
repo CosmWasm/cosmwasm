@@ -18,6 +18,7 @@ and this project adheres to
   `Uint512::from_uint256`.
 - cosmwasm-std: New getters `Decimal{,256}::atomics()` and
   `Decimal{,256}::decimal_places()`.
+- cosmwasm-std: New `Uint128::checked_pow`.
 
 ### Changed
 

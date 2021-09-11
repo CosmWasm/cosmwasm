@@ -86,6 +86,13 @@ impl Uint128 {
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+    }
+
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_div(other.0)
