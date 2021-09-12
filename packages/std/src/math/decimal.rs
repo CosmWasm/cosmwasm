@@ -60,6 +60,9 @@ impl Decimal {
                 if let Ok(factor) = Uint128::new(10).checked_pow(digits) {
                     Self(atomics.checked_div(factor)?)
                 } else {
+                    // In this case `factor` exceeds the Uint128 range.
+                    // Any Uint128 `x` divided by `factor` with `factor > Uint128::MAX` is 0.
+                    // Try e.g. Python3: `(2**128-1) // 2**128`
                     Self(Uint128::zero())
                 }
             }
