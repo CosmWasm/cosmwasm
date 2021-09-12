@@ -32,7 +32,7 @@ const KI: usize = 1024;
 const MI: usize = 1024 * 1024;
 /// Max key length for db_write/db_read/db_remove/db_scan (when VM reads the key argument from Wasm memory)
 const MAX_LENGTH_DB_KEY: usize = 64 * KI;
-/// Max value length for db_write (i.e. when VM reads from Wasm memory)
+/// Max value length for db_write (when VM reads the value argument from Wasm memory)
 const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 /// Typically 20 (Cosmos SDK, Ethereum), 32 (Nano, Substrate) or 54 (MockApi)
 const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
