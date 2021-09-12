@@ -6,7 +6,7 @@ use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
 
-use crate::errors::{StdError, StdResult};
+use crate::errors::StdError;
 
 use super::Fraction;
 use super::Isqrt;
@@ -17,6 +17,9 @@ use super::{Uint128, Uint256};
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] Uint128);
+
+#[derive(Debug, PartialEq)]
+pub struct DecimalRangeExceeded;
 
 impl Decimal {
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
@@ -46,19 +49,26 @@ impl Decimal {
         Decimal(((x as u128) * 1_000_000_000_000_000).into())
     }
 
-    pub fn from_atomics(atomics: impl Into<Uint128>, decimal_places: u32) -> StdResult<Self> {
+    pub fn from_atomics(
+        atomics: impl Into<Uint128>,
+        decimal_places: u32,
+    ) -> Result<Self, DecimalRangeExceeded> {
         let atomics = atomics.into();
         Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES as u32)) {
             Ordering::Less => {
                 let digits = (Self::DECIMAL_PLACES as u32) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
                 let factor = Uint128::new(10).checked_pow(digits).unwrap(); // Safe because digits <= 17
-                Self(atomics.checked_mul(factor)?)
+                Self(
+                    atomics
+                        .checked_mul(factor)
+                        .map_err(|_| DecimalRangeExceeded)?,
+                )
             }
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
                 let digits = decimal_places - (Self::DECIMAL_PLACES as u32); // No overflow because decimal_places > DECIMAL_PLACES
                 if let Ok(factor) = Uint128::new(10).checked_pow(digits) {
-                    Self(atomics.checked_div(factor)?)
+                    Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 } else {
                     // In this case `factor` exceeds the Uint128 range.
                     // Any Uint128 `x` divided by `factor` with `factor > Uint128::MAX` is 0.
@@ -360,7 +370,6 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::StdError;
     use crate::{from_slice, to_vec};
 
     #[test]
@@ -470,6 +479,10 @@ mod tests {
             Decimal::from_atomics(max.atomics(), max.decimal_places()).unwrap(),
             max
         );
+
+        // Overflow is only possible with digits < 18
+        let result = Decimal::from_atomics(u128::MAX, 17);
+        assert_eq!(result.unwrap_err(), DecimalRangeExceeded);
     }
 
     #[test]
