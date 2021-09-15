@@ -15,10 +15,7 @@ use super::Empty;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
-pub enum CosmosMsg<T = Empty>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
+pub enum CosmosMsg<T = Empty> {
     Bank(BankMsg),
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
