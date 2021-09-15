@@ -1,6 +1,5 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::{Binary, ContractResult};
 
@@ -29,10 +28,7 @@ pub enum ReplyOn {
 /// but not revert any state changes in the calling contract. If this is required, it must be done
 /// manually in the `reply` entry point.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SubMsg<T = Empty>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
+pub struct SubMsg<T = Empty> {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
     pub id: u64,
@@ -44,10 +40,7 @@ where
 /// This is used for cases when we use ReplyOn::Never and the id doesn't matter
 pub const UNUSED_MSG_ID: u64 = 0;
 
-impl<T> SubMsg<T>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
+impl<T> SubMsg<T> {
     /// new creates a "fire and forget" message with the pre-0.14 semantics
     pub fn new(msg: impl Into<CosmosMsg<T>>) -> Self {
         SubMsg {
