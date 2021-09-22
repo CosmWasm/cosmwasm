@@ -5,12 +5,11 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Ord, Ordering, PartialOrd};
-use std::fmt;
 
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
-use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+use crate::results::{Attribute, CosmosMsg, CustomMsg, Empty, Event, SubMsg};
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
@@ -441,7 +440,7 @@ impl IbcPacketTimeoutMsg {
 #[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
@@ -465,7 +464,7 @@ where
 
 impl<T> Default for IbcBasicResponse<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn default() -> Self {
         IbcBasicResponse {
@@ -478,7 +477,7 @@ where
 
 impl<T> IbcBasicResponse<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     pub fn new() -> Self {
         Self::default()
@@ -591,7 +590,7 @@ where
 #[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     /// The bytes we return to the contract that sent the packet.
     /// This may represent a success or error of exection
@@ -618,7 +617,7 @@ where
 
 impl<T> Default for IbcReceiveResponse<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn default() -> Self {
         IbcReceiveResponse {
@@ -632,7 +631,7 @@ where
 
 impl<T> IbcReceiveResponse<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     pub fn new() -> Self {
         Self::default()

@@ -26,7 +26,7 @@ use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
-use crate::{Deps, DepsMut, MessageInfo};
+use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
 
 #[cfg(feature = "iterator")]
 #[no_mangle]
@@ -92,7 +92,7 @@ pub fn do_instantiate<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_instantiate(
@@ -120,7 +120,7 @@ pub fn do_execute<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_execute(
@@ -147,7 +147,7 @@ pub fn do_migrate<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -169,7 +169,7 @@ pub fn do_sudo<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_sudo(sudo_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -190,7 +190,7 @@ pub fn do_reply<Q, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_reply(reply_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -254,7 +254,7 @@ pub fn do_ibc_channel_connect<Q, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_ibc_channel_connect(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -277,7 +277,7 @@ pub fn do_ibc_channel_close<Q, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_ibc_channel_close(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -301,7 +301,7 @@ pub fn do_ibc_packet_receive<Q, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_ibc_packet_receive(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -325,7 +325,7 @@ pub fn do_ibc_packet_ack<Q, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_ibc_packet_ack(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -350,7 +350,7 @@ pub fn do_ibc_packet_timeout<Q, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let res = _do_ibc_packet_timeout(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -367,7 +367,7 @@ fn _do_instantiate<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -391,7 +391,7 @@ fn _do_execute<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -414,7 +414,7 @@ fn _do_migrate<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -435,7 +435,7 @@ fn _do_sudo<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned + JsonSchema,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -455,7 +455,7 @@ fn _do_reply<Q, C, E>(
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -516,7 +516,7 @@ fn _do_ibc_channel_connect<Q, C, E>(
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -537,7 +537,7 @@ fn _do_ibc_channel_close<Q, C, E>(
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -558,7 +558,7 @@ fn _do_ibc_packet_receive<Q, C, E>(
 ) -> ContractResult<IbcReceiveResponse<C>>
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -579,7 +579,7 @@ fn _do_ibc_packet_ack<Q, C, E>(
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
@@ -600,7 +600,7 @@ fn _do_ibc_packet_timeout<Q, C, E>(
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
-    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
