@@ -3,9 +3,8 @@
 //! use cosmwasm_vm::testing::X
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
-use std::fmt;
 
-use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
+use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
@@ -38,7 +37,7 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
     call_instantiate(instance, &env, &info, &serialized_msg).expect("VM error")
@@ -58,7 +57,7 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
     call_execute(instance, &env, &info, &serialized_msg).expect("VM error")
@@ -77,7 +76,7 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
     call_migrate(instance, &env, &serialized_msg).expect("VM error")
@@ -96,7 +95,7 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
     call_sudo(instance, &env, &serialized_msg).expect("VM error")
@@ -114,7 +113,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     call_reply(instance, &env, &msg).expect("VM error")
 }
@@ -167,7 +166,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_channel_connect(instance, &env, &msg).expect("VM error")
 }
@@ -185,7 +184,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_channel_close(instance, &env, &msg).expect("VM error")
 }
@@ -203,7 +202,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_packet_receive(instance, &env, &msg).expect("VM error")
 }
@@ -221,7 +220,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_packet_ack(instance, &env, &msg).expect("VM error")
 }
@@ -239,7 +238,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
+    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_packet_timeout(instance, &env, &msg).expect("VM error")
 }
