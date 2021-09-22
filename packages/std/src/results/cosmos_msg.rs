@@ -11,6 +11,12 @@ use crate::serde::to_binary;
 
 use super::Empty;
 
+/// Like CustomQuery for better type clarity.
+/// Also makes it shorter to use as a trait bound.
+pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema {}
+
+impl CustomMsg for Empty {}
+
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -212,7 +218,7 @@ pub fn wasm_execute(
 
 impl<T> From<BankMsg> for CosmosMsg<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
@@ -222,7 +228,7 @@ where
 #[cfg(feature = "staking")]
 impl<T> From<StakingMsg> for CosmosMsg<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn from(msg: StakingMsg) -> Self {
         CosmosMsg::Staking(msg)
@@ -232,7 +238,7 @@ where
 #[cfg(feature = "staking")]
 impl<T> From<DistributionMsg> for CosmosMsg<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn from(msg: DistributionMsg) -> Self {
         CosmosMsg::Distribution(msg)
@@ -241,7 +247,7 @@ where
 
 impl<T> From<WasmMsg> for CosmosMsg<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
@@ -251,7 +257,7 @@ where
 #[cfg(feature = "stargate")]
 impl<T> From<IbcMsg> for CosmosMsg<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
@@ -261,7 +267,7 @@ where
 #[cfg(feature = "stargate")]
 impl<T> From<GovMsg> for CosmosMsg<T>
 where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+    T: CustomMsg,
 {
     fn from(msg: GovMsg) -> Self {
         CosmosMsg::Gov(msg)
