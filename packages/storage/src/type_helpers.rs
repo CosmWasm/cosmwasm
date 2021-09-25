@@ -27,7 +27,7 @@ pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> 
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: Pair<Vec<u8>>) -> StdResult<Pair<T>> {
+pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: Pair) -> StdResult<Pair<Vec<u8>, T>> {
     let (k, v) = kv;
     let t = from_slice::<T>(&v)?;
     Ok((k, t))
