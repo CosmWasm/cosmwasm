@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 
 /// A Key-Value pair, returned from our iterators
 /// (since it is less common to use, and never used with default V, we place K second)
-pub type Pair<V = Vec<u8>, K = Vec<u8>> = (K, V);
+pub type Pair<K = Vec<u8>, V = Vec<u8>> = (K, V);
 
 #[derive(Copy, Clone)]
 // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
@@ -35,10 +35,10 @@ mod test {
     use super::Pair;
 
     #[test]
-    // make sure we add generic K without breaking existing code
-    fn ensure_pair_backwards_compatible() {
+    // Generic K works
+    fn pair_works() {
         let _default: Pair = (vec![1, 2, 3], vec![5]);
-        let _value: Pair<u64> = (vec![4, 3], 1234567890);
-        let _with_key: Pair<u64, String> = ("hello".to_owned(), 12345678);
+        let _value: Pair<u64> = (1234567890, vec![4, 3]);
+        let _with_key: Pair<String, u64> = ("hello".to_owned(), 12345678);
     }
 }

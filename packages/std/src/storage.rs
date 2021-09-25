@@ -101,7 +101,7 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 #[cfg(feature = "iterator")]
-fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> Pair<T> {
+fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> Pair<Vec<u8>, T> {
     let (key, value) = item_ref;
     (key.clone(), value.clone())
 }
