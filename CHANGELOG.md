@@ -34,6 +34,7 @@ and this project adheres to
   such that `Decimal::numerator` and `::denominator` now return `Uint128`.
 - cosmwasm-std: Make methods `Uint256::to_be_bytes`/`::to_le_bytes` const.
 - cosmwasm-std: Make methods `Uint512::to_be_bytes`/`::to_le_bytes` const.
+- cosmwasm-std: Make method `Uint512::from_le_bytes` const.
 
 ### Removed
 
