@@ -102,7 +102,6 @@ impl Uint256 {
     /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
     pub const fn from_uint128(num: Uint128) -> Self {
-        let num = num.u128();
         let bytes = num.to_le_bytes();
 
         Self::from_le_bytes([
