@@ -102,37 +102,14 @@ impl Uint256 {
     /// Returns a copy of the number as big endian bytes.
     pub const fn to_be_bytes(self) -> [u8; 32] {
         let words = [
-            (self.0).0[0].to_be_bytes(),
-            (self.0).0[1].to_be_bytes(),
-            (self.0).0[2].to_be_bytes(),
             (self.0).0[3].to_be_bytes(),
+            (self.0).0[2].to_be_bytes(),
+            (self.0).0[1].to_be_bytes(),
+            (self.0).0[0].to_be_bytes(),
         ];
 
+        // In Rust 1.56+ we can use `unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }` for this
         [
-            words[3][0],
-            words[3][1],
-            words[3][2],
-            words[3][3],
-            words[3][4],
-            words[3][5],
-            words[3][6],
-            words[3][7],
-            words[2][0],
-            words[2][1],
-            words[2][2],
-            words[2][3],
-            words[2][4],
-            words[2][5],
-            words[2][6],
-            words[2][7],
-            words[1][0],
-            words[1][1],
-            words[1][2],
-            words[1][3],
-            words[1][4],
-            words[1][5],
-            words[1][6],
-            words[1][7],
             words[0][0],
             words[0][1],
             words[0][2],
@@ -141,6 +118,30 @@ impl Uint256 {
             words[0][5],
             words[0][6],
             words[0][7],
+            words[1][0],
+            words[1][1],
+            words[1][2],
+            words[1][3],
+            words[1][4],
+            words[1][5],
+            words[1][6],
+            words[1][7],
+            words[2][0],
+            words[2][1],
+            words[2][2],
+            words[2][3],
+            words[2][4],
+            words[2][5],
+            words[2][6],
+            words[2][7],
+            words[3][0],
+            words[3][1],
+            words[3][2],
+            words[3][3],
+            words[3][4],
+            words[3][5],
+            words[3][6],
+            words[3][7],
         ]
     }
 
@@ -153,6 +154,7 @@ impl Uint256 {
             (self.0).0[3].to_le_bytes(),
         ];
 
+        // In Rust 1.56+ we can use `unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }` for this
         [
             words[0][0],
             words[0][1],
