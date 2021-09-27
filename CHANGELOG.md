@@ -14,6 +14,8 @@ and this project adheres to
   the contract call was executed in.
 - cosmwasm-std: Implement `ops::Mul` for `Decimal` and `Decimal256`.
 - cosmwasm-std: New const methods `Uint128::to_be_bytes`/`::to_le_bytes`.
+- cosmwasm-std: New const conversion methods `Uint256::from_uint128` and
+  `Uint512::from_uint256`.
 
 ### Changed
 
@@ -34,6 +36,7 @@ and this project adheres to
   such that `Decimal::numerator` and `::denominator` now return `Uint128`.
 - cosmwasm-std: Make methods `Uint256::to_be_bytes`/`::to_le_bytes` const.
 - cosmwasm-std: Make methods `Uint512::to_be_bytes`/`::to_le_bytes` const.
+- cosmwasm-std: Make method `Uint512::from_le_bytes` const.
 
 ### Removed
 

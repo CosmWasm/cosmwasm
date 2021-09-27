@@ -21,10 +21,6 @@ impl Decimal {
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
     const DECIMAL_FRACTIONAL_SQUARED: Uint128 =
         Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000u128); // (1*10**18)**2 = 1*10**36
-    const DECIMAL_FRACTIONAL_UINT256: Uint256 = Uint256::from_be_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182, 179,
-        167, 100, 0, 0,
-    ]); // Python: `[b for b in (1*10**18).to_bytes(32, "big")]`
     const DECIMAL_PLACES: usize = 18; // This needs to be an even number.
 
     pub const MAX: Self = Self(Uint128::MAX);
@@ -220,8 +216,8 @@ impl ops::Mul for Decimal {
         //       (a.numerator() * b.numerator()) / (a.denominator() * b.denominator())
         //     = (a.numerator() * b.numerator()) / a.denominator() / b.denominator()
 
-        let result_as_uint256 =
-            self.numerator().full_mul(other.numerator()) / Self::DECIMAL_FRACTIONAL_UINT256;
+        let result_as_uint256 = self.numerator().full_mul(other.numerator())
+            / Uint256::from_uint128(Self::DECIMAL_FRACTIONAL); // from_uint128 is a const method and should be "free"
         match result_as_uint256.try_into() {
             Ok(result) => Self(result),
             Err(_) => panic!("attempt to multiply with overflow"),

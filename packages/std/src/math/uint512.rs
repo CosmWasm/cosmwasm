@@ -95,8 +95,48 @@ impl Uint512 {
         Self(U512(words))
     }
 
-    pub fn from_le_bytes(value: [u8; 64]) -> Self {
-        Uint512(U512::from_little_endian(&value))
+    pub const fn from_le_bytes(data: [u8; 64]) -> Self {
+        let words: [u64; 8] = [
+            u64::from_le_bytes([
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
+            ]),
+            u64::from_le_bytes([
+                data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15],
+            ]),
+            u64::from_le_bytes([
+                data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
+            ]),
+            u64::from_le_bytes([
+                data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
+            ]),
+            u64::from_le_bytes([
+                data[32], data[33], data[34], data[35], data[36], data[37], data[38], data[39],
+            ]),
+            u64::from_le_bytes([
+                data[40], data[41], data[42], data[43], data[44], data[45], data[46], data[47],
+            ]),
+            u64::from_le_bytes([
+                data[48], data[49], data[50], data[51], data[52], data[53], data[54], data[55],
+            ]),
+            u64::from_le_bytes([
+                data[56], data[57], data[58], data[59], data[60], data[61], data[62], data[63],
+            ]),
+        ];
+        Self(U512(words))
+    }
+
+    /// A conversion from `Uint256` that, unlike the one provided by the `From` trait,
+    /// can be used in a `const` context.
+    pub const fn from_uint256(num: Uint256) -> Self {
+        let bytes = num.to_le_bytes();
+        Self::from_le_bytes([
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
+            bytes[16], bytes[17], bytes[18], bytes[19], bytes[20], bytes[21], bytes[22], bytes[23],
+            bytes[24], bytes[25], bytes[26], bytes[27], bytes[28], bytes[29], bytes[30], bytes[31],
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ])
     }
 
     /// Returns a copy of the number as big endian bytes.
@@ -716,6 +756,32 @@ mod tests {
                 "Uint128",
                 Uint512::MAX.to_string()
             ))
+        );
+    }
+
+    #[test]
+    fn uint512_from_uint256() {
+        assert_eq!(
+            Uint512::from_uint256(Uint256::from_str("123").unwrap()),
+            Uint512::from_str("123").unwrap()
+        );
+
+        assert_eq!(
+            Uint512::from_uint256(Uint256::from_str("9785746283745").unwrap()),
+            Uint512::from_str("9785746283745").unwrap()
+        );
+
+        assert_eq!(
+            Uint512::from_uint256(
+                Uint256::from_str(
+                    "97857462837575757832978493758398593853985452378423874623874628736482736487236"
+                )
+                .unwrap()
+            ),
+            Uint512::from_str(
+                "97857462837575757832978493758398593853985452378423874623874628736482736487236"
+            )
+            .unwrap()
         );
     }
 
