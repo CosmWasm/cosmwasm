@@ -1,10 +1,12 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use std::convert::TryInto;
 use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
 
 use crate::errors::StdError;
+use crate::Uint512;
 
 use super::Fraction;
 use super::Isqrt;
@@ -30,6 +32,11 @@ impl Decimal256 {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
             75, 159, 16, 0, 0, 0, 0,
         ]);
+    const DECIMAL_FRACTIONAL_UINT512: Uint512 = Uint512::from_be_bytes([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
+        179, 167, 100, 0, 0,
+    ]); // Python: `[b for b in (1*10**18).to_bytes(32, "big")]`
 
     pub const MAX: Self = Self(Uint256::MAX);
 
@@ -211,6 +218,25 @@ impl ops::Sub for Decimal256 {
 
     fn sub(self, other: Self) -> Self {
         Self(self.0 - other.0)
+    }
+}
+
+impl ops::Mul for Decimal256 {
+    type Output = Self;
+
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    fn mul(self, other: Self) -> Self {
+        // Decimals are fractions. We can multiply two decimals a and b
+        // via
+        //       (a.numerator() * b.numerator()) / (a.denominator() * b.denominator())
+        //     = (a.numerator() * b.numerator()) / a.denominator() / b.denominator()
+
+        let result_as_uint512 =
+            self.numerator().full_mul(other.numerator()) / Self::DECIMAL_FRACTIONAL_UINT512;
+        match result_as_uint512.try_into() {
+            Ok(result) => Self(result),
+            Err(_) => panic!("attempt to multiply with overflow"),
+        }
     }
 }
 
@@ -666,6 +692,121 @@ mod tests {
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn decimal_sub_overflow_panics() {
         let _value = Decimal256::zero() - Decimal256::percent(50);
+    }
+
+    #[test]
+    fn decimal_implements_mul() {
+        let one = Decimal256::one();
+        let two = one + one;
+        let half = Decimal256::percent(50);
+
+        // 1*x and x*1
+        assert_eq!(one * Decimal256::percent(0), Decimal256::percent(0));
+        assert_eq!(one * Decimal256::percent(1), Decimal256::percent(1));
+        assert_eq!(one * Decimal256::percent(10), Decimal256::percent(10));
+        assert_eq!(one * Decimal256::percent(100), Decimal256::percent(100));
+        assert_eq!(one * Decimal256::percent(1000), Decimal256::percent(1000));
+        assert_eq!(one * Decimal256::MAX, Decimal256::MAX);
+        assert_eq!(Decimal256::percent(0) * one, Decimal256::percent(0));
+        assert_eq!(Decimal256::percent(1) * one, Decimal256::percent(1));
+        assert_eq!(Decimal256::percent(10) * one, Decimal256::percent(10));
+        assert_eq!(Decimal256::percent(100) * one, Decimal256::percent(100));
+        assert_eq!(Decimal256::percent(1000) * one, Decimal256::percent(1000));
+        assert_eq!(Decimal256::MAX * one, Decimal256::MAX);
+
+        // double
+        assert_eq!(two * Decimal256::percent(0), Decimal256::percent(0));
+        assert_eq!(two * Decimal256::percent(1), Decimal256::percent(2));
+        assert_eq!(two * Decimal256::percent(10), Decimal256::percent(20));
+        assert_eq!(two * Decimal256::percent(100), Decimal256::percent(200));
+        assert_eq!(two * Decimal256::percent(1000), Decimal256::percent(2000));
+        assert_eq!(Decimal256::percent(0) * two, Decimal256::percent(0));
+        assert_eq!(Decimal256::percent(1) * two, Decimal256::percent(2));
+        assert_eq!(Decimal256::percent(10) * two, Decimal256::percent(20));
+        assert_eq!(Decimal256::percent(100) * two, Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(1000) * two, Decimal256::percent(2000));
+
+        // half
+        assert_eq!(half * Decimal256::percent(0), Decimal256::percent(0));
+        assert_eq!(half * Decimal256::percent(1), Decimal256::permille(5));
+        assert_eq!(half * Decimal256::percent(10), Decimal256::percent(5));
+        assert_eq!(half * Decimal256::percent(100), Decimal256::percent(50));
+        assert_eq!(half * Decimal256::percent(1000), Decimal256::percent(500));
+        assert_eq!(Decimal256::percent(0) * half, Decimal256::percent(0));
+        assert_eq!(Decimal256::percent(1) * half, Decimal256::permille(5));
+        assert_eq!(Decimal256::percent(10) * half, Decimal256::percent(5));
+        assert_eq!(Decimal256::percent(100) * half, Decimal256::percent(50));
+        assert_eq!(Decimal256::percent(1000) * half, Decimal256::percent(500));
+
+        fn dec(input: &str) -> Decimal256 {
+            Decimal256::from_str(input).unwrap()
+        }
+
+        // Move left
+        let a = dec("123.127726548762582");
+        assert_eq!(a * dec("1"), dec("123.127726548762582"));
+        assert_eq!(a * dec("10"), dec("1231.27726548762582"));
+        assert_eq!(a * dec("100"), dec("12312.7726548762582"));
+        assert_eq!(a * dec("1000"), dec("123127.726548762582"));
+        assert_eq!(a * dec("1000000"), dec("123127726.548762582"));
+        assert_eq!(a * dec("1000000000"), dec("123127726548.762582"));
+        assert_eq!(a * dec("1000000000000"), dec("123127726548762.582"));
+        assert_eq!(a * dec("1000000000000000"), dec("123127726548762582"));
+        assert_eq!(a * dec("1000000000000000000"), dec("123127726548762582000"));
+        assert_eq!(dec("1") * a, dec("123.127726548762582"));
+        assert_eq!(dec("10") * a, dec("1231.27726548762582"));
+        assert_eq!(dec("100") * a, dec("12312.7726548762582"));
+        assert_eq!(dec("1000") * a, dec("123127.726548762582"));
+        assert_eq!(dec("1000000") * a, dec("123127726.548762582"));
+        assert_eq!(dec("1000000000") * a, dec("123127726548.762582"));
+        assert_eq!(dec("1000000000000") * a, dec("123127726548762.582"));
+        assert_eq!(dec("1000000000000000") * a, dec("123127726548762582"));
+        assert_eq!(dec("1000000000000000000") * a, dec("123127726548762582000"));
+
+        // Move right
+        let max = Decimal256::MAX;
+        assert_eq!(
+            max * dec("1.0"),
+            dec("115792089237316195423570985008687907853269984665640564039457.584007913129639935")
+        );
+        assert_eq!(
+            max * dec("0.1"),
+            dec("11579208923731619542357098500868790785326998466564056403945.758400791312963993")
+        );
+        assert_eq!(
+            max * dec("0.01"),
+            dec("1157920892373161954235709850086879078532699846656405640394.575840079131296399")
+        );
+        assert_eq!(
+            max * dec("0.001"),
+            dec("115792089237316195423570985008687907853269984665640564039.457584007913129639")
+        );
+        assert_eq!(
+            max * dec("0.000001"),
+            dec("115792089237316195423570985008687907853269984665640564.039457584007913129")
+        );
+        assert_eq!(
+            max * dec("0.000000001"),
+            dec("115792089237316195423570985008687907853269984665640.564039457584007913")
+        );
+        assert_eq!(
+            max * dec("0.000000000001"),
+            dec("115792089237316195423570985008687907853269984665.640564039457584007")
+        );
+        assert_eq!(
+            max * dec("0.000000000000001"),
+            dec("115792089237316195423570985008687907853269984.665640564039457584")
+        );
+        assert_eq!(
+            max * dec("0.000000000000000001"),
+            dec("115792089237316195423570985008687907853269.984665640564039457")
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to multiply with overflow")]
+    fn decimal_mul_overflow_panics() {
+        let _value = Decimal256::MAX * Decimal256::percent(101);
     }
 
     #[test]

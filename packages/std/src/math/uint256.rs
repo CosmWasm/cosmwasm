@@ -78,7 +78,7 @@ impl Uint256 {
                 data[7], data[6], data[5], data[4], data[3], data[2], data[1], data[0],
             ]),
         ];
-        Uint256(U256(words))
+        Self(U256(words))
     }
 
     pub const fn from_le_bytes(data: [u8; 32]) -> Self {
