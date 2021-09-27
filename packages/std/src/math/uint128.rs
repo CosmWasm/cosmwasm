@@ -51,6 +51,16 @@ impl Uint128 {
         self.0
     }
 
+    /// Returns a copy of the number as big endian bytes.
+    pub const fn to_be_bytes(self) -> [u8; 16] {
+        self.0.to_be_bytes()
+    }
+
+    /// Returns a copy of the number as little endian bytes.
+    pub const fn to_le_bytes(self) -> [u8; 16] {
+        self.0.to_le_bytes()
+    }
+
     pub fn is_zero(&self) -> bool {
         self.0 == 0
     }
@@ -521,6 +531,54 @@ mod tests {
     fn uint128_display_padding_works() {
         let a = Uint128::from(123u64);
         assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
+    fn uint128_to_be_bytes_works() {
+        assert_eq!(
+            Uint128::zero().to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        assert_eq!(
+            Uint128::MAX.to_be_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff
+            ]
+        );
+        assert_eq!(
+            Uint128::new(1).to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(16, "big")]`
+        assert_eq!(
+            Uint128::new(240282366920938463463374607431768124608).to_be_bytes(),
+            [180, 196, 179, 87, 165, 121, 59, 133, 246, 117, 221, 191, 255, 254, 172, 192]
+        );
+    }
+
+    #[test]
+    fn uint128_to_le_bytes_works() {
+        assert_eq!(
+            Uint128::zero().to_le_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        assert_eq!(
+            Uint128::MAX.to_le_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff
+            ]
+        );
+        assert_eq!(
+            Uint128::new(1).to_le_bytes(),
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(16, "little")]`
+        assert_eq!(
+            Uint128::new(240282366920938463463374607431768124608).to_le_bytes(),
+            [192, 172, 254, 255, 191, 221, 117, 246, 133, 59, 121, 165, 87, 179, 196, 180]
+        );
     }
 
     #[test]

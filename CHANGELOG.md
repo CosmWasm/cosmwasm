@@ -13,6 +13,7 @@ and this project adheres to
 - cosmwasm-std: New field `Env::transaction` containing info of the transaction
   the contract call was executed in.
 - cosmwasm-std: Implement `ops::Mul` for `Decimal` and `Decimal256`.
+- cosmwasm-std: New const methods `Uint128::to_be_bytes`/`::to_le_bytes`.
 
 ### Changed
 
