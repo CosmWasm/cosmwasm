@@ -1,6 +1,5 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::Binary;
 
@@ -62,10 +61,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[non_exhaustive]
-pub struct Response<T = Empty>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
+pub struct Response<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn variant matches the result (Always, Success on Ok, Error on Err),
     /// the runtime will invoke this contract's `reply` entry point
@@ -89,10 +85,7 @@ where
     pub data: Option<Binary>,
 }
 
-impl<T> Default for Response<T>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
+impl<T> Default for Response<T> {
     fn default() -> Self {
         Response {
             messages: vec![],
@@ -103,10 +96,7 @@ where
     }
 }
 
-impl<T> Response<T>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
+impl<T> Response<T> {
     pub fn new() -> Self {
         Self::default()
     }

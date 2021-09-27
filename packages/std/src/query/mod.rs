@@ -26,7 +26,7 @@ pub use wasm::{ContractInfoResponse, WasmQuery};
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryRequest<C: CustomQuery> {
+pub enum QueryRequest<C> {
     Bank(BankQuery),
     Custom(C),
     #[cfg(feature = "staking")]
