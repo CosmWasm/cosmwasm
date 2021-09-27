@@ -100,17 +100,95 @@ impl Uint256 {
     }
 
     /// Returns a copy of the number as big endian bytes.
-    pub fn to_be_bytes(self) -> [u8; 32] {
-        let mut result = [0u8; 32];
-        self.0.to_big_endian(&mut result);
-        result
+    pub const fn to_be_bytes(self) -> [u8; 32] {
+        let words = [
+            (self.0).0[3].to_be_bytes(),
+            (self.0).0[2].to_be_bytes(),
+            (self.0).0[1].to_be_bytes(),
+            (self.0).0[0].to_be_bytes(),
+        ];
+
+        // In Rust 1.56+ we can use `unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }` for this
+        [
+            words[0][0],
+            words[0][1],
+            words[0][2],
+            words[0][3],
+            words[0][4],
+            words[0][5],
+            words[0][6],
+            words[0][7],
+            words[1][0],
+            words[1][1],
+            words[1][2],
+            words[1][3],
+            words[1][4],
+            words[1][5],
+            words[1][6],
+            words[1][7],
+            words[2][0],
+            words[2][1],
+            words[2][2],
+            words[2][3],
+            words[2][4],
+            words[2][5],
+            words[2][6],
+            words[2][7],
+            words[3][0],
+            words[3][1],
+            words[3][2],
+            words[3][3],
+            words[3][4],
+            words[3][5],
+            words[3][6],
+            words[3][7],
+        ]
     }
 
     /// Returns a copy of the number as little endian bytes.
-    pub fn to_le_bytes(self) -> [u8; 32] {
-        let mut result = [0u8; 32];
-        self.0.to_little_endian(&mut result);
-        result
+    pub const fn to_le_bytes(self) -> [u8; 32] {
+        let words = [
+            (self.0).0[0].to_le_bytes(),
+            (self.0).0[1].to_le_bytes(),
+            (self.0).0[2].to_le_bytes(),
+            (self.0).0[3].to_le_bytes(),
+        ];
+
+        // In Rust 1.56+ we can use `unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }` for this
+        [
+            words[0][0],
+            words[0][1],
+            words[0][2],
+            words[0][3],
+            words[0][4],
+            words[0][5],
+            words[0][6],
+            words[0][7],
+            words[1][0],
+            words[1][1],
+            words[1][2],
+            words[1][3],
+            words[1][4],
+            words[1][5],
+            words[1][6],
+            words[1][7],
+            words[2][0],
+            words[2][1],
+            words[2][2],
+            words[2][3],
+            words[2][4],
+            words[2][5],
+            words[2][6],
+            words[2][7],
+            words[3][0],
+            words[3][1],
+            words[3][2],
+            words[3][3],
+            words[3][4],
+            words[3][5],
+            words[3][6],
+            words[3][7],
+        ]
     }
 
     pub fn is_zero(&self) -> bool {
@@ -943,6 +1021,96 @@ mod tests {
     fn uint256_display_padding_works() {
         let a = Uint256::from(123u64);
         assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
+    fn uint256_to_be_bytes_works() {
+        assert_eq!(
+            Uint256::zero().to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ]
+        );
+        assert_eq!(
+            Uint256::MAX.to_be_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff,
+            ]
+        );
+        assert_eq!(
+            Uint256::from(1u128).to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1
+            ]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(32, "big")]`
+        assert_eq!(
+            Uint256::from(240282366920938463463374607431768124608u128).to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 180, 196, 179, 87, 165, 121, 59,
+                133, 246, 117, 221, 191, 255, 254, 172, 192
+            ]
+        );
+        assert_eq!(
+            Uint256::from_be_bytes([
+                233, 2, 240, 200, 115, 150, 240, 218, 88, 106, 45, 208, 134, 238, 119, 85, 22, 14,
+                88, 166, 195, 154, 73, 64, 10, 44, 252, 96, 230, 187, 38, 29
+            ])
+            .to_be_bytes(),
+            [
+                233, 2, 240, 200, 115, 150, 240, 218, 88, 106, 45, 208, 134, 238, 119, 85, 22, 14,
+                88, 166, 195, 154, 73, 64, 10, 44, 252, 96, 230, 187, 38, 29
+            ]
+        );
+    }
+
+    #[test]
+    fn uint256_to_le_bytes_works() {
+        assert_eq!(
+            Uint256::zero().to_le_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0
+            ]
+        );
+        assert_eq!(
+            Uint256::MAX.to_le_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff
+            ]
+        );
+        assert_eq!(
+            Uint256::from(1u128).to_le_bytes(),
+            [
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0
+            ]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(32, "little")]`
+        assert_eq!(
+            Uint256::from(240282366920938463463374607431768124608u128).to_le_bytes(),
+            [
+                192, 172, 254, 255, 191, 221, 117, 246, 133, 59, 121, 165, 87, 179, 196, 180, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            ]
+        );
+        assert_eq!(
+            Uint256::from_be_bytes([
+                233, 2, 240, 200, 115, 150, 240, 218, 88, 106, 45, 208, 134, 238, 119, 85, 22, 14,
+                88, 166, 195, 154, 73, 64, 10, 44, 252, 96, 230, 187, 38, 29
+            ])
+            .to_le_bytes(),
+            [
+                29, 38, 187, 230, 96, 252, 44, 10, 64, 73, 154, 195, 166, 88, 14, 22, 85, 119, 238,
+                134, 208, 45, 106, 88, 218, 240, 150, 115, 200, 240, 2, 233
+            ]
+        );
     }
 
     #[test]

@@ -100,17 +100,167 @@ impl Uint512 {
     }
 
     /// Returns a copy of the number as big endian bytes.
-    pub fn to_be_bytes(self) -> [u8; 64] {
-        let mut result = [0u8; 64];
-        self.0.to_big_endian(&mut result);
-        result
+    pub const fn to_be_bytes(self) -> [u8; 64] {
+        let words = [
+            (self.0).0[7].to_be_bytes(),
+            (self.0).0[6].to_be_bytes(),
+            (self.0).0[5].to_be_bytes(),
+            (self.0).0[4].to_be_bytes(),
+            (self.0).0[3].to_be_bytes(),
+            (self.0).0[2].to_be_bytes(),
+            (self.0).0[1].to_be_bytes(),
+            (self.0).0[0].to_be_bytes(),
+        ];
+
+        // In Rust 1.56+ we can use `unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }` for this
+        [
+            words[0][0],
+            words[0][1],
+            words[0][2],
+            words[0][3],
+            words[0][4],
+            words[0][5],
+            words[0][6],
+            words[0][7],
+            words[1][0],
+            words[1][1],
+            words[1][2],
+            words[1][3],
+            words[1][4],
+            words[1][5],
+            words[1][6],
+            words[1][7],
+            words[2][0],
+            words[2][1],
+            words[2][2],
+            words[2][3],
+            words[2][4],
+            words[2][5],
+            words[2][6],
+            words[2][7],
+            words[3][0],
+            words[3][1],
+            words[3][2],
+            words[3][3],
+            words[3][4],
+            words[3][5],
+            words[3][6],
+            words[3][7],
+            words[4][0],
+            words[4][1],
+            words[4][2],
+            words[4][3],
+            words[4][4],
+            words[4][5],
+            words[4][6],
+            words[4][7],
+            words[5][0],
+            words[5][1],
+            words[5][2],
+            words[5][3],
+            words[5][4],
+            words[5][5],
+            words[5][6],
+            words[5][7],
+            words[6][0],
+            words[6][1],
+            words[6][2],
+            words[6][3],
+            words[6][4],
+            words[6][5],
+            words[6][6],
+            words[6][7],
+            words[7][0],
+            words[7][1],
+            words[7][2],
+            words[7][3],
+            words[7][4],
+            words[7][5],
+            words[7][6],
+            words[7][7],
+        ]
     }
 
     /// Returns a copy of the number as little endian bytes.
-    pub fn to_le_bytes(self) -> [u8; 64] {
-        let mut result = [0u8; 64];
-        self.0.to_little_endian(&mut result);
-        result
+    pub const fn to_le_bytes(self) -> [u8; 64] {
+        let words = [
+            (self.0).0[0].to_le_bytes(),
+            (self.0).0[1].to_le_bytes(),
+            (self.0).0[2].to_le_bytes(),
+            (self.0).0[3].to_le_bytes(),
+            (self.0).0[4].to_le_bytes(),
+            (self.0).0[5].to_le_bytes(),
+            (self.0).0[6].to_le_bytes(),
+            (self.0).0[7].to_le_bytes(),
+        ];
+
+        // In Rust 1.56+ we can use `unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }` for this
+        [
+            words[0][0],
+            words[0][1],
+            words[0][2],
+            words[0][3],
+            words[0][4],
+            words[0][5],
+            words[0][6],
+            words[0][7],
+            words[1][0],
+            words[1][1],
+            words[1][2],
+            words[1][3],
+            words[1][4],
+            words[1][5],
+            words[1][6],
+            words[1][7],
+            words[2][0],
+            words[2][1],
+            words[2][2],
+            words[2][3],
+            words[2][4],
+            words[2][5],
+            words[2][6],
+            words[2][7],
+            words[3][0],
+            words[3][1],
+            words[3][2],
+            words[3][3],
+            words[3][4],
+            words[3][5],
+            words[3][6],
+            words[3][7],
+            words[4][0],
+            words[4][1],
+            words[4][2],
+            words[4][3],
+            words[4][4],
+            words[4][5],
+            words[4][6],
+            words[4][7],
+            words[5][0],
+            words[5][1],
+            words[5][2],
+            words[5][3],
+            words[5][4],
+            words[5][5],
+            words[5][6],
+            words[5][7],
+            words[6][0],
+            words[6][1],
+            words[6][2],
+            words[6][3],
+            words[6][4],
+            words[6][5],
+            words[6][6],
+            words[6][7],
+            words[7][0],
+            words[7][1],
+            words[7][2],
+            words[7][3],
+            words[7][4],
+            words[7][5],
+            words[7][6],
+            words[7][7],
+        ]
     }
 
     pub fn is_zero(&self) -> bool {
@@ -584,6 +734,114 @@ mod tests {
     fn uint512_display_padding_works() {
         let a = Uint512::from(123u64);
         assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
+    fn uint512_to_be_bytes_works() {
+        assert_eq!(
+            Uint512::zero().to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+            ]
+        );
+        assert_eq!(
+            Uint512::MAX.to_be_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            ]
+        );
+        assert_eq!(
+            Uint512::from(1u128).to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 1
+            ]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(64, "big")]`
+        assert_eq!(
+            Uint512::from(240282366920938463463374607431768124608u128).to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 180, 196, 179, 87, 165,
+                121, 59, 133, 246, 117, 221, 191, 255, 254, 172, 192
+            ]
+        );
+        assert_eq!(
+            Uint512::from_be_bytes([
+                17, 4, 23, 32, 87, 67, 123, 200, 58, 91, 0, 38, 33, 21, 67, 78, 87, 76, 65, 54,
+                211, 201, 192, 7, 42, 233, 2, 240, 200, 115, 150, 240, 218, 88, 106, 45, 208, 134,
+                238, 119, 85, 22, 14, 88, 166, 195, 154, 73, 64, 10, 44, 59, 13, 22, 47, 12, 99, 8,
+                252, 96, 230, 187, 38, 29
+            ])
+            .to_be_bytes(),
+            [
+                17, 4, 23, 32, 87, 67, 123, 200, 58, 91, 0, 38, 33, 21, 67, 78, 87, 76, 65, 54,
+                211, 201, 192, 7, 42, 233, 2, 240, 200, 115, 150, 240, 218, 88, 106, 45, 208, 134,
+                238, 119, 85, 22, 14, 88, 166, 195, 154, 73, 64, 10, 44, 59, 13, 22, 47, 12, 99, 8,
+                252, 96, 230, 187, 38, 29
+            ]
+        );
+    }
+
+    #[test]
+    fn uint512_to_le_bytes_works() {
+        assert_eq!(
+            Uint512::zero().to_le_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0
+            ]
+        );
+        assert_eq!(
+            Uint512::MAX.to_le_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+            ]
+        );
+        assert_eq!(
+            Uint512::from(1u128).to_le_bytes(),
+            [
+                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0
+            ]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(64, "little")]`
+        assert_eq!(
+            Uint512::from(240282366920938463463374607431768124608u128).to_le_bytes(),
+            [
+                192, 172, 254, 255, 191, 221, 117, 246, 133, 59, 121, 165, 87, 179, 196, 180, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            ]
+        );
+        assert_eq!(
+            Uint512::from_be_bytes([
+                17, 4, 23, 32, 87, 67, 123, 200, 58, 91, 0, 38, 33, 21, 67, 78, 87, 76, 65, 54,
+                211, 201, 192, 7, 42, 233, 2, 240, 200, 115, 150, 240, 218, 88, 106, 45, 208, 134,
+                238, 119, 85, 22, 14, 88, 166, 195, 154, 73, 64, 10, 44, 59, 13, 22, 47, 12, 99, 8,
+                252, 96, 230, 187, 38, 29
+            ])
+            .to_le_bytes(),
+            [
+                29, 38, 187, 230, 96, 252, 8, 99, 12, 47, 22, 13, 59, 44, 10, 64, 73, 154, 195,
+                166, 88, 14, 22, 85, 119, 238, 134, 208, 45, 106, 88, 218, 240, 150, 115, 200, 240,
+                2, 233, 42, 7, 192, 201, 211, 54, 65, 76, 87, 78, 67, 21, 33, 38, 0, 91, 58, 200,
+                123, 67, 87, 32, 23, 4, 17
+            ]
+        );
     }
 
     #[test]
