@@ -215,7 +215,7 @@ impl ops::Mul for Decimal {
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, other: Self) -> Self {
-        // Decimals are fractions. We can multiplby two decimals a and b
+        // Decimals are fractions. We can multiply two decimals a and b
         // via
         //       (a.numerator() * b.numerator()) / (a.denominator() * b.denominator())
         //     = (a.numerator() * b.numerator()) / a.denominator() / b.denominator()
@@ -226,7 +226,7 @@ impl ops::Mul for Decimal {
             .try_into()
             .ok()
             .expect("attempt to multiply with overflow");
-        Decimal(result)
+        Self(result)
     }
 }
 
