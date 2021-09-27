@@ -1,9 +1,8 @@
 use crate::errors::StdError;
 use std::convert::TryFrom;
 
-/// A Key-Value pair, returned from our iterators
-/// (since it is less common to use, and never used with default V, we place K second)
-pub type Pair<K = Vec<u8>, V = Vec<u8>> = (K, V);
+/// A pair of values, returned from our iterators
+pub type Pair<A = Vec<u8>, B = Vec<u8>> = (A, B);
 
 #[derive(Copy, Clone)]
 // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
