@@ -54,10 +54,11 @@ impl Decimal {
         decimal_places: u32,
     ) -> Result<Self, DecimalRangeExceeded> {
         let atomics = atomics.into();
+        const TEN: Uint128 = Uint128::new(10);
         Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES as u32)) {
             Ordering::Less => {
                 let digits = (Self::DECIMAL_PLACES as u32) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
-                let factor = Uint128::new(10).checked_pow(digits).unwrap(); // Safe because digits <= 17
+                let factor = TEN.checked_pow(digits).unwrap(); // Safe because digits <= 17
                 Self(
                     atomics
                         .checked_mul(factor)
@@ -67,7 +68,7 @@ impl Decimal {
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
                 let digits = decimal_places - (Self::DECIMAL_PLACES as u32); // No overflow because decimal_places > DECIMAL_PLACES
-                if let Ok(factor) = Uint128::new(10).checked_pow(digits) {
+                if let Ok(factor) = TEN.checked_pow(digits) {
                     Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 } else {
                     // In this case `factor` exceeds the Uint128 range.
