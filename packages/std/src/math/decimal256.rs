@@ -32,11 +32,6 @@ impl Decimal256 {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
             75, 159, 16, 0, 0, 0, 0,
         ]);
-    const DECIMAL_FRACTIONAL_UINT512: Uint512 = Uint512::from_be_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
-        179, 167, 100, 0, 0,
-    ]); // Python: `[b for b in (1*10**18).to_bytes(32, "big")]`
 
     pub const MAX: Self = Self(Uint256::MAX);
 
@@ -231,8 +226,8 @@ impl ops::Mul for Decimal256 {
         //       (a.numerator() * b.numerator()) / (a.denominator() * b.denominator())
         //     = (a.numerator() * b.numerator()) / a.denominator() / b.denominator()
 
-        let result_as_uint512 =
-            self.numerator().full_mul(other.numerator()) / Self::DECIMAL_FRACTIONAL_UINT512;
+        let result_as_uint512 = self.numerator().full_mul(other.numerator())
+            / Uint512::from_uint256(Self::DECIMAL_FRACTIONAL); // from_uint256 is a const method and should be "free"
         match result_as_uint512.try_into() {
             Ok(result) => Self(result),
             Err(_) => panic!("attempt to multiply with overflow"),
