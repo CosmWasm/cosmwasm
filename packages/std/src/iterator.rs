@@ -34,8 +34,7 @@ mod test {
     use super::Pair;
 
     #[test]
-    // Generic K works
-    fn pair_works() {
+    fn pair_works_with_generic_types() {
         let _default: Pair = (vec![1, 2, 3], vec![5]);
         let _value: Pair<u64> = (1234567890, vec![4, 3]);
         let _with_key: Pair<String, u64> = ("hello".to_owned(), 12345678);
