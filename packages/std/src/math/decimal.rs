@@ -1,11 +1,12 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
 
-use crate::errors::StdError;
+use crate::errors::{StdError, StdResult};
 
 use super::Fraction;
 use super::Isqrt;
@@ -43,6 +44,26 @@ impl Decimal {
     /// Convert permille (x/1000) into Decimal
     pub fn permille(x: u64) -> Self {
         Decimal(((x as u128) * 1_000_000_000_000_000).into())
+    }
+
+    pub fn from_atomics(atomics: impl Into<Uint128>, decimal_places: u32) -> StdResult<Self> {
+        let atomics = atomics.into();
+        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES as u32)) {
+            Ordering::Less => {
+                let digits = (Self::DECIMAL_PLACES as u32) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
+                let factor = Uint128::new(10).checked_pow(digits).unwrap(); // Safe because digits <= 17
+                Self(atomics.checked_mul(factor)?)
+            }
+            Ordering::Equal => Self(atomics),
+            Ordering::Greater => {
+                let digits = decimal_places - (Self::DECIMAL_PLACES as u32); // No overflow because decimal_places > DECIMAL_PLACES
+                if let Ok(factor) = Uint128::new(10).checked_pow(digits) {
+                    Self(atomics.checked_div(factor)?)
+                } else {
+                    Self(Uint128::zero())
+                }
+            }
+        })
     }
 
     /// Returns the ratio (numerator / denominator) as a Decimal
@@ -361,6 +382,91 @@ mod tests {
     fn decimal_permille() {
         let value = Decimal::permille(125);
         assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(8u8));
+    }
+
+    #[test]
+    fn decimal_from_atomics_works() {
+        let one = Decimal::one();
+        let two = one + one;
+
+        assert_eq!(Decimal::from_atomics(1u128, 0).unwrap(), one);
+        assert_eq!(Decimal::from_atomics(10u128, 1).unwrap(), one);
+        assert_eq!(Decimal::from_atomics(100u128, 2).unwrap(), one);
+        assert_eq!(Decimal::from_atomics(1000u128, 3).unwrap(), one);
+        assert_eq!(
+            Decimal::from_atomics(1000000000000000000u128, 18).unwrap(),
+            one
+        );
+        assert_eq!(
+            Decimal::from_atomics(10000000000000000000u128, 19).unwrap(),
+            one
+        );
+        assert_eq!(
+            Decimal::from_atomics(100000000000000000000u128, 20).unwrap(),
+            one
+        );
+
+        assert_eq!(Decimal::from_atomics(2u128, 0).unwrap(), two);
+        assert_eq!(Decimal::from_atomics(20u128, 1).unwrap(), two);
+        assert_eq!(Decimal::from_atomics(200u128, 2).unwrap(), two);
+        assert_eq!(Decimal::from_atomics(2000u128, 3).unwrap(), two);
+        assert_eq!(
+            Decimal::from_atomics(2000000000000000000u128, 18).unwrap(),
+            two
+        );
+        assert_eq!(
+            Decimal::from_atomics(20000000000000000000u128, 19).unwrap(),
+            two
+        );
+        assert_eq!(
+            Decimal::from_atomics(200000000000000000000u128, 20).unwrap(),
+            two
+        );
+
+        // Cuts decimal digits (20 provided but only 18 can be stored)
+        assert_eq!(
+            Decimal::from_atomics(4321u128, 20).unwrap(),
+            Decimal::from_str("0.000000000000000043").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(6789u128, 20).unwrap(),
+            Decimal::from_str("0.000000000000000067").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, 38).unwrap(),
+            Decimal::from_str("3.402823669209384634").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, 39).unwrap(),
+            Decimal::from_str("0.340282366920938463").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, 45).unwrap(),
+            Decimal::from_str("0.000000340282366920").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, 51).unwrap(),
+            Decimal::from_str("0.000000000000340282").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, 56).unwrap(),
+            Decimal::from_str("0.000000000000000003").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, 57).unwrap(),
+            Decimal::from_str("0.000000000000000000").unwrap()
+        );
+        assert_eq!(
+            Decimal::from_atomics(u128::MAX, u32::MAX).unwrap(),
+            Decimal::from_str("0.000000000000000000").unwrap()
+        );
+
+        // Can be used with max value
+        let max = Decimal::MAX;
+        assert_eq!(
+            Decimal::from_atomics(max.atomics(), max.decimal_places()).unwrap(),
+            max
+        );
     }
 
     #[test]
