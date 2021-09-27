@@ -222,10 +222,10 @@ impl ops::Mul for Decimal {
 
         let result_as_uint256 =
             self.numerator().full_mul(other.numerator()) / Self::DECIMAL_FRACTIONAL_UINT256;
-        let result: Uint128 = result_as_uint256
-            .try_into()
-            .expect("attempt to multiply with overflow");
-        Self(result)
+        match result_as_uint256.try_into() {
+            Ok(result) => Self(result),
+            Err(_) => panic!("attempt to multiply with overflow"),
+        }
     }
 }
 
@@ -728,7 +728,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "attempt to multiply with overflow")]
     fn decimal_mul_overflow_panics() {
         let _value = Decimal::MAX * Decimal::percent(101);
     }
