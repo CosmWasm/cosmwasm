@@ -99,6 +99,22 @@ impl Uint512 {
         Uint512(U512::from_little_endian(&value))
     }
 
+    pub const fn from_uint256(num: Uint256) -> Self {
+        let uint256_words = num.to_words();
+        let words: [u64; 8] = [
+            uint256_words[0],
+            uint256_words[1],
+            uint256_words[2],
+            uint256_words[3],
+            0,
+            0,
+            0,
+            0,
+        ];
+
+        Self(U512(words))
+    }
+
     /// Returns a copy of the number as big endian bytes.
     pub const fn to_be_bytes(self) -> [u8; 64] {
         let words = [
@@ -716,6 +732,32 @@ mod tests {
                 "Uint128",
                 Uint512::MAX.to_string()
             ))
+        );
+    }
+
+    #[test]
+    fn uint512_from_uint256() {
+        assert_eq!(
+            Uint512::from_uint256(Uint256::from_str("123").unwrap()),
+            Uint512::from_str("123").unwrap()
+        );
+
+        assert_eq!(
+            Uint512::from_uint256(Uint256::from_str("9785746283745").unwrap()),
+            Uint512::from_str("9785746283745").unwrap()
+        );
+
+        assert_eq!(
+            Uint512::from_uint256(
+                Uint256::from_str(
+                    "97857462837575757832978493758398593853985452378423874623874628736482736487236"
+                )
+                .unwrap()
+            ),
+            Uint512::from_str(
+                "97857462837575757832978493758398593853985452378423874623874628736482736487236"
+            )
+            .unwrap()
         );
     }
 

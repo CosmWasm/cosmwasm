@@ -286,6 +286,10 @@ impl Uint256 {
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
+
+    pub(crate) const fn to_words(self) -> [u64; 4] {
+        self.0 .0
+    }
 }
 
 impl From<Uint128> for Uint256 {
