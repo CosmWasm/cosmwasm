@@ -7,8 +7,8 @@ mod uint256;
 mod uint512;
 mod uint64;
 
-pub use decimal::Decimal;
-pub use decimal256::Decimal256;
+pub use decimal::{Decimal, DecimalRangeExceeded};
+pub use decimal256::{Decimal256, Decimal256RangeExceeded};
 pub use fraction::Fraction;
 pub use isqrt::Isqrt;
 pub use uint128::Uint128;
