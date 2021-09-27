@@ -102,18 +102,12 @@ impl Uint256 {
     pub const fn from_uint128(num: Uint128) -> Self {
         let num = num.u128();
         let bytes = num.to_le_bytes();
-        let words: [u64; 4] = [
-            u64::from_le_bytes([
-                bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-            ]),
-            u64::from_le_bytes([
-                bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14],
-                bytes[15],
-            ]),
-            0,
-            0,
-        ];
-        Self(U256(words))
+
+        Self::from_le_bytes([
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ])
     }
 
     /// Returns a copy of the number as big endian bytes.
