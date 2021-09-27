@@ -99,6 +99,8 @@ impl Uint512 {
         Uint512(U512::from_little_endian(&value))
     }
 
+    /// A conversion from `Uint256` that, unlike the one provided by the `From` trait,
+    /// can be used in a `const` context.
     pub const fn from_uint256(num: Uint256) -> Self {
         let uint256_words = num.to_words();
         let words: [u64; 8] = [
