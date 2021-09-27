@@ -32,6 +32,7 @@ and this project adheres to
   `ibc_packet_receive`, `ibc_packet_ack` and `ibc_packet_timeout`.
 - cosmwasm-std: In `Decimal` change `Fraction<u128>` to `Fraction<Uint128>`,
   such that `Decimal::numerator` and `::denominator` now return `Uint128`.
+- cosmwasm-std: Make methods `Uint256::to_be_bytes`/`::to_le_bytes` const.
 
 ### Removed
 
