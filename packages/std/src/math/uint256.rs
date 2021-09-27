@@ -99,6 +99,23 @@ impl Uint256 {
         Uint256(U256(words))
     }
 
+    pub const fn from_uint128(num: Uint128) -> Self {
+        let num = num.u128();
+        let bytes = num.to_le_bytes();
+        let words: [u64; 4] = [
+            u64::from_le_bytes([
+                bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+            ]),
+            u64::from_le_bytes([
+                bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14],
+                bytes[15],
+            ]),
+            0,
+            0,
+        ];
+        Self(U256(words))
+    }
+
     /// Returns a copy of the number as big endian bytes.
     pub const fn to_be_bytes(self) -> [u8; 32] {
         let words = [
@@ -1003,6 +1020,19 @@ mod tests {
                 "Uint128",
                 Uint256::MAX.to_string()
             ))
+        );
+    }
+
+    #[test]
+    fn uint256_from_uint128() {
+        assert_eq!(
+            Uint256::from_uint128(Uint128::new(123)),
+            Uint256::from_str("123").unwrap()
+        );
+
+        assert_eq!(
+            Uint256::from_uint128(Uint128::new(9785746283745)),
+            Uint256::from_str("9785746283745").unwrap()
         );
     }
 

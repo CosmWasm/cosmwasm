@@ -47,7 +47,7 @@ impl Uint128 {
     }
 
     /// Returns a copy of the internal data
-    pub fn u128(&self) -> u128 {
+    pub const fn u128(&self) -> u128 {
         self.0
     }
 
