@@ -9,7 +9,7 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
-use crate::results::{Attribute, CosmosMsg, CustomMsg, Empty, Event, SubMsg};
+use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
@@ -438,10 +438,7 @@ impl IbcPacketTimeoutMsg {
 /// will use other Response types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[non_exhaustive]
-pub struct IbcBasicResponse<T = Empty>
-where
-    T: CustomMsg,
-{
+pub struct IbcBasicResponse<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
@@ -462,10 +459,8 @@ where
     pub events: Vec<Event>,
 }
 
-impl<T> Default for IbcBasicResponse<T>
-where
-    T: CustomMsg,
-{
+// Custom imlementation in order to implement it for all `T`, even if `T` is not `Default`.
+impl<T> Default for IbcBasicResponse<T> {
     fn default() -> Self {
         IbcBasicResponse {
             messages: vec![],
@@ -475,10 +470,7 @@ where
     }
 }
 
-impl<T> IbcBasicResponse<T>
-where
-    T: CustomMsg,
-{
+impl<T> IbcBasicResponse<T> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -588,10 +580,7 @@ where
 // and not inform the calling chain).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[non_exhaustive]
-pub struct IbcReceiveResponse<T = Empty>
-where
-    T: CustomMsg,
-{
+pub struct IbcReceiveResponse<T = Empty> {
     /// The bytes we return to the contract that sent the packet.
     /// This may represent a success or error of exection
     pub acknowledgement: Binary,
@@ -615,10 +604,8 @@ where
     pub events: Vec<Event>,
 }
 
-impl<T> Default for IbcReceiveResponse<T>
-where
-    T: CustomMsg,
-{
+// Custom imlementation in order to implement it for all `T`, even if `T` is not `Default`.
+impl<T> Default for IbcReceiveResponse<T> {
     fn default() -> Self {
         IbcReceiveResponse {
             acknowledgement: Binary(vec![]),
@@ -629,10 +616,7 @@ where
     }
 }
 
-impl<T> IbcReceiveResponse<T>
-where
-    T: CustomMsg,
-{
+impl<T> IbcReceiveResponse<T> {
     pub fn new() -> Self {
         Self::default()
     }
