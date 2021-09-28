@@ -4,6 +4,22 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.16 -> 1.0 (unreleased)
+
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "1.0.0"
+  cosmwasm-storage = "1.0.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "1.0.0"
+  cosmwasm-vm = "1.0.0"
+  # ...
+  ```
+
 ## 0.15 -> 0.16
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
