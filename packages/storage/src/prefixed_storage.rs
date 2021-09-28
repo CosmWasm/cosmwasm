@@ -1,6 +1,6 @@
 use cosmwasm_std::Storage;
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, Pair};
+use cosmwasm_std::{Order, Record};
 
 use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
@@ -64,7 +64,7 @@ impl<'a> Storage for PrefixedStorage<'a> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair> + 'b> {
+    ) -> Box<dyn Iterator<Item = Record> + 'b> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
@@ -112,7 +112,7 @@ impl<'a> Storage for ReadonlyPrefixedStorage<'a> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair> + 'b> {
+    ) -> Box<dyn Iterator<Item = Record> + 'b> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }

@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use cosmwasm_std::{Binary, ContractResult, SystemResult};
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, Pair};
+use cosmwasm_std::{Order, Record};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasInfo {
@@ -104,7 +104,7 @@ pub trait Storage {
     /// This call must not change data in the storage, but incrementing an iterator can be a mutating operation on
     /// the Storage implementation.
     #[cfg(feature = "iterator")]
-    fn next(&mut self, iterator_id: u32) -> BackendResult<Option<Pair>>;
+    fn next(&mut self, iterator_id: u32) -> BackendResult<Option<Record>>;
 
     fn set(&mut self, key: &[u8], value: &[u8]) -> BackendResult<()>;
 

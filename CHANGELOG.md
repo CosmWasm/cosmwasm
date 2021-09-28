@@ -41,6 +41,8 @@ and this project adheres to
 - cosmwasm-std: Make methods `Uint256::to_be_bytes`/`::to_le_bytes` const.
 - cosmwasm-std: Make methods `Uint512::to_be_bytes`/`::to_le_bytes` const.
 - cosmwasm-std: Make method `Uint512::from_le_bytes` const.
+- cosmwasm-std: Rename `Pair` to `Record`. `Pair` is now an alias for `Record`
+  and deprecated.
 
 ### Removed
 

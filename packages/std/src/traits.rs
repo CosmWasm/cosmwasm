@@ -7,7 +7,7 @@ use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
-use crate::iterator::{Order, Pair};
+use crate::iterator::{Order, Record};
 use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
@@ -40,7 +40,7 @@ pub trait Storage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair> + 'a>;
+    ) -> Box<dyn Iterator<Item = Record> + 'a>;
 
     fn set(&mut self, key: &[u8], value: &[u8]);
     /// Removes a database entry at `key`.

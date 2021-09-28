@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{to_vec, StdError, StdResult, Storage};
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, Pair};
+use cosmwasm_std::{Order, Record};
 
 use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
@@ -88,7 +88,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<Pair<T>>> + 'b> {
+    ) -> Box<dyn Iterator<Item = StdResult<Record<T>>> + 'b> {
         let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
@@ -159,7 +159,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<Pair<T>>> + 'b> {
+    ) -> Box<dyn Iterator<Item = StdResult<Record<T>>> + 'b> {
         let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
@@ -441,7 +441,7 @@ mod tests {
         bucket.save(b"maria", &maria).unwrap();
         bucket.save(b"jose", &jose).unwrap();
 
-        let res_data: StdResult<Vec<Pair<Data>>> =
+        let res_data: StdResult<Vec<Record<Data>>> =
             bucket.range(None, None, Order::Ascending).collect();
         let data = res_data.unwrap();
         assert_eq!(data.len(), 2);
@@ -450,7 +450,7 @@ mod tests {
 
         // also works for readonly
         let read_bucket = bucket_read::<Data>(&store, b"data");
-        let res_data: StdResult<Vec<Pair<Data>>> =
+        let res_data: StdResult<Vec<Record<Data>>> =
             read_bucket.range(None, None, Order::Ascending).collect();
         let data = res_data.unwrap();
         assert_eq!(data.len(), 2);

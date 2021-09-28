@@ -7,7 +7,7 @@ use std::convert::TryInto;
 use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, Pair};
+use cosmwasm_std::{Order, Record};
 
 #[cfg(feature = "iterator")]
 use crate::BackendError;
@@ -22,7 +22,7 @@ const GAS_COST_RANGE: u64 = 11;
 #[cfg(feature = "iterator")]
 #[derive(Default, Debug)]
 struct Iter {
-    data: Vec<Pair>,
+    data: Vec<Record>,
     position: usize,
 }
 
@@ -39,8 +39,8 @@ impl MockStorage {
     }
 
     #[cfg(feature = "iterator")]
-    pub fn all(&mut self, iterator_id: u32) -> BackendResult<Vec<Pair>> {
-        let mut out: Vec<Pair> = Vec::new();
+    pub fn all(&mut self, iterator_id: u32) -> BackendResult<Vec<Record>> {
+        let mut out: Vec<Record> = Vec::new();
         let mut total = GasInfo::free();
         loop {
             let (result, info) = self.next(iterator_id);
@@ -76,7 +76,7 @@ impl Storage for MockStorage {
         let gas_info = GasInfo::with_externally_used(GAS_COST_RANGE);
         let bounds = range_bounds(start, end);
 
-        let values: Vec<Pair> = match (bounds.start_bound(), bounds.end_bound()) {
+        let values: Vec<Record> = match (bounds.start_bound(), bounds.end_bound()) {
             // BTreeMap.range panics if range is start > end.
             // However, this cases represent just empty range and we treat it as such.
             (Bound::Included(start), Bound::Excluded(end)) if start > end => Vec::new(),
@@ -102,7 +102,7 @@ impl Storage for MockStorage {
     }
 
     #[cfg(feature = "iterator")]
-    fn next(&mut self, iterator_id: u32) -> BackendResult<Option<Pair>> {
+    fn next(&mut self, iterator_id: u32) -> BackendResult<Option<Record>> {
         let iterator = match self.iterators.get_mut(&iterator_id) {
             Some(i) => i,
             None => {
@@ -113,15 +113,15 @@ impl Storage for MockStorage {
             }
         };
 
-        let (value, gas_info): (Option<Pair>, GasInfo) = if iterator.data.len() > iterator.position
-        {
-            let item = iterator.data[iterator.position].clone();
-            iterator.position += 1;
-            let gas_cost = (item.0.len() + item.1.len()) as u64;
-            (Some(item), GasInfo::with_cost(gas_cost))
-        } else {
-            (None, GasInfo::with_externally_used(GAS_COST_LAST_ITERATION))
-        };
+        let (value, gas_info): (Option<Record>, GasInfo) =
+            if iterator.data.len() > iterator.position {
+                let item = iterator.data[iterator.position].clone();
+                iterator.position += 1;
+                let gas_cost = (item.0.len() + item.1.len()) as u64;
+                (Some(item), GasInfo::with_cost(gas_cost))
+            } else {
+                (None, GasInfo::with_externally_used(GAS_COST_LAST_ITERATION))
+            };
 
         (Ok(value), gas_info)
     }
@@ -148,12 +148,12 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 }
 
 #[cfg(feature = "iterator")]
-/// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
+/// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, Vec<u8>>::range.
 /// This is internal as it can change any time if the map implementation is swapped out.
-type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
+type BTreeMapRecordRef<'a> = (&'a Vec<u8>, &'a Vec<u8>);
 
 #[cfg(feature = "iterator")]
-fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> Pair<T> {
+fn clone_item(item_ref: BTreeMapRecordRef) -> Record {
     let (key, value) = item_ref;
     (key.clone(), value.clone())
 }
