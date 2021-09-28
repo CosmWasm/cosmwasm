@@ -1,9 +1,11 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
+use thiserror::Error;
 
 use crate::errors::StdError;
 use crate::Uint512;
@@ -19,6 +21,10 @@ use super::Uint256;
 /// (which is (2^256 - 1) / 10^18)
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
+
+#[derive(Error, Debug, PartialEq)]
+#[error("Decimal256 range exceeded")]
+pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
     const DECIMAL_PLACES: usize = 18;
@@ -55,6 +61,61 @@ impl Decimal256 {
         Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000u128))
     }
 
+    /// Creates a decimal from a number of atomic units and the number
+    /// of decimal places. The inputs will be converted internally to form
+    /// a decimal with 18 decimal places. So the input 123 and 2 will create
+    /// the decimal 1.23.
+    ///
+    /// Using 18 decimal places is slightly more efficient than other values
+    /// as no internal conversion is necessary.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Decimal256, Uint256};
+    /// let a = Decimal256::from_atomics(1234u64, 3).unwrap();
+    /// assert_eq!(a.to_string(), "1.234");
+    ///
+    /// let a = Decimal256::from_atomics(1234u128, 0).unwrap();
+    /// assert_eq!(a.to_string(), "1234");
+    ///
+    /// let a = Decimal256::from_atomics(1u64, 18).unwrap();
+    /// assert_eq!(a.to_string(), "0.000000000000000001");
+    ///
+    /// let a = Decimal256::from_atomics(Uint256::MAX, 18).unwrap();
+    /// assert_eq!(a, Decimal256::MAX);
+    /// ```
+    pub fn from_atomics(
+        atomics: impl Into<Uint256>,
+        decimal_places: u32,
+    ) -> Result<Self, Decimal256RangeExceeded> {
+        let atomics = atomics.into();
+        let ten = Uint256::from(10u64); // TODO: make const
+        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES as u32)) {
+            Ordering::Less => {
+                let digits = (Self::DECIMAL_PLACES as u32) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
+                let factor = ten.checked_pow(digits).unwrap(); // Safe because digits <= 17
+                Self(
+                    atomics
+                        .checked_mul(factor)
+                        .map_err(|_| Decimal256RangeExceeded)?,
+                )
+            }
+            Ordering::Equal => Self(atomics),
+            Ordering::Greater => {
+                let digits = decimal_places - (Self::DECIMAL_PLACES as u32); // No overflow because decimal_places > DECIMAL_PLACES
+                if let Ok(factor) = ten.checked_pow(digits) {
+                    Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
+                } else {
+                    // In this case `factor` exceeds the Uint256 range.
+                    // Any Uint256 `x` divided by `factor` with `factor > Uint256::MAX` is 0.
+                    // Try e.g. Python3: `(2**256-1) // 2**256`
+                    Self(Uint256::zero())
+                }
+            }
+        })
+    }
+
     /// Returns the ratio (numerator / denominator) as a Decimal256
     pub fn from_ratio(numerator: impl Into<Uint256>, denominator: impl Into<Uint256>) -> Self {
         let numerator: Uint256 = numerator.into();
@@ -71,6 +132,36 @@ impl Decimal256 {
 
     pub fn is_zero(&self) -> bool {
         self.0.is_zero()
+    }
+
+    /// A decimal is an integer of atomic units plus a number that specifies the
+    /// position of the decimal dot. So any decimal can be expressed as two numbers.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Decimal256, Uint256};
+    /// # use std::str::FromStr;
+    /// // Value with whole and fractional part
+    /// let a = Decimal256::from_str("1.234").unwrap();
+    /// assert_eq!(a.decimal_places(), 18);
+    /// assert_eq!(a.atomics(), Uint256::from(1234000000000000000u128));
+    ///
+    /// // Smallest possible value
+    /// let b = Decimal256::from_str("0.000000000000000001").unwrap();
+    /// assert_eq!(b.decimal_places(), 18);
+    /// assert_eq!(b.atomics(), Uint256::from(1u128));
+    /// ```
+    pub fn atomics(&self) -> Uint256 {
+        self.0
+    }
+
+    /// The number of decimal places. This is a constant value for now
+    /// but this could potentially change as the type evolves.
+    ///
+    /// See also [`Decimal256::atomics()`].
+    pub fn decimal_places(&self) -> u32 {
+        Self::DECIMAL_PLACES as u32
     }
 
     /// Returns the approximate square root as a Decimal256.
@@ -344,6 +435,95 @@ mod tests {
     }
 
     #[test]
+    fn decimal256_from_atomics_works() {
+        let one = Decimal256::one();
+        let two = one + one;
+
+        assert_eq!(Decimal256::from_atomics(1u128, 0).unwrap(), one);
+        assert_eq!(Decimal256::from_atomics(10u128, 1).unwrap(), one);
+        assert_eq!(Decimal256::from_atomics(100u128, 2).unwrap(), one);
+        assert_eq!(Decimal256::from_atomics(1000u128, 3).unwrap(), one);
+        assert_eq!(
+            Decimal256::from_atomics(1000000000000000000u128, 18).unwrap(),
+            one
+        );
+        assert_eq!(
+            Decimal256::from_atomics(10000000000000000000u128, 19).unwrap(),
+            one
+        );
+        assert_eq!(
+            Decimal256::from_atomics(100000000000000000000u128, 20).unwrap(),
+            one
+        );
+
+        assert_eq!(Decimal256::from_atomics(2u128, 0).unwrap(), two);
+        assert_eq!(Decimal256::from_atomics(20u128, 1).unwrap(), two);
+        assert_eq!(Decimal256::from_atomics(200u128, 2).unwrap(), two);
+        assert_eq!(Decimal256::from_atomics(2000u128, 3).unwrap(), two);
+        assert_eq!(
+            Decimal256::from_atomics(2000000000000000000u128, 18).unwrap(),
+            two
+        );
+        assert_eq!(
+            Decimal256::from_atomics(20000000000000000000u128, 19).unwrap(),
+            two
+        );
+        assert_eq!(
+            Decimal256::from_atomics(200000000000000000000u128, 20).unwrap(),
+            two
+        );
+
+        // Cuts decimal digits (20 provided but only 18 can be stored)
+        assert_eq!(
+            Decimal256::from_atomics(4321u128, 20).unwrap(),
+            Decimal256::from_str("0.000000000000000043").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(6789u128, 20).unwrap(),
+            Decimal256::from_str("0.000000000000000067").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, 38).unwrap(),
+            Decimal256::from_str("3.402823669209384634").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, 39).unwrap(),
+            Decimal256::from_str("0.340282366920938463").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, 45).unwrap(),
+            Decimal256::from_str("0.000000340282366920").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, 51).unwrap(),
+            Decimal256::from_str("0.000000000000340282").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, 56).unwrap(),
+            Decimal256::from_str("0.000000000000000003").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, 57).unwrap(),
+            Decimal256::from_str("0.000000000000000000").unwrap()
+        );
+        assert_eq!(
+            Decimal256::from_atomics(u128::MAX, u32::MAX).unwrap(),
+            Decimal256::from_str("0.000000000000000000").unwrap()
+        );
+
+        // Can be used with max value
+        let max = Decimal256::MAX;
+        assert_eq!(
+            Decimal256::from_atomics(max.atomics(), max.decimal_places()).unwrap(),
+            max
+        );
+
+        // Overflow is only possible with digits < 18
+        let result = Decimal256::from_atomics(Uint256::MAX, 17);
+        assert_eq!(result.unwrap_err(), Decimal256RangeExceeded);
+    }
+
+    #[test]
     fn decimal_from_ratio_works() {
         // 1.0
         assert_eq!(Decimal256::from_ratio(1u128, 1u128), Decimal256::one());
@@ -594,6 +774,36 @@ mod tests {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
+    }
+
+    #[test]
+    fn decimal_atomics_works() {
+        let zero = Decimal256::zero();
+        let one = Decimal256::one();
+        let half = Decimal256::percent(50);
+        let two = Decimal256::percent(200);
+        let max = Decimal256::MAX;
+
+        assert_eq!(zero.atomics(), Uint256::from(0u128));
+        assert_eq!(one.atomics(), Uint256::from(1000000000000000000u128));
+        assert_eq!(half.atomics(), Uint256::from(500000000000000000u128));
+        assert_eq!(two.atomics(), Uint256::from(2000000000000000000u128));
+        assert_eq!(max.atomics(), Uint256::MAX);
+    }
+
+    #[test]
+    fn decimal_decimal_places_works() {
+        let zero = Decimal256::zero();
+        let one = Decimal256::one();
+        let half = Decimal256::percent(50);
+        let two = Decimal256::percent(200);
+        let max = Decimal256::MAX;
+
+        assert_eq!(zero.decimal_places(), 18);
+        assert_eq!(one.decimal_places(), 18);
+        assert_eq!(half.decimal_places(), 18);
+        assert_eq!(two.decimal_places(), 18);
+        assert_eq!(max.decimal_places(), 18);
     }
 
     #[test]

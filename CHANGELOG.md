@@ -16,6 +16,10 @@ and this project adheres to
 - cosmwasm-std: New const methods `Uint128::to_be_bytes`/`::to_le_bytes`.
 - cosmwasm-std: New const conversion methods `Uint256::from_uint128` and
   `Uint512::from_uint256`.
+- cosmwasm-std: New getters `Decimal{,256}::atomics()` and
+  `Decimal{,256}::decimal_places()`.
+- cosmwasm-std: New constructors `Decimal{,256}::from_atomics`.
+- cosmwasm-std: New `Uint128::checked_pow`.
 
 ### Changed
 
