@@ -44,7 +44,7 @@ extern "C" fn requires_stargate() -> () {}
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-extern "C" fn interface_version_7() -> () {}
+extern "C" fn interface_version_8() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
