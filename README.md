@@ -290,7 +290,7 @@ pub trait Storage {
     start: Option<&[u8]>,
     end: Option<&[u8]>,
     order: Order,
-  ) -> Box<dyn Iterator<Item = Pair> + 'a>;
+  ) -> Box<dyn Iterator<Item = Record> + 'a>;
 }
 ```
 

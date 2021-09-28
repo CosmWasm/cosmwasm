@@ -1,8 +1,14 @@
 use crate::errors::StdError;
 use std::convert::TryFrom;
 
-/// A Key-Value pair, returned from our iterators
-pub type Pair<V = Vec<u8>> = (Vec<u8>, V);
+/// A record of a key-value storage that is created through an iterator API.
+/// The first element (key) is always raw binary data. The second element
+/// (value) is binary by default but can be changed to a custom type. This
+/// allows contracts to reuse the type when deserializing database records.
+pub type Record<V = Vec<u8>> = (Vec<u8>, V);
+
+#[deprecated(note = "Renamed to Record, please use this instead")]
+pub type Pair<V = Vec<u8>> = Record<V>;
 
 #[derive(Copy, Clone)]
 // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)

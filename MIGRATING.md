@@ -20,6 +20,16 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
+- Use type `Record` instead of `Pair`
+
+  ```rust
+  // before
+  use cosmwasm_std::Pair;
+
+  // after
+  use cosmwasm_std::Record;
+  ```
+
 ## 0.15 -> 0.16
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):

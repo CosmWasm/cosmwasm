@@ -6,7 +6,7 @@ use std::iter;
 use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
-use crate::iterator::{Order, Pair};
+use crate::iterator::{Order, Record};
 use crate::traits::Storage;
 
 #[derive(Default)]
@@ -45,7 +45,7 @@ impl Storage for MemoryStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair> + 'a> {
+    ) -> Box<dyn Iterator<Item = Record> + 'a> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -98,10 +98,10 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 #[cfg(feature = "iterator")]
 /// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
 /// This is internal as it can change any time if the map implementation is swapped out.
-type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
+type BTreeMapRecordRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 #[cfg(feature = "iterator")]
-fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> Pair<T> {
+fn clone_item<T: Clone>(item_ref: BTreeMapRecordRef<T>) -> Record<T> {
     let (key, value) = item_ref;
     (key.clone(), value.clone())
 }
@@ -160,7 +160,7 @@ mod tests {
         // unbounded
         {
             let iter = store.range(None, None, Order::Ascending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -174,7 +174,7 @@ mod tests {
         // unbounded (descending)
         {
             let iter = store.range(None, None, Order::Descending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -188,14 +188,14 @@ mod tests {
         // bounded
         {
             let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
         // bounded (descending)
         {
             let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -208,35 +208,35 @@ mod tests {
         // bounded empty [a, a)
         {
             let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Ascending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // bounded empty [a, a) (descending)
         {
             let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Descending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // bounded empty [a, b) with b < a
         {
             let iter = store.range(Some(b"z"), Some(b"a"), Order::Ascending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // bounded empty [a, b) with b < a (descending)
         {
             let iter = store.range(Some(b"z"), Some(b"a"), Order::Descending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // right unbounded
         {
             let iter = store.range(Some(b"f"), None, Order::Ascending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -249,7 +249,7 @@ mod tests {
         // right unbounded (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -262,14 +262,14 @@ mod tests {
         // left unbounded
         {
             let iter = store.range(None, Some(b"f"), Order::Ascending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // left unbounded (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending);
-            let elements: Vec<Pair> = iter.collect();
+            let elements: Vec<Record> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
