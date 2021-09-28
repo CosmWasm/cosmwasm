@@ -216,59 +216,41 @@ pub fn wasm_execute(
     })
 }
 
-impl<T> From<BankMsg> for CosmosMsg<T>
-where
-    T: CustomMsg,
-{
+impl<T> From<BankMsg> for CosmosMsg<T> {
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T> From<StakingMsg> for CosmosMsg<T>
-where
-    T: CustomMsg,
-{
+impl<T> From<StakingMsg> for CosmosMsg<T> {
     fn from(msg: StakingMsg) -> Self {
         CosmosMsg::Staking(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T> From<DistributionMsg> for CosmosMsg<T>
-where
-    T: CustomMsg,
-{
+impl<T> From<DistributionMsg> for CosmosMsg<T> {
     fn from(msg: DistributionMsg) -> Self {
         CosmosMsg::Distribution(msg)
     }
 }
 
-impl<T> From<WasmMsg> for CosmosMsg<T>
-where
-    T: CustomMsg,
-{
+impl<T> From<WasmMsg> for CosmosMsg<T> {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T> From<IbcMsg> for CosmosMsg<T>
-where
-    T: CustomMsg,
-{
+impl<T> From<IbcMsg> for CosmosMsg<T> {
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T> From<GovMsg> for CosmosMsg<T>
-where
-    T: CustomMsg,
-{
+impl<T> From<GovMsg> for CosmosMsg<T> {
     fn from(msg: GovMsg) -> Self {
         CosmosMsg::Gov(msg)
     }
