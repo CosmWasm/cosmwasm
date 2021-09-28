@@ -120,8 +120,8 @@ If you haven't worked with WebAssembly before, please read an overview on
 The required exports provided by the cosmwasm smart contract are:
 
 ```rust
-// signal for 0.16 compatibility
-extern "C" fn interface_version_7() -> () {}
+// signal for 1.0 compatibility
+extern "C" fn interface_version_8() -> () {}
 
 // copy memory to/from host, so we can pass in/out Vec<u8>
 extern "C" fn allocate(size: usize) -> u32;

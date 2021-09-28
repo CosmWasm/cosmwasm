@@ -43,7 +43,7 @@ const REQUIRED_EXPORTS: &[&str] = &[
 const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
 /// Only one version is supported right now. This could potentially turn into a list
 /// later, but maybe this never happens and new functionality is only added via features.
-const SUPPORTED_INTERFACE_VERSION: &str = "interface_version_7";
+const SUPPORTED_INTERFACE_VERSION: &str = "interface_version_8";
 
 const MEMORY_LIMIT: u32 = 512; // in pages
 
@@ -348,7 +348,7 @@ mod tests {
                 (func (type 0) nop)
                 (export "add_one" (func 0))
                 (export "allocate" (func 0))
-                (export "interface_version_7" (func 0))
+                (export "interface_version_8" (func 0))
                 (export "deallocate" (func 0))
                 (export "instantiate" (func 0))
             )"#,
@@ -387,8 +387,8 @@ mod tests {
                 (func (type 0) nop)
                 (export "add_one" (func 0))
                 (export "allocate" (func 0))
-                (export "interface_version_7" (func 0))
                 (export "interface_version_8" (func 0))
+                (export "interface_version_9" (func 0))
                 (export "deallocate" (func 0))
                 (export "instantiate" (func 0))
             )"#,

@@ -43,6 +43,8 @@ and this project adheres to
 - cosmwasm-std: Make method `Uint512::from_le_bytes` const.
 - cosmwasm-std: Rename `Pair` to `Record`. `Pair` is now an alias for `Record`
   and deprecated.
+- cosmwasm-vm: Bump required marker export `interface_version_7` to
+  `interface_version_8`.
 
 ### Removed
 
