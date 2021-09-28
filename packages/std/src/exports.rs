@@ -7,12 +7,10 @@
 //! and `do_sudo` should be wrapped with a extern "C" entry point including
 //! the contract-specific function pointer. This is done via the `#[entry_point]`
 //! macro attribute from cosmwasm-derive.
-use std::fmt;
 use std::marker::PhantomData;
 use std::vec::Vec;
 
-use schemars::JsonSchema;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
 
 use crate::deps::OwnedDeps;
 #[cfg(feature = "stargate")]
@@ -91,7 +89,7 @@ pub fn do_instantiate<Q, M, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -119,7 +117,7 @@ pub fn do_execute<Q, M, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -146,7 +144,7 @@ pub fn do_migrate<Q, M, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -168,7 +166,7 @@ pub fn do_sudo<Q, M, C, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -210,7 +208,7 @@ pub fn do_query<Q, M, E>(
 ) -> u32
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     E: ToString,
 {
     let res = _do_query(query_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -366,7 +364,7 @@ fn _do_instantiate<Q, M, C, E>(
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -390,7 +388,7 @@ fn _do_execute<Q, M, C, E>(
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -413,7 +411,7 @@ fn _do_migrate<Q, M, C, E>(
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -434,7 +432,7 @@ fn _do_sudo<Q, M, C, E>(
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -475,7 +473,7 @@ fn _do_query<Q, M, E>(
 ) -> ContractResult<QueryResponse>
 where
     Q: CustomQuery,
-    M: DeserializeOwned + JsonSchema,
+    M: DeserializeOwned,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
