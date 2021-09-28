@@ -49,6 +49,27 @@ impl Decimal {
         Decimal(((x as u128) * 1_000_000_000_000_000).into())
     }
 
+    /// Creates a decimal from a number of atomic units and the number
+    /// of decimal places. The inputs will be converted internally to form
+    /// a decimal with 18 decimal places. So the input 123 and 2 will create
+    /// the decimal 1.23.
+    ///
+    /// Using 18 decimal places is slightly more efficient than other values
+    /// as no internal conversion is necessary.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Decimal, Uint128};
+    /// let a = Decimal::from_atomics(Uint128::new(1234), 3).unwrap();
+    /// assert_eq!(a.to_string(), "1.234");
+    ///
+    /// let a = Decimal::from_atomics(1234u128, 0).unwrap();
+    /// assert_eq!(a.to_string(), "1234");
+    ///
+    /// let a = Decimal::from_atomics(1u64, 18).unwrap();
+    /// assert_eq!(a.to_string(), "0.000000000000000001");
+    /// ```
     pub fn from_atomics(
         atomics: impl Into<Uint128>,
         decimal_places: u32,

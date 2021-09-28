@@ -59,6 +59,30 @@ impl Decimal256 {
         Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000u128))
     }
 
+    /// Creates a decimal from a number of atomic units and the number
+    /// of decimal places. The inputs will be converted internally to form
+    /// a decimal with 18 decimal places. So the input 123 and 2 will create
+    /// the decimal 1.23.
+    ///
+    /// Using 18 decimal places is slightly more efficient than other values
+    /// as no internal conversion is necessary.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Decimal256, Uint256};
+    /// let a = Decimal256::from_atomics(1234u64, 3).unwrap();
+    /// assert_eq!(a.to_string(), "1.234");
+    ///
+    /// let a = Decimal256::from_atomics(1234u128, 0).unwrap();
+    /// assert_eq!(a.to_string(), "1234");
+    ///
+    /// let a = Decimal256::from_atomics(1u64, 18).unwrap();
+    /// assert_eq!(a.to_string(), "0.000000000000000001");
+    ///
+    /// let a = Decimal256::from_atomics(Uint256::MAX, 18).unwrap();
+    /// assert_eq!(a, Decimal256::MAX);
+    /// ```
     pub fn from_atomics(
         atomics: impl Into<Uint256>,
         decimal_places: u32,
