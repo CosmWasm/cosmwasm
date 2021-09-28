@@ -186,15 +186,15 @@ mod tests {
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
 
         // make sure start and end are applied properly
-        let res: Vec<Pair> = range_with_prefix(
+        let res_count = range_with_prefix(
             &storage,
             &prefix,
             Some(b"bas"),
             Some(b"sno"),
             Order::Ascending,
         )
-        .collect();
-        assert_eq!(res.len(), 0);
+        .count();
+        assert_eq!(res_count, 0);
 
         let res: Vec<Pair> =
             range_with_prefix(&storage, &prefix, Some(b"ant"), None, Order::Ascending).collect();
