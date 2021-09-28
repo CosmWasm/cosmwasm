@@ -73,6 +73,36 @@ impl Decimal256 {
         self.0.is_zero()
     }
 
+    /// A decimal is an integer of atomic units plus a number that specifies the
+    /// position of the decimal dot. So any decimal can be expressed as two numbers.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Decimal256, Uint256};
+    /// # use std::str::FromStr;
+    /// // Value with whole and fractional part
+    /// let a = Decimal256::from_str("1.234").unwrap();
+    /// assert_eq!(a.decimal_places(), 18);
+    /// assert_eq!(a.atomics(), Uint256::from(1234000000000000000u128));
+    ///
+    /// // Smallest possible value
+    /// let b = Decimal256::from_str("0.000000000000000001").unwrap();
+    /// assert_eq!(b.decimal_places(), 18);
+    /// assert_eq!(b.atomics(), Uint256::from(1u128));
+    /// ```
+    pub fn atomics(&self) -> Uint256 {
+        self.0
+    }
+
+    /// The number of decimal places. This is a constant value for now
+    /// but this could potentially change as the type evolves.
+    ///
+    /// See also [`Decimal256::atomics()`].
+    pub fn decimal_places(&self) -> u32 {
+        Self::DECIMAL_PLACES as u32
+    }
+
     /// Returns the approximate square root as a Decimal256.
     ///
     /// This should not overflow or panic.
@@ -594,6 +624,36 @@ mod tests {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
+    }
+
+    #[test]
+    fn decimal_atomics_works() {
+        let zero = Decimal256::zero();
+        let one = Decimal256::one();
+        let half = Decimal256::percent(50);
+        let two = Decimal256::percent(200);
+        let max = Decimal256::MAX;
+
+        assert_eq!(zero.atomics(), Uint256::from(0u128));
+        assert_eq!(one.atomics(), Uint256::from(1000000000000000000u128));
+        assert_eq!(half.atomics(), Uint256::from(500000000000000000u128));
+        assert_eq!(two.atomics(), Uint256::from(2000000000000000000u128));
+        assert_eq!(max.atomics(), Uint256::MAX);
+    }
+
+    #[test]
+    fn decimal_decimal_places_works() {
+        let zero = Decimal256::zero();
+        let one = Decimal256::one();
+        let half = Decimal256::percent(50);
+        let two = Decimal256::percent(200);
+        let max = Decimal256::MAX;
+
+        assert_eq!(zero.decimal_places(), 18);
+        assert_eq!(one.decimal_places(), 18);
+        assert_eq!(half.decimal_places(), 18);
+        assert_eq!(two.decimal_places(), 18);
+        assert_eq!(max.decimal_places(), 18);
     }
 
     #[test]

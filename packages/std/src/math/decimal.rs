@@ -63,6 +63,36 @@ impl Decimal {
         self.0.is_zero()
     }
 
+    /// A decimal is an integer of atomic units plus a number that specifies the
+    /// position of the decimal dot. So any decimal can be expressed as two numbers.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Decimal, Uint128};
+    /// # use std::str::FromStr;
+    /// // Value with whole and fractional part
+    /// let a = Decimal::from_str("1.234").unwrap();
+    /// assert_eq!(a.decimal_places(), 18);
+    /// assert_eq!(a.atomics(), Uint128::new(1234000000000000000));
+    ///
+    /// // Smallest possible value
+    /// let b = Decimal::from_str("0.000000000000000001").unwrap();
+    /// assert_eq!(b.decimal_places(), 18);
+    /// assert_eq!(b.atomics(), Uint128::new(1));
+    /// ```
+    pub fn atomics(&self) -> Uint128 {
+        self.0
+    }
+
+    /// The number of decimal places. This is a constant value for now
+    /// but this could potentially change as the type evolves.
+    ///
+    /// See also [`Decimal::atomics()`].
+    pub fn decimal_places(&self) -> u32 {
+        Self::DECIMAL_PLACES as u32
+    }
+
     /// Returns the approximate square root as a Decimal.
     ///
     /// This should not overflow or panic.
@@ -519,6 +549,36 @@ mod tests {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {:?}", e),
         }
+    }
+
+    #[test]
+    fn decimal_atomics_works() {
+        let zero = Decimal::zero();
+        let one = Decimal::one();
+        let half = Decimal::percent(50);
+        let two = Decimal::percent(200);
+        let max = Decimal::MAX;
+
+        assert_eq!(zero.atomics(), Uint128::new(0));
+        assert_eq!(one.atomics(), Uint128::new(1000000000000000000));
+        assert_eq!(half.atomics(), Uint128::new(500000000000000000));
+        assert_eq!(two.atomics(), Uint128::new(2000000000000000000));
+        assert_eq!(max.atomics(), Uint128::MAX);
+    }
+
+    #[test]
+    fn decimal_decimal_places_works() {
+        let zero = Decimal::zero();
+        let one = Decimal::one();
+        let half = Decimal::percent(50);
+        let two = Decimal::percent(200);
+        let max = Decimal::MAX;
+
+        assert_eq!(zero.decimal_places(), 18);
+        assert_eq!(one.decimal_places(), 18);
+        assert_eq!(half.decimal_places(), 18);
+        assert_eq!(two.decimal_places(), 18);
+        assert_eq!(max.decimal_places(), 18);
     }
 
     #[test]
