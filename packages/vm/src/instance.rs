@@ -565,7 +565,7 @@ mod tests {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
         let mut instance = mock_instance_with_failing_api(CONTRACT, &[], error_message);
-        let init_result = call_instantiate::<_, _, _, serde_json::Value>(
+        let init_result = call_instantiate::<_, _, _, Empty>(
             &mut instance,
             &mock_env(),
             &mock_info("someone", &[]),

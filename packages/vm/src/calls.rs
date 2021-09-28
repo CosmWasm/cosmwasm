@@ -1,9 +1,7 @@
-use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
-use std::fmt;
 use wasmer::Val;
 
-use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
+use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
@@ -106,7 +104,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
@@ -126,7 +124,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
@@ -145,7 +143,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
@@ -163,7 +161,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let data = call_sudo_raw(instance, &env, msg)?;
@@ -181,7 +179,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -244,7 +242,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -263,7 +261,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -282,7 +280,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -301,7 +299,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
@@ -320,7 +318,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;

@@ -73,6 +73,8 @@ pub enum CustomMsg {
     Raw(Binary),
 }
 
+impl cosmwasm_std::CustomMsg for CustomMsg {}
+
 impl From<CustomMsg> for CosmosMsg<CustomMsg> {
     fn from(original: CustomMsg) -> Self {
         CosmosMsg::Custom(original)
