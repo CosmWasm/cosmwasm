@@ -5,6 +5,7 @@ use std::convert::TryInto;
 use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
+use thiserror::Error;
 
 use crate::errors::StdError;
 use crate::Uint512;
@@ -21,7 +22,8 @@ use super::Uint256;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
 
-#[derive(Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
+#[error("Decimal256 range exceeded")]
 pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {

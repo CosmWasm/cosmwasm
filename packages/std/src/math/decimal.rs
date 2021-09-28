@@ -5,6 +5,7 @@ use std::convert::TryInto;
 use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
+use thiserror::Error;
 
 use crate::errors::StdError;
 
@@ -18,7 +19,8 @@ use super::{Uint128, Uint256};
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] Uint128);
 
-#[derive(Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq)]
+#[error("Decimal range exceeded")]
 pub struct DecimalRangeExceeded;
 
 impl Decimal {
