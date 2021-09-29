@@ -913,7 +913,7 @@ mod singlepass_tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 162233);
+        assert_eq!(execute_used, 162308);
     }
 
     #[test]
@@ -947,6 +947,6 @@ mod singlepass_tests {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 30646);
+        assert_eq!(query_used, 30663);
     }
 }
