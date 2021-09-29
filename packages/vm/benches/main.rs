@@ -53,7 +53,7 @@ fn bench_instance(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("execute execute", |b| {
+    group.bench_function("execute execute (release)", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
             gas_limit: 500_000_000_000,
@@ -75,6 +75,34 @@ fn bench_instance(c: &mut Criterion) {
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         });
+    });
+
+    group.bench_function("execute execute (argon2)", |b| {
+        let backend = mock_backend(&[]);
+        let much_gas: InstanceOptions = InstanceOptions {
+            gas_limit: 500_000_000_000,
+            ..DEFAULT_INSTANCE_OPTIONS
+        };
+        let mut instance =
+            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
+
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
+        let contract_result =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        assert!(contract_result.into_result().is_ok());
+
+        let mut gas_used = 0;
+        b.iter(|| {
+            let gas_before = instance.get_gas_left();
+            let info = mock_info("hasher", &[]);
+            let msg = br#"{"argon2":{"mem_cost":512,"time_cost":7}}"#;
+            let contract_result =
+                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            assert!(contract_result.into_result().is_ok());
+            gas_used = gas_before - instance.get_gas_left();
+        });
+        println!("Gas used: {}", gas_used);
     });
 
     group.finish();
