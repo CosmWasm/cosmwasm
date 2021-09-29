@@ -13,11 +13,13 @@ use cosmwasm_vm::{
 
 // Instance
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
-const DEFAULT_GAS_LIMIT: u64 = 400_000;
+const DEFAULT_GAS_LIMIT: u64 = 1_000_000_000_000; // ~1ms
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,
     print_debug: false,
 };
+const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000_000; // ~20s, allows many calls on one instance
+
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
@@ -38,7 +40,7 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute init", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 500_000_000_000,
+            gas_limit: HIGH_GAS_LIMIT,
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
@@ -56,7 +58,7 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute execute (release)", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 500_000_000_000,
+            gas_limit: HIGH_GAS_LIMIT,
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
@@ -80,7 +82,7 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute execute (argon2)", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 500_000_000_000,
+            gas_limit: HIGH_GAS_LIMIT,
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
