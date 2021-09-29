@@ -43,15 +43,15 @@ fn main() {
     let measurements = Arc::new(Mutex::new(Measurements::new()));
     let block_store = Arc::new(Mutex::new(BlockStore::new()));
 
+    let mut instance = Module::from_path("testdata/hackatom.wasm").instrument(
+        block_store.clone(),
+        measurements.clone(),
+        start_measurement,
+        take_measurement,
+    );
+
     // This could probably be multi-threaded.
     for _ in 1..10 {
-        let mut instance = Module::from_path("testdata/hackatom.wasm").instrument(
-            block_store.clone(),
-            measurements.clone(),
-            start_measurement,
-            take_measurement,
-        );
-
         call_things(instance.vm_instance());
     }
 
