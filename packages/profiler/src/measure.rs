@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
-use std::time;
+use std::time::{self, Duration};
 
 use crate::code_blocks::{BlockId, BlockStore};
 use crate::utils::InsertPush as _;
@@ -46,15 +46,20 @@ impl Measurements {
             .flexible(true)
             .from_writer(sink);
 
+        // Header row
+        wtr.write_record(["block", "avg", "min", "max"]).unwrap();
+
         for (block_id, timings) in &self.taken {
+            let avg = timings.iter().sum::<Duration>().as_nanos() / timings.len() as u128;
+            let min = timings.iter().min().unwrap().as_nanos();
+            let max = timings.iter().max().unwrap().as_nanos();
+
             let block = format!("{:?}", block_store.get_block(*block_id).unwrap());
-            wtr.write_record(
-                vec![block]
-                    .into_iter()
-                    .chain(timings.into_iter().map(|t| t.as_nanos().to_string())),
-            );
-            wtr.flush().unwrap();
+            wtr.write_record([block, avg.to_string(), min.to_string(), max.to_string()])
+                .unwrap();
         }
+
+        wtr.flush().unwrap();
     }
 }
 
