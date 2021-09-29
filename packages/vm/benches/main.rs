@@ -96,7 +96,7 @@ fn bench_instance(c: &mut Criterion) {
         b.iter(|| {
             let gas_before = instance.get_gas_left();
             let info = mock_info("hasher", &[]);
-            let msg = br#"{"argon2":{"mem_cost":512,"time_cost":7}}"#;
+            let msg = br#"{"argon2":{"mem_cost":256,"time_cost":3}}"#;
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
