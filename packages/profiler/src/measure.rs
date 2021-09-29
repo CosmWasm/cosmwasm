@@ -43,7 +43,6 @@ impl Measurements {
         let block_store = block_store.lock().unwrap();
         let mut wtr = csv::WriterBuilder::new()
             .terminator(csv::Terminator::CRLF)
-            .flexible(true)
             .from_writer(sink);
 
         // Header row
