@@ -46,16 +46,24 @@ impl Measurements {
             .from_writer(sink);
 
         // Header row
-        wtr.write_record(["block", "avg", "min", "max"]).unwrap();
+        wtr.write_record(["block", "executions", "avg in ns", "min in ns", "max in ns"])
+            .unwrap();
 
         for (block_id, timings) in &self.taken {
             let avg = timings.iter().sum::<Duration>().as_nanos() / timings.len() as u128;
             let min = timings.iter().min().unwrap().as_nanos();
             let max = timings.iter().max().unwrap().as_nanos();
+            let executions = timings.len();
 
             let block = format!("{:?}", block_store.get_block(*block_id).unwrap());
-            wtr.write_record([block, avg.to_string(), min.to_string(), max.to_string()])
-                .unwrap();
+            wtr.write_record([
+                block,
+                executions.to_string(),
+                avg.to_string(),
+                min.to_string(),
+                max.to_string(),
+            ])
+            .unwrap();
         }
 
         wtr.flush().unwrap();
