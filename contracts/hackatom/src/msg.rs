@@ -40,6 +40,13 @@ pub enum SudoMsg {
 pub enum ExecuteMsg {
     /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
     Release {},
+    /// Hashes some data. Uses CPU and memory, but no external calls.
+    Argon2 {
+        /// The amount of memory requested (KB).
+        mem_cost: u32,
+        /// The number of passes.
+        time_cost: u32,
+    },
     /// Infinite loop to burn cpu cycles (only run when metering is enabled)
     CpuLoop {},
     /// Infinite loop making storage calls (to test when their limit hits)

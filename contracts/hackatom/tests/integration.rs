@@ -25,7 +25,8 @@ use cosmwasm_vm::{
     call_execute, from_slice,
     testing::{
         execute, instantiate, migrate, mock_env, mock_info, mock_instance,
-        mock_instance_with_balances, query, sudo, test_io, MOCK_CONTRACT_ADDR,
+        mock_instance_with_balances, mock_instance_with_gas_limit, query, sudo, test_io,
+        MOCK_CONTRACT_ADDR,
     },
     Storage, VmError,
 };
@@ -304,6 +305,35 @@ fn execute_release_fails_for_wrong_sender() {
             funder: Addr::unchecked(&creator),
         }
     );
+}
+
+#[test]
+fn execute_argon2() {
+    let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000_000);
+
+    let (instantiate_msg, creator) = make_init_msg();
+    let init_info = mock_info(creator.as_str(), &[]);
+    let init_res: Response =
+        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let gas_before = deps.get_gas_left();
+    let _execute_res: Response = execute(
+        &mut deps,
+        mock_env(),
+        mock_info(creator.as_str(), &[]),
+        ExecuteMsg::Argon2 {
+            mem_cost: 256,
+            time_cost: 5,
+        },
+    )
+    .unwrap();
+    let gas_used = gas_before - deps.get_gas_left();
+    // Note: the exact gas usage depends on the Rust version used to compile WASM,
+    // which we only fix when using cosmwasm-opt, not integration tests.
+    let expected = 157407464; // +/- 20%
+    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
+    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
 }
 
 #[test]
