@@ -34,7 +34,7 @@ use queue::msg::{InstantiateMsg, MigrateMsg};
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
 fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInfo) {
-    let gas_limit = 500_000_000; // enough for many executions within one instance
+    let gas_limit = 1_000_000_000_000; // ~1ms, enough for many executions within one instance
     let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
     let creator = String::from("creator");
     let info = mock_info(&creator, &[]);
