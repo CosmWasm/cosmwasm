@@ -41,7 +41,10 @@ impl Measurements {
 
     pub fn compile_csv(&self, block_store: Arc<Mutex<BlockStore>>, sink: impl std::io::Write) {
         let block_store = block_store.lock().unwrap();
-        let mut wtr = csv::Writer::from_writer(sink);
+        let mut wtr = csv::WriterBuilder::new()
+            .terminator(csv::Terminator::CRLF)
+            .flexible(true)
+            .from_writer(sink);
 
         for (block_id, timings) in &self.taken {
             let block = format!("{:?}", block_store.get_block(*block_id).unwrap());
@@ -50,9 +53,8 @@ impl Measurements {
                     .into_iter()
                     .chain(timings.into_iter().map(|t| t.as_nanos().to_string())),
             );
+            wtr.flush().unwrap();
         }
-
-        wtr.flush().unwrap();
     }
 }
 
