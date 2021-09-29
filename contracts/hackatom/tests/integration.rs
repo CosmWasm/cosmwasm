@@ -329,8 +329,8 @@ fn execute_argon2() {
     )
     .unwrap();
     let gas_used = gas_before - deps.get_gas_left();
-    // Note: the exact gas usage depends on the Rust version used to compile WASM,
-    // which we only fix when using cosmwasm-opt, not integration tests.
+    // Note: the exact gas usage depends on the Rust version used to compile Wasm,
+    // which we only fix when using rust-optimizer, not integration tests.
     let expected = 157407464; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
@@ -433,8 +433,8 @@ fn execute_allocate_large_memory() {
     );
     let gas_used = gas_before - deps.get_gas_left();
     // Gas consumption is relatively small
-    // Note: the exact gas usage depends on the Rust version used to compile WASM,
-    // which we only fix when using cosmwasm-opt, not integration tests.
+    // Note: the exact gas usage depends on the Rust version used to compile Wasm,
+    // which we only fix when using rust-optimizer, not integration tests.
     let expected = 27880; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
@@ -454,8 +454,8 @@ fn execute_allocate_large_memory() {
     assert_eq!(result.unwrap_err(), "Generic error: memory.grow failed");
     let gas_used = gas_before - deps.get_gas_left();
     // Gas consumption is relatively small
-    // Note: the exact gas usage depends on the Rust version used to compile WASM,
-    // which we only fix when using cosmwasm-opt, not integration tests.
+    // Note: the exact gas usage depends on the Rust version used to compile Wasm,
+    // which we only fix when using rust-optimizer, not integration tests.
     let expected = 31076; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
