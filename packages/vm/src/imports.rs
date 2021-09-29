@@ -460,7 +460,7 @@ mod tests {
     const INIT_AMOUNT: u128 = 500;
     const INIT_DENOM: &str = "TOKEN";
 
-    const TESTING_GAS_LIMIT: u64 = 500_000;
+    const TESTING_GAS_LIMIT: u64 = 500_000_000_000; // ~0.5ms
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
     const ECDSA_HASH_HEX: &str = "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";

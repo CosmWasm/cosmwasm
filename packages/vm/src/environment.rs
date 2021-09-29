@@ -406,7 +406,7 @@ mod tests {
     const INIT_AMOUNT: u128 = 500;
     const INIT_DENOM: &str = "TOKEN";
 
-    const TESTING_GAS_LIMIT: u64 = 500_000;
+    const TESTING_GAS_LIMIT: u64 = 50_000_000_000;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 

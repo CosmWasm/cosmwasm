@@ -63,7 +63,7 @@ mod tests {
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
-    const TESTING_GAS_LIMIT: u64 = 5_000;
+    const TESTING_GAS_LIMIT: u64 = 500_000_000;
 
     #[test]
     fn pinned_memory_cache_run() {

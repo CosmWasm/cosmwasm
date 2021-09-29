@@ -309,7 +309,7 @@ fn execute_release_fails_for_wrong_sender() {
 
 #[test]
 fn execute_argon2() {
-    let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000_000);
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
 
     let (instantiate_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
@@ -331,7 +331,7 @@ fn execute_argon2() {
     let gas_used = gas_before - deps.get_gas_left();
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 157407464; // +/- 20%
+    let expected = 23611119600000; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
 }
@@ -435,7 +435,7 @@ fn execute_allocate_large_memory() {
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 27880; // +/- 20%
+    let expected = 4413600000; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
     let used = deps.memory_pages();
@@ -456,7 +456,7 @@ fn execute_allocate_large_memory() {
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 31076; // +/- 20%
+    let expected = 4859700000; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
     let used = deps.memory_pages();

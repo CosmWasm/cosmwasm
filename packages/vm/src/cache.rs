@@ -382,7 +382,7 @@ mod tests {
     use std::iter::FromIterator;
     use tempfile::TempDir;
 
-    const TESTING_GAS_LIMIT: u64 = 4_000_000;
+    const TESTING_GAS_LIMIT: u64 = 500_000_000_000; // ~0.5ms
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,

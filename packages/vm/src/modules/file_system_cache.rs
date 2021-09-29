@@ -114,7 +114,7 @@ mod tests {
     use wasmer_middlewares::metering::set_remaining_points;
 
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
-    const TESTING_GAS_LIMIT: u64 = 5_000;
+    const TESTING_GAS_LIMIT: u64 = 500_000_000;
 
     #[test]
     fn file_system_cache_run() {

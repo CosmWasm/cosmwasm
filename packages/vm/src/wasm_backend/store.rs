@@ -22,10 +22,13 @@ use super::limiting_tunables::LimitingTunables;
 const MAX_WASM_MEMORY: usize = 4 * 1024 * 1024 * 1024;
 
 fn cost(_operator: &Operator) -> u64 {
-    // A flat fee in order to maintain roughly the same pricing as with Wasmer 0.17
-    // (https://github.com/wasmerio/wasmer/blob/0.17.1/lib/middleware-common/src/metering.rs#L43-L113).
-    // This should become more advanced soon: https://github.com/CosmWasm/cosmwasm/issues/670
-    1
+    // A flat fee for each operation
+    // The target is 1 Terragas per millisecond (see GAS.md).
+    //
+    // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
+    // identify runtime differences between different Wasm operation, but this is not yet
+    // precise enough to derive insights from it.
+    150_000
 }
 
 /// Created a store with the default compiler and the given memory limit (in bytes).
