@@ -68,6 +68,11 @@ impl Measurements {
 
         wtr.flush().unwrap();
     }
+
+    pub fn clear(&mut self) {
+        self.started = HashMap::new();
+        self.taken = HashMap::new();
+    }
 }
 
 #[cfg(test)]

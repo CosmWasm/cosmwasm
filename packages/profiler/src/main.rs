@@ -50,6 +50,17 @@ fn main() {
         take_measurement,
     );
 
+    eprintln!("Warm-up round: 10 executions...");
+    for _ in 1..10 {
+        call_things(instance.vm_instance());
+    }
+
+    {
+        let mut measurements = measurements.lock().unwrap();
+        measurements.clear();
+    }
+
+    eprintln!("Profiling 10 executions...");
     // This could probably be multi-threaded.
     for _ in 1..10 {
         call_things(instance.vm_instance());
