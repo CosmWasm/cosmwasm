@@ -23,7 +23,7 @@ const MAX_WASM_MEMORY: usize = 4 * 1024 * 1024 * 1024;
 
 fn cost(_operator: &Operator) -> u64 {
     // A flat fee for each operation
-    // The target is 1 Terragas per millisecond (see GAS.md).
+    // The target is 1 Teragas per millisecond (see GAS.md).
     //
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet

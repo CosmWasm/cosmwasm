@@ -14,7 +14,7 @@ for very fast executions. There is a [multiplier][defaultgasmultiplier] to
 translate between CosmWasm gas and Cosmos SDK. It was measured and set to 100 a
 while ago and can be adjusted when necessary.
 
-For CosmWasm gas, the target gas consumption is 1 Terragas (10^12 gas) per
+For CosmWasm gas, the target gas consumption is 1 Teragas (10^12 gas) per
 millisecond. This idea is [inspired by NEAR][neargas] and we encourage you to
 read their excellent docs on that topic.
 

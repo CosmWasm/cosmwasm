@@ -46,7 +46,7 @@ and this project adheres to
 - cosmwasm-vm: Bump required marker export `interface_version_7` to
   `interface_version_8`.
 - cosmwasm-vm: Increase cost per Wasm operation from 1 to 150_000 and adjust
-  crypto API gas cost based on the target of 1 Terragas per millisecond.
+  crypto API gas cost based on the target of 1 Teragas per millisecond.
 
 ### Removed
 
