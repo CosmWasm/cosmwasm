@@ -43,6 +43,7 @@ impl Measurements {
         let block_store = block_store.lock().unwrap();
         let mut wtr = csv::WriterBuilder::new()
             .terminator(csv::Terminator::CRLF)
+            .flexible(true)
             .from_writer(sink);
 
         // Header row
@@ -64,6 +65,9 @@ impl Measurements {
                 max.to_string(),
             ])
             .unwrap();
+
+            // wtr.write_record(timings.iter().map(|d| d.as_nanos().to_string()))
+            //     .unwrap();
         }
 
         wtr.flush().unwrap();
@@ -80,7 +84,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn take_measurements() {
+    fn take_measurements_of_different_blocks() {
         // TODO: This is probably very confusing. What's a good way to refactor?
 
         let mut measure = Measurements::new();
@@ -105,5 +109,32 @@ mod tests {
         assert!(ms0[0] > time::Duration::from_millis(100));
         assert!(ms0[1] < time::Duration::from_millis(25));
         assert!(ms1[0] < time::Duration::from_millis(25));
+    }
+
+    #[test]
+    fn take_measurements_serial() {
+        let mut measure = Measurements::new();
+
+        measure.start_measurement(0, 0);
+        std::thread::sleep(time::Duration::from_millis(50));
+        measure.start_measurement(0, 0);
+        measure.take_measurement(0, 0, 0);
+        measure.take_measurement(0, 0, 0);
+
+        measure.start_measurement(0, 0);
+        std::thread::sleep(time::Duration::from_millis(50));
+        measure.start_measurement(0, 0);
+        std::thread::sleep(time::Duration::from_millis(50));
+        measure.take_measurement(0, 0, 0);
+        measure.take_measurement(0, 0, 0);
+
+        assert_eq!(measure.taken[&BlockId(0)].len(), 4);
+
+        let ms = &measure.taken[&BlockId(0)];
+
+        assert!(ms[0] < time::Duration::from_millis(60));
+        assert!(ms[1] < time::Duration::from_millis(20));
+        assert!(ms[2] > time::Duration::from_millis(100));
+        assert!(ms[3] < time::Duration::from_millis(60));
     }
 }
