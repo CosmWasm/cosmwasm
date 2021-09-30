@@ -99,7 +99,7 @@ mod tests {
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
-    const TESTING_GAS_LIMIT: u64 = 5_000;
+    const TESTING_GAS_LIMIT: u64 = 500_000_000;
     // Based on `examples/module_size.sh`
     const TESTING_WASM_SIZE_FACTOR: usize = 18;
 

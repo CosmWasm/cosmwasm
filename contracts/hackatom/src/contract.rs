@@ -66,6 +66,10 @@ pub fn execute(
 ) -> Result<Response, HackError> {
     match msg {
         ExecuteMsg::Release {} => do_release(deps, env, info),
+        ExecuteMsg::Argon2 {
+            mem_cost,
+            time_cost,
+        } => do_argon2(mem_cost, time_cost),
         ExecuteMsg::CpuLoop {} => do_cpu_loop(),
         ExecuteMsg::StorageLoop {} => do_storage_loop(deps),
         ExecuteMsg::MemoryLoop {} => do_memory_loop(),
@@ -99,6 +103,28 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
     } else {
         Err(HackError::Unauthorized {})
     }
+}
+
+fn do_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, HackError> {
+    let password = b"password";
+    let salt = b"othersalt";
+    let config = argon2::Config {
+        variant: argon2::Variant::Argon2i,
+        version: argon2::Version::Version13,
+        mem_cost,
+        time_cost,
+        lanes: 4,
+        thread_mode: argon2::ThreadMode::Sequential,
+        secret: &[],
+        ad: &[],
+        hash_length: 32,
+    };
+    let hash = argon2::hash_encoded(password, salt, &config)
+        .map_err(|e| StdError::generic_err(format!("hash_encoded errored: {}", e)))?;
+    // let matches = argon2::verify_encoded(&hash, password).unwrap();
+    // assert!(matches);
+    Ok(Response::new().set_data(hash.into_bytes()))
+    //Ok(Response::new())
 }
 
 fn do_cpu_loop() -> Result<Response, HackError> {

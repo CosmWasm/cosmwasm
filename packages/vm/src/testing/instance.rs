@@ -17,7 +17,7 @@ use super::storage::MockStorage;
 /// This gas limit is used in integration tests and should be high enough to allow a reasonable
 /// number of contract executions and queries on one instance. For this reason it is significatly
 /// higher than the limit for a single execution that we have in the production setup.
-const DEFAULT_GAS_LIMIT: u64 = 5_000_000;
+const DEFAULT_GAS_LIMIT: u64 = 500_000_000_000; // ~0.5ms
 const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 const DEFAULT_PRINT_DEBUG: bool = true;
 

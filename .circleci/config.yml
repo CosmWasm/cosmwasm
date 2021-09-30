@@ -42,6 +42,7 @@ workflows:
                 - load-wasm-speed
                 - cache-analyze
                 - fix-benches
+                - benchmark_argon2
   deploy:
     jobs:
       - build_and_upload_devcontracts:
