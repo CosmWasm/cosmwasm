@@ -18,47 +18,47 @@ reason, use the following commands:
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/burner
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/burner
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/crypto-verify/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/crypto-verify
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/crypto-verify
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/floaty
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/floaty
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/hackatom
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/hackatom
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_reflect",target=/code/contracts/ibc-reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/ibc-reflect
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/ibc-reflect
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_reflect_send",target=/code/contracts/ibc-reflect-send/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/ibc-reflect-send
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/ibc-reflect-send
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_queue",target=/code/contracts/queue/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/queue
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/queue
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_reflect",target=/code/contracts/reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/reflect
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/reflect
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_staking",target=/code/contracts/staking/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.1 ./contracts/staking
+  cosmwasm/rust-optimizer:0.12.3 ./contracts/staking
 ```
 
 ## Entry points
