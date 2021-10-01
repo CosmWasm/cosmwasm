@@ -373,7 +373,7 @@ mod tests {
 
     use super::*;
     use crate::backend::Storage;
-    use crate::call_instantiate;
+    use crate::calls::{call_execute, call_instantiate, call_query};
     use crate::errors::VmError;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
@@ -866,16 +866,6 @@ mod tests {
             })
             .unwrap();
     }
-}
-
-#[cfg(test)]
-mod singlepass_tests {
-    use cosmwasm_std::{coins, Empty};
-
-    use crate::calls::{call_execute, call_instantiate, call_query};
-    use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
-
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn contract_deducts_gas_init() {
