@@ -47,7 +47,7 @@ impl Measurements {
             .from_writer(sink);
 
         // Header row
-        wtr.write_record(["block", "executions", "avg in ns", "min in ns", "max in ns"])
+        wtr.write_record(&["block", "executions", "avg in ns", "min in ns", "max in ns"])
             .unwrap();
 
         for (block_id, timings) in &self.taken {
@@ -57,7 +57,7 @@ impl Measurements {
             let executions = timings.len();
 
             let block = format!("{:?}", block_store.get_block(*block_id).unwrap());
-            wtr.write_record([
+            wtr.write_record(&[
                 block,
                 executions.to_string(),
                 avg.to_string(),
