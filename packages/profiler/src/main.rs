@@ -15,7 +15,7 @@ use cosmwasm_vm::{
 
 use crate::{
     code_blocks::{BlockId, BlockStore},
-    instrumentation::{Module, Profiling},
+    instrumentation::Module,
     measure::Measurements,
 };
 

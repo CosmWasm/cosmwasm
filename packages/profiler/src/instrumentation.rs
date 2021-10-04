@@ -1,7 +1,6 @@
 use std::{
-    collections::HashMap,
     path::Path,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Arc, Mutex},
 };
 
 use cosmwasm_vm::{
@@ -19,6 +18,7 @@ use crate::{code_blocks::BlockStore, operators::OperatorSymbol};
 
 pub enum Module<'d> {
     Path(&'d Path),
+    #[cfg(test)]
     Bytes(&'d [u8]),
 }
 
@@ -27,6 +27,7 @@ impl<'d> Module<'d> {
         Self::Path(path.as_ref())
     }
 
+    #[cfg(test)]
     pub fn from_bytes(bytes: &'d [u8]) -> Self {
         Self::Bytes(bytes)
     }
@@ -37,7 +38,7 @@ impl<'d> Module<'d> {
         env: Env,
         start_measurement_fn: F1,
         take_measurement_fn: F2,
-    ) -> InstrumentedInstance<Env>
+    ) -> InstrumentedInstance
     where
         Env: WasmerEnv + 'static,
         F1: HostFunction<(u32, u32), (), WithEnv, Env>,
@@ -51,6 +52,7 @@ impl<'d> Module<'d> {
         // let store = Store::new(&Universal::new(compiler_config).engine());
         let mut walrus_module = match self {
             Module::Path(path) => walrus::Module::from_file(path).unwrap(),
+            #[cfg(test)]
             Module::Bytes(bytes) => walrus::Module::from_buffer(bytes).unwrap(),
         };
         add_imports(&mut walrus_module);
@@ -65,11 +67,11 @@ impl<'d> Module<'d> {
         let mut fns_to_import = Exports::new();
         fns_to_import.insert(
             "start_measurement",
-            Function::new_native_with_env(&store, env.clone(), start_measurement_fn),
+            Function::new_native_with_env(store, env.clone(), start_measurement_fn),
         );
         fns_to_import.insert(
             "take_measurement",
-            Function::new_native_with_env(&store, env.clone(), take_measurement_fn),
+            Function::new_native_with_env(store, env, take_measurement_fn),
         );
 
         let backend = Backend {
@@ -82,33 +84,26 @@ impl<'d> Module<'d> {
             backend,
             999999999,
             false,
-            Some(HashMap::from(
-                vec![("profiling", fns_to_import)].into_iter().collect(),
-            )),
+            Some(vec![("profiling", fns_to_import)].into_iter().collect()),
         )
         .unwrap();
 
         InstrumentedInstance {
             profiling,
             instance,
-            env,
         }
     }
 }
 
 type MockInstance = Instance<MockApi, MockStorage, MockQuerier>;
 
-pub struct InstrumentedInstance<Env: WasmerEnv> {
+pub struct InstrumentedInstance {
+    #[allow(dead_code)]
     profiling: Arc<Profiling>,
     instance: MockInstance,
-    env: Env,
 }
 
-impl<Env: WasmerEnv> InstrumentedInstance<Env> {
-    pub fn env(&self) -> Env {
-        self.env.clone()
-    }
-
+impl InstrumentedInstance {
     pub fn vm_instance(&mut self) -> &mut MockInstance {
         &mut self.instance
     }
@@ -142,10 +137,6 @@ impl Profiling {
             indexes: Mutex::new(None),
         }
     }
-
-    pub fn block_store(&self) -> Arc<Mutex<BlockStore>> {
-        self.block_store.clone()
-    }
 }
 
 impl ModuleMiddleware for Profiling {
@@ -178,8 +169,7 @@ impl ModuleMiddleware for Profiling {
                 }
                 None
             })
-            .unwrap()
-            .clone();
+            .unwrap();
 
         let fn2 = module_info
             .imports
@@ -192,12 +182,11 @@ impl ModuleMiddleware for Profiling {
                 }
                 None
             })
-            .unwrap()
-            .clone();
+            .unwrap();
 
         *indexes = Some(ProfilingIndexes {
-            start_measurement: fn1,
-            take_measurement: fn2,
+            start_measurement: *fn1,
+            take_measurement: *fn2,
         });
     }
 }
@@ -291,7 +280,6 @@ mod tests {
 
     use std::sync::Arc;
     use wasmer::{wat2wasm, WasmerEnv};
-    use wasmer_types::Value;
 
     const WAT: &[u8] = br#"
     (module
@@ -314,8 +302,7 @@ mod tests {
     "#;
 
     struct Fixture {
-        instance: InstrumentedInstance<FixtureEnv>,
-        block_store: Arc<Mutex<BlockStore>>,
+        instance: InstrumentedInstance,
     }
 
     #[derive(Debug, Clone, WasmerEnv)]
@@ -355,7 +342,6 @@ mod tests {
                     start_measurement_fn,
                     take_measurement_fn,
                 ),
-                block_store,
             }
         }
     }

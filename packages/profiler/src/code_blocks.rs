@@ -46,6 +46,11 @@ impl BlockStore {
         }
     }
 
+    #[cfg(test)]
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
     /// Register a new code block in the store. Returns a hash that can be later
     /// used to get the code block.
     pub fn register_block(&mut self, block: impl Into<CodeBlock>) -> BlockId {
@@ -61,10 +66,6 @@ impl BlockStore {
     pub fn get_block(&self, hash: impl Into<BlockId>) -> Option<&CodeBlock> {
         self.inner.get(&hash.into())
     }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
 }
 
 /// Represents a non-branching Wasm code block.
@@ -74,10 +75,6 @@ pub struct CodeBlock {
 }
 
 impl CodeBlock {
-    pub fn ops(&self) -> &[OperatorSymbol] {
-        self.inner.as_slice()
-    }
-
     pub fn get_hash(&self) -> BlockId {
         use std::hash::Hasher as _;
 

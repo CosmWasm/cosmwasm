@@ -10,7 +10,7 @@ pub trait InsertPush<K: Eq + Hash, I> {
 
 impl<K: Eq + Hash + Clone, I> InsertPush<K, I> for HashMap<K, Vec<I>> {
     fn insert_push(&mut self, k: K, item: I) {
-        if let None = self.get(&k) {
+        if self.get(&k).is_none() {
             self.insert(k.clone(), Vec::new());
         }
 
@@ -21,7 +21,7 @@ impl<K: Eq + Hash + Clone, I> InsertPush<K, I> for HashMap<K, Vec<I>> {
 
 impl<K: Eq + Hash + Clone, I> InsertPush<K, I> for HashMap<K, VecDeque<I>> {
     fn insert_push(&mut self, k: K, item: I) {
-        if let None = self.get(&k) {
+        if self.get(&k).is_none() {
             self.insert(k.clone(), VecDeque::new());
         }
 
