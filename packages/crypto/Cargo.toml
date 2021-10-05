@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-crypto"
-version = "1.0.0-soon"
+version = "1.0.0-soon2"
 authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
 edition = "2018"
 description = "Crypto bindings for cosmwasm contracts"
