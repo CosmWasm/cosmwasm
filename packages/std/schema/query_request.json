@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryRequest",
-  "anyOf": [
+  "oneOf": [
     {
       "type": "object",
       "required": [
@@ -41,7 +41,7 @@
   ],
   "definitions": {
     "BankQuery": {
-      "anyOf": [
+      "oneOf": [
         {
           "description": "This calls into the native bank module for one denomination Return value is BalanceResponse",
           "type": "object",
@@ -99,7 +99,7 @@
       "type": "object"
     },
     "WasmQuery": {
-      "anyOf": [
+      "oneOf": [
         {
           "description": "this queries the public API of another contract at a known address (with known ABI) return value is whatever the contract returns (caller should know)",
           "type": "object",
