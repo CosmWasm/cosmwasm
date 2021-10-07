@@ -94,7 +94,19 @@ mod tests {
 
         let err = check("123", "456").unwrap_err();
         assert!(matches!(err, StdError::GenericErr { .. }));
-
         check("123", "123").unwrap();
+    }
+
+    #[test]
+    fn ensure_eq_gets_precedence_right() {
+        // If this was expanded to `true || false == false` we'd get equality.
+        // It must be expanded to `(true || false) == false` and we expect inequality.
+
+        fn check() -> Result<(), StdError> {
+            ensure_eq!(true || false, false, StdError::generic_err("foobar"));
+            Ok(())
+        }
+
+        let _err = check().unwrap_err();
     }
 }
