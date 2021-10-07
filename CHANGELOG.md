@@ -20,6 +20,10 @@ and this project adheres to
   `Decimal{,256}::decimal_places()`.
 - cosmwasm-std: New constructors `Decimal{,256}::from_atomics`.
 - cosmwasm-std: New `Uint128::checked_pow`.
+- cosmwasm-std: New macros `ensure!`, `ensure_eq!` and `ensure_ne!` allow
+  requirement checking that return errors instead of panicking ([#1103]).
+
+[#1103]: https://github.com/CosmWasm/cosmwasm/issues/1103
 
 ### Changed
 
