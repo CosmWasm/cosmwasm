@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-beta] - 2021-10-11
+
 ### Added
 
 - cosmwasm-std: Add new `WasmQuery::ContractInfo` variant to get metadata about
@@ -1175,7 +1177,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta...HEAD
+[1.0.0-beta]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...v1.0.0-beta
 [0.16.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.2...v0.16.0
