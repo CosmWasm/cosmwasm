@@ -49,6 +49,9 @@
 /// cosmwasm_std::create_entry_points!(contract);
 /// ```
 #[macro_export]
+#[deprecated(
+    note = "create_entry_points and create_entry_points_with_migration should be replaces by the #[entry_point] macro as shown in https://github.com/CosmWasm/cosmwasm/blob/main/MIGRATING.md#013---014. They'll be removed before the final 1.0.0 release. Sorry for the short notice."
+)]
 macro_rules! create_entry_points {
     (@migration; $contract:ident, true) => {
         #[no_mangle]
@@ -115,6 +118,9 @@ macro_rules! create_entry_points {
 /// cosmwasm_std::create_entry_points_with_migration!(contract);
 /// ```
 #[macro_export]
+#[deprecated(
+    note = "create_entry_points and create_entry_points_with_migration should be replaces by the #[entry_point] macro as shown in https://github.com/CosmWasm/cosmwasm/blob/main/MIGRATING.md#013---014. They'll be removed before the final 1.0.0 release. Sorry for the short notice."
+)]
 macro_rules! create_entry_points_with_migration {
     ($contract:ident) => {
         $crate::create_entry_points!(@inner; $contract, migration = true);

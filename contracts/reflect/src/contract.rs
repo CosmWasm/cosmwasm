@@ -11,6 +11,7 @@ use crate::msg::{
 };
 use crate::state::{config, config_read, replies, replies_read, State};
 
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut<SpecialQuery>,
     _env: Env,
@@ -22,6 +23,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
+#[entry_point]
 pub fn execute(
     deps: DepsMut<SpecialQuery>,
     env: Env,
@@ -112,6 +114,7 @@ pub fn reply(deps: DepsMut<SpecialQuery>, _env: Env, msg: Reply) -> Result<Respo
     Ok(Response::default())
 }
 
+#[entry_point]
 pub fn query(deps: Deps<SpecialQuery>, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),

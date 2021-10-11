@@ -51,10 +51,6 @@ use std::str::FromStr;
 ///
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
-///
-/// This is an alternative implementation of `cosmwasm_std::create_entry_points!(contract)`
-/// and `cosmwasm_std::create_entry_points_with_migration!(contract)`
-/// and should not be used together.
 #[proc_macro_attribute]
 pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
     let cloned = item.clone();
