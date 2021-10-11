@@ -3,6 +3,7 @@
 // Exposed on all platforms
 
 mod addresses;
+mod assertions;
 mod binary;
 mod coins;
 mod conversion;
