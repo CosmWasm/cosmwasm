@@ -51,6 +51,9 @@ and this project adheres to
   `interface_version_8`.
 - cosmwasm-vm: Increase cost per Wasm operation from 1 to 150_000 and adjust
   crypto API gas cost based on the target of 1 Teragas per millisecond.
+- cosmwasm-std: Deprecate the macros `create_entry_points` and
+  `create_entry_points_with_migration` in favour of the new, more flexible entry
+  point system introduced in CosmWasm 0.14.
 
 ### Removed
 
