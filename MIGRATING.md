@@ -4,19 +4,19 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.16 -> 1.0 (unreleased)
+## 0.16 -> 1.0.0-beta
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
 
   ```
   [dependencies]
-  cosmwasm-std = "1.0.0"
-  cosmwasm-storage = "1.0.0"
+  cosmwasm-std = "1.0.0-beta"
+  cosmwasm-storage = "1.0.0-beta"
   # ...
 
   [dev-dependencies]
-  cosmwasm-schema = "1.0.0"
-  cosmwasm-vm = "1.0.0"
+  cosmwasm-schema = "1.0.0-beta"
+  cosmwasm-vm = "1.0.0-beta"
   # ...
   ```
 
@@ -29,6 +29,37 @@ major releases of `cosmwasm`. Note that you can also view the
   // after
   use cosmwasm_std::Record;
   ```
+
+- Replace `cosmwasm_std::create_entry_points!` and
+  `cosmwasm_std::create_entry_points_with_migration!` with `#[entry_point]`
+  annotations. See the [0.13 -> 0.14 entry](#013---014) where `#[entry_point]`
+  was introduced.
+
+### Integration tests
+
+- Add new `transaction` field to `Env` when creating a custom mock env:
+
+  ```diff
+  @@ -19,6 +19,7 @@
+
+   use cosmwasm_std::{
+       coins, Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, Response, Timestamp,
+  +    TransactionInfo,
+   };
+   use cosmwasm_storage::to_length_prefixed;
+   use cosmwasm_vm::testing::{instantiate, mock_info, mock_instance};
+  @@ -52,6 +53,7 @@ fn mock_env_info_height(signer: &str, sent: &[Coin], height: u64, time: u64) ->
+           contract: ContractInfo {
+               address: Addr::unchecked(MOCK_CONTRACT_ADDR),
+           },
+  +        transaction: Some(TransactionInfo { index: 3 }),
+       };
+       let info = mock_info(signer, sent);
+       return (env, info);
+  ```
+
+- Gas usage increases by a factor of approximately 150_000. Adapt your tests
+  accordingly.
 
 ## 0.15 -> 0.16
 
