@@ -12,6 +12,7 @@ use crate::msg::{
 };
 use crate::state::{State, CONFIG_KEY};
 
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -33,6 +34,7 @@ pub fn instantiate(
     Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
+#[entry_point]
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
     let data = deps
         .storage
@@ -58,6 +60,7 @@ pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackErr
     }
 }
 
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -247,6 +250,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     Ok(Response::default())
 }
 
+#[entry_point]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),

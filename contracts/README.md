@@ -66,18 +66,11 @@ docker run --rm -v "$(pwd)":/code \
 The development contracts in this folder contain a variety of different entry
 points in order to demonstrate and test the flexibility we have.
 
-| Contract    | Macro                                         | Has `query` | Has `migrate` |
-| ----------- | --------------------------------------------- | ----------- | ------------- |
-| burner      | `#[entry_point]`                              | no          | yes           |
-| hackatom    | [`create_entry_points_with_migration!`][cepm] | yes         | yes           |
-| ibc-reflect | `#[entry_point]`                              | yes         | no            |
-| queue       | mixed<sup>1</sup>                             | yes         | yes           |
-| reflect     | [`create_entry_points!`][cep]                 | yes         | no            |
-| staking     | `#[entry_point]`                              | yes         | no            |
-
-<sup>1</sup> Because we can. Don't try this at home.
-
-[cepm]:
-  https://docs.rs/cosmwasm-std/0.13.0/cosmwasm_std/macro.create_entry_points_with_migration.html
-[cep]:
-  https://docs.rs/cosmwasm-std/0.13.0/cosmwasm_std/macro.create_entry_points.html
+| Contract    | Has `query` | Has `migrate` |
+| ----------- | ----------- | ------------- |
+| burner      | no          | yes           |
+| hackatom    | yes         | yes           |
+| ibc-reflect | yes         | no            |
+| queue       | yes         | yes           |
+| reflect     | yes         | no            |
+| staking     | yes         | no            |

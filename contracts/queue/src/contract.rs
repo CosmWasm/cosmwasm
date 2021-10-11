@@ -63,6 +63,7 @@ pub struct ListResponse {
 }
 
 // A no-op, just empty data
+#[entry_point]
 pub fn instantiate(
     _deps: DepsMut,
     _env: Env,
@@ -72,6 +73,7 @@ pub fn instantiate(
     Ok(Response::default())
 }
 
+#[entry_point]
 pub fn execute(
     deps: DepsMut,
     _env: Env,
@@ -142,6 +144,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     Ok(Response::default())
 }
 
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Count {} => to_binary(&query_count(deps)),
