@@ -7,6 +7,7 @@ import sys
 import os
 import requests
 from bs4 import BeautifulSoup
+from urllib.request import urlparse, urljoin
 from concurrent.futures import ThreadPoolExecutor
 
 def get_broken_links(path):
@@ -18,29 +19,22 @@ def get_broken_links(path):
 
     # Filter links which interest us.
     def _filter(elem):
-        return 'cosmos' in elem['href']
+        parsed = urlparse(elem['href'])
+        return bool(parsed.netloc) and bool(parsed.scheme) and "rust-lang.org" not in parsed.netloc
 
     # Create a list containing all links
     links = [link.get("href") for link in filter(_filter, soup.find_all("a", href=True))]
-    print(links)
+    if links:
+        print(links)
 
     # Initialize list for broken links.
     broken_links = []
 
     # Internal function for validating HTTP status code.
     def _validate_url(url):
-        r = requests.get(url)
-        page = BeautifulSoup(r.content, features="html.parser")
-        # TODO: doesn't yet work (?)
-        hs = page.find_all("div", attrs={'class':'h1'})
-        print(hs)
+        r = requests.head(url)
 
-        def _filter(h):
-            "Page Not Found" in h.contents
-
-        pageNotFound = len(filter(_filter, hs)) > 0
-
-        if r.status_code == 404 or pageNotFound:
+        if r.status_code == 404:
             broken_links.append(url)
 
     # Loop through links checking for 404 responses, and append to list.
@@ -61,7 +55,7 @@ def check_project(project):
                 fpath = dirName + '/' + fname
 
                 file_broken_links = get_broken_links(fpath)
-                if len(file_broken_links) > 0:
+                if file_broken_links:
                     broken_links[fpath] = file_broken_links
 
     return broken_links
@@ -69,7 +63,7 @@ def check_project(project):
 # main
 
 broken_links = {}
-projects = ['test']
+projects = ['cosmwasm_std']
 
 for project in projects:
     broken_links.update(check_project(project))
