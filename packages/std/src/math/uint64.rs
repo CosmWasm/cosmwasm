@@ -47,6 +47,16 @@ impl Uint64 {
         self.0
     }
 
+    /// Returns a copy of the number as big endian bytes.
+    pub const fn to_be_bytes(self) -> [u8; 8] {
+        self.0.to_be_bytes()
+    }
+
+    /// Returns a copy of the number as little endian bytes.
+    pub const fn to_le_bytes(self) -> [u8; 8] {
+        self.0.to_le_bytes()
+    }
+
     pub fn is_zero(&self) -> bool {
         self.0 == 0
     }
@@ -409,6 +419,36 @@ mod tests {
     fn uint64_display_padding_works() {
         let a = Uint64::from(123u64);
         assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
+    fn uint64_to_be_bytes_works() {
+        assert_eq!(Uint64::zero().to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(
+            Uint64::MAX.to_be_bytes(),
+            [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
+        );
+        assert_eq!(Uint64::new(1).to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 1]);
+        // Python: `[b for b in (63374607431768124608).to_bytes(8, "big")]`
+        assert_eq!(
+            Uint64::new(874607431768124608).to_be_bytes(),
+            [12, 35, 58, 211, 72, 116, 172, 192]
+        );
+    }
+
+    #[test]
+    fn uint64_to_le_bytes_works() {
+        assert_eq!(Uint64::zero().to_le_bytes(), [0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(
+            Uint64::MAX.to_le_bytes(),
+            [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
+        );
+        assert_eq!(Uint64::new(1).to_le_bytes(), [1, 0, 0, 0, 0, 0, 0, 0]);
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(16, "little")]`
+        assert_eq!(
+            Uint64::new(874607431768124608).to_le_bytes(),
+            [192, 172, 116, 72, 211, 58, 35, 12]
+        );
     }
 
     #[test]
