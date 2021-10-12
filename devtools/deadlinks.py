@@ -16,16 +16,31 @@ def get_broken_links(path):
     # Parse HTML.
     soup = BeautifulSoup(data, features="html.parser")
 
+    # Filter links which interest us.
+    def _filter(elem):
+        return 'cosmos' in elem['href']
+
     # Create a list containing all links
-    links = [link.get("href") for link in soup.find_all("a", href=True)]
+    links = [link.get("href") for link in filter(_filter, soup.find_all("a", href=True))]
+    print(links)
 
     # Initialize list for broken links.
     broken_links = []
 
     # Internal function for validating HTTP status code.
     def _validate_url(url):
-        r = requests.head(url)
-        if r.status_code == 404:
+        r = requests.get(url)
+        page = BeautifulSoup(r.content, features="html.parser")
+        # TODO: doesn't yet work (?)
+        hs = page.find_all("div", attrs={'class':'h1'})
+        print(hs)
+
+        def _filter(h):
+            "Page Not Found" in h.contents
+
+        pageNotFound = len(filter(_filter, hs)) > 0
+
+        if r.status_code == 404 or pageNotFound:
             broken_links.append(url)
 
     # Loop through links checking for 404 responses, and append to list.
