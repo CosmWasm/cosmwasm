@@ -63,7 +63,15 @@ def check_project(project):
 # main
 
 broken_links = {}
-projects = ['cosmwasm_std']
+projects = [
+    "cosmwasm_crypto",
+    "cosmwasm_derive",
+    "cosmwasm_profiler",
+    "cosmwasm_schema",
+    "cosmwasm_std",
+    "cosmwasm_storage",
+    "cosmwasm_vm"
+]
 
 for project in projects:
     broken_links.update(check_project(project))
