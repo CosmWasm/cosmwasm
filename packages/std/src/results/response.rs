@@ -72,14 +72,14 @@ pub struct Response<T = Empty> {
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/master/core/events.html
     pub attributes: Vec<Attribute>,
     /// Extra, custom events separate from the main `wasm` one. These will have
     /// `wasm-` prepended to the type.
     ///
     /// More info about events can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/master/core/events.html
     pub events: Vec<Event>,
     /// The binary payload to include in the response.
     pub data: Option<Binary>,

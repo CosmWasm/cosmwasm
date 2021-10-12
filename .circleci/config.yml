@@ -19,6 +19,7 @@ workflows:
       - contract_queue
       - contract_reflect
       - contract_staking
+      - deadlinks
       - fmt
       - fmt_extra
       - clippy:
@@ -777,6 +778,38 @@ jobs:
       - run:
           name: Validate YAML files
           command: devtools/format_yml.sh -c
+
+  deadlinks:
+    docker:
+      - image: rust:1.51.0
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-deadlinks-rust:1.51.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Generate docs
+          command: cargo doc
+      - run:
+          name: Install pip
+          command: apt update && apt install -y python3-pip
+      - run:
+          name: Install dependencies
+          command: pip3 install requests bs4
+      - run:
+          name: Check dead links
+          command: devtools/deadlinks.py
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - /root/.cache/pip
+          key: cargocache-v2-deadlinks-rust:1.51.0-{{ checksum "Cargo.lock" }}
 
   clippy:
     parameters:
