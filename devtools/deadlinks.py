@@ -33,8 +33,10 @@ def get_broken_links(path):
     # Internal function for validating HTTP status code.
     def _validate_url(url):
         r = requests.head(url)
+        # These are old and broken.
+        bad_cosmos_link = "docs.cosmos.network/v0." in url
 
-        if r.status_code == 404:
+        if r.status_code == 404 or bad_cosmos_link:
             broken_links.append(url)
 
     # Loop through links checking for 404 responses, and append to list.
