@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Script taken from https://brianli.com/2021/06/how-to-find-broken-links-with-python/
 # and adjusted.
