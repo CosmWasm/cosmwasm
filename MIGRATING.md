@@ -4,6 +4,11 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 1.0.0-beta -> 1.0.0 (unreleased)
+
+- The minimum Rust supported version is 1.53.0. Verify your Rust version is >=
+  1.53.0 with: `rustc --version`
+
 ## 0.16 -> 1.0.0-beta
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):

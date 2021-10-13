@@ -10,6 +10,10 @@ and this project adheres to
 
 - cosmwasm-std: New const methods `Uint64::to_be_bytes`/`::to_le_bytes`.
 
+### Changed
+
+- all: Drop support for Rust versions lower than 1.53.0.
+
 ### Removed
 
 - cosmwasm-std: Remove the macros `create_entry_points` and
