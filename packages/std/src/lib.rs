@@ -8,7 +8,6 @@ mod binary;
 mod coins;
 mod conversion;
 mod deps;
-mod entry_points;
 mod errors;
 mod ibc;
 mod import_helpers;

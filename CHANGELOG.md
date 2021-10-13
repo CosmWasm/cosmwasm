@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Removed
+
+- cosmwasm-std: Remove the macros `create_entry_points` and
+  `create_entry_points_with_migration` in favour of the new, more flexible entry
+  point system introduced in CosmWasm 0.14.
+
 ## [1.0.0-beta] - 2021-10-11
 
 ### Added
