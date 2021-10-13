@@ -35,6 +35,53 @@ major releases of `cosmwasm`. Note that you can also view the
   annotations. See the [0.13 -> 0.14 entry](#013---014) where `#[entry_point]`
   was introduced.
 
+- If your chain provides a custom queries, add the custom query type as a
+  generic argument to `cosmwasm_std::Deps`, `DepsMut`, `OwnedDeps` and
+  `QuerierWrapper`. Otherwise it defaults to `Empty`. E.g.
+
+  ```diff
+   #[entry_point]
+   pub fn instantiate(
+  -    deps: DepsMut,
+  +    deps: DepsMut<CyberQueryWrapper>,
+       _env: Env,
+       info: MessageInfo,
+       msg: InstantiateMsg,
+  @@ -38,112 +35,95 @@ pub fn instantiate(
+   }
+  ```
+
+  ```diff
+   #[entry_point]
+  -pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+  +pub fn query(deps: Deps<CyberQueryWrapper>, _env: Env, msg: QueryMsg) ->   StdResult<Binary> {
+       match msg {
+  ```
+
+  ```diff
+   pub struct CyberQuerier<'a> {
+  -    querier: &'a QuerierWrapper<'a>,
+  +    querier: &'a QuerierWrapper<'a, CyberQueryWrapper>,
+   }
+
+   impl<'a> CyberQuerier<'a> {
+  -    pub fn new(querier: &'a QuerierWrapper) -> Self {
+  +    pub fn new(querier: &'a QuerierWrapper<'a, CyberQueryWrapper>) -> Self {
+           CyberQuerier { querier }
+       }
+   }
+  ```
+
+  Replace `QuerierWrapper::custom_query` with `QuerierWrapper::query` which is
+  now fully typed:
+
+  ```diff
+  -let res: CyberlinksAmountResponse = self.querier.custom_query(&request.into())?;
+  +let res: CyberlinksAmountResponse = self.querier.query(&request.into())?;
+  ```
+
+  See https://github.com/cybercongress/cw-cyber/pull/2 for a complete example.
+
 ### Integration tests
 
 - Add new `transaction` field to `Env` when creating a custom mock env:
