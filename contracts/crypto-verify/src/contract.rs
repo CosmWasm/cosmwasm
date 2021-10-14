@@ -246,7 +246,7 @@ mod tests {
         "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let msg = InstantiateMsg {};
         let info = mock_info(CREATOR, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();

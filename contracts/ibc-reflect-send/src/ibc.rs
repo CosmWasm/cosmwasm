@@ -238,7 +238,7 @@ mod tests {
     const CREATOR: &str = "creator";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let msg = InstantiateMsg {};
         let info = mock_info(CREATOR, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();

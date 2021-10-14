@@ -13,6 +13,9 @@ and this project adheres to
 ### Changed
 
 - all: Drop support for Rust versions lower than 1.53.0.
+- cosmwasm-std: The balance argument from `mock_dependencies` was removed.
+  Remove `&[]` if you don't need a contract balance or use the new
+  `mock_dependencies_with_balance` if you need a balance.
 
 ### Removed
 

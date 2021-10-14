@@ -344,7 +344,7 @@ mod tests {
     const REFLECT_ADDR: &str = "reflect-acct-1";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         let msg = InstantiateMsg {
             reflect_code_id: REFLECT_ID,
         };
@@ -397,7 +397,7 @@ mod tests {
 
     #[test]
     fn instantiate_works() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg {
             reflect_code_id: 17,

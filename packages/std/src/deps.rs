@@ -93,7 +93,7 @@ mod tests {
 
     #[test]
     fn ensure_easy_reuse() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         execute(deps.as_mut());
         query(deps.as_ref())
     }

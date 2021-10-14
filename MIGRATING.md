@@ -7,7 +7,31 @@ major releases of `cosmwasm`. Note that you can also view the
 ## 1.0.0-beta -> 1.0.0 (unreleased)
 
 - The minimum Rust supported version is 1.53.0. Verify your Rust version is >=
-  1.53.0 with: `rustc --version`
+  1.53.0 with: `rustc --version`.
+
+- Simplify `mock_dependencies` calls with empty balance:
+
+  ```diff
+       #[test]
+       fn instantiate_fails() {
+  -        let mut deps = mock_dependencies(&[]);
+  +        let mut deps = mock_dependencies();
+
+           let msg = InstantiateMsg {};
+           let info = mock_info("creator", &coins(1000, "earth"));
+  ```
+
+  Or use the new `mock_dependencies_with_balance` if you need a balance:
+
+  ```diff
+       #[test]
+       fn migrate_cleans_up_data() {
+  -        let mut deps = mock_dependencies(&coins(123456, "gold"));
+  +        let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+
+           // store some sample data
+           deps.storage.set(b"foo", b"bar");
+  ```
 
 ## 0.16 -> 1.0.0-beta
 
