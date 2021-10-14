@@ -33,7 +33,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.51.0
+          toolchain: 1.53.0
           target: wasm32-unknown-unknown
           profile: minimal
           override: true
