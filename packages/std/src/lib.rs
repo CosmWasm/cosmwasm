@@ -101,9 +101,10 @@ pub mod testing {
     #[cfg(feature = "staking")]
     pub use crate::mock::StakingQuerier;
     pub use crate::mock::{
-        digit_sum, mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info,
-        mock_wasmd_attr, riffle_shuffle, BankQuerier, MockApi, MockQuerier,
-        MockQuerierCustomHandlerResult, MockStorage, MOCK_CONTRACT_ADDR,
+        digit_sum, mock_dependencies, mock_dependencies_with_balance,
+        mock_dependencies_with_balances, mock_env, mock_info, mock_wasmd_attr, riffle_shuffle,
+        BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult, MockStorage,
+        MOCK_CONTRACT_ADDR,
     };
     #[cfg(feature = "stargate")]
     pub use crate::mock::{

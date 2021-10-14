@@ -131,7 +131,7 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
 
         let verifier = String::from("verifies");
         let beneficiary = String::from("benefits");
@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn instantiate_and_query() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
 
         let verifier = String::from("verifies");
         let beneficiary = String::from("benefits");
@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn execute_release_works() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
 
         // initialize the store
         let creator = String::from("creator");
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn execute_release_fails_for_wrong_sender() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
 
         // initialize the store
         let creator = String::from("creator");
@@ -293,7 +293,7 @@ mod tests {
         // the test framework doesn't handle contracts querying contracts yet,
         // let's just make sure the last step looks right
 
-        let deps = mock_dependencies(&[]);
+        let deps = mock_dependencies();
         let contract = Addr::unchecked("my-contract");
         let bin_contract: &[u8] = b"my-contract";
 

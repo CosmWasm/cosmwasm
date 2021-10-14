@@ -33,21 +33,30 @@ use crate::Attribute;
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
-/// All external requirements that can be injected for unit tests.
-/// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(
-    contract_balance: &[Coin],
-) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+/// Creates all external requirements that can be injected for unit tests.
+///
+/// See also [`mock_dependencies_with_balance`] and [`mock_dependencies_with_balances`]
+/// if you want to start with some initial balances.
+pub fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
     OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
-        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)]),
+        querier: MockQuerier::default(),
         custom_query_type: PhantomData,
     }
 }
 
+/// Creates all external requirements that can be injected for unit tests.
+///
+/// It sets the given balance for the contract itself, nothing else.
+pub fn mock_dependencies_with_balance(
+    contract_balance: &[Coin],
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+    mock_dependencies_with_balances(&[(MOCK_CONTRACT_ADDR, contract_balance)])
+}
+
 /// Initializes the querier along with the mock_dependencies.
-/// Sets all balances provided (yoy must explicitly set contract balance if desired)
+/// Sets all balances provided (you must explicitly set contract balance if desired).
 pub fn mock_dependencies_with_balances(
     balances: &[(&str, &[Coin])],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
@@ -439,6 +448,12 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     {
         self.custom_handler = Box::from(handler);
         self
+    }
+}
+
+impl Default for MockQuerier {
+    fn default() -> Self {
+        MockQuerier::new(&[])
     }
 }
 

@@ -469,7 +469,7 @@ mod tests {
 
     #[test]
     fn initialization_with_missing_validator() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         deps.querier
             .update_staking("ustake", &[sample_validator("john")], &[]);
 
@@ -496,7 +496,7 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         deps.querier.update_staking(
             "ustake",
             &[
@@ -547,7 +547,7 @@ mod tests {
 
     #[test]
     fn bonding_issues_tokens() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
         let creator = String::from("creator");
@@ -587,7 +587,7 @@ mod tests {
 
     #[test]
     fn rebonding_changes_pricing() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
         let creator = String::from("creator");
@@ -646,7 +646,7 @@ mod tests {
 
     #[test]
     fn bonding_fails_with_wrong_denom() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
         let creator = String::from("creator");
@@ -674,7 +674,7 @@ mod tests {
 
     #[test]
     fn unbonding_maintains_price_ratio() {
-        let mut deps = mock_dependencies(&[]);
+        let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
         let creator = String::from("creator");
