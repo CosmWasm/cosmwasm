@@ -540,9 +540,9 @@ in our simple `ibc-reflect` example.
 
 On error, you will want to revert any state that was pending based on the
 packet. For example, in ics20, if the
-[remote chain rejects the packet](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L246),
+[remote chain rejects the packet](https://github.com/CosmWasm/cw-plus/blob/v0.10.0/contracts/cw20-ics20/src/ibc.rs#L248),
 we must
-[return the funds to the original sender](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L291-L317).
+[return the funds to the original sender](https://github.com/CosmWasm/cw-plus/blob/v0.10.0/contracts/cw20-ics20/src/ibc.rs#L291-L313).
 
 #### Handling Timeouts
 
@@ -568,9 +568,9 @@ pub fn ibc_packet_timeout(
 
 It is generally handled just like the error case in `ibc_packet_ack`, reverting
 the state change from sending the packet (eg. if we send tokens over ICS20, both
-[an ack failure](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L246)
+[an ack failure](https://github.com/CosmWasm/cw-plus/blob/v0.10.0/contracts/cw20-ics20/src/ibc.rs#L248)
 as well as
-[a timeout](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L258)
+[a timeout](https://github.com/CosmWasm/cw-plus/blob/v0.10.0/contracts/cw20-ics20/src/ibc.rs#L261)
 will return those tokens to the original sender. In fact they both dispatch to
 the same `on_packet_failure` function).
 
