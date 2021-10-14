@@ -30,6 +30,10 @@ and this project adheres to
 ### Changed
 
 - cosmwasm-vm: Upgrade Wasmer to 2.2.1.
+- cosmwasm-std: `MockQuerier` now supports adding custom behaviour for handling
+  Wasm queries via `MockQuerier::update_wasm` ([#1050]).
+
+[#1050]: https://github.com/CosmWasm/cosmwasm/pull/1050
 
 ## [1.0.0-beta6] - 2022-03-07
 
