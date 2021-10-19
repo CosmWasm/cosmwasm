@@ -9,6 +9,8 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: New const methods `Uint64::to_be_bytes`/`::to_le_bytes`.
+- cosmwasm-vm: The check_contracts tool now has a `--supported-features` option
+  that defaults to "iterator,staking,stargate".
 
 ### Changed
 
