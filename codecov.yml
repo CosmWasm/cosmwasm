@@ -1,0 +1,5 @@
+comment: false
+
+ignore:
+  - "contracts"
+  - "packages/profiler"
