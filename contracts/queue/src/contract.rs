@@ -119,10 +119,8 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<Response> {
         // remove from storage and return old value
         deps.storage.remove(&key);
         res.data = Some(Binary(value));
-        Ok(res)
-    } else {
-        Ok(res)
     }
+    Ok(res)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
