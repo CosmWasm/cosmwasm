@@ -1004,10 +1004,10 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Coverage with docker
+          name: Run tests with coverage
           command: |
             docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin \
-              sh -c "cargo tarpaulin --out Xml --forward --packages cosmwasm-crypto,cosmwasm-std,cosmwasm-storage,cosmwasm-vm"
+              sh -c "cargo tarpaulin --out Xml --packages cosmwasm-crypto,cosmwasm-derive,cosmwasm-schema,cosmwasm-std,cosmwasm-storage"
       - codecov/upload
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
