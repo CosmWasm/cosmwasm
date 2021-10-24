@@ -24,7 +24,7 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
-// https://github.com/CosmWasm/cosmwasm/blob/v0.14.1/packages/vm/src/instance.rs#L84-L201
+// https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/packages/vm/src/instance.rs#L89-L206
 extern "C" {
     fn db_read(key: u32) -> u32;
     fn db_write(key: u32, value: u32);
@@ -40,15 +40,33 @@ extern "C" {
     fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
     fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
+    /// Verifies message hashes against a signature with a public key, using the
+    /// secp256k1 ECDSA parametrization.
+    /// Returns 0 on verification success, 1 on verification failure, and values
+    /// greater than 1 in case of error.
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
     fn secp256k1_recover_pubkey(
         message_hash_ptr: u32,
         signature_ptr: u32,
         recovery_param: u32,
     ) -> u64;
+
+    /// Verifies a message against a signature with a public key, using the
+    /// ed25519 EdDSA scheme.
+    /// Returns 0 on verification success, 1 on verification failure, and values
+    /// greater than 1 in case of error.
     fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
+    /// Verifies a batch of messages against a batch of signatures and public keys, using the
+    /// ed25519 EdDSA scheme.
+    /// Returns 0 on verification success, 1 on verification failure, and values
+    /// greater than 1 in case of error.
     fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 
+    /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
+    /// The host is free to log or process this in any way it considers appropriate.
+    /// In production environments it is expected that those messages are discarded.
     fn debug(source_ptr: u32);
 
     /// Executes a query on the chain (import). Not to be confused with the
