@@ -1006,9 +1006,28 @@ jobs:
       - run:
           name: Run tests with coverage
           command: |
+            mkdir -p reports/crypto
+            mkdir -p reports/derive
+            mkdir -p reports/schema
+            mkdir -p reports/std
+            mkdir -p reports/storage
             docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin \
-              sh -c "cargo tarpaulin --out Xml --packages cosmwasm-crypto,cosmwasm-derive,cosmwasm-schema,cosmwasm-std,cosmwasm-storage"
-      - codecov/upload
+              sh -c "cargo tarpaulin --out Xml --output-dir reports/crypto --packages cosmwasm-crypto && cargo tarpaulin --out Xml --output-dir reports/derive --packages cosmwasm-derive && cargo tarpaulin --out Xml --output-dir reports/schema --packages cosmwasm-schema && cargo tarpaulin --out Xml --output-dir reports/std --packages cosmwasm-std && cargo tarpaulin --out Xml --output-dir reports/storage --packages cosmwasm-storage"
+      - codecov/upload:
+          file: reports/crypto/cobertura.xml
+          flags: cosmwasm-crypto
+      - codecov/upload:
+          file: reports/derive/cobertura.xml
+          flags: cosmwasm-derive
+      - codecov/upload:
+          file: reports/schema/cobertura.xml
+          flags: cosmwasm-schema
+      - codecov/upload:
+          file: reports/std/cobertura.xml
+          flags: cosmwasm-std
+      - codecov/upload:
+          file: reports/storage/cobertura.xml
+          flags: cosmwasm-storage
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:
