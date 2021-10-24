@@ -5,3 +5,20 @@ ignore:
   - "packages/profiler"
   # Disabled due to "cargo_tarpaulin: Failed to get test coverage! Error: Failed to run tests: Error running test - SIGILL raised in 5835"
   - "packages/vm"
+
+flags:
+  cosmwasm-crypto:
+    paths:
+      - packages/crypto/
+  cosmwasm-derive:
+    paths:
+      - packages/derive/
+  cosmwasm-schema:
+    paths:
+      - packages/schema/
+  cosmwasm-std:
+    paths:
+      - packages/std/
+  cosmwasm-storage:
+    paths:
+      - packages/storage/
