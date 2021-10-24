@@ -43,6 +43,7 @@ pub trait Storage {
     ) -> Box<dyn Iterator<Item = Record> + 'a>;
 
     fn set(&mut self, key: &[u8], value: &[u8]);
+
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed

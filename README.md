@@ -167,8 +167,7 @@ The imports provided to give the contract access to the environment are:
 ```rust
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
-// https://github.com/CosmWasm/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
-//
+// https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/packages/vm/src/instance.rs#L89-L206
 extern "C" {
     fn db_read(key: u32) -> u32;
     fn db_write(key: u32, value: u32);
@@ -176,19 +175,25 @@ extern "C" {
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: u32, end: u32, order: i32) -> u32;
+    fn db_scan(start_ptr: u32, end_ptr: u32, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
     fn addr_validate(source_ptr: u32) -> u32;
-    fn addr_canonicalize(source: u32, destination: u32) -> u32;
-    fn addr_humanize(source: u32, destination: u32) -> u32;
+    fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
     /// Verifies message hashes against a signature with a public key, using the
     /// secp256k1 ECDSA parametrization.
     /// Returns 0 on verification success, 1 on verification failure, and values
     /// greater than 1 in case of error.
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
+    fn secp256k1_recover_pubkey(
+        message_hash_ptr: u32,
+        signature_ptr: u32,
+        recovery_param: u32,
+    ) -> u64;
 
     /// Verifies a message against a signature with a public key, using the
     /// ed25519 EdDSA scheme.
@@ -202,31 +207,36 @@ extern "C" {
     /// greater than 1 in case of error.
     fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 
+    /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
+    /// The host is free to log or process this in any way it considers appropriate.
+    /// In production environments it is expected that those messages are discarded.
+    fn debug(source_ptr: u32);
+
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
     fn query_chain(request: u32) -> u32;
 }
-
 ```
 
 (from
-[imports.rs](https://github.com/CosmWasm/cosmwasm/blob/0.7/src/imports.rs))
+[imports.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/imports.rs))
 
 You could actually implement a WebAssembly module in any language, and as long
 as you implement these functions, it will be interoperable, given the JSON data
 passed around is the proper format.
 
-Note that these `*c_void` pointers refers to a Region pointer, containing the
-offset and length of some Wasm memory, to allow for safe access between the
-caller and the contract:
+Note that these u32 pointers refer to `Region` instances, containing the offset
+and length of some Wasm memory, to allow for safe access between the caller and
+the contract:
 
 ```rust
-/// Refers to some heap allocated data in Wasm.
+/// Describes some data allocated in Wasm's linear memory.
 /// A pointer to an instance of this can be returned over FFI boundaries.
 ///
-/// This struct is crate internal since the VM defined the same type independently.
+/// This struct is crate internal since the cosmwasm-vm defines the same type independently.
 #[repr(C)]
 pub struct Region {
+    /// The beginning of the region expressed as bytes from the beginning of the linear memory
     pub offset: u32,
     /// The number of bytes available in this region
     pub capacity: u32,
@@ -236,7 +246,7 @@ pub struct Region {
 ```
 
 (from
-[memory.rs](https://github.com/CosmWasm/cosmwasm/blob/main/src/memory.rs#L7-L13))
+[memory.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/memory.rs))
 
 ## Implementing the Smart Contract
 
@@ -271,28 +281,48 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, ContractError> {}
 ```
 
-The low-level `c_read` and `c_write` imports are nicely wrapped for you by a
+The low-level `db_read` and `db_write` imports are nicely wrapped for you by a
 `Storage` implementation (which can be swapped out between real Wasm code and
 test code). This gives you a simple way to read and write data to a custom
 sub-database that this contract can safely write as it wants. It's up to you to
 determine which data you want to store here:
 
 ```rust
+/// Storage provides read and write access to a persistent storage.
+/// If you only want to provide read access, provide `&Storage`
 pub trait Storage {
-  fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
-  fn set(&mut self, key: &[u8], value: &[u8]);
-  fn remove(&mut self, key: &[u8]);
+    /// Returns None when key does not exist.
+    /// Returns Some(Vec<u8>) when key exists.
+    ///
+    /// Note: Support for differentiating between a non-existent key and a key with empty value
+    /// is not great yet and might not be possible in all backends. But we're trying to get there.
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 
-  // and for iterating over a range of values
-  #[cfg(feature = "iterator")]
-  fn range<'a>(
-    &'a self,
-    start: Option<&[u8]>,
-    end: Option<&[u8]>,
-    order: Order,
-  ) -> Box<dyn Iterator<Item = Record> + 'a>;
+    #[cfg(feature = "iterator")]
+    /// Allows iteration over a set of key/value pairs, either forwards or backwards.
+    ///
+    /// The bound `start` is inclusive and `end` is exclusive.
+    ///
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    fn range<'a>(
+        &'a self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Record> + 'a>;
+
+    fn set(&mut self, key: &[u8], value: &[u8]);
+
+    /// Removes a database entry at `key`.
+    ///
+    /// The current interface does not allow to differentiate between a key that existed
+    /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
+    fn remove(&mut self, key: &[u8]);
 }
 ```
+
+(from
+[traits.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/traits.rs))
 
 ## Testing the Smart Contract (rust)
 
@@ -376,7 +406,11 @@ nightly toolchain installed as well.
 **Workspace**
 
 ```sh
+# Compile and lint
 ./devtools/check_workspace.sh
+
+# Run tests
+./devtools/test_workspace.sh
 ```
 
 **Contracts**
