@@ -1012,7 +1012,7 @@ jobs:
             mkdir -p reports/std
             mkdir -p reports/storage
             docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin \
-              sh -c "cargo tarpaulin --out Xml --output-dir reports/crypto --packages cosmwasm-crypto && cargo tarpaulin --out Xml --output-dir reports/derive --packages cosmwasm-derive && cargo tarpaulin --out Xml --output-dir reports/schema --packages cosmwasm-schema && cargo tarpaulin --out Xml --output-dir reports/std --packages cosmwasm-std && cargo tarpaulin --out Xml --output-dir reports/storage --packages cosmwasm-storage"
+              sh -c "cargo tarpaulin --skip-clean --out Xml --output-dir reports/crypto --packages cosmwasm-crypto && cargo tarpaulin --skip-clean --out Xml --output-dir reports/derive --packages cosmwasm-derive && cargo tarpaulin --skip-clean --out Xml --output-dir reports/schema --packages cosmwasm-schema && cargo tarpaulin --skip-clean --out Xml --output-dir reports/std --packages cosmwasm-std && cargo tarpaulin --skip-clean --out Xml --output-dir reports/storage --packages cosmwasm-storage"
       - codecov/upload:
           file: reports/crypto/cobertura.xml
           flags: cosmwasm-crypto
