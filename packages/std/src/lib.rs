@@ -82,7 +82,10 @@ mod imports;
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
 #[cfg(target_arch = "wasm32")]
-pub use crate::exports::{do_execute, do_instantiate, do_migrate, do_query, do_reply, do_sudo};
+pub use crate::exports::{
+    do_execute, do_execute_lazy, do_instantiate, do_instantiate_lazy, do_migrate, do_migrate_lazy,
+    do_query, do_query_lazy, do_reply, do_sudo,
+};
 #[cfg(all(feature = "stargate", target_arch = "wasm32"))]
 pub use crate::exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
@@ -117,4 +120,4 @@ pub mod testing {
 
 // Re-exports
 
-pub use cosmwasm_derive::entry_point;
+pub use cosmwasm_derive::{entry_point, entry_point_lazy};

@@ -93,6 +93,37 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    let instantiate_fn = move |deps: DepsMut<Q>,
+                               env: Env,
+                               info: MessageInfo,
+                               msg: Vec<u8>|
+          -> Result<Response<C>, String> {
+        let msg: M = from_slice(&msg).map_err(|err| err.to_string())?;
+        instantiate_fn(deps, env, info, msg).map_err(|err| err.to_string())
+    };
+
+    do_instantiate_lazy(&instantiate_fn, env_ptr, info_ptr, msg_ptr)
+}
+
+/// This should be wrapped in an external "C" export, containing a contract-specific function as an argument.
+/// In contradiction to `do_instantiate` this will not deserialize message, and pass it as
+/// `Vec<u8>` to be deserialized by contract itself.
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+pub fn do_instantiate_lazy<Q, C, E>(
+    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, Vec<u8>) -> Result<Response<C>, E>,
+    env_ptr: u32,
+    info_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
     let res = _do_instantiate(
         instantiate_fn,
         env_ptr as *mut Region,
@@ -121,6 +152,35 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    let execute_fn = move |deps: DepsMut<Q>,
+                           env: Env,
+                           info: MessageInfo,
+                           msg: Vec<u8>|
+          -> Result<Response<C>, String> {
+        let msg: M = from_slice(&msg).map_err(|err| err.to_string())?;
+        execute_fn(deps, env, info, msg).map_err(|err| err.to_string())
+    };
+
+    do_execute_lazy(&execute_fn, env_ptr, info_ptr, msg_ptr)
+}
+
+/// do_execute should be wrapped in an external "C" export, containing a contract-specific function as arg
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+pub fn do_execute_lazy<Q, C, E>(
+    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, Vec<u8>) -> Result<Response<C>, E>,
+    env_ptr: u32,
+    info_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
     let res = _do_execute(
         execute_fn,
         env_ptr as *mut Region,
@@ -145,6 +205,31 @@ pub fn do_migrate<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned,
+    C: CustomMsg,
+    E: ToString,
+{
+    let migrate_fn =
+        move |deps: DepsMut<Q>, env: Env, msg: Vec<u8>| -> Result<Response<C>, String> {
+            let msg: M = from_slice(&msg).map_err(|err| err.to_string())?;
+            migrate_fn(deps, env, msg).map_err(|err| err.to_string())
+        };
+
+    do_migrate_lazy(&migrate_fn, env_ptr, msg_ptr)
+}
+
+/// do_migrate should be wrapped in an external "C" export, containing a contract-specific function as arg
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+pub fn do_migrate_lazy<Q, C, E>(
+    migrate_fn: &dyn Fn(DepsMut<Q>, Env, Vec<u8>) -> Result<Response<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
@@ -209,6 +294,28 @@ pub fn do_query<Q, M, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned,
+    E: ToString,
+{
+    let query_fn = move |deps: Deps<Q>, env: Env, msg: Vec<u8>| -> Result<QueryResponse, String> {
+        let msg: M = from_slice(&msg).map_err(|err| err.to_string())?;
+        query_fn(deps, env, msg).map_err(|err| err.to_string())
+    };
+
+    do_query_lazy(&query_fn, env_ptr, msg_ptr)
+}
+
+/// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `M`: message type for request
+/// - `E`: error type for responses
+pub fn do_query_lazy<Q, E>(
+    query_fn: &dyn Fn(Deps<Q>, Env, Vec<u8>) -> Result<QueryResponse, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
     E: ToString,
 {
     let res = _do_query(query_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
@@ -356,15 +463,14 @@ where
     release_buffer(v) as u32
 }
 
-fn _do_instantiate<Q, M, C, E>(
-    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
+fn _do_instantiate<Q, C, E>(
+    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, Vec<u8>) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -374,21 +480,19 @@ where
 
     let env: Env = try_into_contract_result!(from_slice(&env));
     let info: MessageInfo = try_into_contract_result!(from_slice(&info));
-    let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
     instantiate_fn(deps.as_mut(), env, info, msg).into()
 }
 
-fn _do_execute<Q, M, C, E>(
-    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
+fn _do_execute<Q, C, E>(
+    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, Vec<u8>) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -398,20 +502,18 @@ where
 
     let env: Env = try_into_contract_result!(from_slice(&env));
     let info: MessageInfo = try_into_contract_result!(from_slice(&info));
-    let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
     execute_fn(deps.as_mut(), env, info, msg).into()
 }
 
-fn _do_migrate<Q, M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
+fn _do_migrate<Q, C, E>(
+    migrate_fn: &dyn Fn(DepsMut<Q>, Env, Vec<u8>) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
-    M: DeserializeOwned,
     C: CustomMsg,
     E: ToString,
 {
@@ -419,7 +521,6 @@ where
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
     migrate_fn(deps.as_mut(), env, msg).into()
@@ -466,21 +567,19 @@ where
     reply_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_query<Q, M, E>(
-    query_fn: &dyn Fn(Deps<Q>, Env, M) -> Result<QueryResponse, E>,
+fn _do_query<Q, E>(
+    query_fn: &dyn Fn(Deps<Q>, Env, Vec<u8>) -> Result<QueryResponse, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<QueryResponse>
 where
     Q: CustomQuery,
-    M: DeserializeOwned,
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let deps = make_dependencies();
     query_fn(deps.as_ref(), env, msg).into()
