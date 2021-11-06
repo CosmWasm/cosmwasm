@@ -57,7 +57,7 @@ impl Uint64 {
         self.0.to_le_bytes()
     }
 
-    pub fn is_zero(&self) -> bool {
+    pub const fn is_zero(&self) -> bool {
         self.0 == 0
     }
 
@@ -103,35 +103,35 @@ impl Uint64 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
-    pub fn wrapping_add(self, other: Self) -> Self {
+    pub const fn wrapping_add(self, other: Self) -> Self {
         Self(self.0.wrapping_add(other.0))
     }
 
-    pub fn wrapping_sub(self, other: Self) -> Self {
+    pub const fn wrapping_sub(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
 
-    pub fn wrapping_mul(self, other: Self) -> Self {
+    pub const fn wrapping_mul(self, other: Self) -> Self {
         Self(self.0.wrapping_mul(other.0))
     }
 
-    pub fn wrapping_pow(self, other: u32) -> Self {
+    pub const fn wrapping_pow(self, other: u32) -> Self {
         Self(self.0.wrapping_pow(other))
     }
 
-    pub fn saturating_add(self, other: Self) -> Self {
+    pub const fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
 
-    pub fn saturating_sub(self, other: Self) -> Self {
+    pub const fn saturating_sub(self, other: Self) -> Self {
         Self(self.0.saturating_sub(other.0))
     }
 
-    pub fn saturating_mul(self, other: Self) -> Self {
+    pub const fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
 
-    pub fn saturating_pow(self, other: u32) -> Self {
+    pub const fn saturating_pow(self, other: u32) -> Self {
         Self(self.0.saturating_pow(other))
     }
 }

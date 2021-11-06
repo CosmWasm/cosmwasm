@@ -42,13 +42,13 @@ impl Decimal {
     }
 
     /// Convert x% into Decimal
-    pub fn percent(x: u64) -> Self {
-        Decimal(((x as u128) * 10_000_000_000_000_000).into())
+    pub const fn percent(x: u64) -> Self {
+        Decimal(Uint128::new((x as u128) * 10_000_000_000_000_000))
     }
 
     /// Convert permille (x/1000) into Decimal
-    pub fn permille(x: u64) -> Self {
-        Decimal(((x as u128) * 1_000_000_000_000_000).into())
+    pub const fn permille(x: u64) -> Self {
+        Decimal(Uint128::new((x as u128) * 1_000_000_000_000_000))
     }
 
     /// Creates a decimal from a number of atomic units and the number
@@ -117,7 +117,7 @@ impl Decimal {
         )
     }
 
-    pub fn is_zero(&self) -> bool {
+    pub const fn is_zero(&self) -> bool {
         self.0.is_zero()
     }
 
@@ -139,7 +139,7 @@ impl Decimal {
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Uint128::new(1));
     /// ```
-    pub fn atomics(&self) -> Uint128 {
+    pub const fn atomics(&self) -> Uint128 {
         self.0
     }
 
@@ -147,7 +147,7 @@ impl Decimal {
     /// but this could potentially change as the type evolves.
     ///
     /// See also [`Decimal::atomics()`].
-    pub fn decimal_places(&self) -> u32 {
+    pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
     }
 
