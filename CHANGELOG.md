@@ -18,6 +18,7 @@ and this project adheres to
 - cosmwasm-std: The balance argument from `mock_dependencies` was removed.
   Remove `&[]` if you don't need a contract balance or use the new
   `mock_dependencies_with_balance` if you need a balance.
+- cosmwasm-vm: Unlock cache mutex before module instantiation.
 
 ### Removed
 
