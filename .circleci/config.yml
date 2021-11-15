@@ -230,6 +230,12 @@ jobs:
           name: Test with all features
           working_directory: ~/project/packages/vm
           command: cargo test --locked --features iterator,staking,stargate
+      - run:
+          name: Test multi threaded cache
+          working_directory: ~/project/packages/vm
+          command: |
+            cargo build --locked --example multi_threaded_cache
+            time ../../target/debug/examples/multi_threaded_cache >/dev/null
       - save_cache:
           paths:
             - /usr/local/cargo/registry
