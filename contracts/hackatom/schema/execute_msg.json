@@ -86,6 +86,19 @@
       "additionalProperties": false
     },
     {
+      "description": "Infinite loop sending message to itself",
+      "type": "object",
+      "required": [
+        "message_loop"
+      ],
+      "properties": {
+        "message_loop": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Allocate large amounts of memory without consuming much gas",
       "type": "object",
       "required": [
