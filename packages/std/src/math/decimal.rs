@@ -1162,7 +1162,10 @@ mod tests {
         assert_eq!(
             items.into_iter().sum::<Decimal>(),
             Decimal(Uint128::from(4u128))
-        )
+        );
+
+        let empty: Vec<Decimal> = vec![];
+        assert_eq!(Decimal::zero(), empty.iter().sum())
     }
 
     #[test]
