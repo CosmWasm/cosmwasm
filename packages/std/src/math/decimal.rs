@@ -286,6 +286,14 @@ impl ops::Add for Decimal {
     }
 }
 
+impl ops::Add<&Decimal> for Decimal {
+    type Output = Self;
+
+    fn add(self, other: &Decimal) -> Self {
+        Decimal(self.0 + other.0)
+    }
+}
+
 impl ops::Sub for Decimal {
     type Output = Self;
 
@@ -348,6 +356,15 @@ impl ops::Div<Uint128> for Decimal {
 impl ops::DivAssign<Uint128> for Decimal {
     fn div_assign(&mut self, rhs: Uint128) {
         self.0 /= rhs;
+    }
+}
+
+impl<A> std::iter::Sum<A> for Decimal
+where
+    Decimal: ops::Add<A, Output = Decimal>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+        iter.fold(Self::zero(), |a, b| a + b)
     }
 }
 
@@ -1132,6 +1149,20 @@ mod tests {
             Decimal(Uint128::from(100000000000000000u128)).to_string(),
             "0.1"
         );
+    }
+
+    #[test]
+    fn decimal_iter_sum() {
+        let items = vec![
+            Decimal::zero(),
+            Decimal(Uint128::from(2u128)),
+            Decimal(Uint128::from(2u128)),
+        ];
+        assert_eq!(items.iter().sum::<Decimal>(), Decimal(Uint128::from(4u128)));
+        assert_eq!(
+            items.into_iter().sum::<Decimal>(),
+            Decimal(Uint128::from(4u128))
+        )
     }
 
     #[test]
