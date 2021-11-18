@@ -11,6 +11,7 @@ and this project adheres to
 - cosmwasm-std: New const methods `Uint64::to_be_bytes`/`::to_le_bytes`.
 - cosmwasm-vm: The check_contracts tool now has a `--supported-features` option
   that defaults to "iterator,staking,stargate".
+- cosmwasm-std: Implementation of `std::iter::Sum` for `Decimal`.
 
 ### Changed
 
