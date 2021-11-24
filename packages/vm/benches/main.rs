@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 use tempfile::TempDir;
 
 use cosmwasm_std::{coins, Empty};
@@ -10,6 +10,8 @@ use cosmwasm_vm::{
     call_execute, call_instantiate, features_from_csv, Cache, CacheOptions, Checksum, Instance,
     InstanceOptions, Size,
 };
+use std::sync::Arc;
+use std::thread;
 
 // Instance
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
@@ -22,6 +24,9 @@ const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000_000; // ~20s, allows many calls o
 
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
+
+// Multi-threaded get_instance benchmark
+const INSTANTIATION_THREADS: usize = 1024;
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -217,6 +222,60 @@ fn bench_cache(c: &mut Criterion) {
     group.finish();
 }
 
+pub fn bench_instance_threads(c: &mut Criterion) {
+    c.bench_function("multi-threaded get_instance", |b| {
+        let options = CacheOptions {
+            base_dir: TempDir::new().unwrap().into_path(),
+            supported_features: features_from_csv("iterator,staking"),
+            memory_cache_size: MEMORY_CACHE_SIZE,
+            instance_memory_limit: DEFAULT_MEMORY_LIMIT,
+        };
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options).unwrap() };
+        let cache = Arc::new(cache);
+
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        b.iter_custom(|iters| {
+            let mut res = Duration::from_secs(0);
+            for _ in 0..iters {
+                let mut durations: Vec<_> = (0..INSTANTIATION_THREADS)
+                    .map(|_id| {
+                        let cache = Arc::clone(&cache);
+
+                        thread::spawn(move || {
+                            let checksum = checksum;
+                            // Perform measurement internally
+                            let t = SystemTime::now();
+                            let _instance = cache
+                                .get_instance(
+                                    &checksum,
+                                    mock_backend(&[]),
+                                    DEFAULT_INSTANCE_OPTIONS,
+                                )
+                                .unwrap();
+                            t.elapsed().unwrap()
+                        })
+                    })
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .map(|handle| handle.join().unwrap())
+                    .collect(); // join threads, collect durations
+
+                // Calculate max thread duration
+                //res += *durations.iter().max().unwrap();
+                // Calculate mean thread duration
+                //res += durations.iter().sum::<Duration>() / durations.len() as u32;
+                // Calculate median thread duration
+                durations.sort_unstable();
+                res += durations[durations.len() / 2];
+            }
+            res
+        });
+    });
+}
+
 fn make_config() -> Criterion {
     Criterion::default()
         .without_plots()
@@ -235,4 +294,13 @@ criterion_group!(
     config = make_config();
     targets = bench_cache
 );
-criterion_main!(instance, cache);
+criterion_group!(
+    name = multi_threaded_instance;
+    config = Criterion::default()
+        .without_plots()
+        .measurement_time(Duration::new(15, 0))
+        .sample_size(10)
+        .configure_from_args();
+    targets = bench_instance_threads
+);
+criterion_main!(instance, cache, multi_threaded_instance);
