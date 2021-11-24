@@ -296,7 +296,7 @@ criterion_group!(
     name = multi_threaded_instance;
     config = Criterion::default()
         .without_plots()
-        .measurement_time(Duration::new(15, 0))
+        .measurement_time(Duration::new(16, 0))
         .sample_size(10)
         .configure_from_args();
     targets = bench_instance_threads
