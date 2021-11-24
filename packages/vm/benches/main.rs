@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
+use criterion::{criterion_group, criterion_main, Criterion};
 use std::time::Duration;
 use tempfile::TempDir;
 
@@ -219,7 +219,6 @@ fn bench_cache(c: &mut Criterion) {
 
 fn make_config() -> Criterion {
     Criterion::default()
-        .plotting_backend(PlottingBackend::Plotters)
         .without_plots()
         .measurement_time(Duration::new(10, 0))
         .sample_size(12)
