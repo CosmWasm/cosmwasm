@@ -223,6 +223,7 @@ fn make_config() -> Criterion {
         .without_plots()
         .measurement_time(Duration::new(10, 0))
         .sample_size(12)
+        .configure_from_args()
 }
 
 criterion_group!(
