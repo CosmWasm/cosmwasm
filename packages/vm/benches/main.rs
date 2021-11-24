@@ -265,10 +265,6 @@ pub fn bench_instance_threads(c: &mut Criterion) {
                     .map(|handle| handle.join().unwrap())
                     .collect(); // join threads, collect durations
 
-                // Calculate max thread duration
-                //res += *durations.iter().max().unwrap();
-                // Calculate mean thread duration
-                //res += durations.iter().sum::<Duration>() / durations.len() as u32;
                 // Calculate median thread duration
                 durations.sort_unstable();
                 res += durations[durations.len() / 2];
