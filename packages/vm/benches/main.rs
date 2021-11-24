@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::time::{Duration, SystemTime};
 use tempfile::TempDir;
 
@@ -248,13 +248,15 @@ pub fn bench_instance_threads(c: &mut Criterion) {
                             let checksum = checksum;
                             // Perform measurement internally
                             let t = SystemTime::now();
-                            let _instance = cache
-                                .get_instance(
-                                    &checksum,
-                                    mock_backend(&[]),
-                                    DEFAULT_INSTANCE_OPTIONS,
-                                )
-                                .unwrap();
+                            black_box(
+                                cache
+                                    .get_instance(
+                                        &checksum,
+                                        mock_backend(&[]),
+                                        DEFAULT_INSTANCE_OPTIONS,
+                                    )
+                                    .unwrap(),
+                            );
                             t.elapsed().unwrap()
                         })
                     })
