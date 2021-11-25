@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
+use std::sync::Mutex;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
@@ -69,6 +70,7 @@ where
             options.gas_limit,
             options.print_debug,
             None,
+            None,
         )
     }
 
@@ -78,7 +80,9 @@ where
         gas_limit: u64,
         print_debug: bool,
         extra_imports: Option<HashMap<&str, Exports>>,
+        m: Option<&Mutex<()>>,
     ) -> VmResult<Self> {
+        let _lock = m.map(|m| m.lock().unwrap());
         let store = module.store();
 
         let env = Environment::new(backend.api, gas_limit, print_debug);
@@ -363,7 +367,7 @@ where
     S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
     Q: Querier + 'static,
 {
-    Instance::from_module(module, backend, gas_limit, print_debug, extra_imports)
+    Instance::from_module(module, backend, gas_limit, print_debug, extra_imports, None)
 }
 
 #[cfg(test)]
@@ -462,6 +466,7 @@ mod tests {
             instance_options.gas_limit,
             false,
             Some(extra_imports),
+            None,
         )
         .unwrap();
 
