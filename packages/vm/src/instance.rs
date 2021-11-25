@@ -82,7 +82,6 @@ where
         extra_imports: Option<HashMap<&str, Exports>>,
         m: Option<&Mutex<()>>,
     ) -> VmResult<Self> {
-        let _lock = m.map(|m| m.lock().unwrap());
         let store = module.store();
 
         let env = Environment::new(backend.api, gas_limit, print_debug);
@@ -217,11 +216,15 @@ where
             }
         }
 
+        let lock = m.map(|m| m.lock().unwrap());
         let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
             |original| {
                 VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
             },
         )?);
+        if let Some(lock) = lock {
+            drop(lock)
+        }
 
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
