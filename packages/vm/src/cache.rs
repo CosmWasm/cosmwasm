@@ -3,7 +3,7 @@ use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::checksum::Checksum;
@@ -254,7 +254,8 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let module = self.get_module(checksum)?;
+        let mut cache = self.inner.lock().unwrap();
+        let module = self.get_module(&mut cache, checksum)?;
         let instance = Instance::from_module(
             &module,
             backend,
@@ -268,8 +269,11 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<wasmer::Module> {
-        let mut cache = self.inner.lock().unwrap();
+    fn get_module(
+        &self,
+        cache: &mut MutexGuard<CacheInner>,
+        checksum: &Checksum,
+    ) -> VmResult<wasmer::Module> {
         // Try to get module from the pinned memory cache
         if let Some(module) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache += 1;
