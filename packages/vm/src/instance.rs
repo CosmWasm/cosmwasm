@@ -216,15 +216,15 @@ where
             }
         }
 
-        let lock = instantiation_lock.map(|l| l.lock().unwrap());
-        let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
-            |original| {
+        let wasmer_instance = Box::from(
+            {
+                let _lock = instantiation_lock.map(|l| l.lock().unwrap());
+                WasmerInstance::new(module, &import_obj)
+            }
+            .map_err(|original| {
                 VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
-            },
-        )?);
-        if let Some(lock) = lock {
-            drop(lock)
-        }
+            })?,
+        );
 
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
