@@ -80,7 +80,7 @@ where
         gas_limit: u64,
         print_debug: bool,
         extra_imports: Option<HashMap<&str, Exports>>,
-        m: Option<&Mutex<()>>,
+        instantiation_lock: Option<&Mutex<()>>,
     ) -> VmResult<Self> {
         let store = module.store();
 
@@ -216,7 +216,7 @@ where
             }
         }
 
-        let lock = m.map(|m| m.lock().unwrap());
+        let lock = instantiation_lock.map(|l| l.lock().unwrap());
         let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
             |original| {
                 VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
