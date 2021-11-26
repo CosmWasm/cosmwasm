@@ -1,10 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
+use std::sync::Mutex;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
-use crate::cache::Lock;
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -80,7 +80,7 @@ where
         gas_limit: u64,
         print_debug: bool,
         extra_imports: Option<HashMap<&str, Exports>>,
-        instantiation_lock: Option<&Lock>,
+        instantiation_lock: Option<&Mutex<()>>,
     ) -> VmResult<Self> {
         let store = module.store();
 
