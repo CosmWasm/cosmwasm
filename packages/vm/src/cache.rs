@@ -71,7 +71,8 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_api: PhantomData<A>,
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
-    m: Mutex<()>,
+    /// To prevent concurrent access to `WasmerInstance::new`
+    instantiation_lock: Mutex<()>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -132,7 +133,7 @@ where
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
-            m: Mutex::new(()),
+            instantiation_lock: Mutex::new(()),
         })
     }
 
@@ -263,7 +264,7 @@ where
             options.gas_limit,
             options.print_debug,
             None,
-            Some(&self.m),
+            Some(&self.instantiation_lock),
         )?;
         Ok(instance)
     }
