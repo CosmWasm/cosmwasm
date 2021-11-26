@@ -380,6 +380,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "520fbf3c07483f94e3e3ca9d0cfd913d7718ef2483d2cfd91c0d9e91474ab913"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "corosensei"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -428,7 +434,10 @@ dependencies = [
 name = "cosmwasm-derive"
 version = "2.0.0-rc.1"
 dependencies = [
+ "convert_case",
  "cosmwasm-std",
+ "proc-macro2",
+ "quote",
  "syn 1.0.109",
 ]
 

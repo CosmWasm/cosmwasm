@@ -16,6 +16,9 @@ default = []
 
 [dependencies]
 syn = { version = "1.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0.32"
+convert_case = "0.4.0"
 
 [dev-dependencies]
 # Needed for testing docs
