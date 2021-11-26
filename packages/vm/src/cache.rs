@@ -16,6 +16,8 @@ use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
 use crate::wasm_backend::{compile, make_runtime_store};
 
+pub(crate) type Lock = Mutex<()>;
+
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
 const WASM_DIR: &str = "wasm";
@@ -72,7 +74,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
     /// To prevent concurrent access to `WasmerInstance::new`
-    instantiation_lock: Mutex<()>,
+    instantiation_lock: Lock,
 }
 
 #[derive(PartialEq, Debug)]
@@ -133,7 +135,7 @@ where
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
-            instantiation_lock: Mutex::new(()),
+            instantiation_lock: Lock::new(()),
         })
     }
 
