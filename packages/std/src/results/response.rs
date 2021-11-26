@@ -129,8 +129,8 @@ impl<T> Response<T> {
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided type
     /// of event.
-    pub fn add_event(mut self, event: Event) -> Self {
-        self.events.push(event);
+    pub fn add_event(mut self, event: impl Into<Event>) -> Self {
+        self.events.push(event.into());
         self
     }
 
@@ -219,8 +219,11 @@ impl<T> Response<T> {
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided types
     /// of events.
-    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
-        self.events.extend(events);
+    pub fn add_events<E>(mut self, events: impl IntoIterator<Item = E>) -> Self
+    where
+        E: Into<Event>,
+    {
+        self.events.extend(events.into_iter().map(|e| e.into()));
         self
     }
 
@@ -236,7 +239,7 @@ mod tests {
     use super::super::BankMsg;
     use super::*;
     use crate::results::submessages::{ReplyOn, UNUSED_MSG_ID};
-    use crate::{coins, from_json, to_json_vec, ContractResult};
+    use crate::{attr, coins, from_json, to_json_vec, Addr, Coin, ContractResult, IntoEvent};
 
     #[test]
     fn response_add_attributes_works() {
@@ -330,5 +333,76 @@ mod tests {
         let failure = ContractResult::<()>::Err("broken".to_string());
         assert!(failure.is_err());
         assert!(!success.is_err());
+    }
+
+    #[test]
+    fn using_into_event() {
+        // IntoEvent can be used only when cosmwasm_std is imported as `cosmwasm_std`
+        use crate as cosmwasm_std;
+
+        fn coins_to_string(coins: Vec<Coin>) -> String {
+            format!(
+                "[{}]",
+                coins
+                    .iter()
+                    .map(|c| c.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            )
+        }
+
+        #[derive(Clone, IntoEvent)]
+        struct TransferEvent {
+            from: Addr,
+            receiver: Addr,
+            #[to_string_fn(coins_to_string)]
+            amount: Vec<Coin>,
+        }
+
+        let transfer_event = TransferEvent {
+            from: Addr::unchecked("alice"),
+            receiver: Addr::unchecked("bob"),
+            amount: coins(42, "link"),
+        };
+        let expected =
+            Response::<Empty>::new().add_event(Event::new("transfer_event").add_attributes(vec![
+                attr("from", "alice"),
+                attr("receiver", "bob"),
+                attr("amount", coins_to_string(coins(42, "link"))),
+            ]));
+        let actual = Response::<Empty>::new().add_event(transfer_event);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn using_into_event_add_events() {
+        use crate as cosmwasm_std;
+
+        fn u32_to_string(n: u32) -> String {
+            n.to_string()
+        }
+
+        #[derive(IntoEvent)]
+        struct Act {
+            name: String,
+            #[to_string_fn(u32_to_string)]
+            amount: u32,
+        }
+
+        let act1 = Act {
+            name: "mint".to_string(),
+            amount: 42,
+        };
+        let act2 = Act {
+            name: "burn".to_string(),
+            amount: 21,
+        };
+        let event1 =
+            Event::new("act").add_attributes(vec![attr("name", "mint"), attr("amount", "42")]);
+        let event2 =
+            Event::new("act").add_attributes(vec![attr("name", "burn"), attr("amount", "21")]);
+        let expected = Response::<Empty>::new().add_events(vec![event1, event2]);
+        let actual = Response::<Empty>::new().add_events(vec![act1, act2]);
+        assert_eq!(actual, expected);
     }
 }
