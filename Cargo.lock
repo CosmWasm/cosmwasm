@@ -321,6 +321,7 @@ dependencies = [
  "hex-literal",
  "loupe",
  "parity-wasm",
+ "rand",
  "schemars",
  "serde",
  "serde_json",

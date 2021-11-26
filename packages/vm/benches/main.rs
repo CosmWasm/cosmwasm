@@ -1,4 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use rand::seq::SliceRandom;
+use std::sync::Arc;
+use std::thread;
 use std::time::{Duration, SystemTime};
 use tempfile::TempDir;
 
@@ -10,8 +13,6 @@ use cosmwasm_vm::{
     call_execute, call_instantiate, features_from_csv, Cache, CacheOptions, Checksum, Instance,
     InstanceOptions, Size,
 };
-use std::sync::Arc;
-use std::thread;
 
 // Instance
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
@@ -29,6 +30,7 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 1024;
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+static CONTRACTS: &[&[u8]] = &[CONTRACT, include_bytes!("../testdata/ibc_reflect.wasm")];
 
 fn bench_instance(c: &mut Criterion) {
     let mut group = c.benchmark_group("Instance");
@@ -226,7 +228,7 @@ pub fn bench_instance_threads(c: &mut Criterion) {
     c.bench_function("multi-threaded get_instance", |b| {
         let options = CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_features: features_from_csv("iterator,staking"),
+            supported_features: features_from_csv("iterator,staking,stargate"),
             memory_cache_size: MEMORY_CACHE_SIZE,
             instance_memory_limit: DEFAULT_MEMORY_LIMIT,
         };
@@ -235,7 +237,12 @@ pub fn bench_instance_threads(c: &mut Criterion) {
             unsafe { Cache::new(options).unwrap() };
         let cache = Arc::new(cache);
 
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksums: Vec<_> = CONTRACTS
+            .iter()
+            .map(|&wasm| cache.save_wasm(wasm).unwrap())
+            .collect();
+
+        let random_checksum = || *checksums.choose(&mut rand::thread_rng()).unwrap();
 
         b.iter_custom(|iters| {
             let mut res = Duration::from_secs(0);
@@ -243,6 +250,7 @@ pub fn bench_instance_threads(c: &mut Criterion) {
                 let mut durations: Vec<_> = (0..INSTANTIATION_THREADS)
                     .map(|_id| {
                         let cache = Arc::clone(&cache);
+                        let checksum = random_checksum();
 
                         thread::spawn(move || {
                             let checksum = checksum;
