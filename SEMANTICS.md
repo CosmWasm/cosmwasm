@@ -184,7 +184,7 @@ this by following the actor model, which doesn't nest function calls, but
 returns messages that will be executed later. This means all state that is
 carried over between one call and the next happens in storage and not in memory.
 For more information on this design, I recommend you read
-[our docs on the Actor Model](https://docs.cosmwasm.com/0.13/architecture/actor.html).
+[our docs on the Actor Model](https://docs.cosmwasm.com/docs/1.0/architecture/actor).
 
 ### Submessages
 
