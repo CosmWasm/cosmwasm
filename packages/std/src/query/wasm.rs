@@ -25,7 +25,6 @@ pub enum WasmQuery {
     ContractInfo { contract_addr: String },
 }
 
-#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ContractInfoResponse {
     pub code_id: u64,
