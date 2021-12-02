@@ -39,9 +39,9 @@ pub struct ContractInfoResponse {
     pub ibc_port: Option<String>,
 }
 
-/// Convenience constructor for tests / mocks
-#[doc(hidden)]
 impl ContractInfoResponse {
+    /// Convenience constructor for tests / mocks
+    #[doc(hidden)]
     pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
         Self {
             code_id,
