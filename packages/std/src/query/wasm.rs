@@ -38,3 +38,17 @@ pub struct ContractInfoResponse {
     /// set if this contract has bound an IBC port
     pub ibc_port: Option<String>,
 }
+
+/// Convenience constructor for tests / mocks
+#[doc(hidden)]
+impl ContractInfoResponse {
+    pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
+        Self {
+            code_id,
+            creator: creator.into(),
+            admin: None,
+            pinned: false,
+            ibc_port: None,
+        }
+    }
+}
