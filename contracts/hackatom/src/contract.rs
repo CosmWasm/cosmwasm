@@ -316,7 +316,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
-    use cosmwasm_std::{coins, Storage, SubMsg};
+    use cosmwasm_std::{coins, Binary, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
@@ -579,6 +579,28 @@ mod tests {
             ExecuteMsg::UserErrorsInApiCalls {},
         )
         .unwrap();
+    }
+
+    #[test]
+    fn query_recursive() {
+        // the test framework doesn't handle contracts querying contracts yet,
+        // let's just make sure the last step looks right
+
+        let deps = mock_dependencies();
+        let contract = Addr::unchecked("my-contract");
+        let bin_contract: &[u8] = b"my-contract";
+
+        // return the unhashed value here
+        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract.clone()).unwrap();
+        assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
+
+        // let's see if 5 hashes are done right
+        let mut expected_hash = Sha256::digest(bin_contract);
+        for _ in 0..4 {
+            expected_hash = Sha256::digest(&expected_hash);
+        }
+        let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
+        assert_eq!(work_query.hashed, expected_hash.to_vec());
     }
 
     #[test]
