@@ -1,6 +1,6 @@
 //! exports exposes the public wasm API
 //!
-//! interface_version_7, allocate and deallocate turn into Wasm exports
+//! interface_version_8, allocate and deallocate turn into Wasm exports
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
 //! `do_execute`, `do_instantiate`, `do_migrate`, `do_query`, `do_reply`
