@@ -319,6 +319,7 @@ dependencies = [
  "criterion",
  "hex",
  "hex-literal",
+ "leb128",
  "loupe",
  "parity-wasm",
  "rand",
