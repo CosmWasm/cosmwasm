@@ -62,6 +62,7 @@ tempfile = "3.1.0"
 wat = "1.0"
 clap = "2.33.3"
 rand = "0.8"
+leb128 = "0.2"
 
 [[bench]]
 name = "main"

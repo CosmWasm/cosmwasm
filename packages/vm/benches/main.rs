@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rand::seq::SliceRandom;
+
+use rand::Rng;
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, SystemTime};
@@ -27,10 +28,10 @@ const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000_000; // ~20s, allows many calls o
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
 // Multi-threaded get_instance benchmark
-const INSTANTIATION_THREADS: usize = 1024;
+const INSTANTIATION_THREADS: usize = 128;
+const CONTRACTS: u64 = 10;
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
-static CONTRACTS: &[&[u8]] = &[CONTRACT, include_bytes!("../testdata/ibc_reflect.wasm")];
 
 fn bench_instance(c: &mut Criterion) {
     let mut group = c.benchmark_group("Instance");
@@ -228,7 +229,7 @@ pub fn bench_instance_threads(c: &mut Criterion) {
     c.bench_function("multi-threaded get_instance", |b| {
         let options = CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_features: features_from_csv("iterator,staking,stargate"),
+            supported_features: features_from_csv("iterator,staking"),
             memory_cache_size: MEMORY_CACHE_SIZE,
             instance_memory_limit: DEFAULT_MEMORY_LIMIT,
         };
@@ -237,12 +238,40 @@ pub fn bench_instance_threads(c: &mut Criterion) {
             unsafe { Cache::new(options).unwrap() };
         let cache = Arc::new(cache);
 
-        let checksums: Vec<_> = CONTRACTS
-            .iter()
-            .map(|&wasm| cache.save_wasm(wasm).unwrap())
-            .collect();
+        // Find sub-sequence helper
+        fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+            haystack
+                .windows(needle.len())
+                .position(|window| window == needle)
+        }
 
-        let random_checksum = || *checksums.choose(&mut rand::thread_rng()).unwrap();
+        // Offset to the i32.const (0x41) 15731626 (0xf00baa) (unsigned leb128 encoded) instruction
+        // data we want to replace
+        let query_int_data = b"\x41\xaa\x97\xc0\x07";
+        let offset = find_subsequence(CONTRACT, query_int_data).unwrap() + 1;
+
+        let mut leb128_buf = [0; 4];
+        let mut contract = CONTRACT.to_vec();
+
+        let mut random_checksum = || {
+            let mut writable = &mut leb128_buf[..];
+
+            // Generates a random number in the range of a 4-byte unsigned leb128 encoded number
+            let r = rand::thread_rng().gen_range(2097152..2097152 + CONTRACTS);
+
+            leb128::write::unsigned(&mut writable, r).expect("Should write number");
+
+            // Splice data in contract
+            contract.splice(offset..offset + leb128_buf.len(), leb128_buf);
+
+            cache.save_wasm(contract.as_slice()).unwrap()
+            // let checksum = cache.save_wasm(contract.as_slice()).unwrap();
+            // Preload into memory
+            // cache
+            //     .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
+            //     .unwrap();
+            // checksum
+        };
 
         b.iter_custom(|iters| {
             let mut res = Duration::from_secs(0);
