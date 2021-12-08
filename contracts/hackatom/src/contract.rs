@@ -8,7 +8,8 @@ use cosmwasm_std::{
 
 use crate::errors::HackError;
 use crate::msg::{
-    ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg, VerifierResponse,
+    ExecuteMsg, InstantiateMsg, IntResponse, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg,
+    VerifierResponse,
 };
 use crate::state::{State, CONFIG_KEY};
 
@@ -258,6 +259,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
         QueryMsg::Recurse { depth, work } => {
             to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
         }
+        QueryMsg::GetInt {} => to_binary(&query_int()),
     }
 }
 
@@ -303,6 +305,10 @@ fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult
     }
 }
 
+fn query_int() -> IntResponse {
+    IntResponse { int: 0xf00baa }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -310,7 +316,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
-    use cosmwasm_std::{coins, Binary, Storage, SubMsg};
+    use cosmwasm_std::{coins, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
@@ -576,24 +582,8 @@ mod tests {
     }
 
     #[test]
-    fn query_recursive() {
-        // the test framework doesn't handle contracts querying contracts yet,
-        // let's just make sure the last step looks right
-
-        let deps = mock_dependencies();
-        let contract = Addr::unchecked("my-contract");
-        let bin_contract: &[u8] = b"my-contract";
-
-        // return the unhashed value here
-        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract.clone()).unwrap();
-        assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
-
-        // let's see if 5 hashes are done right
-        let mut expected_hash = Sha256::digest(bin_contract);
-        for _ in 0..4 {
-            expected_hash = Sha256::digest(&expected_hash);
-        }
-        let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
-        assert_eq!(work_query.hashed, expected_hash.to_vec());
+    fn get_int() {
+        let get_int_query = query_int();
+        assert_eq!(get_int_query.int, 0xf00baa);
     }
 }
