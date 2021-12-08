@@ -11,7 +11,8 @@ and this project adheres to
 - cosmwasm-std: New const methods `Uint64::to_be_bytes`/`::to_le_bytes`.
 - cosmwasm-vm: The check_contracts tool now has a `--supported-features` option
   that defaults to "iterator,staking,stargate".
-- cosmwasm-vm: The default `singlepass` compiler is now supported on 64-bit Windows.
+- cosmwasm-vm: The default `singlepass` compiler is now supported on 64-bit
+  Windows.
 
 ### Changed
 
