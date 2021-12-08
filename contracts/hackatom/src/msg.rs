@@ -75,6 +75,8 @@ pub enum QueryMsg {
     /// (`work` rounds of sha256 on contract).
     /// Now that we have Env, we can auto-calculate the address to recurse into
     Recurse { depth: u32, work: u32 },
+    /// GetInt returns a hardcoded u32 value
+    GetInt {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -86,4 +88,9 @@ pub struct VerifierResponse {
 pub struct RecurseResponse {
     /// hashed is the result of running sha256 "work+1" times on the contract's human address
     pub hashed: Binary,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IntResponse {
+    pub int: u32,
 }
