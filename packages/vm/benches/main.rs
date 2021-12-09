@@ -28,8 +28,8 @@ const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000_000; // ~20s, allows many calls o
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
 // Multi-threaded get_instance benchmark
-const INSTANTIATION_THREADS: usize = 1024;
-const CONTRACTS: u64 = 100;
+const INSTANTIATION_THREADS: usize = 128;
+const CONTRACTS: u64 = 10;
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
