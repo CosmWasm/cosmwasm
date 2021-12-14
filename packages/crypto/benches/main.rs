@@ -32,6 +32,7 @@ const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
 #[derive(Deserialize, Debug)]
 struct Encoded {
     #[serde(rename = "privkey")]
+    #[allow(dead_code)]
     private_key: String,
     #[serde(rename = "pubkey")]
     public_key: String,
