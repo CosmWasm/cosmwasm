@@ -1165,7 +1165,7 @@ mod tests {
         );
 
         let empty: Vec<Decimal> = vec![];
-        assert_eq!(Decimal::zero(), empty.iter().sum())
+        assert_eq!(Decimal::zero(), empty.iter().sum());
     }
 
     #[test]
