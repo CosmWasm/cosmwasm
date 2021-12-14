@@ -11,6 +11,8 @@ and this project adheres to
 - cosmwasm-std: New const methods `Uint64::to_be_bytes`/`::to_le_bytes`.
 - cosmwasm-vm: The check_contracts tool now has a `--supported-features` option
   that defaults to "iterator,staking,stargate".
+- cosmwasm-vm: The default `singlepass` compiler is now supported on 64-bit
+  Windows.
 - cosmwasm-std: Add missing `DivideByZeroError` export.
 
 ### Changed
@@ -20,6 +22,7 @@ and this project adheres to
   Remove `&[]` if you don't need a contract balance or use the new
   `mock_dependencies_with_balance` if you need a balance.
 - cosmwasm-vm: Unlock cache mutex before module instantiation.
+- cosmwasm-vm: `wasmer` version bumped `2.0.0 -> 2.1.0`
 
 ### Removed
 
