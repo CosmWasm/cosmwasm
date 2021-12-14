@@ -299,6 +299,14 @@ impl ops::Add for Decimal256 {
     }
 }
 
+impl ops::Add<&Decimal256> for Decimal256 {
+    type Output = Self;
+
+    fn add(self, other: &Decimal256) -> Self {
+        Self(self.0 + other.0)
+    }
+}
+
 impl ops::Sub for Decimal256 {
     type Output = Self;
 
@@ -364,6 +372,15 @@ impl ops::DivAssign<Uint256> for Decimal256 {
     }
 }
 
+impl<A> std::iter::Sum<A> for Decimal256
+where
+    Decimal256: ops::Add<A, Output = Decimal256>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+        iter.fold(Self::zero(), |a, b| a + b)
+    }
+}
+
 /// Serializes as a decimal string
 impl Serialize for Decimal256 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -411,25 +428,25 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
-    fn decimal_one() {
+    fn decimal256_one() {
         let value = Decimal256::one();
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL);
     }
 
     #[test]
-    fn decimal_zero() {
+    fn decimal256_zero() {
         let value = Decimal256::zero();
         assert!(value.0.is_zero());
     }
 
     #[test]
-    fn decimal_percent() {
+    fn decimal256_percent() {
         let value = Decimal256::percent(50);
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(2u8));
     }
 
     #[test]
-    fn decimal_permille() {
+    fn decimal256_permille() {
         let value = Decimal256::permille(125);
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(8u8));
     }
@@ -524,7 +541,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_ratio_works() {
+    fn decimal256_from_ratio_works() {
         // 1.0
         assert_eq!(Decimal256::from_ratio(1u128, 1u128), Decimal256::one());
         assert_eq!(Decimal256::from_ratio(53u128, 53u128), Decimal256::one());
@@ -581,12 +598,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Denominator must not be zero")]
-    fn decimal_from_ratio_panics_for_zero_denominator() {
+    fn decimal256_from_ratio_panics_for_zero_denominator() {
         Decimal256::from_ratio(1u128, 0u128);
     }
 
     #[test]
-    fn decimal_implements_fraction() {
+    fn decimal256_implements_fraction() {
         let fraction = Decimal256::from_str("1234.567").unwrap();
         assert_eq!(
             fraction.numerator(),
@@ -599,7 +616,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_works() {
+    fn decimal256_from_str_works() {
         // Integers
         assert_eq!(Decimal256::from_str("0").unwrap(), Decimal256::percent(0));
         assert_eq!(Decimal256::from_str("1").unwrap(), Decimal256::percent(100));
@@ -678,7 +695,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_broken_whole_part() {
+    fn decimal256_from_str_errors_for_broken_whole_part() {
         match Decimal256::from_str("").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
             e => panic!("Unexpected error: {:?}", e),
@@ -696,7 +713,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_broken_fractinal_part() {
+    fn decimal256_from_str_errors_for_broken_fractinal_part() {
         match Decimal256::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {:?}", e),
@@ -719,7 +736,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_more_than_36_fractional_digits() {
+    fn decimal256_from_str_errors_for_more_than_36_fractional_digits() {
         match Decimal256::from_str("7.1234567890123456789").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits")
@@ -737,7 +754,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_invalid_number_of_dots() {
+    fn decimal256_from_str_errors_for_invalid_number_of_dots() {
         match Decimal256::from_str("1.2.3").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
             e => panic!("Unexpected error: {:?}", e),
@@ -750,7 +767,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_more_than_max_value() {
+    fn decimal256_from_str_errors_for_more_than_max_value() {
         // Integer
         match Decimal256::from_str("115792089237316195423570985008687907853269984665640564039458")
             .unwrap_err()
@@ -777,7 +794,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_atomics_works() {
+    fn decimal256_atomics_works() {
         let zero = Decimal256::zero();
         let one = Decimal256::one();
         let half = Decimal256::percent(50);
@@ -792,7 +809,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_decimal_places_works() {
+    fn decimal256_decimal_places_works() {
         let zero = Decimal256::zero();
         let one = Decimal256::one();
         let half = Decimal256::percent(50);
@@ -807,7 +824,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_is_zero_works() {
+    fn decimal256_is_zero_works() {
         assert!(Decimal256::zero().is_zero());
         assert!(Decimal256::percent(0).is_zero());
         assert!(Decimal256::permille(0).is_zero());
@@ -818,7 +835,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_inv_works() {
+    fn decimal256_inv_works() {
         // d = 0
         assert_eq!(Decimal256::zero().inv(), None);
 
@@ -873,7 +890,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_add() {
+    fn decimal256_add() {
         let value = Decimal256::one() + Decimal256::percent(50); // 1.5
         assert_eq!(
             value.0,
@@ -883,24 +900,24 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to add with overflow")]
-    fn decimal_add_overflow_panics() {
+    fn decimal256_add_overflow_panics() {
         let _value = Decimal256::MAX + Decimal256::percent(50);
     }
 
     #[test]
-    fn decimal_sub() {
+    fn decimal256_sub() {
         let value = Decimal256::one() - Decimal256::percent(50); // 0.5
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(2u8));
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
-    fn decimal_sub_overflow_panics() {
+    fn decimal256_sub_overflow_panics() {
         let _value = Decimal256::zero() - Decimal256::percent(50);
     }
 
     #[test]
-    fn decimal_implements_mul() {
+    fn decimal256_implements_mul() {
         let one = Decimal256::one();
         let two = one + one;
         let half = Decimal256::percent(50);
@@ -1010,7 +1027,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to multiply with overflow")]
-    fn decimal_mul_overflow_panics() {
+    fn decimal256_mul_overflow_panics() {
         let _value = Decimal256::MAX * Decimal256::percent(101);
     }
 
@@ -1035,7 +1052,7 @@ mod tests {
 
     #[test]
     // in this test the Decimal256 is on the left
-    fn decimal_uint128_multiply() {
+    fn decimal256_uint128_multiply() {
         // a*b
         let left = Decimal256::one() + Decimal256::percent(50); // 1.5
         let right = Uint256::from(300u128);
@@ -1053,7 +1070,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_uint128_division() {
+    fn decimal256_uint128_division() {
         // a/b
         let left = Decimal256::percent(150); // 1.5
         let right = Uint256::from(3u128);
@@ -1067,14 +1084,14 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to divide by zero")]
-    fn decimal_uint128_divide_by_zero() {
+    fn decimal256_uint128_divide_by_zero() {
         let left = Decimal256::percent(150); // 1.5
         let right = Uint256::from(0u128);
         let _result = left / right;
     }
 
     #[test]
-    fn decimal_uint128_div_assign() {
+    fn decimal256_uint128_div_assign() {
         // a/b
         let mut dec = Decimal256::percent(150); // 1.5
         dec /= Uint256::from(3u128);
@@ -1088,14 +1105,14 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to divide by zero")]
-    fn decimal_uint128_div_assign_by_zero() {
+    fn decimal256_uint128_div_assign_by_zero() {
         // a/0
         let mut dec = Decimal256::percent(50);
         dec /= Uint256::from(0u128);
     }
 
     #[test]
-    fn decimal_uint128_sqrt() {
+    fn decimal256_uint128_sqrt() {
         assert_eq!(Decimal256::percent(900).sqrt(), Decimal256::percent(300));
 
         assert!(Decimal256::percent(316) < Decimal256::percent(1000).sqrt());
@@ -1104,7 +1121,7 @@ mod tests {
 
     /// sqrt(2) is an irrational number, i.e. all 36 decimal places should be used.
     #[test]
-    fn decimal_uint128_sqrt_is_precise() {
+    fn decimal256_uint128_sqrt_is_precise() {
         assert_eq!(
             Decimal256::from_str("2").unwrap().sqrt(),
             Decimal256::from_str("1.414213562373095048").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
@@ -1112,7 +1129,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_uint128_sqrt_does_not_overflow() {
+    fn decimal256_uint128_sqrt_does_not_overflow() {
         assert_eq!(
             Decimal256::from_str("40000000000000000000000000000000000000000000000000000000000")
                 .unwrap()
@@ -1122,7 +1139,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_uint128_sqrt_intermediate_precision_used() {
+    fn decimal256_uint128_sqrt_intermediate_precision_used() {
         assert_eq!(
             Decimal256::from_str("40000000000000000000000000000000000000000000000001")
                 .unwrap()
@@ -1135,7 +1152,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_to_string() {
+    fn decimal256_to_string() {
         // Integers
         assert_eq!(Decimal256::zero().to_string(), "0");
         assert_eq!(Decimal256::one().to_string(), "1");
@@ -1218,7 +1235,27 @@ mod tests {
     }
 
     #[test]
-    fn decimal_serialize() {
+    fn decimal256_iter_sum() {
+        let items = vec![
+            Decimal256::zero(),
+            Decimal256::from_str("2").unwrap(),
+            Decimal256::from_str("2").unwrap(),
+        ];
+        assert_eq!(
+            items.iter().sum::<Decimal256>(),
+            Decimal256::from_str("4").unwrap()
+        );
+        assert_eq!(
+            items.into_iter().sum::<Decimal256>(),
+            Decimal256::from_str("4").unwrap()
+        );
+
+        let empty: Vec<Decimal256> = vec![];
+        assert_eq!(Decimal256::zero(), empty.iter().sum());
+    }
+
+    #[test]
+    fn decimal256_serialize() {
         assert_eq!(to_vec(&Decimal256::zero()).unwrap(), br#""0""#);
         assert_eq!(to_vec(&Decimal256::one()).unwrap(), br#""1""#);
         assert_eq!(to_vec(&Decimal256::percent(8)).unwrap(), br#""0.08""#);
@@ -1228,7 +1265,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_deserialize() {
+    fn decimal256_deserialize() {
         assert_eq!(
             from_slice::<Decimal256>(br#""0""#).unwrap(),
             Decimal256::zero()
