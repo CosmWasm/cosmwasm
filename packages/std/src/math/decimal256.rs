@@ -299,6 +299,14 @@ impl ops::Add for Decimal256 {
     }
 }
 
+impl ops::Add<&Decimal256> for Decimal256 {
+    type Output = Self;
+
+    fn add(self, other: &Decimal256) -> Self {
+        Self(self.0 + other.0)
+    }
+}
+
 impl ops::Sub for Decimal256 {
     type Output = Self;
 
@@ -361,6 +369,15 @@ impl ops::Div<Uint256> for Decimal256 {
 impl ops::DivAssign<Uint256> for Decimal256 {
     fn div_assign(&mut self, rhs: Uint256) {
         self.0 /= rhs;
+    }
+}
+
+impl<A> std::iter::Sum<A> for Decimal256
+where
+    Decimal256: ops::Add<A, Output = Decimal256>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+        iter.fold(Self::zero(), |a, b| a + b)
     }
 }
 
@@ -1215,6 +1232,26 @@ mod tests {
             Decimal256(Uint256::from(100000000000000000u128)).to_string(),
             "0.1"
         );
+    }
+
+    #[test]
+    fn decimal_iter_sum() {
+        let items = vec![
+            Decimal256::zero(),
+            Decimal256::from_str("2").unwrap(),
+            Decimal256::from_str("2").unwrap(),
+        ];
+        assert_eq!(
+            items.iter().sum::<Decimal256>(),
+            Decimal256::from_str("4").unwrap()
+        );
+        assert_eq!(
+            items.into_iter().sum::<Decimal256>(),
+            Decimal256::from_str("4").unwrap()
+        );
+
+        let empty: Vec<Decimal256> = vec![];
+        assert_eq!(Decimal256::zero(), empty.iter().sum());
     }
 
     #[test]

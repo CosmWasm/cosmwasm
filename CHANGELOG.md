@@ -14,7 +14,7 @@ and this project adheres to
 - cosmwasm-vm: The default `singlepass` compiler is now supported on 64-bit
   Windows.
 - cosmwasm-std: Add missing `DivideByZeroError` export.
-- cosmwasm-std: Implementation of `std::iter::Sum` for `Decimal`.
+- cosmwasm-std: Implement `std::iter::Sum` for `Decimal` and `Decimal256`.
 
 ### Changed
 
