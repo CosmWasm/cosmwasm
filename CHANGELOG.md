@@ -13,6 +13,7 @@ and this project adheres to
   that defaults to "iterator,staking,stargate".
 - cosmwasm-vm: The default `singlepass` compiler is now supported on 64-bit
   Windows.
+- cosmwasm-std: Add missing `DivideByZeroError` export.
 
 ### Changed
 
