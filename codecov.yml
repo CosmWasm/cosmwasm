@@ -1,5 +1,14 @@
 comment: false
 
+coverage:
+  status:
+    project:
+      default:
+        threshold: 0.05%
+    patch:
+      default:
+        threshold: 0.05%
+
 ignore:
   - "contracts"
   - "packages/profiler"
