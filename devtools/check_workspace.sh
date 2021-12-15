@@ -3,7 +3,9 @@ set -o errexit -o nounset -o pipefail
 command -v shellcheck >/dev/null && shellcheck "$0"
 
 cargo fmt
-(cd packages/crypto && cargo build && cargo clippy --all-targets -- -D warnings)
+(cd packages/crypto && cargo check && cargo clippy --all-targets -- -D warnings)
+(cd packages/derive && cargo check && cargo clippy --all-targets -- -D warnings)
+(cd packages/profiler && cargo check && cargo clippy --all-targets -- -D warnings)
 (
   cd packages/std
   cargo check
