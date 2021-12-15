@@ -113,7 +113,7 @@ mod tests {
 
         let code_block1 = [
             Operator::GlobalGet { global_index: 333 },
-            Operator::I64Const { value: 555 as i64 },
+            Operator::I64Const { value: 555 },
             Operator::I64LtU,
             Operator::If {
                 ty: TypeOrFuncType::Type(Type::EmptyBlockType),

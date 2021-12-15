@@ -337,7 +337,7 @@ mod tests {
 
             Self {
                 instance: module.instrument(
-                    block_store.clone(),
+                    block_store,
                     env,
                     start_measurement_fn,
                     take_measurement_fn,
