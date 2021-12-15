@@ -849,6 +849,14 @@ jobs:
           working_directory: ~/project/packages/crypto
           command: cargo clippy --all-targets -- -D warnings
       - run:
+          name: Clippy linting on derive
+          working_directory: ~/project/packages/derive
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
+          name: Clippy linting on profiler
+          working_directory: ~/project/packages/profiler
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
           name: Clippy linting on schema
           working_directory: ~/project/packages/schema
           command: cargo clippy --all-targets -- -D warnings
