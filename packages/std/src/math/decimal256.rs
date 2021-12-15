@@ -374,10 +374,10 @@ impl ops::DivAssign<Uint256> for Decimal256 {
 
 impl<A> std::iter::Sum<A> for Decimal256
 where
-    Decimal256: ops::Add<A, Output = Decimal256>,
+    Self: ops::Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), |a, b| a + b)
+        iter.fold(Self::zero(), ops::Add::add)
     }
 }
 

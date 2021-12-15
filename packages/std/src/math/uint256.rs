@@ -2,7 +2,6 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::iter::Sum;
 use std::ops::{self, Shl, Shr};
 use std::str::FromStr;
 
@@ -632,15 +631,12 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     }
 }
 
-impl Sum<Uint256> for Uint256 {
-    fn sum<I: Iterator<Item = Uint256>>(iter: I) -> Self {
-        iter.fold(Uint256::zero(), ops::Add::add)
-    }
-}
-
-impl<'a> Sum<&'a Uint256> for Uint256 {
-    fn sum<I: Iterator<Item = &'a Uint256>>(iter: I) -> Self {
-        iter.fold(Uint256::zero(), ops::Add::add)
+impl<A> std::iter::Sum<A> for Uint256
+where
+    Self: ops::Add<A, Output = Self>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+        iter.fold(Self::zero(), ops::Add::add)
     }
 }
 
