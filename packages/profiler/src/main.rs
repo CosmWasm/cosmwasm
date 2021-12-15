@@ -71,7 +71,7 @@ fn main() {
 }
 
 // Pretty much stolen from `/contracts/hackatom/tests/integration.rs`
-fn call_things(mut deps: &mut MockInstance) {
+fn call_things(deps: &mut MockInstance) {
     use hackatom::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
     let verifier = String::from("verifies");
@@ -82,15 +82,15 @@ fn call_things(mut deps: &mut MockInstance) {
         beneficiary,
     };
     let info = mock_info(&creator, &coins(1000, "earth"));
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
-    let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+    let query_response = query(deps, mock_env(), QueryMsg::Verifier {}).unwrap();
     assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
-    let qres = query(&mut deps, mock_env(), ExecuteMsg::Release {});
+    let qres = query(deps, mock_env(), ExecuteMsg::Release {});
     let msg = qres.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
