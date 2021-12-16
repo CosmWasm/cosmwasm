@@ -79,7 +79,7 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   as Etherscan.
 - [serde-json-wasm](https://github.com/CosmWasm/serde-json-wasm) - A custom json
   library, forked from `serde-json-core`. This provides an interface similar to
-  `serde-json`, but without ay floating-point instructions (non-deterministic)
+  `serde-json`, but without any floating-point instructions (non-deterministic)
   and producing builds around 40% of the code size.
 
 **Executing contracts:**
