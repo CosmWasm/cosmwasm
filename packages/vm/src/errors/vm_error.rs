@@ -267,7 +267,10 @@ impl VmError {
         }
     }
 
-    pub(crate) fn runtime_err(msg: impl Into<String>) -> Self {
+    // Creates a runtime error with the given message.
+    // This is private since it is only needed when converting wasmer::RuntimeError
+    // to VmError.
+    fn runtime_err(msg: impl Into<String>) -> Self {
         VmError::RuntimeErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
