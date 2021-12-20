@@ -483,7 +483,9 @@ fn execute_panic() {
         &to_vec(&ExecuteMsg::Panic {}).unwrap(),
     );
     match execute_res.unwrap_err() {
-        VmError::RuntimeErr { .. } => {}
+        VmError::RuntimeErr { msg, .. } => {
+            assert_eq!(msg, "Wasmer runtime error: RuntimeError: unreachable")
+        }
         err => panic!("Unexpected error: {:?}", err),
     }
 }
