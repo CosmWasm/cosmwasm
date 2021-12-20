@@ -337,7 +337,19 @@ impl From<wasmer::DeserializeError> for VmError {
 
 impl From<wasmer::RuntimeError> for VmError {
     fn from(original: wasmer::RuntimeError) -> Self {
-        VmError::runtime_err(format!("Wasmer runtime error: {}", original))
+        // Do not use the Display implementation or to_string() of `RuntimeError`
+        // because it can contain a system specific stack trace, which can
+        // lead to non-deterministic execution.
+        //
+        // Implementation follows https://github.com/wasmerio/wasmer/blob/2.0.0/lib/engine/src/trap/error.rs#L215
+        let message = format!("RuntimeError: {}", original.message());
+        debug_assert!(
+            original.to_string().starts_with(&message),
+            "The error message we created is not a prefix of the error message from Wasmer. Our message: '{}'. Wasmer messsage: '{}'",
+            &message,
+            original.to_string()
+        );
+        VmError::runtime_err(format!("Wasmer runtime error: {}", &message))
     }
 }
 
