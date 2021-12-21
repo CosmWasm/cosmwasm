@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: `wasmer` version bumped `2.1.0 -> 2.1.1`
+
 ## [1.0.0-beta3]
 
 ### Added
