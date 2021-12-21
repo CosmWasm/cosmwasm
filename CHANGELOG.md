@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-beta3]
+
 ### Added
 
 - cosmwasm-std: New const methods `Uint64::to_be_bytes`/`::to_le_bytes`.
@@ -1202,7 +1204,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta3...HEAD
+[1.0.0-beta3]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta...v1.0.0-beta3
 [1.0.0-beta]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...v1.0.0-beta
 [0.16.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.0...v0.16.1
