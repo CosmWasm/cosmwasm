@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Remove system-dependent stacktrace from `VmError::RuntimeErr`
+  (fixes CWA-2021-003).
+
 ## [0.16.2] - 2021-09-07
 
 ### Added
