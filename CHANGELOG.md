@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.16.3] - 2021-12-23
+
 ### Fixed
 
 - cosmwasm-vm: Remove system-dependent stacktrace from `VmError::RuntimeErr`
