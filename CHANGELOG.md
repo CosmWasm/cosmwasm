@@ -10,6 +10,11 @@ and this project adheres to
 
 - cosmwasm-vm: `wasmer` version bumped `2.1.0 -> 2.1.1`
 
+### Fixed
+
+- cosmwasm-vm: Remove system-dependent stacktrace from `VmError::RuntimeErr`
+  (fixes CWA-2021-003).
+
 ## [1.0.0-beta3]
 
 ### Added
