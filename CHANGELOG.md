@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-beta4] - 2021-12-23
+
 ### Changed
 
 - cosmwasm-vm: `wasmer` version bumped `2.1.0 -> 2.1.1`
@@ -1213,7 +1215,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta3...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta4...HEAD
+[1.0.0-beta4]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta3...v1.0.0-beta4
 [1.0.0-beta3]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta...v1.0.0-beta3
 [1.0.0-beta]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...v1.0.0-beta
