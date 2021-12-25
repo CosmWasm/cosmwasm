@@ -1,9 +1,9 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::checksum::Checksum;
@@ -72,7 +72,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
     /// To prevent concurrent access to `WasmerInstance::new`
-    instantiation_lock: Mutex<()>,
+    instantiation_locks: Mutex<HashMap<Checksum, Arc<Mutex<()>>>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -133,7 +133,7 @@ where
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
-            instantiation_lock: Mutex::new(()),
+            instantiation_locks: Mutex::new(HashMap::new()),
         })
     }
 
@@ -248,6 +248,15 @@ where
             .remove(checksum)
     }
 
+    #[inline]
+    fn get_instance_lock(&self, checksum: &Checksum) -> Arc<Mutex<()>> {
+        let mut locks_map = self.instantiation_locks.lock().unwrap();
+        locks_map
+            .entry(*checksum)
+            .or_insert_with(|| Arc::new(Mutex::new(())))
+            .clone()
+    }
+
     /// Returns an Instance tied to a previously saved Wasm.
     ///
     /// It takes a module from cache or Wasm code and instantiates it.
@@ -258,13 +267,14 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
         let module = self.get_module(checksum)?;
+
         let instance = Instance::from_module(
             &module,
             backend,
             options.gas_limit,
             options.print_debug,
             None,
-            Some(&self.instantiation_lock),
+            Some(&self.get_instance_lock(checksum)),
         )?;
         Ok(instance)
     }
