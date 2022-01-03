@@ -1062,6 +1062,7 @@ jobs:
             # create a dummy container which will hold a volume with config
             docker create -v /code --name with_code alpine /bin/true
             # copy a config file into this volume
+            docker cp ./Cargo.lock with_code:/code
             docker cp ./Cargo.toml with_code:/code
             docker cp ./contracts with_code:/code
             docker cp ./packages with_code:/code
