@@ -48,7 +48,7 @@ workflows:
                 - cache-analyze
                 - fix-benches
                 - benchmark_argon2
-                - get_instance-multi-threaded-benchmark-multi-contract
+                - 1183-per-instance-lock
       - coverage
   deploy:
     jobs:
