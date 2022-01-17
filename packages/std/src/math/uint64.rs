@@ -2,7 +2,6 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::iter::Sum;
 use std::ops;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -355,15 +354,12 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
     }
 }
 
-impl Sum<Uint64> for Uint64 {
-    fn sum<I: Iterator<Item = Uint64>>(iter: I) -> Self {
-        iter.fold(Uint64::zero(), ops::Add::add)
-    }
-}
-
-impl<'a> Sum<&'a Uint64> for Uint64 {
-    fn sum<I: Iterator<Item = &'a Uint64>>(iter: I) -> Self {
-        iter.fold(Uint64::zero(), ops::Add::add)
+impl<A> std::iter::Sum<A> for Uint64
+where
+    Self: ops::Add<A, Output = Self>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+        iter.fold(Self::zero(), ops::Add::add)
     }
 }
 
