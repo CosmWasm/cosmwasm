@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: The `Debug` implementation of `Binary` now produces a hex string
+  instead of a list of bytes ([#1199]).
+
+[#1199]: https://github.com/CosmWasm/cosmwasm/issues/1199
+
 ## [1.0.0-beta4] - 2021-12-23
 
 ### Changed

@@ -10,7 +10,7 @@ use crate::errors::{StdError, StdResult};
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
-#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
 impl Binary {
@@ -72,6 +72,19 @@ impl Binary {
 impl fmt::Display for Binary {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_base64())
+    }
+}
+
+impl fmt::Debug for Binary {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Use an output inspired by tuples (https://doc.rust-lang.org/std/fmt/struct.Formatter.html#method.debug_tuple)
+        // but with a custom implementation to avoid the need for an intemediate hex string.
+        write!(f, "Binary(")?;
+        for byte in self.0.iter() {
+            write!(f, "{:02x}", byte)?;
+        }
+        write!(f, ")")?;
+        Ok(())
     }
 }
 
@@ -436,6 +449,17 @@ mod tests {
         let serialized = to_vec(&invalid_str).unwrap();
         let res = from_slice::<Binary>(&serialized);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn binary_implements_debug() {
+        // Some data
+        let binary = Binary(vec![0x07, 0x35, 0xAA, 0xcb, 0x00, 0xff]);
+        assert_eq!(format!("{:?}", binary), "Binary(0735aacb00ff)",);
+
+        // Empty
+        let binary = Binary(vec![]);
+        assert_eq!(format!("{:?}", binary), "Binary()",);
     }
 
     #[test]

@@ -18,7 +18,9 @@ impl Checksum {
         Checksum(Sha256::digest(wasm).into())
     }
 
-    /// Creates a lowercase hex encoded copy of this checksum
+    /// Creates a lowercase hex encoded copy of this checksum.
+    ///
+    /// This takes an owned `self` instead of a reference because `Checksum` is cheap to `Copy`.
     pub fn to_hex(self) -> String {
         self.to_string()
     }
