@@ -273,7 +273,7 @@ pub struct Region {
 
 If you followed the [instructions above](#Creating), you should have a runable
 smart contract. You may notice that all of the Wasm exports are taken care of by
-`lib.rs`, which shouldn't need to modify. What you need to do is simply
+`lib.rs`, which you shouldn't need to modify. What you need to do is simply
 look in `contract.rs` and implement `instantiate` and `execute` functions,
 defining your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your
 custom message types (as json):
