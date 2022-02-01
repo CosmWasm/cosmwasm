@@ -25,15 +25,18 @@ development, you will depends on the cosmwasm-vm MSRV.
 
 ## Latest changes
 
-| Version | cosmwasm-std MSRV | cosmwasm-vm MSRV | Notes                            |
-| ------- | ----------------- | ---------------- | -------------------------------- |
-| 0.14.0  | 1.51.0            | 1.51.0           | Added support for const generics |
-| 0.13.2  | 1.47.0            | 1.48.0           | Through [Wasmer 1.0.1]           |
-| 0.13.0  | 1.47.0            | 1.47.0           |                                  |
-| 0.11.0  | 1.45.2            | 1.45.2           |                                  |
+| Version | cosmwasm-std MSRV | cosmwasm-vm MSRV | Notes                                                              |
+| ------- | ----------------- | ---------------- | ------------------------------------------------------------------ |
+| 0.16.4  | 1.55.0            | 1.55.0           | Required for [Wasmer 2.1.0+] and let's us keep up with modern Rust |
+| 0.14.0  | 1.51.0            | 1.51.0           | Added support for const generics                                   |
+| 0.13.2  | 1.47.0            | 1.48.0           | Through [Wasmer 1.0.1]                                             |
+| 0.13.0  | 1.47.0            | 1.47.0           |                                                                    |
+| 0.11.0  | 1.45.2            | 1.45.2           |                                                                    |
 
 [wasmer 1.0.1]:
   https://github.com/wasmerio/wasmer/blob/master/CHANGELOG.md#101---2021-01-12
+[wasmer 2.1.0+]:
+  https://github.com/wasmerio/wasmer/commit/005d1295297acaaa7fdf713e76a36d08264d8c49
 
 ## Policy
 
