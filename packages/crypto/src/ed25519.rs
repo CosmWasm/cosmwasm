@@ -161,6 +161,7 @@ mod tests {
     #[derive(Deserialize, Debug)]
     struct Encoded {
         #[serde(rename = "privkey")]
+        #[allow(dead_code)]
         private_key: String,
         #[serde(rename = "pubkey")]
         public_key: String,
