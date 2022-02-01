@@ -10,6 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: The `Debug` implementation of `Binary` now produces a hex string
   instead of a list of bytes ([#1199]).
+- cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
+  MSRV.
 
 [#1199]: https://github.com/CosmWasm/cosmwasm/issues/1199
 
