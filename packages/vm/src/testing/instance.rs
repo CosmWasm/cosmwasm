@@ -98,6 +98,8 @@ impl MockInstanceOptions<'_> {
         let mut out = features_from_csv("iterator,staking");
         #[cfg(feature = "stargate")]
         out.insert("stargate".to_string());
+        #[cfg(feature = "tgrade")]
+        out.insert("tgrade".to_string());
         out
     }
 }
