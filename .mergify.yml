@@ -9,6 +9,7 @@ pull_request_rules:
       - label!=WIP
       # We need to list them all individually. Here is why: https://doc.mergify.io/conditions.html#validating-all-status-check
       - "status-success=ci/circleci: package_crypto"
+      - "status-success=ci/circleci: package_profiler"
       - "status-success=ci/circleci: package_schema"
       - "status-success=ci/circleci: package_std"
       - "status-success=ci/circleci: package_storage"
@@ -23,10 +24,10 @@ pull_request_rules:
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"
       - "status-success=ci/circleci: fmt"
-      - "status-success=ci/circleci: clippy"
+      - "status-success=ci/circleci: clippy-1.53.0"
+      - "status-success=ci/circleci: clippy-1.58.1"
       - "status-success=Windows"
       - "status-success=macOS"
     actions:
       merge:
         method: merge
-        strict: false
