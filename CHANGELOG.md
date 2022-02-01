@@ -6,6 +6,7 @@ and this project adheres to
 
 ## [Unreleased]
 
+- all: Drop support for Rust versions lower than 1.54.0.
 - cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
   MSRV.
 

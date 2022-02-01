@@ -27,6 +27,7 @@ development, you will depends on the cosmwasm-vm MSRV.
 
 | Version | cosmwasm-std MSRV | cosmwasm-vm MSRV | Notes                            |
 | ------- | ----------------- | ---------------- | -------------------------------- |
+| 0.16.4  | 1.54.0            | 1.54.0           |                                  |
 | 0.14.0  | 1.51.0            | 1.51.0           | Added support for const generics |
 | 0.13.2  | 1.47.0            | 1.48.0           | Through [Wasmer 1.0.1]           |
 | 0.13.0  | 1.47.0            | 1.47.0           |                                  |
