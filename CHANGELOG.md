@@ -6,6 +6,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+- cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
+  MSRV.
+
 ## [0.16.3] - 2021-12-23
 
 ### Fixed
