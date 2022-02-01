@@ -109,6 +109,12 @@ jobs:
   package_std:
     docker:
       - image: rust:1.55.0
+    # Reduce number of parallel builds to avoid OOM when running doc tests
+    # ("collect2: fatal error: ld terminated with signal 9 [Killed]").
+    # Our machine has 2 vCPUs (https://circleci.com/docs/2.0/configuration-reference/#docker-executor)
+    # but nproc and lscpu report 36 CPUs.
+    environment:
+      CARGO_BUILD_JOBS: 1
     steps:
       - checkout
       - run:
