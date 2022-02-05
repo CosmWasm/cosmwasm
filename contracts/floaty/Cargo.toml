@@ -39,4 +39,4 @@ thiserror = "1.0"
 [dev-dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-storage = { path = "../../packages/storage" }
-cosmwasm-vm = { path = "../../packages/vm", default-features = false }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }

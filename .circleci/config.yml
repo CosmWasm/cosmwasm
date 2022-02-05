@@ -547,6 +547,9 @@ jobs:
           name: Unit tests
           command: cargo unit-test --locked
       - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
+      - run:
           name: Build and run schema generator
           command: cargo schema --locked
       - run:
