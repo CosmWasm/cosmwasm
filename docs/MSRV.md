@@ -25,13 +25,15 @@ development, you will depends on the cosmwasm-vm MSRV.
 
 ## Latest changes
 
-| Version | cosmwasm-std MSRV | cosmwasm-vm MSRV | Notes                                                                                   |
-| ------- | ----------------- | ---------------- | --------------------------------------------------------------------------------------- |
-| 1.0.0   | 1.53.0            | 1.53.0           | Not strictly needed but prepares for [Wasmer > 2] and let's us keep up with modern Rust |
-| 0.14.0  | 1.51.0            | 1.51.0           | Added support for const generics                                                        |
-| 0.13.2  | 1.47.0            | 1.48.0           | Through [Wasmer 1.0.1]                                                                  |
-| 0.13.0  | 1.47.0            | 1.47.0           |                                                                                         |
-| 0.11.0  | 1.45.2            | 1.45.2           |                                                                                         |
+| Version     | cosmwasm-std MSRV | cosmwasm-vm MSRV | Notes                                                                                   |
+| ----------- | ----------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| 1.0.0-beta5 | 1.54.0            | 1.54.0           | Align with 0.16 series                                                                  |
+| 1.0.0-beta2 | 1.53.0            | 1.53.0           | Not strictly needed but prepares for [Wasmer > 2] and let's us keep up with modern Rust |
+| 0.16.4      | 1.54.0            | 1.54.0           |                                                                                         |
+| 0.14.0      | 1.51.0            | 1.51.0           | Added support for const generics                                                        |
+| 0.13.2      | 1.47.0            | 1.48.0           | Through [Wasmer 1.0.1]                                                                  |
+| 0.13.0      | 1.47.0            | 1.47.0           |                                                                                         |
+| 0.11.0      | 1.45.2            | 1.45.2           |                                                                                         |
 
 [wasmer 1.0.1]:
   https://github.com/wasmerio/wasmer/blob/master/CHANGELOG.md#101---2021-01-12

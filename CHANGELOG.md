@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Changed
 
+- all: Drop support for Rust versions lower than 1.54.0.
 - cosmwasm-std: The `Debug` implementation of `Binary` now produces a hex string
   instead of a list of bytes ([#1199]).
 - cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low

@@ -6,8 +6,8 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 1.0.0-beta -> 1.0.0 (unreleased)
 
-- The minimum Rust supported version is 1.53.0. Verify your Rust version is >=
-  1.53.0 with: `rustc --version`.
+- The minimum Rust supported version is 1.54.0. Verify your Rust version is >=
+  1.54.0 with: `rustc --version`.
 
 - Simplify `mock_dependencies` calls with empty balance:
 
