@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+- all: Drop support for Rust versions lower than 1.54.0.
+- cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
+  MSRV.
+
 ## [0.16.3] - 2021-12-23
 
 ### Fixed
@@ -1127,7 +1131,10 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.3...HEAD
+[0.16.3]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...v0.16.3
+[0.16.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.1...v0.16.2
+[0.16.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.2...v0.16.0
 [0.15.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.0...v0.15.1
