@@ -45,12 +45,12 @@ multiple ways:
 
 ## Gas overflow potential
 
-CosmWasm gas aims for 1 Teragas/second, i.e. the uint64 range exceeds after 18
-billion seconds (213 days)<sup>1</sup>. Assuming a max supported block execution
-time of 100 seconds, the gas price has to be over-priced by a factor of 184
-million (184 Petagas/second) in order to exceed the uint64 range<sup>2</sup>.
+CosmWasm gas aims for 1 Teragas/millisecond, i.e. the uint64 range exceeds after
+18 million seconds (5 hours)<sup>1</sup>. Assuming a max supported block
+execution time of 30 seconds, the gas price has to be over-priced by a factor of
+614 (614 Teragas/millisecond) in order to exceed the uint64 range<sup>2</sup>.
 Since serious over or underpricing is considered a bug, using uint64 for gas
-mesurments is considered safe.
+measurements is considered safe.
 
 Cosmos SDK gas uses values that are smaller by a factor of 150_000, so those
 don't overflow as well. Since no Cosmos SDK gas values are processed inside of
@@ -62,6 +62,6 @@ their JSON implementation. Go and Rust do that while many other implementations
 don't support integers numbers and convert to them to IEEE-754 doubles, which
 has a safe integer range up about 53 bit (e.g. JavaScript and jq).
 
-<sup>1</sup> Python3: `(2**64-1) / 10**12`
+<sup>1</sup> Python3: `(2**64-1)/1000 / 10**12`
 
-<sup>2</sup> Python3: `((2**64-1)/100) / 10**12`
+<sup>2</sup> Python3: `((2**64-1)/1000/30) / 10**122`
