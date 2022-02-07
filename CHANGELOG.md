@@ -9,6 +9,9 @@ and this project adheres to
 - all: Drop support for Rust versions lower than 1.54.0.
 - cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
   MSRV.
+- cosmwasm-std: Add missing `Isqrt` export ([#1214]).
+
+[#1214]: https://github.com/CosmWasm/cosmwasm/issues/1214
 
 ## [0.16.3] - 2021-12-23
 
