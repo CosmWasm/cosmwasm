@@ -400,7 +400,7 @@ but the quickstart guide is:
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.3
+  cosmwasm/rust-optimizer:0.12.5
 ```
 
 It will output a highly size-optimized build as `contract.wasm` in `$CODE`. With
