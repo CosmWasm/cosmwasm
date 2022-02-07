@@ -12,8 +12,10 @@ and this project adheres to
   instead of a list of bytes ([#1199]).
 - cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
   MSRV.
+- cosmwasm-std: Add missing `Isqrt` export ([#1214]).
 
 [#1199]: https://github.com/CosmWasm/cosmwasm/issues/1199
+[#1214]: https://github.com/CosmWasm/cosmwasm/issues/1214
 
 ## [1.0.0-beta4] - 2021-12-23
 
