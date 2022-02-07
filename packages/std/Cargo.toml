@@ -47,6 +47,6 @@ cosmwasm-crypto = { path = "../crypto", version = "1.0.0-beta4" }
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
 hex = "0.4"
 hex-literal = "0.3.1"
