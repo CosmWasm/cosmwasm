@@ -18,6 +18,10 @@ and this project adheres to
 [#1199]: https://github.com/CosmWasm/cosmwasm/issues/1199
 [#1214]: https://github.com/CosmWasm/cosmwasm/issues/1214
 
+### Fixed
+
+- cosmwasm-vm: Fix `AddAssign` implementation of `GasInfo`.
+
 ## [1.0.0-beta4] - 2021-12-23
 
 ### Changed
