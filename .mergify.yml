@@ -24,7 +24,7 @@ pull_request_rules:
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"
       - "status-success=ci/circleci: fmt"
-      - "status-success=ci/circleci: clippy-1.53.0"
+      - "status-success=ci/circleci: clippy-1.54.0"
       - "status-success=ci/circleci: clippy-1.58.1"
       - "status-success=Windows"
       - "status-success=macOS"
