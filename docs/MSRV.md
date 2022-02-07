@@ -48,10 +48,12 @@ development, you will depends on the cosmwasm-vm MSRV.
   stable Rust 1.33.3 it must not exceed 1.32.0.
 - It can be bumped without a semver major release of the crates. However, a
   minor version bump is required.
+- Before the 1.0.0 release, it can change at any time.
 
 **cosmwasm-vm MSRV**
 
 - It can be bumped without a semver major release of the crate. However, a minor
   version bump is required.
+- Before the 1.0.0 release, it can change at any time.
 - It is always higher or equal to cosmwasm-std MSRV because the VM depends on
   cosmwasm-std and related packages.
