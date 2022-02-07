@@ -43,8 +43,8 @@ pub use crate::iterator::Pair;
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
-    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Uint128, Uint256,
-    Uint512, Uint64,
+    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,
+    Uint256, Uint512, Uint64,
 };
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, ContractInfoResponse, CustomQuery,
