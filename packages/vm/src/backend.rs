@@ -7,9 +7,15 @@ use cosmwasm_std::{Binary, ContractResult, SystemResult};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, Record};
 
-#[derive(Copy, Clone, Debug)]
+/// A structure that represents gas cost to be deducted from the remaining gas.
+/// This is always needed when computations are performed outside of
+/// Wasm execution, such as calling crypto APIs or calls into the blockchain.
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct GasInfo {
-    /// The gas cost of a computation that was executed already but not yet charged
+    /// The gas cost of a computation that was executed already but not yet charged.
+    ///
+    /// This could be renamed to `internally_used` for consistency because it is used inside
+    /// of the `cosmwasm_vm`.
     pub cost: u64,
     /// Gas that was used and charged externally. This is needed to
     /// adjust the VM's gas limit but does not affect the gas usage.
@@ -53,7 +59,7 @@ impl AddAssign for GasInfo {
     fn add_assign(&mut self, other: Self) {
         *self = GasInfo {
             cost: self.cost + other.cost,
-            externally_used: self.externally_used + other.cost,
+            externally_used: self.externally_used + other.externally_used,
         };
     }
 }
@@ -234,6 +240,69 @@ mod tests {
         let gas_info = GasInfo::free();
         assert_eq!(gas_info.cost, 0);
         assert_eq!(gas_info.externally_used, 0);
+    }
+
+    #[test]
+    fn gas_info_implements_add_assign() {
+        let mut a = GasInfo::new(0, 0);
+        a += GasInfo::new(0, 0);
+        assert_eq!(
+            a,
+            GasInfo {
+                cost: 0,
+                externally_used: 0
+            }
+        );
+
+        let mut a = GasInfo::new(0, 0);
+        a += GasInfo::new(12, 0);
+        assert_eq!(
+            a,
+            GasInfo {
+                cost: 12,
+                externally_used: 0
+            }
+        );
+
+        let mut a = GasInfo::new(10, 0);
+        a += GasInfo::new(3, 0);
+        assert_eq!(
+            a,
+            GasInfo {
+                cost: 13,
+                externally_used: 0
+            }
+        );
+
+        let mut a = GasInfo::new(0, 0);
+        a += GasInfo::new(0, 7);
+        assert_eq!(
+            a,
+            GasInfo {
+                cost: 0,
+                externally_used: 7
+            }
+        );
+
+        let mut a = GasInfo::new(0, 8);
+        a += GasInfo::new(0, 9);
+        assert_eq!(
+            a,
+            GasInfo {
+                cost: 0,
+                externally_used: 17
+            }
+        );
+
+        let mut a = GasInfo::new(100, 200);
+        a += GasInfo::new(1, 2);
+        assert_eq!(
+            a,
+            GasInfo {
+                cost: 101,
+                externally_used: 202
+            }
+        );
     }
 
     // constructors
