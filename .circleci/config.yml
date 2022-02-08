@@ -7,6 +7,7 @@ workflows:
   test:
     # Keep those job names in sync with .mergify.yml
     jobs:
+      - arm64
       - package_crypto
       - package_schema
       - package_std
@@ -60,6 +61,51 @@ workflows:
               ignore: /.*/
 
 jobs:
+  arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - run:
+          name: Install Rust
+          command: |
+            wget https://static.rust-lang.org/rustup/dist/aarch64-unknown-linux-gnu/rustup-init
+            chmod +x rustup-init
+            ./rustup-init -y --default-toolchain 1.54.0 --profile minimal
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-arm64-rust:1.54.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: "packages/crypto: test"
+          working_directory: ~/project/packages/crypto
+          command: cargo test --locked
+      - run:
+          name: "packages/std: test"
+          working_directory: ~/project/packages/std
+          command: cargo test --locked
+      - run:
+          name: "packages/vm: test"
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked
+      - run:
+          name: "packages/vm: test with all features"
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features iterator,staking,stargate
+      - save_cache:
+          paths:
+            - ~/.cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-arm64-rust:1.54.0-{{ checksum "Cargo.lock" }}
+
   package_crypto:
     docker:
       - image: rust:1.54.0
