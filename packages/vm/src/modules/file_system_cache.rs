@@ -32,6 +32,11 @@ use crate::errors::{VmError, VmResult};
 ///   Version for Wasmer 2.2.0 which contains a [module breaking change to 2.1.x](https://github.com/wasmerio/wasmer/pull/2747).
 const MODULE_SERIALIZATION_VERSION: &str = "v2";
 
+/// This header prefix contains the module type (wasmer-universal),
+/// the magic value WASMER\0\0 and a little endian encoded uint32 version number.
+/// The full header also contains a length that we do not check.
+const EXPECTED_MODULE_HEADER_PREFIX: &[u8] = b"wasmer-universalWASMER\0\0\x01\0\0\0";
+
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
     /// The base path this cache operates in. Within this path, versioned directories are created.
@@ -48,6 +53,10 @@ impl FileSystemCache {
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
     pub unsafe fn new(path: impl Into<PathBuf>) -> io::Result<Self> {
+        if !current_wasmer_module_header().starts_with(EXPECTED_MODULE_HEADER_PREFIX) {
+            panic!("Wasmer module format changed. Please update the expected version accordingly and bump MODULE_SERIALIZATION_VERSION.");
+        }
+
         let path: PathBuf = path.into();
         if path.exists() {
             let metadata = path.metadata()?;
@@ -118,6 +127,19 @@ impl FileSystemCache {
     fn latest_modules_path(&self) -> PathBuf {
         self.base_path.join(MODULE_SERIALIZATION_VERSION)
     }
+}
+
+fn current_wasmer_module_header() -> Vec<u8> {
+    use crate::wasm_backend::compile;
+    // echo "(module)" > my.wat && wat2wasm my.wat && hexdump -C my.wasm
+    const WASM: &[u8] = b"\x00\x61\x73\x6d\x01\x00\x00\x00";
+    let module = compile(WASM, None, &[]).unwrap();
+    let mut bytes = module.serialize().unwrap_or_default();
+
+    const ENGINE_TYPE_LEN: usize = 16; // https://github.com/wasmerio/wasmer/blob/2.2.0-rc1/lib/engine-universal/src/artifact.rs#L48
+    const METADATA_HEADER_LEN: usize = 16; // https://github.com/wasmerio/wasmer/blob/2.2.0-rc1/lib/engine/src/artifact.rs#L251-L252
+    bytes.truncate(ENGINE_TYPE_LEN + METADATA_HEADER_LEN);
+    bytes
 }
 
 #[cfg(test)]
@@ -191,5 +213,11 @@ mod tests {
 
         let file_path = format!("{}/v2/{}", tmp_dir.path().to_string_lossy(), checksum);
         let _serialized_module = fs::read(file_path).unwrap();
+    }
+
+    #[test]
+    fn current_wasmer_module_header_works() {
+        let header = current_wasmer_module_header();
+        assert!(header.starts_with(EXPECTED_MODULE_HEADER_PREFIX));
     }
 }
