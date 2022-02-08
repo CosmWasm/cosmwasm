@@ -116,22 +116,21 @@ mod tests {
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
     const TESTING_GAS_LIMIT: u64 = 500_000_000;
 
+    const SOME_WAT: &str = r#"(module
+        (type $t0 (func (param i32) (result i32)))
+        (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+            get_local $p0
+            i32.const 1
+            i32.add))
+    "#;
+
     #[test]
     fn file_system_cache_run() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 
         // Create module
-        let wasm = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 1
-                i32.add))
-            "#,
-        )
-        .unwrap();
+        let wasm = wat::parse_str(SOME_WAT).unwrap();
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
@@ -159,5 +158,23 @@ mod tests {
             let result = add_one.call(&[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
+    }
+
+    #[test]
+    fn file_system_cache_store_uses_expected_path() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+
+        // Create module
+        let wasm = wat::parse_str(SOME_WAT).unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        // Store module
+        let module = compile(&wasm, None, &[]).unwrap();
+        cache.store(&checksum, &module).unwrap();
+
+        let file_path = format!("{}/v1/{}", tmp_dir.path().to_string_lossy(), checksum);
+        let serialized_module = fs::read(file_path).unwrap();
+        assert_eq!(serialized_module.len(), 1040);
     }
 }
