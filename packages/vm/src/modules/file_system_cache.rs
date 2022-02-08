@@ -14,7 +14,23 @@ use crate::errors::{VmError, VmResult};
 /// The string is used as a folder and should be named in a way that is
 /// easy to interprete for system admins. It should allow easy clearing
 /// of old versions.
-const MODULE_SERIALIZATION_VERSION: &str = "v1";
+///
+/// See https://github.com/wasmerio/wasmer/issues/2781 for more information
+/// on Wasmer's module stability concept.
+///
+/// ## Version history:
+/// - **v1**:<br>
+///   cosmwasm_vm < 1.0.0-beta5. This is working well up to Wasmer 2.0.0 as
+///   [in wasmvm 1.0.0-beta2](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-beta2/libwasmvm/Cargo.lock#L1412-L1413)
+///   and [wasmvm 0.16.3](https://github.com/CosmWasm/wasmvm/blob/v0.16.3/libwasmvm/Cargo.lock#L1408-L1409).
+///   Versions that ship with Wasmer 2.1.x such [as wasmvm 1.0.0-beta3](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-beta3/libwasmvm/Cargo.lock#L1534-L1535)
+///   to [wasmvm 1.0.0-beta5](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-beta5/libwasmvm/Cargo.lock#L1530-L1531)
+///   are broken, i.e. they will crash when reading older v1 modules.
+/// - **v2**:<br>
+///   Version for cosmwasm_vm 1.0.0-beta5 / wasmvm 1.0.0-beta6 that ships with Wasmer 2.1.1.
+/// - **v3**:<br>
+///   Version for Wasmer 2.2.0 which contains a [module breaking change to 2.1.x](https://github.com/wasmerio/wasmer/pull/2747).
+const MODULE_SERIALIZATION_VERSION: &str = "v2";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -116,22 +132,21 @@ mod tests {
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
     const TESTING_GAS_LIMIT: u64 = 500_000_000;
 
+    const SOME_WAT: &str = r#"(module
+        (type $t0 (func (param i32) (result i32)))
+        (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+            get_local $p0
+            i32.const 1
+            i32.add))
+    "#;
+
     #[test]
     fn file_system_cache_run() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 
         // Create module
-        let wasm = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 1
-                i32.add))
-            "#,
-        )
-        .unwrap();
+        let wasm = wat::parse_str(SOME_WAT).unwrap();
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
@@ -159,5 +174,23 @@ mod tests {
             let result = add_one.call(&[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
+    }
+
+    #[test]
+    fn file_system_cache_store_uses_expected_path() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+
+        // Create module
+        let wasm = wat::parse_str(SOME_WAT).unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        // Store module
+        let module = compile(&wasm, None, &[]).unwrap();
+        cache.store(&checksum, &module).unwrap();
+
+        let file_path = format!("{}/v2/{}", tmp_dir.path().to_string_lossy(), checksum);
+        let serialized_module = fs::read(file_path).unwrap();
+        assert_eq!(serialized_module.len(), 1040);
     }
 }
