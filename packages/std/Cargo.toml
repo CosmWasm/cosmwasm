@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-std"
-version = "1.0.0-beta4"
+version = "1.0.0-beta5"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
@@ -32,7 +32,7 @@ stargate = []
 
 [dependencies]
 base64 = "0.13.0"
-cosmwasm-derive = { path = "../derive", version = "1.0.0-beta4" }
+cosmwasm-derive = { path = "../derive", version = "1.0.0-beta5" }
 # uint 0.9.2 uses edition2021 for no reason but we don't want to upgrade MSRV that much right now
 # See https://github.com/CosmWasm/cosmwasm/issues/1204
 uint = "=0.9.1"
@@ -42,7 +42,7 @@ serde = { version = "1.0.103", default-features = false, features = ["derive", "
 thiserror = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cosmwasm-crypto = { path = "../crypto", version = "1.0.0-beta4" }
+cosmwasm-crypto = { path = "../crypto", version = "1.0.0-beta5" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
