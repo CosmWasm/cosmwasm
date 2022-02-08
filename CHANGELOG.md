@@ -21,6 +21,8 @@ and this project adheres to
 ### Fixed
 
 - cosmwasm-vm: Fix `AddAssign` implementation of `GasInfo`.
+- cosmwasm-vm: Bump `MODULE_SERIALIZATION_VERSION` to "v2" because the module
+  serialization format changed between Wasmer 2.0.0 and 2.1.x.
 
 ## [1.0.0-beta4] - 2021-12-23
 
