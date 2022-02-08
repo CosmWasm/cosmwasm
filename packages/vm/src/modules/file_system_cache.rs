@@ -30,7 +30,7 @@ use crate::errors::{VmError, VmResult};
 ///   Version for cosmwasm_vm 1.0.0-beta5 / wasmvm 1.0.0-beta6 that ships with Wasmer 2.1.1.
 /// - **v3**:<br>
 ///   Version for Wasmer 2.2.0 which contains a [module breaking change to 2.1.x](https://github.com/wasmerio/wasmer/pull/2747).
-const MODULE_SERIALIZATION_VERSION: &str = "v2";
+const MODULE_SERIALIZATION_VERSION: &str = "v3";
 
 /// This header prefix contains the module type (wasmer-universal),
 /// the magic value WASMER\0\0 and a little endian encoded uint32 version number.
@@ -211,7 +211,7 @@ mod tests {
         let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
-        let file_path = format!("{}/v2/{}", tmp_dir.path().to_string_lossy(), checksum);
+        let file_path = format!("{}/v3/{}", tmp_dir.path().to_string_lossy(), checksum);
         let _serialized_module = fs::read(file_path).unwrap();
     }
 
