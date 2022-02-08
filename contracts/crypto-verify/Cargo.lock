@@ -521,6 +521,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum-iterator"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4eeac5c5edb79e4e39fe8439ef35207780a11f69c52cbe424ce3dfad4cb78de6"
+dependencies = [
+ "enum-iterator-derive",
+]
+
+[[package]]
+name = "enum-iterator-derive"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c134c37760b27a871ba422106eedbb8247da973a09e82558bf26d619c882b159"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "enumset"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -841,11 +861,12 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.27.1"
+version = "0.28.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67ac1d3f9a1d3616fd9a60c8d74296f22406a238b6a72f5cc1e6f314df4ffbf9"
+checksum = "40bec70ba014595f99f7aa110b84331ffe1ee9aece7fe6f387cc7e3ecda4d456"
 dependencies = [
  "crc32fast",
+ "hashbrown",
  "indexmap",
  "memchr",
 ]
@@ -1493,9 +1514,9 @@ checksum = "0237232789cf037d5480773fe568aac745bfe2afbc11a863e97901780a6b47cc"
 
 [[package]]
 name = "wasmer"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23f0188c23fc1b7de9bd7f8b834d0b1cd5edbe66e287452e8ce36d24418114f7"
+checksum = "7c823abda8b80153c938b3c7c55fcc74e2adfe40592732f7be01309dbe4aa53b"
 dependencies = [
  "cfg-if",
  "indexmap",
@@ -1519,9 +1540,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88c51cc589772c5f90bd329244c2416976d6cb2ee00d59429aaa8f421d9fe447"
+checksum = "4ef59c6661f8f739c7c56d85400711a6e8791a101e931902af87423280e3dd36"
 dependencies = [
  "enumset",
  "loupe",
@@ -1538,9 +1559,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler-cranelift"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09691e3e323b4e1128d2127f60f9cd988b66ce49afc8184b071c2b5ab16793f2"
+checksum = "bd21b6306ec69096ac39e93418b2338e5def5445522f098c5b0a38863059492d"
 dependencies = [
  "cranelift-codegen",
  "cranelift-entity",
@@ -1559,9 +1580,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "271d3da24c5d1a8bb3f9fc3944ba96d2588b6fa16a0bcef91765db853aeccac4"
+checksum = "95c704e8c917e047e301862c76b93e2374631d3e6dc0b547c690f7ac38227344"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -1578,9 +1599,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-derive"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93f5cb7b09640e09f1215da95d6fb7477d2db572f064b803ff705f39ff079cc5"
+checksum = "5932932ef9e4f185dee5c99848ffafe98c5f49e0e92d2da14686761e38345c67"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1590,9 +1611,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-engine"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab20311c354fe2c12bc766417e0a1a45f399c1cd8ff262127d1dc86d0588971a"
+checksum = "5ed91396b15addd562d53fd92a016ba88c9b2ce4e0e0169a0e47cc67b739b37f"
 dependencies = [
  "backtrace",
  "enumset",
@@ -1612,15 +1633,17 @@ dependencies = [
 
 [[package]]
 name = "wasmer-engine-dylib"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dd5b7a74731e1dcccaf10a8ff5f72216c82f12972ce17cc81c6caa1afff75ea"
+checksum = "8d9ecf7885c571a26141f37a362caa97796b8904f423dc5645031e149c9ee802"
 dependencies = [
  "cfg-if",
+ "enum-iterator",
  "enumset",
  "leb128",
  "libloading",
  "loupe",
+ "object 0.28.3",
  "rkyv",
  "serde",
  "tempfile",
@@ -1635,11 +1658,12 @@ dependencies = [
 
 [[package]]
 name = "wasmer-engine-universal"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfeae8d5b825ad7abcf9a34e66eb11e1507b21020efe7bbf9897e3dd8d7869e2"
+checksum = "3bc4c936ebc050946dced5a3c4ef2bfe0b937c6e91323642c8e04552a82dfd9f"
 dependencies = [
  "cfg-if",
+ "enum-iterator",
  "enumset",
  "leb128",
  "loupe",
@@ -1654,9 +1678,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-middlewares"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c61a73bda8608a4ca56142b7849ccf4847cda566267d0071664ca06c6f4fbff1"
+checksum = "cc770d4c278498bbbabec4cb9db33362ce6349cc397f746f2c75b20b5448fe2f"
 dependencies = [
  "loupe",
  "wasmer",
@@ -1666,11 +1690,11 @@ dependencies = [
 
 [[package]]
 name = "wasmer-object"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d4714e4f3bdc3b2157c24284417d19cd99de036da31d00ec5664712dcb72f7"
+checksum = "f5626938e5e062747b999493d3a36591d9ba2fb0b6fb8e6f474e3355440ff9a0"
 dependencies = [
- "object 0.27.1",
+ "object 0.28.3",
  "thiserror",
  "wasmer-compiler",
  "wasmer-types",
@@ -1678,9 +1702,9 @@ dependencies = [
 
 [[package]]
 name = "wasmer-types"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "434e1c0177da0a74ecca90b2aa7d5e86198260f07e8ba83be89feb5f0a4aeead"
+checksum = "78e5c8a51b65b946c122cecacdd496b24cc070f5465bc07ce83c62f830835814"
 dependencies = [
  "indexmap",
  "loupe",
@@ -1691,13 +1715,14 @@ dependencies = [
 
 [[package]]
 name = "wasmer-vm"
-version = "2.1.1"
+version = "2.2.0-rc1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc8f964ebba70d9f81340228b98a164782591f00239fc7f01e1b67afcf0e0156"
+checksum = "91ad82e6b8e33a63c5215e11ea2f37e9a0b8a81606a41c922f26f61cb862e7f9"
 dependencies = [
  "backtrace",
  "cc",
  "cfg-if",
+ "enum-iterator",
  "indexmap",
  "libc",
  "loupe",

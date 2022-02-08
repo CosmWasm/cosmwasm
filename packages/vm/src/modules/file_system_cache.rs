@@ -190,7 +190,6 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let file_path = format!("{}/v2/{}", tmp_dir.path().to_string_lossy(), checksum);
-        let serialized_module = fs::read(file_path).unwrap();
-        assert_eq!(serialized_module.len(), 1040);
+        let _serialized_module = fs::read(file_path).unwrap();
     }
 }
