@@ -273,10 +273,10 @@ pub struct Region {
 
 If you followed the [instructions above](#Creating), you should have a runable
 smart contract. You may notice that all of the Wasm exports are taken care of by
-`lib.rs`, which should shouldn't need to modify. What you need to do is simply
-look in `contract.rs` and implement `instantiate` and `execute` functions,
-defining your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your
-custom message types (as json):
+`lib.rs`, which you shouldn't need to modify. What you need to do is simply look
+in `contract.rs` and implement `instantiate` and `execute` functions, defining
+your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your custom
+message types (as json):
 
 ```rust
 #[entry_point]
@@ -305,8 +305,8 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, Con
 The low-level `db_read` and `db_write` imports are nicely wrapped for you by a
 `Storage` implementation (which can be swapped out between real Wasm code and
 test code). This gives you a simple way to read and write data to a custom
-sub-database that this contract can safely write as it wants. It's up to you to
-determine which data you want to store here:
+sub-database that this contract can safely write to as it wants. It's up to you
+to determine which data you want to store here:
 
 ```rust
 /// Storage provides read and write access to a persistent storage.
