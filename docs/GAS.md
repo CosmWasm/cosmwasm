@@ -59,8 +59,8 @@ we can safely pass them in uint64 fields, as long as the full range is
 supported. This is the case for the C API as well as
 [JSON numbers](https://www.json.org/) as long as both sides support integers in
 their JSON implementation. Go and Rust do that while many other implementations
-don't support integers numbers and convert to them to IEEE-754 doubles, which
-has a safe integer range up about 53 bit (e.g. JavaScript and jq).
+don't support integers, and convert them to IEEE-754 doubles, which has a safe
+integer range up to about 53 bit (e.g. JavaScript and jq).
 
 <sup>1</sup> Python3: `(2**64-1)/1000 / 10**12`
 
