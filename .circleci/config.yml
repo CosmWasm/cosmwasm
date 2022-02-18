@@ -83,6 +83,26 @@ jobs:
           keys:
             - cargocache-v2-arm64-rust:1.54.0-{{ checksum "Cargo.lock" }}
       - run:
+          name: "contracts/crypto-verify: integration-test"
+          working_directory: ~/project/contracts/crypto-verify
+          command: cargo wasm --locked && cargo integration-test --locked
+      - run:
+          name: "contracts/hackatom: integration-test"
+          working_directory: ~/project/contracts/hackatom
+          command: cargo wasm --locked && cargo integration-test --locked
+      - run:
+          name: "contracts/queue: integration-test"
+          working_directory: ~/project/contracts/queue
+          command: cargo wasm --locked && cargo integration-test --locked
+      - run:
+          name: "contracts/reflect: integration-test"
+          working_directory: ~/project/contracts/reflect
+          command: cargo wasm --locked && cargo integration-test --locked
+      - run:
+          name: "contracts/staking: integration-test"
+          working_directory: ~/project/contracts/staking
+          command: cargo wasm --locked && cargo integration-test --locked
+      - run:
           name: "packages/crypto: test"
           working_directory: ~/project/packages/crypto
           command: cargo test --locked
