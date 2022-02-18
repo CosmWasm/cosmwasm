@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.16.4] - 2022-02-18
+
 ### Changed
 
 - all: Drop support for Rust versions lower than 1.54.0.
@@ -1142,7 +1144,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.3...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.4...HEAD
+[0.16.4]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.3...v0.16.4
 [0.16.3]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.0...v0.16.1
