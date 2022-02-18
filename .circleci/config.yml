@@ -93,10 +93,7 @@ jobs:
       - run:
           name: "packages/vm: test"
           working_directory: ~/project/packages/vm
-          command: cargo test --locked
-      - run:
-          name: "packages/vm: test with all features"
-          working_directory: ~/project/packages/vm
+          # use all features
           command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
           paths:
