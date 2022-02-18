@@ -64,7 +64,7 @@ jobs:
   arm64:
     machine:
       image: ubuntu-2004:202101-01
-    resource_class: arm.medium
+    resource_class: arm.large
     steps:
       - checkout
       - run:
