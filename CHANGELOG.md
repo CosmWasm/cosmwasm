@@ -12,6 +12,8 @@ and this project adheres to
 - cosmwasm-std: Pin uint version to 0.9.1 in order to maintain a reasonably low
   MSRV.
 - cosmwasm-std: Add missing `Isqrt` export ([#1214]).
+- cosmwasm-vm: Update `wasmer` to `2.1.1` and bump module serialization version
+  to `v2`.
 
 [#1214]: https://github.com/CosmWasm/cosmwasm/issues/1214
 
