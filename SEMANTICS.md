@@ -96,16 +96,18 @@ pub struct Response<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    /// Optional list of "subcalls" to make. These will be executed in order
-    /// (and this contract's subcall_response entry point invoked)
-    /// *before* any of the "fire and forget" messages get executed.
-    pub submessages: Vec<SubMsg<T>>,
-    /// After any submessages are processed, these are all dispatched in the host blockchain.
-    /// If they all succeed, then the transaction is committed. If any fail, then the transaction
-    /// and any local contract state changes are reverted.
-    pub messages: Vec<CosmosMsg<T>>,
-    /// The attributes that will be emitted as part of a "wasm" event
+    /// Optional list of messages to pass. These will be executed in order.
+    /// If the ReplyOn variant matches the result (Always, Success on Ok, Error on Err),
+    /// the runtime will invoke this contract's `reply` entry point
+    /// after execution. Otherwise, they act like "fire and forget".
+    /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
+    pub messages: Vec<SubMsg<T>>,
+    /// The attributes that will be emitted as part of a "wasm" event.
     pub attributes: Vec<Attribute>,
+    /// Extra, custom events separate from the main `wasm` one. These will have
+    /// `wasm-` prepended to the type.
+    pub events: Vec<Event>,
+    /// The binary payload to include in the response.
     pub data: Option<Binary>,
 }
 ```
@@ -251,15 +253,15 @@ entry point:
 
 ```rust
 #[entry_point]
-pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> { }
+pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, SubMsgExecutionResponse> { }
 
 pub struct Reply {
     pub id: u64,
-    /// ContractResult is just a nicely serializable version of `Result<SubcallResponse, String>`
-    pub result: ContractResult<SubcallResponse>,
+    /// ContractResult is just a nicely serializable version of `Result<SubMsgExecutionResponse, String>`
+    pub result: ContractResult<SubMsgExecutionResponse>,
 }
 
-pub struct SubcallResponse {
+pub struct SubMsgExecutionResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
 }
