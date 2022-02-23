@@ -177,8 +177,8 @@ mod tests {
     use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BankMsg, BankQuery, Binary, ContractResult,
-        Event, StakingMsg, StdError, SubMsgExecutionResponse,
+        coin, coins, from_binary, AllBalanceResponse, BankMsg, BankQuery, Binary, Event,
+        StakingMsg, StdError, SubMsgExecutionResponse, SubMsgResult,
     };
 
     #[test]
@@ -435,7 +435,7 @@ mod tests {
         let id = 123u64;
         let data = Binary::from(b"foobar");
         let events = vec![Event::new("message").add_attribute("signer", "caller-addr")];
-        let result = ContractResult::Ok(SubMsgExecutionResponse {
+        let result = SubMsgResult::Ok(SubMsgExecutionResponse {
             events: events.clone(),
             data: Some(data.clone()),
         });

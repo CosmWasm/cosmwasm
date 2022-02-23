@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Binary, ContractResult};
+use crate::Binary;
 
 use super::{CosmosMsg, Empty, Event};
 
@@ -100,12 +100,210 @@ pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
     pub id: u64,
-    pub result: ContractResult<SubMsgExecutionResponse>,
+    pub result: SubMsgResult,
 }
 
-/// The information we get back from a successful sub-call, with full sdk events
+/// This is the result type that is returned from a sub message execution.
+///
+/// We use a custom type here instead of Rust's Result because we want to be able to
+/// define the serialization, which is a public interface. Every language that compiles
+/// to Wasm and runs in the ComsWasm VM needs to create the same JSON representation.
+///
+/// Until version 1.0.0-beta5, `ContractResult<SubMsgExecutionResponse>` was used instead
+/// of this type. Once serialized, the two types are the same. However, in the Rust type
+/// system we want different types for clarity and documenation reasons.
+///
+/// # Examples
+///
+/// Success:
+///
+/// ```
+/// # use cosmwasm_std::{to_vec, Binary, Event, SubMsgExecutionResponse, SubMsgResult};
+/// let response = SubMsgExecutionResponse {
+///     data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+///     events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+/// };
+/// let result: SubMsgResult = SubMsgResult::Ok(response);
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#);
+/// ```
+///
+/// Failure:
+///
+/// ```
+/// # use cosmwasm_std::{to_vec, SubMsgResult, Response};
+/// let error_msg = String::from("Something went wrong");
+/// let result = SubMsgResult::Err(error_msg);
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SubMsgResult {
+    Ok(SubMsgExecutionResponse),
+    /// An error type that every custom error created by contract developers can be converted to.
+    /// This could potientially have more structure, but String is the easiest.
+    #[serde(rename = "error")]
+    Err(String),
+}
+
+// Implementations here mimic the Result API and should be implemented via a conversion to Result
+// to ensure API consistency
+impl SubMsgResult {
+    /// Converts a `SubMsgResult<S>` to a `Result<S, String>` as a convenient way
+    /// to access the full Result API.
+    pub fn into_result(self) -> Result<SubMsgExecutionResponse, String> {
+        Result::<SubMsgExecutionResponse, String>::from(self)
+    }
+
+    pub fn unwrap(self) -> SubMsgExecutionResponse {
+        self.into_result().unwrap()
+    }
+
+    pub fn unwrap_err(self) -> String {
+        self.into_result().unwrap_err()
+    }
+
+    pub fn is_ok(&self) -> bool {
+        matches!(self, SubMsgResult::Ok(_))
+    }
+
+    pub fn is_err(&self) -> bool {
+        matches!(self, SubMsgResult::Err(_))
+    }
+}
+
+impl<E: ToString> From<Result<SubMsgExecutionResponse, E>> for SubMsgResult {
+    fn from(original: Result<SubMsgExecutionResponse, E>) -> SubMsgResult {
+        match original {
+            Ok(value) => SubMsgResult::Ok(value),
+            Err(err) => SubMsgResult::Err(err.to_string()),
+        }
+    }
+}
+
+impl From<SubMsgResult> for Result<SubMsgExecutionResponse, String> {
+    fn from(original: SubMsgResult) -> Result<SubMsgExecutionResponse, String> {
+        match original {
+            SubMsgResult::Ok(value) => Ok(value),
+            SubMsgResult::Err(err) => Err(err),
+        }
+    }
+}
+
+/// The information we get back from a successful sub message execution,
+/// with full Cosmos SDK events.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SubMsgExecutionResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{from_slice, to_vec, StdError, StdResult};
+
+    #[test]
+    fn sub_msg_result_serialization_works() {
+        let result = SubMsgResult::Ok(SubMsgExecutionResponse {
+            data: None,
+            events: vec![],
+        });
+        assert_eq!(
+            &to_vec(&result).unwrap(),
+            br#"{"ok":{"events":[],"data":null}}"#
+        );
+
+        let result = SubMsgResult::Ok(SubMsgExecutionResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+        });
+        assert_eq!(
+            &to_vec(&result).unwrap(),
+            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#
+        );
+
+        let result: SubMsgResult = SubMsgResult::Err("broken".to_string());
+        assert_eq!(&to_vec(&result).unwrap(), b"{\"error\":\"broken\"}");
+    }
+
+    #[test]
+    fn sub_msg_result_deserialization_works() {
+        let result: SubMsgResult = from_slice(br#"{"ok":{"events":[],"data":null}}"#).unwrap();
+        assert_eq!(
+            result,
+            SubMsgResult::Ok(SubMsgExecutionResponse {
+                events: vec![],
+                data: None,
+            })
+        );
+
+        let result: SubMsgResult = from_slice(
+            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#).unwrap();
+        assert_eq!(
+            result,
+            SubMsgResult::Ok(SubMsgExecutionResponse {
+                data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+                events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+            })
+        );
+
+        let result: SubMsgResult = from_slice(br#"{"error":"broken"}"#).unwrap();
+        assert_eq!(result, SubMsgResult::Err("broken".to_string()));
+
+        // fails for additional attributes
+        let parse: StdResult<SubMsgResult> = from_slice(br#"{"unrelated":321,"error":"broken"}"#);
+        match parse.unwrap_err() {
+            StdError::ParseErr { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+        let parse: StdResult<SubMsgResult> = from_slice(br#"{"error":"broken","unrelated":321}"#);
+        match parse.unwrap_err() {
+            StdError::ParseErr { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn sub_msg_result_can_convert_from_core_result() {
+        let original: Result<SubMsgExecutionResponse, StdError> = Ok(SubMsgExecutionResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![],
+        });
+        let converted: SubMsgResult = original.into();
+        assert_eq!(
+            converted,
+            SubMsgResult::Ok(SubMsgExecutionResponse {
+                data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+                events: vec![],
+            })
+        );
+
+        let original: Result<SubMsgExecutionResponse, StdError> =
+            Err(StdError::generic_err("broken"));
+        let converted: SubMsgResult = original.into();
+        assert_eq!(
+            converted,
+            SubMsgResult::Err("Generic error: broken".to_string())
+        );
+    }
+
+    #[test]
+    fn sub_msg_result_can_convert_to_core_result() {
+        let original = SubMsgResult::Ok(SubMsgExecutionResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![],
+        });
+        let converted: Result<SubMsgExecutionResponse, String> = original.into();
+        assert_eq!(
+            converted,
+            Ok(SubMsgExecutionResponse {
+                data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+                events: vec![],
+            })
+        );
+
+        let original = SubMsgResult::Err("went wrong".to_string());
+        let converted: Result<SubMsgExecutionResponse, String> = original.into();
+        assert_eq!(converted, Err("went wrong".to_string()));
+    }
 }
