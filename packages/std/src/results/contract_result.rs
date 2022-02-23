@@ -18,7 +18,7 @@ use std::fmt;
 /// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let response: Response = Response::default();
 /// let result: ContractResult<Response> = ContractResult::Ok(response);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"events":[],"data":null}}"#.to_vec());
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"events":[],"data":null}}"#);
 /// ```
 ///
 /// Failure:
@@ -27,7 +27,7 @@ use std::fmt;
 /// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let error_msg = String::from("Something went wrong");
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#.to_vec());
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -101,7 +101,7 @@ mod tests {
         let result: ContractResult<Response> = ContractResult::Ok(Response::default());
         assert_eq!(
             to_vec(&result).unwrap(),
-            br#"{"ok":{"messages":[],"attributes":[],"events":[],"data":null}}"#.to_vec()
+            br#"{"ok":{"messages":[],"attributes":[],"events":[],"data":null}}"#
         );
 
         let result: ContractResult<Response> = ContractResult::Err("broken".to_string());
