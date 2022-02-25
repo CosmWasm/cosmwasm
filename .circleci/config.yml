@@ -1018,7 +1018,9 @@ jobs:
           key: cargocache-v2-benchmarking-rust:1.54.0-{{ checksum "Cargo.lock" }}
 
   coverage:
-    machine: true
+    # https://circleci.com/developer/images?imageType=machine
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
