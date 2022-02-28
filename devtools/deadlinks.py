@@ -25,7 +25,7 @@ def get_broken_links(path):
     # Create a list containing all links
     links = [link.get("href") for link in filter(_filter, soup.find_all("a", href=True))]
     if links:
-        print(links)
+        print("Checking", links)
 
     # Initialize list for broken links.
     broken_links = []
@@ -50,17 +50,19 @@ doc_folder = 'target/doc/'
 def check_project(project):
     project_path = doc_folder + project
     broken_links = {}
+    html_file_found = False
 
     for dirName, subdirList, fileList in os.walk(project_path):
         for fname in fileList:
             if fname.endswith(".html"):
+                html_file_found = True
                 fpath = dirName + '/' + fname
 
                 file_broken_links = get_broken_links(fpath)
                 if file_broken_links:
                     broken_links[fpath] = file_broken_links
 
-    return broken_links
+    return html_file_found, broken_links
 
 # main
 
@@ -76,7 +78,10 @@ projects = [
 ]
 
 for project in projects:
-    broken_links.update(check_project(project))
+    html_file_found, broken = check_project(project)
+    if not html_file_found:
+        print("No .html file found in project " + project + ". Did you generate the docs?")
+    broken_links.update(broken)
 
 if len(broken_links) > 0:
     print("Dead links found!")

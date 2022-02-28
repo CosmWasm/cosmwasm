@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::Addr;
@@ -25,13 +26,13 @@ pub struct TransactionInfo {
     pub index: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
     pub height: u64,
     /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
     ///
-    /// The source of this is the [BFT Time in Tendermint](https://docs.tendermint.com/master/spec/consensus/bft-time.html),
+    /// The source of this is the [BFT Time in Tendermint](https://github.com/tendermint/tendermint/blob/58dc1726/spec/consensus/bft-time.md),
     /// which has the same nanosecond precision as the `Timestamp` type.
     ///
     /// # Examples
