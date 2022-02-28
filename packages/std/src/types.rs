@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::Addr;
@@ -25,7 +26,7 @@ pub struct TransactionInfo {
     pub index: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
     pub height: u64,
