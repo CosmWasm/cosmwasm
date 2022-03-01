@@ -6,6 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Change type of `Reply::result` from `ContractResult` to the new
+  `SubMsgResult`. Both types are equal when serialized but `ContractResult` is
+  documented to be the result of a contract execution, which is not the case
+  here. ([#1232])
+
+[#1232]: https://github.com/CosmWasm/cosmwasm/pull/1232
+
 ## [1.0.0-beta5] - 2022-02-08
 
 ### Changed

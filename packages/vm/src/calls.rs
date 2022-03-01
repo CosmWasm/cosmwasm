@@ -682,6 +682,7 @@ mod tests {
         };
         use cosmwasm_std::{
             Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgExecutionResponse,
+            SubMsgResult,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
@@ -726,7 +727,7 @@ mod tests {
             // which creates a reflect account. here we get the callback
             let response = Reply {
                 id,
-                result: ContractResult::Ok(SubMsgExecutionResponse {
+                result: SubMsgResult::Ok(SubMsgExecutionResponse {
                     events: vec![event],
                     data: None,
                 }),

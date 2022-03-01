@@ -1,9 +1,9 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult, CosmosMsg,
-    Deps, DepsMut, Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
+    Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgExecutionResponse, WasmMsg,
+    SubMsg, SubMsgExecutionResponse, SubMsgResult, WasmMsg,
 };
 
 use crate::msg::{
@@ -35,10 +35,10 @@ pub fn instantiate(
 #[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
     match (reply.id, reply.result) {
-        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => {
+        (RECEIVE_DISPATCH_ID, SubMsgResult::Err(err)) => {
             Ok(Response::new().set_data(encode_ibc_error(err)))
         }
-        (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
+        (INIT_CALLBACK_ID, SubMsgResult::Ok(response)) => handle_init_callback(deps, response),
         _ => Err(StdError::generic_err("invalid reply id or result")),
     }
 }
@@ -387,7 +387,7 @@ mod tests {
         // fake a reply and ensure this works
         let response = Reply {
             id,
-            result: ContractResult::Ok(SubMsgExecutionResponse {
+            result: SubMsgResult::Ok(SubMsgExecutionResponse {
                 events: fake_events(&account),
                 data: None,
             }),
@@ -462,7 +462,7 @@ mod tests {
         // fake a reply and ensure this works
         let response = Reply {
             id,
-            result: ContractResult::Ok(SubMsgExecutionResponse {
+            result: SubMsgResult::Ok(SubMsgExecutionResponse {
                 events: fake_events(REFLECT_ADDR),
                 data: None,
             }),

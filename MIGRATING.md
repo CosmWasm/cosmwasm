@@ -33,6 +33,24 @@ major releases of `cosmwasm`. Note that you can also view the
            deps.storage.set(b"foo", b"bar");
   ```
 
+- Replace `ContractResult` with `SubMsgResult` in `Reply` handling:
+
+  ```diff
+  @@ -35,10 +35,10 @@ pub fn instantiate(
+   #[entry_point]
+   pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+       match (reply.id, reply.result) {
+  -        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => {
+  +        (RECEIVE_DISPATCH_ID, SubMsgResult::Err(err)) => {
+               Ok(Response::new().set_data(encode_ibc_error(err)))
+           }
+  -        (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
+  +        (INIT_CALLBACK_ID, SubMsgResult::Ok(response)) => handle_init_callback(deps, response),
+           _ => Err(StdError::generic_err("invalid reply id or result")),
+       }
+   }
+  ```
+
 ## 0.16 -> 1.0.0-beta
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
