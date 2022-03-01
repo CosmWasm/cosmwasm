@@ -12,7 +12,10 @@ and this project adheres to
   `SubMsgResult`. Both types are equal when serialized but `ContractResult` is
   documented to be the result of a contract execution, which is not the case
   here. ([#1232])
+- cosmwasm-vm: Upgrade Wasmer to 2.2.0 and bump `MODULE_SERIALIZATION_VERSION`
+  to "v3-wasmer1". ([#1224])
 
+[#1224]: https://github.com/CosmWasm/cosmwasm/pull/1224
 [#1232]: https://github.com/CosmWasm/cosmwasm/pull/1232
 
 ## [1.0.0-beta5] - 2022-02-08
