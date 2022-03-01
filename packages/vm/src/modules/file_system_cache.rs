@@ -7,6 +7,8 @@ use wasmer::{DeserializeError, Module, Store};
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
 
+use crate::modules::current_wasmer_module_version;
+
 /// Bump this version whenever the module system changes in a way
 /// that old stored modules would be corrupt when loaded in the new system.
 /// This needs to be done e.g. when switching between the jit/native engine.
@@ -30,13 +32,14 @@ use crate::errors::{VmError, VmResult};
 ///   Version for cosmwasm_vm 1.0.0-beta5 / wasmvm 1.0.0-beta6 that ships with Wasmer 2.1.1.
 /// - **v3**:<br>
 ///   Version for Wasmer 2.2.0 which contains a [module breaking change to 2.1.x](https://github.com/wasmerio/wasmer/pull/2747).
-const MODULE_SERIALIZATION_VERSION: &str = "v2";
+const MODULE_SERIALIZATION_VERSION: &str = "v3";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
     /// The base path this cache operates in. Within this path, versioned directories are created.
     /// A sophisticated version of this cache might be able to read multiple input versions in the future.
     base_path: PathBuf,
+    wasmer_module_version: u32,
 }
 
 impl FileSystemCache {
@@ -48,12 +51,17 @@ impl FileSystemCache {
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
     pub unsafe fn new(path: impl Into<PathBuf>) -> io::Result<Self> {
+        let wasmer_module_version = current_wasmer_module_version();
+
         let path: PathBuf = path.into();
         if path.exists() {
             let metadata = path.metadata()?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
-                    Ok(Self { base_path: path })
+                    Ok(Self {
+                        base_path: path,
+                        wasmer_module_version,
+                    })
                 } else {
                     // This directory is readonly.
                     Err(io::Error::new(
@@ -74,7 +82,10 @@ impl FileSystemCache {
         } else {
             // Create the directory and any parent directories if they don't yet exist.
             fs::create_dir_all(&path)?;
-            Ok(Self { base_path: path })
+            Ok(Self {
+                base_path: path,
+                wasmer_module_version,
+            })
         }
     }
 
@@ -116,7 +127,11 @@ impl FileSystemCache {
 
     /// The path to the latest version of the modules.
     fn latest_modules_path(&self) -> PathBuf {
-        self.base_path.join(MODULE_SERIALIZATION_VERSION)
+        let version = format!(
+            "{}-wasmer{}",
+            MODULE_SERIALIZATION_VERSION, self.wasmer_module_version
+        );
+        self.base_path.join(version)
     }
 }
 
@@ -189,8 +204,11 @@ mod tests {
         let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
-        let file_path = format!("{}/v2/{}", tmp_dir.path().to_string_lossy(), checksum);
-        let serialized_module = fs::read(file_path).unwrap();
-        assert_eq!(serialized_module.len(), 1040);
+        let file_path = format!(
+            "{}/v3-wasmer1/{}",
+            tmp_dir.path().to_string_lossy(),
+            checksum
+        );
+        let _serialized_module = fs::read(file_path).unwrap();
     }
 }
