@@ -210,7 +210,7 @@ mod tests {
     use super::super::BankMsg;
     use super::*;
     use crate::results::submessages::{ReplyOn, UNUSED_MSG_ID};
-    use crate::{coins, from_slice, to_vec};
+    use crate::{coins, from_slice, to_vec, ContractResult};
 
     #[test]
     fn can_serialize_and_deserialize_init_response() {
@@ -247,5 +247,21 @@ mod tests {
         let serialized = to_vec(&original).expect("encode contract result");
         let deserialized: Response = from_slice(&serialized).expect("decode contract result");
         assert_eq!(deserialized, original);
+    }
+
+    #[test]
+    fn contract_result_is_ok_works() {
+        let success = ContractResult::<()>::Ok(());
+        let failure = ContractResult::<()>::Err("broken".to_string());
+        assert!(success.is_ok());
+        assert!(!failure.is_ok());
+    }
+
+    #[test]
+    fn contract_result_is_err_works() {
+        let success = ContractResult::<()>::Ok(());
+        let failure = ContractResult::<()>::Err("broken".to_string());
+        assert!(failure.is_err());
+        assert!(!success.is_err());
     }
 }

@@ -264,6 +264,28 @@ mod tests {
     }
 
     #[test]
+    fn sub_msg_result_is_ok_works() {
+        let success = SubMsgResult::Ok(SubMsgExecutionResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+        });
+        let failure = SubMsgResult::Err("broken".to_string());
+        assert!(success.is_ok());
+        assert!(!failure.is_ok());
+    }
+
+    #[test]
+    fn sub_msg_result_is_err_works() {
+        let success = SubMsgResult::Ok(SubMsgExecutionResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+        });
+        let failure = SubMsgResult::Err("broken".to_string());
+        assert!(failure.is_err());
+        assert!(!success.is_err());
+    }
+
+    #[test]
     fn sub_msg_result_can_convert_from_core_result() {
         let original: Result<SubMsgExecutionResponse, StdError> = Ok(SubMsgExecutionResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
