@@ -6,7 +6,6 @@ command -v shellcheck >/dev/null && shellcheck "$0"
 op="write"
 while getopts c option; do
   case "${option}" in
-
   c) op="check" ;;
   *) ;;
   esac
