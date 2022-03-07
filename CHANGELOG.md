@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-beta6] - 2022-03-07
+
 ### Added
 
 - cosmwasm-std: Implement `ops::Rem` for `Uint{64,128,256,512}`.
@@ -1251,7 +1253,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta5...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta6...HEAD
+[1.0.0-beta6]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta5...v1.0.0-beta6
 [1.0.0-beta5]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta4...v1.0.0-beta5
 [1.0.0-beta4]:
