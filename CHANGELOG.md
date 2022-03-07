@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `ops::Rem` for `Uint{64,128,256,512}`.
+
 ### Changed
 
 - cosmwasm-std: Change type of `Reply::result` from `ContractResult` to the new

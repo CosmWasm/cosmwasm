@@ -1,8 +1,9 @@
+use forward_ref::forward_ref_binop;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Shl, Shr};
+use std::ops::{self, Rem, Shl, Shr};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -432,6 +433,19 @@ impl<'a> ops::Div<&'a Uint256> for Uint256 {
         self / *rhs
     }
 }
+
+impl Rem for Uint256 {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero.
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Uint256, Uint256);
 
 impl ops::Mul<Uint256> for Uint256 {
     type Output = Self;
@@ -1340,5 +1354,31 @@ mod tests {
             Uint256::MAX.saturating_mul(Uint256::from(2u32)),
             Uint256::MAX
         );
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint256_implements_rem() {
+        let a = Uint256::from(10u32);
+        assert_eq!(a % Uint256::from(10u32), Uint256::zero());
+        assert_eq!(a % Uint256::from(2u32), Uint256::zero());
+        assert_eq!(a % Uint256::from(1u32), Uint256::zero());
+        assert_eq!(a % Uint256::from(3u32), Uint256::from(1u32));
+        assert_eq!(a % Uint256::from(4u32), Uint256::from(2u32));
+
+        // works for refs
+        let a = Uint256::from(10u32);
+        let b = Uint256::from(3u32);
+        let expected = Uint256::from(1u32);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "division by zero")]
+    fn uint256_rem_panics_for_zero() {
+        let _ = Uint256::from(10u32) % Uint256::zero();
     }
 }
