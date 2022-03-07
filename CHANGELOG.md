@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.16.5] - 2022-03-07
+
 ### Changed
 
 - cosmwasm-vm: Upgrade Wasmer to 2.2.0 and bump `MODULE_SERIALIZATION_VERSION`
@@ -1149,7 +1151,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.4...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.5...HEAD
+[0.16.5]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.4...v0.16.5
 [0.16.4]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.3...v0.16.4
 [0.16.3]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.1...v0.16.2
