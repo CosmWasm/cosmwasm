@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Upgrade Wasmer to 2.2.0 and bump `MODULE_SERIALIZATION_VERSION`
+  to "v3-wasmer1".
+
 ## [0.16.4] - 2022-02-18
 
 ### Changed
