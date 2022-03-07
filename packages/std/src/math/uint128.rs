@@ -1,8 +1,9 @@
+use forward_ref::forward_ref_binop;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops;
+use std::ops::{self, Rem};
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -381,6 +382,19 @@ impl<'a> ops::DivAssign<&'a Uint128> for Uint128 {
         *self = *self / rhs;
     }
 }
+
+impl Rem for Uint128 {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero.
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
 
 impl ops::ShrAssign<u32> for Uint128 {
     fn shr_assign(&mut self, rhs: u32) {
@@ -770,5 +784,31 @@ mod tests {
             Uint128(u128::MAX - 1)
         );
         assert_eq!(Uint128(u128::MAX).wrapping_pow(2), Uint128(1));
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_implements_rem() {
+        let a = Uint128::new(10);
+        assert_eq!(a % Uint128::new(10), Uint128::zero());
+        assert_eq!(a % Uint128::new(2), Uint128::zero());
+        assert_eq!(a % Uint128::new(1), Uint128::zero());
+        assert_eq!(a % Uint128::new(3), Uint128::new(1));
+        assert_eq!(a % Uint128::new(4), Uint128::new(2));
+
+        // works for refs
+        let a = Uint128::new(10);
+        let b = Uint128::new(3);
+        let expected = Uint128::new(1);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "divisor of zero")]
+    fn uint128_rem_panics_for_zero() {
+        let _ = Uint128::new(10) % Uint128::zero();
     }
 }

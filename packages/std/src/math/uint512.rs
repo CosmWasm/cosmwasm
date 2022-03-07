@@ -1,8 +1,9 @@
+use forward_ref::forward_ref_binop;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Shr};
+use std::ops::{self, Rem, Shr};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -523,6 +524,19 @@ impl<'a> ops::Div<&'a Uint512> for Uint512 {
         Self(self.0.checked_div(rhs.0).unwrap())
     }
 }
+
+impl Rem for Uint512 {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero.
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Uint512, Uint512);
 
 impl ops::Mul<Uint512> for Uint512 {
     type Output = Self;
@@ -1064,5 +1078,31 @@ mod tests {
             Uint512::MAX.saturating_mul(Uint512::from(2u32)),
             Uint512::MAX
         );
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint512_implements_rem() {
+        let a = Uint512::from(10u32);
+        assert_eq!(a % Uint512::from(10u32), Uint512::zero());
+        assert_eq!(a % Uint512::from(2u32), Uint512::zero());
+        assert_eq!(a % Uint512::from(1u32), Uint512::zero());
+        assert_eq!(a % Uint512::from(3u32), Uint512::from(1u32));
+        assert_eq!(a % Uint512::from(4u32), Uint512::from(2u32));
+
+        // works for refs
+        let a = Uint512::from(10u32);
+        let b = Uint512::from(3u32);
+        let expected = Uint512::from(1u32);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "division by zero")]
+    fn uint512_rem_panics_for_zero() {
+        let _ = Uint512::from(10u32) % Uint512::zero();
     }
 }
