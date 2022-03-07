@@ -53,6 +53,8 @@ pub enum ExecuteMsg {
     StorageLoop {},
     /// Infinite loop reading and writing memory
     MemoryLoop {},
+    /// Infinite loop sending message to itself
+    MessageLoop {},
     /// Allocate large amounts of memory without consuming much gas
     AllocateLargeMemory { pages: u32 },
     /// Trigger a panic to ensure framework handles gracefully

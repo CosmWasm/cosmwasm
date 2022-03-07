@@ -3,7 +3,7 @@ use sha2::{Digest, Sha256};
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
     CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
-    StdError, StdResult, WasmQuery,
+    StdError, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -77,6 +77,7 @@ pub fn execute(
         ExecuteMsg::CpuLoop {} => do_cpu_loop(),
         ExecuteMsg::StorageLoop {} => do_storage_loop(deps),
         ExecuteMsg::MemoryLoop {} => do_memory_loop(),
+        ExecuteMsg::MessageLoop {} => do_message_loop(env),
         ExecuteMsg::AllocateLargeMemory { pages } => do_allocate_large_memory(pages),
         ExecuteMsg::Panic {} => do_panic(),
         ExecuteMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(deps.api),
@@ -156,6 +157,15 @@ fn do_memory_loop() -> Result<Response, HackError> {
         // add one element
         data.push((*data.last().expect("must not be empty")) + 1);
     }
+}
+
+fn do_message_loop(env: Env) -> Result<Response, HackError> {
+    let resp = Response::new().add_message(WasmMsg::Execute {
+        contract_addr: env.contract.address.into(),
+        msg: to_binary(&ExecuteMsg::MessageLoop {})?,
+        funds: vec![],
+    });
+    Ok(resp)
 }
 
 #[allow(unused_variables)]
