@@ -8,7 +8,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::StdError;
-use crate::Uint512;
+use crate::{OverflowError, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -162,6 +162,19 @@ impl Decimal256 {
     /// See also [`Decimal256::atomics()`].
     pub fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
+    }
+
+    pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
+        let result_as_uint512 = self.numerator().full_mul(other.numerator())
+            / Uint512::from_uint256(Self::DECIMAL_FRACTIONAL); // from_uint128 is a const method and should be "free"
+        result_as_uint512
+            .try_into()
+            .map(Self)
+            .map_err(|_| OverflowError {
+                operation: crate::OverflowOperation::Mul,
+                operand1: self.to_string(),
+                operand2: other.to_string(),
+            })
     }
 
     /// Returns the approximate square root as a Decimal256.
@@ -1029,6 +1042,37 @@ mod tests {
     #[should_panic(expected = "attempt to multiply with overflow")]
     fn decimal256_mul_overflow_panics() {
         let _value = Decimal256::MAX * Decimal256::percent(101);
+    }
+
+    #[test]
+    fn decimal256_checked_mul() {
+        let test_data = [
+            (Decimal256::zero(), Decimal256::zero()),
+            (Decimal256::zero(), Decimal256::one()),
+            (Decimal256::one(), Decimal256::zero()),
+            (Decimal256::percent(10), Decimal256::zero()),
+            (Decimal256::percent(10), Decimal256::percent(5)),
+            (Decimal256::MAX, Decimal256::one()),
+            (Decimal256::MAX / 2u128.into(), Decimal256::percent(200)),
+            (Decimal256::permille(6), Decimal256::permille(13)),
+        ];
+
+        // The regular std::ops::Mul is our source of truth for these tests.
+        for (x, y) in test_data.iter().cloned() {
+            assert_eq!(x * y, x.checked_mul(y).unwrap());
+        }
+    }
+
+    #[test]
+    fn decimal256_checked_mul_overflow() {
+        assert_eq!(
+            Decimal256::MAX.checked_mul(Decimal256::percent(200)),
+            Err(OverflowError {
+                operation: crate::OverflowOperation::Mul,
+                operand1: Decimal256::MAX.to_string(),
+                operand2: Decimal256::percent(200).to_string(),
+            })
+        );
     }
 
     #[test]

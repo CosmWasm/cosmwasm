@@ -8,6 +8,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::StdError;
+use crate::OverflowError;
 
 use super::Fraction;
 use super::Isqrt;
@@ -149,6 +150,19 @@ impl Decimal {
     /// See also [`Decimal::atomics()`].
     pub fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
+    }
+
+    pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
+        let result_as_uint256 = self.numerator().full_mul(other.numerator())
+            / Uint256::from_uint128(Self::DECIMAL_FRACTIONAL); // from_uint128 is a const method and should be "free"
+        result_as_uint256
+            .try_into()
+            .map(Self)
+            .map_err(|_| OverflowError {
+                operation: crate::OverflowOperation::Mul,
+                operand1: self.to_string(),
+                operand2: other.to_string(),
+            })
     }
 
     /// Returns the approximate square root as a Decimal.
@@ -950,6 +964,37 @@ mod tests {
     #[should_panic(expected = "attempt to multiply with overflow")]
     fn decimal_mul_overflow_panics() {
         let _value = Decimal::MAX * Decimal::percent(101);
+    }
+
+    #[test]
+    fn decimal_checked_mul() {
+        let test_data = [
+            (Decimal::zero(), Decimal::zero()),
+            (Decimal::zero(), Decimal::one()),
+            (Decimal::one(), Decimal::zero()),
+            (Decimal::percent(10), Decimal::zero()),
+            (Decimal::percent(10), Decimal::percent(5)),
+            (Decimal::MAX, Decimal::one()),
+            (Decimal::MAX / 2u128.into(), Decimal::percent(200)),
+            (Decimal::permille(6), Decimal::permille(13)),
+        ];
+
+        // The regular std::ops::Mul is our source of truth for these tests.
+        for (x, y) in test_data.iter().cloned() {
+            assert_eq!(x * y, x.checked_mul(y).unwrap());
+        }
+    }
+
+    #[test]
+    fn decimal_checked_mul_overflow() {
+        assert_eq!(
+            Decimal::MAX.checked_mul(Decimal::percent(200)),
+            Err(OverflowError {
+                operation: crate::OverflowOperation::Mul,
+                operand1: Decimal::MAX.to_string(),
+                operand2: Decimal::percent(200).to_string(),
+            })
+        );
     }
 
     #[test]
