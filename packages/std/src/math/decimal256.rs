@@ -1238,7 +1238,10 @@ mod tests {
             );
         }
 
-        // Do we leave 0^0 undefined?
+        assert_eq!(
+            Decimal256::zero().checked_pow(0).unwrap(),
+            Decimal256::one()
+        );
 
         for exp in 1..10 {
             assert_eq!(

@@ -1153,7 +1153,7 @@ mod tests {
             assert_eq!(Decimal::one().checked_pow(exp).unwrap(), Decimal::one());
         }
 
-        // Do we leave 0^0 undefined?
+        assert_eq!(Decimal::zero().checked_pow(0).unwrap(), Decimal::one());
 
         for exp in 1..10 {
             assert_eq!(Decimal::zero().checked_pow(exp).unwrap(), Decimal::zero());
