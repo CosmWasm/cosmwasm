@@ -1153,6 +1153,8 @@ mod tests {
             assert_eq!(Decimal::one().checked_pow(exp).unwrap(), Decimal::one());
         }
 
+        // This case is mathematically undefined but we ensure consistency with Rust stdandard types
+        // https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=20df6716048e77087acd40194b233494
         assert_eq!(Decimal::zero().checked_pow(0).unwrap(), Decimal::one());
 
         for exp in 1..10 {

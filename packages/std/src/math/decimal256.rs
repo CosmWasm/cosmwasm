@@ -1238,6 +1238,8 @@ mod tests {
             );
         }
 
+        // This case is mathematically undefined but we ensure consistency with Rust stdandard types
+        // https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=20df6716048e77087acd40194b233494
         assert_eq!(
             Decimal256::zero().checked_pow(0).unwrap(),
             Decimal256::one()
