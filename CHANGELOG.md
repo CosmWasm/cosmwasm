@@ -11,6 +11,8 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Implement `ops::Rem` for `Uint{64,128,256,512}`.
+- cosmwasm-std: Implement `Decimal{,256}::checked_mul` and
+  `Decimal{,256}::checked_pow`.
 
 ### Changed
 

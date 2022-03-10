@@ -164,6 +164,7 @@ impl Decimal256 {
         Self::DECIMAL_PLACES as u32
     }
 
+    /// Multiplies one `Decimal256` by another, returning an `OverflowError` if an overflow occurred.
     pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
         let result_as_uint512 = self.numerator().full_mul(other.numerator())
             / Uint512::from_uint256(Self::DECIMAL_FRACTIONAL); // from_uint128 is a const method and should be "free"
@@ -177,7 +178,11 @@ impl Decimal256 {
             })
     }
 
+    /// Raises a value to the power of `exp`, returning an `OverflowError` if an overflow occurred.
     pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        // This uses the exponentiation by squaring algorithm:
+        // https://en.wikipedia.org/wiki/Exponentiation_by_squaring#Basic_method
+
         fn inner(mut x: Decimal256, mut n: u32) -> Result<Decimal256, OverflowError> {
             if n == 0 {
                 return Ok(Decimal256::one());
