@@ -6,13 +6,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `Decimal{,256}::checked_mul` and
+  `Decimal{,256}::checked_pow`.
+
 ## [1.0.0-beta6] - 2022-03-07
 
 ### Added
 
 - cosmwasm-std: Implement `ops::Rem` for `Uint{64,128,256,512}`.
-- cosmwasm-std: Implement `Decimal{,256}::checked_mul` and
-  `Decimal{,256}::checked_pow`.
 
 ### Changed
 
