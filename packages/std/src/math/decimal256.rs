@@ -177,6 +177,35 @@ impl Decimal256 {
             })
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        fn inner(mut x: Decimal256, mut n: u32) -> Result<Decimal256, OverflowError> {
+            if n == 0 {
+                return Ok(Decimal256::one());
+            }
+
+            let mut y = Decimal256::one();
+
+            while n > 1 {
+                if n % 2 == 0 {
+                    x = x.checked_mul(x)?;
+                    n /= 2;
+                } else {
+                    y = x.checked_mul(y)?;
+                    x = x.checked_mul(x)?;
+                    n = (n - 1) / 2;
+                }
+            }
+
+            Ok(x * y)
+        }
+
+        inner(self, exp).map_err(|_| OverflowError {
+            operation: crate::OverflowOperation::Pow,
+            operand1: self.to_string(),
+            operand2: exp.to_string(),
+        })
+    }
+
     /// Returns the approximate square root as a Decimal256.
     ///
     /// This should not overflow or panic.
@@ -1192,6 +1221,95 @@ mod tests {
             // we use. Larger numbers will cause less precision.
             // https://www.wolframalpha.com/input/?i=sqrt%2840000000000000000000000000000000000000000000000001%29
             Decimal256::from_str("6324555320336758663997787.088865437067400000").unwrap()
+        );
+    }
+
+    #[test]
+    fn decimal256_checked_pow() {
+        for exp in 0..10 {
+            assert_eq!(
+                Decimal256::one().checked_pow(exp).unwrap(),
+                Decimal256::one()
+            );
+        }
+
+        // Do we leave 0^0 undefined?
+
+        for exp in 1..10 {
+            assert_eq!(
+                Decimal256::zero().checked_pow(exp).unwrap(),
+                Decimal256::zero()
+            );
+        }
+
+        for num in &[
+            Decimal256::percent(50),
+            Decimal256::percent(99),
+            Decimal256::percent(200),
+        ] {
+            assert_eq!(num.checked_pow(0).unwrap(), Decimal256::one())
+        }
+
+        assert_eq!(
+            Decimal256::percent(20).checked_pow(2).unwrap(),
+            Decimal256::percent(4)
+        );
+
+        assert_eq!(
+            Decimal256::percent(20).checked_pow(3).unwrap(),
+            Decimal256::permille(8)
+        );
+
+        assert_eq!(
+            Decimal256::percent(200).checked_pow(4).unwrap(),
+            Decimal256::percent(1600)
+        );
+
+        assert_eq!(
+            Decimal256::percent(200).checked_pow(4).unwrap(),
+            Decimal256::percent(1600)
+        );
+
+        assert_eq!(
+            Decimal256::percent(700).checked_pow(5).unwrap(),
+            Decimal256::percent(1680700)
+        );
+
+        assert_eq!(
+            Decimal256::percent(700).checked_pow(8).unwrap(),
+            Decimal256::percent(576480100)
+        );
+
+        assert_eq!(
+            Decimal256::percent(700).checked_pow(10).unwrap(),
+            Decimal256::percent(28247524900)
+        );
+
+        assert_eq!(
+            Decimal256::percent(120).checked_pow(123).unwrap(),
+            Decimal256(5486473221892422150877397607u128.into())
+        );
+
+        assert_eq!(
+            Decimal256::percent(10).checked_pow(2).unwrap(),
+            Decimal256(10000000000000000u128.into())
+        );
+
+        assert_eq!(
+            Decimal256::percent(10).checked_pow(18).unwrap(),
+            Decimal256(1u128.into())
+        );
+    }
+
+    #[test]
+    fn decimal256_checked_pow_overflow() {
+        assert_eq!(
+            Decimal256::MAX.checked_pow(2),
+            Err(OverflowError {
+                operation: crate::OverflowOperation::Pow,
+                operand1: Decimal256::MAX.to_string(),
+                operand2: "2".to_string(),
+            })
         );
     }
 

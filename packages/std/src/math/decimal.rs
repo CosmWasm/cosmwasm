@@ -165,6 +165,35 @@ impl Decimal {
             })
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        fn inner(mut x: Decimal, mut n: u32) -> Result<Decimal, OverflowError> {
+            if n == 0 {
+                return Ok(Decimal::one());
+            }
+
+            let mut y = Decimal::one();
+
+            while n > 1 {
+                if n % 2 == 0 {
+                    x = x.checked_mul(x)?;
+                    n /= 2;
+                } else {
+                    y = x.checked_mul(y)?;
+                    x = x.checked_mul(x)?;
+                    n = (n - 1) / 2;
+                }
+            }
+
+            Ok(x * y)
+        }
+
+        inner(self, exp).map_err(|_| OverflowError {
+            operation: crate::OverflowOperation::Pow,
+            operand1: self.to_string(),
+            operand2: exp.to_string(),
+        })
+    }
+
     /// Returns the approximate square root as a Decimal.
     ///
     /// This should not overflow or panic.
@@ -1110,6 +1139,89 @@ mod tests {
             // we use. Larger numbers will cause less precision.
             // https://www.wolframalpha.com/input/?i=sqrt%28400001%29
             Decimal::from_str("632.456322602596803200").unwrap()
+        );
+    }
+
+    #[test]
+    fn decimal_checked_pow() {
+        for exp in 0..10 {
+            assert_eq!(Decimal::one().checked_pow(exp).unwrap(), Decimal::one());
+        }
+
+        // Do we leave 0^0 undefined?
+
+        for exp in 1..10 {
+            assert_eq!(Decimal::zero().checked_pow(exp).unwrap(), Decimal::zero());
+        }
+
+        for num in &[
+            Decimal::percent(50),
+            Decimal::percent(99),
+            Decimal::percent(200),
+        ] {
+            assert_eq!(num.checked_pow(0).unwrap(), Decimal::one())
+        }
+
+        assert_eq!(
+            Decimal::percent(20).checked_pow(2).unwrap(),
+            Decimal::percent(4)
+        );
+
+        assert_eq!(
+            Decimal::percent(20).checked_pow(3).unwrap(),
+            Decimal::permille(8)
+        );
+
+        assert_eq!(
+            Decimal::percent(200).checked_pow(4).unwrap(),
+            Decimal::percent(1600)
+        );
+
+        assert_eq!(
+            Decimal::percent(200).checked_pow(4).unwrap(),
+            Decimal::percent(1600)
+        );
+
+        assert_eq!(
+            Decimal::percent(700).checked_pow(5).unwrap(),
+            Decimal::percent(1680700)
+        );
+
+        assert_eq!(
+            Decimal::percent(700).checked_pow(8).unwrap(),
+            Decimal::percent(576480100)
+        );
+
+        assert_eq!(
+            Decimal::percent(700).checked_pow(10).unwrap(),
+            Decimal::percent(28247524900)
+        );
+
+        assert_eq!(
+            Decimal::percent(120).checked_pow(123).unwrap(),
+            Decimal(5486473221892422150877397607u128.into())
+        );
+
+        assert_eq!(
+            Decimal::percent(10).checked_pow(2).unwrap(),
+            Decimal(10000000000000000u128.into())
+        );
+
+        assert_eq!(
+            Decimal::percent(10).checked_pow(18).unwrap(),
+            Decimal(1u128.into())
+        );
+    }
+
+    #[test]
+    fn decimal_checked_pow_overflow() {
+        assert_eq!(
+            Decimal::MAX.checked_pow(2),
+            Err(OverflowError {
+                operation: crate::OverflowOperation::Pow,
+                operand1: Decimal::MAX.to_string(),
+                operand2: "2".to_string(),
+            })
         );
     }
 
