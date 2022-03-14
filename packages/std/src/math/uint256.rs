@@ -1,9 +1,9 @@
-use forward_ref::forward_ref_binop;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Rem, Shl, Shr};
+use std::ops::{self, Rem, Shl, Shr, Sub, SubAssign};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -405,14 +405,14 @@ impl ops::Sub<Uint256> for Uint256 {
         )
     }
 }
+forward_ref_binop!(impl Sub, sub for Uint256, Uint256);
 
-impl<'a> ops::Sub<&'a Uint256> for Uint256 {
-    type Output = Self;
-
-    fn sub(self, rhs: &'a Uint256) -> Self {
-        self - *rhs
+impl SubAssign<Uint256> for Uint256 {
+    fn sub_assign(&mut self, rhs: Uint256) {
+        *self = *self - rhs;
     }
 }
+forward_ref_op_assign!(impl SubAssign, sub_assign for Uint256, Uint256);
 
 impl ops::Div<Uint256> for Uint256 {
     type Output = Self;
@@ -518,18 +518,6 @@ impl ops::AddAssign<Uint256> for Uint256 {
 impl<'a> ops::AddAssign<&'a Uint256> for Uint256 {
     fn add_assign(&mut self, rhs: &'a Uint256) {
         *self = *self + rhs;
-    }
-}
-
-impl ops::SubAssign<Uint256> for Uint256 {
-    fn sub_assign(&mut self, rhs: Uint256) {
-        *self = *self - rhs;
-    }
-}
-
-impl<'a> ops::SubAssign<&'a Uint256> for Uint256 {
-    fn sub_assign(&mut self, rhs: &'a Uint256) {
-        *self = *self - rhs;
     }
 }
 
@@ -1222,9 +1210,49 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
+    fn uint256_sub_works() {
+        assert_eq!(
+            Uint256::from(2u32) - Uint256::from(1u32),
+            Uint256::from(1u32)
+        );
+        assert_eq!(
+            Uint256::from(2u32) - Uint256::from(0u32),
+            Uint256::from(2u32)
+        );
+        assert_eq!(
+            Uint256::from(2u32) - Uint256::from(2u32),
+            Uint256::from(0u32)
+        );
+
+        // works for refs
+        let a = Uint256::from(10u32);
+        let b = Uint256::from(3u32);
+        let expected = Uint256::from(7u32);
+        assert_eq!(a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(&a - &b, expected);
+    }
+
+    #[test]
     #[should_panic]
     fn uint256_sub_overflow_panics() {
         let _ = Uint256::from(1u32) - Uint256::from(2u32);
+    }
+
+    #[test]
+    fn uint256_sub_assign_works() {
+        let mut a = Uint256::from(14u32);
+        a -= Uint256::from(2u32);
+        assert_eq!(a, Uint256::from(12u32));
+
+        // works for refs
+        let mut a = Uint256::from(10u32);
+        let b = Uint256::from(3u32);
+        let expected = Uint256::from(7u32);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]

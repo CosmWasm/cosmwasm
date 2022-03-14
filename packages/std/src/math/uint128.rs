@@ -1,9 +1,9 @@
-use forward_ref::forward_ref_binop;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops::{self, Rem};
+use std::ops::{self, Rem, Sub, SubAssign};
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -266,14 +266,14 @@ impl ops::Sub<Uint128> for Uint128 {
         )
     }
 }
+forward_ref_binop!(impl Sub, sub for Uint128, Uint128);
 
-impl<'a> ops::Sub<&'a Uint128> for Uint128 {
-    type Output = Self;
-
-    fn sub(self, rhs: &'a Uint128) -> Self {
-        self - *rhs
+impl SubAssign<Uint128> for Uint128 {
+    fn sub_assign(&mut self, rhs: Uint128) {
+        *self = *self - rhs;
     }
 }
+forward_ref_op_assign!(impl SubAssign, sub_assign for Uint128, Uint128);
 
 impl ops::Mul<Uint128> for Uint128 {
     type Output = Self;
@@ -344,18 +344,6 @@ impl ops::AddAssign<Uint128> for Uint128 {
 impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
         *self = *self + rhs;
-    }
-}
-
-impl ops::SubAssign<Uint128> for Uint128 {
-    fn sub_assign(&mut self, rhs: Uint128) {
-        *self = *self - rhs;
-    }
-}
-
-impl<'a> ops::SubAssign<&'a Uint128> for Uint128 {
-    fn sub_assign(&mut self, rhs: &'a Uint128) {
-        *self = *self - rhs;
     }
 }
 
@@ -673,9 +661,40 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_sub_works() {
+        assert_eq!(Uint128(2) - Uint128(1), Uint128(1));
+        assert_eq!(Uint128(2) - Uint128(0), Uint128(2));
+        assert_eq!(Uint128(2) - Uint128(2), Uint128(0));
+
+        // works for refs
+        let a = Uint128::new(10);
+        let b = Uint128::new(3);
+        let expected = Uint128::new(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(&a - &b, expected);
+    }
+
+    #[test]
     #[should_panic]
     fn uint128_sub_overflow_panics() {
         let _ = Uint128(1) - Uint128(2);
+    }
+
+    #[test]
+    fn uint128_sub_assign_works() {
+        let mut a = Uint128(14);
+        a -= Uint128(2);
+        assert_eq!(a, Uint128(12));
+
+        // works for refs
+        let mut a = Uint128::new(10);
+        let b = Uint128::new(3);
+        let expected = Uint128::new(7);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]

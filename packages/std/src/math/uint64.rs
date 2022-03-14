@@ -1,9 +1,9 @@
-use forward_ref::forward_ref_binop;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops::{self, Rem};
+use std::ops::{self, Rem, Sub, SubAssign};
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
 use crate::Uint128;
@@ -209,6 +209,26 @@ impl<'a> ops::Add<&'a Uint64> for Uint64 {
         Uint64(self.u64().checked_add(rhs.u64()).unwrap())
     }
 }
+
+impl ops::Sub<Uint64> for Uint64 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Uint64(
+            self.u64()
+                .checked_sub(rhs.u64())
+                .expect("attempt to subtract with overflow"),
+        )
+    }
+}
+forward_ref_binop!(impl Sub, sub for Uint64, Uint64);
+
+impl SubAssign<Uint64> for Uint64 {
+    fn sub_assign(&mut self, rhs: Uint64) {
+        *self = *self - rhs;
+    }
+}
+forward_ref_op_assign!(impl SubAssign, sub_assign for Uint64, Uint64);
 
 impl ops::Div<Uint64> for Uint64 {
     type Output = Self;
@@ -516,6 +536,43 @@ mod tests {
             operand1, operand2, ..
         } = underflow_result.unwrap_err();
         assert_eq!((operand1, operand2), (a.to_string(), b.to_string()));
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint64_sub_works() {
+        assert_eq!(Uint64(2) - Uint64(1), Uint64(1));
+        assert_eq!(Uint64(2) - Uint64(0), Uint64(2));
+        assert_eq!(Uint64(2) - Uint64(2), Uint64(0));
+
+        // works for refs
+        let a = Uint64::new(10);
+        let b = Uint64::new(3);
+        let expected = Uint64::new(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(&a - &b, expected);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_sub_overflow_panics() {
+        let _ = Uint64(1) - Uint64(2);
+    }
+
+    #[test]
+    fn uint64_sub_assign_works() {
+        let mut a = Uint64(14);
+        a -= Uint64(2);
+        assert_eq!(a, Uint64(12));
+
+        // works for refs
+        let mut a = Uint64::new(10);
+        let b = Uint64::new(3);
+        let expected = Uint64::new(7);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]
