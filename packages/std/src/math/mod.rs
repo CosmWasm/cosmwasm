@@ -15,3 +15,45 @@ pub use uint128::Uint128;
 pub use uint256::Uint256;
 pub use uint512::Uint512;
 pub use uint64::Uint64;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ops::*;
+
+    /// An trait that ensures other traits are implemented for our number types
+    trait AllImpl<'a>:
+        Add
+        + Add<&'a Self>
+        + AddAssign
+        + AddAssign<&'a Self>
+        + Sub
+        + Sub<&'a Self>
+        + SubAssign
+        + SubAssign<&'a Self>
+        // Uncomment when implementing Mul/MulAssign for Uint64
+        // + Mul
+        // + Mul<&'a Self>
+        // + MulAssign
+        // + MulAssign<&'a Self>
+        + Div
+        + Div<&'a Self>
+        + DivAssign
+        + DivAssign<&'a Self>
+        + Rem
+        + Rem<&'a Self>
+        // Uncomment when implementing RemAssign
+        // + RemAssign
+        // + RemAssign<&'a Self>
+        + Sized
+        + Copy
+    where
+        Self: 'a,
+    {
+    }
+
+    impl AllImpl<'_> for Uint64 {}
+    impl AllImpl<'_> for Uint128 {}
+    impl AllImpl<'_> for Uint256 {}
+    impl AllImpl<'_> for Uint512 {}
+}
