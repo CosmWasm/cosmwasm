@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops::{self, Rem, Sub, SubAssign};
+use std::ops::{self, Mul, MulAssign, Rem, Sub, SubAssign};
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -275,7 +275,7 @@ impl SubAssign<Uint128> for Uint128 {
 }
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint128, Uint128);
 
-impl ops::Mul<Uint128> for Uint128 {
+impl Mul<Uint128> for Uint128 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -286,14 +286,14 @@ impl ops::Mul<Uint128> for Uint128 {
         )
     }
 }
+forward_ref_binop!(impl Mul, mul for Uint128, Uint128);
 
-impl<'a> ops::Mul<&'a Uint128> for Uint128 {
-    type Output = Self;
-
-    fn mul(self, rhs: &'a Uint128) -> Self::Output {
-        self.mul(*rhs)
+impl MulAssign<Uint128> for Uint128 {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
     }
 }
+forward_ref_op_assign!(impl MulAssign, mul_assign for Uint128, Uint128);
 
 impl ops::Div<Uint128> for Uint128 {
     type Output = Self;
@@ -344,18 +344,6 @@ impl ops::AddAssign<Uint128> for Uint128 {
 impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
         *self = *self + rhs;
-    }
-}
-
-impl ops::MulAssign<Uint128> for Uint128 {
-    fn mul_assign(&mut self, rhs: Self) {
-        *self = *self * rhs;
-    }
-}
-
-impl<'a> ops::MulAssign<&'a Uint128> for Uint128 {
-    fn mul_assign(&mut self, rhs: &'a Uint128) {
-        *self = *self * rhs;
     }
 }
 
@@ -695,6 +683,25 @@ mod tests {
         let expected = Uint128::new(7);
         a -= &b;
         assert_eq!(a, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_mul_works() {
+        assert_eq!(
+            Uint128::from(2u32) * Uint128::from(3u32),
+            Uint128::from(6u32)
+        );
+        assert_eq!(Uint128::from(2u32) * Uint128::zero(), Uint128::zero());
+
+        // works for refs
+        let a = Uint128::from(11u32);
+        let b = Uint128::from(3u32);
+        let expected = Uint128::from(33u32);
+        assert_eq!(a * b, expected);
+        assert_eq!(a * &b, expected);
+        assert_eq!(&a * b, expected);
+        assert_eq!(&a * &b, expected);
     }
 
     #[test]

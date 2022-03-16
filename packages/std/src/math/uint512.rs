@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Rem, Shr, Sub, SubAssign};
+use std::ops::{self, Mul, MulAssign, Rem, Shr, Sub, SubAssign};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -538,21 +538,21 @@ impl Rem for Uint512 {
 }
 forward_ref_binop!(impl Rem, rem for Uint512, Uint512);
 
-impl ops::Mul<Uint512> for Uint512 {
+impl Mul<Uint512> for Uint512 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0.checked_mul(rhs.0).unwrap())
     }
 }
+forward_ref_binop!(impl Mul, mul for Uint512, Uint512);
 
-impl<'a> ops::Mul<&'a Uint512> for Uint512 {
-    type Output = Self;
-
-    fn mul(self, rhs: &'a Uint512) -> Self::Output {
-        Self(self.0.checked_mul(rhs.0).unwrap())
+impl MulAssign<Uint512> for Uint512 {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.0 = self.0.checked_mul(rhs.0).unwrap();
     }
 }
+forward_ref_op_assign!(impl MulAssign, mul_assign for Uint512, Uint512);
 
 impl ops::Shr<u32> for Uint512 {
     type Output = Self;
@@ -596,18 +596,6 @@ impl ops::DivAssign<Uint512> for Uint512 {
 impl<'a> ops::DivAssign<&'a Uint512> for Uint512 {
     fn div_assign(&mut self, rhs: &'a Uint512) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
-    }
-}
-
-impl ops::MulAssign<Uint512> for Uint512 {
-    fn mul_assign(&mut self, rhs: Self) {
-        self.0 = self.0.checked_mul(rhs.0).unwrap();
-    }
-}
-
-impl<'a> ops::MulAssign<&'a Uint512> for Uint512 {
-    fn mul_assign(&mut self, rhs: &'a Uint512) {
-        self.0 = self.0.checked_mul(rhs.0).unwrap();
     }
 }
 
@@ -1025,6 +1013,25 @@ mod tests {
         let expected = Uint512::from(7u32);
         a -= &b;
         assert_eq!(a, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint512_mul_works() {
+        assert_eq!(
+            Uint512::from(2u32) * Uint512::from(3u32),
+            Uint512::from(6u32)
+        );
+        assert_eq!(Uint512::from(2u32) * Uint512::zero(), Uint512::zero());
+
+        // works for refs
+        let a = Uint512::from(11u32);
+        let b = Uint512::from(3u32);
+        let expected = Uint512::from(33u32);
+        assert_eq!(a * b, expected);
+        assert_eq!(a * &b, expected);
+        assert_eq!(&a * b, expected);
+        assert_eq!(&a * &b, expected);
     }
 
     #[test]
