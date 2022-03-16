@@ -10,6 +10,7 @@ and this project adheres to
 
 - cosmwasm-std: Implement `Decimal{,256}::checked_mul` and
   `Decimal{,256}::checked_pow`.
+- cosmwasm-std: Implement `Sub`/`SubAssign` for `Uint64`.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
 
 ## [1.0.0-beta6] - 2022-03-07

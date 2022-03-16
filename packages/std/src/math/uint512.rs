@@ -1,9 +1,9 @@
-use forward_ref::forward_ref_binop;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Rem, Shr};
+use std::ops::{self, Rem, Shr, Sub, SubAssign};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -493,21 +493,21 @@ impl<'a> ops::Add<&'a Uint512> for Uint512 {
     }
 }
 
-impl ops::Sub<Uint512> for Uint512 {
+impl Sub<Uint512> for Uint512 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
         Uint512(self.0.checked_sub(rhs.0).unwrap())
     }
 }
+forward_ref_binop!(impl Sub, sub for Uint512, Uint512);
 
-impl<'a> ops::Sub<&'a Uint512> for Uint512 {
-    type Output = Self;
-
-    fn sub(self, rhs: &'a Uint512) -> Self {
-        Uint512(self.0.checked_sub(rhs.0).unwrap())
+impl ops::SubAssign<Uint512> for Uint512 {
+    fn sub_assign(&mut self, rhs: Uint512) {
+        self.0 = self.0.checked_sub(rhs.0).unwrap();
     }
 }
+forward_ref_op_assign!(impl SubAssign, sub_assign for Uint512, Uint512);
 
 impl ops::Div<Uint512> for Uint512 {
     type Output = Self;
@@ -584,18 +584,6 @@ impl ops::AddAssign<Uint512> for Uint512 {
 impl<'a> ops::AddAssign<&'a Uint512> for Uint512 {
     fn add_assign(&mut self, rhs: &'a Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
-    }
-}
-
-impl ops::SubAssign<Uint512> for Uint512 {
-    fn sub_assign(&mut self, rhs: Uint512) {
-        self.0 = self.0.checked_sub(rhs.0).unwrap();
-    }
-}
-
-impl<'a> ops::SubAssign<&'a Uint512> for Uint512 {
-    fn sub_assign(&mut self, rhs: &'a Uint512) {
-        self.0 = self.0.checked_sub(rhs.0).unwrap();
     }
 }
 
@@ -994,9 +982,49 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
+    fn uint512_sub_works() {
+        assert_eq!(
+            Uint512::from(2u32) - Uint512::from(1u32),
+            Uint512::from(1u32)
+        );
+        assert_eq!(
+            Uint512::from(2u32) - Uint512::from(0u32),
+            Uint512::from(2u32)
+        );
+        assert_eq!(
+            Uint512::from(2u32) - Uint512::from(2u32),
+            Uint512::from(0u32)
+        );
+
+        // works for refs
+        let a = Uint512::from(10u32);
+        let b = Uint512::from(3u32);
+        let expected = Uint512::from(7u32);
+        assert_eq!(a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(&a - &b, expected);
+    }
+
+    #[test]
     #[should_panic]
     fn uint512_sub_overflow_panics() {
         let _ = Uint512::from(1u32) - Uint512::from(2u32);
+    }
+
+    #[test]
+    fn uint512_sub_assign_works() {
+        let mut a = Uint512::from(14u32);
+        a -= Uint512::from(2u32);
+        assert_eq!(a, Uint512::from(12u32));
+
+        // works for refs
+        let mut a = Uint512::from(10u32);
+        let b = Uint512::from(3u32);
+        let expected = Uint512::from(7u32);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]
