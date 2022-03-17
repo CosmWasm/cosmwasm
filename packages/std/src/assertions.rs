@@ -174,6 +174,7 @@ mod tests {
         // If this was expanded to `true || false == false` we'd get equality.
         // It must be expanded to `(true || false) == false` and we expect inequality.
 
+        #[allow(clippy::nonminimal_bool)]
         fn check() -> Result<(), StdError> {
             ensure_eq!(true || false, false, StdError::generic_err("foobar"));
             Ok(())
@@ -199,6 +200,7 @@ mod tests {
         // If this was expanded to `true || false == false` we'd get equality.
         // It must be expanded to `(true || false) == false` and we expect inequality.
 
+        #[allow(clippy::nonminimal_bool)]
         fn check() -> Result<(), StdError> {
             ensure_ne!(true || false, false, StdError::generic_err("foobar"));
             Ok(())
