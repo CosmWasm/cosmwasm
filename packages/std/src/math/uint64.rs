@@ -612,6 +612,19 @@ mod tests {
     }
 
     #[test]
+    fn uint64_mul_assign_works() {
+        let mut a = Uint64::from(14u32);
+        a *= Uint64::from(2u32);
+        assert_eq!(a, Uint64::from(28u32));
+
+        // works for refs
+        let mut a = Uint64::from(10u32);
+        let b = Uint64::from(3u32);
+        a *= &b;
+        assert_eq!(a, Uint64::from(30u32));
+    }
+
+    #[test]
     #[should_panic]
     fn uint64_math_overflow_panics() {
         // almost_max is 2^64 - 10

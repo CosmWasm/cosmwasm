@@ -1263,6 +1263,19 @@ mod tests {
     }
 
     #[test]
+    fn uint256_mul_assign_works() {
+        let mut a = Uint256::from(14u32);
+        a *= Uint256::from(2u32);
+        assert_eq!(a, Uint256::from(28u32));
+
+        // works for refs
+        let mut a = Uint256::from(10u32);
+        let b = Uint256::from(3u32);
+        a *= &b;
+        assert_eq!(a, Uint256::from(30u32));
+    }
+
+    #[test]
     fn uint256_multiply_ratio_works() {
         let base = Uint256::from(500u32);
 

@@ -1035,6 +1035,19 @@ mod tests {
     }
 
     #[test]
+    fn uint512_mul_assign_works() {
+        let mut a = Uint512::from(14u32);
+        a *= Uint512::from(2u32);
+        assert_eq!(a, Uint512::from(28u32));
+
+        // works for refs
+        let mut a = Uint512::from(10u32);
+        let b = Uint512::from(3u32);
+        a *= &b;
+        assert_eq!(a, Uint512::from(30u32));
+    }
+
+    #[test]
     fn uint512_shr_works() {
         let original = Uint512::new([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,

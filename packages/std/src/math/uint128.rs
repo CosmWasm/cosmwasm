@@ -705,6 +705,19 @@ mod tests {
     }
 
     #[test]
+    fn uint128_mul_assign_works() {
+        let mut a = Uint128::from(14u32);
+        a *= Uint128::from(2u32);
+        assert_eq!(a, Uint128::from(28u32));
+
+        // works for refs
+        let mut a = Uint128::from(10u32);
+        let b = Uint128::from(3u32);
+        a *= &b;
+        assert_eq!(a, Uint128::from(30u32));
+    }
+
+    #[test]
     fn uint128_multiply_ratio_works() {
         let base = Uint128(500);
 
