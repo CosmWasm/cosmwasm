@@ -31,11 +31,10 @@ mod tests {
         + Sub<&'a Self>
         + SubAssign
         + SubAssign<&'a Self>
-        // Uncomment when implementing Mul/MulAssign for Uint64
-        // + Mul
-        // + Mul<&'a Self>
-        // + MulAssign
-        // + MulAssign<&'a Self>
+        + Mul
+        + Mul<&'a Self>
+        + MulAssign
+        + MulAssign<&'a Self>
         + Div
         + Div<&'a Self>
         + DivAssign

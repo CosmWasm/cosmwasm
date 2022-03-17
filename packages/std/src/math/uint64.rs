@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops::{self, Rem, Sub, SubAssign};
+use std::ops::{self, Mul, MulAssign, Rem, Sub, SubAssign};
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
 use crate::Uint128;
@@ -229,6 +229,26 @@ impl SubAssign<Uint64> for Uint64 {
     }
 }
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint64, Uint64);
+
+impl Mul<Uint64> for Uint64 {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self(
+            self.u64()
+                .checked_mul(rhs.u64())
+                .expect("attempt to multiply with overflow"),
+        )
+    }
+}
+forward_ref_binop!(impl Mul, mul for Uint64, Uint64);
+
+impl MulAssign<Uint64> for Uint64 {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
+    }
+}
+forward_ref_op_assign!(impl MulAssign, mul_assign for Uint64, Uint64);
 
 impl ops::Div<Uint64> for Uint64 {
     type Output = Self;
@@ -573,6 +593,35 @@ mod tests {
         let expected = Uint64::new(7);
         a -= &b;
         assert_eq!(a, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint64_mul_works() {
+        assert_eq!(Uint64::from(2u32) * Uint64::from(3u32), Uint64::from(6u32));
+        assert_eq!(Uint64::from(2u32) * Uint64::zero(), Uint64::zero());
+
+        // works for refs
+        let a = Uint64::from(11u32);
+        let b = Uint64::from(3u32);
+        let expected = Uint64::from(33u32);
+        assert_eq!(a * b, expected);
+        assert_eq!(a * &b, expected);
+        assert_eq!(&a * b, expected);
+        assert_eq!(&a * &b, expected);
+    }
+
+    #[test]
+    fn uint64_mul_assign_works() {
+        let mut a = Uint64::from(14u32);
+        a *= Uint64::from(2u32);
+        assert_eq!(a, Uint64::from(28u32));
+
+        // works for refs
+        let mut a = Uint64::from(10u32);
+        let b = Uint64::from(3u32);
+        a *= &b;
+        assert_eq!(a, Uint64::from(30u32));
     }
 
     #[test]
