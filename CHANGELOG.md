@@ -13,7 +13,10 @@ and this project adheres to
 - cosmwasm-std: Implement `Sub`/`SubAssign` for `Uint64`.
 - cosmwasm-std: Implement `Mul`/`MulAssign` for `Uint64`.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
-- cosmwasm-vm: Upgrade Wasmer to 2.2.1
+
+### Changed
+
+- cosmwasm-vm: Upgrade Wasmer to 2.2.1.
 
 ## [1.0.0-beta6] - 2022-03-07
 
