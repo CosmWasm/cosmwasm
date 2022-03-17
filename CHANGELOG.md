@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Upgrade Wasmer to 2.2.1.
+
 ## [0.16.5] - 2022-03-07
 
 ### Changed
