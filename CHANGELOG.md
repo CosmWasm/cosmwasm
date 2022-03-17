@@ -12,6 +12,7 @@ and this project adheres to
   `Decimal{,256}::checked_pow`.
 - cosmwasm-std: Implement `Sub`/`SubAssign` for `Uint64`.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
+- cosmwasm-vm: Upgrade Wasmer to 2.2.1
 
 ## [1.0.0-beta6] - 2022-03-07
 
