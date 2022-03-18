@@ -4,7 +4,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -539,6 +539,13 @@ impl Rem for Uint512 {
     }
 }
 forward_ref_binop!(impl Rem, rem for Uint512, Uint512);
+
+impl RemAssign<Uint512> for Uint512 {
+    fn rem_assign(&mut self, rhs: Uint512) {
+        *self = *self % rhs;
+    }
+}
+forward_ref_op_assign!(impl RemAssign, rem_assign for Uint512, Uint512);
 
 impl Mul<Uint512> for Uint512 {
     type Output = Self;
@@ -1154,5 +1161,37 @@ mod tests {
     #[should_panic(expected = "division by zero")]
     fn uint512_rem_panics_for_zero() {
         let _ = Uint512::from(10u32) % Uint512::zero();
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint512_rem_works() {
+        assert_eq!(
+            Uint512::from(12u32) % Uint512::from(10u32),
+            Uint512::from(2u32)
+        );
+        assert_eq!(Uint512::from(50u32) % Uint512::from(5u32), Uint512::zero());
+
+        // works for refs
+        let a = Uint512::from(42u32);
+        let b = Uint512::from(5u32);
+        let expected = Uint512::from(2u32);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    fn uint512_rem_assign_works() {
+        let mut a = Uint512::from(30u32);
+        a %= Uint512::from(4u32);
+        assert_eq!(a, Uint512::from(2u32));
+
+        // works for refs
+        let mut a = Uint512::from(25u32);
+        let b = Uint512::from(6u32);
+        a %= &b;
+        assert_eq!(a, Uint512::from(1u32));
     }
 }

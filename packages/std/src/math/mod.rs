@@ -41,8 +41,8 @@ mod tests {
         + DivAssign<&'a Self>
         + Rem
         + Rem<&'a Self>
-        // + RemAssign
-        // + RemAssign<&'a Self>
+        + RemAssign
+        + RemAssign<&'a Self>
         + Sized
         + Copy
     where
