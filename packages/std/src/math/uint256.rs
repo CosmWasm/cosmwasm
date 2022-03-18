@@ -210,6 +210,11 @@ impl Uint256 {
         self.0.is_zero()
     }
 
+    pub fn pow(self, exp: u32) -> Self {
+        self.checked_pow(exp)
+            .expect("attempt to raise to a power with overflow")
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -231,6 +236,13 @@ impl Uint256 {
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp.into())
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+    }
+
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_div(other.0)
@@ -243,18 +255,6 @@ impl Uint256 {
             .checked_rem(other.0)
             .map(Self)
             .ok_or_else(|| DivideByZeroError::new(self))
-    }
-
-    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
-        self.0
-            .checked_pow(exp.into())
-            .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
-    }
-
-    pub fn pow(self, exp: u32) -> Self {
-        self.checked_pow(exp)
-            .expect("attempt to raise to a power with overflow")
     }
 
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
@@ -1388,6 +1388,10 @@ mod tests {
         ));
         assert!(matches!(
             Uint256::MAX.checked_mul(Uint256::from(2u32)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint256::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
         assert!(matches!(

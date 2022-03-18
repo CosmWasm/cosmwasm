@@ -63,6 +63,10 @@ impl Uint64 {
         self.0 == 0
     }
 
+    pub fn pow(&self, exp: u32) -> Self {
+        self.0.pow(exp).into()
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -82,6 +86,13 @@ impl Uint64 {
             .checked_mul(other.0)
             .map(Self)
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
+    }
+
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
@@ -634,6 +645,18 @@ mod tests {
     }
 
     #[test]
+    fn uint64_pow_works() {
+        assert_eq!(Uint64::from(2u32).pow(2), Uint64::from(4u32));
+        assert_eq!(Uint64::from(2u32).pow(10), Uint64::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_pow_overflow_panics() {
+        Uint64(u64::MAX).pow(2u32);
+    }
+
+    #[test]
     #[should_panic]
     fn uint64_math_overflow_panics() {
         // almost_max is 2^64 - 10
@@ -712,6 +735,10 @@ mod tests {
         ));
         assert!(matches!(
             Uint64(u64::MAX).checked_mul(Uint64(2)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint64(u64::MAX).checked_pow(2u32),
             Err(OverflowError { .. })
         ));
         assert!(matches!(

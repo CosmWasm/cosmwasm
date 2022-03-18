@@ -330,6 +330,13 @@ impl Uint512 {
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp.into())
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+    }
+
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_div(other.0)
@@ -1111,6 +1118,10 @@ mod tests {
         ));
         assert!(matches!(
             Uint512::MAX.checked_mul(Uint512::from(2u32)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint512::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
         assert!(matches!(

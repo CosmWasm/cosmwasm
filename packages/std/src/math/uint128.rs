@@ -67,6 +67,10 @@ impl Uint128 {
         self.0 == 0
     }
 
+    pub fn pow(&self, exp: u32) -> Self {
+        self.0.pow(exp).into()
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -797,6 +801,10 @@ mod tests {
         ));
         assert!(matches!(
             Uint128(u128::MAX).checked_mul(Uint128(2)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint128(u128::MAX).checked_pow(2u32),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
