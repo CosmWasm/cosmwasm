@@ -211,8 +211,7 @@ impl Uint256 {
     }
 
     pub fn pow(self, exp: u32) -> Self {
-        self.checked_pow(exp)
-            .expect("attempt to raise to a power with overflow")
+        unimplemented!()
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {

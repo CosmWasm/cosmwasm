@@ -309,6 +309,10 @@ impl Uint512 {
         self.0.is_zero()
     }
 
+    pub fn pow(self, exp: u32) -> Self {
+        unimplemented!()
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
