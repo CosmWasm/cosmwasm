@@ -3,7 +3,9 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops::{self, Mul, MulAssign, Rem, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Shr, ShrAssign, Sub, SubAssign,
+};
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -235,7 +237,7 @@ impl fmt::Display for Uint128 {
     }
 }
 
-impl ops::Add<Uint128> for Uint128 {
+impl Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -247,7 +249,7 @@ impl ops::Add<Uint128> for Uint128 {
     }
 }
 
-impl<'a> ops::Add<&'a Uint128> for Uint128 {
+impl<'a> Add<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint128) -> Self {
@@ -255,7 +257,7 @@ impl<'a> ops::Add<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::Sub<Uint128> for Uint128 {
+impl Sub<Uint128> for Uint128 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -295,7 +297,7 @@ impl MulAssign<Uint128> for Uint128 {
 }
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint128, Uint128);
 
-impl ops::Div<Uint128> for Uint128 {
+impl Div<Uint128> for Uint128 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -307,7 +309,7 @@ impl ops::Div<Uint128> for Uint128 {
     }
 }
 
-impl<'a> ops::Div<&'a Uint128> for Uint128 {
+impl<'a> Div<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint128) -> Self::Output {
@@ -315,7 +317,7 @@ impl<'a> ops::Div<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::Shr<u32> for Uint128 {
+impl Shr<u32> for Uint128 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -327,7 +329,7 @@ impl ops::Shr<u32> for Uint128 {
     }
 }
 
-impl<'a> ops::Shr<&'a u32> for Uint128 {
+impl<'a> Shr<&'a u32> for Uint128 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
@@ -335,25 +337,25 @@ impl<'a> ops::Shr<&'a u32> for Uint128 {
     }
 }
 
-impl ops::AddAssign<Uint128> for Uint128 {
+impl AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         *self = *self + rhs;
     }
 }
 
-impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
+impl<'a> AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
         *self = *self + rhs;
     }
 }
 
-impl ops::DivAssign<Uint128> for Uint128 {
+impl DivAssign<Uint128> for Uint128 {
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
     }
 }
 
-impl<'a> ops::DivAssign<&'a Uint128> for Uint128 {
+impl<'a> DivAssign<&'a Uint128> for Uint128 {
     fn div_assign(&mut self, rhs: &'a Uint128) {
         *self = *self / rhs;
     }
@@ -372,13 +374,13 @@ impl Rem for Uint128 {
 }
 forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
 
-impl ops::ShrAssign<u32> for Uint128 {
+impl ShrAssign<u32> for Uint128 {
     fn shr_assign(&mut self, rhs: u32) {
         *self = *self >> rhs;
     }
 }
 
-impl<'a> ops::ShrAssign<&'a u32> for Uint128 {
+impl<'a> ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
     }
@@ -462,10 +464,10 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
 
 impl<A> std::iter::Sum<A> for Uint128
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 

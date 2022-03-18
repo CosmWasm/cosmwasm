@@ -3,7 +3,9 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Mul, MulAssign, Rem, Shr, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Shr, ShrAssign, Sub, SubAssign,
+};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -477,7 +479,7 @@ impl fmt::Display for Uint512 {
     }
 }
 
-impl ops::Add<Uint512> for Uint512 {
+impl Add<Uint512> for Uint512 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -485,7 +487,7 @@ impl ops::Add<Uint512> for Uint512 {
     }
 }
 
-impl<'a> ops::Add<&'a Uint512> for Uint512 {
+impl<'a> Add<&'a Uint512> for Uint512 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint512) -> Self {
@@ -502,14 +504,14 @@ impl Sub<Uint512> for Uint512 {
 }
 forward_ref_binop!(impl Sub, sub for Uint512, Uint512);
 
-impl ops::SubAssign<Uint512> for Uint512 {
+impl SubAssign<Uint512> for Uint512 {
     fn sub_assign(&mut self, rhs: Uint512) {
         self.0 = self.0.checked_sub(rhs.0).unwrap();
     }
 }
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint512, Uint512);
 
-impl ops::Div<Uint512> for Uint512 {
+impl Div<Uint512> for Uint512 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -517,7 +519,7 @@ impl ops::Div<Uint512> for Uint512 {
     }
 }
 
-impl<'a> ops::Div<&'a Uint512> for Uint512 {
+impl<'a> Div<&'a Uint512> for Uint512 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint512) -> Self::Output {
@@ -554,7 +556,7 @@ impl MulAssign<Uint512> for Uint512 {
 }
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint512, Uint512);
 
-impl ops::Shr<u32> for Uint512 {
+impl Shr<u32> for Uint512 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -567,7 +569,7 @@ impl ops::Shr<u32> for Uint512 {
     }
 }
 
-impl<'a> ops::Shr<&'a u32> for Uint512 {
+impl<'a> Shr<&'a u32> for Uint512 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
@@ -575,37 +577,37 @@ impl<'a> ops::Shr<&'a u32> for Uint512 {
     }
 }
 
-impl ops::AddAssign<Uint512> for Uint512 {
+impl AddAssign<Uint512> for Uint512 {
     fn add_assign(&mut self, rhs: Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
     }
 }
 
-impl<'a> ops::AddAssign<&'a Uint512> for Uint512 {
+impl<'a> AddAssign<&'a Uint512> for Uint512 {
     fn add_assign(&mut self, rhs: &'a Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
     }
 }
 
-impl ops::DivAssign<Uint512> for Uint512 {
+impl DivAssign<Uint512> for Uint512 {
     fn div_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
     }
 }
 
-impl<'a> ops::DivAssign<&'a Uint512> for Uint512 {
+impl<'a> DivAssign<&'a Uint512> for Uint512 {
     fn div_assign(&mut self, rhs: &'a Uint512) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
     }
 }
 
-impl ops::ShrAssign<u32> for Uint512 {
+impl ShrAssign<u32> for Uint512 {
     fn shr_assign(&mut self, rhs: u32) {
         *self = Shr::<u32>::shr(*self, rhs);
     }
 }
 
-impl<'a> ops::ShrAssign<&'a u32> for Uint512 {
+impl<'a> ShrAssign<&'a u32> for Uint512 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
     }
@@ -650,10 +652,10 @@ impl<'de> de::Visitor<'de> for Uint512Visitor {
 
 impl<A> std::iter::Sum<A> for Uint512
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 

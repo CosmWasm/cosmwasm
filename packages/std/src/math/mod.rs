@@ -41,7 +41,6 @@ mod tests {
         + DivAssign<&'a Self>
         + Rem
         + Rem<&'a Self>
-        // Uncomment when implementing RemAssign
         // + RemAssign
         // + RemAssign<&'a Self>
         + Sized

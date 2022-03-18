@@ -3,7 +3,9 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use std::ops::{self, Mul, MulAssign, Rem, Shl, Shr, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Shl, Shr, ShrAssign, Sub, SubAssign,
+};
 use std::str::FromStr;
 
 use crate::errors::{
@@ -374,7 +376,7 @@ impl fmt::Display for Uint256 {
     }
 }
 
-impl ops::Add<Uint256> for Uint256 {
+impl Add<Uint256> for Uint256 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -386,7 +388,7 @@ impl ops::Add<Uint256> for Uint256 {
     }
 }
 
-impl<'a> ops::Add<&'a Uint256> for Uint256 {
+impl<'a> Add<&'a Uint256> for Uint256 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint256) -> Self {
@@ -394,7 +396,7 @@ impl<'a> ops::Add<&'a Uint256> for Uint256 {
     }
 }
 
-impl ops::Sub<Uint256> for Uint256 {
+impl Sub<Uint256> for Uint256 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -414,7 +416,7 @@ impl SubAssign<Uint256> for Uint256 {
 }
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint256, Uint256);
 
-impl ops::Div<Uint256> for Uint256 {
+impl Div<Uint256> for Uint256 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -426,7 +428,7 @@ impl ops::Div<Uint256> for Uint256 {
     }
 }
 
-impl<'a> ops::Div<&'a Uint256> for Uint256 {
+impl<'a> Div<&'a Uint256> for Uint256 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint256) -> Self::Output {
@@ -467,7 +469,7 @@ impl MulAssign<Uint256> for Uint256 {
 }
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint256, Uint256);
 
-impl ops::Shr<u32> for Uint256 {
+impl Shr<u32> for Uint256 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -480,7 +482,7 @@ impl ops::Shr<u32> for Uint256 {
     }
 }
 
-impl<'a> ops::Shr<&'a u32> for Uint256 {
+impl<'a> Shr<&'a u32> for Uint256 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
@@ -488,7 +490,7 @@ impl<'a> ops::Shr<&'a u32> for Uint256 {
     }
 }
 
-impl ops::Shl<u32> for Uint256 {
+impl Shl<u32> for Uint256 {
     type Output = Self;
 
     fn shl(self, rhs: u32) -> Self::Output {
@@ -501,7 +503,7 @@ impl ops::Shl<u32> for Uint256 {
     }
 }
 
-impl<'a> ops::Shl<&'a u32> for Uint256 {
+impl<'a> Shl<&'a u32> for Uint256 {
     type Output = Self;
 
     fn shl(self, rhs: &'a u32) -> Self::Output {
@@ -509,37 +511,37 @@ impl<'a> ops::Shl<&'a u32> for Uint256 {
     }
 }
 
-impl ops::AddAssign<Uint256> for Uint256 {
+impl AddAssign<Uint256> for Uint256 {
     fn add_assign(&mut self, rhs: Uint256) {
         *self = *self + rhs;
     }
 }
 
-impl<'a> ops::AddAssign<&'a Uint256> for Uint256 {
+impl<'a> AddAssign<&'a Uint256> for Uint256 {
     fn add_assign(&mut self, rhs: &'a Uint256) {
         *self = *self + rhs;
     }
 }
 
-impl ops::DivAssign<Uint256> for Uint256 {
+impl DivAssign<Uint256> for Uint256 {
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
     }
 }
 
-impl<'a> ops::DivAssign<&'a Uint256> for Uint256 {
+impl<'a> DivAssign<&'a Uint256> for Uint256 {
     fn div_assign(&mut self, rhs: &'a Uint256) {
         *self = *self / rhs;
     }
 }
 
-impl ops::ShrAssign<u32> for Uint256 {
+impl ShrAssign<u32> for Uint256 {
     fn shr_assign(&mut self, rhs: u32) {
         *self = Shr::<u32>::shr(*self, rhs);
     }
 }
 
-impl<'a> ops::ShrAssign<&'a u32> for Uint256 {
+impl<'a> ShrAssign<&'a u32> for Uint256 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
     }
@@ -623,10 +625,10 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
 
 impl<A> std::iter::Sum<A> for Uint256
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 

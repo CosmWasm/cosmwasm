@@ -3,7 +3,9 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::ops::{self, Mul, MulAssign, Rem, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Shr, ShrAssign, Sub, SubAssign,
+};
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
 use crate::Uint128;
@@ -194,7 +196,7 @@ impl fmt::Display for Uint64 {
     }
 }
 
-impl ops::Add<Uint64> for Uint64 {
+impl Add<Uint64> for Uint64 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -202,7 +204,7 @@ impl ops::Add<Uint64> for Uint64 {
     }
 }
 
-impl<'a> ops::Add<&'a Uint64> for Uint64 {
+impl<'a> Add<&'a Uint64> for Uint64 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint64) -> Self {
@@ -210,7 +212,7 @@ impl<'a> ops::Add<&'a Uint64> for Uint64 {
     }
 }
 
-impl ops::Sub<Uint64> for Uint64 {
+impl Sub<Uint64> for Uint64 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -250,7 +252,7 @@ impl MulAssign<Uint64> for Uint64 {
 }
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint64, Uint64);
 
-impl ops::Div<Uint64> for Uint64 {
+impl Div<Uint64> for Uint64 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -258,7 +260,7 @@ impl ops::Div<Uint64> for Uint64 {
     }
 }
 
-impl<'a> ops::Div<&'a Uint64> for Uint64 {
+impl<'a> Div<&'a Uint64> for Uint64 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint64) -> Self::Output {
@@ -279,7 +281,7 @@ impl Rem for Uint64 {
 }
 forward_ref_binop!(impl Rem, rem for Uint64, Uint64);
 
-impl ops::Shr<u32> for Uint64 {
+impl Shr<u32> for Uint64 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -287,7 +289,7 @@ impl ops::Shr<u32> for Uint64 {
     }
 }
 
-impl<'a> ops::Shr<&'a u32> for Uint64 {
+impl<'a> Shr<&'a u32> for Uint64 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
@@ -295,37 +297,37 @@ impl<'a> ops::Shr<&'a u32> for Uint64 {
     }
 }
 
-impl ops::AddAssign<Uint64> for Uint64 {
+impl AddAssign<Uint64> for Uint64 {
     fn add_assign(&mut self, rhs: Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
     }
 }
 
-impl<'a> ops::AddAssign<&'a Uint64> for Uint64 {
+impl<'a> AddAssign<&'a Uint64> for Uint64 {
     fn add_assign(&mut self, rhs: &'a Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
     }
 }
 
-impl ops::DivAssign<Uint64> for Uint64 {
+impl DivAssign<Uint64> for Uint64 {
     fn div_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_div(rhs.u64()).unwrap();
     }
 }
 
-impl<'a> ops::DivAssign<&'a Uint64> for Uint64 {
+impl<'a> DivAssign<&'a Uint64> for Uint64 {
     fn div_assign(&mut self, rhs: &'a Uint64) {
         self.0 = self.0.checked_div(rhs.u64()).unwrap();
     }
 }
 
-impl ops::ShrAssign<u32> for Uint64 {
+impl ShrAssign<u32> for Uint64 {
     fn shr_assign(&mut self, rhs: u32) {
         self.0 = self.0.checked_shr(rhs).unwrap();
     }
 }
 
-impl<'a> ops::ShrAssign<&'a u32> for Uint64 {
+impl<'a> ShrAssign<&'a u32> for Uint64 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         self.0 = self.0.checked_shr(*rhs).unwrap();
     }
@@ -410,10 +412,10 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
 
 impl<A> std::iter::Sum<A> for Uint64
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 
