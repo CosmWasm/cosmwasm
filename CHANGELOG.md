@@ -12,6 +12,8 @@ and this project adheres to
   `Decimal{,256}::checked_pow`.
 - cosmwasm-std: Implement `Sub`/`SubAssign` for `Uint64`.
 - cosmwasm-std: Implement `Mul`/`MulAssign` for `Uint64`.
+- cosmwasm-std: Implement `RemAssign` for
+  `Uint64`/`Uint128`/`Uint256`/`Uint512`.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
 
 ### Changed
