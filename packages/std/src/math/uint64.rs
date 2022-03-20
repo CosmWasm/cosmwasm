@@ -4,7 +4,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -280,6 +280,13 @@ impl Rem for Uint64 {
     }
 }
 forward_ref_binop!(impl Rem, rem for Uint64, Uint64);
+
+impl RemAssign<Uint64> for Uint64 {
+    fn rem_assign(&mut self, rhs: Uint64) {
+        *self = *self % rhs;
+    }
+}
+forward_ref_op_assign!(impl RemAssign, rem_assign for Uint64, Uint64);
 
 impl Shr<u32> for Uint64 {
     type Output = Self;
@@ -760,5 +767,37 @@ mod tests {
     #[should_panic(expected = "divisor of zero")]
     fn uint64_rem_panics_for_zero() {
         let _ = Uint64::new(10) % Uint64::zero();
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint64_rem_works() {
+        assert_eq!(
+            Uint64::from(12u32) % Uint64::from(10u32),
+            Uint64::from(2u32)
+        );
+        assert_eq!(Uint64::from(50u32) % Uint64::from(5u32), Uint64::zero());
+
+        // works for refs
+        let a = Uint64::from(42u32);
+        let b = Uint64::from(5u32);
+        let expected = Uint64::from(2u32);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    fn uint64_rem_assign_works() {
+        let mut a = Uint64::from(30u32);
+        a %= Uint64::from(4u32);
+        assert_eq!(a, Uint64::from(2u32));
+
+        // works for refs
+        let mut a = Uint64::from(25u32);
+        let b = Uint64::from(6u32);
+        a %= &b;
+        assert_eq!(a, Uint64::from(1u32));
     }
 }
