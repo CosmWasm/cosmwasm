@@ -4,7 +4,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -350,6 +350,14 @@ impl Sub for Decimal {
         Decimal(self.0 - other.0)
     }
 }
+forward_ref_binop!(impl Sub, sub for Decimal, Decimal);
+
+impl SubAssign for Decimal {
+    fn sub_assign(&mut self, rhs: Decimal) {
+        *self = *self - rhs;
+    }
+}
+forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal, Decimal);
 
 impl Mul for Decimal {
     type Output = Self;

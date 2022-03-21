@@ -63,9 +63,9 @@ mod tests {
         + AddAssign
         + AddAssign<&'a Self>
         + Sub
-        // + Sub<&'a Self>
-        // + SubAssign
-        // + SubAssign<&'a Self>
+        + Sub<&'a Self>
+        + SubAssign
+        + SubAssign<&'a Self>
         + Mul
         // + Mul<&'a Self>
         // + MulAssign
