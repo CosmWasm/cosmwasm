@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Backport `Uint*` types from latest main branch.
+
 ### Changed
 
 - cosmwasm-vm: Upgrade Wasmer to 2.2.1.
