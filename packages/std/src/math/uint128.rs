@@ -67,6 +67,10 @@ impl Uint128 {
         self.0 == 0
     }
 
+    pub fn pow(self, exp: u32) -> Self {
+        self.0.pow(exp).into()
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -727,6 +731,18 @@ mod tests {
     }
 
     #[test]
+    fn uint128_pow_works() {
+        assert_eq!(Uint128::from(2u32).pow(2), Uint128::from(4u32));
+        assert_eq!(Uint128::from(2u32).pow(10), Uint128::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_pow_overflow_panics() {
+        Uint128::MAX.pow(2u32);
+    }
+
+    #[test]
     fn uint128_multiply_ratio_works() {
         let base = Uint128(500);
 
@@ -788,7 +804,7 @@ mod tests {
     fn uint128_methods() {
         // checked_*
         assert!(matches!(
-            Uint128(u128::MAX).checked_add(Uint128(1)),
+            Uint128::MAX.checked_add(Uint128(1)),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
@@ -796,42 +812,40 @@ mod tests {
             Err(OverflowError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_mul(Uint128(2)),
+            Uint128::MAX.checked_mul(Uint128(2)),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_div(Uint128(0)),
+            Uint128::MAX.checked_pow(2u32),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint128::MAX.checked_div(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_div_euclid(Uint128(0)),
+            Uint128::MAX.checked_div_euclid(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_rem(Uint128(0)),
+            Uint128::MAX.checked_rem(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
 
         // saturating_*
-        assert_eq!(
-            Uint128(u128::MAX).saturating_add(Uint128(1)),
-            Uint128(u128::MAX)
-        );
+        assert_eq!(Uint128::MAX.saturating_add(Uint128(1)), Uint128::MAX);
         assert_eq!(Uint128(0).saturating_sub(Uint128(1)), Uint128(0));
-        assert_eq!(
-            Uint128(u128::MAX).saturating_mul(Uint128(2)),
-            Uint128(u128::MAX)
-        );
-        assert_eq!(Uint128(u128::MAX).saturating_pow(2), Uint128(u128::MAX));
+        assert_eq!(Uint128::MAX.saturating_mul(Uint128(2)), Uint128::MAX);
+        assert_eq!(Uint128::MAX.saturating_pow(2), Uint128::MAX);
 
         // wrapping_*
-        assert_eq!(Uint128(u128::MAX).wrapping_add(Uint128(1)), Uint128(0));
-        assert_eq!(Uint128(0).wrapping_sub(Uint128(1)), Uint128(u128::MAX));
+        assert_eq!(Uint128::MAX.wrapping_add(Uint128(1)), Uint128(0));
+        assert_eq!(Uint128(0).wrapping_sub(Uint128(1)), Uint128::MAX);
         assert_eq!(
-            Uint128(u128::MAX).wrapping_mul(Uint128(2)),
+            Uint128::MAX.wrapping_mul(Uint128(2)),
             Uint128(u128::MAX - 1)
         );
-        assert_eq!(Uint128(u128::MAX).wrapping_pow(2), Uint128(1));
+        assert_eq!(Uint128::MAX.wrapping_pow(2), Uint128(1));
     }
 
     #[test]

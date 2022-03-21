@@ -210,6 +210,11 @@ impl Uint256 {
         self.0.is_zero()
     }
 
+    pub fn pow(self, exp: u32) -> Self {
+        let res = self.0.pow(exp.into());
+        Self(res)
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -231,6 +236,13 @@ impl Uint256 {
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
     }
 
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp.into())
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+    }
+
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_div(other.0)
@@ -243,18 +255,6 @@ impl Uint256 {
             .checked_rem(other.0)
             .map(Self)
             .ok_or_else(|| DivideByZeroError::new(self))
-    }
-
-    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
-        self.0
-            .checked_pow(exp.into())
-            .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
-    }
-
-    pub fn pow(self, exp: u32) -> Self {
-        self.checked_pow(exp)
-            .expect("attempt to raise to a power with overflow")
     }
 
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
@@ -1286,6 +1286,18 @@ mod tests {
     }
 
     #[test]
+    fn uint256_pow_works() {
+        assert_eq!(Uint256::from(2u32).pow(2), Uint256::from(4u32));
+        assert_eq!(Uint256::from(2u32).pow(10), Uint256::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint256_pow_overflow_panics() {
+        Uint256::MAX.pow(2u32);
+    }
+
+    #[test]
     fn uint256_multiply_ratio_works() {
         let base = Uint256::from(500u32);
 
@@ -1388,6 +1400,10 @@ mod tests {
         ));
         assert!(matches!(
             Uint256::MAX.checked_mul(Uint256::from(2u32)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint256::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
         assert!(matches!(

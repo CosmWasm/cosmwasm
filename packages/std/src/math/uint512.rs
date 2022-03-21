@@ -309,6 +309,11 @@ impl Uint512 {
         self.0.is_zero()
     }
 
+    pub fn pow(self, exp: u32) -> Self {
+        let res = self.0.pow(exp.into());
+        Self(res)
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -328,6 +333,13 @@ impl Uint512 {
             .checked_mul(other.0)
             .map(Self)
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
+    }
+
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp.into())
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
@@ -1057,6 +1069,18 @@ mod tests {
     }
 
     #[test]
+    fn uint512_pow_works() {
+        assert_eq!(Uint512::from(2u32).pow(2), Uint512::from(4u32));
+        assert_eq!(Uint512::from(2u32).pow(10), Uint512::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint512_pow_overflow_panics() {
+        Uint512::MAX.pow(2u32);
+    }
+
+    #[test]
     fn uint512_shr_works() {
         let original = Uint512::new([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1111,6 +1135,10 @@ mod tests {
         ));
         assert!(matches!(
             Uint512::MAX.checked_mul(Uint512::from(2u32)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint512::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
         assert!(matches!(

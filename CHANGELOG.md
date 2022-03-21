@@ -14,6 +14,7 @@ and this project adheres to
 - cosmwasm-std: Implement `Mul`/`MulAssign` for `Uint64`.
 - cosmwasm-std: Implement `RemAssign` for
   `Uint64`/`Uint128`/`Uint256`/`Uint512`.
+- cosmwasm-std: Implement `pow`/`checked_pow` for `Uint64`/`Uint128`/`Uint512`.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
 
 ### Changed

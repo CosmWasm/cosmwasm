@@ -63,6 +63,10 @@ impl Uint64 {
         self.0 == 0
     }
 
+    pub fn pow(self, exp: u32) -> Self {
+        self.0.pow(exp).into()
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -82,6 +86,13 @@ impl Uint64 {
             .checked_mul(other.0)
             .map(Self)
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
+    }
+
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
@@ -634,6 +645,18 @@ mod tests {
     }
 
     #[test]
+    fn uint64_pow_works() {
+        assert_eq!(Uint64::from(2u32).pow(2), Uint64::from(4u32));
+        assert_eq!(Uint64::from(2u32).pow(10), Uint64::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_pow_overflow_panics() {
+        Uint64::MAX.pow(2u32);
+    }
+
+    #[test]
     #[should_panic]
     fn uint64_math_overflow_panics() {
         // almost_max is 2^64 - 10
@@ -703,7 +726,7 @@ mod tests {
     fn uint64_methods() {
         // checked_*
         assert!(matches!(
-            Uint64(u64::MAX).checked_add(Uint64(1)),
+            Uint64::MAX.checked_add(Uint64(1)),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
@@ -711,36 +734,37 @@ mod tests {
             Err(OverflowError { .. })
         ));
         assert!(matches!(
-            Uint64(u64::MAX).checked_mul(Uint64(2)),
+            Uint64::MAX.checked_mul(Uint64(2)),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
-            Uint64(u64::MAX).checked_div(Uint64(0)),
+            Uint64::MAX.checked_pow(2u32),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint64::MAX.checked_div(Uint64(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
-            Uint64(u64::MAX).checked_div_euclid(Uint64(0)),
+            Uint64::MAX.checked_div_euclid(Uint64(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
-            Uint64(u64::MAX).checked_rem(Uint64(0)),
+            Uint64::MAX.checked_rem(Uint64(0)),
             Err(DivideByZeroError { .. })
         ));
 
         // saturating_*
-        assert_eq!(Uint64(u64::MAX).saturating_add(Uint64(1)), Uint64(u64::MAX));
+        assert_eq!(Uint64::MAX.saturating_add(Uint64(1)), Uint64::MAX);
         assert_eq!(Uint64(0).saturating_sub(Uint64(1)), Uint64(0));
-        assert_eq!(Uint64(u64::MAX).saturating_mul(Uint64(2)), Uint64(u64::MAX));
-        assert_eq!(Uint64(u64::MAX).saturating_pow(2), Uint64(u64::MAX));
+        assert_eq!(Uint64::MAX.saturating_mul(Uint64(2)), Uint64::MAX);
+        assert_eq!(Uint64::MAX.saturating_pow(2), Uint64::MAX);
 
         // wrapping_*
-        assert_eq!(Uint64(u64::MAX).wrapping_add(Uint64(1)), Uint64(0));
-        assert_eq!(Uint64(0).wrapping_sub(Uint64(1)), Uint64(u64::MAX));
-        assert_eq!(
-            Uint64(u64::MAX).wrapping_mul(Uint64(2)),
-            Uint64(u64::MAX - 1)
-        );
-        assert_eq!(Uint64(u64::MAX).wrapping_pow(2), Uint64(1));
+        assert_eq!(Uint64::MAX.wrapping_add(Uint64(1)), Uint64(0));
+        assert_eq!(Uint64(0).wrapping_sub(Uint64(1)), Uint64::MAX);
+        assert_eq!(Uint64::MAX.wrapping_mul(Uint64(2)), Uint64(u64::MAX - 1));
+        assert_eq!(Uint64::MAX.wrapping_pow(2), Uint64(1));
     }
 
     #[test]
