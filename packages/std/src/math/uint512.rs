@@ -310,7 +310,8 @@ impl Uint512 {
     }
 
     pub fn pow(self, exp: u32) -> Self {
-        unimplemented!()
+        let res = self.0.pow(exp.into());
+        Self(res)
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -1065,6 +1066,18 @@ mod tests {
         let b = Uint512::from(3u32);
         a *= &b;
         assert_eq!(a, Uint512::from(30u32));
+    }
+
+    #[test]
+    fn uint512_pow_works() {
+        assert_eq!(Uint512::from(2u32).pow(2), Uint512::from(4u32));
+        assert_eq!(Uint512::from(2u32).pow(10), Uint512::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint512_pow_overflow_panics() {
+        Uint512::MAX.pow(2u32);
     }
 
     #[test]

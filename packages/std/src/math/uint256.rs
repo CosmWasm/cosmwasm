@@ -211,7 +211,8 @@ impl Uint256 {
     }
 
     pub fn pow(self, exp: u32) -> Self {
-        unimplemented!()
+        let res = self.0.pow(exp.into());
+        Self(res)
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -1282,6 +1283,18 @@ mod tests {
         let b = Uint256::from(3u32);
         a *= &b;
         assert_eq!(a, Uint256::from(30u32));
+    }
+
+    #[test]
+    fn uint256_pow_works() {
+        assert_eq!(Uint256::from(2u32).pow(2), Uint256::from(4u32));
+        assert_eq!(Uint256::from(2u32).pow(10), Uint256::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint256_pow_overflow_panics() {
+        Uint256::MAX.pow(2u32);
     }
 
     #[test]
