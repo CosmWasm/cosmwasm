@@ -54,4 +54,37 @@ mod tests {
     impl AllImpl<'_> for Uint128 {}
     impl AllImpl<'_> for Uint256 {}
     impl AllImpl<'_> for Uint512 {}
+
+    // TODO: When all implementations are done, extra trait can be removed and
+    // unified with AllImpl
+    trait AllImplDecimal<'a>:
+        Add
+        // + Add<&'a Self>
+        // + AddAssign
+        // + AddAssign<&'a Self>
+        + Sub
+        // + Sub<&'a Self>
+        // + SubAssign
+        // + SubAssign<&'a Self>
+        + Mul
+        // + Mul<&'a Self>
+        // + MulAssign
+        // + MulAssign<&'a Self>
+        // + Div
+        // + Div<&'a Self>
+        // + DivAssign
+        // + DivAssign<&'a Self>
+        // + Rem
+        // + Rem<&'a Self>
+        // + RemAssign
+        // + RemAssign<&'a Self>
+        + Sized
+        + Copy
+    where
+        Self: 'a,
+    {
+    }
+
+    impl AllImplDecimal<'_> for Decimal {}
+    impl AllImplDecimal<'_> for Decimal256 {}
 }
