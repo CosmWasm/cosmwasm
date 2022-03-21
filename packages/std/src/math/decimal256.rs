@@ -1,9 +1,10 @@
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
-use std::ops;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -338,23 +339,23 @@ impl fmt::Display for Decimal256 {
     }
 }
 
-impl ops::Add for Decimal256 {
+impl Add for Decimal256 {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
         Self(self.0 + other.0)
     }
 }
+forward_ref_binop!(impl Add, add for Decimal256, Decimal256);
 
-impl ops::Add<&Decimal256> for Decimal256 {
-    type Output = Self;
-
-    fn add(self, other: &Decimal256) -> Self {
-        Self(self.0 + other.0)
+impl AddAssign for Decimal256 {
+    fn add_assign(&mut self, rhs: Decimal256) {
+        *self = *self + rhs;
     }
 }
+forward_ref_op_assign!(impl AddAssign, add_assign for Decimal256, Decimal256);
 
-impl ops::Sub for Decimal256 {
+impl Sub for Decimal256 {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
@@ -362,7 +363,7 @@ impl ops::Sub for Decimal256 {
     }
 }
 
-impl ops::Mul for Decimal256 {
+impl Mul for Decimal256 {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -384,7 +385,7 @@ impl ops::Mul for Decimal256 {
 /// Both d*u and u*d with d: Decimal256 and u: Uint256 returns an Uint256. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
 /// need a Decimal256 result for the same calculation, use Decimal256(d*u) or Decimal256(u*d).
-impl ops::Mul<Decimal256> for Uint256 {
+impl Mul<Decimal256> for Uint256 {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -397,7 +398,7 @@ impl ops::Mul<Decimal256> for Uint256 {
     }
 }
 
-impl ops::Mul<Uint256> for Decimal256 {
+impl Mul<Uint256> for Decimal256 {
     type Output = Uint256;
 
     fn mul(self, rhs: Uint256) -> Self::Output {
@@ -405,7 +406,7 @@ impl ops::Mul<Uint256> for Decimal256 {
     }
 }
 
-impl ops::Div<Uint256> for Decimal256 {
+impl Div<Uint256> for Decimal256 {
     type Output = Self;
 
     fn div(self, rhs: Uint256) -> Self::Output {
@@ -413,7 +414,7 @@ impl ops::Div<Uint256> for Decimal256 {
     }
 }
 
-impl ops::DivAssign<Uint256> for Decimal256 {
+impl DivAssign<Uint256> for Decimal256 {
     fn div_assign(&mut self, rhs: Uint256) {
         self.0 /= rhs;
     }
@@ -421,10 +422,10 @@ impl ops::DivAssign<Uint256> for Decimal256 {
 
 impl<A> std::iter::Sum<A> for Decimal256
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 

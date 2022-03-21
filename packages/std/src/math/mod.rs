@@ -59,9 +59,9 @@ mod tests {
     // unified with AllImpl
     trait AllImplDecimal<'a>:
         Add
-        // + Add<&'a Self>
-        // + AddAssign
-        // + AddAssign<&'a Self>
+        + Add<&'a Self>
+        + AddAssign
+        + AddAssign<&'a Self>
         + Sub
         // + Sub<&'a Self>
         // + SubAssign
