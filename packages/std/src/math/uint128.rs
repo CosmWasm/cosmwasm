@@ -731,6 +731,18 @@ mod tests {
     }
 
     #[test]
+    fn uint128_pow_works() {
+        assert_eq!(Uint128::from(2u32).pow(2), Uint128::from(4u32));
+        assert_eq!(Uint128::from(2u32).pow(10), Uint128::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_pow_overflow_panics() {
+        Uint128(u128::MAX).pow(2u32);
+    }
+
+    #[test]
     fn uint128_multiply_ratio_works() {
         let base = Uint128(500);
 
