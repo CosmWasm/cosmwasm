@@ -1,9 +1,10 @@
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
-use std::ops;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -326,31 +327,39 @@ impl fmt::Display for Decimal {
     }
 }
 
-impl ops::Add for Decimal {
+impl Add for Decimal {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
         Decimal(self.0 + other.0)
     }
 }
+forward_ref_binop!(impl Add, add for Decimal, Decimal);
 
-impl ops::Add<&Decimal> for Decimal {
-    type Output = Self;
-
-    fn add(self, other: &Decimal) -> Self {
-        Decimal(self.0 + other.0)
+impl AddAssign for Decimal {
+    fn add_assign(&mut self, rhs: Decimal) {
+        *self = *self + rhs;
     }
 }
+forward_ref_op_assign!(impl AddAssign, add_assign for Decimal, Decimal);
 
-impl ops::Sub for Decimal {
+impl Sub for Decimal {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
         Decimal(self.0 - other.0)
     }
 }
+forward_ref_binop!(impl Sub, sub for Decimal, Decimal);
 
-impl ops::Mul for Decimal {
+impl SubAssign for Decimal {
+    fn sub_assign(&mut self, rhs: Decimal) {
+        *self = *self - rhs;
+    }
+}
+forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal, Decimal);
+
+impl Mul for Decimal {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -372,7 +381,7 @@ impl ops::Mul for Decimal {
 /// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
 /// need a Decimal result for the same calculation, use Decimal(d*u) or Decimal(u*d).
-impl ops::Mul<Decimal> for Uint128 {
+impl Mul<Decimal> for Uint128 {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -385,7 +394,7 @@ impl ops::Mul<Decimal> for Uint128 {
     }
 }
 
-impl ops::Mul<Uint128> for Decimal {
+impl Mul<Uint128> for Decimal {
     type Output = Uint128;
 
     fn mul(self, rhs: Uint128) -> Self::Output {
@@ -393,7 +402,7 @@ impl ops::Mul<Uint128> for Decimal {
     }
 }
 
-impl ops::Div<Uint128> for Decimal {
+impl Div<Uint128> for Decimal {
     type Output = Self;
 
     fn div(self, rhs: Uint128) -> Self::Output {
@@ -401,7 +410,7 @@ impl ops::Div<Uint128> for Decimal {
     }
 }
 
-impl ops::DivAssign<Uint128> for Decimal {
+impl DivAssign<Uint128> for Decimal {
     fn div_assign(&mut self, rhs: Uint128) {
         self.0 /= rhs;
     }
@@ -409,10 +418,10 @@ impl ops::DivAssign<Uint128> for Decimal {
 
 impl<A> std::iter::Sum<A> for Decimal
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 
@@ -859,12 +868,29 @@ mod tests {
     }
 
     #[test]
-    fn decimal_add() {
+    #[allow(clippy::op_ref)]
+    fn decimal_add_works() {
         let value = Decimal::one() + Decimal::percent(50); // 1.5
         assert_eq!(
             value.0,
             Decimal::DECIMAL_FRACTIONAL * Uint128::from(3u8) / Uint128::from(2u8)
         );
+
+        assert_eq!(
+            Decimal::percent(5) + Decimal::percent(4),
+            Decimal::percent(9)
+        );
+        assert_eq!(Decimal::percent(5) + Decimal::zero(), Decimal::percent(5));
+        assert_eq!(Decimal::zero() + Decimal::zero(), Decimal::zero());
+
+        // works for refs
+        let a = Decimal::percent(15);
+        let b = Decimal::percent(25);
+        let expected = Decimal::percent(40);
+        assert_eq!(a + b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + &b, expected);
     }
 
     #[test]
@@ -874,15 +900,61 @@ mod tests {
     }
 
     #[test]
-    fn decimal_sub() {
+    fn decimal_add_assign_works() {
+        let mut a = Decimal::percent(30);
+        a += Decimal::percent(20);
+        assert_eq!(a, Decimal::percent(50));
+
+        // works for refs
+        let mut a = Decimal::percent(15);
+        let b = Decimal::percent(3);
+        let expected = Decimal::percent(18);
+        a += &b;
+        assert_eq!(a, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn decimal_sub_works() {
         let value = Decimal::one() - Decimal::percent(50); // 0.5
         assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(2u8));
+
+        assert_eq!(
+            Decimal::percent(9) - Decimal::percent(4),
+            Decimal::percent(5)
+        );
+        assert_eq!(Decimal::percent(16) - Decimal::zero(), Decimal::percent(16));
+        assert_eq!(Decimal::percent(16) - Decimal::percent(16), Decimal::zero());
+        assert_eq!(Decimal::zero() - Decimal::zero(), Decimal::zero());
+
+        // works for refs
+        let a = Decimal::percent(13);
+        let b = Decimal::percent(6);
+        let expected = Decimal::percent(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - &b, expected);
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn decimal_sub_overflow_panics() {
         let _value = Decimal::zero() - Decimal::percent(50);
+    }
+
+    #[test]
+    fn decimal_sub_assign_works() {
+        let mut a = Decimal::percent(20);
+        a -= Decimal::percent(2);
+        assert_eq!(a, Decimal::percent(18));
+
+        // works for refs
+        let mut a = Decimal::percent(33);
+        let b = Decimal::percent(13);
+        let expected = Decimal::percent(20);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]

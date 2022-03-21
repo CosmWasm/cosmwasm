@@ -1,9 +1,10 @@
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
-use std::ops;
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -338,31 +339,39 @@ impl fmt::Display for Decimal256 {
     }
 }
 
-impl ops::Add for Decimal256 {
+impl Add for Decimal256 {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
         Self(self.0 + other.0)
     }
 }
+forward_ref_binop!(impl Add, add for Decimal256, Decimal256);
 
-impl ops::Add<&Decimal256> for Decimal256 {
-    type Output = Self;
-
-    fn add(self, other: &Decimal256) -> Self {
-        Self(self.0 + other.0)
+impl AddAssign for Decimal256 {
+    fn add_assign(&mut self, rhs: Decimal256) {
+        *self = *self + rhs;
     }
 }
+forward_ref_op_assign!(impl AddAssign, add_assign for Decimal256, Decimal256);
 
-impl ops::Sub for Decimal256 {
+impl Sub for Decimal256 {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
         Self(self.0 - other.0)
     }
 }
+forward_ref_binop!(impl Sub, sub for Decimal256, Decimal256);
 
-impl ops::Mul for Decimal256 {
+impl SubAssign for Decimal256 {
+    fn sub_assign(&mut self, rhs: Decimal256) {
+        *self = *self - rhs;
+    }
+}
+forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal256, Decimal256);
+
+impl Mul for Decimal256 {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -384,7 +393,7 @@ impl ops::Mul for Decimal256 {
 /// Both d*u and u*d with d: Decimal256 and u: Uint256 returns an Uint256. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
 /// need a Decimal256 result for the same calculation, use Decimal256(d*u) or Decimal256(u*d).
-impl ops::Mul<Decimal256> for Uint256 {
+impl Mul<Decimal256> for Uint256 {
     type Output = Self;
 
     #[allow(clippy::suspicious_arithmetic_impl)]
@@ -397,7 +406,7 @@ impl ops::Mul<Decimal256> for Uint256 {
     }
 }
 
-impl ops::Mul<Uint256> for Decimal256 {
+impl Mul<Uint256> for Decimal256 {
     type Output = Uint256;
 
     fn mul(self, rhs: Uint256) -> Self::Output {
@@ -405,7 +414,7 @@ impl ops::Mul<Uint256> for Decimal256 {
     }
 }
 
-impl ops::Div<Uint256> for Decimal256 {
+impl Div<Uint256> for Decimal256 {
     type Output = Self;
 
     fn div(self, rhs: Uint256) -> Self::Output {
@@ -413,7 +422,7 @@ impl ops::Div<Uint256> for Decimal256 {
     }
 }
 
-impl ops::DivAssign<Uint256> for Decimal256 {
+impl DivAssign<Uint256> for Decimal256 {
     fn div_assign(&mut self, rhs: Uint256) {
         self.0 /= rhs;
     }
@@ -421,10 +430,10 @@ impl ops::DivAssign<Uint256> for Decimal256 {
 
 impl<A> std::iter::Sum<A> for Decimal256
 where
-    Self: ops::Add<A, Output = Self>,
+    Self: Add<A, Output = Self>,
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
-        iter.fold(Self::zero(), ops::Add::add)
+        iter.fold(Self::zero(), Add::add)
     }
 }
 
@@ -937,12 +946,32 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_add() {
+    #[allow(clippy::op_ref)]
+    fn decimal256_add_works() {
         let value = Decimal256::one() + Decimal256::percent(50); // 1.5
         assert_eq!(
             value.0,
             Decimal256::DECIMAL_FRACTIONAL * Uint256::from(3u8) / Uint256::from(2u8)
         );
+
+        assert_eq!(
+            Decimal256::percent(5) + Decimal256::percent(4),
+            Decimal256::percent(9)
+        );
+        assert_eq!(
+            Decimal256::percent(5) + Decimal256::zero(),
+            Decimal256::percent(5)
+        );
+        assert_eq!(Decimal256::zero() + Decimal256::zero(), Decimal256::zero());
+
+        // works for refs
+        let a = Decimal256::percent(15);
+        let b = Decimal256::percent(25);
+        let expected = Decimal256::percent(40);
+        assert_eq!(a + b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + &b, expected);
     }
 
     #[test]
@@ -952,15 +981,67 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_sub() {
+    fn decimal256_add_assign_works() {
+        let mut a = Decimal256::percent(30);
+        a += Decimal256::percent(20);
+        assert_eq!(a, Decimal256::percent(50));
+
+        // works for refs
+        let mut a = Decimal256::percent(15);
+        let b = Decimal256::percent(3);
+        let expected = Decimal256::percent(18);
+        a += &b;
+        assert_eq!(a, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn decimal256_sub_works() {
         let value = Decimal256::one() - Decimal256::percent(50); // 0.5
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(2u8));
+
+        assert_eq!(
+            Decimal256::percent(9) - Decimal256::percent(4),
+            Decimal256::percent(5)
+        );
+        assert_eq!(
+            Decimal256::percent(16) - Decimal256::zero(),
+            Decimal256::percent(16)
+        );
+        assert_eq!(
+            Decimal256::percent(16) - Decimal256::percent(16),
+            Decimal256::zero()
+        );
+        assert_eq!(Decimal256::zero() - Decimal256::zero(), Decimal256::zero());
+
+        // works for refs
+        let a = Decimal256::percent(13);
+        let b = Decimal256::percent(6);
+        let expected = Decimal256::percent(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - &b, expected);
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn decimal256_sub_overflow_panics() {
         let _value = Decimal256::zero() - Decimal256::percent(50);
+    }
+
+    #[test]
+    fn decimal256_sub_assign_works() {
+        let mut a = Decimal256::percent(20);
+        a -= Decimal256::percent(2);
+        assert_eq!(a, Decimal256::percent(18));
+
+        // works for refs
+        let mut a = Decimal256::percent(33);
+        let b = Decimal256::percent(13);
+        let expected = Decimal256::percent(20);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]
