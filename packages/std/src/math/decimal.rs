@@ -914,15 +914,47 @@ mod tests {
     }
 
     #[test]
-    fn decimal_sub() {
+    #[allow(clippy::op_ref)]
+    fn decimal_sub_works() {
         let value = Decimal::one() - Decimal::percent(50); // 0.5
         assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(2u8));
+
+        assert_eq!(
+            Decimal::percent(9) - Decimal::percent(4),
+            Decimal::percent(5)
+        );
+        assert_eq!(Decimal::percent(16) - Decimal::zero(), Decimal::percent(16));
+        assert_eq!(Decimal::percent(16) - Decimal::percent(16), Decimal::zero());
+        assert_eq!(Decimal::zero() - Decimal::zero(), Decimal::zero());
+
+        // works for refs
+        let a = Decimal::percent(13);
+        let b = Decimal::percent(6);
+        let expected = Decimal::percent(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - &b, expected);
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn decimal_sub_overflow_panics() {
         let _value = Decimal::zero() - Decimal::percent(50);
+    }
+
+    #[test]
+    fn decimal_sub_assign_works() {
+        let mut a = Decimal::percent(20);
+        a -= Decimal::percent(2);
+        assert_eq!(a, Decimal::percent(18));
+
+        // works for refs
+        let mut a = Decimal::percent(33);
+        let b = Decimal::percent(13);
+        let expected = Decimal::percent(20);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]

@@ -995,15 +995,53 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_sub() {
+    #[allow(clippy::op_ref)]
+    fn decimal256_sub_works() {
         let value = Decimal256::one() - Decimal256::percent(50); // 0.5
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(2u8));
+
+        assert_eq!(
+            Decimal256::percent(9) - Decimal256::percent(4),
+            Decimal256::percent(5)
+        );
+        assert_eq!(
+            Decimal256::percent(16) - Decimal256::zero(),
+            Decimal256::percent(16)
+        );
+        assert_eq!(
+            Decimal256::percent(16) - Decimal256::percent(16),
+            Decimal256::zero()
+        );
+        assert_eq!(Decimal256::zero() - Decimal256::zero(), Decimal256::zero());
+
+        // works for refs
+        let a = Decimal256::percent(13);
+        let b = Decimal256::percent(6);
+        let expected = Decimal256::percent(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - &b, expected);
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn decimal256_sub_overflow_panics() {
         let _value = Decimal256::zero() - Decimal256::percent(50);
+    }
+
+    #[test]
+    fn decimal256_sub_assign_works() {
+        let mut a = Decimal256::percent(20);
+        a -= Decimal256::percent(2);
+        assert_eq!(a, Decimal256::percent(18));
+
+        // works for refs
+        let mut a = Decimal256::percent(33);
+        let b = Decimal256::percent(13);
+        let expected = Decimal256::percent(20);
+        a -= &b;
+        assert_eq!(a, expected);
     }
 
     #[test]
