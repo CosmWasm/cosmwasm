@@ -860,18 +860,49 @@ mod tests {
     }
 
     #[test]
-    fn decimal_add() {
+    #[allow(clippy::op_ref)]
+    fn decimal_add_works() {
         let value = Decimal::one() + Decimal::percent(50); // 1.5
         assert_eq!(
             value.0,
             Decimal::DECIMAL_FRACTIONAL * Uint128::from(3u8) / Uint128::from(2u8)
         );
+
+        assert_eq!(
+            Decimal::percent(5) + Decimal::percent(4),
+            Decimal::percent(9)
+        );
+        assert_eq!(Decimal::percent(5) + Decimal::zero(), Decimal::percent(5));
+        assert_eq!(Decimal::zero() + Decimal::zero(), Decimal::zero());
+
+        // works for refs
+        let a = Decimal::percent(15);
+        let b = Decimal::percent(25);
+        let expected = Decimal::percent(40);
+        assert_eq!(a + b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + &b, expected);
     }
 
     #[test]
     #[should_panic(expected = "attempt to add with overflow")]
     fn decimal_add_overflow_panics() {
         let _value = Decimal::MAX + Decimal::percent(50);
+    }
+
+    #[test]
+    fn decimal_add_assign_works() {
+        let mut a = Decimal::percent(30);
+        a += Decimal::percent(20);
+        assert_eq!(a, Decimal::percent(50));
+
+        // works for refs
+        let mut a = Decimal::percent(15);
+        let b = Decimal::percent(3);
+        let expected = Decimal::percent(18);
+        a += &b;
+        assert_eq!(a, expected);
     }
 
     #[test]

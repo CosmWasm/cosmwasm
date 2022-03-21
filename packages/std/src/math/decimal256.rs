@@ -938,18 +938,52 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_add() {
+    #[allow(clippy::op_ref)]
+    fn decimal256_add_works() {
         let value = Decimal256::one() + Decimal256::percent(50); // 1.5
         assert_eq!(
             value.0,
             Decimal256::DECIMAL_FRACTIONAL * Uint256::from(3u8) / Uint256::from(2u8)
         );
+
+        assert_eq!(
+            Decimal256::percent(5) + Decimal256::percent(4),
+            Decimal256::percent(9)
+        );
+        assert_eq!(
+            Decimal256::percent(5) + Decimal256::zero(),
+            Decimal256::percent(5)
+        );
+        assert_eq!(Decimal256::zero() + Decimal256::zero(), Decimal256::zero());
+
+        // works for refs
+        let a = Decimal256::percent(15);
+        let b = Decimal256::percent(25);
+        let expected = Decimal256::percent(40);
+        assert_eq!(a + b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + &b, expected);
     }
 
     #[test]
     #[should_panic(expected = "attempt to add with overflow")]
     fn decimal256_add_overflow_panics() {
         let _value = Decimal256::MAX + Decimal256::percent(50);
+    }
+
+    #[test]
+    fn decimal256_add_assign_works() {
+        let mut a = Decimal256::percent(30);
+        a += Decimal256::percent(20);
+        assert_eq!(a, Decimal256::percent(50));
+
+        // works for refs
+        let mut a = Decimal256::percent(15);
+        let b = Decimal256::percent(3);
+        let expected = Decimal256::percent(18);
+        a += &b;
+        assert_eq!(a, expected);
     }
 
     #[test]
