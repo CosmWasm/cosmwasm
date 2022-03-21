@@ -1,9 +1,11 @@
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
-use std::iter::Sum;
-use std::ops;
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+};
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
@@ -47,12 +49,26 @@ impl Uint128 {
     }
 
     /// Returns a copy of the internal data
-    pub fn u128(&self) -> u128 {
+    pub const fn u128(&self) -> u128 {
         self.0
+    }
+
+    /// Returns a copy of the number as big endian bytes.
+    pub const fn to_be_bytes(self) -> [u8; 16] {
+        self.0.to_be_bytes()
+    }
+
+    /// Returns a copy of the number as little endian bytes.
+    pub const fn to_le_bytes(self) -> [u8; 16] {
+        self.0.to_le_bytes()
     }
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0
+    }
+
+    pub fn pow(self, exp: u32) -> Self {
+        self.0.pow(exp).into()
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -74,6 +90,13 @@ impl Uint128 {
             .checked_mul(other.0)
             .map(Self)
             .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
+    }
+
+    pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
+        self.0
+            .checked_pow(exp)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
@@ -218,7 +241,7 @@ impl fmt::Display for Uint128 {
     }
 }
 
-impl ops::Add<Uint128> for Uint128 {
+impl Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -230,7 +253,7 @@ impl ops::Add<Uint128> for Uint128 {
     }
 }
 
-impl<'a> ops::Add<&'a Uint128> for Uint128 {
+impl<'a> Add<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint128) -> Self {
@@ -238,7 +261,7 @@ impl<'a> ops::Add<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::Sub<Uint128> for Uint128 {
+impl Sub<Uint128> for Uint128 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -249,16 +272,16 @@ impl ops::Sub<Uint128> for Uint128 {
         )
     }
 }
+forward_ref_binop!(impl Sub, sub for Uint128, Uint128);
 
-impl<'a> ops::Sub<&'a Uint128> for Uint128 {
-    type Output = Self;
-
-    fn sub(self, rhs: &'a Uint128) -> Self {
-        self - *rhs
+impl SubAssign<Uint128> for Uint128 {
+    fn sub_assign(&mut self, rhs: Uint128) {
+        *self = *self - rhs;
     }
 }
+forward_ref_op_assign!(impl SubAssign, sub_assign for Uint128, Uint128);
 
-impl ops::Mul<Uint128> for Uint128 {
+impl Mul<Uint128> for Uint128 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -269,16 +292,16 @@ impl ops::Mul<Uint128> for Uint128 {
         )
     }
 }
+forward_ref_binop!(impl Mul, mul for Uint128, Uint128);
 
-impl<'a> ops::Mul<&'a Uint128> for Uint128 {
-    type Output = Self;
-
-    fn mul(self, rhs: &'a Uint128) -> Self::Output {
-        self.mul(*rhs)
+impl MulAssign<Uint128> for Uint128 {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
     }
 }
+forward_ref_op_assign!(impl MulAssign, mul_assign for Uint128, Uint128);
 
-impl ops::Div<Uint128> for Uint128 {
+impl Div<Uint128> for Uint128 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -290,7 +313,7 @@ impl ops::Div<Uint128> for Uint128 {
     }
 }
 
-impl<'a> ops::Div<&'a Uint128> for Uint128 {
+impl<'a> Div<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn div(self, rhs: &'a Uint128) -> Self::Output {
@@ -298,7 +321,7 @@ impl<'a> ops::Div<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::Shr<u32> for Uint128 {
+impl Shr<u32> for Uint128 {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -310,7 +333,7 @@ impl ops::Shr<u32> for Uint128 {
     }
 }
 
-impl<'a> ops::Shr<&'a u32> for Uint128 {
+impl<'a> Shr<&'a u32> for Uint128 {
     type Output = Self;
 
     fn shr(self, rhs: &'a u32) -> Self::Output {
@@ -318,61 +341,57 @@ impl<'a> ops::Shr<&'a u32> for Uint128 {
     }
 }
 
-impl ops::AddAssign<Uint128> for Uint128 {
+impl AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         *self = *self + rhs;
     }
 }
 
-impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
+impl<'a> AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
         *self = *self + rhs;
     }
 }
 
-impl ops::SubAssign<Uint128> for Uint128 {
-    fn sub_assign(&mut self, rhs: Uint128) {
-        *self = *self - rhs;
-    }
-}
-
-impl<'a> ops::SubAssign<&'a Uint128> for Uint128 {
-    fn sub_assign(&mut self, rhs: &'a Uint128) {
-        *self = *self - rhs;
-    }
-}
-
-impl ops::MulAssign<Uint128> for Uint128 {
-    fn mul_assign(&mut self, rhs: Self) {
-        *self = *self * rhs;
-    }
-}
-
-impl<'a> ops::MulAssign<&'a Uint128> for Uint128 {
-    fn mul_assign(&mut self, rhs: &'a Uint128) {
-        *self = *self * rhs;
-    }
-}
-
-impl ops::DivAssign<Uint128> for Uint128 {
+impl DivAssign<Uint128> for Uint128 {
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs;
     }
 }
 
-impl<'a> ops::DivAssign<&'a Uint128> for Uint128 {
+impl<'a> DivAssign<&'a Uint128> for Uint128 {
     fn div_assign(&mut self, rhs: &'a Uint128) {
         *self = *self / rhs;
     }
 }
 
-impl ops::ShrAssign<u32> for Uint128 {
+impl Rem for Uint128 {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero.
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
+
+impl RemAssign<Uint128> for Uint128 {
+    fn rem_assign(&mut self, rhs: Uint128) {
+        *self = *self % rhs;
+    }
+}
+forward_ref_op_assign!(impl RemAssign, rem_assign for Uint128, Uint128);
+
+impl ShrAssign<u32> for Uint128 {
     fn shr_assign(&mut self, rhs: u32) {
         *self = *self >> rhs;
     }
 }
 
-impl<'a> ops::ShrAssign<&'a u32> for Uint128 {
+impl<'a> ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
     }
@@ -454,15 +473,12 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     }
 }
 
-impl Sum<Uint128> for Uint128 {
-    fn sum<I: Iterator<Item = Uint128>>(iter: I) -> Self {
-        iter.fold(Uint128::zero(), ops::Add::add)
-    }
-}
-
-impl<'a> Sum<&'a Uint128> for Uint128 {
-    fn sum<I: Iterator<Item = &'a Uint128>>(iter: I) -> Self {
-        iter.fold(Uint128::zero(), ops::Add::add)
+impl<A> std::iter::Sum<A> for Uint128
+where
+    Self: Add<A, Output = Self>,
+{
+    fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
+        iter.fold(Self::zero(), Add::add)
     }
 }
 
@@ -521,6 +537,54 @@ mod tests {
     fn uint128_display_padding_works() {
         let a = Uint128::from(123u64);
         assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+    }
+
+    #[test]
+    fn uint128_to_be_bytes_works() {
+        assert_eq!(
+            Uint128::zero().to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        assert_eq!(
+            Uint128::MAX.to_be_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff
+            ]
+        );
+        assert_eq!(
+            Uint128::new(1).to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(16, "big")]`
+        assert_eq!(
+            Uint128::new(240282366920938463463374607431768124608).to_be_bytes(),
+            [180, 196, 179, 87, 165, 121, 59, 133, 246, 117, 221, 191, 255, 254, 172, 192]
+        );
+    }
+
+    #[test]
+    fn uint128_to_le_bytes_works() {
+        assert_eq!(
+            Uint128::zero().to_le_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        assert_eq!(
+            Uint128::MAX.to_le_bytes(),
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff
+            ]
+        );
+        assert_eq!(
+            Uint128::new(1).to_le_bytes(),
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+        // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(16, "little")]`
+        assert_eq!(
+            Uint128::new(240282366920938463463374607431768124608).to_le_bytes(),
+            [192, 172, 254, 255, 191, 221, 117, 246, 133, 59, 121, 165, 87, 179, 196, 180]
+        );
     }
 
     #[test]
@@ -598,9 +662,84 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_sub_works() {
+        assert_eq!(Uint128(2) - Uint128(1), Uint128(1));
+        assert_eq!(Uint128(2) - Uint128(0), Uint128(2));
+        assert_eq!(Uint128(2) - Uint128(2), Uint128(0));
+
+        // works for refs
+        let a = Uint128::new(10);
+        let b = Uint128::new(3);
+        let expected = Uint128::new(7);
+        assert_eq!(a - b, expected);
+        assert_eq!(a - &b, expected);
+        assert_eq!(&a - b, expected);
+        assert_eq!(&a - &b, expected);
+    }
+
+    #[test]
     #[should_panic]
     fn uint128_sub_overflow_panics() {
         let _ = Uint128(1) - Uint128(2);
+    }
+
+    #[test]
+    fn uint128_sub_assign_works() {
+        let mut a = Uint128(14);
+        a -= Uint128(2);
+        assert_eq!(a, Uint128(12));
+
+        // works for refs
+        let mut a = Uint128::new(10);
+        let b = Uint128::new(3);
+        let expected = Uint128::new(7);
+        a -= &b;
+        assert_eq!(a, expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_mul_works() {
+        assert_eq!(
+            Uint128::from(2u32) * Uint128::from(3u32),
+            Uint128::from(6u32)
+        );
+        assert_eq!(Uint128::from(2u32) * Uint128::zero(), Uint128::zero());
+
+        // works for refs
+        let a = Uint128::from(11u32);
+        let b = Uint128::from(3u32);
+        let expected = Uint128::from(33u32);
+        assert_eq!(a * b, expected);
+        assert_eq!(a * &b, expected);
+        assert_eq!(&a * b, expected);
+        assert_eq!(&a * &b, expected);
+    }
+
+    #[test]
+    fn uint128_mul_assign_works() {
+        let mut a = Uint128::from(14u32);
+        a *= Uint128::from(2u32);
+        assert_eq!(a, Uint128::from(28u32));
+
+        // works for refs
+        let mut a = Uint128::from(10u32);
+        let b = Uint128::from(3u32);
+        a *= &b;
+        assert_eq!(a, Uint128::from(30u32));
+    }
+
+    #[test]
+    fn uint128_pow_works() {
+        assert_eq!(Uint128::from(2u32).pow(2), Uint128::from(4u32));
+        assert_eq!(Uint128::from(2u32).pow(10), Uint128::from(1024u32));
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_pow_overflow_panics() {
+        Uint128::MAX.pow(2u32);
     }
 
     #[test]
@@ -665,7 +804,7 @@ mod tests {
     fn uint128_methods() {
         // checked_*
         assert!(matches!(
-            Uint128(u128::MAX).checked_add(Uint128(1)),
+            Uint128::MAX.checked_add(Uint128(1)),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
@@ -673,41 +812,97 @@ mod tests {
             Err(OverflowError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_mul(Uint128(2)),
+            Uint128::MAX.checked_mul(Uint128(2)),
             Err(OverflowError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_div(Uint128(0)),
+            Uint128::MAX.checked_pow(2u32),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint128::MAX.checked_div(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_div_euclid(Uint128(0)),
+            Uint128::MAX.checked_div_euclid(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
-            Uint128(u128::MAX).checked_rem(Uint128(0)),
+            Uint128::MAX.checked_rem(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
 
         // saturating_*
-        assert_eq!(
-            Uint128(u128::MAX).saturating_add(Uint128(1)),
-            Uint128(u128::MAX)
-        );
+        assert_eq!(Uint128::MAX.saturating_add(Uint128(1)), Uint128::MAX);
         assert_eq!(Uint128(0).saturating_sub(Uint128(1)), Uint128(0));
-        assert_eq!(
-            Uint128(u128::MAX).saturating_mul(Uint128(2)),
-            Uint128(u128::MAX)
-        );
-        assert_eq!(Uint128(u128::MAX).saturating_pow(2), Uint128(u128::MAX));
+        assert_eq!(Uint128::MAX.saturating_mul(Uint128(2)), Uint128::MAX);
+        assert_eq!(Uint128::MAX.saturating_pow(2), Uint128::MAX);
 
         // wrapping_*
-        assert_eq!(Uint128(u128::MAX).wrapping_add(Uint128(1)), Uint128(0));
-        assert_eq!(Uint128(0).wrapping_sub(Uint128(1)), Uint128(u128::MAX));
+        assert_eq!(Uint128::MAX.wrapping_add(Uint128(1)), Uint128(0));
+        assert_eq!(Uint128(0).wrapping_sub(Uint128(1)), Uint128::MAX);
         assert_eq!(
-            Uint128(u128::MAX).wrapping_mul(Uint128(2)),
+            Uint128::MAX.wrapping_mul(Uint128(2)),
             Uint128(u128::MAX - 1)
         );
-        assert_eq!(Uint128(u128::MAX).wrapping_pow(2), Uint128(1));
+        assert_eq!(Uint128::MAX.wrapping_pow(2), Uint128(1));
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_implements_rem() {
+        let a = Uint128::new(10);
+        assert_eq!(a % Uint128::new(10), Uint128::zero());
+        assert_eq!(a % Uint128::new(2), Uint128::zero());
+        assert_eq!(a % Uint128::new(1), Uint128::zero());
+        assert_eq!(a % Uint128::new(3), Uint128::new(1));
+        assert_eq!(a % Uint128::new(4), Uint128::new(2));
+
+        // works for refs
+        let a = Uint128::new(10);
+        let b = Uint128::new(3);
+        let expected = Uint128::new(1);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "divisor of zero")]
+    fn uint128_rem_panics_for_zero() {
+        let _ = Uint128::new(10) % Uint128::zero();
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint128_rem_works() {
+        assert_eq!(
+            Uint128::from(12u32) % Uint128::from(10u32),
+            Uint128::from(2u32)
+        );
+        assert_eq!(Uint128::from(50u32) % Uint128::from(5u32), Uint128::zero());
+
+        // works for refs
+        let a = Uint128::from(42u32);
+        let b = Uint128::from(5u32);
+        let expected = Uint128::from(2u32);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    fn uint128_rem_assign_works() {
+        let mut a = Uint128::from(30u32);
+        a %= Uint128::from(4u32);
+        assert_eq!(a, Uint128::from(2u32));
+
+        // works for refs
+        let mut a = Uint128::from(25u32);
+        let b = Uint128::from(6u32);
+        a %= &b;
+        assert_eq!(a, Uint128::from(1u32));
     }
 }
