@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-beta7] - 2022-03-22
+
 ### Added
 
 - cosmwasm-std: Implement `Decimal{,256}::checked_mul` and
@@ -1269,7 +1271,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta6...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta7...HEAD
+[1.0.0-beta7]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta6...v1.0.0-beta7
 [1.0.0-beta6]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta5...v1.0.0-beta6
 [1.0.0-beta5]:
