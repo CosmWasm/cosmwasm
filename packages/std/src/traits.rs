@@ -66,8 +66,18 @@ pub trait Storage {
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api {
-    /// Takes a human readable address and validates if it's correctly formatted.
-    /// If it succeeds, a Addr is returned.
+    /// Takes a human readable address and validates if it is valid.
+    /// If it the validation succeeds, a `Addr` containing the same data as the input is returned.
+    ///
+    /// This validation checks two things:
+    /// 1. The address is valid in the sense that it can be converted to a canonical representation by the backend.
+    /// 2. The address is normalized, i.e. `humanize(canonicalize(input)) == input`.
+    ///
+    /// Check #2 is typically needed for upper/lower case representations of the same
+    /// address that are both valid according to #1. This way we ensure uniqueness
+    /// of the human readable address. Clients should perform the normalization before sending
+    /// the addresses to the CosmWasm stack. But please note that the definition of normalized
+    /// depends on the backend.
     ///
     /// ## Examples
     ///
