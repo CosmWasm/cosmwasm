@@ -77,7 +77,10 @@ impl Default for MockApi {
 }
 
 impl BackendApi for MockApi {
-    fn canonical_address(&self, human: &str) -> BackendResult<Vec<u8>> {
+    fn canonical_address(&self, input: &str) -> BackendResult<Vec<u8>> {
+        // mimicks formats like hex or bech32 where different casings are valid for one address
+        let normalzed = input.to_lowercase();
+
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         if let Some(backend_error) = self.backend_error {
@@ -85,7 +88,7 @@ impl BackendApi for MockApi {
         }
 
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        if human.len() < 3 {
+        if normalzed.len() < 3 {
             return (
                 Err(BackendError::user_err(
                     "Invalid input: human address too short",
@@ -93,7 +96,7 @@ impl BackendApi for MockApi {
                 gas_info,
             );
         }
-        if human.len() > self.canonical_length {
+        if normalzed.len() > self.canonical_length {
             return (
                 Err(BackendError::user_err(
                     "Invalid input: human address too long",
@@ -102,7 +105,7 @@ impl BackendApi for MockApi {
             );
         }
 
-        let mut out = Vec::from(human);
+        let mut out = Vec::from(normalzed);
         // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
         // content-dependent rotate followed by shuffle to destroy
@@ -200,13 +203,32 @@ mod tests {
     }
 
     #[test]
+    fn canonical_address_works() {
+        let api = MockApi::default();
+
+        api.canonical_address("foobar123").0.unwrap();
+
+        // is case insensitive
+        let data1 = api.canonical_address("foo123").0.unwrap();
+        let data2 = api.canonical_address("FOO123").0.unwrap();
+        assert_eq!(data1, data2);
+    }
+
+    #[test]
     fn canonicalize_and_humanize_restores_original() {
         let api = MockApi::default();
 
+        // simple
         let original = "shorty";
         let canonical = api.canonical_address(original).0.unwrap();
         let (recovered, _gas_cost) = api.human_address(&canonical);
         assert_eq!(recovered.unwrap(), original);
+
+        // normalizes input
+        let original = String::from("CosmWasmChef");
+        let canonical = api.canonical_address(&original).0.unwrap();
+        let recovered = api.human_address(&canonical).0.unwrap();
+        assert_eq!(recovered, "cosmwasmchef");
     }
 
     #[test]
