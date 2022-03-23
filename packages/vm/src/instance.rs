@@ -611,7 +611,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 73);
-        assert_eq!(report2.used_internally, 36378);
+        assert_eq!(report2.used_internally, 36466);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -810,7 +810,7 @@ mod singlepass_tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 36451);
+        assert_eq!(init_used, 36539);
     }
 
     #[test]
