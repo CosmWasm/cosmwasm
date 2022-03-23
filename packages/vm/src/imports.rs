@@ -135,13 +135,29 @@ pub fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
 
     let (result, gas_info) = env.api.canonical_address(&source_string);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    match result {
-        Ok(_canonical) => Ok(0),
+    let canonical = match result {
+        Ok(data) => data,
         Err(BackendError::UserErr { msg, .. }) => {
-            Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
+            return write_to_contract::<A, S, Q>(env, msg.as_bytes())
         }
-        Err(err) => Err(VmError::from(err)),
+        Err(err) => return Err(VmError::from(err)),
+    };
+
+    let (result, gas_info) = env.api.human_address(&canonical);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let normalized = match result {
+        Ok(addr) => addr,
+        Err(BackendError::UserErr { msg, .. }) => {
+            return write_to_contract::<A, S, Q>(env, msg.as_bytes())
+        }
+        Err(err) => return Err(VmError::from(err)),
+    };
+
+    if normalized != source_string {
+        return write_to_contract::<A, S, Q>(env, b"Address is not normalized");
     }
+
+    Ok(0)
 }
 
 pub fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
@@ -827,11 +843,12 @@ mod tests {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, b"foo");
+        let source_ptr1 = write_data(&env, b"foo");
+        let source_ptr2 = write_data(&env, b"eth1n48g2mjh9ezz7zjtya37wtgg5r5emr0drkwlgw");
 
-        leave_default_data(&env);
-
-        let res = do_addr_validate(&env, source_ptr).unwrap();
+        let res = do_addr_validate(&env, source_ptr1).unwrap();
+        assert_eq!(res, 0);
+        let res = do_addr_validate(&env, source_ptr2).unwrap();
         assert_eq!(res, 0);
     }
 
@@ -843,8 +860,7 @@ mod tests {
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
         let source_ptr3 = write_data(&env, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
-
-        leave_default_data(&env);
+        let source_ptr4 = write_data(&env, b"fooBar"); // Not normalized. The definition of normalized is chain-dependent but the MockApi requires lower case.
 
         let res = do_addr_validate(&env, source_ptr1).unwrap();
         assert_ne!(res, 0);
@@ -860,6 +876,11 @@ mod tests {
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Invalid input: human address too long");
+
+        let res = do_addr_validate(&env, source_ptr4).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(&env, res)).unwrap();
+        assert_eq!(err, "Address is not normalized");
     }
 
     #[test]
