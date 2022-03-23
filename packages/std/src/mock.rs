@@ -99,25 +99,35 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn addr_validate(&self, human: &str) -> StdResult<Addr> {
-        self.addr_canonicalize(human).map(|_canonical| ())?;
-        Ok(Addr::unchecked(human))
+    fn addr_validate(&self, input: &str) -> StdResult<Addr> {
+        let canonical = self.addr_canonicalize(input)?;
+        let normalized = self.addr_humanize(&canonical)?;
+        if input != normalized {
+            return Err(StdError::generic_err(
+                "Invalid input: address not normalized",
+            ));
+        }
+
+        Ok(Addr::unchecked(input))
     }
 
-    fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
+    fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        if human.len() < 3 {
+        if input.len() < 3 {
             return Err(StdError::generic_err(
                 "Invalid input: human address too short",
             ));
         }
-        if human.len() > self.canonical_length {
+        if input.len() > self.canonical_length {
             return Err(StdError::generic_err(
                 "Invalid input: human address too long",
             ));
         }
 
-        let mut out = Vec::from(human);
+        // mimicks formats like hex or bech32 where different casings are valid for one address
+        let normalzed = input.to_lowercase();
+
+        let mut out = Vec::from(normalzed);
 
         // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
@@ -763,13 +773,47 @@ mod tests {
     }
 
     #[test]
+    fn addr_validate_works() {
+        let api = MockApi::default();
+
+        // valid
+        let addr = api.addr_validate("foobar123").unwrap();
+        assert_eq!(addr, "foobar123");
+
+        // invalid: too short
+        api.addr_validate("").unwrap_err();
+        // invalid: not normalized
+        api.addr_validate("Foobar123").unwrap_err();
+        api.addr_validate("FOOBAR123").unwrap_err();
+    }
+
+    #[test]
+    fn addr_canonicalize_works() {
+        let api = MockApi::default();
+
+        api.addr_canonicalize("foobar123").unwrap();
+
+        // is case insensitive
+        let data1 = api.addr_canonicalize("foo123").unwrap();
+        let data2 = api.addr_canonicalize("FOO123").unwrap();
+        assert_eq!(data1, data2);
+    }
+
+    #[test]
     fn canonicalize_and_humanize_restores_original() {
         let api = MockApi::default();
 
+        // simple
         let original = String::from("shorty");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
         assert_eq!(recovered, original);
+
+        // normalizes input
+        let original = String::from("CosmWasmChef");
+        let canonical = api.addr_canonicalize(&original).unwrap();
+        let recovered = api.addr_humanize(&canonical).unwrap();
+        assert_eq!(recovered, "cosmwasmchef");
     }
 
     #[test]
@@ -787,17 +831,6 @@ mod tests {
         let human =
             String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
         let _ = api.addr_canonicalize(&human).unwrap();
-    }
-
-    #[test]
-    fn addr_canonicalize_works_with_string_inputs() {
-        let api = MockApi::default();
-
-        let input = String::from("foobar123");
-        api.addr_canonicalize(&input).unwrap();
-
-        let input = "foobar456";
-        api.addr_canonicalize(input).unwrap();
     }
 
     #[test]
