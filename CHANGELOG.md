@@ -18,6 +18,7 @@ and this project adheres to
   `Uint64`/`Uint128`/`Uint256`/`Uint512`.
 - cosmwasm-std: Implement `pow`/`checked_pow` for `Uint64`/`Uint128`/`Uint512`.
 - cosmwasm-std: Implement `SubAssign`/`AddAssign` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `MulAssign` for `Decimal`/`Decimal256`.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
 
 ### Changed
