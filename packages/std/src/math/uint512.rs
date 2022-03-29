@@ -58,7 +58,7 @@ impl Uint512 {
 
     /// Creates a Uint512(value) from a big endian representation. It's just an alias for
     /// `from_big_endian`.
-    pub fn new(value: [u8; 64]) -> Self {
+    pub const fn new(value: [u8; 64]) -> Self {
         Self::from_be_bytes(value)
     }
 
