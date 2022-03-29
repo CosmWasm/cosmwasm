@@ -4,7 +4,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -377,6 +377,14 @@ impl Mul for Decimal {
         }
     }
 }
+forward_ref_binop!(impl Mul, mul for Decimal, Decimal);
+
+impl MulAssign for Decimal {
+    fn mul_assign(&mut self, rhs: Decimal) {
+        *self = *self * rhs;
+    }
+}
+forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal, Decimal);
 
 /// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
@@ -958,6 +966,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn decimal_implements_mul() {
         let one = Decimal::one();
         let two = one + one;
@@ -1064,6 +1073,28 @@ mod tests {
             max * dec("0.000000000000000001"),
             dec("340.282366920938463463")
         );
+
+        // works for refs
+        let a = Decimal::percent(20);
+        let b = Decimal::percent(30);
+        let expected = Decimal::percent(6);
+        assert_eq!(a * b, expected);
+        assert_eq!(&a * b, expected);
+        assert_eq!(a * &b, expected);
+        assert_eq!(&a * &b, expected);
+    }
+
+    #[test]
+    fn decimal_mul_assign_works() {
+        let mut a = Decimal::percent(15);
+        a *= Decimal::percent(60);
+        assert_eq!(a, Decimal::percent(9));
+
+        // works for refs
+        let mut a = Decimal::percent(50);
+        let b = Decimal::percent(20);
+        a *= &b;
+        assert_eq!(a, Decimal::percent(10));
     }
 
     #[test]

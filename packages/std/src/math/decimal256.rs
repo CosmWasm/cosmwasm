@@ -4,7 +4,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -389,6 +389,14 @@ impl Mul for Decimal256 {
         }
     }
 }
+forward_ref_binop!(impl Mul, mul for Decimal256, Decimal256);
+
+impl MulAssign for Decimal256 {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
+    }
+}
+forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal256, Decimal256);
 
 /// Both d*u and u*d with d: Decimal256 and u: Uint256 returns an Uint256. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
@@ -1045,6 +1053,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn decimal256_implements_mul() {
         let one = Decimal256::one();
         let two = one + one;
@@ -1151,6 +1160,28 @@ mod tests {
             max * dec("0.000000000000000001"),
             dec("115792089237316195423570985008687907853269.984665640564039457")
         );
+
+        // works for refs
+        let a = Decimal256::percent(20);
+        let b = Decimal256::percent(30);
+        let expected = Decimal256::percent(6);
+        assert_eq!(a * b, expected);
+        assert_eq!(&a * b, expected);
+        assert_eq!(a * &b, expected);
+        assert_eq!(&a * &b, expected);
+    }
+
+    #[test]
+    fn decimal256_mul_assign_works() {
+        let mut a = Decimal256::percent(15);
+        a *= Decimal256::percent(60);
+        assert_eq!(a, Decimal256::percent(9));
+
+        // works for refs
+        let mut a = Decimal256::percent(50);
+        let b = Decimal256::percent(20);
+        a *= &b;
+        assert_eq!(a, Decimal256::percent(10));
     }
 
     #[test]
