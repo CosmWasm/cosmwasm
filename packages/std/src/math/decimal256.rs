@@ -131,7 +131,7 @@ impl Decimal256 {
         )
     }
 
-    pub fn is_zero(&self) -> bool {
+    pub const fn is_zero(&self) -> bool {
         self.0.is_zero()
     }
 
@@ -153,7 +153,7 @@ impl Decimal256 {
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Uint256::from(1u128));
     /// ```
-    pub fn atomics(&self) -> Uint256 {
+    pub const fn atomics(&self) -> Uint256 {
         self.0
     }
 
@@ -161,7 +161,7 @@ impl Decimal256 {
     /// but this could potentially change as the type evolves.
     ///
     /// See also [`Decimal256::atomics()`].
-    pub fn decimal_places(&self) -> u32 {
+    pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
     }
 

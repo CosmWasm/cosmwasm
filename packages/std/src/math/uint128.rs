@@ -63,7 +63,7 @@ impl Uint128 {
         self.0.to_le_bytes()
     }
 
-    pub fn is_zero(&self) -> bool {
+    pub const fn is_zero(&self) -> bool {
         self.0 == 0
     }
 
