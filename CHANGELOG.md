@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add missing `DivideByZeroError` export ([#1226]).
+
+[#1226]: https://github.com/CosmWasm/cosmwasm/issues/1226
+
 ## [0.16.6] - 2022-03-21
 
 ### Added
