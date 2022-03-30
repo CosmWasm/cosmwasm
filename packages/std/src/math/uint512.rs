@@ -306,71 +306,15 @@ impl Uint512 {
     }
 
     pub const fn is_zero(&self) -> bool {
-        let bytes = self.to_be_bytes();
-        bytes[0] == 0
-            && bytes[1] == 0
-            && bytes[2] == 0
-            && bytes[3] == 0
-            && bytes[4] == 0
-            && bytes[5] == 0
-            && bytes[6] == 0
-            && bytes[7] == 0
-            && bytes[8] == 0
-            && bytes[9] == 0
-            && bytes[10] == 0
-            && bytes[11] == 0
-            && bytes[12] == 0
-            && bytes[13] == 0
-            && bytes[14] == 0
-            && bytes[15] == 0
-            && bytes[16] == 0
-            && bytes[17] == 0
-            && bytes[18] == 0
-            && bytes[19] == 0
-            && bytes[20] == 0
-            && bytes[21] == 0
-            && bytes[22] == 0
-            && bytes[23] == 0
-            && bytes[24] == 0
-            && bytes[25] == 0
-            && bytes[26] == 0
-            && bytes[27] == 0
-            && bytes[28] == 0
-            && bytes[29] == 0
-            && bytes[30] == 0
-            && bytes[31] == 0
-            && bytes[32] == 0
-            && bytes[33] == 0
-            && bytes[34] == 0
-            && bytes[35] == 0
-            && bytes[36] == 0
-            && bytes[37] == 0
-            && bytes[38] == 0
-            && bytes[39] == 0
-            && bytes[40] == 0
-            && bytes[41] == 0
-            && bytes[42] == 0
-            && bytes[43] == 0
-            && bytes[44] == 0
-            && bytes[45] == 0
-            && bytes[46] == 0
-            && bytes[47] == 0
-            && bytes[48] == 0
-            && bytes[49] == 0
-            && bytes[50] == 0
-            && bytes[51] == 0
-            && bytes[52] == 0
-            && bytes[53] == 0
-            && bytes[54] == 0
-            && bytes[55] == 0
-            && bytes[56] == 0
-            && bytes[57] == 0
-            && bytes[58] == 0
-            && bytes[59] == 0
-            && bytes[60] == 0
-            && bytes[61] == 0
-            && bytes[62] == 0
-            && bytes[63] == 0
+        let words = (self.0).0;
+        words[0] == 0
+            && words[1] == 0
+            && words[2] == 0
+            && words[3] == 0
+            && words[4] == 0
+            && words[5] == 0
+            && words[6] == 0
+            && words[7] == 0
     }
 
     pub fn pow(self, exp: u32) -> Self {
