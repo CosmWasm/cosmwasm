@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- all: Drop support for Rust versions lower than 1.56.1.
+
 ## [1.0.0-beta7] - 2022-03-22
 
 ### Added
