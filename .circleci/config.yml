@@ -180,6 +180,9 @@ jobs:
   package_std:
     docker:
       - image: rust:1.56.1
+    environment:
+      # Limit the number of parallel jobs to avoid OOM crashes during doc testing
+      RUST_TEST_THREADS: 8
     steps:
       - checkout
       - run:
