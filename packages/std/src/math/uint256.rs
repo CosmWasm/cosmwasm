@@ -206,8 +206,9 @@ impl Uint256 {
         ]
     }
 
-    pub fn is_zero(&self) -> bool {
-        self.0.is_zero()
+    pub const fn is_zero(&self) -> bool {
+        let words = (self.0).0;
+        words[0] == 0 && words[1] == 0 && words[2] == 0 && words[3] == 0
     }
 
     pub fn pow(self, exp: u32) -> Self {

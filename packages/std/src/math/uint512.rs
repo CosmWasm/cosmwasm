@@ -58,7 +58,7 @@ impl Uint512 {
 
     /// Creates a Uint512(value) from a big endian representation. It's just an alias for
     /// `from_big_endian`.
-    pub fn new(value: [u8; 64]) -> Self {
+    pub const fn new(value: [u8; 64]) -> Self {
         Self::from_be_bytes(value)
     }
 
@@ -305,8 +305,16 @@ impl Uint512 {
         ]
     }
 
-    pub fn is_zero(&self) -> bool {
-        self.0.is_zero()
+    pub const fn is_zero(&self) -> bool {
+        let words = (self.0).0;
+        words[0] == 0
+            && words[1] == 0
+            && words[2] == 0
+            && words[3] == 0
+            && words[4] == 0
+            && words[5] == 0
+            && words[6] == 0
+            && words[7] == 0
     }
 
     pub fn pow(self, exp: u32) -> Self {
