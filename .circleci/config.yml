@@ -23,7 +23,6 @@ workflows:
       - contract_queue
       - contract_reflect
       - contract_staking
-      - deadlinks
       - fmt
       - fmt_extra
       - clippy:
@@ -41,7 +40,7 @@ workflows:
                 # Long living branches
                 - main
                 - /^[0-9]+\.[0-9]+$/
-                # 👇Add your branch here if benchmarking matters to your work
+                # Add your branch here if benchmarking matters to your work
                 - benchmarking
                 - update-wasmer
                 - metering-restart
@@ -59,6 +58,16 @@ workflows:
               only: /^v[0-9]+\.[0-9]+\.[0-9]+.*/
             branches:
               ignore: /.*/
+  cron_jobs:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - deadlinks
 
 jobs:
   arm64:
