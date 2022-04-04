@@ -1344,22 +1344,42 @@ mod tests {
             Uint256::MAX.checked_add(Uint256::from(1u32)),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint256::from(1u32).checked_add(Uint256::from(1u32)),
+            Ok(Uint256::from(2u32)),
+        );
         assert!(matches!(
             Uint256::from(0u32).checked_sub(Uint256::from(1u32)),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint256::from(2u32).checked_sub(Uint256::from(1u32)),
+            Ok(Uint256::from(1u32)),
+        );
         assert!(matches!(
             Uint256::MAX.checked_mul(Uint256::from(2u32)),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint256::from(2u32).checked_mul(Uint256::from(2u32)),
+            Ok(Uint256::from(4u32)),
+        );
         assert!(matches!(
             Uint256::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint256::from(2u32).checked_pow(3u32),
+            Ok(Uint256::from(8u32)),
+        );
         assert!(matches!(
             Uint256::MAX.checked_div(Uint256::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
+        assert_eq!(
+            Uint256::from(6u32).checked_div(Uint256::from(2u32)),
+            Ok(Uint256::from(3u32)),
+        );
         assert!(matches!(
             Uint256::MAX.checked_rem(Uint256::from(0u32)),
             Err(DivideByZeroError { .. })

@@ -807,25 +807,34 @@ mod tests {
             Uint128::MAX.checked_add(Uint128(1)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint128(1).checked_add(Uint128(1)), Ok(Uint128(2))));
         assert!(matches!(
             Uint128(0).checked_sub(Uint128(1)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint128(2).checked_sub(Uint128(1)), Ok(Uint128(1))));
         assert!(matches!(
             Uint128::MAX.checked_mul(Uint128(2)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint128(2).checked_mul(Uint128(2)), Ok(Uint128(4))));
         assert!(matches!(
             Uint128::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint128(2).checked_pow(3), Ok(Uint128(8))));
         assert!(matches!(
             Uint128::MAX.checked_div(Uint128(0)),
             Err(DivideByZeroError { .. })
         ));
+        assert!(matches!(Uint128(6).checked_div(Uint128(2)), Ok(Uint128(3))));
         assert!(matches!(
             Uint128::MAX.checked_div_euclid(Uint128(0)),
             Err(DivideByZeroError { .. })
+        ));
+        assert!(matches!(
+            Uint128(6).checked_div_euclid(Uint128(2)),
+            Ok(Uint128(3)),
         ));
         assert!(matches!(
             Uint128::MAX.checked_rem(Uint128(0)),
