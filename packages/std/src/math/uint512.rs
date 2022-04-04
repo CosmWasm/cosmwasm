@@ -1003,22 +1003,42 @@ mod tests {
             Uint512::MAX.checked_add(Uint512::from(1u32)),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint512::from(1u32).checked_add(Uint512::from(1u32)),
+            Ok(Uint512::from(2u32)),
+        );
         assert!(matches!(
             Uint512::from(0u32).checked_sub(Uint512::from(1u32)),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint512::from(2u32).checked_sub(Uint512::from(1u32)),
+            Ok(Uint512::from(1u32)),
+        );
         assert!(matches!(
             Uint512::MAX.checked_mul(Uint512::from(2u32)),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint512::from(2u32).checked_mul(Uint512::from(2u32)),
+            Ok(Uint512::from(4u32)),
+        );
         assert!(matches!(
             Uint512::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
+        assert_eq!(
+            Uint512::from(2u32).checked_pow(3u32),
+            Ok(Uint512::from(8u32)),
+        );
         assert!(matches!(
             Uint512::MAX.checked_div(Uint512::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
+        assert_eq!(
+            Uint512::from(6u32).checked_div(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
         assert!(matches!(
             Uint512::MAX.checked_rem(Uint512::from(0u32)),
             Err(DivideByZeroError { .. })

@@ -729,30 +729,40 @@ mod tests {
             Uint64::MAX.checked_add(Uint64(1)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint64(1).checked_add(Uint64(1)), Ok(Uint64(2))));
         assert!(matches!(
             Uint64(0).checked_sub(Uint64(1)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint64(2).checked_sub(Uint64(1)), Ok(Uint64(1))));
         assert!(matches!(
             Uint64::MAX.checked_mul(Uint64(2)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint64(2).checked_mul(Uint64(2)), Ok(Uint64(4))));
         assert!(matches!(
             Uint64::MAX.checked_pow(2u32),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(Uint64(2).checked_pow(3), Ok(Uint64(8))));
         assert!(matches!(
             Uint64::MAX.checked_div(Uint64(0)),
             Err(DivideByZeroError { .. })
         ));
+        assert!(matches!(Uint64(6).checked_div(Uint64(2)), Ok(Uint64(3))));
         assert!(matches!(
             Uint64::MAX.checked_div_euclid(Uint64(0)),
             Err(DivideByZeroError { .. })
         ));
         assert!(matches!(
+            Uint64(6).checked_div_euclid(Uint64(2)),
+            Ok(Uint64(3)),
+        ));
+        assert!(matches!(
             Uint64::MAX.checked_rem(Uint64(0)),
             Err(DivideByZeroError { .. })
         ));
+        assert!(matches!(Uint64(7).checked_rem(Uint64(2)), Ok(Uint64(1))));
 
         // saturating_*
         assert_eq!(Uint64::MAX.saturating_add(Uint64(1)), Uint64::MAX);
