@@ -117,13 +117,7 @@ impl Uint256 {
     /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
     pub const fn from_uint128(num: Uint128) -> Self {
-        let bytes = num.to_le_bytes();
-
-        Self::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        ])
+        Self::from_u128(num.u128())
     }
 
     /// Returns a copy of the number as big endian bytes.

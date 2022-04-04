@@ -34,11 +34,13 @@ impl Decimal {
     pub const MAX: Self = Self(Uint128::MAX);
 
     /// Creates a Decimal(value)
+    /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
     pub const fn new(value: Uint128) -> Self {
         Self(value)
     }
 
     /// Creates a Decimal(Uint128(value))
+    /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
     pub const fn raw(value: u128) -> Self {
         Self(Uint128::new(value))
     }
@@ -491,13 +493,13 @@ mod tests {
     #[test]
     fn decimal_new() {
         let expected = Uint128::from(300u128);
-        assert_eq!(expected, Decimal::new(expected).0);
+        assert_eq!(Decimal::new(expected).0, expected);
     }
 
     #[test]
     fn decimal_raw() {
         let value = 300u128;
-        assert_eq!(value, Decimal::raw(value).0.u128());
+        assert_eq!(Decimal::raw(value).0.u128(), value);
     }
 
     #[test]
