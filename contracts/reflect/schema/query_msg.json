@@ -459,7 +459,7 @@
     "WasmQuery": {
       "oneOf": [
         {
-          "description": "this queries the public API of another contract at a known address (with known ABI) return value is whatever the contract returns (caller should know)",
+          "description": "this queries the public API of another contract at a known address (with known ABI) Return value is whatever the contract returns (caller should know), wrapped in a ContractResult that is JSON encoded.",
           "type": "object",
           "required": [
             "smart"

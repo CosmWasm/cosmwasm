@@ -8,7 +8,8 @@ use crate::Binary;
 #[serde(rename_all = "snake_case")]
 pub enum WasmQuery {
     /// this queries the public API of another contract at a known address (with known ABI)
-    /// return value is whatever the contract returns (caller should know)
+    /// Return value is whatever the contract returns (caller should know), wrapped in a
+    /// ContractResult that is JSON encoded.
     Smart {
         contract_addr: String,
         /// msg is the json-encoded QueryMsg struct
