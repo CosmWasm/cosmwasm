@@ -125,9 +125,9 @@ impl Api for MockApi {
         }
 
         // mimicks formats like hex or bech32 where different casings are valid for one address
-        let normalzed = input.to_lowercase();
+        let normalized = input.to_lowercase();
 
-        let mut out = Vec::from(normalzed);
+        let mut out = Vec::from(normalized);
 
         // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
