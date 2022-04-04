@@ -22,6 +22,11 @@ and this project adheres to
 
 [#1050]: https://github.com/CosmWasm/cosmwasm/pull/1050
 
+### Fixed
+
+- cosmwasm-std: `Api::addr_validate` now requires inputs to be normalized.
+- cosmwasm-vm: The `addr_validate` import now requires inputs to be normalized.
+
 ## [1.0.0-beta7] - 2022-03-22
 
 ### Added
