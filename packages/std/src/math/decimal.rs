@@ -33,24 +33,36 @@ impl Decimal {
 
     pub const MAX: Self = Self(Uint128::MAX);
 
+    /// Creates a Decimal(value)
+    /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    pub const fn new(value: Uint128) -> Self {
+        Self(value)
+    }
+
+    /// Creates a Decimal(Uint128(value))
+    /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    pub const fn raw(value: u128) -> Self {
+        Self(Uint128::new(value))
+    }
+
     /// Create a 1.0 Decimal
     pub const fn one() -> Self {
-        Decimal(Self::DECIMAL_FRACTIONAL)
+        Self(Self::DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal
     pub const fn zero() -> Self {
-        Decimal(Uint128::zero())
+        Self(Uint128::zero())
     }
 
     /// Convert x% into Decimal
     pub fn percent(x: u64) -> Self {
-        Decimal(((x as u128) * 10_000_000_000_000_000).into())
+        Self(((x as u128) * 10_000_000_000_000_000).into())
     }
 
     /// Convert permille (x/1000) into Decimal
     pub fn permille(x: u64) -> Self {
-        Decimal(((x as u128) * 1_000_000_000_000_000).into())
+        Self(((x as u128) * 1_000_000_000_000_000).into())
     }
 
     /// Creates a decimal from a number of atomic units and the number
@@ -477,6 +489,18 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
 mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
+
+    #[test]
+    fn decimal_new() {
+        let expected = Uint128::from(300u128);
+        assert_eq!(Decimal::new(expected).0, expected);
+    }
+
+    #[test]
+    fn decimal_raw() {
+        let value = 300u128;
+        assert_eq!(Decimal::raw(value).0.u128(), value);
+    }
 
     #[test]
     fn decimal_one() {

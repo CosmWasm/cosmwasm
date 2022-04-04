@@ -6,9 +6,21 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `MulAssign` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `is_zero`/`atomics`/`decimal_places` as const for Uint
+  and Decimal types.
+- cosmwasm-std: Implement `new` and `raw` const constructors for
+  `Decimal`/`Decimal256`.
+
 ### Changed
 
 - all: Drop support for Rust versions lower than 1.56.1.
+- cosmwasm-std: `MockQuerier` now supports adding custom behaviour for handling
+  Wasm queries via `MockQuerier::update_wasm` ([#1050]).
+
+[#1050]: https://github.com/CosmWasm/cosmwasm/pull/1050
 
 ## [1.0.0-beta7] - 2022-03-22
 
@@ -22,18 +34,11 @@ and this project adheres to
   `Uint64`/`Uint128`/`Uint256`/`Uint512`.
 - cosmwasm-std: Implement `pow`/`checked_pow` for `Uint64`/`Uint128`/`Uint512`.
 - cosmwasm-std: Implement `SubAssign`/`AddAssign` for `Decimal`/`Decimal256`.
-- cosmwasm-std: Implement `MulAssign` for `Decimal`/`Decimal256`.
-- cosmwasm-std: Implement `is_zero`/`atomics`/`decimal_places` as const for Uint
-  and Decimal types.
 - cosmwasm-crypto: Upgrade ed25519-zebra to version 3.
 
 ### Changed
 
 - cosmwasm-vm: Upgrade Wasmer to 2.2.1.
-- cosmwasm-std: `MockQuerier` now supports adding custom behaviour for handling
-  Wasm queries via `MockQuerier::update_wasm` ([#1050]).
-
-[#1050]: https://github.com/CosmWasm/cosmwasm/pull/1050
 
 ## [1.0.0-beta6] - 2022-03-07
 

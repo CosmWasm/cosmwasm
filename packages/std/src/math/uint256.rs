@@ -102,9 +102,9 @@ impl Uint256 {
         Uint256(U256(words))
     }
 
-    /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
+    /// A conversion from `u128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
-    pub const fn from_uint128(num: Uint128) -> Self {
+    pub const fn from_u128(num: u128) -> Self {
         let bytes = num.to_le_bytes();
 
         Self::from_le_bytes([
@@ -112,6 +112,12 @@ impl Uint256 {
             bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ])
+    }
+
+    /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
+    /// can be used in a `const` context.
+    pub const fn from_uint128(num: Uint128) -> Self {
+        Self::from_u128(num.u128())
     }
 
     /// Returns a copy of the number as big endian bytes.
@@ -942,6 +948,19 @@ mod tests {
                 "Uint128",
                 Uint256::MAX.to_string()
             ))
+        );
+    }
+
+    #[test]
+    fn uint256_from_u128() {
+        assert_eq!(
+            Uint256::from_u128(123u128),
+            Uint256::from_str("123").unwrap()
+        );
+
+        assert_eq!(
+            Uint256::from_u128(9785746283745u128),
+            Uint256::from_str("9785746283745").unwrap()
         );
     }
 

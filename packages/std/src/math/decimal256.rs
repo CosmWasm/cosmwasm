@@ -42,6 +42,18 @@ impl Decimal256 {
 
     pub const MAX: Self = Self(Uint256::MAX);
 
+    /// Creates a Decimal256 from Uint256
+    /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.
+    pub const fn new(value: Uint256) -> Self {
+        Self(value)
+    }
+
+    /// Creates a Decimal256 from u128
+    /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.
+    pub const fn raw(value: u128) -> Self {
+        Self(Uint256::from_u128(value))
+    }
+
     /// Create a 1.0 Decimal256
     pub const fn one() -> Self {
         Self(Self::DECIMAL_FRACTIONAL)
@@ -490,6 +502,19 @@ mod tests {
     use super::*;
     use crate::errors::StdError;
     use crate::{from_slice, to_vec};
+
+    #[test]
+    fn decimal256_new() {
+        let expected = Uint256::from(300u128);
+        assert_eq!(Decimal256::new(expected).0, expected);
+    }
+
+    #[test]
+    fn decimal256_raw() {
+        let value = 300u128;
+        let expected = Uint256::from(value);
+        assert_eq!(Decimal256::raw(value).0, expected);
+    }
 
     #[test]
     fn decimal256_one() {
