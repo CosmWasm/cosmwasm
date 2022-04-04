@@ -77,7 +77,7 @@ impl Default for MockApi {
 impl BackendApi for MockApi {
     fn canonical_address(&self, input: &str) -> BackendResult<Vec<u8>> {
         // mimicks formats like hex or bech32 where different casings are valid for one address
-        let normalzed = input.to_lowercase();
+        let normalized = input.to_lowercase();
 
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
@@ -86,7 +86,7 @@ impl BackendApi for MockApi {
         }
 
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        if normalzed.len() < 3 {
+        if normalized.len() < 3 {
             return (
                 Err(BackendError::user_err(
                     "Invalid input: human address too short",
@@ -94,7 +94,7 @@ impl BackendApi for MockApi {
                 gas_info,
             );
         }
-        if normalzed.len() > self.canonical_length {
+        if normalized.len() > self.canonical_length {
             return (
                 Err(BackendError::user_err(
                     "Invalid input: human address too long",
@@ -103,7 +103,7 @@ impl BackendApi for MockApi {
             );
         }
 
-        let mut out = Vec::from(normalzed);
+        let mut out = Vec::from(normalized);
         // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
         // content-dependent rotate followed by shuffle to destroy
