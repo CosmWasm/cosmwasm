@@ -12,6 +12,10 @@ and this project adheres to
 
 [#1226]: https://github.com/CosmWasm/cosmwasm/issues/1226
 
+### Changed
+
+- all: Drop support for Rust versions lower than 1.56.1.
+
 ## [0.16.6] - 2022-03-21
 
 ### Added
