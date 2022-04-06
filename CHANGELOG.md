@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-beta8] - 2022-04-06
+
 ### Added
 
 - cosmwasm-std: Implement `MulAssign` for `Decimal`/`Decimal256`.
@@ -1292,7 +1294,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta7...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta8...HEAD
+[1.0.0-beta8]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta7...v1.0.0-beta8
 [1.0.0-beta7]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta6...v1.0.0-beta7
 [1.0.0-beta6]:
