@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.16.7] - 2022-04-06
+
 ### Added
 
 - cosmwasm-std: Add missing `DivideByZeroError` export ([#1226]).
@@ -1176,7 +1178,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.6...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.7...HEAD
+[0.16.7]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.6...v0.16.7
 [0.16.6]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.5...v0.16.6
 [0.16.5]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.4...v0.16.5
 [0.16.4]: https://github.com/CosmWasm/cosmwasm/compare/v0.16.3...v0.16.4
