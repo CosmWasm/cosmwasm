@@ -16,6 +16,11 @@ and this project adheres to
 
 - all: Drop support for Rust versions lower than 1.56.1.
 
+### Fixed
+
+- cosmwasm-std: `Api::addr_validate` now requires inputs to be normalized.
+- cosmwasm-vm: The `addr_validate` import now requires inputs to be normalized.
+
 ## [0.16.6] - 2022-03-21
 
 ### Added
