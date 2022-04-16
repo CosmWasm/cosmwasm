@@ -213,6 +213,45 @@ mod tests {
     use crate::{coins, from_slice, to_vec, ContractResult};
 
     #[test]
+    fn response_add_attributes_works() {
+        let res = Response::<Empty>::new().add_attributes(std::iter::empty::<Attribute>());
+        assert_eq!(res.attributes.len(), 0);
+
+        let res = Response::<Empty>::new().add_attributes([Attribute::new("test", "ing")]);
+        assert_eq!(res.attributes.len(), 1);
+        assert_eq!(
+            res.attributes[0],
+            Attribute {
+                key: "test".to_string(),
+                value: "ing".to_string(),
+            }
+        );
+
+        let attrs = vec![
+            ("action", "reaction"),
+            ("answer", "42"),
+            ("another", "attribute"),
+        ];
+        let res: Response = Response::new().add_attributes(attrs.clone());
+        assert_eq!(res.attributes, attrs);
+
+        let optional = Option::<Attribute>::None;
+        let res: Response = Response::new().add_attributes(optional.into_iter());
+        assert_eq!(res.attributes.len(), 0);
+
+        let optional = Option::<Attribute>::Some(Attribute::new("test", "ing"));
+        let res: Response = Response::new().add_attributes(optional.into_iter());
+        assert_eq!(res.attributes.len(), 1);
+        assert_eq!(
+            res.attributes[0],
+            Attribute {
+                key: "test".to_string(),
+                value: "ing".to_string(),
+            }
+        );
+    }
+
+    #[test]
     fn can_serialize_and_deserialize_init_response() {
         let original = Response {
             messages: vec![
