@@ -542,6 +542,10 @@ mod tests {
     use crate::errors::StdError;
     use crate::{from_slice, to_vec};
 
+    fn dec(input: &str) -> Decimal256 {
+        Decimal256::from_str(input).unwrap()
+    }
+
     #[test]
     fn decimal256_new() {
         let expected = Uint256::from(300u128);
@@ -1180,10 +1184,6 @@ mod tests {
         assert_eq!(Decimal256::percent(100) * half, Decimal256::percent(50));
         assert_eq!(Decimal256::percent(1000) * half, Decimal256::percent(500));
 
-        fn dec(input: &str) -> Decimal256 {
-            Decimal256::from_str(input).unwrap()
-        }
-
         // Move left
         let a = dec("123.127726548762582");
         assert_eq!(a * dec("1"), dec("123.127726548762582"));
@@ -1351,10 +1351,6 @@ mod tests {
         let one = Decimal256::one();
         let two = one + one;
         let half = Decimal256::percent(50);
-
-        fn dec(input: &str) -> Decimal256 {
-            Decimal256::from_str(input).unwrap()
-        }
 
         // 1/x and x/1
         assert_eq!(one / Decimal256::percent(1), Decimal256::percent(10_000));

@@ -529,6 +529,10 @@ mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
 
+    fn dec(input: &str) -> Decimal {
+        Decimal::from_str(input).unwrap()
+    }
+
     #[test]
     fn decimal_new() {
         let expected = Uint128::from(300u128);
@@ -1092,10 +1096,6 @@ mod tests {
         assert_eq!(Decimal::percent(100) * half, Decimal::percent(50));
         assert_eq!(Decimal::percent(1000) * half, Decimal::percent(500));
 
-        fn dec(input: &str) -> Decimal {
-            Decimal::from_str(input).unwrap()
-        }
-
         // Move left
         let a = dec("123.127726548762582");
         assert_eq!(a * dec("1"), dec("123.127726548762582"));
@@ -1260,10 +1260,6 @@ mod tests {
         let one = Decimal::one();
         let two = one + one;
         let half = Decimal::percent(50);
-
-        fn dec(input: &str) -> Decimal {
-            Decimal::from_str(input).unwrap()
-        }
 
         // 1/x and x/1
         assert_eq!(one / Decimal::percent(1), Decimal::percent(10_000));

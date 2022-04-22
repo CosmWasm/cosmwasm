@@ -11,6 +11,7 @@ and this project adheres to
 - cosmwasm-std: Implement `checked_multiply_ratio` for
   `Uint64`/`Uint128`/`Uint256`
 - cosmwasm-std: Implement `checked_from_ratio` for `Decimal`/`Decimal256`
+- cosmwasm-std: Implement `Div`/`DivAssign` for `Decimal`/`Decimal256`.
 - cosmwasm-vm: Add feature `allow_interface_version_7` to run CosmWasm 0.16
   contracts in modern hosts. Be careful if you consider using this!
 
