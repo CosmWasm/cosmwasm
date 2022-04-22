@@ -102,6 +102,8 @@ impl<T> Response<T> {
     }
 
     /// Add an attribute included in the main `wasm` event.
+    ///
+    /// For working with optional values or optional attributes, see [`add_attributes`][Self::add_attributes].
     pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.attributes.push(Attribute::new(key, value));
         self
@@ -138,8 +140,10 @@ impl<T> Response<T> {
     ///
     /// ## Examples
     ///
+    /// Adding a list of attributes using the pair notation for key and value:
+    ///
     /// ```
-    /// use cosmwasm_std::{attr, Response};
+    /// use cosmwasm_std::Response;
     ///
     /// let attrs = vec![
     ///     ("action", "reaction"),
@@ -148,6 +152,27 @@ impl<T> Response<T> {
     /// ];
     /// let res: Response = Response::new().add_attributes(attrs.clone());
     /// assert_eq!(res.attributes, attrs);
+    /// ```
+    ///
+    /// Adding an optional value as an optional attribute by turning it into a list of 0 or 1 elements:
+    ///
+    /// ```
+    /// use cosmwasm_std::{Attribute, Response};
+    ///
+    /// // Some value
+    /// let value: Option<String> = Some("sarah".to_string());
+    /// let attribute: Option<Attribute> = value.map(|v| Attribute::new("winner", v));
+    /// let res: Response = Response::new().add_attributes(attribute);
+    /// assert_eq!(res.attributes, [Attribute {
+    ///     key: "winner".to_string(),
+    ///     value: "sarah".to_string(),
+    /// }]);
+    ///
+    /// // No value
+    /// let value: Option<String> = None;
+    /// let attribute: Option<Attribute> = value.map(|v| Attribute::new("winner", v));
+    /// let res: Response = Response::new().add_attributes(attribute);
+    /// assert_eq!(res.attributes.len(), 0);
     /// ```
     pub fn add_attributes<A: Into<Attribute>>(
         mut self,
