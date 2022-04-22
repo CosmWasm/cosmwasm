@@ -1,7 +1,6 @@
 use cosmwasm_std::{Api, StdError, StdResult};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
-use std::convert::TryInto;
 
 #[allow(clippy::too_many_arguments)]
 pub fn verify_transaction(

@@ -5,7 +5,6 @@ use k256::{
     ecdsa::{Signature, VerifyingKey},                   // type aliases
     elliptic_curve::sec1::ToEncodedPoint,
 };
-use std::convert::TryInto;
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;

@@ -1,7 +1,5 @@
 use ed25519_zebra::{batch, Signature, VerificationKey};
 use rand_core::OsRng;
-use std::convert::TryFrom;
-use std::convert::TryInto;
 
 use crate::errors::{CryptoError, CryptoResult};
 

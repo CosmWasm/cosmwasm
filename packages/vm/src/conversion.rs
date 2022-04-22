@@ -1,5 +1,4 @@
 use std::any::type_name;
-use std::convert::TryInto;
 
 use crate::errors::{VmError, VmResult};
 

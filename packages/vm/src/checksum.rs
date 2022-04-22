@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::fmt;
 
 use sha2::{Digest, Sha256};
