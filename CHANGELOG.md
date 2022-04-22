@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- all: Updated Rust edition to 2021
+
 ## [1.0.0-beta8] - 2022-04-06
 
 ### Added
