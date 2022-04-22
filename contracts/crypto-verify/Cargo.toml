@@ -2,7 +2,7 @@
 name = "crypto-verify"
 version = "0.0.0"
 authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 publish = false
 license = "Apache-2.0"
 

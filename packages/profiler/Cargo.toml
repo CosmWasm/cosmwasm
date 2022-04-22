@@ -2,7 +2,7 @@
 name = "cosmwasm-profiler"
 version = "0.0.0"
 authors = ["Tomasz Kurcz <uint@lavabit.com>"]
-edition = "2018"
+edition = "2021"
 description = "A profiling utility for compiled Cosmwasm smart contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/profiler"
 license = "Apache-2.0"

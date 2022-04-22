@@ -12,7 +12,6 @@ pub fn force_to_u32(input: usize) -> u32 {
     }
     #[cfg(not(target_pointer_width = "32"))]
     {
-        use std::convert::TryInto;
         input.try_into().expect("Input exceeds u32 range")
     }
 }

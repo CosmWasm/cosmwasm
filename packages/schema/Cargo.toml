@@ -2,7 +2,7 @@
 name = "cosmwasm-schema"
 version = "1.0.0-beta8"
 authors = ["Simon Warta <webmaster128@users.noreply.github.com>", "Ethan Frey <ethanfrey@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 description = "A dev-dependency for CosmWasm contracts to generate JSON Schema files."
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
 license = "Apache-2.0"

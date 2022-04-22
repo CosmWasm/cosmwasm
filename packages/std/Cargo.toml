@@ -2,7 +2,7 @@
 name = "cosmwasm-std"
 version = "1.0.0-beta8"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
 license = "Apache-2.0"
