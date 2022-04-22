@@ -445,7 +445,7 @@ impl Div for Decimal {
 
         let inverted = other.inv().expect("attempt to divide by zero");
         let result_as_uint256 = self.numerator().full_mul(inverted.numerator())
-            / Uint256::from_uint128(Self::DECIMAL_FRACTIONAL); // from_uint128 is a const method and should be "free"
+            / Uint256::from_uint128(Self::DECIMAL_FRACTIONAL);
         match result_as_uint256.try_into() {
             Ok(result) => Self(result),
             Err(_) => panic!("attempt to divide with overflow"),
@@ -453,6 +453,13 @@ impl Div for Decimal {
     }
 }
 forward_ref_binop!(impl Div, div for Decimal, Decimal);
+
+impl DivAssign for Decimal {
+    fn div_assign(&mut self, rhs: Decimal) {
+        *self = *self / rhs;
+    }
+}
+forward_ref_op_assign!(impl DivAssign, div_assign for Decimal, Decimal);
 
 impl Div<Uint128> for Decimal {
     type Output = Self;
@@ -1187,7 +1194,7 @@ mod tests {
             (Decimal::percent(10), Decimal::zero()),
             (Decimal::percent(10), Decimal::percent(5)),
             (Decimal::MAX, Decimal::one()),
-            // (Decimal::MAX / 2u128.into(), Decimal::percent(200)),
+            (Decimal::MAX / Uint128::new(2), Decimal::percent(200)),
             (Decimal::permille(6), Decimal::permille(13)),
         ];
 
@@ -1225,6 +1232,7 @@ mod tests {
         assert_eq!(one / Decimal::percent(10), Decimal::percent(1_000));
         assert_eq!(one / Decimal::percent(100), Decimal::percent(100));
         assert_eq!(one / Decimal::percent(1000), Decimal::percent(10));
+        assert_eq!(Decimal::percent(0) / one, Decimal::percent(0));
         assert_eq!(Decimal::percent(1) / one, Decimal::percent(1));
         assert_eq!(Decimal::percent(10) / one, Decimal::percent(10));
         assert_eq!(Decimal::percent(100) / one, Decimal::percent(100));
@@ -1235,6 +1243,7 @@ mod tests {
         assert_eq!(two / Decimal::percent(10), Decimal::percent(2_000));
         assert_eq!(two / Decimal::percent(100), Decimal::percent(200));
         assert_eq!(two / Decimal::percent(1000), Decimal::percent(20));
+        assert_eq!(Decimal::percent(0) / two, Decimal::percent(0));
         assert_eq!(Decimal::percent(1) / two, dec("0.005"));
         assert_eq!(Decimal::percent(10) / two, Decimal::percent(5));
         assert_eq!(Decimal::percent(100) / two, Decimal::percent(50));
@@ -1245,12 +1254,13 @@ mod tests {
         assert_eq!(half / Decimal::percent(10), Decimal::percent(500));
         assert_eq!(half / Decimal::percent(100), Decimal::percent(50));
         assert_eq!(half / Decimal::percent(1000), Decimal::percent(5));
+        assert_eq!(Decimal::percent(0) / half, Decimal::percent(0));
         assert_eq!(Decimal::percent(1) / half, Decimal::percent(2));
         assert_eq!(Decimal::percent(10) / half, Decimal::percent(20));
         assert_eq!(Decimal::percent(100) / half, Decimal::percent(200));
         assert_eq!(Decimal::percent(1000) / half, Decimal::percent(2000));
 
-        // Move left
+        // Move right
         let a = dec("123127726548762582");
         assert_eq!(a / dec("1"), dec("123127726548762582"));
         assert_eq!(a / dec("10"), dec("12312772654876258.2"));
@@ -1271,17 +1281,17 @@ mod tests {
         assert_eq!(dec("1000000000000000") / a, dec("0.008000000000000000"));
         assert_eq!(dec("1000000000000000000") / a, dec("8"));
 
-        // Move right
-        let max = dec("0.123127726548762582");
-        assert_eq!(max / dec("1.0"), dec("0.123127726548762582"));
-        assert_eq!(max / dec("0.1"), dec("1.23127726548762582"));
-        assert_eq!(max / dec("0.01"), dec("12.3127726548762582"));
-        assert_eq!(max / dec("0.001"), dec("123.127726548762582"));
-        assert_eq!(max / dec("0.000001"), dec("123127.726548762582"));
-        assert_eq!(max / dec("0.000000001"), dec("123127726.548762582"));
-        assert_eq!(max / dec("0.000000000001"), dec("123127726548.762582"));
-        assert_eq!(max / dec("0.000000000000001"), dec("123127726548762.582"));
-        assert_eq!(max / dec("0.000000000000000001"), dec("123127726548762582"));
+        // Move left
+        let a = dec("0.123127726548762582");
+        assert_eq!(a / dec("1.0"), dec("0.123127726548762582"));
+        assert_eq!(a / dec("0.1"), dec("1.23127726548762582"));
+        assert_eq!(a / dec("0.01"), dec("12.3127726548762582"));
+        assert_eq!(a / dec("0.001"), dec("123.127726548762582"));
+        assert_eq!(a / dec("0.000001"), dec("123127.726548762582"));
+        assert_eq!(a / dec("0.000000001"), dec("123127726.548762582"));
+        assert_eq!(a / dec("0.000000000001"), dec("123127726548.762582"));
+        assert_eq!(a / dec("0.000000000000001"), dec("123127726548762.582"));
+        assert_eq!(a / dec("0.000000000000000001"), dec("123127726548762582"));
 
         // works for refs
         let a = Decimal::percent(100);
@@ -1291,6 +1301,31 @@ mod tests {
         assert_eq!(&a / b, expected);
         assert_eq!(a / &b, expected);
         assert_eq!(&a / &b, expected);
+    }
+
+    #[test]
+    fn decimal_div_assign_works() {
+        let mut a = Decimal::percent(15);
+        a /= Decimal::percent(20);
+        assert_eq!(a, Decimal::percent(75));
+
+        // works for refs
+        let mut a = Decimal::percent(50);
+        let b = Decimal::percent(20);
+        a /= &b;
+        assert_eq!(a, Decimal::percent(250));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to divide with overflow")]
+    fn decimal_div_overflow_panics() {
+        let _value = Decimal::MAX / Decimal::percent(10);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to divide by zero")]
+    fn decimal_div_by_zero_panics() {
+        let _value = Decimal::one() / Decimal::zero();
     }
 
     #[test]
