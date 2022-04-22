@@ -1217,6 +1217,44 @@ mod tests {
     }
 
     #[test]
+    // in this test the Decimal is on the right
+    fn uint128_decimal_multiply() {
+        // a*b
+        let left = Uint128::new(300);
+        let right = Decimal::one() + Decimal::percent(50); // 1.5
+        assert_eq!(left * right, Uint128::new(450));
+
+        // a*0
+        let left = Uint128::new(300);
+        let right = Decimal::zero();
+        assert_eq!(left * right, Uint128::new(0));
+
+        // 0*a
+        let left = Uint128::new(0);
+        let right = Decimal::one() + Decimal::percent(50); // 1.5
+        assert_eq!(left * right, Uint128::new(0));
+    }
+
+    #[test]
+    // in this test the Decimal is on the left
+    fn decimal_uint128_multiply() {
+        // a*b
+        let left = Decimal::one() + Decimal::percent(50); // 1.5
+        let right = Uint128::new(300);
+        assert_eq!(left * right, Uint128::new(450));
+
+        // 0*a
+        let left = Decimal::zero();
+        let right = Uint128::new(300);
+        assert_eq!(left * right, Uint128::new(0));
+
+        // a*0
+        let left = Decimal::one() + Decimal::percent(50); // 1.5
+        let right = Uint128::new(0);
+        assert_eq!(left * right, Uint128::new(0));
+    }
+
+    #[test]
     #[allow(clippy::op_ref)]
     fn decimal_implements_div() {
         let one = Decimal::one();
@@ -1326,44 +1364,6 @@ mod tests {
     #[should_panic(expected = "attempt to divide by zero")]
     fn decimal_div_by_zero_panics() {
         let _value = Decimal::one() / Decimal::zero();
-    }
-
-    #[test]
-    // in this test the Decimal is on the right
-    fn uint128_decimal_multiply() {
-        // a*b
-        let left = Uint128::new(300);
-        let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128::new(450));
-
-        // a*0
-        let left = Uint128::new(300);
-        let right = Decimal::zero();
-        assert_eq!(left * right, Uint128::new(0));
-
-        // 0*a
-        let left = Uint128::new(0);
-        let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128::new(0));
-    }
-
-    #[test]
-    // in this test the Decimal is on the left
-    fn decimal_uint128_multiply() {
-        // a*b
-        let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128::new(300);
-        assert_eq!(left * right, Uint128::new(450));
-
-        // 0*a
-        let left = Decimal::zero();
-        let right = Uint128::new(300);
-        assert_eq!(left * right, Uint128::new(0));
-
-        // a*0
-        let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128::new(0);
-        assert_eq!(left * right, Uint128::new(0));
     }
 
     #[test]
