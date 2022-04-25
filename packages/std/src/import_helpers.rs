@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 /// Returns the four most significant bytes
 #[allow(dead_code)] // only used in Wasm builds
 #[inline]

@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use std::sync::Arc;
 #[cfg(feature = "cranelift")]
 use wasmer::Cranelift;

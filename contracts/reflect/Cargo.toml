@@ -2,7 +2,7 @@
 name = "reflect"
 version = "0.0.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 publish = false
 description = "Reflect messages to use for test cases - based on cw-mask"
 license = "Apache-2.0"

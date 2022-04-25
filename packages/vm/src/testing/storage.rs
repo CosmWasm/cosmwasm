@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
 use std::collections::HashMap;
 #[cfg(feature = "iterator")]
-use std::convert::TryInto;
-#[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]

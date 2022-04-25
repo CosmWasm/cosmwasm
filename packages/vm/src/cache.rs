@@ -375,7 +375,6 @@ mod tests {
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;
     use std::io::Write;
-    use std::iter::FromIterator;
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 500_000_000_000; // ~0.5ms

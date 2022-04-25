@@ -86,7 +86,6 @@ pub fn has_ibc_entry_points(module: &impl ExportInfo) -> bool {
 mod tests {
     use super::*;
     use parity_wasm::elements::Internal;
-    use std::iter::FromIterator;
     use wasmer::{Cranelift, Store, Universal};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");

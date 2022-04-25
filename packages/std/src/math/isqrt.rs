@@ -53,8 +53,6 @@ impl Unsigned for usize {}
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-
     use super::*;
 
     #[test]

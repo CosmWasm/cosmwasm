@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use crate::wasm_backend::compile;
 
 /// This header prefix contains the module type (wasmer-universal) and

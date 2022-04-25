@@ -2,7 +2,6 @@
 //! which can potientially have abusive size.
 
 use std::collections::{BTreeSet, HashSet};
-use std::iter::FromIterator;
 
 pub trait LimitedDisplay {
     /// Returns a string representationof the object, which is shorter than or equal to `max_length`.
