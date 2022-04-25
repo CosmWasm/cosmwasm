@@ -526,6 +526,15 @@ impl DivideByZeroError {
     }
 }
 
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum CheckedMultiplyRatioError {
+    #[error("Denominator must not be zero")]
+    DivideByZero {},
+
+    #[error("Multiplication overflow")]
+    MulOverflow {},
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
