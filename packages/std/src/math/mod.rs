@@ -70,10 +70,10 @@ mod tests {
         + Mul<&'a Self>
         + MulAssign
         + MulAssign<&'a Self>
-        // + Div
-        // + Div<&'a Self>
-        // + DivAssign
-        // + DivAssign<&'a Self>
+        + Div
+        + Div<&'a Self>
+        + DivAssign
+        + DivAssign<&'a Self>
         // + Rem
         // + Rem<&'a Self>
         // + RemAssign

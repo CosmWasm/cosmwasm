@@ -1348,7 +1348,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "attempt to divide with overflow")]
+    #[should_panic(expected = "Multiplication overflow")]
     fn decimal_div_overflow_panics() {
         let _value = Decimal::MAX / Decimal::percent(10);
     }
