@@ -441,15 +441,7 @@ impl Div for Decimal {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        // Decimal division is just multiplication of inverted second argument
-
-        let inverted = other.inv().expect("attempt to divide by zero");
-        let result_as_uint256 = self.numerator().full_mul(inverted.numerator())
-            / Uint256::from_uint128(Self::DECIMAL_FRACTIONAL);
-        match result_as_uint256.try_into() {
-            Ok(result) => Self(result),
-            Err(_) => panic!("attempt to divide with overflow"),
-        }
+        Decimal::from_ratio(self.numerator(), other.numerator())
     }
 }
 forward_ref_binop!(impl Div, div for Decimal, Decimal);
@@ -1306,14 +1298,14 @@ mod tests {
         assert_eq!(a / dec("1000000000000000"), dec("123.127726548762582"));
         assert_eq!(a / dec("1000000000000000000"), dec("0.123127726548762582"));
         assert_eq!(dec("1") / a, dec("0.000000000000000008"));
-        assert_eq!(dec("10") / a, dec("0.000000000000000080"));
-        assert_eq!(dec("100") / a, dec("0.000000000000000800"));
-        assert_eq!(dec("1000") / a, dec("0.000000000000008000"));
-        assert_eq!(dec("1000000") / a, dec("0.000000000008000000"));
-        assert_eq!(dec("1000000000") / a, dec("0.000000008000000000"));
-        assert_eq!(dec("1000000000000") / a, dec("0.000008000000000000"));
-        assert_eq!(dec("1000000000000000") / a, dec("0.008000000000000000"));
-        assert_eq!(dec("1000000000000000000") / a, dec("8"));
+        assert_eq!(dec("10") / a, dec("0.000000000000000081"));
+        assert_eq!(dec("100") / a, dec("0.000000000000000812"));
+        assert_eq!(dec("1000") / a, dec("0.000000000000008121"));
+        assert_eq!(dec("1000000") / a, dec("0.000000000008121647"));
+        assert_eq!(dec("1000000000") / a, dec("0.000000008121647560"));
+        assert_eq!(dec("1000000000000") / a, dec("0.000008121647560868"));
+        assert_eq!(dec("1000000000000000") / a, dec("0.008121647560868164"));
+        assert_eq!(dec("1000000000000000000") / a, dec("8.121647560868164773"));
 
         // Move left
         let a = dec("0.123127726548762582");
@@ -1326,6 +1318,11 @@ mod tests {
         assert_eq!(a / dec("0.000000000001"), dec("123127726548.762582"));
         assert_eq!(a / dec("0.000000000000001"), dec("123127726548762.582"));
         assert_eq!(a / dec("0.000000000000000001"), dec("123127726548762582"));
+
+        assert_eq!(
+            Decimal::percent(15) / Decimal::percent(60),
+            Decimal::percent(25)
+        );
 
         // works for refs
         let a = Decimal::percent(100);
@@ -1357,7 +1354,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "attempt to divide by zero")]
+    #[should_panic(expected = "Denominator must not be zero")]
     fn decimal_div_by_zero_panics() {
         let _value = Decimal::one() / Decimal::zero();
     }
