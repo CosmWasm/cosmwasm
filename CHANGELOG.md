@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `checked_multiply_ratio` for
+  `Uint64`/`Uint128`/`Uint256`
+
 ### Changed
 
 - all: Updated Rust edition to 2021
