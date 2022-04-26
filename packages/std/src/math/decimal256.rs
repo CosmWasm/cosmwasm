@@ -7,7 +7,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::errors::{CheckedMultiplyRatioError, StdError};
+use crate::errors::{CheckedFromRatioError, CheckedMultiplyRatioError, StdError};
 use crate::{OverflowError, Uint512};
 
 use super::Fraction;
@@ -132,10 +132,10 @@ impl Decimal256 {
     pub fn from_ratio(numerator: impl Into<Uint256>, denominator: impl Into<Uint256>) -> Self {
         match Decimal256::checked_from_ratio(numerator, denominator) {
             Ok(value) => value,
-            Err(CheckedMultiplyRatioError::DivideByZero) => {
+            Err(CheckedFromRatioError::DivideByZero) => {
                 panic!("Denominator must not be zero")
             }
-            Err(CheckedMultiplyRatioError::Overflow) => panic!("Multiplication overflow"),
+            Err(CheckedFromRatioError::Overflow) => panic!("Multiplication overflow"),
         }
     }
 
@@ -143,17 +143,19 @@ impl Decimal256 {
     pub fn checked_from_ratio(
         numerator: impl Into<Uint256>,
         denominator: impl Into<Uint256>,
-    ) -> Result<Self, CheckedMultiplyRatioError> {
+    ) -> Result<Self, CheckedFromRatioError> {
         let numerator: Uint256 = numerator.into();
         let denominator: Uint256 = denominator.into();
-        if denominator.is_zero() {
-            return Err(CheckedMultiplyRatioError::DivideByZero);
+        match numerator.checked_multiply_ratio(Self::DECIMAL_FRACTIONAL, denominator) {
+            Ok(ratio) => {
+                // numerator * DECIMAL_FRACTIONAL / denominator
+                Ok(Self(ratio))
+            }
+            Err(CheckedMultiplyRatioError::Overflow) => Err(CheckedFromRatioError::Overflow),
+            Err(CheckedMultiplyRatioError::DivideByZero) => {
+                Err(CheckedFromRatioError::DivideByZero)
+            }
         }
-
-        Ok(Self(
-            // numerator * DECIMAL_FRACTIONAL / denominator
-            numerator.checked_multiply_ratio(Self::DECIMAL_FRACTIONAL, denominator)?,
-        ))
     }
 
     pub const fn is_zero(&self) -> bool {
@@ -705,15 +707,21 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Multiplication overflow")]
+    fn decimal256_from_ratio_panics_for_mul_overflow() {
+        Decimal256::from_ratio(Uint256::MAX, 1u128);
+    }
+
+    #[test]
     fn decimal256_checked_from_ratio_does_not_panic() {
         assert_eq!(
             Decimal256::checked_from_ratio(1u128, 0u128),
-            Err(CheckedMultiplyRatioError::DivideByZero)
+            Err(CheckedFromRatioError::DivideByZero)
         );
 
         assert_eq!(
             Decimal256::checked_from_ratio(Uint256::MAX, 1u128),
-            Err(CheckedMultiplyRatioError::Overflow)
+            Err(CheckedFromRatioError::Overflow)
         );
     }
 
