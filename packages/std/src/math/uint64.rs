@@ -6,7 +6,9 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 
-use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::errors::{
+    CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+};
 use crate::Uint128;
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
@@ -64,6 +66,56 @@ impl Uint64 {
 
     pub fn pow(self, exp: u32) -> Self {
         self.0.pow(exp).into()
+    }
+
+    /// Returns `self * numerator / denominator`
+    pub fn multiply_ratio<A: Into<u64>, B: Into<u64>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Uint64 {
+        match self.checked_multiply_ratio(numerator, denominator) {
+            Ok(value) => value,
+            Err(CheckedMultiplyRatioError::DivideByZero) => {
+                panic!("Denominator must not be zero")
+            }
+            Err(CheckedMultiplyRatioError::Overflow) => panic!("Multiplication overflow"),
+        }
+    }
+
+    /// Returns `self * numerator / denominator`
+    pub fn checked_multiply_ratio<A: Into<u64>, B: Into<u64>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Result<Uint64, CheckedMultiplyRatioError> {
+        let numerator = numerator.into();
+        let denominator = denominator.into();
+        if denominator == 0 {
+            return Err(CheckedMultiplyRatioError::DivideByZero);
+        }
+        match (self.full_mul(numerator) / Uint128::from(denominator)).try_into() {
+            Ok(ratio) => Ok(ratio),
+            Err(_) => Err(CheckedMultiplyRatioError::Overflow),
+        }
+    }
+
+    /// Multiplies two `Uint64`/`u64` values without overflow, producing an
+    /// [`Uint128`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Uint64;
+    ///
+    /// let a = Uint64::MAX;
+    /// let result = a.full_mul(2u32);
+    /// assert_eq!(result.to_string(), "36893488147419103230");
+    /// ```
+    pub fn full_mul(self, rhs: impl Into<u64>) -> Uint128 {
+        Uint128::from(self.u64())
+            .checked_mul(Uint128::from(rhs.into()))
+            .unwrap()
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -347,43 +399,6 @@ impl ShrAssign<u32> for Uint64 {
 impl<'a> ShrAssign<&'a u32> for Uint64 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         self.0 = self.0.checked_shr(*rhs).unwrap();
-    }
-}
-
-impl Uint64 {
-    /// Returns `self * numerator / denominator`
-    pub fn multiply_ratio<A: Into<u64>, B: Into<u64>>(
-        &self,
-        numerator: A,
-        denominator: B,
-    ) -> Uint64 {
-        let numerator = numerator.into();
-        let denominator = denominator.into();
-        if denominator == 0 {
-            panic!("Denominator must not be zero");
-        }
-
-        (self.full_mul(numerator) / Uint128::from(denominator))
-            .try_into()
-            .expect("multiplication overflow")
-    }
-
-    /// Multiplies two `Uint64`/`u64` values without overflow, producing an
-    /// [`Uint128`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use cosmwasm_std::Uint64;
-    ///
-    /// let a = Uint64::MAX;
-    /// let result = a.full_mul(2u32);
-    /// assert_eq!(result.to_string(), "36893488147419103230");
-    /// ```
-    pub fn full_mul(self, rhs: impl Into<u64>) -> Uint128 {
-        Uint128::from(self.u64())
-            .checked_mul(Uint128::from(rhs.into()))
-            .unwrap()
     }
 }
 
@@ -707,6 +722,18 @@ mod tests {
     #[should_panic(expected = "Denominator must not be zero")]
     fn uint64_multiply_ratio_panics_for_zero_denominator() {
         Uint64(500).multiply_ratio(1u64, 0u64);
+    }
+
+    #[test]
+    fn uint64_checked_multiply_ratio_does_not_panic() {
+        assert_eq!(
+            Uint64(500u64).checked_multiply_ratio(1u64, 0u64),
+            Err(CheckedMultiplyRatioError::DivideByZero),
+        );
+        assert_eq!(
+            Uint64(500u64).checked_multiply_ratio(u64::MAX, 1u64),
+            Err(CheckedMultiplyRatioError::Overflow),
+        );
     }
 
     #[test]

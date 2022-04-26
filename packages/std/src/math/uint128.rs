@@ -7,7 +7,9 @@ use std::ops::{
 };
 use std::str::FromStr;
 
-use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::errors::{
+    CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+};
 use crate::{ConversionOverflowError, Uint256, Uint64};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
@@ -68,6 +70,56 @@ impl Uint128 {
 
     pub fn pow(self, exp: u32) -> Self {
         self.0.pow(exp).into()
+    }
+
+    /// Returns `self * numerator / denominator`
+    pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Uint128 {
+        match self.checked_multiply_ratio(numerator, denominator) {
+            Ok(value) => value,
+            Err(CheckedMultiplyRatioError::DivideByZero) => {
+                panic!("Denominator must not be zero")
+            }
+            Err(CheckedMultiplyRatioError::Overflow) => panic!("Multiplication overflow"),
+        }
+    }
+
+    /// Returns `self * numerator / denominator`
+    pub fn checked_multiply_ratio<A: Into<u128>, B: Into<u128>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Result<Uint128, CheckedMultiplyRatioError> {
+        let numerator: u128 = numerator.into();
+        let denominator: u128 = denominator.into();
+        if denominator == 0 {
+            return Err(CheckedMultiplyRatioError::DivideByZero);
+        }
+        match (self.full_mul(numerator) / Uint256::from(denominator)).try_into() {
+            Ok(ratio) => Ok(ratio),
+            Err(_) => Err(CheckedMultiplyRatioError::Overflow),
+        }
+    }
+
+    /// Multiplies two u128 values without overflow, producing an
+    /// [`Uint256`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Uint128;
+    ///
+    /// let a = Uint128::MAX;
+    /// let result = a.full_mul(2u32);
+    /// assert_eq!(result.to_string(), "680564733841876926926749214863536422910");
+    /// ```
+    pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
+        Uint256::from(self.u128())
+            .checked_mul(Uint256::from(rhs.into()))
+            .unwrap()
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -393,42 +445,6 @@ impl ShrAssign<u32> for Uint128 {
 impl<'a> ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
-    }
-}
-
-impl Uint128 {
-    /// Returns `self * numerator / denominator`
-    pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
-        &self,
-        numerator: A,
-        denominator: B,
-    ) -> Uint128 {
-        let numerator: u128 = numerator.into();
-        let denominator: u128 = denominator.into();
-        if denominator == 0 {
-            panic!("Denominator must not be zero");
-        }
-        (self.full_mul(numerator) / Uint256::from(denominator))
-            .try_into()
-            .expect("multiplication overflow")
-    }
-
-    /// Multiplies two u128 values without overflow, producing an
-    /// [`Uint256`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use cosmwasm_std::Uint128;
-    ///
-    /// let a = Uint128::MAX;
-    /// let result = a.full_mul(2u32);
-    /// assert_eq!(result.to_string(), "680564733841876926926749214863536422910");
-    /// ```
-    pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
-        Uint256::from(self.u128())
-            .checked_mul(Uint256::from(rhs.into()))
-            .unwrap()
     }
 }
 
@@ -785,6 +801,18 @@ mod tests {
     #[should_panic(expected = "Denominator must not be zero")]
     fn uint128_multiply_ratio_panics_for_zero_denominator() {
         Uint128(500).multiply_ratio(1u128, 0u128);
+    }
+
+    #[test]
+    fn uint128_checked_multiply_ratio_does_not_panic() {
+        assert_eq!(
+            Uint128(500u128).checked_multiply_ratio(1u128, 0u128),
+            Err(CheckedMultiplyRatioError::DivideByZero),
+        );
+        assert_eq!(
+            Uint128(500u128).checked_multiply_ratio(u128::MAX, 1u128),
+            Err(CheckedMultiplyRatioError::Overflow),
+        );
     }
 
     #[test]
