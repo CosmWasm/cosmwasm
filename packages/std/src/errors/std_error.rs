@@ -532,7 +532,7 @@ pub enum CheckedMultiplyRatioError {
     DivideByZero {},
 
     #[error("Multiplication overflow")]
-    MulOverflow {},
+    Overflow {},
 }
 
 #[cfg(test)]

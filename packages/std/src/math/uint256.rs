@@ -163,7 +163,7 @@ impl Uint256 {
             Err(CheckedMultiplyRatioError::DivideByZero {}) => {
                 panic!("Denominator must not be zero")
             }
-            Err(CheckedMultiplyRatioError::MulOverflow {}) => panic!("Multiplication overflow"),
+            Err(CheckedMultiplyRatioError::Overflow {}) => panic!("Multiplication overflow"),
         }
     }
 
@@ -180,7 +180,7 @@ impl Uint256 {
         }
         match (self.full_mul(numerator) / Uint512::from(denominator)).try_into() {
             Ok(ratio) => Ok(ratio),
-            Err(_) => Err(CheckedMultiplyRatioError::MulOverflow {}),
+            Err(_) => Err(CheckedMultiplyRatioError::Overflow {}),
         }
     }
 
@@ -1316,12 +1316,12 @@ mod tests {
     #[test]
     fn uint256_checked_multiply_ratio_does_not_panic() {
         assert_eq!(
+            Uint256::from(500u32).checked_multiply_ratio(1u128, 0u128),
             Err(CheckedMultiplyRatioError::DivideByZero {}),
-            Uint256::from(500u32).checked_multiply_ratio(1u128, 0u128)
         );
         assert_eq!(
-            Err(CheckedMultiplyRatioError::MulOverflow {}),
-            Uint256::from(500u32).checked_multiply_ratio(Uint256::MAX, 1u128)
+            Uint256::from(500u32).checked_multiply_ratio(Uint256::MAX, 1u128),
+            Err(CheckedMultiplyRatioError::Overflow {}),
         );
     }
 
