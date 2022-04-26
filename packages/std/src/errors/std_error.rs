@@ -529,10 +529,10 @@ impl DivideByZeroError {
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyRatioError {
     #[error("Denominator must not be zero")]
-    DivideByZero {},
+    DivideByZero,
 
     #[error("Multiplication overflow")]
-    Overflow {},
+    Overflow,
 }
 
 #[cfg(test)]

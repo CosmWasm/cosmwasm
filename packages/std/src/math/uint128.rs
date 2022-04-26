@@ -80,10 +80,10 @@ impl Uint128 {
     ) -> Uint128 {
         match self.checked_multiply_ratio(numerator, denominator) {
             Ok(value) => value,
-            Err(CheckedMultiplyRatioError::DivideByZero {}) => {
+            Err(CheckedMultiplyRatioError::DivideByZero) => {
                 panic!("Denominator must not be zero")
             }
-            Err(CheckedMultiplyRatioError::Overflow {}) => panic!("Multiplication overflow"),
+            Err(CheckedMultiplyRatioError::Overflow) => panic!("Multiplication overflow"),
         }
     }
 
@@ -96,11 +96,11 @@ impl Uint128 {
         let numerator: u128 = numerator.into();
         let denominator: u128 = denominator.into();
         if denominator == 0 {
-            return Err(CheckedMultiplyRatioError::DivideByZero {});
+            return Err(CheckedMultiplyRatioError::DivideByZero);
         }
         match (self.full_mul(numerator) / Uint256::from(denominator)).try_into() {
             Ok(ratio) => Ok(ratio),
-            Err(_) => Err(CheckedMultiplyRatioError::Overflow {}),
+            Err(_) => Err(CheckedMultiplyRatioError::Overflow),
         }
     }
 
@@ -807,11 +807,11 @@ mod tests {
     fn uint128_checked_multiply_ratio_does_not_panic() {
         assert_eq!(
             Uint128(500u128).checked_multiply_ratio(1u128, 0u128),
-            Err(CheckedMultiplyRatioError::DivideByZero {}),
+            Err(CheckedMultiplyRatioError::DivideByZero),
         );
         assert_eq!(
             Uint128(500u128).checked_multiply_ratio(u128::MAX, 1u128),
-            Err(CheckedMultiplyRatioError::Overflow {}),
+            Err(CheckedMultiplyRatioError::Overflow),
         );
     }
 
