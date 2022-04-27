@@ -3,7 +3,7 @@ use cosmwasm_std::{
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgExecutionResponse, SubMsgResult, WasmMsg,
+    SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 
 use crate::msg::{
@@ -56,10 +56,7 @@ fn parse_contract_from_event(events: Vec<Event>) -> Option<String> {
         .map(|a| a.value)
 }
 
-pub fn handle_init_callback(
-    deps: DepsMut,
-    response: SubMsgExecutionResponse,
-) -> StdResult<Response> {
+pub fn handle_init_callback(deps: DepsMut, response: SubMsgResponse) -> StdResult<Response> {
     // we use storage to pass info from the caller to the reply
     let id = pending_channel(deps.storage).load()?;
     pending_channel(deps.storage).remove();
@@ -387,7 +384,7 @@ mod tests {
         // fake a reply and ensure this works
         let response = Reply {
             id,
-            result: SubMsgResult::Ok(SubMsgExecutionResponse {
+            result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(&account),
                 data: None,
             }),
@@ -462,7 +459,7 @@ mod tests {
         // fake a reply and ensure this works
         let response = Reply {
             id,
-            result: SubMsgResult::Ok(SubMsgExecutionResponse {
+            result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(REFLECT_ADDR),
                 data: None,
             }),

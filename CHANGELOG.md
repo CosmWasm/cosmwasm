@@ -17,6 +17,12 @@ and this project adheres to
 ### Changed
 
 - all: Updated Rust edition to 2021
+- cosmwasm-std: Rename `SubMsgExecutionResponse` to `SubMsgResponse`.
+
+### Deprecated
+
+- cosmwasm-std: `SubMsgExecutionResponse` is deprecated in favor of the new
+  `SubMsgResponse`.
 
 ### Removed
 
