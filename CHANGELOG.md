@@ -175,7 +175,7 @@ and this project adheres to
 - cosmwasm-std: Make methods `Uint512::to_be_bytes`/`::to_le_bytes` const.
 - cosmwasm-std: Make method `Uint512::from_le_bytes` const.
 - cosmwasm-std: Rename `Pair` to `Record`. `Pair` is now an alias for `Record`
-  and deprecated.
+  and deprecated. ([#1108])
 - cosmwasm-vm: Bump required marker export `interface_version_7` to
   `interface_version_8`.
 - cosmwasm-vm: Increase cost per Wasm operation from 1 to 150_000 and adjust
@@ -189,6 +189,8 @@ and this project adheres to
 - cosmwasm-std: Remove `HumanAddr` (deprecated since 0.14). Use `String`
   instead.
 - cosmwasm-std: Remove `KV` (deprecated since 0.14). Use `Pair` instead.
+
+[#1108]: https://github.com/CosmWasm/cosmwasm/issues/1108
 
 ## [0.16.2] - 2021-09-07
 
