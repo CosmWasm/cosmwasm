@@ -359,14 +359,14 @@ mod tests {
             // valid legacy version
             let wasm = wat::parse_str(
                 r#"(module
-                            (type (func))
-                            (func (type 0) nop)
-                            (export "add_one" (func 0))
-                            (export "allocate" (func 0))
-                            (export "interface_version_7" (func 0))
-                            (export "deallocate" (func 0))
-                            (export "instantiate" (func 0))
-                        )"#,
+                    (type (func))
+                    (func (type 0) nop)
+                    (export "add_one" (func 0))
+                    (export "allocate" (func 0))
+                    (export "interface_version_7" (func 0))
+                    (export "deallocate" (func 0))
+                    (export "instantiate" (func 0))
+                )"#,
             )
             .unwrap();
             let module = deserialize_wasm(&wasm).unwrap();
@@ -424,14 +424,14 @@ mod tests {
         // CosmWasm 0.15
         let wasm = wat::parse_str(
             r#"(module
-                        (type (func))
-                        (func (type 0) nop)
-                        (export "add_one" (func 0))
-                        (export "allocate" (func 0))
-                        (export "interface_version_6" (func 0))
-                        (export "deallocate" (func 0))
-                        (export "instantiate" (func 0))
-                    )"#,
+                (type (func))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "interface_version_6" (func 0))
+                (export "deallocate" (func 0))
+                (export "instantiate" (func 0))
+            )"#,
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
