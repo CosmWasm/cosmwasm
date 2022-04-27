@@ -41,7 +41,11 @@ const REQUIRED_EXPORTS: &[&str] = &[
 ];
 
 const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
-const SUPPORTED_INTERFACE_VERSIONS: &[&str] = &["interface_version_8", "interface_version_7"];
+const SUPPORTED_INTERFACE_VERSIONS: &[&str] = &[
+    "interface_version_8",
+    #[cfg(feature = "allow_interface_version_7")]
+    "interface_version_7",
+];
 
 const MEMORY_LIMIT: u32 = 512; // in pages
 
@@ -350,21 +354,24 @@ mod tests {
         let module = deserialize_wasm(&wasm).unwrap();
         check_interface_version(&module).unwrap();
 
-        // valid legacy version
-        let wasm = wat::parse_str(
-            r#"(module
-                        (type (func))
-                        (func (type 0) nop)
-                        (export "add_one" (func 0))
-                        (export "allocate" (func 0))
-                        (export "interface_version_7" (func 0))
-                        (export "deallocate" (func 0))
-                        (export "instantiate" (func 0))
-                    )"#,
-        )
-        .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
-        check_interface_version(&module).unwrap();
+        #[cfg(feature = "allow_interface_version_7")]
+        {
+            // valid legacy version
+            let wasm = wat::parse_str(
+                r#"(module
+                            (type (func))
+                            (func (type 0) nop)
+                            (export "add_one" (func 0))
+                            (export "allocate" (func 0))
+                            (export "interface_version_7" (func 0))
+                            (export "deallocate" (func 0))
+                            (export "instantiate" (func 0))
+                        )"#,
+            )
+            .unwrap();
+            let module = deserialize_wasm(&wasm).unwrap();
+            check_interface_version(&module).unwrap();
+        }
 
         // missing
         let wasm = wat::parse_str(
