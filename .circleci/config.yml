@@ -297,7 +297,7 @@ jobs:
       - run:
           name: Build with all features
           working_directory: ~/project/packages/vm
-          command: cargo build --locked --features iterator,staking,stargate
+          command: cargo build --locked --features allow_interface_version_7,iterator,staking,stargate
       - run:
           name: Test
           working_directory: ~/project/packages/vm
@@ -305,7 +305,7 @@ jobs:
       - run:
           name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo test --locked --features iterator,staking,stargate
+          command: cargo test --locked --features allow_interface_version_7,iterator,staking,stargate
       - run:
           name: Test multi threaded cache
           working_directory: ~/project/packages/vm
