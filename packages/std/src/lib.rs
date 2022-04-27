@@ -39,9 +39,6 @@ pub use crate::ibc::{
     IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
-#[allow(deprecated)]
-pub use crate::iterator::Pair;
-#[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,

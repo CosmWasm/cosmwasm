@@ -16,6 +16,13 @@ and this project adheres to
 
 - all: Updated Rust edition to 2021
 
+### Removed
+
+- cosmwasm-std: Remove `Pair` which was previously deprecated. Use `Record`
+  instead. ([#1282])
+
+[#1282] : https://github.com/CosmWasm/cosmwasm/issues/1282
+
 ## [1.0.0-beta8] - 2022-04-06
 
 ### Added
