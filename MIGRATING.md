@@ -51,6 +51,20 @@ major releases of `cosmwasm`. Note that you can also view the
    }
   ```
 
+- Replace `SubMsgExecutionResponse` with `SubMsgResponse`:
+
+  ```diff
+  @@ -387,7 +384,7 @@ mod tests {
+           // fake a reply and ensure this works
+           let response = Reply {
+               id,
+  -            result: SubMsgResult::Ok(SubMsgExecutionResponse {
+  +            result: SubMsgResult::Ok(SubMsgResponse {
+                   events: fake_events(&account),
+                   data: None,
+               }),
+  ```
+
 ## 0.16 -> 1.0.0-beta
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):

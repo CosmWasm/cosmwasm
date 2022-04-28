@@ -681,7 +681,7 @@ mod tests {
             mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout, mock_wasmd_attr,
         };
         use cosmwasm_std::{
-            Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgExecutionResponse,
+            Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgResponse,
             SubMsgResult,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
@@ -727,7 +727,7 @@ mod tests {
             // which creates a reflect account. here we get the callback
             let response = Reply {
                 id,
-                result: SubMsgResult::Ok(SubMsgExecutionResponse {
+                result: SubMsgResult::Ok(SubMsgResponse {
                     events: vec![event],
                     data: None,
                 }),

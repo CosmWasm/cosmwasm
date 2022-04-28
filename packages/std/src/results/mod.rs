@@ -19,5 +19,7 @@ pub use empty::Empty;
 pub use events::{attr, Attribute, Event};
 pub use query::QueryResponse;
 pub use response::Response;
-pub use submessages::{Reply, ReplyOn, SubMsg, SubMsgExecutionResponse, SubMsgResult};
+#[allow(deprecated)]
+pub use submessages::SubMsgExecutionResponse;
+pub use submessages::{Reply, ReplyOn, SubMsg, SubMsgResponse, SubMsgResult};
 pub use system_result::SystemResult;
