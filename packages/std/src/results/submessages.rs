@@ -267,6 +267,40 @@ mod tests {
     }
 
     #[test]
+    fn sub_msg_result_unwrap_works() {
+        let response = SubMsgResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+        };
+        let success = SubMsgResult::Ok(response.clone());
+        assert_eq!(success.unwrap(), response);
+    }
+
+    #[test]
+    #[should_panic]
+    fn sub_msg_result_unwrap_panicks_for_err() {
+        let failure = SubMsgResult::Err("broken".to_string());
+        let _ = failure.unwrap();
+    }
+
+    #[test]
+    fn sub_msg_result_unwrap_err_works() {
+        let failure = SubMsgResult::Err("broken".to_string());
+        assert_eq!(failure.unwrap_err(), "broken");
+    }
+
+    #[test]
+    #[should_panic]
+    fn sub_msg_result_unwrap_err_panics_for_ok() {
+        let response = SubMsgResponse {
+            data: Some(Binary::from_base64("MTIzCg==").unwrap()),
+            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+        };
+        let success = SubMsgResult::Ok(response);
+        let _ = success.unwrap_err();
+    }
+
+    #[test]
     fn sub_msg_result_is_ok_works() {
         let success = SubMsgResult::Ok(SubMsgResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
