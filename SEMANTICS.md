@@ -249,7 +249,7 @@ Note, that error doesn't abort the whole transaction _if and only if_ the
 submessage is called with `ReplyOn::Success` (or `ReplyOn::Never`, which makes
 it effectively a normal message), the error in subsequent call would result in
 failing whole transaction and not commit the changes for it. The rule here is as
-follows: if for any reason you want your message Handling to succeed on
+follows: if for any reason you want your message handling to succeed on
 submessage failure, you always have to reply on failure.
 
 Obviously - on the successful processing of sub-message, if the reply is not
