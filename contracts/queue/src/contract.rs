@@ -1,66 +1,13 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, MessageInfo, Order,
     QueryResponse, Response, StdResult, Storage,
 };
 
-use crate::msg::{InstantiateMsg, MigrateMsg};
-
-// we store one entry for each item in the queue
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Item {
-    pub value: i32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    // Enqueue will add some value to the end of list
-    Enqueue { value: i32 },
-    // Dequeue will remove value from start of the list
-    Dequeue {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum QueryMsg {
-    // how many items are in the queue
-    Count {},
-    // total of all values in the queue
-    Sum {},
-    // Reducer holds open two iterators at once
-    Reducer {},
-    List {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CountResponse {
-    pub count: u32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SumResponse {
-    pub sum: i32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-// the Vec contains pairs for every element in the queue
-// (value of item i, sum of all elements where value > value[i])
-pub struct ReducerResponse {
-    pub counters: Vec<(i32, i32)>,
-}
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct ListResponse {
-    /// List an empty range, both bounded
-    pub empty: Vec<u32>,
-    /// List all IDs lower than 0x20
-    pub early: Vec<u32>,
-    /// List all IDs starting from 0x20
-    pub late: Vec<u32>,
-}
+use crate::msg::{
+    CountResponse, ExecuteMsg, InstantiateMsg, ListResponse, MigrateMsg, QueryMsg, ReducerResponse,
+    SumResponse,
+};
+use crate::state::Item;
 
 // A no-op, just empty data
 #[entry_point]

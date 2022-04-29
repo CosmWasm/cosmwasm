@@ -26,10 +26,11 @@ use cosmwasm_vm::{
     Instance,
 };
 
-use queue::contract::{
-    CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
+use queue::msg::{
+    CountResponse, ExecuteMsg, InstantiateMsg, ListResponse, MigrateMsg, QueryMsg, ReducerResponse,
+    SumResponse,
 };
-use queue::msg::{InstantiateMsg, MigrateMsg};
+use queue::state::Item;
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 

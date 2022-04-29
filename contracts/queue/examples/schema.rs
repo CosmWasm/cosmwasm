@@ -3,8 +3,10 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use queue::contract::{CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, SumResponse};
-use queue::msg::{InstantiateMsg, MigrateMsg};
+use queue::msg::{
+    CountResponse, ExecuteMsg, InstantiateMsg, ListResponse, MigrateMsg, QueryMsg, SumResponse,
+};
+use queue::state::Item;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
