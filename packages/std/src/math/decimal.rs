@@ -441,7 +441,15 @@ impl Div for Decimal {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        Decimal::from_ratio(self.numerator(), other.numerator())
+        match Decimal::checked_from_ratio(self.numerator(), other.numerator()) {
+            Ok(ratio) => ratio,
+            Err(CheckedFromRatioError::DivideByZero) => {
+                panic!("Division failed - denominator must not be zero")
+            }
+            Err(CheckedFromRatioError::Overflow) => {
+                panic!("Division failed - multiplication overflow")
+            }
+        }
     }
 }
 forward_ref_binop!(impl Div, div for Decimal, Decimal);
@@ -1348,13 +1356,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Multiplication overflow")]
+    #[should_panic(expected = "Division failed - multiplication overflow")]
     fn decimal_div_overflow_panics() {
         let _value = Decimal::MAX / Decimal::percent(10);
     }
 
     #[test]
-    #[should_panic(expected = "Denominator must not be zero")]
+    #[should_panic(expected = "Division failed - denominator must not be zero")]
     fn decimal_div_by_zero_panics() {
         let _value = Decimal::one() / Decimal::zero();
     }
