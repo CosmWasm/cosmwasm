@@ -33,7 +33,7 @@ pub fn execute(
     }
 }
 
-const FIRST_KEY: u8 = 0;
+const FIRST_KEY: [u8; 4] = [0, 0, 0, 0];
 
 fn handle_enqueue(deps: DepsMut, value: i32) -> StdResult<Response> {
     enqueue(deps.storage, value)?;
@@ -46,13 +46,14 @@ fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
 
     let new_key = match last_item {
         None => FIRST_KEY,
-        Some((key, _)) => {
-            key[0] + 1 // all keys are one byte
+        Some((key, _value)) => {
+            let last_key = u32::from_be_bytes(key.try_into().unwrap());
+            (last_key + 1).to_be_bytes()
         }
     };
     let new_value = to_vec(&Item { value })?;
 
-    storage.set(&[new_key], &new_value);
+    storage.set(&new_key, &new_value);
     Ok(())
 }
 
@@ -144,20 +145,21 @@ fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
 /// Does a range query with both bounds set. Not really useful but to debug an issue
 /// between VM and Wasm: https://github.com/CosmWasm/cosmwasm/issues/508
 fn query_list(deps: Deps) -> ListResponse {
+    const THRESHOLD: [u8; 4] = [0x00, 0x00, 0x00, 0x20];
     let empty: Vec<u32> = deps
         .storage
-        .range(Some(b"large"), Some(b"larger"), Order::Ascending)
-        .map(|(k, _)| k[0] as u32)
+        .range(Some(&THRESHOLD), Some(&THRESHOLD), Order::Ascending)
+        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     let early: Vec<u32> = deps
         .storage
-        .range(None, Some(b"\x20"), Order::Ascending)
-        .map(|(k, _)| k[0] as u32)
+        .range(None, Some(&THRESHOLD), Order::Ascending)
+        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     let late: Vec<u32> = deps
         .storage
-        .range(Some(b"\x20"), None, Order::Ascending)
-        .map(|(k, _)| k[0] as u32)
+        .range(Some(&THRESHOLD), None, Order::Ascending)
+        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     ListResponse { empty, early, late }
 }
