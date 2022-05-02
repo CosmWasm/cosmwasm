@@ -26,6 +26,11 @@ pub enum QueryMsg {
     // Reducer holds open two iterators at once
     Reducer {},
     List {},
+    /// Opens the given number of iterators for no reason other than testing.
+    /// Returns and `Empty` response.
+    OpenIterators {
+        count: u32,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

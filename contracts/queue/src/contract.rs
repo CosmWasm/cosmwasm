@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, MessageInfo, Order,
-    QueryResponse, Response, StdResult, Storage,
+    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, QueryResponse, Response, StdResult, Storage,
 };
 
 use crate::msg::{
@@ -97,6 +97,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
         QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
         QueryMsg::Reducer {} => to_binary(&query_reducer(deps)?),
         QueryMsg::List {} => to_binary(&query_list(deps)),
+        QueryMsg::OpenIterators { count } => to_binary(&query_open_iterators(deps, count)),
     }
 }
 
@@ -164,6 +165,14 @@ fn query_list(deps: Deps) -> ListResponse {
     ListResponse { empty, early, late }
 }
 
+/// Opens iterators and does nothing with them. Because we can.
+fn query_open_iterators(deps: Deps, count: u32) -> Empty {
+    for _ in 0..count {
+        let _ = deps.storage.range(None, None, Order::Ascending);
+    }
+    Empty::default()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -172,6 +181,7 @@ mod tests {
     };
     use cosmwasm_std::{coins, from_binary, OwnedDeps};
 
+    /// Instantiates a contract with no elements
     fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies_with_balance(&coins(1000, "earth"));
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -332,5 +342,19 @@ mod tests {
         assert_eq!(ids.empty, Vec::<u32>::new());
         assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
         assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
+    }
+
+    #[test]
+    fn query_open_iterators() {
+        let (deps, _info) = create_contract();
+
+        let query_msg = QueryMsg::OpenIterators { count: 0 };
+        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+
+        let query_msg = QueryMsg::OpenIterators { count: 1 };
+        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+
+        let query_msg = QueryMsg::OpenIterators { count: 321 };
+        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
     }
 }
