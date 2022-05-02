@@ -449,6 +449,30 @@ impl Mul<Uint256> for Decimal256 {
     }
 }
 
+impl Div for Decimal256 {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        match Decimal256::checked_from_ratio(self.numerator(), other.numerator()) {
+            Ok(ratio) => ratio,
+            Err(CheckedFromRatioError::DivideByZero) => {
+                panic!("Division failed - denominator must not be zero")
+            }
+            Err(CheckedFromRatioError::Overflow) => {
+                panic!("Division failed - multiplication overflow")
+            }
+        }
+    }
+}
+forward_ref_binop!(impl Div, div for Decimal256, Decimal256);
+
+impl DivAssign for Decimal256 {
+    fn div_assign(&mut self, rhs: Decimal256) {
+        *self = *self / rhs;
+    }
+}
+forward_ref_op_assign!(impl DivAssign, div_assign for Decimal256, Decimal256);
+
 impl Div<Uint256> for Decimal256 {
     type Output = Self;
 
@@ -517,6 +541,10 @@ mod tests {
     use super::*;
     use crate::errors::StdError;
     use crate::{from_slice, to_vec};
+
+    fn dec(input: &str) -> Decimal256 {
+        Decimal256::from_str(input).unwrap()
+    }
 
     #[test]
     fn decimal256_new() {
@@ -1156,10 +1184,6 @@ mod tests {
         assert_eq!(Decimal256::percent(100) * half, Decimal256::percent(50));
         assert_eq!(Decimal256::percent(1000) * half, Decimal256::percent(500));
 
-        fn dec(input: &str) -> Decimal256 {
-            Decimal256::from_str(input).unwrap()
-        }
-
         // Move left
         let a = dec("123.127726548762582");
         assert_eq!(a * dec("1"), dec("123.127726548762582"));
@@ -1258,7 +1282,10 @@ mod tests {
             (Decimal256::percent(10), Decimal256::zero()),
             (Decimal256::percent(10), Decimal256::percent(5)),
             (Decimal256::MAX, Decimal256::one()),
-            (Decimal256::MAX / 2u128.into(), Decimal256::percent(200)),
+            (
+                Decimal256::MAX / Uint256::from_uint128(2u128.into()),
+                Decimal256::percent(200),
+            ),
             (Decimal256::permille(6), Decimal256::permille(13)),
         ];
 
@@ -1316,6 +1343,119 @@ mod tests {
         let left = Decimal256::one() + Decimal256::percent(50); // 1.5
         let right = Uint256::from(0u128);
         assert_eq!(left * right, Uint256::from(0u128));
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn decimal256_implements_div() {
+        let one = Decimal256::one();
+        let two = one + one;
+        let half = Decimal256::percent(50);
+
+        // 1/x and x/1
+        assert_eq!(one / Decimal256::percent(1), Decimal256::percent(10_000));
+        assert_eq!(one / Decimal256::percent(10), Decimal256::percent(1_000));
+        assert_eq!(one / Decimal256::percent(100), Decimal256::percent(100));
+        assert_eq!(one / Decimal256::percent(1000), Decimal256::percent(10));
+        assert_eq!(Decimal256::percent(0) / one, Decimal256::percent(0));
+        assert_eq!(Decimal256::percent(1) / one, Decimal256::percent(1));
+        assert_eq!(Decimal256::percent(10) / one, Decimal256::percent(10));
+        assert_eq!(Decimal256::percent(100) / one, Decimal256::percent(100));
+        assert_eq!(Decimal256::percent(1000) / one, Decimal256::percent(1000));
+
+        // double
+        assert_eq!(two / Decimal256::percent(1), Decimal256::percent(20_000));
+        assert_eq!(two / Decimal256::percent(10), Decimal256::percent(2_000));
+        assert_eq!(two / Decimal256::percent(100), Decimal256::percent(200));
+        assert_eq!(two / Decimal256::percent(1000), Decimal256::percent(20));
+        assert_eq!(Decimal256::percent(0) / two, Decimal256::percent(0));
+        assert_eq!(Decimal256::percent(1) / two, dec("0.005"));
+        assert_eq!(Decimal256::percent(10) / two, Decimal256::percent(5));
+        assert_eq!(Decimal256::percent(100) / two, Decimal256::percent(50));
+        assert_eq!(Decimal256::percent(1000) / two, Decimal256::percent(500));
+
+        // half
+        assert_eq!(half / Decimal256::percent(1), Decimal256::percent(5_000));
+        assert_eq!(half / Decimal256::percent(10), Decimal256::percent(500));
+        assert_eq!(half / Decimal256::percent(100), Decimal256::percent(50));
+        assert_eq!(half / Decimal256::percent(1000), Decimal256::percent(5));
+        assert_eq!(Decimal256::percent(0) / half, Decimal256::percent(0));
+        assert_eq!(Decimal256::percent(1) / half, Decimal256::percent(2));
+        assert_eq!(Decimal256::percent(10) / half, Decimal256::percent(20));
+        assert_eq!(Decimal256::percent(100) / half, Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(1000) / half, Decimal256::percent(2000));
+
+        // Move right
+        let a = dec("123127726548762582");
+        assert_eq!(a / dec("1"), dec("123127726548762582"));
+        assert_eq!(a / dec("10"), dec("12312772654876258.2"));
+        assert_eq!(a / dec("100"), dec("1231277265487625.82"));
+        assert_eq!(a / dec("1000"), dec("123127726548762.582"));
+        assert_eq!(a / dec("1000000"), dec("123127726548.762582"));
+        assert_eq!(a / dec("1000000000"), dec("123127726.548762582"));
+        assert_eq!(a / dec("1000000000000"), dec("123127.726548762582"));
+        assert_eq!(a / dec("1000000000000000"), dec("123.127726548762582"));
+        assert_eq!(a / dec("1000000000000000000"), dec("0.123127726548762582"));
+        assert_eq!(dec("1") / a, dec("0.000000000000000008"));
+        assert_eq!(dec("10") / a, dec("0.000000000000000081"));
+        assert_eq!(dec("100") / a, dec("0.000000000000000812"));
+        assert_eq!(dec("1000") / a, dec("0.000000000000008121"));
+        assert_eq!(dec("1000000") / a, dec("0.000000000008121647"));
+        assert_eq!(dec("1000000000") / a, dec("0.000000008121647560"));
+        assert_eq!(dec("1000000000000") / a, dec("0.000008121647560868"));
+        assert_eq!(dec("1000000000000000") / a, dec("0.008121647560868164"));
+        assert_eq!(dec("1000000000000000000") / a, dec("8.121647560868164773"));
+
+        // Move left
+        let a = dec("0.123127726548762582");
+        assert_eq!(a / dec("1.0"), dec("0.123127726548762582"));
+        assert_eq!(a / dec("0.1"), dec("1.23127726548762582"));
+        assert_eq!(a / dec("0.01"), dec("12.3127726548762582"));
+        assert_eq!(a / dec("0.001"), dec("123.127726548762582"));
+        assert_eq!(a / dec("0.000001"), dec("123127.726548762582"));
+        assert_eq!(a / dec("0.000000001"), dec("123127726.548762582"));
+        assert_eq!(a / dec("0.000000000001"), dec("123127726548.762582"));
+        assert_eq!(a / dec("0.000000000000001"), dec("123127726548762.582"));
+        assert_eq!(a / dec("0.000000000000000001"), dec("123127726548762582"));
+
+        assert_eq!(
+            Decimal256::percent(15) / Decimal256::percent(60),
+            Decimal256::percent(25)
+        );
+
+        // works for refs
+        let a = Decimal256::percent(100);
+        let b = Decimal256::percent(20);
+        let expected = Decimal256::percent(500);
+        assert_eq!(a / b, expected);
+        assert_eq!(&a / b, expected);
+        assert_eq!(a / &b, expected);
+        assert_eq!(&a / &b, expected);
+    }
+
+    #[test]
+    fn decimal256_div_assign_works() {
+        let mut a = Decimal256::percent(15);
+        a /= Decimal256::percent(20);
+        assert_eq!(a, Decimal256::percent(75));
+
+        // works for refs
+        let mut a = Decimal256::percent(50);
+        let b = Decimal256::percent(20);
+        a /= &b;
+        assert_eq!(a, Decimal256::percent(250));
+    }
+
+    #[test]
+    #[should_panic(expected = "Division failed - multiplication overflow")]
+    fn decimal256_div_overflow_panics() {
+        let _value = Decimal256::MAX / Decimal256::percent(10);
+    }
+
+    #[test]
+    #[should_panic(expected = "Division failed - denominator must not be zero")]
+    fn decimal256_div_by_zero_panics() {
+        let _value = Decimal256::one() / Decimal256::zero();
     }
 
     #[test]
