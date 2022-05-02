@@ -50,9 +50,9 @@ pub fn secp256k1_verify(
     let mut signature =
         Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
     // Non low-S signatures require normalization
-    signature
-        .normalize_s()
-        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
+    if let Some(normalized) = signature.normalize_s() {
+        signature = normalized;
+    }
 
     let public_key = VerifyingKey::from_sec1_bytes(public_key)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
@@ -154,13 +154,12 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
 mod tests {
     use super::*;
 
-    use elliptic_curve::rand_core::OsRng;
-    use elliptic_curve::sec1::ToEncodedPoint;
-
     use hex_literal::hex;
     use k256::{
         ecdsa::signature::DigestSigner, // trait
         ecdsa::SigningKey,              // type alias
+        elliptic_curve::rand_core::OsRng,
+        elliptic_curve::sec1::ToEncodedPoint,
     };
     use sha2::Sha256;
 

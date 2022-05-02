@@ -7,8 +7,8 @@ use serde::Deserialize;
 
 // Crypto stuff
 use digest::Digest;
-use elliptic_curve::sec1::ToEncodedPoint;
 use k256::ecdsa::SigningKey; // type alias
+use k256::elliptic_curve::sec1::ToEncodedPoint;
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
