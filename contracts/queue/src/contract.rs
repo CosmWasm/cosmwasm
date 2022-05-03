@@ -1,66 +1,13 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, MessageInfo, Order,
-    QueryResponse, Response, StdResult, Storage,
+    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Empty, Env, MessageInfo,
+    Order, QueryResponse, Response, StdResult, Storage,
 };
 
-use crate::msg::{InstantiateMsg, MigrateMsg};
-
-// we store one entry for each item in the queue
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Item {
-    pub value: i32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    // Enqueue will add some value to the end of list
-    Enqueue { value: i32 },
-    // Dequeue will remove value from start of the list
-    Dequeue {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum QueryMsg {
-    // how many items are in the queue
-    Count {},
-    // total of all values in the queue
-    Sum {},
-    // Reducer holds open two iterators at once
-    Reducer {},
-    List {},
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct CountResponse {
-    pub count: u32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SumResponse {
-    pub sum: i32,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-// the Vec contains pairs for every element in the queue
-// (value of item i, sum of all elements where value > value[i])
-pub struct ReducerResponse {
-    pub counters: Vec<(i32, i32)>,
-}
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct ListResponse {
-    /// List an empty range, both bounded
-    pub empty: Vec<u32>,
-    /// List all IDs lower than 0x20
-    pub early: Vec<u32>,
-    /// List all IDs starting from 0x20
-    pub late: Vec<u32>,
-}
+use crate::msg::{
+    CountResponse, ExecuteMsg, InstantiateMsg, ListResponse, MigrateMsg, QueryMsg, ReducerResponse,
+    SumResponse,
+};
+use crate::state::Item;
 
 // A no-op, just empty data
 #[entry_point]
@@ -86,7 +33,7 @@ pub fn execute(
     }
 }
 
-const FIRST_KEY: u8 = 0;
+const FIRST_KEY: [u8; 4] = [0, 0, 0, 0];
 
 fn handle_enqueue(deps: DepsMut, value: i32) -> StdResult<Response> {
     enqueue(deps.storage, value)?;
@@ -99,13 +46,14 @@ fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
 
     let new_key = match last_item {
         None => FIRST_KEY,
-        Some((key, _)) => {
-            key[0] + 1 // all keys are one byte
+        Some((key, _value)) => {
+            let last_key = u32::from_be_bytes(key.try_into().unwrap());
+            (last_key + 1).to_be_bytes()
         }
     };
     let new_value = to_vec(&Item { value })?;
 
-    storage.set(&[new_key], &new_value);
+    storage.set(&new_key, &new_value);
     Ok(())
 }
 
@@ -149,6 +97,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
         QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
         QueryMsg::Reducer {} => to_binary(&query_reducer(deps)?),
         QueryMsg::List {} => to_binary(&query_list(deps)),
+        QueryMsg::OpenIterators { count } => to_binary(&query_open_iterators(deps, count)),
     }
 }
 
@@ -197,22 +146,31 @@ fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
 /// Does a range query with both bounds set. Not really useful but to debug an issue
 /// between VM and Wasm: https://github.com/CosmWasm/cosmwasm/issues/508
 fn query_list(deps: Deps) -> ListResponse {
+    const THRESHOLD: [u8; 4] = [0x00, 0x00, 0x00, 0x20];
     let empty: Vec<u32> = deps
         .storage
-        .range(Some(b"large"), Some(b"larger"), Order::Ascending)
-        .map(|(k, _)| k[0] as u32)
+        .range(Some(&THRESHOLD), Some(&THRESHOLD), Order::Ascending)
+        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     let early: Vec<u32> = deps
         .storage
-        .range(None, Some(b"\x20"), Order::Ascending)
-        .map(|(k, _)| k[0] as u32)
+        .range(None, Some(&THRESHOLD), Order::Ascending)
+        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     let late: Vec<u32> = deps
         .storage
-        .range(Some(b"\x20"), None, Order::Ascending)
-        .map(|(k, _)| k[0] as u32)
+        .range(Some(&THRESHOLD), None, Order::Ascending)
+        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     ListResponse { empty, early, late }
+}
+
+/// Opens iterators and does nothing with them. Because we can.
+fn query_open_iterators(deps: Deps, count: u32) -> Empty {
+    for _ in 0..count {
+        let _ = deps.storage.range(None, None, Order::Ascending);
+    }
+    Empty::default()
 }
 
 #[cfg(test)]
@@ -223,6 +181,7 @@ mod tests {
     };
     use cosmwasm_std::{coins, from_binary, OwnedDeps};
 
+    /// Instantiates a contract with no elements
     fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies_with_balance(&coins(1000, "earth"));
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -383,5 +342,19 @@ mod tests {
         assert_eq!(ids.empty, Vec::<u32>::new());
         assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
         assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
+    }
+
+    #[test]
+    fn query_open_iterators() {
+        let (deps, _info) = create_contract();
+
+        let query_msg = QueryMsg::OpenIterators { count: 0 };
+        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+
+        let query_msg = QueryMsg::OpenIterators { count: 1 };
+        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+
+        let query_msg = QueryMsg::OpenIterators { count: 321 };
+        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
     }
 }

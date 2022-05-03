@@ -26,13 +26,15 @@ use cosmwasm_vm::{
     Instance,
 };
 
-use queue::contract::{
-    CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
+use queue::msg::{
+    CountResponse, ExecuteMsg, InstantiateMsg, ListResponse, MigrateMsg, QueryMsg, ReducerResponse,
+    SumResponse,
 };
-use queue::msg::{InstantiateMsg, MigrateMsg};
+use queue::state::Item;
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
+/// Instantiates a contract with no elements
 fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInfo) {
     let gas_limit = 1_000_000_000_000; // ~1ms, enough for many executions within one instance
     let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
@@ -225,4 +227,18 @@ fn query_list() {
     assert_eq!(ids.empty, Vec::<u32>::new());
     assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
     assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
+}
+
+#[test]
+fn query_open_iterators() {
+    let (mut deps, _info) = create_contract();
+
+    let query_msg = QueryMsg::OpenIterators { count: 0 };
+    let _ = query(&mut deps, mock_env(), query_msg).unwrap();
+
+    let query_msg = QueryMsg::OpenIterators { count: 1 };
+    let _ = query(&mut deps, mock_env(), query_msg).unwrap();
+
+    let query_msg = QueryMsg::OpenIterators { count: 321 };
+    let _ = query(&mut deps, mock_env(), query_msg).unwrap();
 }

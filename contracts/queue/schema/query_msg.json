@@ -49,6 +49,29 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "Opens the given number of iterators for no reason other than testing. Returns and `Empty` response.",
+      "type": "object",
+      "required": [
+        "open_iterators"
+      ],
+      "properties": {
+        "open_iterators": {
+          "type": "object",
+          "required": [
+            "count"
+          ],
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

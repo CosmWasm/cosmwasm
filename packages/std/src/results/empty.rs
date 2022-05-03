@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// It is designed to be expressable in correct JSON and JSON Schema but
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct Empty {}
 
 #[cfg(test)]
@@ -15,6 +15,12 @@ mod tests {
     use super::*;
 
     use crate::serde::{from_slice, to_vec};
+
+    #[test]
+    fn empty_can_be_instantiated() {
+        let instance = Empty::default();
+        assert_eq!(instance, Empty {});
+    }
 
     #[test]
     fn empty_can_be_instantiated_serialized_and_deserialized() {

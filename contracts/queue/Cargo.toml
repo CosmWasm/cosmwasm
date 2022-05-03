@@ -1,7 +1,7 @@
 [package]
 name = "queue"
 version = "0.0.0"
-authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+authors = ["Simon Warta <webmaster128@users.noreply.github.com>", "Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 publish = false
 license = "Apache-2.0"
@@ -23,8 +23,9 @@ incremental = false
 overflow-checks = true
 
 [features]
-# Change this to [] if you don't need Windows support and want faster integration tests.
-default = ["cranelift"]
+# Change this to ["cranelift"] if you don't need Windows support and want faster integration tests.
+#default = ["cranelift"]
+default = []
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["cosmwasm-vm/cranelift"]
 # For quicker tests, cargo test --lib. for more explicit tests, cargo test --features=backtraces
