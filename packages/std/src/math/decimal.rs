@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign, BitXor};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -259,10 +259,15 @@ impl Decimal {
         })
     }
 
-    // pub fn floor(self) -> Self {
-    //     let mask = self / Decimal::DECIMAL_FRACTIONAL;
-    //     self ^ mask
-    // }
+    pub fn floor(self) -> Self {
+        dbg!(self.decimal_places());
+        // let mask = self / Decimal::DECIMAL_FRACTIONAL;
+        // dbg!(mask.clone());
+        // dbg!(Decimal::one());
+        // dbg!(mask ^ Decimal::one());
+        // Decimal::zero() ^ mask
+        self / Decimal::DECIMAL_FRACTIONAL
+    }
 }
 
 impl Fraction<Uint128> for Decimal {
@@ -488,6 +493,15 @@ where
         iter.fold(Self::zero(), Add::add)
     }
 }
+
+impl BitXor for Decimal {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self {
+        Self(self.atomics() ^ rhs.atomics())
+    }
+}
+
 
 /// Serializes as a decimal string
 impl Serialize for Decimal {
@@ -1670,14 +1684,27 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn floor() {
-    //     dbg!(Decimal::from_str("0.34214").unwrap() / Decimal::DECIMAL_FRACTIONAL);
+    #[test]
+    fn bitxor() {
+        let a = Decimal(Uint128::from(5u32));
+        let b = Decimal(Uint128::from(1u32));
+        let expected = Decimal(Uint128::from(4u32));
+        assert_eq!(a ^ b, expected);
 
-    //     assert_eq!(Decimal::from_str("0.34214").unwrap().floor(), Decimal::zero());
+        let a = Decimal(Uint128::from(5u32));
+        let b = Decimal(Uint128::from(2u32));
+        let expected = Decimal(Uint128::from(7u32));
+        assert_eq!(a ^ b, expected);
+    }
 
-    //     let a = Decimal::from_str("123.53232").unwrap().floor();
-    //     let expected = Decimal::from_str("123").unwrap();
-    //     assert_eq!(a, expected);
-    // }
+    #[test]
+    fn floor() {
+        dbg!(Decimal::from_str("0.34214").unwrap() / Decimal::DECIMAL_FRACTIONAL);
+
+        assert_eq!(Decimal::from_str("0.34214").unwrap().floor(), Decimal::zero());
+
+        let a = Decimal::from_str("123.53232").unwrap().floor();
+        let expected = Decimal::from_str("123").unwrap();
+        assert_eq!(a, expected);
+    }
 }
