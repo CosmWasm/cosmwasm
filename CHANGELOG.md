@@ -19,6 +19,7 @@ and this project adheres to
 
 - all: Updated Rust edition to 2021
 - cosmwasm-std: Rename `SubMsgExecutionResponse` to `SubMsgResponse`.
+- cosmwasm-crypto: Update dependency `k256` to ^0.10.4.
 
 ### Deprecated
 
