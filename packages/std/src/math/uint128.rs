@@ -3,7 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt::{self};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, BitXor, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub,
+    SubAssign,
 };
 use std::str::FromStr;
 
@@ -445,6 +446,14 @@ impl ShrAssign<u32> for Uint128 {
 impl<'a> ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
+    }
+}
+
+impl BitXor for Uint128 {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self {
+        Self(self.0 ^ rhs.0)
     }
 }
 
@@ -940,5 +949,18 @@ mod tests {
         let b = Uint128::from(6u32);
         a %= &b;
         assert_eq!(a, Uint128::from(1u32));
+    }
+
+    #[test]
+    fn bitxor() {
+        let a = Uint128::from(5u32);
+        let b = Uint128::from(1u32);
+        let expected = Uint128::from(4u32);
+        assert_eq!(a ^ b, expected);
+
+        let a = Uint128::from(5u32);
+        let b = Uint128::from(2u32);
+        let expected = Uint128::from(7u32);
+        assert_eq!(a ^ b, expected);
     }
 }

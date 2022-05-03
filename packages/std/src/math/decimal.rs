@@ -258,6 +258,11 @@ impl Decimal {
             Decimal(inner.isqrt().checked_mul(Uint128::from(outer_mul)).unwrap())
         })
     }
+
+    // pub fn floor(self) -> Self {
+    //     let mask = self / Decimal::DECIMAL_FRACTIONAL;
+    //     self ^ mask
+    // }
 }
 
 impl Fraction<Uint128> for Decimal {
@@ -1664,4 +1669,15 @@ mod tests {
             Decimal::percent(8765)
         );
     }
+
+    // #[test]
+    // fn floor() {
+    //     dbg!(Decimal::from_str("0.34214").unwrap() / Decimal::DECIMAL_FRACTIONAL);
+
+    //     assert_eq!(Decimal::from_str("0.34214").unwrap().floor(), Decimal::zero());
+
+    //     let a = Decimal::from_str("123.53232").unwrap().floor();
+    //     let expected = Decimal::from_str("123").unwrap();
+    //     assert_eq!(a, expected);
+    // }
 }
