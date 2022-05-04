@@ -299,7 +299,7 @@ mod tests {
     // constructors
 
     #[test]
-    fn ffi_error_foreign_panic() {
+    fn backend_err_foreign_panic() {
         let error = BackendError::foreign_panic();
         match error {
             BackendError::ForeignPanic { .. } => {}
@@ -308,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_bad_argument() {
+    fn backend_err_bad_argument() {
         let error = BackendError::bad_argument();
         match error {
             BackendError::BadArgument { .. } => {}
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_out_of_gas() {
+    fn backend_err_out_of_gas() {
         let error = BackendError::out_of_gas();
         match error {
             BackendError::OutOfGas { .. } => {}
@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_unknown() {
+    fn backend_err_unknown() {
         let error = BackendError::unknown("broken");
         match error {
             BackendError::Unknown { msg, .. } => assert_eq!(msg, "broken"),
@@ -344,7 +344,7 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_user_err() {
+    fn backend_err_user_err() {
         let error = BackendError::user_err("invalid input");
         match error {
             BackendError::UserErr { msg, .. } => assert_eq!(msg, "invalid input"),
