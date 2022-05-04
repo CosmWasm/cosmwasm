@@ -193,16 +193,12 @@ impl BackendError {
         BackendError::OutOfGas {}
     }
 
-    pub fn unknown(msg: impl ToString) -> Self {
-        BackendError::Unknown {
-            msg: msg.to_string(),
-        }
+    pub fn unknown(msg: impl Into<String>) -> Self {
+        BackendError::Unknown { msg: msg.into() }
     }
 
-    pub fn user_err(msg: impl ToString) -> Self {
-        BackendError::UserErr {
-            msg: msg.to_string(),
-        }
+    pub fn user_err(msg: impl Into<String>) -> Self {
+        BackendError::UserErr { msg: msg.into() }
     }
 }
 
