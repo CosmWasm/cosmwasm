@@ -169,8 +169,8 @@ pub enum BackendError {
     IteratorDoesNotExist { id: u32 },
     #[error("Ran out of gas during call into backend")]
     OutOfGas {},
-    #[error("Unknown error during call into backend: {msg:?}")]
-    Unknown { msg: Option<String> },
+    #[error("Unknown error during call into backend: {msg}")]
+    Unknown { msg: String },
     // This is the only error case of BackendError that is reported back to the contract.
     #[error("User error during call into backend: {msg}")]
     UserErr { msg: String },
@@ -195,13 +195,8 @@ impl BackendError {
 
     pub fn unknown(msg: impl ToString) -> Self {
         BackendError::Unknown {
-            msg: Some(msg.to_string()),
+            msg: msg.to_string(),
         }
-    }
-
-    /// Use `::unknown(msg: S)` if possible
-    pub fn unknown_without_message() -> Self {
-        BackendError::Unknown { msg: None }
     }
 
     pub fn user_err(msg: impl ToString) -> Self {
@@ -347,16 +342,7 @@ mod tests {
     fn ffi_error_unknown() {
         let error = BackendError::unknown("broken");
         match error {
-            BackendError::Unknown { msg, .. } => assert_eq!(msg.unwrap(), "broken"),
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn ffi_error_unknown_without_message() {
-        let error = BackendError::unknown_without_message();
-        match error {
-            BackendError::Unknown { msg, .. } => assert!(msg.is_none()),
+            BackendError::Unknown { msg, .. } => assert_eq!(msg, "broken"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
