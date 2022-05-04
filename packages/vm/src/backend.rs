@@ -157,7 +157,7 @@ pub trait Querier {
 /// attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum BackendError {
     #[error("Panic in FFI call")]
     ForeignPanic {},
