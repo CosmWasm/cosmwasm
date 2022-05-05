@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Upgrade `serde-json-wasm` to 0.4.0 to fix u128/i128
+  serialization of `to_vec`/`to_binary` in some cases ([#1297]).
+
+[#1297]: https://github.com/CosmWasm/cosmwasm/pull/1297
+
 ### Added
 
 - cosmwasm-std: Implement `checked_multiply_ratio` for
