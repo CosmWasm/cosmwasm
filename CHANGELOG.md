@@ -20,6 +20,11 @@ and this project adheres to
 - all: Updated Rust edition to 2021
 - cosmwasm-std: Rename `SubMsgExecutionResponse` to `SubMsgResponse`.
 - cosmwasm-crypto: Update dependency `k256` to ^0.10.4.
+- cosmwasm-vm: `BackendError` was changed to `non_exhaustive` for future
+  extension; `BackendError` now implements `PartialEq` for easier test code; the
+  `msg` in `BackendError::Unknown` became non-optional because it was always
+  set; the argument in `BackendError::unknown`/`::user_err` was change to
+  `impl Into<String>` to avoid unnecessary clones.
 
 ### Deprecated
 

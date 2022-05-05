@@ -896,9 +896,7 @@ mod tests {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
                 ..
-            } => {
-                assert_eq!(msg.unwrap(), "Temporarily unavailable");
-            }
+            } => assert_eq!(msg, "Temporarily unavailable"),
             err => panic!("Incorrect error returned: {:?}", err),
         }
     }
@@ -989,9 +987,7 @@ mod tests {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
                 ..
-            } => {
-                assert_eq!(msg.unwrap(), "Temporarily unavailable");
-            }
+            } => assert_eq!(msg, "Temporarily unavailable"),
             err => panic!("Incorrect error returned: {:?}", err),
         }
     }
@@ -1093,7 +1089,7 @@ mod tests {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
                 ..
-            } => assert_eq!(msg.unwrap(), "Temporarily unavailable"),
+            } => assert_eq!(msg, "Temporarily unavailable"),
             err => panic!("Incorrect error returned: {:?}", err),
         };
     }

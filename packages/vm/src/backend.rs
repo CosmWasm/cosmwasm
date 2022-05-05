@@ -157,7 +157,8 @@ pub trait Querier {
 /// attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
+#[non_exhaustive]
 pub enum BackendError {
     #[error("Panic in FFI call")]
     ForeignPanic {},
@@ -169,8 +170,8 @@ pub enum BackendError {
     IteratorDoesNotExist { id: u32 },
     #[error("Ran out of gas during call into backend")]
     OutOfGas {},
-    #[error("Unknown error during call into backend: {msg:?}")]
-    Unknown { msg: Option<String> },
+    #[error("Unknown error during call into backend: {msg}")]
+    Unknown { msg: String },
     // This is the only error case of BackendError that is reported back to the contract.
     #[error("User error during call into backend: {msg}")]
     UserErr { msg: String },
@@ -193,21 +194,12 @@ impl BackendError {
         BackendError::OutOfGas {}
     }
 
-    pub fn unknown(msg: impl ToString) -> Self {
-        BackendError::Unknown {
-            msg: Some(msg.to_string()),
-        }
+    pub fn unknown(msg: impl Into<String>) -> Self {
+        BackendError::Unknown { msg: msg.into() }
     }
 
-    /// Use `::unknown(msg: S)` if possible
-    pub fn unknown_without_message() -> Self {
-        BackendError::Unknown { msg: None }
-    }
-
-    pub fn user_err(msg: impl ToString) -> Self {
-        BackendError::UserErr {
-            msg: msg.to_string(),
-        }
+    pub fn user_err(msg: impl Into<String>) -> Self {
+        BackendError::UserErr { msg: msg.into() }
     }
 }
 
@@ -308,7 +300,7 @@ mod tests {
     // constructors
 
     #[test]
-    fn ffi_error_foreign_panic() {
+    fn backend_err_foreign_panic() {
         let error = BackendError::foreign_panic();
         match error {
             BackendError::ForeignPanic { .. } => {}
@@ -317,7 +309,7 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_bad_argument() {
+    fn backend_err_bad_argument() {
         let error = BackendError::bad_argument();
         match error {
             BackendError::BadArgument { .. } => {}
@@ -335,7 +327,7 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_out_of_gas() {
+    fn backend_err_out_of_gas() {
         let error = BackendError::out_of_gas();
         match error {
             BackendError::OutOfGas { .. } => {}
@@ -344,25 +336,16 @@ mod tests {
     }
 
     #[test]
-    fn ffi_error_unknown() {
+    fn backend_err_unknown() {
         let error = BackendError::unknown("broken");
         match error {
-            BackendError::Unknown { msg, .. } => assert_eq!(msg.unwrap(), "broken"),
+            BackendError::Unknown { msg, .. } => assert_eq!(msg, "broken"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
-    fn ffi_error_unknown_without_message() {
-        let error = BackendError::unknown_without_message();
-        match error {
-            BackendError::Unknown { msg, .. } => assert!(msg.is_none()),
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn ffi_error_user_err() {
+    fn backend_err_user_err() {
         let error = BackendError::user_err("invalid input");
         match error {
             BackendError::UserErr { msg, .. } => assert_eq!(msg, "invalid input"),

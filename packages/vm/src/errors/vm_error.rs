@@ -385,7 +385,7 @@ mod tests {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg },
                 ..
-            } => assert_eq!(msg.unwrap(), "something went wrong"),
+            } => assert_eq!(msg, "something went wrong"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
