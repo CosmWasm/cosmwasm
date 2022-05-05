@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0-rc.0] - 2022-05-05
+
 ### Fixed
 
 - cosmwasm-std: Upgrade `serde-json-wasm` to 0.4.0 to fix u128/i128
@@ -1335,7 +1337,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta8...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...HEAD
+[1.0.0-rc.0]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta8...v1.0.0-rc.0
 [1.0.0-beta8]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta7...v1.0.0-beta8
 [1.0.0-beta7]:
