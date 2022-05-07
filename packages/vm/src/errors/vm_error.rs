@@ -11,6 +11,12 @@ use crate::backend::BackendError;
 #[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum VmError {
+    #[error("Aborted: {}", msg)]
+    Aborted {
+        msg: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Error calling into the VM's backend: {}", source)]
     BackendErr {
         source: BackendError,
@@ -142,6 +148,14 @@ pub enum VmError {
 }
 
 impl VmError {
+    pub(crate) fn aborted(msg: impl Into<String>) -> Self {
+        VmError::Aborted {
+            msg: msg.into(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     pub(crate) fn backend_err(original: BackendError) -> Self {
         VmError::BackendErr {
             source: original,

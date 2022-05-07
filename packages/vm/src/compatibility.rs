@@ -10,6 +10,7 @@ use crate::static_analysis::{deserialize_wasm, ExportInfo};
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 const SUPPORTED_IMPORTS: &[&str] = &[
+    "env.abort",
     "env.db_read",
     "env.db_write",
     "env.db_remove",

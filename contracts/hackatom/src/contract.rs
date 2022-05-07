@@ -1,4 +1,5 @@
 use sha2::{Digest, Sha256};
+use std::panic;
 
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
@@ -13,6 +14,20 @@ use crate::msg::{
 };
 use crate::state::{State, CONFIG_KEY};
 
+fn install_panic_handler() {
+    panic::set_hook(Box::new(|info| {
+        // E.g. "panicked at 'oh no (a = 3)', src/contract.rs:51:5"
+        let full_message = info.to_string();
+        println!("Message: {}", &full_message);
+        if let Some(loc) = info.location() {
+            println!("File: {}", loc.file());
+            println!("Line: {}", loc.line());
+        }
+        #[cfg(target_arch = "wasm32")]
+        cosmwasm_std::handle_panic(&full_message);
+    }));
+}
+
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
@@ -20,7 +35,9 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, HackError> {
-    deps.api.debug("here we go 🚀");
+    install_panic_handler();
+
+    // deps.api.debug("here we go 🚀");
 
     deps.storage.set(
         CONFIG_KEY,
@@ -31,8 +48,13 @@ pub fn instantiate(
         })?,
     );
 
+    let a = 3;
+    panic!("oh no (a = {a})");
+
+    println!("Now what?");
+
     // This adds some unrelated event attribute for testing purposes
-    Ok(Response::new().add_attribute("Let the", "hacking begin"))
+    // Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
 #[entry_point]

@@ -89,7 +89,7 @@ pub use crate::exports::{
     do_ibc_packet_receive, do_ibc_packet_timeout,
 };
 #[cfg(target_arch = "wasm32")]
-pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
+pub use crate::imports::{handle_panic, ExternalApi, ExternalQuerier, ExternalStorage};
 
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
