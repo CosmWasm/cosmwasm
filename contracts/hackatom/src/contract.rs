@@ -48,13 +48,25 @@ pub fn instantiate(
         })?,
     );
 
-    let a = 3;
-    panic!("oh no (a = {a})");
+    // Uncomment your favourite panic case
 
-    println!("Now what?");
+    // panicked at 'Now what?', src/contract.rs:53:5
+    panic!("Now what?");
+
+    // panicked at 'oh no (a = 3)', src/contract.rs:56:5
+    // let a = 3;
+    // panic!("oh no (a = {a})");
+
+    // panicked at 'attempt to subtract with overflow', src/contract.rs:59:13
+    // #[allow(arithmetic_overflow)]
+    // let _ = 5u32 - 8u32;
+
+    // panicked at 'no entry found for key', src/contract.rs:62:13
+    // let map = std::collections::HashMap::<String, String>::new();
+    // let _ = map["foo"];
 
     // This adds some unrelated event attribute for testing purposes
-    // Ok(Response::new().add_attribute("Let the", "hacking begin"))
+    Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
 #[entry_point]
