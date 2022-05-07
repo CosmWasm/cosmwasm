@@ -2,9 +2,9 @@ use sha2::{Digest, Sha256};
 use std::panic;
 
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
-    StdError, StdResult, WasmMsg, WasmQuery,
+    entry_point, from_slice, install_panic_handler, to_binary, to_vec, Addr, AllBalanceResponse,
+    Api, BankMsg, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest,
+    QueryResponse, Response, StdError, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -13,20 +13,6 @@ use crate::msg::{
     VerifierResponse,
 };
 use crate::state::{State, CONFIG_KEY};
-
-fn install_panic_handler() {
-    panic::set_hook(Box::new(|info| {
-        // E.g. "panicked at 'oh no (a = 3)', src/contract.rs:51:5"
-        let full_message = info.to_string();
-        println!("Message: {}", &full_message);
-        if let Some(loc) = info.location() {
-            println!("File: {}", loc.file());
-            println!("Line: {}", loc.line());
-        }
-        #[cfg(target_arch = "wasm32")]
-        cosmwasm_std::handle_panic(&full_message);
-    }));
-}
 
 #[entry_point]
 pub fn instantiate(
