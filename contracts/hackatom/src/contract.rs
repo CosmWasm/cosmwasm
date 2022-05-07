@@ -1,10 +1,9 @@
 use sha2::{Digest, Sha256};
-use std::panic;
 
 use cosmwasm_std::{
-    entry_point, from_slice, install_panic_handler, to_binary, to_vec, Addr, AllBalanceResponse,
-    Api, BankMsg, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest,
-    QueryResponse, Response, StdError, StdResult, WasmMsg, WasmQuery,
+    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
+    CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
+    StdError, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -21,8 +20,6 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, HackError> {
-    install_panic_handler();
-
     // deps.api.debug("here we go 🚀");
 
     deps.storage.set(

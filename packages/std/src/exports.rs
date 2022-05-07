@@ -20,6 +20,7 @@ use crate::ibc::{
 };
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
+use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_slice, to_vec};
@@ -93,6 +94,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_instantiate(
         instantiate_fn,
         env_ptr as *mut Region,
@@ -121,6 +123,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_execute(
         execute_fn,
         env_ptr as *mut Region,
@@ -148,6 +151,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -170,6 +174,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_sudo(sudo_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -191,6 +196,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_reply(reply_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -211,6 +217,7 @@ where
     M: DeserializeOwned,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_query(query_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -232,6 +239,7 @@ where
     Q: CustomQuery,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_ibc_channel_open(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -255,6 +263,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_ibc_channel_connect(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -278,6 +287,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_ibc_channel_close(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -302,6 +312,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_ibc_packet_receive(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -326,6 +337,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_ibc_packet_ack(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -351,6 +363,7 @@ where
     C: CustomMsg,
     E: ToString,
 {
+    install_panic_handler();
     let res = _do_ibc_packet_timeout(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
