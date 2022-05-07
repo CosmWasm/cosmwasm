@@ -4,6 +4,7 @@
 ///
 /// This overrides any previous panic handler. See <https://doc.rust-lang.org/std/panic/fn.set_hook.html>
 /// for details.
+#[cfg(feature = "abort")]
 pub fn install_panic_handler() {
     #[cfg(target_arch = "wasm32")]
     {
