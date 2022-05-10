@@ -119,6 +119,7 @@ pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
     pub order: IbcOrder,
+    /// Note: in ibcv3 this may be "", in the IbcOpenChannel handshake messages
     pub version: String,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
@@ -294,6 +295,19 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
             IbcChannelOpenMsg::OpenTry { channel, .. } => channel,
         }
     }
+}
+
+/// Note that this serializes as "null"
+#[cfg(not(feature = "ibcv3"))]
+pub type IbcChannelOpenResponse = ();
+
+/// This serializes as a JSON object, the parser should treat as Option to handle both v1 and v3
+#[cfg(feature = "ibcv3")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcChannelOpenResponse {
+    /// We can set the channel version to a different one than we were called with
+    /// TODO: remove option??
+    pub version: Option<String>,
 }
 
 /// The message that is passed into `ibc_channel_connect`
