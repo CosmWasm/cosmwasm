@@ -518,7 +518,7 @@ fn _do_ibc_channel_open<Q, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelOpenMsg) -> Result<IbcChannelOpenResponse, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<()>
+) -> ContractResult<IbcChannelOpenResponse>
 where
     Q: CustomQuery,
     E: ToString,
