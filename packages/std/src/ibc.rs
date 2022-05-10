@@ -6,6 +6,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Ord, Ordering, PartialOrd};
 
+#[cfg(feature = "ibcv3")]
+use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
@@ -405,11 +407,19 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
+    #[cfg(feature = "ibcv3")]
+    pub relayer: Addr,
 }
 
 impl IbcPacketReceiveMsg {
+    #[cfg(not(feature = "ibcv3"))]
     pub fn new(packet: IbcPacket) -> Self {
         Self { packet }
+    }
+
+    #[cfg(feature = "ibcv3")]
+    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+        Self { packet, relayer }
     }
 }
 
@@ -419,13 +429,29 @@ impl IbcPacketReceiveMsg {
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
     pub original_packet: IbcPacket,
+    #[cfg(feature = "ibcv3")]
+    pub relayer: Addr,
 }
 
 impl IbcPacketAckMsg {
+    #[cfg(not(feature = "ibcv3"))]
     pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
         Self {
             acknowledgement,
             original_packet,
+        }
+    }
+
+    #[cfg(feature = "ibcv3")]
+    pub fn new(
+        acknowledgement: IbcAcknowledgement,
+        original_packet: IbcPacket,
+        relayer: Addr,
+    ) -> Self {
+        Self {
+            acknowledgement,
+            original_packet,
+            relayer,
         }
     }
 }
@@ -435,11 +461,19 @@ impl IbcPacketAckMsg {
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
+    #[cfg(feature = "ibcv3")]
+    pub relayer: Addr,
 }
 
 impl IbcPacketTimeoutMsg {
+    #[cfg(not(feature = "ibcv3"))]
     pub fn new(packet: IbcPacket) -> Self {
         Self { packet }
+    }
+
+    #[cfg(feature = "ibcv3")]
+    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+        Self { packet, relayer }
     }
 }
 
