@@ -1,9 +1,9 @@
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
+    IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response,
+    StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 
 use crate::msg::{
@@ -116,19 +116,19 @@ pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 
 #[entry_point]
 /// enforces ordering and versioing constraints
-pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
+pub fn ibc_channel_open(
+    _deps: DepsMut,
+    _env: Env,
+    msg: IbcChannelOpenMsg,
+) -> StdResult<IbcChannelOpenResponse> {
     let channel = msg.channel();
 
     if channel.order != IbcOrder::Ordered {
         return Err(StdError::generic_err("Only supports ordered channels"));
     }
-    if channel.version.as_str() != IBC_VERSION {
-        return Err(StdError::generic_err(format!(
-            "Must set version to `{}`",
-            IBC_VERSION
-        )));
-    }
 
+    // In ibcv3 we ignore the version string passed in the message
+    // just check the counterparty message
     if let Some(counter_version) = msg.counterparty_version() {
         if counter_version != IBC_VERSION {
             return Err(StdError::generic_err(format!(
@@ -138,7 +138,10 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
         }
     }
 
-    Ok(())
+    // and then return what we want
+    Ok(IbcChannelOpenResponse {
+        version: Some(IBC_VERSION.to_string()),
+    })
 }
 
 #[entry_point]
