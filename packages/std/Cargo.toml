@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["stargate", "staking"]
+features = ["stargate", "staking", "ibcv3"]
 
 [features]
 default = ["iterator"]
@@ -30,6 +30,9 @@ backtraces = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
 stargate = []
+# ibcv3 extends ibc messages with ibcv3 only features. This should only be enabled on contracts
+# that require these types. Without this, they get the smaller ibcv1 API.
+ibcv3 = ["stargate"]
 
 [dependencies]
 base64 = "0.13.0"
