@@ -484,7 +484,7 @@ fn execute_panic() {
     );
     match execute_res.unwrap_err() {
         VmError::RuntimeErr { msg, .. } => {
-            assert_eq!(msg, "Wasmer runtime error: RuntimeError: unreachable")
+            assert_eq!(msg, "Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted', src/contract.rs:195:5")
         }
         err => panic!("Unexpected error: {:?}", err),
     }

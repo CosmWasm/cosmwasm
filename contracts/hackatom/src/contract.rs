@@ -20,7 +20,7 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, HackError> {
-    // deps.api.debug("here we go 🚀");
+    deps.api.debug("here we go 🚀");
 
     deps.storage.set(
         CONFIG_KEY,
@@ -30,23 +30,6 @@ pub fn instantiate(
             funder: info.sender,
         })?,
     );
-
-    // Uncomment your favourite panic case
-
-    // panicked at 'Now what?', src/contract.rs:53:5
-    panic!("Now what?");
-
-    // panicked at 'oh no (a = 3)', src/contract.rs:56:5
-    // let a = 3;
-    // panic!("oh no (a = {a})");
-
-    // panicked at 'attempt to subtract with overflow', src/contract.rs:59:13
-    // #[allow(arithmetic_overflow)]
-    // let _ = 5u32 - 8u32;
-
-    // panicked at 'no entry found for key', src/contract.rs:62:13
-    // let map = std::collections::HashMap::<String, String>::new();
-    // let _ = map["foo"];
 
     // This adds some unrelated event attribute for testing purposes
     Ok(Response::new().add_attribute("Let the", "hacking begin"))
@@ -206,7 +189,22 @@ fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
 }
 
 fn do_panic() -> Result<Response, HackError> {
+    // Uncomment your favourite panic case
+
+    // panicked at 'This page intentionally faulted', src/contract.rs:53:5
     panic!("This page intentionally faulted");
+
+    // panicked at 'oh no (a = 3)', src/contract.rs:56:5
+    // let a = 3;
+    // panic!("oh no (a = {a})");
+
+    // panicked at 'attempt to subtract with overflow', src/contract.rs:59:13
+    // #[allow(arithmetic_overflow)]
+    // let _ = 5u32 - 8u32;
+
+    // panicked at 'no entry found for key', src/contract.rs:62:13
+    // let map = std::collections::HashMap::<String, String>::new();
+    // let _ = map["foo"];
 }
 
 fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
