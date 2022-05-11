@@ -389,7 +389,7 @@ mod tests {
     static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
 
     fn default_features() -> HashSet<String> {
-        features_from_csv("abort,iterator,staking")
+        features_from_csv("iterator,staking")
     }
 
     fn make_testing_options() -> CacheOptions {

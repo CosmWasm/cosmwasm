@@ -54,8 +54,7 @@ fn make_init_msg() -> (InstantiateMsg, String) {
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
-    assert_eq!(deps.required_features().len(), 1);
-    assert!(deps.required_features().contains("abort"));
+    assert_eq!(deps.required_features().len(), 0);
 
     let verifier = String::from("verifies");
     let beneficiary = String::from("benefits");

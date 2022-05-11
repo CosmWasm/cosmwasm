@@ -9,10 +9,10 @@ cargo fmt
 (
   cd packages/std
   cargo check
-  cargo check --features abort,iterator,staking,stargate
+  cargo check --features iterator,staking,stargate
   cargo wasm-debug
-  cargo wasm-debug --features abort,iterator,staking,stargate
-  cargo clippy --all-targets --features abort,iterator,staking,stargate -- -D warnings
+  cargo wasm-debug --features iterator,staking,stargate
+  cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
   cargo schema
 )
 (cd packages/storage && cargo build && cargo clippy --all-targets --features iterator -- -D warnings)

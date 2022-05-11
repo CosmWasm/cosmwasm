@@ -6,7 +6,7 @@ use clap::{App, Arg};
 use cosmwasm_vm::features_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
 
-const DEFAULT_SUPPORTED_FEATURES: &str = "abort,iterator,staking,stargate";
+const DEFAULT_SUPPORTED_FEATURES: &str = "iterator,staking,stargate";
 
 pub fn main() {
     let matches = App::new("Contract checking")
