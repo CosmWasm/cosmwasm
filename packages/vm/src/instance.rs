@@ -180,6 +180,9 @@ where
             Function::new_native_with_env(store, env.clone(), do_debug),
         );
 
+        // Aborts the contract execution with an error message provided by the contract.
+        // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+        // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "abort",
             Function::new_native_with_env(store, env.clone(), do_abort),
