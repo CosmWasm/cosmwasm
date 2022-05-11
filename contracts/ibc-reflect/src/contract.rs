@@ -2,8 +2,9 @@ use cosmwasm_std::{
     entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
     Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
     IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response,
-    StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcV3ChannelOpenResponse, MessageInfo, Order,
+    QueryResponse, Reply, Response, StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult,
+    WasmMsg,
 };
 
 use crate::msg::{
@@ -139,9 +140,9 @@ pub fn ibc_channel_open(
     }
 
     // and then return what we want
-    Ok(IbcChannelOpenResponse {
-        version: Some(IBC_VERSION.to_string()),
-    })
+    Ok(Some(IbcV3ChannelOpenResponse {
+        version: IBC_VERSION.to_string(),
+    }))
 }
 
 #[entry_point]
