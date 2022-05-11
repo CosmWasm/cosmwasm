@@ -302,14 +302,15 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 /// Note that this serializes as "null"
 #[cfg(not(feature = "ibcv3"))]
 pub type IbcChannelOpenResponse = ();
+/// This serializes either as "null"
+#[cfg(feature = "ibcv3")]
+pub type IbcChannelOpenResponse = Option<IbcV3ChannelOpenResponse>;
 
 /// This serializes as a JSON object, the parser should treat as Option to handle both v1 and v3
-#[cfg(feature = "ibcv3")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcChannelOpenResponse {
+pub struct IbcV3ChannelOpenResponse {
     /// We can set the channel version to a different one than we were called with
-    /// TODO: remove option??
-    pub version: Option<String>,
+    pub version: String,
 }
 
 /// The message that is passed into `ibc_channel_connect`
