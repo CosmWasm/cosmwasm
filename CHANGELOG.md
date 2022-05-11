@@ -6,6 +6,18 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: When the new `abort` feature is enabled, cosmwasm-std installs a
+  panic handler that aborts the contract and passes the panic message to the
+  host. The `abort` feature can only be used when deploying to chains that
+  implement the import. For this reason, it's not yet enabled by default.
+  ([#1299])
+- cosmwasm-vm: A new import `abort` is created to abort contract execution when
+  requested by the contract. ([#1299])
+
+[#1299]: https://github.com/CosmWasm/cosmwasm/pull/1299
+
 ## [1.0.0-rc.0] - 2022-05-05
 
 ### Fixed

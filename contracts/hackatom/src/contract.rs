@@ -189,7 +189,22 @@ fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
 }
 
 fn do_panic() -> Result<Response, HackError> {
+    // Uncomment your favourite panic case
+
+    // panicked at 'This page intentionally faulted', src/contract.rs:53:5
     panic!("This page intentionally faulted");
+
+    // panicked at 'oh no (a = 3)', src/contract.rs:56:5
+    // let a = 3;
+    // panic!("oh no (a = {a})");
+
+    // panicked at 'attempt to subtract with overflow', src/contract.rs:59:13
+    // #[allow(arithmetic_overflow)]
+    // let _ = 5u32 - 8u32;
+
+    // panicked at 'no entry found for key', src/contract.rs:62:13
+    // let map = std::collections::HashMap::<String, String>::new();
+    // let _ = map["foo"];
 }
 
 fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {

@@ -54,6 +54,9 @@ const MAX_COUNT_ED25519_BATCH: usize = 256;
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
+/// Max length for an abort message
+const MAX_LENGTH_ABORT: usize = 2 * MI;
+
 // Import implementations
 //
 // This block of do_* prefixed functions is tailored for Wasmer's
@@ -357,6 +360,16 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
         println!("{}", msg);
     }
     Ok(())
+}
+
+/// Aborts the contract and shows the given error message
+pub fn do_abort<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+) -> VmResult<()> {
+    let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_ABORT)?;
+    let msg = String::from_utf8_lossy(&message_data);
+    Err(VmError::aborted(msg))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location

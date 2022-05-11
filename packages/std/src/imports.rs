@@ -26,6 +26,9 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/packages/vm/src/instance.rs#L89-L206
 extern "C" {
+    #[cfg(feature = "abort")]
+    fn abort(source_ptr: u32);
+
     fn db_read(key: u32) -> u32;
     fn db_write(key: u32, value: u32);
     fn db_remove(key: u32);
@@ -394,4 +397,12 @@ impl Querier for ExternalQuerier {
             })
         })
     }
+}
+
+#[cfg(feature = "abort")]
+pub fn handle_panic(message: &str) {
+    // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+    let region = build_region(message.as_bytes());
+    let region_ptr = region.as_ref() as *const Region as u32;
+    unsafe { abort(region_ptr) };
 }

@@ -402,9 +402,11 @@ mod tests {
     }
 
     fn make_stargate_testing_options() -> CacheOptions {
+        let mut feature = default_features();
+        feature.insert("stargate".into());
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_features: features_from_csv("iterator,staking,stargate"),
+            supported_features: feature,
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }

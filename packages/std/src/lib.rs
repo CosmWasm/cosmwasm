@@ -14,6 +14,7 @@ mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
 mod math;
+mod panic;
 mod query;
 mod results;
 mod sections;
