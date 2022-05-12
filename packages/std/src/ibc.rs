@@ -412,13 +412,16 @@ pub struct IbcPacketReceiveMsg {
 }
 
 impl IbcPacketReceiveMsg {
-    #[cfg(not(feature = "ibc3"))]
     pub fn new(packet: IbcPacket) -> Self {
-        Self { packet }
+        Self {
+            packet,
+            #[cfg(feature = "ibc3")]
+            relayer: Addr::unchecked("relayer"),
+        }
     }
 
     #[cfg(feature = "ibc3")]
-    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+    pub fn new_with_relayer(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
     }
 }
@@ -434,16 +437,17 @@ pub struct IbcPacketAckMsg {
 }
 
 impl IbcPacketAckMsg {
-    #[cfg(not(feature = "ibc3"))]
     pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
         Self {
             acknowledgement,
             original_packet,
+            #[cfg(feature = "ibc3")]
+            relayer: Addr::unchecked("relayer"),
         }
     }
 
     #[cfg(feature = "ibc3")]
-    pub fn new(
+    pub fn new_with_relayer(
         acknowledgement: IbcAcknowledgement,
         original_packet: IbcPacket,
         relayer: Addr,
@@ -466,13 +470,16 @@ pub struct IbcPacketTimeoutMsg {
 }
 
 impl IbcPacketTimeoutMsg {
-    #[cfg(not(feature = "ibc3"))]
     pub fn new(packet: IbcPacket) -> Self {
-        Self { packet }
+        Self {
+            packet,
+            #[cfg(feature = "ibc3")]
+            relayer: Addr::unchecked("relayer"),
+        }
     }
 
     #[cfg(feature = "ibc3")]
-    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+    pub fn new_with_relayer(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
     }
 }

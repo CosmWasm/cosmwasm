@@ -330,27 +330,23 @@ pub fn mock_ibc_packet_recv(
     my_channel_id: &str,
     data: &impl Serialize,
 ) -> StdResult<IbcPacketReceiveMsg> {
-    Ok(IbcPacketReceiveMsg::new(
-        IbcPacket {
-            data: to_binary(data)?,
-            src: IbcEndpoint {
-                port_id: "their-port".to_string(),
-                channel_id: "channel-1234".to_string(),
-            },
-            dest: IbcEndpoint {
-                port_id: "our-port".to_string(),
-                channel_id: my_channel_id.into(),
-            },
-            sequence: 27,
-            timeout: IbcTimeoutBlock {
-                revision: 1,
-                height: 12345678,
-            }
-            .into(),
+    Ok(IbcPacketReceiveMsg::new(IbcPacket {
+        data: to_binary(data)?,
+        src: IbcEndpoint {
+            port_id: "their-port".to_string(),
+            channel_id: "channel-1234".to_string(),
         },
-        #[cfg(feature = "ibc3")]
-        Addr::unchecked("relayer"),
-    ))
+        dest: IbcEndpoint {
+            port_id: "our-port".to_string(),
+            channel_id: my_channel_id.into(),
+        },
+        sequence: 27,
+        timeout: IbcTimeoutBlock {
+            revision: 1,
+            height: 12345678,
+        }
+        .into(),
+    }))
 }
 
 /// Creates a IbcPacket for testing ibc_packet_{ack,timeout}. You set a few key parameters that are
@@ -388,12 +384,7 @@ pub fn mock_ibc_packet_ack(
 ) -> StdResult<IbcPacketAckMsg> {
     let packet = mock_ibc_packet(my_channel_id, data)?;
 
-    Ok(IbcPacketAckMsg::new(
-        ack,
-        packet,
-        #[cfg(feature = "ibc3")]
-        Addr::unchecked("relayer"),
-    ))
+    Ok(IbcPacketAckMsg::new(ack, packet))
 }
 
 /// Creates a IbcPacketTimeoutMsg for testing ibc_packet_timeout. You set a few key parameters that are
@@ -405,11 +396,7 @@ pub fn mock_ibc_packet_timeout(
     data: &impl Serialize,
 ) -> StdResult<IbcPacketTimeoutMsg> {
     let packet = mock_ibc_packet(my_channel_id, data)?;
-    Ok(IbcPacketTimeoutMsg::new(
-        packet,
-        #[cfg(feature = "ibc3")]
-        Addr::unchecked("relayer"),
-    ))
+    Ok(IbcPacketTimeoutMsg::new(packet))
 }
 
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
