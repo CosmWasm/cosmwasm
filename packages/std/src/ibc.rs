@@ -6,6 +6,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Ord, Ordering, PartialOrd};
 
+#[cfg(feature = "ibc3")]
+use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
@@ -119,6 +121,7 @@ pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
     pub order: IbcOrder,
+    /// Note: in ibcv3 this may be "", in the IbcOpenChannel handshake messages
     pub version: String,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
@@ -296,6 +299,19 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
     }
 }
 
+/// Note that this serializes as "null".
+#[cfg(not(feature = "ibc3"))]
+pub type IbcChannelOpenResponse = ();
+/// This serializes either as "null" or a JSON object.
+#[cfg(feature = "ibc3")]
+pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Ibc3ChannelOpenResponse {
+    /// We can set the channel version to a different one than we were called with
+    pub version: String,
+}
+
 /// The message that is passed into `ibc_channel_connect`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -391,11 +407,19 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
+    #[cfg(feature = "ibc3")]
+    pub relayer: Addr,
 }
 
 impl IbcPacketReceiveMsg {
+    #[cfg(not(feature = "ibc3"))]
     pub fn new(packet: IbcPacket) -> Self {
         Self { packet }
+    }
+
+    #[cfg(feature = "ibc3")]
+    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+        Self { packet, relayer }
     }
 }
 
@@ -405,13 +429,29 @@ impl IbcPacketReceiveMsg {
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
     pub original_packet: IbcPacket,
+    #[cfg(feature = "ibc3")]
+    pub relayer: Addr,
 }
 
 impl IbcPacketAckMsg {
+    #[cfg(not(feature = "ibc3"))]
     pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
         Self {
             acknowledgement,
             original_packet,
+        }
+    }
+
+    #[cfg(feature = "ibc3")]
+    pub fn new(
+        acknowledgement: IbcAcknowledgement,
+        original_packet: IbcPacket,
+        relayer: Addr,
+    ) -> Self {
+        Self {
+            acknowledgement,
+            original_packet,
+            relayer,
         }
     }
 }
@@ -421,11 +461,19 @@ impl IbcPacketAckMsg {
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
+    #[cfg(feature = "ibc3")]
+    pub relayer: Addr,
 }
 
 impl IbcPacketTimeoutMsg {
+    #[cfg(not(feature = "ibc3"))]
     pub fn new(packet: IbcPacket) -> Self {
         Self { packet }
+    }
+
+    #[cfg(feature = "ibc3")]
+    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+        Self { packet, relayer }
     }
 }
 

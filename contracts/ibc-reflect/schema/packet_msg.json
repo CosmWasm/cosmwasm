@@ -154,30 +154,6 @@
           "additionalProperties": false
         },
         {
-          "type": "object",
-          "required": [
-            "staking"
-          ],
-          "properties": {
-            "staking": {
-              "$ref": "#/definitions/StakingMsg"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "distribution"
-          ],
-          "properties": {
-            "distribution": {
-              "$ref": "#/definitions/DistributionMsg"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
           "description": "A Stargate message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto). This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)",
           "type": "object",
           "required": [
@@ -234,55 +210,6 @@
           "properties": {
             "gov": {
               "$ref": "#/definitions/GovMsg"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "DistributionMsg": {
-      "description": "The message types of the distribution module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto",
-      "oneOf": [
-        {
-          "description": "This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37). `delegator_address` is automatically filled with the current contract's address.",
-          "type": "object",
-          "required": [
-            "set_withdraw_address"
-          ],
-          "properties": {
-            "set_withdraw_address": {
-              "type": "object",
-              "required": [
-                "address"
-              ],
-              "properties": {
-                "address": {
-                  "description": "The `withdraw_address`",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50). `delegator_address` is automatically filled with the current contract's address.",
-          "type": "object",
-          "required": [
-            "withdraw_delegator_reward"
-          ],
-          "properties": {
-            "withdraw_delegator_reward": {
-              "type": "object",
-              "required": [
-                "validator"
-              ],
-              "properties": {
-                "validator": {
-                  "description": "The `validator_address`",
-                  "type": "string"
-                }
-              }
             }
           },
           "additionalProperties": false
@@ -476,90 +403,6 @@
           "minimum": 0.0
         }
       }
-    },
-    "StakingMsg": {
-      "description": "The message types of the staking module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto",
-      "oneOf": [
-        {
-          "description": "This is translated to a [MsgDelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L81-L90). `delegator_address` is automatically filled with the current contract's address.",
-          "type": "object",
-          "required": [
-            "delegate"
-          ],
-          "properties": {
-            "delegate": {
-              "type": "object",
-              "required": [
-                "amount",
-                "validator"
-              ],
-              "properties": {
-                "amount": {
-                  "$ref": "#/definitions/Coin"
-                },
-                "validator": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "This is translated to a [MsgUndelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L112-L121). `delegator_address` is automatically filled with the current contract's address.",
-          "type": "object",
-          "required": [
-            "undelegate"
-          ],
-          "properties": {
-            "undelegate": {
-              "type": "object",
-              "required": [
-                "amount",
-                "validator"
-              ],
-              "properties": {
-                "amount": {
-                  "$ref": "#/definitions/Coin"
-                },
-                "validator": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "This is translated to a [MsgBeginRedelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L95-L105). `delegator_address` is automatically filled with the current contract's address.",
-          "type": "object",
-          "required": [
-            "redelegate"
-          ],
-          "properties": {
-            "redelegate": {
-              "type": "object",
-              "required": [
-                "amount",
-                "dst_validator",
-                "src_validator"
-              ],
-              "properties": {
-                "amount": {
-                  "$ref": "#/definitions/Coin"
-                },
-                "dst_validator": {
-                  "type": "string"
-                },
-                "src_validator": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
     },
     "Timestamp": {
       "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",

@@ -21,7 +21,7 @@ backtraces = []
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
 # this enables all stargate-related functionality, including the ibc entry points
-stargate = ["cosmwasm-std/stargate"]
+stargate = ["cosmwasm-std/stargate", "cosmwasm-std/ibc3"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
 # It's a bit unclear if interface_version_7 (CosmWasm 0.16) contracts are fully compatible
