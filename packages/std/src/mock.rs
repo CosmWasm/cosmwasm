@@ -348,7 +348,7 @@ pub fn mock_ibc_packet_recv(
             }
             .into(),
         },
-        #[cfg(feature = "ibcv3")]
+        #[cfg(feature = "ibc3")]
         Addr::unchecked("relayer"),
     ))
 }
@@ -391,7 +391,7 @@ pub fn mock_ibc_packet_ack(
     Ok(IbcPacketAckMsg::new(
         ack,
         packet,
-        #[cfg(feature = "ibcv3")]
+        #[cfg(feature = "ibc3")]
         Addr::unchecked("relayer"),
     ))
 }
@@ -407,7 +407,7 @@ pub fn mock_ibc_packet_timeout(
     let packet = mock_ibc_packet(my_channel_id, data)?;
     Ok(IbcPacketTimeoutMsg::new(
         packet,
-        #[cfg(feature = "ibcv3")]
+        #[cfg(feature = "ibc3")]
         Addr::unchecked("relayer"),
     ))
 }
