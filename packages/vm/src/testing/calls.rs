@@ -7,8 +7,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcV3ChannelOpenResponse,
+    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse,
 };
 
 use crate::calls::{
@@ -144,7 +145,7 @@ pub fn ibc_channel_open<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcChannelOpenMsg,
-) -> ContractResult<Option<IbcV3ChannelOpenResponse>>
+) -> ContractResult<Option<Ibc3ChannelOpenResponse>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,

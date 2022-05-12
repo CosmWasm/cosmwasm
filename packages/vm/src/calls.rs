@@ -4,8 +4,9 @@ use wasmer::Val;
 use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcV3ChannelOpenResponse,
+    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
@@ -218,7 +219,7 @@ pub fn call_ibc_channel_open<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcChannelOpenMsg,
-) -> VmResult<ContractResult<Option<IbcV3ChannelOpenResponse>>>
+) -> VmResult<ContractResult<Option<Ibc3ChannelOpenResponse>>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
@@ -227,7 +228,7 @@ where
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_ibc_channel_open_raw(instance, &env, &msg)?;
-    let result: ContractResult<Option<IbcV3ChannelOpenResponse>> =
+    let result: ContractResult<Option<Ibc3ChannelOpenResponse>> =
         from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_OPEN)?;
     Ok(result)
 }

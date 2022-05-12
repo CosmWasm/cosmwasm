@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
-    Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcV3ChannelOpenResponse, MessageInfo, Order,
+    Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Order,
     QueryResponse, Reply, Response, StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult,
     WasmMsg,
 };
@@ -140,7 +140,7 @@ pub fn ibc_channel_open(
     }
 
     // We return the version we need (which could be different than the counterparty version)
-    Ok(Some(IbcV3ChannelOpenResponse {
+    Ok(Some(Ibc3ChannelOpenResponse {
         version: IBC_APP_VERSION.to_string(),
     }))
 }
