@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Ord, Ordering, PartialOrd};
 
-#[cfg(feature = "ibcv3")]
+#[cfg(feature = "ibc3")]
 use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coins::Coin;
@@ -300,10 +300,10 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 }
 
 /// Note that this serializes as "null".
-#[cfg(not(feature = "ibcv3"))]
+#[cfg(not(feature = "ibc3"))]
 pub type IbcChannelOpenResponse = ();
 /// This serializes either as "null" or a JSON object.
-#[cfg(feature = "ibcv3")]
+#[cfg(feature = "ibc3")]
 pub type IbcChannelOpenResponse = Option<IbcV3ChannelOpenResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -407,17 +407,17 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
-    #[cfg(feature = "ibcv3")]
+    #[cfg(feature = "ibc3")]
     pub relayer: Addr,
 }
 
 impl IbcPacketReceiveMsg {
-    #[cfg(not(feature = "ibcv3"))]
+    #[cfg(not(feature = "ibc3"))]
     pub fn new(packet: IbcPacket) -> Self {
         Self { packet }
     }
 
-    #[cfg(feature = "ibcv3")]
+    #[cfg(feature = "ibc3")]
     pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
     }
@@ -429,12 +429,12 @@ impl IbcPacketReceiveMsg {
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
     pub original_packet: IbcPacket,
-    #[cfg(feature = "ibcv3")]
+    #[cfg(feature = "ibc3")]
     pub relayer: Addr,
 }
 
 impl IbcPacketAckMsg {
-    #[cfg(not(feature = "ibcv3"))]
+    #[cfg(not(feature = "ibc3"))]
     pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
         Self {
             acknowledgement,
@@ -442,7 +442,7 @@ impl IbcPacketAckMsg {
         }
     }
 
-    #[cfg(feature = "ibcv3")]
+    #[cfg(feature = "ibc3")]
     pub fn new(
         acknowledgement: IbcAcknowledgement,
         original_packet: IbcPacket,
@@ -461,17 +461,17 @@ impl IbcPacketAckMsg {
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
-    #[cfg(feature = "ibcv3")]
+    #[cfg(feature = "ibc3")]
     pub relayer: Addr,
 }
 
 impl IbcPacketTimeoutMsg {
-    #[cfg(not(feature = "ibcv3"))]
+    #[cfg(not(feature = "ibc3"))]
     pub fn new(packet: IbcPacket) -> Self {
         Self { packet }
     }
 
-    #[cfg(feature = "ibcv3")]
+    #[cfg(feature = "ibc3")]
     pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
     }
