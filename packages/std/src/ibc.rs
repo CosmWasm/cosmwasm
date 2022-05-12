@@ -304,10 +304,10 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 pub type IbcChannelOpenResponse = ();
 /// This serializes either as "null" or a JSON object.
 #[cfg(feature = "ibc3")]
-pub type IbcChannelOpenResponse = Option<IbcV3ChannelOpenResponse>;
+pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcV3ChannelOpenResponse {
+pub struct Ibc3ChannelOpenResponse {
     /// We can set the channel version to a different one than we were called with
     pub version: String,
 }
