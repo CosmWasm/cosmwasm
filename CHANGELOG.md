@@ -15,8 +15,12 @@ and this project adheres to
   ([#1299])
 - cosmwasm-vm: A new import `abort` is created to abort contract execution when
   requested by the contract. ([#1299])
+- cosmwasm-std: Add new `ibc3` feature that allows to use IBC-Go V3 features,
+  like version negotiation and exposing relayer address to the contract.
+  Requires a compatible wasmd runtime (v0.27.0+) ([#1302])
 
 [#1299]: https://github.com/CosmWasm/cosmwasm/pull/1299
+[#1302]: https://github.com/CosmWasm/cosmwasm/pull/1302
 
 ## [1.0.0-rc.0] - 2022-05-05
 
@@ -35,11 +39,6 @@ and this project adheres to
 - cosmwasm-std: Implement `Div`/`DivAssign` for `Decimal`/`Decimal256`.
 - cosmwasm-vm: Add feature `allow_interface_version_7` to run CosmWasm 0.16
   contracts in modern hosts. Be careful if you consider using this!
-- cosmwasm-std: Add new `ibc3` feature that allows to use IBC-Go V3 features,
-  like version negotiation and exposing relayer address to the contract.
-  Requires a compatible wasmd runtime (v0.27.0+) ([#1297])
-
-[#1302]: https://github.com/CosmWasm/cosmwasm/pull/1302
 
 ### Changed
 
