@@ -4,10 +4,12 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 1.0.0-beta -> 1.0.0 (unreleased)
+## 1.0.0-beta -> 1.0.0
 
-- The minimum Rust supported version is 1.54.0. Verify your Rust version is >=
-  1.54.0 with: `rustc --version`.
+- The minimum Rust supported version is 1.56.1. Verify your Rust version is >=
+  1.56.1 with: `rustc --version`. Please note that the required Rust version
+  changes over time and we have little control over that due to the dependencies
+  that are used.
 
 - Simplify `mock_dependencies` calls with empty balance:
 

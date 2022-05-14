@@ -6,8 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.0.0] - 2022-05-14
+
 ### Added
 
+- cosmwasm-std: Export `DelegationResponse` ([#1301]).
 - cosmwasm-std: When the new `abort` feature is enabled, cosmwasm-std installs a
   panic handler that aborts the contract and passes the panic message to the
   host. The `abort` feature can only be used when deploying to chains that
@@ -20,6 +23,7 @@ and this project adheres to
   Requires a compatible wasmd runtime (v0.27.0+) ([#1302])
 
 [#1299]: https://github.com/CosmWasm/cosmwasm/pull/1299
+[#1301]: https://github.com/CosmWasm/cosmwasm/pull/1301
 [#1302]: https://github.com/CosmWasm/cosmwasm/pull/1302
 
 ## [1.0.0-rc.0] - 2022-05-05
