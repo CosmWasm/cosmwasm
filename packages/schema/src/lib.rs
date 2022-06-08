@@ -1,5 +1,6 @@
 mod casing;
 mod export;
+mod idl;
 mod remove;
 
 pub use export::{export_schema, export_schema_with_title};

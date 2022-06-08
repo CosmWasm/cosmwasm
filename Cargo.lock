@@ -287,6 +287,7 @@ name = "cosmwasm-schema"
 version = "1.0.0"
 dependencies = [
  "schemars",
+ "serde",
  "serde_json",
 ]
 
