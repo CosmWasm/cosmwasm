@@ -45,6 +45,12 @@ impl Uint64 {
         Uint64(0)
     }
 
+    /// Creates a Uint64(1)
+    #[inline]
+    pub const fn one() -> Self {
+        Self(1)
+    }
+
     /// Returns a copy of the internal data
     pub const fn u64(&self) -> u64 {
         self.0
@@ -455,6 +461,15 @@ where
 mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
+
+    #[test]
+    fn uint64_zero_and_one_works() {
+        let zero = Uint64::zero();
+        assert_eq!(zero.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 0,]);
+
+        let one = Uint64::one();
+        assert_eq!(one.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 1]);
+    }
 
     #[test]
     fn uint64_convert_into() {
