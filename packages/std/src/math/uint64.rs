@@ -463,10 +463,13 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
-    fn uint64_zero_and_one_works() {
+    fn uint64_zero_works() {
         let zero = Uint64::zero();
-        assert_eq!(zero.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 0,]);
+        assert_eq!(zero.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 0]);
+    }
 
+    #[test]
+    fn uint64_one_works() {
         let one = Uint64::one();
         assert_eq!(one.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 1]);
     }

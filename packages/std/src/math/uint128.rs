@@ -509,22 +509,16 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
-    fn uint128_one_works() {
-        let one = Uint128::one();
+    fn uint128_zero_works() {
+        let zero = Uint128::zero();
         assert_eq!(
-            one.to_be_bytes(),
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+            zero.to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         );
     }
 
     #[test]
-    fn uint128_zero_and_one_works() {
-        let zero = Uint128::zero();
-        assert_eq!(
-            zero.to_be_bytes(),
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,]
-        );
-
+    fn uint128_one_works() {
         let one = Uint128::one();
         assert_eq!(
             one.to_be_bytes(),

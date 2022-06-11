@@ -567,20 +567,7 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
-    fn uin512_one_works() {
-        let one = Uint512::one();
-        assert_eq!(
-            one.to_be_bytes(),
-            [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 1
-            ]
-        );
-    }
-
-    #[test]
-    fn uint512_construct() {
+    fn uint512_new_works() {
         let num = Uint512::new([1; 64]);
         let a: [u8; 64] = num.to_be_bytes();
         assert_eq!(a, [1; 64]);
@@ -597,7 +584,7 @@ mod tests {
     }
 
     #[test]
-    fn uint512_zero_and_one_works() {
+    fn uint512_zero_works() {
         let zero = Uint512::zero();
         assert_eq!(
             zero.to_be_bytes(),
@@ -607,7 +594,10 @@ mod tests {
                 0, 0, 0, 0, 0, 0, 0, 0
             ]
         );
+    }
 
+    #[test]
+    fn uin512_one_works() {
         let one = Uint512::one();
         assert_eq!(
             one.to_be_bytes(),
