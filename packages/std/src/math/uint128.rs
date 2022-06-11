@@ -49,6 +49,12 @@ impl Uint128 {
         Uint128(0)
     }
 
+    /// Creates a Uint128(1)
+    #[inline]
+    pub const fn one() -> Self {
+        Self(1)
+    }
+
     /// Returns a copy of the internal data
     pub const fn u128(&self) -> u128 {
         self.0
@@ -501,6 +507,24 @@ where
 mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
+
+    #[test]
+    fn uint128_zero_works() {
+        let zero = Uint128::zero();
+        assert_eq!(
+            zero.to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+    }
+
+    #[test]
+    fn uint128_one_works() {
+        let one = Uint128::one();
+        assert_eq!(
+            one.to_be_bytes(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        );
+    }
 
     #[test]
     fn uint128_convert_into() {

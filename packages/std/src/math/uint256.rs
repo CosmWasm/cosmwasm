@@ -66,6 +66,15 @@ impl Uint256 {
         Uint256(U256::zero())
     }
 
+    /// Creates a Uint256(1)
+    #[inline]
+    pub const fn one() -> Self {
+        Self::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 1,
+        ])
+    }
+
     pub const fn from_be_bytes(data: [u8; 32]) -> Self {
         let words: [u64; 4] = [
             u64::from_le_bytes([
@@ -597,7 +606,7 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
-    fn uint256_construct() {
+    fn uint256_new_works() {
         let num = Uint256::new([1; 32]);
         let a: [u8; 32] = num.to_be_bytes();
         assert_eq!(a, [1; 32]);
@@ -609,6 +618,30 @@ mod tests {
         let num = Uint256::new(be_bytes);
         let resulting_bytes: [u8; 32] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn uint256_zero_works() {
+        let zero = Uint256::zero();
+        assert_eq!(
+            zero.to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0
+            ]
+        );
+    }
+
+    #[test]
+    fn uin256_one_works() {
+        let one = Uint256::one();
+        assert_eq!(
+            one.to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1,
+            ]
+        );
     }
 
     #[test]

@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `Uint{64,128,256,512}::one`.
+
 ## [1.0.0] - 2022-05-14
 
 ### Added
