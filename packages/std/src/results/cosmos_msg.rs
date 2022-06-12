@@ -123,6 +123,9 @@ pub enum WasmMsg {
     /// `sender` is automatically filled with the current contract's address.
     Execute {
         contract_addr: String,
+        /// code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract
+        /// It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked
+        code_hash: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
         msg: Binary,
         funds: Vec<Coin>,
@@ -134,6 +137,9 @@ pub enum WasmMsg {
     Instantiate {
         admin: Option<String>,
         code_id: u64,
+        /// code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract
+        /// It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked
+        code_hash: String,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         msg: Binary,
         funds: Vec<Coin>,
@@ -188,6 +194,7 @@ pub enum VoteOption {
 /// When using this, `admin` is always unset. If you need more flexibility, create the message directly.
 pub fn wasm_instantiate(
     code_id: u64,
+    code_hash: impl Into<String>,
     msg: &impl Serialize,
     funds: Vec<Coin>,
     label: String,
@@ -196,6 +203,7 @@ pub fn wasm_instantiate(
     Ok(WasmMsg::Instantiate {
         admin: None,
         code_id,
+        code_hash: code_hash.into(),
         msg: payload,
         funds,
         label,
@@ -205,12 +213,14 @@ pub fn wasm_instantiate(
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
 pub fn wasm_execute(
     contract_addr: impl Into<String>,
+    code_hash: impl Into<String>,
     msg: &impl Serialize,
     funds: Vec<Coin>,
 ) -> StdResult<WasmMsg> {
     let payload = to_binary(msg)?;
     Ok(WasmMsg::Execute {
         contract_addr: contract_addr.into(),
+        code_hash: code_hash.into(),
         msg: payload,
         funds,
     })

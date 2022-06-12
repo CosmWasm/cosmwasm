@@ -162,6 +162,7 @@ fn do_memory_loop() -> Result<Response, HackError> {
 fn do_message_loop(env: Env) -> Result<Response, HackError> {
     let resp = Response::new().add_message(WasmMsg::Execute {
         contract_addr: env.contract.address.into(),
+        code_hash: env.contract.code_hash,
         msg: to_binary(&ExecuteMsg::MessageLoop {})?,
         funds: vec![],
     });

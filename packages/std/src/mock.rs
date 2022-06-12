@@ -231,6 +231,7 @@ pub fn mock_env() -> Env {
         transaction: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            code_hash: "".to_string(),
         },
     }
 }
