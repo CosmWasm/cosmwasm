@@ -258,6 +258,15 @@ impl Uint512 {
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
+
+    pub fn abs_diff(self, other: impl Into<Uint512>) -> Self {
+        let other = other.into();
+        if self < other {
+            other - self
+        } else {
+            self - other
+        }
+    }
 }
 
 impl From<Uint256> for Uint512 {
@@ -1150,5 +1159,14 @@ mod tests {
         let b = Uint512::from(6u32);
         a %= &b;
         assert_eq!(a, Uint512::from(1u32));
+    }
+
+    #[test]
+    fn uint512_abs_diff_works() {
+        let a = Uint512::from(42u32);
+        let b = Uint512::from(5u32);
+        let expected = Uint512::from(37u32);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
     }
 }

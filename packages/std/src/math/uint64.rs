@@ -204,6 +204,10 @@ impl Uint64 {
     pub fn saturating_pow(self, other: u32) -> Self {
         Self(self.0.saturating_pow(other))
     }
+
+    pub fn abs_diff(self, other: impl Into<u64>) -> Self {
+        Self(self.0.abs_diff(other.into()))
+    }
 }
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
@@ -877,5 +881,14 @@ mod tests {
         let b = Uint64::from(6u32);
         a %= &b;
         assert_eq!(a, Uint64::from(1u32));
+    }
+
+    #[test]
+    fn uint64_abs_diff_works() {
+        let a = Uint64::from(42u32);
+        let b = Uint64::from(5u32);
+        let expected = Uint64::from(37u32);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
     }
 }
