@@ -206,7 +206,11 @@ impl Uint64 {
     }
 
     pub const fn abs_diff(self, other: Self) -> Self {
-        Self(self.0.abs_diff(other.0))
+        Self(if self.0 < other.0 {
+            other.0 - self.0
+        } else {
+            self.0 - other.0
+        })
     }
 }
 
