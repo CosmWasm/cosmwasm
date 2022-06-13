@@ -205,8 +205,8 @@ impl Uint64 {
         Self(self.0.saturating_pow(other))
     }
 
-    pub fn abs_diff(self, other: impl Into<u64>) -> Self {
-        Self(self.0.abs_diff(other.into()))
+    pub const fn abs_diff(self, other: Self) -> Self {
+        Self(self.0.abs_diff(other.0))
     }
 }
 

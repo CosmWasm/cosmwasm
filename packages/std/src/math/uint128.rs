@@ -209,8 +209,8 @@ impl Uint128 {
         Self(self.0.saturating_pow(other))
     }
 
-    pub fn abs_diff(self, other: impl Into<u128>) -> Self {
-        Self(self.0.abs_diff(other.into()))
+    pub const fn abs_diff(self, other: Self) -> Self {
+        Self(self.0.abs_diff(other.0))
     }
 }
 

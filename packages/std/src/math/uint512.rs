@@ -259,8 +259,7 @@ impl Uint512 {
         Self(self.0.saturating_mul(other.0))
     }
 
-    pub fn abs_diff(self, other: impl Into<Uint512>) -> Self {
-        let other = other.into();
+    pub fn abs_diff(self, other: Self) -> Self {
         if self < other {
             other - self
         } else {

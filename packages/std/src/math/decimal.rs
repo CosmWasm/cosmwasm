@@ -259,12 +259,8 @@ impl Decimal {
         })
     }
 
-    pub fn abs_diff(self, other: Self) -> Self {
-        if self < other {
-            other - self
-        } else {
-            self - other
-        }
+    pub const fn abs_diff(self, other: Self) -> Self {
+        Self(self.0.abs_diff(other.0))
     }
 }
 
