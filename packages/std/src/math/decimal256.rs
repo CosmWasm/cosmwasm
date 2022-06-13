@@ -270,6 +270,14 @@ impl Decimal256 {
             Self(inner.isqrt().checked_mul(outer_mul).unwrap())
         })
     }
+
+    pub fn abs_diff(self, other: Self) -> Self {
+        if self < other {
+            other - self
+        } else {
+            self - other
+        }
+    }
 }
 
 impl Fraction<Uint256> for Decimal256 {
@@ -1782,5 +1790,14 @@ mod tests {
             from_slice::<Decimal256>(br#""87.65""#).unwrap(),
             Decimal256::percent(8765)
         );
+    }
+
+    #[test]
+    fn decimal256_abs_diff_works() {
+        let a = Decimal256::percent(285);
+        let b = Decimal256::percent(200);
+        let expected = Decimal256::percent(85);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
     }
 }

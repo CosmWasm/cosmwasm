@@ -204,6 +204,14 @@ impl Uint64 {
     pub fn saturating_pow(self, other: u32) -> Self {
         Self(self.0.saturating_pow(other))
     }
+
+    pub const fn abs_diff(self, other: Self) -> Self {
+        Self(if self.0 < other.0 {
+            other.0 - self.0
+        } else {
+            self.0 - other.0
+        })
+    }
 }
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
@@ -877,5 +885,14 @@ mod tests {
         let b = Uint64::from(6u32);
         a %= &b;
         assert_eq!(a, Uint64::from(1u32));
+    }
+
+    #[test]
+    fn uint64_abs_diff_works() {
+        let a = Uint64::from(42u32);
+        let b = Uint64::from(5u32);
+        let expected = Uint64::from(37u32);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
     }
 }

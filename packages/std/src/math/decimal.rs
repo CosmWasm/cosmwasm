@@ -258,6 +258,10 @@ impl Decimal {
             Decimal(inner.isqrt().checked_mul(Uint128::from(outer_mul)).unwrap())
         })
     }
+
+    pub const fn abs_diff(self, other: Self) -> Self {
+        Self(self.0.abs_diff(other.0))
+    }
 }
 
 impl Fraction<Uint128> for Decimal {
@@ -1663,5 +1667,14 @@ mod tests {
             from_slice::<Decimal>(br#""87.65""#).unwrap(),
             Decimal::percent(8765)
         );
+    }
+
+    #[test]
+    fn decimal_abs_diff_works() {
+        let a = Decimal::percent(285);
+        let b = Decimal::percent(200);
+        let expected = Decimal::percent(85);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
     }
 }
