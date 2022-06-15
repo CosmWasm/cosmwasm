@@ -168,6 +168,7 @@ impl Decimal {
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Uint128::new(1));
     /// ```
+    #[inline]
     pub const fn atomics(&self) -> Uint128 {
         self.0
     }
@@ -176,6 +177,7 @@ impl Decimal {
     /// but this could potentially change as the type evolves.
     ///
     /// See also [`Decimal::atomics()`].
+    #[inline]
     pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
     }

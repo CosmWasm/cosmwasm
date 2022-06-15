@@ -8,7 +8,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::{CheckedFromRatioError, CheckedMultiplyRatioError, StdError};
-use crate::{OverflowError, Uint512};
+use crate::{Decimal, OverflowError, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -180,6 +180,7 @@ impl Decimal256 {
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Uint256::from(1u128));
     /// ```
+    #[inline]
     pub const fn atomics(&self) -> Uint256 {
         self.0
     }
@@ -188,6 +189,7 @@ impl Decimal256 {
     /// but this could potentially change as the type evolves.
     ///
     /// See also [`Decimal256::atomics()`].
+    #[inline]
     pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
     }
@@ -303,6 +305,14 @@ impl Fraction<Uint256> for Decimal256 {
             // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
             Some(Self(Self::DECIMAL_FRACTIONAL_SQUARED / self.0))
         }
+    }
+}
+
+impl From<Decimal> for Decimal256 {
+    fn from(input: Decimal) -> Self {
+        // Unwrap is safe because Decimal256 and Decimal have the same decimal places.
+        // Every Decimal value can be stored in Decimal256.
+        Decimal256::from_atomics(input.atomics(), input.decimal_places()).unwrap()
     }
 }
 
@@ -772,6 +782,21 @@ mod tests {
             fraction.denominator(),
             Uint256::from_str("1000000000000000000").unwrap()
         );
+    }
+
+    #[test]
+    fn decimal256_implements_from_decimal() {
+        let a = Decimal::from_str("123.456").unwrap();
+        let b = Decimal256::from(a);
+        assert_eq!(b.to_string(), "123.456");
+
+        let a = Decimal::from_str("0").unwrap();
+        let b = Decimal256::from(a);
+        assert_eq!(b.to_string(), "0");
+
+        let a = Decimal::MAX;
+        let b = Decimal256::from(a);
+        assert_eq!(b.to_string(), "340282366920938463463.374607431768211455");
     }
 
     #[test]
