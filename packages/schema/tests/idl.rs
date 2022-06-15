@@ -23,6 +23,12 @@ pub enum QueryMsg {
     Balance { account: String },
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ContractError {
+    Invalid {},
+}
+
 #[test]
 fn test() -> anyhow::Result<()> {
     let file = tempfile()?;
@@ -31,11 +37,12 @@ fn test() -> anyhow::Result<()> {
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),
+        migrate: None,
+        sudo: None,
+        error: schema_for!(ContractError),
         responses: [("balance".to_string(), schema_for!(u128))]
             .into_iter()
             .collect(),
-        migrate: None,
-        sudo: None,
     }
     .render();
     let _api = serde_json::to_writer_pretty(file, &api)?;

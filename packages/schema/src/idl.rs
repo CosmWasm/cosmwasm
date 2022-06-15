@@ -18,6 +18,7 @@ pub struct Api {
     pub query: RootSchema,
     pub migrate: Option<RootSchema>,
     pub sudo: Option<RootSchema>,
+    pub error: RootSchema,
     /// A mapping of query variants to response types
     pub responses: HashMap<String, RootSchema>,
 }
@@ -31,6 +32,7 @@ impl Api {
             query: self.query,
             migrate: self.migrate,
             sudo: self.sudo,
+            error: self.error,
             responses: self.responses,
         };
 
@@ -67,6 +69,7 @@ pub struct JsonApi<'v> {
     query: RootSchema,
     migrate: Option<RootSchema>,
     sudo: Option<RootSchema>,
+    error: RootSchema,
     responses: HashMap<String, RootSchema>,
 }
 
