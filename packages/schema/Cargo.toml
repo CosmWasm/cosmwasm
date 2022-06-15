@@ -11,3 +11,7 @@ license = "Apache-2.0"
 schemars = "0.8.1"
 serde = "1.0"
 serde_json = "1.0"
+
+[dev-dependencies]
+anyhow = "1"
+tempfile = "3"

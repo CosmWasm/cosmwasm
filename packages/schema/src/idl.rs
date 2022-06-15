@@ -1,5 +1,7 @@
 //! The Cosmwasm IDL (Interface Description Language)
 
+use std::path::Path;
+
 use schemars::schema::RootSchema;
 
 /// The version of the CosmWasm IDL.
@@ -11,20 +13,20 @@ pub const VERSION: &'static str = "0.1.0";
 
 /// Rust representation of a contract's API.
 pub struct Api {
-    instantiate: RootSchema,
-    execute: RootSchema,
-    query: RootSchema,
-    response: RootSchema,
+    pub instantiate: RootSchema,
+    pub execute: RootSchema,
+    pub query: RootSchema,
+    //pub response: RootSchema,
 }
 
 impl Api {
-    fn render(self) -> JsonApi<'static> {
+    pub fn render(self) -> JsonApi<'static> {
         let mut json_api = JsonApi {
             version: VERSION,
             instantiate: self.instantiate,
             execute: self.execute,
             query: self.query,
-            response: self.response,
+            //response: self.response,
         };
 
         if let Some(metadata) = &mut json_api.instantiate.schema.metadata {
@@ -36,9 +38,9 @@ impl Api {
         if let Some(metadata) = &mut json_api.query.schema.metadata {
             metadata.title = Some("QueryMsg".to_string());
         }
-        if let Some(metadata) = &mut json_api.response.schema.metadata {
-            metadata.title = Some("QueryResponse".to_string());
-        }
+        //if let Some(metadata) = &mut json_api.response.schema.metadata {
+        //    metadata.title = Some("QueryResponse".to_string());
+        //}
 
         json_api
     }
@@ -46,10 +48,20 @@ impl Api {
 
 /// A JSON representation of a contract's API.
 #[derive(serde::Serialize, serde::Deserialize)]
-struct JsonApi<'v> {
+pub struct JsonApi<'v> {
     version: &'v str,
     instantiate: RootSchema,
     execute: RootSchema,
     query: RootSchema,
-    response: RootSchema,
+    //response: RootSchema,
 }
+
+impl JsonApi<'_> {
+    pub fn verify(self) -> Result<Api, VerificationError> {
+        // TODO: check semver compatibility
+        todo!()
+    }
+}
+
+/// TODO: actual thiserror thingy
+pub struct VerificationError;

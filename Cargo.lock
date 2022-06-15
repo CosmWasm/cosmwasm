@@ -286,9 +286,11 @@ dependencies = [
 name = "cosmwasm-schema"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "schemars",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]
