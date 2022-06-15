@@ -1,8 +1,8 @@
 //! The Cosmwasm IDL (Interface Description Language)
 
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
-use schemars::schema::RootSchema;
+use schemars::schema::{RootSchema, SchemaObject};
 
 /// The version of the CosmWasm IDL.
 ///
@@ -16,7 +16,8 @@ pub struct Api {
     pub instantiate: RootSchema,
     pub execute: RootSchema,
     pub query: RootSchema,
-    //pub response: RootSchema,
+    /// A mapping of query variants to response types
+    pub responses: HashMap<String, RootSchema>,
 }
 
 impl Api {
@@ -26,7 +27,7 @@ impl Api {
             instantiate: self.instantiate,
             execute: self.execute,
             query: self.query,
-            //response: self.response,
+            responses: self.responses,
         };
 
         if let Some(metadata) = &mut json_api.instantiate.schema.metadata {
@@ -38,9 +39,6 @@ impl Api {
         if let Some(metadata) = &mut json_api.query.schema.metadata {
             metadata.title = Some("QueryMsg".to_string());
         }
-        //if let Some(metadata) = &mut json_api.response.schema.metadata {
-        //    metadata.title = Some("QueryResponse".to_string());
-        //}
 
         json_api
     }
@@ -53,7 +51,7 @@ pub struct JsonApi<'v> {
     instantiate: RootSchema,
     execute: RootSchema,
     query: RootSchema,
-    //response: RootSchema,
+    responses: HashMap<String, RootSchema>,
 }
 
 impl JsonApi<'_> {

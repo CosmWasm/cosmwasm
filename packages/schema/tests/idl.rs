@@ -31,22 +31,12 @@ fn test() -> anyhow::Result<()> {
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),
-        //response: schema_for!(QueryResponse),
+        responses: [("balance".to_string(), schema_for!(u128))]
+            .into_iter()
+            .collect(),
     }
     .render();
     let api = serde_json::to_writer_pretty(file, &api)?;
 
-    // let mut out_dir = current_dir().unwrap();
-    // out_dir.push("schema");
-    // create_dir_all(&out_dir).unwrap();
-    // remove_schemas(&out_dir).unwrap();
-
-    // api.set_names();
-
-    // // TODO: expose write_schema in export.rs (cosmwasm-schema)
-    // let path = out_dir.join("api.json".to_string());
-    // let json = serde_json::to_string_pretty(&api).unwrap();
-    // write(&path, json + "\n").unwrap();
-    // println!("Created {}", path.to_str().unwrap());
     Ok(())
 }
