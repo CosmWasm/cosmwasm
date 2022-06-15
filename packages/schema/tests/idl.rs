@@ -27,16 +27,18 @@ pub enum QueryMsg {
 fn test() -> anyhow::Result<()> {
     let file = tempfile()?;
 
-    let mut api = Api {
+    let api = Api {
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),
         responses: [("balance".to_string(), schema_for!(u128))]
             .into_iter()
             .collect(),
+        migrate: None,
+        sudo: None,
     }
     .render();
-    let api = serde_json::to_writer_pretty(file, &api)?;
+    let _api = serde_json::to_writer_pretty(file, &api)?;
 
     Ok(())
 }

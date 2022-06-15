@@ -1,8 +1,8 @@
 //! The Cosmwasm IDL (Interface Description Language)
 
-use std::{collections::HashMap, path::Path};
+use std::collections::HashMap;
 
-use schemars::schema::{RootSchema, SchemaObject};
+use schemars::schema::RootSchema;
 
 /// The version of the CosmWasm IDL.
 ///
@@ -16,6 +16,8 @@ pub struct Api {
     pub instantiate: RootSchema,
     pub execute: RootSchema,
     pub query: RootSchema,
+    pub migrate: Option<RootSchema>,
+    pub sudo: Option<RootSchema>,
     /// A mapping of query variants to response types
     pub responses: HashMap<String, RootSchema>,
 }
@@ -27,6 +29,8 @@ impl Api {
             instantiate: self.instantiate,
             execute: self.execute,
             query: self.query,
+            migrate: self.migrate,
+            sudo: self.sudo,
             responses: self.responses,
         };
 
@@ -38,6 +42,16 @@ impl Api {
         }
         if let Some(metadata) = &mut json_api.query.schema.metadata {
             metadata.title = Some("QueryMsg".to_string());
+        }
+        if let Some(migrate) = &mut json_api.migrate {
+            if let Some(metadata) = &mut migrate.schema.metadata {
+                metadata.title = Some("MigrateMsg".to_string());
+            }
+        }
+        if let Some(sudo) = &mut json_api.sudo {
+            if let Some(metadata) = &mut sudo.schema.metadata {
+                metadata.title = Some("SudoMsg".to_string());
+            }
         }
 
         json_api
@@ -51,6 +65,8 @@ pub struct JsonApi<'v> {
     instantiate: RootSchema,
     execute: RootSchema,
     query: RootSchema,
+    migrate: Option<RootSchema>,
+    sudo: Option<RootSchema>,
     responses: HashMap<String, RootSchema>,
 }
 
