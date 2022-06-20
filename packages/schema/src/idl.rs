@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use schemars::schema::RootSchema;
+use thiserror::Error;
 
 /// The version of the CosmWasm IDL.
 ///
@@ -68,6 +69,22 @@ pub struct JsonApi<'v> {
     migrate: Option<RootSchema>,
     sudo: Option<RootSchema>,
     responses: HashMap<String, RootSchema>,
+}
+
+impl JsonApi<'_> {
+    pub fn to_string(&self) -> Result<String, EncodeError> {
+        serde_json::to_string_pretty(&self).map_err(Into::into)
+    }
+
+    pub fn to_writer(&self, writer: impl std::io::Write) -> Result<(), EncodeError> {
+        serde_json::to_writer_pretty(writer, self).map_err(Into::into)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum EncodeError {
+    #[error("{0}")]
+    JsonError(#[from] serde_json::Error),
 }
 
 #[cfg(test)]
