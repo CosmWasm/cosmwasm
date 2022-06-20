@@ -23,12 +23,6 @@ pub enum QueryMsg {
     Balance { account: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ContractError {
-    Invalid {},
-}
-
 #[test]
 fn test() {
     let file = tempfile().unwrap();
@@ -39,7 +33,6 @@ fn test() {
         query: schema_for!(QueryMsg),
         migrate: None,
         sudo: None,
-        error: schema_for!(ContractError),
         responses: [("balance".to_string(), schema_for!(u128))]
             .into_iter()
             .collect(),
