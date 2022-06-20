@@ -14,4 +14,5 @@ serde_json = "1.0"
 
 [dev-dependencies]
 anyhow = "1"
+semver = "1"
 tempfile = "3"

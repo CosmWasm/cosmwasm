@@ -9,7 +9,7 @@ use schemars::schema::RootSchema;
 /// Follows Semantic Versioning 2.0.0: https://semver.org/
 ///
 /// To determine if a change is breaking, assume consumers allow unknown fields.
-pub const VERSION: &'static str = "0.1.0";
+pub const IDL_VERSION: &'static str = "0.1.0";
 
 /// Rust representation of a contract's API.
 pub struct Api {
@@ -26,7 +26,7 @@ pub struct Api {
 impl Api {
     pub fn render(self) -> JsonApi<'static> {
         let mut json_api = JsonApi {
-            version: VERSION,
+            version: IDL_VERSION,
             instantiate: self.instantiate,
             execute: self.execute,
             query: self.query,
@@ -61,7 +61,7 @@ impl Api {
 }
 
 /// A JSON representation of a contract's API.
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize)]
 pub struct JsonApi<'v> {
     version: &'v str,
     instantiate: RootSchema,
@@ -72,13 +72,3 @@ pub struct JsonApi<'v> {
     error: RootSchema,
     responses: HashMap<String, RootSchema>,
 }
-
-impl JsonApi<'_> {
-    pub fn verify(self) -> Result<Api, VerificationError> {
-        // TODO: check semver compatibility
-        todo!()
-    }
-}
-
-/// TODO: actual thiserror thingy
-pub struct VerificationError;

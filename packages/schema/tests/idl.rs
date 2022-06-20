@@ -30,8 +30,8 @@ pub enum ContractError {
 }
 
 #[test]
-fn test() -> anyhow::Result<()> {
-    let file = tempfile()?;
+fn test() {
+    let file = tempfile().unwrap();
 
     let api = Api {
         instantiate: schema_for!(InstantiateMsg),
@@ -45,7 +45,5 @@ fn test() -> anyhow::Result<()> {
             .collect(),
     }
     .render();
-    let _api = serde_json::to_writer_pretty(file, &api)?;
-
-    Ok(())
+    let _api = serde_json::to_writer_pretty(file, &api).unwrap();
 }
