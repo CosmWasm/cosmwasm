@@ -10,7 +10,7 @@ use thiserror::Error;
 /// Follows Semantic Versioning 2.0.0: https://semver.org/
 ///
 /// To determine if a change is breaking, assume consumers allow unknown fields.
-pub const IDL_VERSION: &'static str = "0.1.0";
+pub const IDL_VERSION: &str = "0.1.0";
 
 /// Rust representation of a contract's API.
 pub struct Api {

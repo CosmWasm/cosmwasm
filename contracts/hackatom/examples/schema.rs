@@ -4,7 +4,6 @@ use std::fs::{create_dir_all, write};
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for, Api};
 use cosmwasm_std::{AllBalanceResponse, BalanceResponse};
 
-use hackatom::errors::HackError;
 use hackatom::msg::{
     ExecuteMsg, InstantiateMsg, IntResponse, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg,
     VerifierResponse,
