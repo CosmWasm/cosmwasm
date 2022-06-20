@@ -72,3 +72,13 @@ pub struct JsonApi<'v> {
     error: RootSchema,
     responses: HashMap<String, RootSchema>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn version_is_semver() {
+        semver::Version::parse(IDL_VERSION).unwrap();
+    }
+}
