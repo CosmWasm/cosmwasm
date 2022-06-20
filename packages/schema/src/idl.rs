@@ -25,7 +25,7 @@ pub struct Api {
 impl Api {
     pub fn render(self) -> JsonApi<'static> {
         let mut json_api = JsonApi {
-            version: IDL_VERSION,
+            idl_version: IDL_VERSION,
             instantiate: self.instantiate,
             execute: self.execute,
             query: self.query,
@@ -61,7 +61,7 @@ impl Api {
 /// A JSON representation of a contract's API.
 #[derive(serde::Serialize)]
 pub struct JsonApi<'v> {
-    version: &'v str,
+    idl_version: &'v str,
     instantiate: RootSchema,
     execute: RootSchema,
     query: RootSchema,
