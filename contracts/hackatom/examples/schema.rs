@@ -29,7 +29,7 @@ fn main() {
     export_schema(&schema_for!(State), &out_dir);
 
     // The new IDL
-    let path = out_dir.join("api.json".to_string());
+    let path = out_dir.join("api.json");
     let api = Api {
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
