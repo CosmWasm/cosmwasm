@@ -4,6 +4,7 @@ use std::fs::{create_dir_all, write};
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for, Api};
 use cosmwasm_std::{AllBalanceResponse, BalanceResponse};
 
+use hackatom::contract::{CONTRACT_NAME, CONTRACT_VERSION};
 use hackatom::msg::{
     ExecuteMsg, InstantiateMsg, IntResponse, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg,
     VerifierResponse,
@@ -31,9 +32,9 @@ fn main() {
     // The new IDL
     let path = out_dir.join("api.json");
     let api = Api {
-        contract_name: "hackatom".to_string(),
+        contract_name: CONTRACT_NAME.to_string(),
         // TODO: this version should really be acquired dynamically somehow
-        contract_version: "0.0.0".to_string(),
+        contract_version: CONTRACT_VERSION.to_string(),
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),

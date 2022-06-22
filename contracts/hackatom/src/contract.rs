@@ -13,6 +13,9 @@ use crate::msg::{
 };
 use crate::state::{State, CONFIG_KEY};
 
+pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
