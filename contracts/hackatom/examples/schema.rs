@@ -30,10 +30,9 @@ fn main() {
     export_schema(&schema_for!(State), &out_dir);
 
     // The new IDL
-    let path = out_dir.join("api.json");
+    let path = out_dir.join(format!("{}.json", CONTRACT_NAME));
     let api = Api {
         contract_name: CONTRACT_NAME.to_string(),
-        // TODO: this version should really be acquired dynamically somehow
         contract_version: CONTRACT_VERSION.to_string(),
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
