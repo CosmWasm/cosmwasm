@@ -14,6 +14,8 @@ pub const IDL_VERSION: &str = "0.1.0";
 
 /// Rust representation of a contract's API.
 pub struct Api {
+    pub contract_name: String,
+    pub contract_version: String,
     pub instantiate: RootSchema,
     pub execute: RootSchema,
     pub query: RootSchema,
@@ -26,6 +28,8 @@ pub struct Api {
 impl Api {
     pub fn render(self) -> JsonApi<'static> {
         let mut json_api = JsonApi {
+            contract_name: self.contract_name,
+            contract_version: self.contract_version,
             idl_version: IDL_VERSION,
             instantiate: self.instantiate,
             execute: self.execute,
@@ -62,6 +66,8 @@ impl Api {
 /// A JSON representation of a contract's API.
 #[derive(serde::Serialize)]
 pub struct JsonApi<'v> {
+    contract_name: String,
+    contract_version: String,
     idl_version: &'v str,
     instantiate: RootSchema,
     execute: RootSchema,

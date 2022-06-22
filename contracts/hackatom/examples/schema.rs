@@ -31,6 +31,9 @@ fn main() {
     // The new IDL
     let path = out_dir.join("api.json");
     let api = Api {
+        contract_name: "hackatom".to_string(),
+        // TODO: this version should really be acquired dynamically somehow
+        contract_version: "0.0.0".to_string(),
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),

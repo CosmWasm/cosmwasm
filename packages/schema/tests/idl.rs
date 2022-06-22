@@ -40,6 +40,8 @@ pub struct MigrateMsg {
 #[test]
 fn test_basic_structure() {
     let api_str = Api {
+        contract_name: "test".to_string(),
+        contract_version: "0.1.0".to_string(),
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),
@@ -55,6 +57,8 @@ fn test_basic_structure() {
 
     let api_json: HashMap<String, Value> = serde_json::from_str(&api_str).unwrap();
     assert_eq!(api_json.get("idl_version").unwrap(), IDL_VERSION);
+    assert_eq!(api_json.get("contract_name").unwrap(), "test");
+    assert_eq!(api_json.get("contract_version").unwrap(), "0.1.0");
     assert_eq!(
         api_json.get("instantiate").unwrap().get("title").unwrap(),
         "InstantiateMsg"
@@ -80,6 +84,8 @@ fn test_basic_structure() {
 #[test]
 fn test_query_responses() {
     let api_str = Api {
+        contract_name: "test".to_string(),
+        contract_version: "0.1.0".to_string(),
         instantiate: schema_for!(InstantiateMsg),
         execute: schema_for!(ExecuteMsg),
         query: schema_for!(QueryMsg),
