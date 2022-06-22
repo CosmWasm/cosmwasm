@@ -1,7 +1,7 @@
 {
   "contract_name": "hackatom",
   "contract_version": "0.0.0",
-  "idl_version": "0.1.0",
+  "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
