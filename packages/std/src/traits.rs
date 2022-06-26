@@ -224,10 +224,12 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     // (response and request) based on the contract API
     pub fn query_wasm_smart<T: DeserializeOwned>(
         &self,
+        code_hash: impl Into<String>,
         contract_addr: impl Into<String>,
         msg: &impl Serialize,
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
+            code_hash: code_hash.into(),
             contract_addr: contract_addr.into(),
             msg: to_binary(msg)?,
         }

@@ -11,6 +11,7 @@ pub enum WasmQuery {
     /// Return value is whatever the contract returns (caller should know), wrapped in a
     /// ContractResult that is JSON encoded.
     Smart {
+        code_hash: String,
         contract_addr: String,
         /// msg is the json-encoded QueryMsg struct
         msg: Binary,
