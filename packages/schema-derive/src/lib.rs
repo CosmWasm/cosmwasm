@@ -27,6 +27,7 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
 
     let expanded = quote! {
         #[automatically_derived]
+        #[cfg(not(target_arch = "wasm32"))]
         impl cosmwasm_schema::QueryResponses for #ident {
             fn query_responses() -> std::collections::BTreeMap<&'static str, schemars::schema::RootSchema> {
                 [
