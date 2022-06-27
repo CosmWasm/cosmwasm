@@ -172,10 +172,20 @@ dependencies = [
 name = "cosmwasm-schema"
 version = "1.0.0"
 dependencies = [
+ "cosmwasm-schema-derive",
  "schemars",
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-schema-derive"
+version = "1.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
