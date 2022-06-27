@@ -1,14 +1,10 @@
-use std::collections::BTreeMap;
 use std::env::current_dir;
 use std::fs::{create_dir_all, write};
 
-use cosmwasm_schema::{export_schema, remove_schemas, schema_for, Api};
-use cosmwasm_std::{AllBalanceResponse, BalanceResponse};
+use cosmwasm_schema::{export_schema, remove_schemas, schema_for, Api, QueryResponses};
+use cosmwasm_std::BalanceResponse;
 
-use hackatom::msg::{
-    ExecuteMsg, InstantiateMsg, IntResponse, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg,
-    VerifierResponse,
-};
+use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg, VerifierResponse};
 use hackatom::state::State;
 
 fn main() {
@@ -42,12 +38,7 @@ fn main() {
         query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
-        responses: BTreeMap::from([
-            ("verifier".to_string(), schema_for!(VerifierResponse)),
-            ("other_balance".to_string(), schema_for!(AllBalanceResponse)),
-            ("recurse".to_string(), schema_for!(RecurseResponse)),
-            ("get_int".to_string(), schema_for!(IntResponse)),
-        ]),
+        responses: QueryMsg::query_responses(),
     }
     .render();
     let json = api.to_string().unwrap();

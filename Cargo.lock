@@ -853,6 +853,7 @@ dependencies = [
 name = "hackatom"
 version = "0.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "rust-argon2",
  "schemars",
