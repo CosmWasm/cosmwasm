@@ -4,7 +4,7 @@ use syn::{parse_macro_input, ItemEnum, Type, Variant};
 
 /// Extract the query -> response mapping out of an enum variant.
 fn parse_query(v: Variant) -> TokenStream {
-    let query = stringify!(v.ident);
+    let query = to_snake_case(&v.ident.to_string());
     let response_ty: Type = v
         .attrs
         .iter()
@@ -16,6 +16,17 @@ fn parse_query(v: Variant) -> TokenStream {
     quote! {
         (#query, cosmwasm_schema::schema_for!(#response_ty))
     }
+}
+
+fn to_snake_case(input: &str) -> String {
+    let mut snake = String::new();
+    for (i, ch) in input.char_indices() {
+        if i > 0 && ch.is_uppercase() {
+            snake.push('_');
+        }
+        snake.push(ch.to_ascii_lowercase());
+    }
+    snake
 }
 
 #[proc_macro_derive(QueryResponses, attributes(returns))]
