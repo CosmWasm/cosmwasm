@@ -19,6 +19,7 @@ fn parse_query(v: Variant) -> TokenStream {
 }
 
 fn to_snake_case(input: &str) -> String {
+    // this was stolen from serde for consistent behavior
     let mut snake = String::new();
     for (i, ch) in input.char_indices() {
         if i > 0 && ch.is_uppercase() {
@@ -51,4 +52,40 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
     };
 
     proc_macro::TokenStream::from(expanded)
+}
+
+#[cfg(tests)]
+mod tests {
+    use syn::parse_quote;
+
+    use super::*;
+
+    #[test]
+    fn parse_query() {
+        let variant = parse_quote! {
+            #[returns(Foo)]
+            GetFoo {},
+        };
+
+        assert_eq!(
+            parse_query(variant),
+            quote! { ("get_foo", cosmwasm_schema::schema_for!(Foo)) }
+        );
+
+        let variant = parse_quote! {
+            #[returns(some_crate::Foo)]
+            GetFoo {},
+        };
+
+        assert_eq!(
+            parse_query(variant),
+            quote! { ("get_foo", cosmwasm_schema::schema_for!(some_crate::Foo)) }
+        );
+    }
+
+    #[test]
+    fn to_snake_case() {
+        assert_eq!(to_snake_case("SnakeCase"), "snake_case");
+        assert_eq!(to_snake_case("Wasm123AndCo"), "wasm123_and_co");
+    }
 }
