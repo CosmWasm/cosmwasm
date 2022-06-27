@@ -300,7 +300,6 @@ dependencies = [
 name = "cosmwasm-schema-derive"
 version = "1.0.0"
 dependencies = [
- "cosmwasm-schema",
  "proc-macro2",
  "quote",
  "syn",

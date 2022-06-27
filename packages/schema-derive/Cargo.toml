@@ -12,8 +12,5 @@ proc-macro2 = "1"
 quote = "1"
 syn = { version = "1", features = ["full", "printing"] }
 
-[dev-dependencies]
-cosmwasm-schema = { version = "=1.0.0", path = "../schema" }
-
 [lib]
 proc-macro = true
