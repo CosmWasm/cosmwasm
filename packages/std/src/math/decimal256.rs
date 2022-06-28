@@ -1881,4 +1881,10 @@ mod tests {
         a %= &b;
         assert_eq!(a, Decimal256::percent(452)); // 42.62 % 12.7 = 4.52
     }
+
+    #[test]
+    #[should_panic(expected = "division by zero")]
+    fn decimal256_rem_panics_for_zero() {
+        let _ = Decimal256::percent(777) % Decimal256::zero();
+    }
 }

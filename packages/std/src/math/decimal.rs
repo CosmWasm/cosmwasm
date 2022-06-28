@@ -1735,4 +1735,10 @@ mod tests {
         a %= &b;
         assert_eq!(a, Decimal::percent(452)); // 42.62 % 12.7 = 4.52
     }
+
+    #[test]
+    #[should_panic(expected = "divisor of zero")]
+    fn decimal_rem_panics_for_zero() {
+        let _ = Decimal::percent(777) % Decimal::zero();
+    }
 }
