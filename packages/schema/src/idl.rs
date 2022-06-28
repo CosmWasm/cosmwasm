@@ -26,11 +26,11 @@ pub struct Api {
 }
 
 impl Api {
-    pub fn render(self) -> JsonApi<'static> {
+    pub fn render(self) -> JsonApi {
         let mut json_api = JsonApi {
             contract_name: self.contract_name,
             contract_version: self.contract_version,
-            idl_version: IDL_VERSION,
+            idl_version: IDL_VERSION.to_string(),
             instantiate: self.instantiate,
             execute: self.execute,
             query: self.query,
@@ -69,10 +69,10 @@ impl Api {
 
 /// A JSON representation of a contract's API.
 #[derive(serde::Serialize)]
-pub struct JsonApi<'v> {
+pub struct JsonApi {
     contract_name: String,
     contract_version: String,
-    idl_version: &'v str,
+    idl_version: String,
     instantiate: RootSchema,
     execute: Option<RootSchema>,
     query: Option<RootSchema>,
@@ -81,7 +81,7 @@ pub struct JsonApi<'v> {
     responses: BTreeMap<String, RootSchema>,
 }
 
-impl JsonApi<'_> {
+impl JsonApi {
     pub fn to_string(&self) -> Result<String, EncodeError> {
         serde_json::to_string_pretty(&self).map_err(Into::into)
     }
