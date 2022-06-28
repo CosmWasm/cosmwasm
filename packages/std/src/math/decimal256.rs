@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -504,6 +504,26 @@ impl DivAssign<Uint256> for Decimal256 {
         self.0 /= rhs;
     }
 }
+
+impl Rem for Decimal256 {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Decimal256, Decimal256);
+
+impl RemAssign<Decimal256> for Decimal256 {
+    fn rem_assign(&mut self, rhs: Decimal256) {
+        *self = *self % rhs;
+    }
+}
+forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal256, Decimal256);
 
 impl<A> std::iter::Sum<A> for Decimal256
 where
@@ -1824,5 +1844,41 @@ mod tests {
         let expected = Decimal256::percent(85);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn decimal256_rem_works() {
+        // 4.02 % 1.11 = 0.69
+        assert_eq!(
+            Decimal256::percent(402) % Decimal256::percent(111),
+            Decimal256::percent(69)
+        );
+
+        // 15.25 % 4 = 3.25
+        assert_eq!(
+            Decimal256::percent(1525) % Decimal256::percent(400),
+            Decimal256::percent(325)
+        );
+
+        let a = Decimal256::percent(318);
+        let b = Decimal256::percent(317);
+        let expected = Decimal256::percent(1);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    fn decimal_rem_assign_works() {
+        let mut a = Decimal256::percent(17673);
+        a %= Decimal256::percent(2362);
+        assert_eq!(a, Decimal256::percent(1139)); // 176.73 % 23.62 = 11.39
+
+        let mut a = Decimal256::percent(4262);
+        let b = Decimal256::percent(1270);
+        a %= &b;
+        assert_eq!(a, Decimal256::percent(452)); // 42.62 % 12.7 = 4.52
     }
 }
