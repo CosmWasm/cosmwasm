@@ -17,8 +17,8 @@ pub struct Api {
     pub contract_name: String,
     pub contract_version: String,
     pub instantiate: RootSchema,
-    pub execute: RootSchema,
-    pub query: RootSchema,
+    pub execute: Option<RootSchema>,
+    pub query: Option<RootSchema>,
     pub migrate: Option<RootSchema>,
     pub sudo: Option<RootSchema>,
     /// A mapping of query variants to response types
@@ -42,11 +42,15 @@ impl Api {
         if let Some(metadata) = &mut json_api.instantiate.schema.metadata {
             metadata.title = Some("InstantiateMsg".to_string());
         }
-        if let Some(metadata) = &mut json_api.execute.schema.metadata {
-            metadata.title = Some("ExecuteMsg".to_string());
+        if let Some(execute) = &mut json_api.execute {
+            if let Some(metadata) = &mut execute.schema.metadata {
+                metadata.title = Some("ExecuteMsg".to_string());
+            }
         }
-        if let Some(metadata) = &mut json_api.query.schema.metadata {
-            metadata.title = Some("QueryMsg".to_string());
+        if let Some(query) = &mut json_api.query {
+            if let Some(metadata) = &mut query.schema.metadata {
+                metadata.title = Some("QueryMsg".to_string());
+            }
         }
         if let Some(migrate) = &mut json_api.migrate {
             if let Some(metadata) = &mut migrate.schema.metadata {
@@ -70,8 +74,8 @@ pub struct JsonApi<'v> {
     contract_version: String,
     idl_version: &'v str,
     instantiate: RootSchema,
-    execute: RootSchema,
-    query: RootSchema,
+    execute: Option<RootSchema>,
+    query: Option<RootSchema>,
     migrate: Option<RootSchema>,
     sudo: Option<RootSchema>,
     responses: BTreeMap<String, RootSchema>,

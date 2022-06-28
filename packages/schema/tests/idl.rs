@@ -43,8 +43,8 @@ fn test_basic_structure() {
         contract_name: "test".to_string(),
         contract_version: "0.1.0".to_string(),
         instantiate: schema_for!(InstantiateMsg),
-        execute: schema_for!(ExecuteMsg),
-        query: schema_for!(QueryMsg),
+        execute: Some(schema_for!(ExecuteMsg)),
+        query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
         responses: [("balance".to_string(), schema_for!(u128))]
@@ -87,8 +87,8 @@ fn test_query_responses() {
         contract_name: "test".to_string(),
         contract_version: "0.1.0".to_string(),
         instantiate: schema_for!(InstantiateMsg),
-        execute: schema_for!(ExecuteMsg),
-        query: schema_for!(QueryMsg),
+        execute: Some(schema_for!(ExecuteMsg)),
+        query: Some(schema_for!(QueryMsg)),
         migrate: None,
         sudo: None,
         responses: [("balance".to_string(), schema_for!(u128))]

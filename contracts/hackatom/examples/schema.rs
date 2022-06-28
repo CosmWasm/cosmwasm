@@ -37,8 +37,8 @@ fn main() {
         contract_name: contract_name.to_string(),
         contract_version: contract_version.to_string(),
         instantiate: schema_for!(InstantiateMsg),
-        execute: schema_for!(ExecuteMsg),
-        query: schema_for!(QueryMsg),
+        execute: Some(schema_for!(ExecuteMsg)),
+        query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
         responses: [
