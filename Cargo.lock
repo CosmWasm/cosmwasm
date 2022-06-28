@@ -286,8 +286,13 @@ dependencies = [
 name = "cosmwasm-schema"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "schemars",
+ "semver",
+ "serde",
  "serde_json",
+ "tempfile",
+ "thiserror",
 ]
 
 [[package]]

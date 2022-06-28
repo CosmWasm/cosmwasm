@@ -1,10 +1,14 @@
+use std::collections::BTreeMap;
 use std::env::current_dir;
-use std::fs::create_dir_all;
+use std::fs::{create_dir_all, write};
 
-use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
-use cosmwasm_std::BalanceResponse;
+use cosmwasm_schema::{export_schema, remove_schemas, schema_for, Api};
+use cosmwasm_std::{AllBalanceResponse, BalanceResponse};
 
-use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg, VerifierResponse};
+use hackatom::msg::{
+    ExecuteMsg, InstantiateMsg, IntResponse, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg,
+    VerifierResponse,
+};
 use hackatom::state::State;
 
 fn main() {
@@ -24,4 +28,29 @@ fn main() {
 
     // state
     export_schema(&schema_for!(State), &out_dir);
+
+    let contract_name = env!("CARGO_PKG_NAME");
+    let contract_version = env!("CARGO_PKG_VERSION");
+
+    // The new IDL
+    let path = out_dir.join(format!("{}.json", contract_name));
+    let api = Api {
+        contract_name: contract_name.to_string(),
+        contract_version: contract_version.to_string(),
+        instantiate: schema_for!(InstantiateMsg),
+        execute: Some(schema_for!(ExecuteMsg)),
+        query: Some(schema_for!(QueryMsg)),
+        migrate: Some(schema_for!(MigrateMsg)),
+        sudo: Some(schema_for!(SudoMsg)),
+        responses: BTreeMap::from([
+            ("verifier".to_string(), schema_for!(VerifierResponse)),
+            ("other_balance".to_string(), schema_for!(AllBalanceResponse)),
+            ("recurse".to_string(), schema_for!(RecurseResponse)),
+            ("get_int".to_string(), schema_for!(IntResponse)),
+        ]),
+    }
+    .render();
+    let json = api.to_string().unwrap();
+    write(&path, json + "\n").unwrap();
+    println!("Exported the full API as {}", path.to_str().unwrap());
 }

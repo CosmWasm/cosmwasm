@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Binary, Coin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct InstantiateMsg {
     pub verifier: String,
     pub beneficiary: String,
@@ -17,6 +18,7 @@ pub struct InstantiateMsg {
 /// Note that the contract doesn't enforce permissions here, this is done
 /// by blockchain logic (in the future by blockchain governance)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct MigrateMsg {
     pub verifier: String,
 }
@@ -25,7 +27,7 @@ pub struct MigrateMsg {
 /// This is showing how we can expose "admin" functionality than can not be called by
 /// external users or contracts, but only trusted (native/Go) code in the blockchain
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[serde(deny_unknown_fields, rename_all = "snake_case")]
 pub enum SudoMsg {
     StealFunds {
         recipient: String,
@@ -36,7 +38,7 @@ pub enum SudoMsg {
 // failure modes to help test wasmd, based on this comment
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[serde(deny_unknown_fields, rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
     Release {},
@@ -65,7 +67,7 @@ pub enum ExecuteMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[serde(deny_unknown_fields, rename_all = "snake_case")]
 pub enum QueryMsg {
     /// returns a human-readable representation of the verifier
     /// use to ensure query path works in integration tests
@@ -82,17 +84,20 @@ pub enum QueryMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct VerifierResponse {
     pub verifier: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct RecurseResponse {
     /// hashed is the result of running sha256 "work+1" times on the contract's human address
     pub hashed: Binary,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct IntResponse {
     pub int: u32,
 }
