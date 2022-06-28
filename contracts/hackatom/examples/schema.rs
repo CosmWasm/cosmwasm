@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::env::current_dir;
 use std::fs::{create_dir_all, write};
 
@@ -41,14 +42,12 @@ fn main() {
         query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
-        responses: [
+        responses: BTreeMap::from([
             ("verifier".to_string(), schema_for!(VerifierResponse)),
             ("other_balance".to_string(), schema_for!(AllBalanceResponse)),
             ("recurse".to_string(), schema_for!(RecurseResponse)),
             ("get_int".to_string(), schema_for!(IntResponse)),
-        ]
-        .into_iter()
-        .collect(),
+        ]),
     }
     .render();
     let json = api.to_string().unwrap();
