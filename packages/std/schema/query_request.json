@@ -110,45 +110,20 @@
             "smart": {
               "type": "object",
               "required": [
+                "code_hash",
                 "contract_addr",
                 "msg"
               ],
               "properties": {
+                "code_hash": {
+                  "description": "code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked",
+                  "type": "string"
+                },
                 "contract_addr": {
                   "type": "string"
                 },
                 "msg": {
                   "description": "msg is the json-encoded QueryMsg struct",
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/Binary"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key, which may be an empty vector if not present",
-          "type": "object",
-          "required": [
-            "raw"
-          ],
-          "properties": {
-            "raw": {
-              "type": "object",
-              "required": [
-                "contract_addr",
-                "key"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "type": "string"
-                },
-                "key": {
-                  "description": "Key is the raw key used in the contracts Storage",
                   "allOf": [
                     {
                       "$ref": "#/definitions/Binary"

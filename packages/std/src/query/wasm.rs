@@ -11,17 +11,12 @@ pub enum WasmQuery {
     /// Return value is whatever the contract returns (caller should know), wrapped in a
     /// ContractResult that is JSON encoded.
     Smart {
-        callback_code_hash: String,
         contract_addr: String,
+        /// code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract
+        /// It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked
+        code_hash: String,
         /// msg is the json-encoded QueryMsg struct
         msg: Binary,
-    },
-    /// this queries the raw kv-store of the contract.
-    /// returns the raw, unparsed data stored at that key, which may be an empty vector if not present
-    Raw {
-        contract_addr: String,
-        /// Key is the raw key used in the contracts Storage
-        key: Binary,
     },
     /// returns a ContractInfoResponse with metadata on the contract from the runtime
     ContractInfo { contract_addr: String },
@@ -33,8 +28,6 @@ pub struct ContractInfoResponse {
     pub code_id: u64,
     /// address that instantiated this contract
     pub creator: String,
-    /// admin who can run migrations (if any)
-    pub admin: Option<String>,
     /// if set, the contract is pinned to the cache, and thus uses less gas when called
     pub pinned: bool,
     /// set if this contract has bound an IBC port
@@ -48,7 +41,6 @@ impl ContractInfoResponse {
         Self {
             code_id,
             creator: creator.into(),
-            admin: None,
             pinned: false,
             ibc_port: None,
         }

@@ -229,52 +229,12 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         msg: &impl Serialize,
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
-            callback_code_hash: code_hash.into(),
+            code_hash: code_hash.into(),
             contract_addr: contract_addr.into(),
             msg: to_binary(msg)?,
         }
         .into();
         self.query(&request)
-    }
-
-    // this queries the raw storage from another wasm contract.
-    // you must know the exact layout and are implementation dependent
-    // (not tied to an interface like query_wasm_smart)
-    // that said, if you are building a few contracts together, this is a much cheaper approach
-    //
-    // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
-    // It only returns error on some runtime issue, not on any data cases.
-    pub fn query_wasm_raw(
-        &self,
-        contract_addr: impl Into<String>,
-        key: impl Into<Binary>,
-    ) -> StdResult<Option<Vec<u8>>> {
-        let request: QueryRequest<Empty> = WasmQuery::Raw {
-            contract_addr: contract_addr.into(),
-            key: key.into(),
-        }
-        .into();
-        // we cannot use query, as it will try to parse the binary data, when we just want to return it,
-        // so a bit of code copy here...
-        let raw = to_vec(&request).map_err(|serialize_err| {
-            StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
-        })?;
-        match self.raw_query(&raw) {
-            SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
-                "Querier system error: {}",
-                system_err
-            ))),
-            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {}", contract_err),
-            )),
-            SystemResult::Ok(ContractResult::Ok(value)) => {
-                if value.is_empty() {
-                    Ok(None)
-                } else {
-                    Ok(Some(value.into()))
-                }
-            }
-        }
     }
 
     #[cfg(feature = "staking")]

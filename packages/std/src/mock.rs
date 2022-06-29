@@ -553,7 +553,6 @@ impl Default for WasmQuerier {
         let handler = Box::from(|request: &WasmQuery| -> QuerierResult {
             let addr = match request {
                 WasmQuery::Smart { contract_addr, .. } => contract_addr,
-                WasmQuery::Raw { contract_addr, .. } => contract_addr,
                 WasmQuery::ContractInfo { contract_addr, .. } => contract_addr,
             }
             .clone();
@@ -1332,23 +1331,13 @@ mod tests {
         let mut querier = WasmQuerier::default();
 
         let any_addr = "foo".to_string();
-
-        // Query WasmQuery::Raw
-        let system_err = querier
-            .query(&WasmQuery::Raw {
-                contract_addr: any_addr.clone(),
-                key: b"the key".into(),
-            })
-            .unwrap_err();
-        match system_err {
-            SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        let any_code_hash = "goo".to_string();
 
         // Query WasmQuery::Smart
         let system_err = querier
             .query(&WasmQuery::Smart {
                 contract_addr: any_addr.clone(),
+                code_hash: any_code_hash.clone(),
                 msg: b"{}".into(),
             })
             .unwrap_err();
@@ -1374,20 +1363,9 @@ mod tests {
             storage1.insert(b"the key".into(), b"the value".into());
 
             match request {
-                WasmQuery::Raw { contract_addr, key } => {
-                    if *contract_addr == constract1 {
-                        if let Some(value) = storage1.get(key) {
-                            SystemResult::Ok(ContractResult::Ok(value.clone()))
-                        } else {
-                            SystemResult::Ok(ContractResult::Ok(Binary::default()))
-                        }
-                    } else {
-                        SystemResult::Err(SystemError::NoSuchContract {
-                            addr: contract_addr.clone(),
-                        })
-                    }
-                }
-                WasmQuery::Smart { contract_addr, msg } => {
+                WasmQuery::Smart {
+                    contract_addr, msg, ..
+                } => {
                     if *contract_addr == constract1 {
                         #[derive(Deserialize)]
                         struct MyMsg {}
@@ -1410,7 +1388,6 @@ mod tests {
                         let response = ContractInfoResponse {
                             code_id: 4,
                             creator: "lalala".into(),
-                            admin: None,
                             pinned: false,
                             ibc_port: None,
                         };
@@ -1424,27 +1401,10 @@ mod tests {
             }
         });
 
-        // WasmQuery::Raw
-        let result = querier.query(&WasmQuery::Raw {
-            contract_addr: "contract1".into(),
-            key: b"the key".into(),
-        });
-        match result {
-            SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(value, b"the value" as &[u8]),
-            res => panic!("Unexpected result: {:?}", res),
-        }
-        let result = querier.query(&WasmQuery::Raw {
-            contract_addr: "contract1".into(),
-            key: b"other key".into(),
-        });
-        match result {
-            SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(value, b"" as &[u8]),
-            res => panic!("Unexpected result: {:?}", res),
-        }
-
         // WasmQuery::Smart
         let result = querier.query(&WasmQuery::Smart {
             contract_addr: "contract1".into(),
+            code_hash: "code_hash1".into(),
             msg: b"{}".into(),
         });
         match result {
@@ -1456,6 +1416,7 @@ mod tests {
         }
         let result = querier.query(&WasmQuery::Smart {
             contract_addr: "contract1".into(),
+            code_hash: "code_hash1".into(),
             msg: b"a broken request".into(),
         });
         match result {
@@ -1472,8 +1433,7 @@ mod tests {
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                 value,
-                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null}"#
-                    as &[u8]
+                br#"{"code_id":4,"creator":"lalala","pinned":false,"ibc_port":null}"# as &[u8]
             ),
             res => panic!("Unexpected result: {:?}", res),
         }

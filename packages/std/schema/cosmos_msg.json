@@ -137,11 +137,16 @@
             "execute": {
               "type": "object",
               "required": [
+                "code_hash",
                 "contract_addr",
                 "funds",
                 "msg"
               ],
               "properties": {
+                "code_hash": {
+                  "description": "code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked",
+                  "type": "string"
+                },
                 "contract_addr": {
                   "type": "string"
                 },
@@ -174,17 +179,16 @@
             "instantiate": {
               "type": "object",
               "required": [
+                "code_hash",
                 "code_id",
                 "funds",
                 "label",
                 "msg"
               ],
               "properties": {
-                "admin": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                "code_hash": {
+                  "description": "code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked",
+                  "type": "string"
                 },
                 "code_id": {
                   "type": "integer",
@@ -198,7 +202,7 @@
                   }
                 },
                 "label": {
-                  "description": "A human-readbale label for the contract",
+                  "description": "A human-readbale label for the contract, must be unique across all contracts",
                   "type": "string"
                 },
                 "msg": {
@@ -208,89 +212,6 @@
                       "$ref": "#/definitions/Binary"
                     }
                   ]
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to customize behavior.\n\nOnly the contract admin (as defined in wasmd), if any, is able to make this call.\n\nThis is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96). `sender` is automatically filled with the current contract's address.",
-          "type": "object",
-          "required": [
-            "migrate"
-          ],
-          "properties": {
-            "migrate": {
-              "type": "object",
-              "required": [
-                "contract_addr",
-                "msg",
-                "new_code_id"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "type": "string"
-                },
-                "msg": {
-                  "description": "msg is the json-encoded MigrateMsg struct that will be passed to the new code",
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/Binary"
-                    }
-                  ]
-                },
-                "new_code_id": {
-                  "description": "the code_id of the new logic to place in the given contract",
-                  "type": "integer",
-                  "format": "uint64",
-                  "minimum": 0.0
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Sets a new admin (for migrate) on the given contract. Fails if this contract is not currently admin of the target contract.",
-          "type": "object",
-          "required": [
-            "update_admin"
-          ],
-          "properties": {
-            "update_admin": {
-              "type": "object",
-              "required": [
-                "admin",
-                "contract_addr"
-              ],
-              "properties": {
-                "admin": {
-                  "type": "string"
-                },
-                "contract_addr": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Clears the admin on the given contract, so no more migration possible. Fails if this contract is not currently admin of the target contract.",
-          "type": "object",
-          "required": [
-            "clear_admin"
-          ],
-          "properties": {
-            "clear_admin": {
-              "type": "object",
-              "required": [
-                "contract_addr"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "type": "string"
                 }
               }
             }
