@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use cosmwasm_schema::{schema_for, Api, IDL_VERSION};
 use schemars::JsonSchema;
@@ -47,7 +47,7 @@ fn test_basic_structure() {
         query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
-        responses: [("balance", schema_for!(u128))].into_iter().collect(),
+        responses: BTreeMap::from([("balance".to_string(), schema_for!(u128))]),
     }
     .render()
     .to_string()
@@ -89,7 +89,7 @@ fn test_query_responses() {
         query: Some(schema_for!(QueryMsg)),
         migrate: None,
         sudo: None,
-        responses: [("balance", schema_for!(u128))].into_iter().collect(),
+        responses: BTreeMap::from([("balance".to_string(), schema_for!(u128))]),
     }
     .render()
     .to_string()
