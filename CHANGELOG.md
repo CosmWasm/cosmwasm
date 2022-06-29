@@ -12,6 +12,7 @@ and this project adheres to
 - cosmwasm-std: Add `Uint{64,128,256,512}::abs_diff` and
   `Decimal{,256}::abs_diff` ([#1334]).
 - cosmwasm-std: Implement `From<Decimal> for Decimal256`.
+- cosmwasm-std: Implement `Rem`/`RemAssign` for `Decimal`/`Decimal256`.
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 

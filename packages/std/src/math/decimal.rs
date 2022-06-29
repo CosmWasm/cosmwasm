@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -480,6 +480,26 @@ impl DivAssign<Uint128> for Decimal {
         self.0 /= rhs;
     }
 }
+
+impl Rem for Decimal {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Decimal, Decimal);
+
+impl RemAssign<Decimal> for Decimal {
+    fn rem_assign(&mut self, rhs: Decimal) {
+        *self = *self % rhs;
+    }
+}
+forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal, Decimal);
 
 impl<A> std::iter::Sum<A> for Decimal
 where
@@ -1678,5 +1698,47 @@ mod tests {
         let expected = Decimal::percent(85);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn decimal_rem_works() {
+        // 4.02 % 1.11 = 0.69
+        assert_eq!(
+            Decimal::percent(402) % Decimal::percent(111),
+            Decimal::percent(69)
+        );
+
+        // 15.25 % 4 = 3.25
+        assert_eq!(
+            Decimal::percent(1525) % Decimal::percent(400),
+            Decimal::percent(325)
+        );
+
+        let a = Decimal::percent(318);
+        let b = Decimal::percent(317);
+        let expected = Decimal::percent(1);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    fn decimal_rem_assign_works() {
+        let mut a = Decimal::percent(17673);
+        a %= Decimal::percent(2362);
+        assert_eq!(a, Decimal::percent(1139)); // 176.73 % 23.62 = 11.39
+
+        let mut a = Decimal::percent(4262);
+        let b = Decimal::percent(1270);
+        a %= &b;
+        assert_eq!(a, Decimal::percent(452)); // 42.62 % 12.7 = 4.52
+    }
+
+    #[test]
+    #[should_panic(expected = "divisor of zero")]
+    fn decimal_rem_panics_for_zero() {
+        let _ = Decimal::percent(777) % Decimal::zero();
     }
 }
