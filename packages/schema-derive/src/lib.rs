@@ -14,7 +14,7 @@ fn parse_query(v: Variant) -> TokenStream {
         .unwrap();
 
     quote! {
-        (#query, cosmwasm_schema::schema_for!(#response_ty))
+        (#query.to_string(), cosmwasm_schema::schema_for!(#response_ty))
     }
 }
 
@@ -41,7 +41,7 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
         #[automatically_derived]
         #[cfg(not(target_arch = "wasm32"))]
         impl cosmwasm_schema::QueryResponses for #ident {
-            fn query_responses() -> std::collections::BTreeMap<&'static str, schemars::schema::RootSchema> {
+            fn query_responses() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
                 std::collections::BTreeMap::from([
                     #( #responses, )*
                 ])
