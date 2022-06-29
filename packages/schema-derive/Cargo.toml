@@ -10,7 +10,8 @@ license = "Apache-2.0"
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "1", features = ["full", "printing"] }
+serde_derive_internals = "0.26.0"
+syn = { version = "1", features = ["full", "printing", "extra-traits"] }
 
 [lib]
 proc-macro = true
