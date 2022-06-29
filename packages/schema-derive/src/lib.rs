@@ -1,8 +1,5 @@
 use quote::ToTokens;
-use serde_derive_internals::attr::RenameRule;
-use syn::{
-    parse_macro_input, parse_quote, DeriveInput, ExprTuple, ItemEnum, ItemImpl, Type, Variant,
-};
+use syn::{parse_macro_input, parse_quote, ExprTuple, ItemEnum, ItemImpl, Type, Variant};
 
 /// Extract the query -> response mapping out of an enum variant.
 fn parse_query(v: Variant) -> ExprTuple {
@@ -32,18 +29,6 @@ fn to_snake_case(input: &str) -> String {
     snake
 }
 
-fn verify_serde_snake_case(input: ItemEnum) -> bool {
-    let ctx = serde_derive_internals::Ctxt::new();
-    let attr = serde_derive_internals::attr::Container::from_ast(&ctx, &DeriveInput::from(input));
-    ctx.check().unwrap();
-
-    let rename_all_rules = attr.rename_all_rules();
-
-    [rename_all_rules.serialize(), rename_all_rules.deserialize()]
-        .iter()
-        .all(|rule| **rule == RenameRule::SnakeCase)
-}
-
 #[proc_macro_derive(QueryResponses, attributes(returns))]
 pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as ItemEnum);
@@ -54,10 +39,6 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
 }
 
 fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
-    if !verify_serde_snake_case(input.clone()) {
-        panic!("queries need to be serialized as snake_case using #[serde(rename_all = \"snake_case\")]");
-    }
-
     let ident = input.ident;
 
     let responses = input.variants.into_iter().map(parse_query);
@@ -143,9 +124,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "queries need to be serialized as snake_case using #[serde(rename_all = \"snake_case\")]"
-    )]
+    #[should_panic]
     fn panic_if_queries_are_not_snake_case1() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
@@ -159,9 +138,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "queries need to be serialized as snake_case using #[serde(rename_all = \"snake_case\")]"
-    )]
+    #[should_panic]
     fn panic_if_queries_are_not_snake_case2() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
@@ -176,9 +153,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "queries need to be serialized as snake_case using #[serde(rename_all = \"snake_case\")]"
-    )]
+    #[should_panic]
     fn panic_if_queries_are_not_snake_case3() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
