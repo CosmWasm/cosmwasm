@@ -5,5 +5,5 @@ use schemars::schema::RootSchema;
 pub use cosmwasm_schema_derive::QueryResponses;
 
 pub trait QueryResponses {
-    fn query_responses() -> BTreeMap<String, RootSchema>;
+    fn response_schemas() -> BTreeMap<String, RootSchema>;
 }
