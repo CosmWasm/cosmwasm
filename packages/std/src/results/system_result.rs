@@ -30,8 +30,8 @@ use super::super::errors::SystemError;
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum SystemResult<S> {
+    #[serde(rename = "Ok")]
     Ok(S),
     #[serde(rename = "error")]
     Err(SystemError),
