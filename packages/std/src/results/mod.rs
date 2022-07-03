@@ -16,7 +16,7 @@ pub use cosmos_msg::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use cosmos_msg::{GovMsg, VoteOption};
 pub use empty::Empty;
-pub use events::{attr, Attribute, Event};
+pub use events::{attr, attr_plaintext, Attribute, Event};
 pub use query::QueryResponse;
 pub use response::Response;
 #[allow(deprecated)]

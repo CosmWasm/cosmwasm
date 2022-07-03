@@ -32,11 +32,29 @@ impl Event {
         }
     }
 
-    /// Add an attribute to the event.
+    /// Add an ENCRYPTED attribute to the event.
+    /// Only the transaction sender can decrypt it.
     pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.attributes.push(Attribute {
             key: key.into(),
             value: value.into(),
+            encrypted: true,
+        });
+        self
+    }
+
+    /// Add a NON-ENCRYPTED attribute to the event.
+    /// This key-value pair will be a public on-chain output for the transaction.
+    /// This is a good way of indexing public contract data on-chain.
+    pub fn add_attribute_plaintext(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Self {
+        self.attributes.push(Attribute {
+            key: key.into(),
+            value: value.into(),
+            encrypted: false,
         });
         self
     }
@@ -59,10 +77,11 @@ impl Event {
 pub struct Attribute {
     pub key: String,
     pub value: String,
+    pub encrypted: bool,
 }
 
 impl Attribute {
-    /// Creates a new Attribute. `attr` is just an alias for this.
+    /// Creates a new ENCRYPTED Attribute. `attr` is just an alias for this.
     pub fn new(key: impl Into<String>, value: impl Into<String>) -> Self {
         let key = key.into();
 
@@ -77,6 +96,26 @@ impl Attribute {
         Self {
             key,
             value: value.into(),
+            encrypted: true,
+        }
+    }
+
+    /// Creates a new NON-ENCRYPTED Attribute. `attr_plaintext` is just an alias for this.
+    pub fn new_plaintext(key: impl Into<String>, value: impl Into<String>) -> Self {
+        let key = key.into();
+
+        #[cfg(debug_assertions)]
+        if key.starts_with('_') {
+            panic!(
+                "attribute key `{}` is invalid - keys starting with an underscore are reserved",
+                key
+            );
+        }
+
+        Self {
+            key,
+            value: value.into(),
+            encrypted: true,
         }
     }
 }
@@ -123,10 +162,16 @@ impl PartialEq<&Attribute> for Attribute {
     }
 }
 
-/// Creates a new Attribute. `Attribute::new` is an alias for this.
+/// Creates a new ENCRYPTED Attribute. `Attribute::new` is an alias for this.
 #[inline]
 pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
     Attribute::new(key, value)
+}
+
+/// Creates a new ENCRYPTED Attribute. `Attribute::new_plaintext` is an alias for this.
+#[inline]
+pub fn attr_plaintext(key: impl Into<String>, value: impl Into<String>) -> Attribute {
+    Attribute::new_plaintext(key, value)
 }
 
 #[cfg(test)]

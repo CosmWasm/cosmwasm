@@ -101,11 +101,23 @@ impl<T> Response<T> {
         Self::default()
     }
 
-    /// Add an attribute included in the main `wasm` event.
+    /// Add an ENCRYPTED attribute included in the main `wasm` event.
     ///
     /// For working with optional values or optional attributes, see [`add_attributes`][Self::add_attributes].
     pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.attributes.push(Attribute::new(key, value));
+        self
+    }
+
+    /// Add a NON-ENCRYPTED attribute included in the main `wasm` event.
+    ///
+    /// For working with optional values or optional attributes, see [`add_attributes`][Self::add_attributes].
+    pub fn add_attribute_plaintext(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Self {
+        self.attributes.push(Attribute::new_plaintext(key, value));
         self
     }
 
@@ -249,6 +261,7 @@ mod tests {
             Attribute {
                 key: "test".to_string(),
                 value: "ing".to_string(),
+                encrypted: true
             }
         );
 
@@ -272,6 +285,7 @@ mod tests {
             Attribute {
                 key: "test".to_string(),
                 value: "ing".to_string(),
+                encrypted: true
             }
         );
     }
@@ -304,6 +318,7 @@ mod tests {
             attributes: vec![Attribute {
                 key: "action".to_string(),
                 value: "release".to_string(),
+                encrypted: true,
             }],
             events: vec![],
             data: Some(Binary::from([0xAA, 0xBB])),

@@ -749,6 +749,7 @@ pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attr
     Attribute {
         key: key.into(),
         value: value.into(),
+        encrypted: true,
     }
 }
 
