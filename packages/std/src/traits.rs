@@ -229,8 +229,8 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         msg: &impl Serialize,
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
-            callback_code_hash: code_hash.into(),
             contract_addr: contract_addr.into(),
+            code_hash: code_hash.into(),
             msg: to_binary(msg)?,
         }
         .into();
