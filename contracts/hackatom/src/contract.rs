@@ -282,9 +282,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
-        QueryMsg::Recurse { depth, work } => {
-            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
-        }
+        QueryMsg::Recurse { depth, work } => to_binary(&query_recurse(
+            deps,
+            depth,
+            work,
+            env.contract.address,
+            env.contract.code_hash,
+        )?),
         QueryMsg::GetInt {} => to_binary(&query_int()),
     }
 }
@@ -305,7 +309,13 @@ fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceRespo
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
+fn query_recurse(
+    deps: Deps,
+    depth: u32,
+    work: u32,
+    contract: Addr,
+    code_hash: String,
+) -> StdResult<RecurseResponse> {
     // perform all hashes as requested
     let mut hashed: Vec<u8> = contract.as_str().into();
     for _ in 0..work {
@@ -325,6 +335,7 @@ fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult
         };
         let query = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract.into(),
+            code_hash,
             msg: to_binary(&req)?,
         });
         deps.querier.query(&query)
@@ -614,10 +625,12 @@ mod tests {
 
         let deps = mock_dependencies();
         let contract = Addr::unchecked("my-contract");
+        let code_hash = String::from("my-code-hash");
         let bin_contract: &[u8] = b"my-contract";
 
         // return the unhashed value here
-        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract.clone()).unwrap();
+        let no_work_query =
+            query_recurse(deps.as_ref(), 0, 0, contract.clone(), code_hash.clone()).unwrap();
         assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
 
         // let's see if 5 hashes are done right
@@ -625,7 +638,7 @@ mod tests {
         for _ in 0..4 {
             expected_hash = Sha256::digest(&expected_hash);
         }
-        let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
+        let work_query = query_recurse(deps.as_ref(), 0, 5, contract, code_hash).unwrap();
         assert_eq!(work_query.hashed, expected_hash.to_vec());
     }
 

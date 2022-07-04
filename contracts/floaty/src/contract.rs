@@ -93,7 +93,13 @@ fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceRespo
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
+fn query_recurse(
+    deps: Deps,
+    depth: u32,
+    work: u32,
+    contract: Addr,
+    code_hash: String,
+) -> StdResult<RecurseResponse> {
     // perform all hashes as requested
     let mut hashed: Vec<u8> = contract.as_str().into();
     for _ in 0..work {
@@ -113,6 +119,7 @@ fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult
         };
         let query = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract.into(),
+            code_hash,
             msg: to_binary(&req)?,
         });
         deps.querier.query(&query)
