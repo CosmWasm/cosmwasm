@@ -1,7 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
 use cosmwasm_schema::{schema_for, Api, IDL_VERSION};
-use cosmwasm_schema_derive::generate_api;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
