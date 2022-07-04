@@ -111,7 +111,7 @@ impl<T> Response<T> {
 
     /// Add a NON-ENCRYPTED attribute included in the main `wasm` event.
     ///
-    /// For working with optional values or optional attributes, see [`add_attributes`][Self::add_attributes].
+    /// For working with optional values or optional attributes, see [`add_attribute_plaintext`][Self::add_attribute_plaintext].
     pub fn add_attribute_plaintext(
         mut self,
         key: impl Into<String>,
