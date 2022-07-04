@@ -38,7 +38,7 @@ fn main() {
         query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
-        responses: QueryMsg::response_schemas().unwrap(),
+        responses: Some(QueryMsg::response_schemas().unwrap()),
     }
     .render();
     let json = api.to_string().unwrap();

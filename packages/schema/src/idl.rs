@@ -22,7 +22,7 @@ pub struct Api {
     pub migrate: Option<RootSchema>,
     pub sudo: Option<RootSchema>,
     /// A mapping of query variants to response types
-    pub responses: BTreeMap<String, RootSchema>,
+    pub responses: Option<BTreeMap<String, RootSchema>>,
 }
 
 impl Api {
@@ -78,7 +78,7 @@ pub struct JsonApi {
     query: Option<RootSchema>,
     migrate: Option<RootSchema>,
     sudo: Option<RootSchema>,
-    responses: BTreeMap<String, RootSchema>,
+    responses: Option<BTreeMap<String, RootSchema>>,
 }
 
 impl JsonApi {

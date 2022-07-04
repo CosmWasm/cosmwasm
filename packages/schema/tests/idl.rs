@@ -47,7 +47,7 @@ fn test_basic_structure() {
         query: Some(schema_for!(QueryMsg)),
         migrate: Some(schema_for!(MigrateMsg)),
         sudo: Some(schema_for!(SudoMsg)),
-        responses: BTreeMap::from([("balance".to_string(), schema_for!(u128))]),
+        responses: Some(BTreeMap::from([("balance".to_string(), schema_for!(u128))])),
     }
     .render()
     .to_string()
@@ -89,7 +89,7 @@ fn test_query_responses() {
         query: Some(schema_for!(QueryMsg)),
         migrate: None,
         sudo: None,
-        responses: BTreeMap::from([("balance".to_string(), schema_for!(u128))]),
+        responses: Some(BTreeMap::from([("balance".to_string(), schema_for!(u128))])),
     }
     .render()
     .to_string()
