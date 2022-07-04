@@ -198,12 +198,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-schema"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "772e80bbad231a47a2068812b723a1ff81dd4a0d56c9391ac748177bea3a61da"
+dependencies = [
+ "schemars",
+ "serde_json",
+]
+
+[[package]]
 name = "cosmwasm-schema-derive"
 version = "1.0.0"
 dependencies = [
+ "cosmwasm-schema 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2",
  "quote",
- "serde_derive_internals 0.26.0",
  "syn",
 ]
 
@@ -681,7 +691,7 @@ dependencies = [
 name = "hackatom"
 version = "0.0.0"
 dependencies = [
- "cosmwasm-schema",
+ "cosmwasm-schema 1.0.0",
  "cosmwasm-std",
  "cosmwasm-storage",
  "cosmwasm-vm",
@@ -1237,7 +1247,7 @@ checksum = "4a9ea2a613fe4cd7118b2bb101a25d8ae6192e1975179b67b2f17afd11e70ac8"
 dependencies = [
  "proc-macro2",
  "quote",
- "serde_derive_internals 0.25.0",
+ "serde_derive_internals",
  "syn",
 ]
 
@@ -1309,17 +1319,6 @@ name = "serde_derive_internals"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1dbab34ca63057a1f15280bdf3c39f2b1eb1b54c17e98360e511637aef7418c6"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "serde_derive_internals"
-version = "0.26.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85bf8229e7920a9f636479437026331ce11aa132b4dde37d121944a44d6e5f3c"
 dependencies = [
  "proc-macro2",
  "quote",

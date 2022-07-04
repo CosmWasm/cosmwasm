@@ -8,9 +8,9 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
 license = "Apache-2.0"
 
 [dependencies]
+cosmwasm-schema = "1"
 proc-macro2 = "1"
 quote = "1"
-serde_derive_internals = "0.26.0"
 syn = { version = "1", features = ["full", "printing", "extra-traits"] }
 
 [lib]

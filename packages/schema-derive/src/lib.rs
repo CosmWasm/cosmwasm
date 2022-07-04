@@ -1,8 +1,8 @@
 use quote::ToTokens;
-use syn::{parse_macro_input, parse_quote, ExprTuple, ItemEnum, ItemImpl, Type, Variant};
+use syn::{parse_macro_input, parse_quote, Expr, ExprTuple, ItemEnum, ItemImpl, Type, Variant};
 
 /// Extract the query -> response mapping out of an enum variant.
-fn parse_query(v: Variant) -> ExprTuple {
+fn parse_query(v: Variant) -> (String, Expr) {
     let query = to_snake_case(&v.ident.to_string());
     let response_ty: Type = v
         .attrs
@@ -12,8 +12,15 @@ fn parse_query(v: Variant) -> ExprTuple {
         .parse_args()
         .unwrap();
 
+    (
+        query,
+        parse_quote!(cosmwasm_schema::schema_for!(#response_ty)),
+    )
+}
+
+fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {
     parse_quote! {
-        (#query.to_string(), cosmwasm_schema::schema_for!(#response_ty))
+        (#q.to_string(), #r)
     }
 }
 
@@ -40,16 +47,20 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
 
 fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     let ident = input.ident;
-
-    let responses = input.variants.into_iter().map(parse_query);
+    let mappings = input.variants.into_iter().map(parse_query);
+    let mut queries: Vec<_> = mappings.clone().map(|(q, _)| q).collect();
+    queries.sort();
+    let mappings = mappings.map(parse_tuple);
 
     parse_quote! {
         #[automatically_derived]
         #[cfg(not(target_arch = "wasm32"))]
         impl cosmwasm_schema::QueryResponses for #ident {
             fn response_schemas() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
+                Self::check_api_integrity(&[#(#queries),*]);
+
                 std::collections::BTreeMap::from([
-                    #( #responses, )*
+                    #( #mappings, )*
                 ])
             }
         }
@@ -68,10 +79,10 @@ mod tests {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
             #[serde(rename_all = "snake_case")]
             pub enum QueryMsg {
-                #[returns(SomeType)]
-                Balance {},
                 #[returns(some_crate::AnotherType)]
                 Supply {},
+                #[returns(SomeType)]
+                Balance {},
             }
         };
 
@@ -82,9 +93,11 @@ mod tests {
                 #[cfg(not(target_arch = "wasm32"))]
                 impl cosmwasm_schema::QueryResponses for QueryMsg {
                     fn response_schemas() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
+                        Self::check_api_integrity(&["balance", "supply"]);
+
                         std::collections::BTreeMap::from([
-                            ("balance".to_string(), cosmwasm_schema::schema_for!(SomeType)),
                             ("supply".to_string(), cosmwasm_schema::schema_for!(some_crate::AnotherType)),
+                            ("balance".to_string(), cosmwasm_schema::schema_for!(SomeType)),
                         ])
                     }
                 }
@@ -100,7 +113,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_query(variant),
+            parse_tuple(parse_query(variant)),
             parse_quote! {
                 ("get_foo".to_string(), cosmwasm_schema::schema_for!(Foo))
             }
@@ -112,7 +125,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_query(variant),
+            parse_tuple(parse_query(variant)),
             parse_quote! { ("get_foo".to_string(), cosmwasm_schema::schema_for!(some_crate::Foo)) }
         );
     }
@@ -121,49 +134,5 @@ mod tests {
     fn to_snake_case_works() {
         assert_eq!(to_snake_case("SnakeCase"), "snake_case");
         assert_eq!(to_snake_case("Wasm123AndCo"), "wasm123_and_co");
-    }
-
-    #[test]
-    #[should_panic]
-    fn panic_if_queries_are_not_snake_case1() {
-        let input: ItemEnum = parse_quote! {
-            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
-            pub enum QueryMsg {
-                #[returns(SomeType)]
-                Balance {},
-            }
-        };
-
-        query_responses_derive_impl(input);
-    }
-
-    #[test]
-    #[should_panic]
-    fn panic_if_queries_are_not_snake_case2() {
-        let input: ItemEnum = parse_quote! {
-            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
-            #[serde(deny_unknown_fields)]
-            pub enum QueryMsg {
-                #[returns(SomeType)]
-                Balance {},
-            }
-        };
-
-        query_responses_derive_impl(input);
-    }
-
-    #[test]
-    #[should_panic]
-    fn panic_if_queries_are_not_snake_case3() {
-        let input: ItemEnum = parse_quote! {
-            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
-            #[serde(rename_all = "kebab-case")]
-            pub enum QueryMsg {
-                #[returns(SomeType)]
-                Balance {},
-            }
-        };
-
-        query_responses_derive_impl(input);
     }
 }
