@@ -231,7 +231,9 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::InvalidPrivkeyFormat { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -265,7 +267,9 @@ pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+            CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidPrivkeyFormat { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -292,7 +296,8 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. }
             | CryptoError::InvalidHashFormat { .. }
-            | CryptoError::InvalidRecoveryParam { .. } => {
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::InvalidPrivkeyFormat { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -340,7 +345,9 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::InvalidHashFormat { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::InvalidPrivkeyFormat { .. } => {
                 panic!("Error must not happen for this call")
             }
         },

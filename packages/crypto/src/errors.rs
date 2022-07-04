@@ -29,6 +29,11 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Invalid private key format")]
+    InvalidPrivkeyFormat {
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Invalid signature format")]
     InvalidSignatureFormat {
         #[cfg(feature = "backtraces")]
@@ -72,6 +77,13 @@ impl CryptoError {
         }
     }
 
+    pub fn invalid_privkey_format() -> Self {
+        CryptoError::InvalidPrivkeyFormat {
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     pub fn invalid_signature_format() -> Self {
         CryptoError::InvalidSignatureFormat {
             #[cfg(feature = "backtraces")]
@@ -96,6 +108,7 @@ impl CryptoError {
             CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::BatchErr { .. } => 7,
             CryptoError::GenericErr { .. } => 10,
+            CryptoError::InvalidPrivkeyFormat { .. } => 1000, // Assaf: 1000 to not collide with CosmWasm someday
         }
     }
 }

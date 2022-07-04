@@ -3,7 +3,7 @@ use std::backtrace::Backtrace;
 use std::fmt;
 use thiserror::Error;
 
-use crate::errors::{RecoverPubkeyError, VerificationError};
+use crate::errors::{RecoverPubkeyError, SigningError, VerificationError};
 
 /// Structured error type for init, execute and query.
 ///
@@ -25,6 +25,12 @@ pub enum StdError {
     #[error("Verification error: {source}")]
     VerificationErr {
         source: VerificationError,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
+    #[error("Signing error: {source}")]
+    SigningErr {
+        source: SigningError,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -389,6 +395,22 @@ impl PartialEq<StdError> for StdError {
                     backtrace: _,
             } => {
                 if let StdError::ConversionOverflow {
+                    source: rhs_source,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
+            StdError::SigningErr {
+                source,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::SigningErr {
                     source: rhs_source,
                     #[cfg(feature = "backtraces")]
                         backtrace: _,

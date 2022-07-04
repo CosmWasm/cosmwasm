@@ -1,4 +1,4 @@
-use ed25519_zebra::{batch, Signature, VerificationKey};
+use ed25519_zebra::{batch, Signature, SigningKey, VerificationKey};
 use rand_core::OsRng;
 
 use crate::errors::{CryptoError, CryptoResult};
@@ -109,6 +109,21 @@ pub fn ed25519_batch_verify(
     }
 }
 
+pub fn ed25519_sign(message: &[u8], private_key: &[u8]) -> CryptoResult<Vec<u8>> {
+    let privkey = read_privkey(private_key)?;
+
+    let ed25519_signing_key = match SigningKey::try_from(privkey.as_slice()) {
+        Ok(x) => x,
+        Err(_) => {
+            return Err(InvalidEd25519PrivkeyFormat.into());
+        }
+    };
+
+    let sig: [u8; 64] = ed25519_signing_key.sign(message).into();
+
+    Ok(sig.into())
+}
+
 /// Error raised when signature is not 64 bytes long
 struct InvalidEd25519SignatureFormat;
 
@@ -133,6 +148,19 @@ impl From<InvalidEd25519PubkeyFormat> for CryptoError {
 
 fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
     data.try_into().map_err(|_| InvalidEd25519PubkeyFormat)
+}
+
+/// Error raised when privkey is not 32 bytes long
+struct InvalidEd25519PrivkeyFormat;
+
+impl From<InvalidEd25519PrivkeyFormat> for CryptoError {
+    fn from(_original: InvalidEd25519PrivkeyFormat) -> Self {
+        CryptoError::invalid_privkey_format()
+    }
+}
+
+fn read_privkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PrivkeyFormat> {
+    data.try_into().map_err(|_| InvalidEd25519PrivkeyFormat)
 }
 
 #[cfg(test)]

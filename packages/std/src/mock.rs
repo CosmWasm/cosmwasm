@@ -8,7 +8,9 @@ use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
-use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+use crate::errors::{
+    RecoverPubkeyError, SigningError, StdError, StdResult, SystemError, VerificationError,
+};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
@@ -213,6 +215,14 @@ impl Api for MockApi {
 
     fn debug(&self, message: &str) {
         println!("{}", message);
+    }
+
+    fn secp256k1_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError> {
+        Ok(cosmwasm_crypto::secp256k1_sign(message, private_key)?)
+    }
+
+    fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError> {
+        Ok(cosmwasm_crypto::ed25519_sign(message, private_key)?)
     }
 }
 

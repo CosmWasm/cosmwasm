@@ -70,6 +70,10 @@ impl From<CryptoError> for RecoverPubkeyError {
             CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => panic!("Conversion not supported"),
+            CryptoError::InvalidPrivkeyFormat { .. } => {
+                // should never get here
+                RecoverPubkeyError::UnknownErr { error_code: 0 }
+            }
         }
     }
 }
