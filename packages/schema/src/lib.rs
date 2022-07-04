@@ -10,4 +10,5 @@ pub use query_response::QueryResponses;
 pub use remove::remove_schemas;
 
 // Re-exports
+pub use cosmwasm_schema_derive::generate_api;
 pub use schemars::schema_for;

@@ -1,7 +1,9 @@
 use std::env::current_dir;
 use std::fs::{create_dir_all, write};
 
-use cosmwasm_schema::{export_schema, remove_schemas, schema_for, Api, QueryResponses};
+use cosmwasm_schema::{
+    export_schema, generate_api, remove_schemas, schema_for, Api, QueryResponses,
+};
 use cosmwasm_std::BalanceResponse;
 
 use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg, VerifierResponse};
@@ -26,19 +28,15 @@ fn main() {
     export_schema(&schema_for!(State), &out_dir);
 
     let contract_name = env!("CARGO_PKG_NAME");
-    let contract_version = env!("CARGO_PKG_VERSION");
 
     // The new IDL
     let path = out_dir.join(format!("{}.json", contract_name));
-    let api = Api {
-        contract_name: contract_name.to_string(),
-        contract_version: contract_version.to_string(),
-        instantiate: schema_for!(InstantiateMsg),
-        execute: Some(schema_for!(ExecuteMsg)),
-        query: Some(schema_for!(QueryMsg)),
-        migrate: Some(schema_for!(MigrateMsg)),
-        sudo: Some(schema_for!(SudoMsg)),
-        responses: Some(QueryMsg::response_schemas().unwrap()),
+    let api = generate_api! {
+        instantiate: InstantiateMsg,
+        query: QueryMsg,
+        execute: ExecuteMsg,
+        sudo: SudoMsg,
+        migrate: MigrateMsg,
     }
     .render();
     let json = api.to_string().unwrap();
