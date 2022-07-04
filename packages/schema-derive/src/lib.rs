@@ -56,9 +56,7 @@ fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
         #[automatically_derived]
         #[cfg(not(target_arch = "wasm32"))]
         impl cosmwasm_schema::QueryResponses for #ident {
-            fn response_schemas() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
-                Self::check_api_integrity(&[#(#queries),*]);
-
+            fn response_schemas_impl() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
                 std::collections::BTreeMap::from([
                     #( #mappings, )*
                 ])
@@ -92,9 +90,7 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl cosmwasm_schema::QueryResponses for QueryMsg {
-                    fn response_schemas() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
-                        Self::check_api_integrity(&["balance", "supply"]);
-
+                    fn response_schemas_impl() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
                         std::collections::BTreeMap::from([
                             ("supply".to_string(), cosmwasm_schema::schema_for!(some_crate::AnotherType)),
                             ("balance".to_string(), cosmwasm_schema::schema_for!(SomeType)),
