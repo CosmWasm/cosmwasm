@@ -7,9 +7,8 @@ use thiserror::Error;
 
 /// The version of the CosmWasm IDL.
 ///
-/// Follows Semantic Versioning 2.0.0: https://semver.org/
-///
-/// To determine if a change is breaking, assume consumers allow unknown fields.
+/// Follows Semantic Versioning 2.0.0: <https://semver.org/>
+// To determine if a change is breaking, assume consumers allow unknown fields and bump accordingly.
 pub const IDL_VERSION: &str = "1.0.0";
 
 /// Rust representation of a contract's API.
