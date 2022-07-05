@@ -21,3 +21,12 @@ pub fn generate_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     proc_macro::TokenStream::from(expanded)
 }
+
+#[proc_macro]
+pub fn generate_api_obj(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as generate_api::Options);
+
+    let expanded = generate_api::api_object(&input).into_token_stream();
+
+    proc_macro::TokenStream::from(expanded)
+}
