@@ -10,19 +10,19 @@ pub use query_response::QueryResponses;
 pub use remove::remove_schemas;
 
 // Re-exports
-/// Generates an [`Api`](schema::Api) for the contract. The body describes the message
-/// types exported in the schema and allows setting contract name and version overrides.
+/// Takes care of generating the interface description file for a contract. The body describes
+/// the message types included and allows setting contract name and version overrides.
 ///
 /// The only obligatory field is `instantiate` - to set the InstantiateMsg type.
 ///
 /// # Available fields
-/// - `name` - contract name
-/// - `version` - contract version
+/// - `name` - contract name, crate name by default
+/// - `version` - contract version, crate version by default
 /// - `instantiate` - instantiate msg type
-/// - `query` - query msg type
-/// - `execute` - execute msg type
-/// - `migrate` - migrate msg type
-/// - `sudo` - sudo msg type
+/// - `query` - query msg type, empty by default
+/// - `execute` - execute msg type, empty by default
+/// - `migrate` - migrate msg type, empty by default
+/// - `sudo` - sudo msg type, empty by default
 ///
 /// # Example
 /// ```
@@ -42,19 +42,13 @@ pub use remove::remove_schemas;
 /// };
 /// ```
 pub use cosmwasm_schema_derive::generate_api;
-/// Generates an [`Api`](schema::Api) for the contract. The body describes the message
+/// Generates an [`Api`](crate::Api) for the contract. The body describes the message
 /// types exported in the schema and allows setting contract name and version overrides.
 ///
 /// The only obligatory field is `instantiate` - to set the InstantiateMsg type.
 ///
 /// # Available fields
-/// - `name` - contract name
-/// - `version` - contract version
-/// - `instantiate` - instantiate msg type
-/// - `query` - query msg type
-/// - `execute` - execute msg type
-/// - `migrate` - migrate msg type
-/// - `sudo` - sudo msg type
+/// See [`generate_api`](crate::generate_api).
 ///
 /// # Example
 /// ```
