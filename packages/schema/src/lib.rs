@@ -10,5 +10,36 @@ pub use query_response::QueryResponses;
 pub use remove::remove_schemas;
 
 // Re-exports
+/// Generates an [`Api`](schema::Api) for the contract. The body describes the message
+/// types exported in the schema and allows setting contract name and version overrides.
+///
+/// The only obligatory field is `instantiate` - to set the InstantiateMsg type.
+///
+/// # Available fields
+/// - `name` - contract name
+/// - `version` - contract version
+/// - `instantiate` - instantiate msg type
+/// - `query` - query msg type
+/// - `execute` - execute msg type
+/// - `migrate` - migrate msg type
+/// - `sudo` - sudo msg type
+///
+/// # Example
+/// ```
+/// use cosmwasm_schema::{generate_api, Api};
+/// use schemars::{schema_for, JsonSchema};
+///
+/// #[derive(JsonSchema)]
+/// struct InstantiateMsg;
+///
+/// #[derive(JsonSchema)]
+/// struct MigrateMsg;
+///
+/// let api = generate_api! {
+///     name: "cw20",
+///     instantiate: InstantiateMsg,
+///     migrate: MigrateMsg,
+/// };
+/// ```
 pub use cosmwasm_schema_derive::generate_api;
 pub use schemars::schema_for;

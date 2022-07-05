@@ -5,6 +5,29 @@ use thiserror::Error;
 
 pub use cosmwasm_schema_derive::QueryResponses;
 
+/// A trait for tying QueryMsg variants (different contract queries) to their response types.
+/// This is mostly useful for the generated contracted API description when using `cargo schema`.
+///
+/// Using the derive macro is the preferred way of implementing this trait.
+///
+/// # Example
+/// ```
+/// use cosmwasm_schema::QueryResponses;
+/// use schemars::JsonSchema;
+///
+/// #[derive(JsonSchema)]
+/// struct AccountInfo {
+///     IcqHandle: String,
+/// }
+///
+/// #[derive(JsonSchema, QueryResponses)]
+/// enum QueryMsg {
+///     #[returns(Vec<String>)]
+///     Denoms {},
+///     #[returns(AccountInfo)]
+///     AccountInfo { account: String },
+/// }
+/// ```
 pub trait QueryResponses: JsonSchema {
     fn response_schemas() -> Result<BTreeMap<String, RootSchema>, IntegrityError> {
         let response_schemas = Self::response_schemas_impl();
