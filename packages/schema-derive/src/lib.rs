@@ -15,7 +15,7 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
 
 #[proc_macro]
 pub fn generate_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(input as generate_api::KV);
+    let input = parse_macro_input!(input as generate_api::Options);
 
     let expanded = generate_api::generate_api_impl(input).into_token_stream();
 

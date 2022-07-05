@@ -1,45 +1,13 @@
-use std::env::current_dir;
-use std::fs::{create_dir_all, write};
+use cosmwasm_schema::generate_api;
 
-use cosmwasm_schema::{
-    export_schema, generate_api, remove_schemas, schema_for, Api, QueryResponses,
-};
-use cosmwasm_std::BalanceResponse;
-
-use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg, VerifierResponse};
-use hackatom::state::State;
+use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 
 fn main() {
-    let mut out_dir = current_dir().unwrap();
-    out_dir.push("schema");
-    create_dir_all(&out_dir).unwrap();
-    remove_schemas(&out_dir).unwrap();
-
-    // messages
-    export_schema(&schema_for!(InstantiateMsg), &out_dir);
-    export_schema(&schema_for!(ExecuteMsg), &out_dir);
-    export_schema(&schema_for!(MigrateMsg), &out_dir);
-    export_schema(&schema_for!(SudoMsg), &out_dir);
-    export_schema(&schema_for!(QueryMsg), &out_dir);
-    export_schema(&schema_for!(VerifierResponse), &out_dir);
-    export_schema(&schema_for!(BalanceResponse), &out_dir);
-
-    // state
-    export_schema(&schema_for!(State), &out_dir);
-
-    let contract_name = env!("CARGO_PKG_NAME");
-
-    // The new IDL
-    let path = out_dir.join(format!("{}.json", contract_name));
-    let api = generate_api! {
+    generate_api! {
         instantiate: InstantiateMsg,
         query: QueryMsg,
         execute: ExecuteMsg,
         sudo: SudoMsg,
         migrate: MigrateMsg,
     }
-    .render();
-    let json = api.to_string().unwrap();
-    write(&path, json + "\n").unwrap();
-    println!("Exported the full API as {}", path.to_str().unwrap());
 }

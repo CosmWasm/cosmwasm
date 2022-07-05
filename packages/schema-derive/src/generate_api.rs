@@ -1,80 +1,55 @@
 use std::collections::BTreeMap;
 
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_quote, Expr, Ident, Token,
+    parse_quote, Block, ExprStruct, Ident, Path, Token,
 };
 
-pub fn generate_api_impl(input: KV) -> Expr {
-    let mut input = input.0;
+pub fn generate_api_impl(input: Options) -> Block {
+    let api_object = api_object(&input);
+    let name = input.name;
 
-    let name = if let Some(name_override) = input.remove(&parse_quote!(name)) {
-        let name_override = name_override.unwrap_str();
-        quote! {
-            #name_override.to_string()
-        }
-    } else {
-        quote! {
-            env!("CARGO_PKG_NAME").to_string()
-        }
-    };
+    parse_quote! {
+        {
+            use std::env::current_dir;
+            use std::fs::{create_dir_all, write};
 
-    let version = if let Some(version_override) = input.remove(&parse_quote!(version)) {
-        let version_override = version_override.unwrap_str();
-        quote! {
-            #version_override.to_string()
-        }
-    } else {
-        quote! {
-            env!("CARGO_PKG_VERSION").to_string()
-        }
-    };
+            use cosmwasm_schema::{remove_schemas, schema_for, Api, QueryResponses};
 
-    let instantiate = input
-        .remove(&parse_quote!(instantiate))
-        .unwrap()
-        .unwrap_type();
+            let mut out_dir = current_dir().unwrap();
+            out_dir.push("schema");
+            create_dir_all(&out_dir).unwrap();
+            remove_schemas(&out_dir).unwrap();
 
-    let execute = match input.remove(&parse_quote!(execute)) {
-        Some(ty) => {
-            let ty = ty.unwrap_type();
-            quote! {Some(schema_for!(#ty))}
-        }
-        None => quote! { None },
-    };
+            let path = out_dir.join(concat!(#name, ".json"));
 
-    let (query, responses) = match input.remove(&parse_quote!(query)) {
-        Some(ty) => {
-            let ty = ty.unwrap_type();
-            (
-                quote! {Some(schema_for!(#ty))},
-                quote! { Some(#ty::response_schemas().unwrap()) },
-            )
-        }
-        None => (quote! { None }, quote! { None }),
-    };
+            let api = #api_object.render();
 
-    let migrate = match input.remove(&parse_quote!(migrate)) {
-        Some(ty) => {
-            let ty = ty.unwrap_type();
-            quote! {Some(schema_for!(#ty))}
+            let json = api.to_string().unwrap();
+            write(&path, json + "\n").unwrap();
+            println!("Exported the full API as {}", path.to_str().unwrap());
         }
-        None => quote! { None },
-    };
+    }
+}
 
-    let sudo = match input.remove(&parse_quote!(sudo)) {
-        Some(ty) => {
-            let ty = ty.unwrap_type();
-            quote! {Some(schema_for!(#ty))}
-        }
-        None => quote! { None },
-    };
+fn api_object(input: &Options) -> ExprStruct {
+    let Options {
+        name,
+        version,
+        instantiate,
+        execute,
+        query,
+        migrate,
+        sudo,
+        responses,
+    } = input;
 
     parse_quote! {
         Api {
-            contract_name: #name,
-            contract_version: #version,
+            contract_name: #name.to_string(),
+            contract_version: #version.to_string(),
             instantiate: schema_for!(#instantiate),
             execute: #execute,
             query: #query,
@@ -133,12 +108,98 @@ impl Parse for Pair {
 }
 
 #[derive(Debug)]
-pub struct KV(BTreeMap<Ident, Value>);
+pub struct Options {
+    name: TokenStream,
+    version: TokenStream,
+    instantiate: Path,
+    execute: TokenStream,
+    query: TokenStream,
+    migrate: TokenStream,
+    sudo: TokenStream,
+    responses: TokenStream,
+}
 
-impl Parse for KV {
+impl Parse for Options {
     fn parse(input: ParseStream) -> syn::parse::Result<Self> {
         let pairs = input.parse_terminated::<Pair, Token![,]>(Pair::parse)?;
-        Ok(Self(pairs.into_iter().map(|p| p.0).collect()))
+        let mut map: BTreeMap<_, _> = pairs.into_iter().map(|p| p.0).collect();
+
+        let name = if let Some(name_override) = map.remove(&parse_quote!(name)) {
+            let name_override = name_override.unwrap_str();
+            quote! {
+                #name_override
+            }
+        } else {
+            quote! {
+                env!("CARGO_PKG_NAME")
+            }
+        };
+
+        let version = if let Some(version_override) = map.remove(&parse_quote!(version)) {
+            let version_override = version_override.unwrap_str();
+            quote! {
+                #version_override
+            }
+        } else {
+            quote! {
+                env!("CARGO_PKG_VERSION")
+            }
+        };
+
+        let instantiate = map
+            .remove(&parse_quote!(instantiate))
+            .unwrap()
+            .unwrap_type();
+
+        let execute = match map.remove(&parse_quote!(execute)) {
+            Some(ty) => {
+                let ty = ty.unwrap_type();
+                quote! {Some(schema_for!(#ty))}
+            }
+            None => quote! { None },
+        };
+
+        let (query, responses) = match map.remove(&parse_quote!(query)) {
+            Some(ty) => {
+                let ty = ty.unwrap_type();
+                (
+                    quote! {Some(schema_for!(#ty))},
+                    quote! { Some(#ty::response_schemas().unwrap()) },
+                )
+            }
+            None => (quote! { None }, quote! { None }),
+        };
+
+        let migrate = match map.remove(&parse_quote!(migrate)) {
+            Some(ty) => {
+                let ty = ty.unwrap_type();
+                quote! {Some(schema_for!(#ty))}
+            }
+            None => quote! { None },
+        };
+
+        let sudo = match map.remove(&parse_quote!(sudo)) {
+            Some(ty) => {
+                let ty = ty.unwrap_type();
+                quote! {Some(schema_for!(#ty))}
+            }
+            None => quote! { None },
+        };
+
+        if let Some((invalid_option, _)) = map.into_iter().next() {
+            panic!("unknown generate_api option: {}", invalid_option);
+        }
+
+        Ok(Self {
+            name,
+            version,
+            instantiate,
+            execute,
+            query,
+            migrate,
+            sudo,
+            responses,
+        })
     }
 }
 
@@ -147,9 +208,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn generate_api_minimal() {
+    fn api_object_minimal() {
         assert_eq!(
-            generate_api_impl(parse_quote! {
+            api_object(&parse_quote! {
                 instantiate: InstantiateMsg,
             }),
             parse_quote! {
@@ -168,9 +229,9 @@ mod tests {
     }
 
     #[test]
-    fn generate_api_name_vesion_override() {
+    fn api_object_name_vesion_override() {
         assert_eq!(
-            generate_api_impl(parse_quote! {
+            api_object(&parse_quote! {
                 name: "foo",
                 version: "bar",
                 instantiate: InstantiateMsg,
@@ -191,9 +252,9 @@ mod tests {
     }
 
     #[test]
-    fn generate_api_all_msgs() {
+    fn api_object_all_msgs() {
         assert_eq!(
-            generate_api_impl(parse_quote! {
+            api_object(&parse_quote! {
                 instantiate: InstantiateMsg,
                 execute: ExecuteMsg,
                 query: QueryMsg,
@@ -213,5 +274,14 @@ mod tests {
                 }
             }
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "unknown generate_api option: asd")]
+    fn invalid_option() {
+        let _options: Options = parse_quote! {
+            instantiate: InstantiateMsg,
+            asd: Asd,
+        };
     }
 }
