@@ -9,7 +9,7 @@ use cosmwasm_crypto::CryptoError;
 #[derive(Error, Debug)]
 pub enum SigningError {
     #[error("Invalid private key format")]
-    InvalidPrivKeyFormat,
+    InvalidPrivateKeyFormat,
     #[error("Unknown error: {error_code}")]
     UnknownErr {
         error_code: u32,
@@ -31,8 +31,8 @@ impl SigningError {
 impl PartialEq<SigningError> for SigningError {
     fn eq(&self, rhs: &SigningError) -> bool {
         match self {
-            SigningError::InvalidPrivKeyFormat => {
-                matches!(rhs, SigningError::InvalidPrivKeyFormat)
+            SigningError::InvalidPrivateKeyFormat => {
+                matches!(rhs, SigningError::InvalidPrivateKeyFormat)
             }
             SigningError::UnknownErr { error_code, .. } => {
                 if let SigningError::UnknownErr {
@@ -53,7 +53,7 @@ impl PartialEq<SigningError> for SigningError {
 impl From<CryptoError> for SigningError {
     fn from(original: CryptoError) -> Self {
         match original {
-            CryptoError::InvalidPrivkeyFormat { .. } => SigningError::InvalidPrivKeyFormat,
+            CryptoError::InvalidPrivateKeyFormat { .. } => SigningError::InvalidPrivateKeyFormat,
             _ => SigningError::UnknownErr { error_code: 0 }, // should never get here
         }
     }

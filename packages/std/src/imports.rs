@@ -363,6 +363,44 @@ impl Api for ExternalApi {
         let region_ptr = region.as_ref() as *const Region as u32;
         unsafe { debug(region_ptr) };
     }
+
+    fn secp256k1_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError> {
+        let msg_send = build_region(message);
+        let msg_send_ptr = &*msg_send as *const Region as u32;
+        let pk_send = build_region(private_key);
+        let pk_send_ptr = &*pk_send as *const Region as u32;
+
+        let result = unsafe { secp256k1_sign(msg_send_ptr, pk_send_ptr) };
+        let error_code = from_high_half(result);
+        let signature_ptr = from_low_half(result);
+        match error_code {
+            0 => {
+                let signature = unsafe { consume_region(signature_ptr as *mut Region) };
+                Ok(signature)
+            }
+            1000 => Err(SigningError::InvalidPrivateKeyFormat),
+            error_code => Err(SigningError::unknown_err(error_code)),
+        }
+    }
+
+    fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError> {
+        let msg_send = build_region(message);
+        let msg_send_ptr = &*msg_send as *const Region as u32;
+        let pk_send = build_region(private_key);
+        let pk_send_ptr = &*pk_send as *const Region as u32;
+
+        let result = unsafe { ed25519_sign(msg_send_ptr, pk_send_ptr) };
+        let error_code = from_high_half(result);
+        let signature_ptr = from_low_half(result);
+        match error_code {
+            0 => {
+                let signature = unsafe { consume_region(signature_ptr as *mut Region) };
+                Ok(signature)
+            }
+            1000 => Err(SigningError::InvalidPrivateKeyFormat),
+            error_code => Err(SigningError::unknown_err(error_code)),
+        }
+    }
 }
 
 /// Takes a pointer to a Region and reads the data into a String.
