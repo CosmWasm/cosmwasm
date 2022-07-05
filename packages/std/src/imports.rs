@@ -2,7 +2,9 @@ use std::vec::Vec;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
-use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+use crate::errors::{
+    RecoverPubkeyError, SigningError, StdError, StdResult, SystemError, VerificationError,
+};
 use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
@@ -75,6 +77,10 @@ extern "C" {
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
     fn query_chain(request: u32) -> u32;
+
+    fn secp256k1_sign(messages_ptr: u32, private_key_ptr: u32) -> u64;
+
+    fn ed25519_sign(messages_ptr: u32, private_key_ptr: u32) -> u64;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
