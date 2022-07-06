@@ -27,9 +27,9 @@ fn parse_query(v: Variant) -> (String, Expr) {
         .attrs
         .iter()
         .find(|a| a.path.get_ident().unwrap() == "returns")
-        .unwrap()
+        .unwrap_or_else(|| panic!("missing return type for query: {}", v.ident))
         .parse_args()
-        .unwrap();
+        .unwrap_or_else(|_| panic!("return for {} must be a type", v.ident));
 
     (
         query,
@@ -89,6 +89,39 @@ mod tests {
                 }
             }
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "missing return type for query: Supply")]
+    fn missing_return() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            pub enum QueryMsg {
+                Supply {},
+                #[returns(SomeType)]
+                Balance {},
+            }
+        };
+
+        query_responses_derive_impl(input);
+    }
+
+    #[test]
+    #[should_panic(expected = "return for Supply must be a type")]
+    fn invalid_return() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            pub enum QueryMsg {
+                #[returns(1)]
+                Supply {},
+                #[returns(SomeType)]
+                Balance {},
+            }
+        };
+
+        query_responses_derive_impl(input);
     }
 
     #[test]

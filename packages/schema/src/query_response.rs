@@ -101,11 +101,15 @@ mod tests {
     #[allow(dead_code)]
     pub enum GoodMsg {
         BalanceFor { account: String },
+        Supply {},
     }
 
     impl QueryResponses for GoodMsg {
         fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
-            BTreeMap::from([("balance_for".to_string(), schema_for!(u128))])
+            BTreeMap::from([
+                ("balance_for".to_string(), schema_for!(u128)),
+                ("supply".to_string(), schema_for!(u128)),
+            ])
         }
     }
 
@@ -114,7 +118,10 @@ mod tests {
         let response_schemas = GoodMsg::response_schemas().unwrap();
         assert_eq!(
             response_schemas,
-            BTreeMap::from([("balance_for".to_string(), schema_for!(u128))])
+            BTreeMap::from([
+                ("balance_for".to_string(), schema_for!(u128)),
+                ("supply".to_string(), schema_for!(u128))
+            ])
         );
     }
 
