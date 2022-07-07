@@ -260,30 +260,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-crypto"
-version = "1.0.0"
-source = "git+https://github.com/scrtlabs/cosmwasm?branch=secret-sdk#bc564e5143166eb484f77fd6b27810de4cccaab1"
-dependencies = [
- "digest",
- "ed25519-zebra",
- "k256",
- "rand_core 0.6.3",
- "thiserror",
-]
-
-[[package]]
 name = "cosmwasm-derive"
 version = "1.0.0"
 dependencies = [
- "cosmwasm-std 1.0.0",
- "syn",
-]
-
-[[package]]
-name = "cosmwasm-derive"
-version = "1.0.0"
-source = "git+https://github.com/scrtlabs/cosmwasm?branch=secret-sdk#bc564e5143166eb484f77fd6b27810de4cccaab1"
-dependencies = [
+ "cosmwasm-std",
  "syn",
 ]
 
@@ -291,7 +271,7 @@ dependencies = [
 name = "cosmwasm-profiler"
 version = "0.0.0"
 dependencies = [
- "cosmwasm-std 1.0.0",
+ "cosmwasm-std",
  "cosmwasm-vm",
  "csv",
  "hackatom",
@@ -316,8 +296,8 @@ version = "1.0.0"
 dependencies = [
  "base64",
  "chrono",
- "cosmwasm-crypto 1.0.0",
- "cosmwasm-derive 1.0.0",
+ "cosmwasm-crypto",
+ "cosmwasm-derive",
  "cosmwasm-schema",
  "forward_ref",
  "hex",
@@ -330,26 +310,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-std"
-version = "1.0.0"
-source = "git+https://github.com/scrtlabs/cosmwasm?branch=secret-sdk#bc564e5143166eb484f77fd6b27810de4cccaab1"
-dependencies = [
- "base64",
- "cosmwasm-crypto 1.0.0 (git+https://github.com/scrtlabs/cosmwasm?branch=secret-sdk)",
- "cosmwasm-derive 1.0.0 (git+https://github.com/scrtlabs/cosmwasm?branch=secret-sdk)",
- "forward_ref",
- "schemars",
- "serde",
- "serde-json-wasm",
- "thiserror",
- "uint",
-]
-
-[[package]]
 name = "cosmwasm-storage"
 version = "1.0.0"
 dependencies = [
- "cosmwasm-std 1.0.0 (git+https://github.com/scrtlabs/cosmwasm?branch=secret-sdk)",
+ "cosmwasm-std",
  "serde",
 ]
 
@@ -359,8 +323,8 @@ version = "1.0.0"
 dependencies = [
  "clap",
  "clru",
- "cosmwasm-crypto 1.0.0",
- "cosmwasm-std 1.0.0",
+ "cosmwasm-crypto",
+ "cosmwasm-std",
  "criterion",
  "hex",
  "hex-literal",
@@ -884,7 +848,7 @@ dependencies = [
 name = "hackatom"
 version = "0.0.0"
 dependencies = [
- "cosmwasm-std 1.0.0",
+ "cosmwasm-std",
  "rust-argon2",
  "schemars",
  "serde",

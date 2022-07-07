@@ -14,5 +14,5 @@ default = []
 
 [dependencies]
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { git = "https://github.com/scrtlabs/cosmwasm", branch = "secret-sdk"}
+cosmwasm-std = { path = "../std" }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
