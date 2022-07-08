@@ -212,6 +212,14 @@ impl Decimal {
             })
     }
 
+    /// Raises a value to the power of `exp`, pancis if an overflow occurred.
+    pub fn pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => panic!("Multiplication overflow"),
+        }
+    }
+
     /// Raises a value to the power of `exp`, returning an `OverflowError` if an overflow occurred.
     pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
         // This uses the exponentiation by squaring algorithm:
@@ -1834,5 +1842,17 @@ mod tests {
             Decimal::MAX.checked_rem(Decimal::zero()),
             Err(DivideByZeroError { .. })
         ));
+    }
+
+    #[test]
+    fn decimal_pow_works() {
+        assert_eq!(Decimal::percent(200).pow(2), Decimal::percent(400));
+        assert_eq!(Decimal::percent(200).pow(10), Decimal::percent(102400));
+    }
+
+    #[test]
+    #[should_panic]
+    fn decimal_pow_overflow_panics() {
+        Decimal::MAX.pow(2u32);
     }
 }
