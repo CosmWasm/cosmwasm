@@ -278,14 +278,6 @@ impl Decimal {
         })
     }
 
-    /// Raises a value to the power of `exp`, returns MAX on overflow.
-    pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
-    }
-
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
         Decimal::checked_from_ratio(self.numerator(), other.numerator())
     }
@@ -295,14 +287,6 @@ impl Decimal {
             .checked_rem(other.0)
             .map(Self)
             .map_err(|_| DivideByZeroError::new(self))
-    }
-
-    /// Raises a value to the power of `exp`, returns MAX on overflow.
-    pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
     }
 
     /// Returns the approximate square root as a Decimal.
@@ -339,6 +323,34 @@ impl Decimal {
 
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(self.0.abs_diff(other.0))
+    }
+
+    pub fn saturating_add(self, other: Self) -> Self {
+        match self.checked_add(other) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn saturating_sub(self, other: Self) -> Self {
+        match self.checked_sub(other) {
+            Ok(value) => value,
+            Err(_) => Self::zero(),
+        }
+    }
+
+    pub fn saturating_mul(self, other: Self) -> Self {
+        match self.checked_mul(other) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
     }
 }
 
@@ -1898,10 +1910,18 @@ mod tests {
     }
 
     #[test]
-    fn decimal_saturating_pow() {
+    fn decimal_saturating_works() {
         assert_eq!(
-            Decimal::percent(400).saturating_pow(2u32),
-            Decimal::percent(1600)
+            Decimal::MAX.saturating_add(Decimal::percent(200)),
+            Decimal::MAX
+        );
+        assert_eq!(
+            Decimal::zero().saturating_sub(Decimal::percent(200)),
+            Decimal::zero()
+        );
+        assert_eq!(
+            Decimal::MAX.saturating_mul(Decimal::percent(200)),
+            Decimal::MAX
         );
         assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
     }
