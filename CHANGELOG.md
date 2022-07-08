@@ -13,6 +13,8 @@ and this project adheres to
   `Decimal{,256}::abs_diff` ([#1334]).
 - cosmwasm-std: Implement `From<Decimal> for Decimal256`.
 - cosmwasm-std: Implement `Rem`/`RemAssign` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `checked_add`/`_sub`/`_div`/`_rem` for
+  `Decimal`/`Decimal256`.
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 
