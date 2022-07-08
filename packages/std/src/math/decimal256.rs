@@ -2015,7 +2015,11 @@ mod tests {
     }
 
     #[test]
-    fn decimal_saturating_pow() {
-        assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
+    fn decimal256_saturating_pow() {
+        assert_eq!(
+            Decimal256::percent(400).saturating_pow(2u32),
+            Decimal256::percent(1600)
+        );
+        assert_eq!(Decimal256::MAX.saturating_pow(2u32), Decimal256::MAX);
     }
 }

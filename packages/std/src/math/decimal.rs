@@ -1866,6 +1866,10 @@ mod tests {
 
     #[test]
     fn decimal_saturating_pow() {
+        assert_eq!(
+            Decimal::percent(400).saturating_pow(2u32),
+            Decimal::percent(1600)
+        );
         assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
     }
 }
