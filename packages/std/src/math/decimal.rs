@@ -1912,16 +1912,32 @@ mod tests {
     #[test]
     fn decimal_saturating_works() {
         assert_eq!(
+            Decimal::percent(200).saturating_add(Decimal::percent(200)),
+            Decimal::percent(400)
+        );
+        assert_eq!(
             Decimal::MAX.saturating_add(Decimal::percent(200)),
             Decimal::MAX
+        );
+        assert_eq!(
+            Decimal::percent(200).saturating_sub(Decimal::percent(100)),
+            Decimal::percent(100)
         );
         assert_eq!(
             Decimal::zero().saturating_sub(Decimal::percent(200)),
             Decimal::zero()
         );
         assert_eq!(
+            Decimal::percent(200).saturating_mul(Decimal::percent(50)),
+            Decimal::percent(100)
+        );
+        assert_eq!(
             Decimal::MAX.saturating_mul(Decimal::percent(200)),
             Decimal::MAX
+        );
+        assert_eq!(
+            Decimal::percent(400).saturating_pow(2u32),
+            Decimal::percent(1600)
         );
         assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
     }

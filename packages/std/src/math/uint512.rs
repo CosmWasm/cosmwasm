@@ -1107,6 +1107,10 @@ mod tests {
             Uint512::MAX.saturating_mul(Uint512::from(2u32)),
             Uint512::MAX
         );
+        assert_eq!(
+            Uint512::from(4u32).saturating_pow(2u32),
+            Uint512::from(16u32)
+        );
         assert_eq!(Uint512::MAX.saturating_pow(2u32), Uint512::MAX);
     }
 

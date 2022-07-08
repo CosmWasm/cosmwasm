@@ -1472,6 +1472,10 @@ mod tests {
             Uint256::MAX.saturating_mul(Uint256::from(2u32)),
             Uint256::MAX
         );
+        assert_eq!(
+            Uint256::from(4u32).saturating_pow(2u32),
+            Uint256::from(16u32)
+        );
         assert_eq!(Uint256::MAX.saturating_pow(2u32), Uint256::MAX);
     }
 
