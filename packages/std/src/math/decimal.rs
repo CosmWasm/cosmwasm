@@ -7,7 +7,10 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, S
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::errors::{CheckedFromRatioError, CheckedMultiplyRatioError, StdError, OverflowError, OverflowOperation, DivideByZeroError};
+use crate::errors::{
+    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
+};
 
 use super::Fraction;
 use super::Isqrt;
@@ -195,19 +198,6 @@ impl Decimal {
             .map_err(|_| OverflowError::new(OverflowOperation::Sub, self, other))
     }
 
-    pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
-        Decimal::checked_from_ratio(self.numerator(), other.numerator())
-    }
-
-    pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
-        self.0
-            .checked_rem(other.0)
-            .map(Self)
-            .map_err(|_| DivideByZeroError::new(self))
-    }
-
-
-
     /// Multiplies one `Decimal` by another, returning an `OverflowError` if an overflow occurred.
     pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
         let result_as_uint256 = self.numerator().full_mul(other.numerator())
@@ -253,6 +243,17 @@ impl Decimal {
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
+    }
+
+    pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
+        Decimal::checked_from_ratio(self.numerator(), other.numerator())
+    }
+
+    pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.0
+            .checked_rem(other.0)
+            .map(Self)
+            .map_err(|_| DivideByZeroError::new(self))
     }
 
     /// Returns the approximate square root as a Decimal.
@@ -1772,7 +1773,9 @@ mod tests {
     fn decimal_checked_methods() {
         // checked add
         assert_eq!(
-            Decimal::percent(402).checked_add(Decimal::percent(111)).unwrap(),
+            Decimal::percent(402)
+                .checked_add(Decimal::percent(111))
+                .unwrap(),
             Decimal::percent(513)
         );
         assert!(matches!(
@@ -1782,7 +1785,9 @@ mod tests {
 
         // checked sub
         assert_eq!(
-            Decimal::percent(1111).checked_sub(Decimal::percent(111)).unwrap(),
+            Decimal::percent(1111)
+                .checked_sub(Decimal::percent(111))
+                .unwrap(),
             Decimal::percent(1000)
         );
         assert!(matches!(
@@ -1792,11 +1797,15 @@ mod tests {
 
         // checked div
         assert_eq!(
-            Decimal::percent(30).checked_div(Decimal::percent(200)).unwrap(),
+            Decimal::percent(30)
+                .checked_div(Decimal::percent(200))
+                .unwrap(),
             Decimal::percent(15)
         );
         assert_eq!(
-            Decimal::percent(88).checked_div(Decimal::percent(20)).unwrap(),
+            Decimal::percent(88)
+                .checked_div(Decimal::percent(20))
+                .unwrap(),
             Decimal::percent(440)
         );
         assert!(matches!(
@@ -1810,11 +1819,15 @@ mod tests {
 
         // checked rem
         assert_eq!(
-            Decimal::percent(402).checked_rem(Decimal::percent(111)).unwrap(),
+            Decimal::percent(402)
+                .checked_rem(Decimal::percent(111))
+                .unwrap(),
             Decimal::percent(69)
         );
         assert_eq!(
-            Decimal::percent(1525).checked_rem(Decimal::percent(400)).unwrap(),
+            Decimal::percent(1525)
+                .checked_rem(Decimal::percent(400))
+                .unwrap(),
             Decimal::percent(325)
         );
         assert!(matches!(
@@ -1822,6 +1835,4 @@ mod tests {
             Err(DivideByZeroError { .. })
         ));
     }
-
-
 }
