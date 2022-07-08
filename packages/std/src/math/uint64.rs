@@ -201,8 +201,8 @@ impl Uint64 {
         Self(self.0.saturating_mul(other.0))
     }
 
-    pub fn saturating_pow(self, other: u32) -> Self {
-        Self(self.0.saturating_pow(other))
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        Self(self.0.saturating_pow(exp))
     }
 
     pub const fn abs_diff(self, other: Self) -> Self {
