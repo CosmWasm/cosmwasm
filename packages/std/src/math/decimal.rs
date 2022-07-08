@@ -297,6 +297,14 @@ impl Decimal {
             .map_err(|_| DivideByZeroError::new(self))
     }
 
+    /// Raises a value to the power of `exp`, returns MAX on overflow.
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
     /// Returns the approximate square root as a Decimal.
     ///
     /// This should not overflow or panic.
