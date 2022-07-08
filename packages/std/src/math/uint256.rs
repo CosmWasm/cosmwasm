@@ -283,6 +283,21 @@ impl Uint256 {
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
+
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn abs_diff(self, other: Self) -> Self {
+        if self < other {
+            other - self
+        } else {
+            self - other
+        }
+    }
 }
 
 impl From<Uint128> for Uint256 {
@@ -1457,6 +1472,7 @@ mod tests {
             Uint256::MAX.saturating_mul(Uint256::from(2u32)),
             Uint256::MAX
         );
+        assert_eq!(Uint256::MAX.saturating_pow(2u32), Uint256::MAX);
     }
 
     #[test]
@@ -1515,5 +1531,14 @@ mod tests {
         let b = Uint256::from(6u32);
         a %= &b;
         assert_eq!(a, Uint256::from(1u32));
+    }
+
+    #[test]
+    fn uint256_abs_diff_works() {
+        let a = Uint256::from(42u32);
+        let b = Uint256::from(5u32);
+        let expected = Uint256::from(37u32);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
     }
 }
