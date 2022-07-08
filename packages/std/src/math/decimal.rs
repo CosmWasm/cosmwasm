@@ -198,17 +198,6 @@ impl Decimal {
             .map_err(|_| OverflowError::new(OverflowOperation::Sub, self, other))
     }
 
-    pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
-        Decimal::checked_from_ratio(self.numerator(), other.numerator())
-    }
-
-    pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
-        self.0
-            .checked_rem(other.0)
-            .map(Self)
-            .map_err(|_| DivideByZeroError::new(self))
-    }
-
     /// Multiplies one `Decimal` by another, returning an `OverflowError` if an overflow occurred.
     pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
         let result_as_uint256 = self.numerator().full_mul(other.numerator())
@@ -254,6 +243,17 @@ impl Decimal {
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
+    }
+
+    pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
+        Decimal::checked_from_ratio(self.numerator(), other.numerator())
+    }
+
+    pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.0
+            .checked_rem(other.0)
+            .map(Self)
+            .map_err(|_| DivideByZeroError::new(self))
     }
 
     /// Returns the approximate square root as a Decimal.

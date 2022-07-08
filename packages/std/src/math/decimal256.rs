@@ -3,12 +3,15 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::errors::{CheckedFromRatioError, CheckedMultiplyRatioError, StdError};
-use crate::{OverflowError, Uint512};
+use crate::errors::{
+    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
+};
+use crate::{Decimal, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -180,6 +183,7 @@ impl Decimal256 {
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Uint256::from(1u128));
     /// ```
+    #[inline]
     pub const fn atomics(&self) -> Uint256 {
         self.0
     }
@@ -188,8 +192,23 @@ impl Decimal256 {
     /// but this could potentially change as the type evolves.
     ///
     /// See also [`Decimal256::atomics()`].
+    #[inline]
     pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
+    }
+
+    pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
+        self.0
+            .checked_add(other.0)
+            .map(Self)
+            .map_err(|_| OverflowError::new(OverflowOperation::Add, self, other))
+    }
+
+    pub fn checked_sub(self, other: Self) -> Result<Self, OverflowError> {
+        self.0
+            .checked_sub(other.0)
+            .map(Self)
+            .map_err(|_| OverflowError::new(OverflowOperation::Sub, self, other))
     }
 
     /// Multiplies one `Decimal256` by another, returning an `OverflowError` if an overflow occurred.
@@ -239,6 +258,17 @@ impl Decimal256 {
         })
     }
 
+    pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
+        Decimal256::checked_from_ratio(self.numerator(), other.numerator())
+    }
+
+    pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.0
+            .checked_rem(other.0)
+            .map(Self)
+            .map_err(|_| DivideByZeroError::new(self))
+    }
+
     /// Returns the approximate square root as a Decimal256.
     ///
     /// This should not overflow or panic.
@@ -270,6 +300,14 @@ impl Decimal256 {
             Self(inner.isqrt().checked_mul(outer_mul).unwrap())
         })
     }
+
+    pub fn abs_diff(self, other: Self) -> Self {
+        if self < other {
+            other - self
+        } else {
+            self - other
+        }
+    }
 }
 
 impl Fraction<Uint256> for Decimal256 {
@@ -295,6 +333,14 @@ impl Fraction<Uint256> for Decimal256 {
             // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
             Some(Self(Self::DECIMAL_FRACTIONAL_SQUARED / self.0))
         }
+    }
+}
+
+impl From<Decimal> for Decimal256 {
+    fn from(input: Decimal) -> Self {
+        // Unwrap is safe because Decimal256 and Decimal have the same decimal places.
+        // Every Decimal value can be stored in Decimal256.
+        Decimal256::from_atomics(input.atomics(), input.decimal_places()).unwrap()
     }
 }
 
@@ -486,6 +532,26 @@ impl DivAssign<Uint256> for Decimal256 {
         self.0 /= rhs;
     }
 }
+
+impl Rem for Decimal256 {
+    type Output = Self;
+
+    /// # Panics
+    ///
+    /// This operation will panic if `rhs` is zero
+    #[inline]
+    fn rem(self, rhs: Self) -> Self {
+        Self(self.0.rem(rhs.0))
+    }
+}
+forward_ref_binop!(impl Rem, rem for Decimal256, Decimal256);
+
+impl RemAssign<Decimal256> for Decimal256 {
+    fn rem_assign(&mut self, rhs: Decimal256) {
+        *self = *self % rhs;
+    }
+}
+forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal256, Decimal256);
 
 impl<A> std::iter::Sum<A> for Decimal256
 where
@@ -764,6 +830,21 @@ mod tests {
             fraction.denominator(),
             Uint256::from_str("1000000000000000000").unwrap()
         );
+    }
+
+    #[test]
+    fn decimal256_implements_from_decimal() {
+        let a = Decimal::from_str("123.456").unwrap();
+        let b = Decimal256::from(a);
+        assert_eq!(b.to_string(), "123.456");
+
+        let a = Decimal::from_str("0").unwrap();
+        let b = Decimal256::from(a);
+        assert_eq!(b.to_string(), "0");
+
+        let a = Decimal::MAX;
+        let b = Decimal256::from(a);
+        assert_eq!(b.to_string(), "340282366920938463463.374607431768211455");
     }
 
     #[test]
@@ -1782,5 +1863,123 @@ mod tests {
             from_slice::<Decimal256>(br#""87.65""#).unwrap(),
             Decimal256::percent(8765)
         );
+    }
+
+    #[test]
+    fn decimal256_abs_diff_works() {
+        let a = Decimal256::percent(285);
+        let b = Decimal256::percent(200);
+        let expected = Decimal256::percent(85);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn decimal256_rem_works() {
+        // 4.02 % 1.11 = 0.69
+        assert_eq!(
+            Decimal256::percent(402) % Decimal256::percent(111),
+            Decimal256::percent(69)
+        );
+
+        // 15.25 % 4 = 3.25
+        assert_eq!(
+            Decimal256::percent(1525) % Decimal256::percent(400),
+            Decimal256::percent(325)
+        );
+
+        let a = Decimal256::percent(318);
+        let b = Decimal256::percent(317);
+        let expected = Decimal256::percent(1);
+        assert_eq!(a % b, expected);
+        assert_eq!(a % &b, expected);
+        assert_eq!(&a % b, expected);
+        assert_eq!(&a % &b, expected);
+    }
+
+    #[test]
+    fn decimal_rem_assign_works() {
+        let mut a = Decimal256::percent(17673);
+        a %= Decimal256::percent(2362);
+        assert_eq!(a, Decimal256::percent(1139)); // 176.73 % 23.62 = 11.39
+
+        let mut a = Decimal256::percent(4262);
+        let b = Decimal256::percent(1270);
+        a %= &b;
+        assert_eq!(a, Decimal256::percent(452)); // 42.62 % 12.7 = 4.52
+    }
+
+    #[test]
+    #[should_panic(expected = "division by zero")]
+    fn decimal256_rem_panics_for_zero() {
+        let _ = Decimal256::percent(777) % Decimal256::zero();
+    }
+
+    #[test]
+    fn decimal256_checked_methods() {
+        // checked add
+        assert_eq!(
+            Decimal256::percent(402)
+                .checked_add(Decimal256::percent(111))
+                .unwrap(),
+            Decimal256::percent(513)
+        );
+        assert!(matches!(
+            Decimal256::MAX.checked_add(Decimal256::percent(1)),
+            Err(OverflowError { .. })
+        ));
+
+        // checked sub
+        assert_eq!(
+            Decimal256::percent(1111)
+                .checked_sub(Decimal256::percent(111))
+                .unwrap(),
+            Decimal256::percent(1000)
+        );
+        assert!(matches!(
+            Decimal256::zero().checked_sub(Decimal256::percent(1)),
+            Err(OverflowError { .. })
+        ));
+
+        // checked div
+        assert_eq!(
+            Decimal256::percent(30)
+                .checked_div(Decimal256::percent(200))
+                .unwrap(),
+            Decimal256::percent(15)
+        );
+        assert_eq!(
+            Decimal256::percent(88)
+                .checked_div(Decimal256::percent(20))
+                .unwrap(),
+            Decimal256::percent(440)
+        );
+        assert!(matches!(
+            Decimal256::MAX.checked_div(Decimal256::zero()),
+            Err(CheckedFromRatioError::DivideByZero { .. })
+        ));
+        assert!(matches!(
+            Decimal256::MAX.checked_div(Decimal256::percent(1)),
+            Err(CheckedFromRatioError::Overflow { .. })
+        ));
+
+        // checked rem
+        assert_eq!(
+            Decimal256::percent(402)
+                .checked_rem(Decimal256::percent(111))
+                .unwrap(),
+            Decimal256::percent(69)
+        );
+        assert_eq!(
+            Decimal256::percent(1525)
+                .checked_rem(Decimal256::percent(400))
+                .unwrap(),
+            Decimal256::percent(325)
+        );
+        assert!(matches!(
+            Decimal256::MAX.checked_rem(Decimal256::zero()),
+            Err(DivideByZeroError { .. })
+        ));
     }
 }
