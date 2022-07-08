@@ -266,6 +266,14 @@ impl Decimal256 {
         })
     }
 
+    /// Raises a value to the power of `exp`, returns MAX on overflow.
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
         Decimal256::checked_from_ratio(self.numerator(), other.numerator())
     }
@@ -2004,5 +2012,10 @@ mod tests {
     #[should_panic]
     fn decimal256_pow_overflow_panics() {
         Decimal256::MAX.pow(2u32);
+    }
+
+    #[test]
+    fn decimal_saturating_pow() {
+        assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
     }
 }

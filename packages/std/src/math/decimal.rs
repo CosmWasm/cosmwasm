@@ -212,7 +212,7 @@ impl Decimal {
             })
     }
 
-    /// Raises a value to the power of `exp`, pancis if an overflow occurred.
+    /// Raises a value to the power of `exp`, panics if an overflow occurred.
     pub fn pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -251,6 +251,14 @@ impl Decimal {
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
+    }
+
+    /// Raises a value to the power of `exp`, returns MAX on overflow.
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
@@ -1854,5 +1862,10 @@ mod tests {
     #[should_panic]
     fn decimal_pow_overflow_panics() {
         Decimal::MAX.pow(2u32);
+    }
+
+    #[test]
+    fn decimal_saturating_pow() {
+        assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
     }
 }
