@@ -128,6 +128,7 @@ pub enum WasmMsg {
         code_hash: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
         msg: Binary,
+        #[serde(rename = "send")]
         funds: Vec<Coin>,
     },
     /// Instantiates a new contracts from previously uploaded Wasm code.
@@ -141,6 +142,7 @@ pub enum WasmMsg {
         code_hash: String,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         msg: Binary,
+        #[serde(rename = "send")]
         funds: Vec<Coin>,
         /// A human-readbale label for the contract, must be unique across all contracts
         label: String,
