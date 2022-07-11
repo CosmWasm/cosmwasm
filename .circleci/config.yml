@@ -967,6 +967,10 @@ jobs:
           working_directory: ~/project/packages/schema
           command: cargo clippy --all-targets -- -D warnings
       - run:
+          name: Clippy linting on schema-derive
+          working_directory: ~/project/packages/schema-derive
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
           name: Clippy linting on std (no feature flags)
           working_directory: ~/project/packages/std
           command: cargo clippy --all-targets -- -D warnings
