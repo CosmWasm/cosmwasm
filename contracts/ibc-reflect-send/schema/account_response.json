@@ -29,6 +29,7 @@
       }
     }
   },
+  "additionalProperties": false,
   "definitions": {
     "Coin": {
       "type": "object",

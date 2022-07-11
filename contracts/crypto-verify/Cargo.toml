@@ -33,6 +33,7 @@ cranelift = ["cosmwasm-vm/cranelift"]
 backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 
 [dependencies]
+cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
 cosmwasm-storage = { path = "../../packages/storage", features = ["iterator"] }
 hex = "0.4"
@@ -44,5 +45,4 @@ sha3 = "0.9"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
-cosmwasm-schema = { path = "../../packages/schema" }
 hex-literal = "0.3.1"

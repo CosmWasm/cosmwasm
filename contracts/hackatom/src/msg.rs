@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
-use cosmwasm_std::{AllBalanceResponse, Binary, Coin};
+use cosmwasm_std::{Binary, Coin};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -69,7 +69,7 @@ pub enum QueryMsg {
     #[returns(VerifierResponse)]
     Verifier {},
     /// This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
-    #[returns(AllBalanceResponse)]
+    #[returns(cosmwasm_std::AllBalanceResponse)]
     OtherBalance { address: String },
     /// Recurse will execute a query into itself up to depth-times and return
     /// Each step of the recursion may perform some extra work to test gas metering

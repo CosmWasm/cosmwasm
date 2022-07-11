@@ -34,10 +34,10 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 library = []
 
 [dependencies]
+cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"]  }

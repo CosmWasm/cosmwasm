@@ -9,5 +9,6 @@
     "admin": {
       "type": "string"
     }
-  }
+  },
+  "additionalProperties": false
 }
