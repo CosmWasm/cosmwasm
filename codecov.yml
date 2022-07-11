@@ -26,7 +26,7 @@ flags:
     paths:
       - packages/schema/
   cosmwasm-schema-derive:
-      - packages/schema-derive/
+    - packages/schema-derive/
   cosmwasm-std:
     paths:
       - packages/std/
