@@ -287,12 +287,22 @@ name = "cosmwasm-schema"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "cosmwasm-schema-derive",
  "schemars",
  "semver",
  "serde",
  "serde_json",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-schema-derive"
+version = "1.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -853,6 +863,7 @@ dependencies = [
 name = "hackatom"
 version = "0.0.0"
 dependencies = [
+ "cosmwasm-schema",
  "cosmwasm-std",
  "rust-argon2",
  "schemars",

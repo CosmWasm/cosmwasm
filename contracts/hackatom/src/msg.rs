@@ -1,7 +1,8 @@
+use cosmwasm_schema::QueryResponses;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Binary, Coin};
+use cosmwasm_std::{AllBalanceResponse, Binary, Coin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -66,20 +67,24 @@ pub enum ExecuteMsg {
     UserErrorsInApiCalls {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
 #[serde(deny_unknown_fields, rename_all = "snake_case")]
 pub enum QueryMsg {
     /// returns a human-readable representation of the verifier
     /// use to ensure query path works in integration tests
+    #[returns(VerifierResponse)]
     Verifier {},
     /// This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
+    #[returns(AllBalanceResponse)]
     OtherBalance { address: String },
     /// Recurse will execute a query into itself up to depth-times and return
     /// Each step of the recursion may perform some extra work to test gas metering
     /// (`work` rounds of sha256 on contract).
     /// Now that we have Env, we can auto-calculate the address to recurse into
+    #[returns(RecurseResponse)]
     Recurse { depth: u32, work: u32 },
     /// GetInt returns a hardcoded u32 value
+    #[returns(IntResponse)]
     GetInt {},
 }
 
