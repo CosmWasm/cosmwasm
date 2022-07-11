@@ -544,6 +544,10 @@ pub enum CheckedFromRatioError {
     Overflow,
 }
 
+#[derive(Error, Debug, PartialEq, Eq)]
+#[error("Round up operation failed because of overflow")]
+pub struct RoundUpOverflowError;
+
 #[cfg(test)]
 mod tests {
     use super::*;

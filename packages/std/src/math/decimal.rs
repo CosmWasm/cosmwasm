@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, StdError,
+    OverflowOperation, RoundUpOverflowError, StdError,
 };
 
 use super::Fraction;
@@ -198,12 +198,14 @@ impl Decimal {
     }
 
     /// Rounds value up after decimal places. Returns OverflowError on overflow.
-    pub fn checked_ceil(&self) -> Result<Self, OverflowError> {
+    pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
         let floor = self.floor();
         if &floor == self {
             Ok(floor)
         } else {
-            floor.checked_add(Decimal::one())
+            floor
+                .checked_add(Decimal::one())
+                .map_err(|_| RoundUpOverflowError)
         }
     }
 
@@ -1925,7 +1927,7 @@ mod tests {
         );
         assert!(matches!(
             Decimal::MAX.checked_ceil(),
-            Err(OverflowError { .. })
+            Err(RoundUpOverflowError { .. })
         ));
     }
 }
