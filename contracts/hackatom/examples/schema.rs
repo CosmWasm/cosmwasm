@@ -1,9 +1,9 @@
-use cosmwasm_schema::generate_api;
+use cosmwasm_schema::write_api;
 
 use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 
 fn main() {
-    generate_api! {
+    write_api! {
         instantiate: InstantiateMsg,
         query: QueryMsg,
         execute: ExecuteMsg,

@@ -10,6 +10,32 @@ pub use query_response::QueryResponses;
 pub use remove::remove_schemas;
 
 // Re-exports
+/// Generates an [`Api`](crate::Api) for the contract. The body describes the message
+/// types exported in the schema and allows setting contract name and version overrides.
+///
+/// The only obligatory field is `instantiate` - to set the InstantiateMsg type.
+///
+/// # Available fields
+/// See [`write_api`](crate::write_api).
+///
+/// # Example
+/// ```
+/// use cosmwasm_schema::{generate_api};
+/// use schemars::{JsonSchema};
+///
+/// #[derive(JsonSchema)]
+/// struct InstantiateMsg;
+///
+/// #[derive(JsonSchema)]
+/// struct MigrateMsg;
+///
+/// let api = generate_api! {
+///     name: "cw20",
+///     instantiate: InstantiateMsg,
+///     migrate: MigrateMsg,
+/// }.render();
+/// ```
+pub use cosmwasm_schema_derive::generate_api;
 /// Takes care of generating the interface description file for a contract. The body describes
 /// the message types included and allows setting contract name and version overrides.
 ///
@@ -26,7 +52,7 @@ pub use remove::remove_schemas;
 ///
 /// # Example
 /// ```
-/// use cosmwasm_schema::{generate_api};
+/// use cosmwasm_schema::{write_api};
 /// use schemars::{JsonSchema};
 ///
 /// #[derive(JsonSchema)]
@@ -41,31 +67,5 @@ pub use remove::remove_schemas;
 ///     migrate: MigrateMsg,
 /// };
 /// ```
-pub use cosmwasm_schema_derive::generate_api;
-/// Generates an [`Api`](crate::Api) for the contract. The body describes the message
-/// types exported in the schema and allows setting contract name and version overrides.
-///
-/// The only obligatory field is `instantiate` - to set the InstantiateMsg type.
-///
-/// # Available fields
-/// See [`generate_api`](crate::generate_api).
-///
-/// # Example
-/// ```
-/// use cosmwasm_schema::{generate_api_obj};
-/// use schemars::{JsonSchema};
-///
-/// #[derive(JsonSchema)]
-/// struct InstantiateMsg;
-///
-/// #[derive(JsonSchema)]
-/// struct MigrateMsg;
-///
-/// let api = generate_api_obj! {
-///     name: "cw20",
-///     instantiate: InstantiateMsg,
-///     migrate: MigrateMsg,
-/// }.render();
-/// ```
-pub use cosmwasm_schema_derive::generate_api_obj;
+pub use cosmwasm_schema_derive::write_api;
 pub use schemars::schema_for;

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_schema::{generate_api_obj, QueryResponses, IDL_VERSION};
+use cosmwasm_schema::{generate_api, QueryResponses, IDL_VERSION};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -40,7 +40,7 @@ pub struct MigrateMsg {
 
 #[test]
 fn test_basic_structure() {
-    let api_str = generate_api_obj! {
+    let api_str = generate_api! {
         name: "test",
         version: "0.1.0",
         instantiate: InstantiateMsg,
@@ -81,7 +81,7 @@ fn test_basic_structure() {
 
 #[test]
 fn test_query_responses() {
-    let api_str = generate_api_obj! {
+    let api_str = generate_api! {
         instantiate: InstantiateMsg,
         query: QueryMsg,
     }

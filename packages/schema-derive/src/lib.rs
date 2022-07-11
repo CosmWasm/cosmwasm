@@ -14,19 +14,19 @@ pub fn query_responses_derive(input: proc_macro::TokenStream) -> proc_macro::Tok
 }
 
 #[proc_macro]
-pub fn generate_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn write_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as generate_api::Options);
 
-    let expanded = generate_api::generate_api_impl(input).into_token_stream();
+    let expanded = generate_api::write_api_impl(input).into_token_stream();
 
     proc_macro::TokenStream::from(expanded)
 }
 
 #[proc_macro]
-pub fn generate_api_obj(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn generate_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as generate_api::Options);
 
-    let expanded = generate_api::api_object(&input).into_token_stream();
+    let expanded = generate_api::generate_api_impl(&input).into_token_stream();
 
     proc_macro::TokenStream::from(expanded)
 }

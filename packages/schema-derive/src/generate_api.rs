@@ -7,8 +7,8 @@ use syn::{
     parse_quote, Block, ExprStruct, Ident, Path, Token,
 };
 
-pub fn generate_api_impl(input: Options) -> Block {
-    let api_object = api_object(&input);
+pub fn write_api_impl(input: Options) -> Block {
+    let api_object = generate_api_impl(&input);
     let name = input.name;
 
     parse_quote! {
@@ -34,7 +34,7 @@ pub fn generate_api_impl(input: Options) -> Block {
     }
 }
 
-pub fn api_object(input: &Options) -> ExprStruct {
+pub fn generate_api_impl(input: &Options) -> ExprStruct {
     let Options {
         name,
         version,
@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn api_object_minimal() {
         assert_eq!(
-            api_object(&parse_quote! {
+            generate_api_impl(&parse_quote! {
                 instantiate: InstantiateMsg,
             }),
             parse_quote! {
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn api_object_name_vesion_override() {
         assert_eq!(
-            api_object(&parse_quote! {
+            generate_api_impl(&parse_quote! {
                 name: "foo",
                 version: "bar",
                 instantiate: InstantiateMsg,
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn api_object_all_msgs() {
         assert_eq!(
-            api_object(&parse_quote! {
+            generate_api_impl(&parse_quote! {
                 instantiate: InstantiateMsg,
                 execute: ExecuteMsg,
                 query: QueryMsg,
