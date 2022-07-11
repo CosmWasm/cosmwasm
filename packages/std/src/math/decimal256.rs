@@ -197,6 +197,19 @@ impl Decimal256 {
         Self::DECIMAL_PLACES as u32
     }
 
+    pub fn floor(&self) -> Self {
+        Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
+    }
+
+    pub fn ceil(&self) -> Self {
+        let floor = self.floor();
+        if &floor == self {
+            floor
+        } else {
+            floor + Decimal256::one()
+        }
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -2021,5 +2034,20 @@ mod tests {
             Decimal256::percent(1600)
         );
         assert_eq!(Decimal256::MAX.saturating_pow(2u32), Decimal256::MAX);
+    }
+
+    #[test]
+    fn decimal256_rounding() {
+        assert_eq!(Decimal256::one().floor(), Decimal256::one());
+        assert_eq!(Decimal256::percent(150).floor(), Decimal256::one());
+        assert_eq!(Decimal256::percent(199).floor(), Decimal256::one());
+        assert_eq!(Decimal256::percent(200).floor(), Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(99).floor(), Decimal256::zero());
+
+        assert_eq!(Decimal256::one().ceil(), Decimal256::one());
+        assert_eq!(Decimal256::percent(150).ceil(), Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(199).ceil(), Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(99).ceil(), Decimal256::one());
+        assert_eq!(Decimal256(Uint256::from(1u128)).ceil(), Decimal256::one());
     }
 }
