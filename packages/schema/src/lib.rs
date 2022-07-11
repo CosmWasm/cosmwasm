@@ -36,6 +36,7 @@ pub use remove::remove_schemas;
 /// }.render();
 /// ```
 pub use cosmwasm_schema_derive::generate_api;
+pub use cosmwasm_schema_derive::msg;
 /// Takes care of generating the interface description file for a contract. The body describes
 /// the message types included and allows setting contract name and version overrides.
 ///
