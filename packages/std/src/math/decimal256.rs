@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, StdError,
+    OverflowOperation, RoundUpOverflowError, StdError,
 };
 use crate::{Decimal, Uint512};
 
@@ -195,6 +195,31 @@ impl Decimal256 {
     #[inline]
     pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
+    }
+
+    /// Rounds value down after decimal places.
+    pub fn floor(&self) -> Self {
+        Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
+    }
+
+    /// Rounds value up after decimal places. Panics on overflow.
+    pub fn ceil(&self) -> Self {
+        match self.checked_ceil() {
+            Ok(value) => value,
+            Err(_) => panic!("attempt to ceil with overflow"),
+        }
+    }
+
+    /// Rounds value up after decimal places. Returns OverflowError on overflow.
+    pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
+        let floor = self.floor();
+        if &floor == self {
+            Ok(floor)
+        } else {
+            floor
+                .checked_add(Decimal256::one())
+                .map_err(|_| RoundUpOverflowError)
+        }
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -2021,5 +2046,35 @@ mod tests {
             Decimal256::percent(1600)
         );
         assert_eq!(Decimal256::MAX.saturating_pow(2u32), Decimal256::MAX);
+    }
+
+    #[test]
+    fn decimal256_rounding() {
+        assert_eq!(Decimal256::one().floor(), Decimal256::one());
+        assert_eq!(Decimal256::percent(150).floor(), Decimal256::one());
+        assert_eq!(Decimal256::percent(199).floor(), Decimal256::one());
+        assert_eq!(Decimal256::percent(200).floor(), Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(99).floor(), Decimal256::zero());
+
+        assert_eq!(Decimal256::one().ceil(), Decimal256::one());
+        assert_eq!(Decimal256::percent(150).ceil(), Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(199).ceil(), Decimal256::percent(200));
+        assert_eq!(Decimal256::percent(99).ceil(), Decimal256::one());
+        assert_eq!(Decimal256(Uint256::from(1u128)).ceil(), Decimal256::one());
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to ceil with overflow")]
+    fn decimal256_ceil_panics() {
+        let _ = Decimal256::MAX.ceil();
+    }
+
+    #[test]
+    fn decimal256_checked_ceil() {
+        assert_eq!(
+            Decimal256::percent(199).checked_ceil(),
+            Ok(Decimal256::percent(200))
+        );
+        assert_eq!(Decimal256::MAX.checked_ceil(), Err(RoundUpOverflowError));
     }
 }

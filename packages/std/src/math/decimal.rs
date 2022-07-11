@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, StdError,
+    OverflowOperation, RoundUpOverflowError, StdError,
 };
 
 use super::Fraction;
@@ -182,6 +182,31 @@ impl Decimal {
     #[inline]
     pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES as u32
+    }
+
+    /// Rounds value down after decimal places.
+    pub fn floor(&self) -> Self {
+        Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
+    }
+
+    /// Rounds value up after decimal places. Panics on overflow.
+    pub fn ceil(&self) -> Self {
+        match self.checked_ceil() {
+            Ok(value) => value,
+            Err(_) => panic!("attempt to ceil with overflow"),
+        }
+    }
+
+    /// Rounds value up after decimal places. Returns OverflowError on overflow.
+    pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
+        let floor = self.floor();
+        if &floor == self {
+            Ok(floor)
+        } else {
+            floor
+                .checked_add(Decimal::one())
+                .map_err(|_| RoundUpOverflowError)
+        }
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -1871,5 +1896,38 @@ mod tests {
             Decimal::percent(1600)
         );
         assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
+    }
+
+    #[test]
+    fn decimal_rounding() {
+        assert_eq!(Decimal::one().floor(), Decimal::one());
+        assert_eq!(Decimal::percent(150).floor(), Decimal::one());
+        assert_eq!(Decimal::percent(199).floor(), Decimal::one());
+        assert_eq!(Decimal::percent(200).floor(), Decimal::percent(200));
+        assert_eq!(Decimal::percent(99).floor(), Decimal::zero());
+
+        assert_eq!(Decimal::one().ceil(), Decimal::one());
+        assert_eq!(Decimal::percent(150).ceil(), Decimal::percent(200));
+        assert_eq!(Decimal::percent(199).ceil(), Decimal::percent(200));
+        assert_eq!(Decimal::percent(99).ceil(), Decimal::one());
+        assert_eq!(Decimal(Uint128::from(1u128)).ceil(), Decimal::one());
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to ceil with overflow")]
+    fn decimal_ceil_panics() {
+        let _ = Decimal::MAX.ceil();
+    }
+
+    #[test]
+    fn decimal_checked_ceil() {
+        assert_eq!(
+            Decimal::percent(199).checked_ceil(),
+            Ok(Decimal::percent(200))
+        );
+        assert!(matches!(
+            Decimal::MAX.checked_ceil(),
+            Err(RoundUpOverflowError { .. })
+        ));
     }
 }
