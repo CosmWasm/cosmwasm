@@ -511,6 +511,12 @@ where
     }
 }
 
+impl PartialEq<&Uint128> for Uint128 {
+    fn eq(&self, rhs: &&Uint128) -> bool {
+        self == *rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -852,10 +858,10 @@ mod tests {
         let nums = vec![Uint128(17), Uint128(123), Uint128(540), Uint128(82)];
         let expected = Uint128(762);
 
-        let sum_as_ref = nums.iter().sum();
+        let sum_as_ref: Uint128 = nums.iter().sum();
         assert_eq!(expected, sum_as_ref);
 
-        let sum_as_owned = nums.into_iter().sum();
+        let sum_as_owned: Uint128 = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
     }
 

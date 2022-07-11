@@ -569,6 +569,12 @@ where
     }
 }
 
+impl PartialEq<&Uint512> for Uint512 {
+    fn eq(&self, rhs: &&Uint512) -> bool {
+        self == *rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1032,10 +1038,10 @@ mod tests {
         ];
         let expected = Uint512::from(762u32);
 
-        let sum_as_ref = nums.iter().sum();
+        let sum_as_ref: Uint512 = nums.iter().sum();
         assert_eq!(expected, sum_as_ref);
 
-        let sum_as_owned = nums.into_iter().sum();
+        let sum_as_owned: Uint512 = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
     }
 

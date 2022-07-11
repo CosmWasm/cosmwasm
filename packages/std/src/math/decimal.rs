@@ -200,7 +200,7 @@ impl Decimal {
     /// Rounds value up after decimal places. Returns OverflowError on overflow.
     pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
         let floor = self.floor();
-        if &floor == self {
+        if floor == self {
             Ok(floor)
         } else {
             floor
@@ -615,6 +615,12 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
         }
+    }
+}
+
+impl PartialEq<&Decimal> for Decimal {
+    fn eq(&self, rhs: &&Decimal) -> bool {
+        self == *rhs
     }
 }
 
@@ -1721,7 +1727,7 @@ mod tests {
         );
 
         let empty: Vec<Decimal> = vec![];
-        assert_eq!(Decimal::zero(), empty.iter().sum());
+        assert_eq!(Decimal::zero(), empty.iter().sum::<Decimal>());
     }
 
     #[test]

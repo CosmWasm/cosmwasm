@@ -608,6 +608,12 @@ where
     }
 }
 
+impl PartialEq<&Uint256> for Uint256 {
+    fn eq(&self, rhs: &&Uint256) -> bool {
+        self == *rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1397,10 +1403,10 @@ mod tests {
         ];
         let expected = Uint256::from(762u32);
 
-        let sum_as_ref = nums.iter().sum();
+        let sum_as_ref: Uint256 = nums.iter().sum();
         assert_eq!(expected, sum_as_ref);
 
-        let sum_as_owned = nums.into_iter().sum();
+        let sum_as_owned: Uint256 = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
     }
 

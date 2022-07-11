@@ -465,6 +465,12 @@ where
     }
 }
 
+impl PartialEq<&Uint64> for Uint64 {
+    fn eq(&self, rhs: &&Uint64) -> bool {
+        self == *rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -767,10 +773,10 @@ mod tests {
         let nums = vec![Uint64(17), Uint64(123), Uint64(540), Uint64(82)];
         let expected = Uint64(762);
 
-        let sum_as_ref = nums.iter().sum();
+        let sum_as_ref: Uint64 = nums.iter().sum();
         assert_eq!(expected, sum_as_ref);
 
-        let sum_as_owned = nums.into_iter().sum();
+        let sum_as_owned: Uint64 = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
     }
 

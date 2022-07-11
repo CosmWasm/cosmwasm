@@ -213,7 +213,7 @@ impl Decimal256 {
     /// Rounds value up after decimal places. Returns OverflowError on overflow.
     pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
         let floor = self.floor();
-        if &floor == self {
+        if floor == self {
             Ok(floor)
         } else {
             floor
@@ -640,6 +640,12 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
         }
+    }
+}
+
+impl PartialEq<&Decimal256> for Decimal256 {
+    fn eq(&self, rhs: &&Decimal256) -> bool {
+        self == *rhs
     }
 }
 
@@ -1856,7 +1862,7 @@ mod tests {
         );
 
         let empty: Vec<Decimal256> = vec![];
-        assert_eq!(Decimal256::zero(), empty.iter().sum());
+        assert_eq!(Decimal256::zero(), empty.iter().sum::<Decimal256>());
     }
 
     #[test]
