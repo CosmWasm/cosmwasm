@@ -61,7 +61,7 @@ pub use cosmwasm_schema_derive::generate_api;
 /// #[derive(JsonSchema)]
 /// struct MigrateMsg;
 ///
-/// generate_api! {
+/// write_api! {
 ///     name: "cw20",
 ///     instantiate: InstantiateMsg,
 ///     migrate: MigrateMsg,
