@@ -184,6 +184,19 @@ impl Decimal {
         Self::DECIMAL_PLACES as u32
     }
 
+    pub fn floor(&self) -> Self {
+        Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
+    }
+
+    pub fn ceil(&self) -> Self {
+        let floor = self.floor();
+        if &floor == self {
+            floor
+        } else {
+            floor + Decimal::one()
+        }
+    }
+
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -1871,5 +1884,20 @@ mod tests {
             Decimal::percent(1600)
         );
         assert_eq!(Decimal::MAX.saturating_pow(2u32), Decimal::MAX);
+    }
+
+    #[test]
+    fn decimal_rounding() {
+        assert_eq!(Decimal::one().floor(), Decimal::one());
+        assert_eq!(Decimal::percent(150).floor(), Decimal::one());
+        assert_eq!(Decimal::percent(199).floor(), Decimal::one());
+        assert_eq!(Decimal::percent(200).floor(), Decimal::percent(200));
+        assert_eq!(Decimal::percent(99).floor(), Decimal::zero());
+
+        assert_eq!(Decimal::one().ceil(), Decimal::one());
+        assert_eq!(Decimal::percent(150).ceil(), Decimal::percent(200));
+        assert_eq!(Decimal::percent(199).ceil(), Decimal::percent(200));
+        assert_eq!(Decimal::percent(99).ceil(), Decimal::one());
+        assert_eq!(Decimal(Uint128::from(1u128)).ceil(), Decimal::one());
     }
 }
