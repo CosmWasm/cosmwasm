@@ -225,6 +225,14 @@ impl Decimal256 {
             })
     }
 
+    /// Raises a value to the power of `exp`, panics if an overflow occurred.
+    pub fn pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => panic!("Multiplication overflow"),
+        }
+    }
+
     /// Raises a value to the power of `exp`, returning an `OverflowError` if an overflow occurred.
     pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
         // This uses the exponentiation by squaring algorithm:
@@ -256,6 +264,14 @@ impl Decimal256 {
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
+    }
+
+    /// Raises a value to the power of `exp`, returns MAX on overflow.
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
@@ -1981,5 +1997,29 @@ mod tests {
             Decimal256::MAX.checked_rem(Decimal256::zero()),
             Err(DivideByZeroError { .. })
         ));
+    }
+
+    #[test]
+    fn decimal256_pow_works() {
+        assert_eq!(Decimal256::percent(200).pow(2), Decimal256::percent(400));
+        assert_eq!(
+            Decimal256::percent(200).pow(10),
+            Decimal256::percent(102400)
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn decimal256_pow_overflow_panics() {
+        Decimal256::MAX.pow(2u32);
+    }
+
+    #[test]
+    fn decimal256_saturating_pow() {
+        assert_eq!(
+            Decimal256::percent(400).saturating_pow(2u32),
+            Decimal256::percent(1600)
+        );
+        assert_eq!(Decimal256::MAX.saturating_pow(2u32), Decimal256::MAX);
     }
 }
