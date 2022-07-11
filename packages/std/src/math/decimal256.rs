@@ -197,16 +197,26 @@ impl Decimal256 {
         Self::DECIMAL_PLACES as u32
     }
 
+    /// Rounds value down after decimal places.
     pub fn floor(&self) -> Self {
         Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
     }
 
+    /// Rounds value up after decimal places. Panics on overflow.
     pub fn ceil(&self) -> Self {
+        match self.checked_ceil() {
+            Ok(value) => value,
+            Err(_) => panic!("attempt to ceil with overflow"),
+        }
+    }
+
+    /// Rounds value up after decimal places. Returns OverflowError on overflow.
+    pub fn checked_ceil(&self) -> Result<Self, OverflowError> {
         let floor = self.floor();
         if &floor == self {
-            floor
+            Ok(floor)
         } else {
-            floor + Decimal256::one()
+            floor.checked_add(Decimal256::one())
         }
     }
 
@@ -2049,5 +2059,23 @@ mod tests {
         assert_eq!(Decimal256::percent(199).ceil(), Decimal256::percent(200));
         assert_eq!(Decimal256::percent(99).ceil(), Decimal256::one());
         assert_eq!(Decimal256(Uint256::from(1u128)).ceil(), Decimal256::one());
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to ceil with overflow")]
+    fn decimal256_ceil_panics() {
+        let _ = Decimal256::MAX.ceil();
+    }
+
+    #[test]
+    fn decimal256_checked_ceil() {
+        assert_eq!(
+            Decimal256::percent(199).checked_ceil(),
+            Ok(Decimal256::percent(200))
+        );
+        assert!(matches!(
+            Decimal256::MAX.checked_ceil(),
+            Err(OverflowError { .. })
+        ));
     }
 }
