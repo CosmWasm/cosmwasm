@@ -48,7 +48,7 @@ pub use crate::math::{
 };
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, ContractInfoResponse, CustomQuery,
-    QueryRequest, WasmQuery,
+    QueryRequest, SupplyResponse, WasmQuery,
 };
 #[cfg(feature = "staking")]
 pub use crate::query::{
