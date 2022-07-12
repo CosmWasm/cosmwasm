@@ -17,6 +17,8 @@ and this project adheres to
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `pow`/`saturating_pow` for `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `ceil`/`floor` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
+  `Decimal`/`Decimal256`.
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 

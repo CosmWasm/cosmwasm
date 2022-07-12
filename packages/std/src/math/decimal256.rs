@@ -291,14 +291,6 @@ impl Decimal256 {
         })
     }
 
-    /// Raises a value to the power of `exp`, returns MAX on overflow.
-    pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
-    }
-
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
         Decimal256::checked_from_ratio(self.numerator(), other.numerator())
     }
@@ -347,6 +339,34 @@ impl Decimal256 {
             other - self
         } else {
             self - other
+        }
+    }
+
+    pub fn saturating_add(self, other: Self) -> Self {
+        match self.checked_add(other) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn saturating_sub(self, other: Self) -> Self {
+        match self.checked_sub(other) {
+            Ok(value) => value,
+            Err(_) => Self::zero(),
+        }
+    }
+
+    pub fn saturating_mul(self, other: Self) -> Self {
+        match self.checked_mul(other) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
         }
     }
 }
@@ -2040,7 +2060,31 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_saturating_pow() {
+    fn decimal256_saturating_works() {
+        assert_eq!(
+            Decimal256::percent(200).saturating_add(Decimal256::percent(200)),
+            Decimal256::percent(400)
+        );
+        assert_eq!(
+            Decimal256::MAX.saturating_add(Decimal256::percent(200)),
+            Decimal256::MAX
+        );
+        assert_eq!(
+            Decimal256::percent(200).saturating_sub(Decimal256::percent(100)),
+            Decimal256::percent(100)
+        );
+        assert_eq!(
+            Decimal256::zero().saturating_sub(Decimal256::percent(200)),
+            Decimal256::zero()
+        );
+        assert_eq!(
+            Decimal256::percent(200).saturating_mul(Decimal256::percent(50)),
+            Decimal256::percent(100)
+        );
+        assert_eq!(
+            Decimal256::MAX.saturating_mul(Decimal256::percent(200)),
+            Decimal256::MAX
+        );
         assert_eq!(
             Decimal256::percent(400).saturating_pow(2u32),
             Decimal256::percent(1600)

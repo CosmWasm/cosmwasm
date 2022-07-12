@@ -259,6 +259,13 @@ impl Uint512 {
         Self(self.0.saturating_mul(other.0))
     }
 
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
     pub fn abs_diff(self, other: Self) -> Self {
         if self < other {
             other - self
@@ -1100,6 +1107,11 @@ mod tests {
             Uint512::MAX.saturating_mul(Uint512::from(2u32)),
             Uint512::MAX
         );
+        assert_eq!(
+            Uint512::from(4u32).saturating_pow(2u32),
+            Uint512::from(16u32)
+        );
+        assert_eq!(Uint512::MAX.saturating_pow(2u32), Uint512::MAX);
     }
 
     #[test]
