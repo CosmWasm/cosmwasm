@@ -18,6 +18,7 @@ use crate::query::{
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
+use crate::SupplyResponse;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -195,6 +196,15 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }
+    }
+
+    pub fn query_supply(&self, denom: impl Into<String>) -> StdResult<Coin> {
+        let request = BankQuery::Supply {
+            denom: denom.into(),
+        }
+        .into();
+        let res: SupplyResponse = self.query(&request)?;
+        Ok(res.amount)
     }
 
     pub fn query_balance(
