@@ -10,7 +10,7 @@ mod ibc;
 mod staking;
 mod wasm;
 
-pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
+pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery, SupplyResponse};
 #[cfg(feature = "stargate")]
 pub use ibc::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "staking")]

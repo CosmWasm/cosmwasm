@@ -15,8 +15,10 @@ use crate::ibc::{
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
+use crate::math::Uint128;
 use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, SupplyResponse,
+    WasmQuery,
 };
 #[cfg(feature = "staking")]
 use crate::query::{
@@ -564,20 +566,44 @@ impl Default for WasmQuerier {
 
 #[derive(Clone, Default)]
 pub struct BankQuerier {
+    supplies: HashMap<String, Uint128>,
     balances: HashMap<String, Vec<Coin>>,
 }
 
 impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
-        let mut map = HashMap::new();
+        let mut supplies_map = HashMap::new();
+        let mut balances_map = HashMap::new();
         for (addr, coins) in balances.iter() {
-            map.insert(addr.to_string(), coins.to_vec());
+            balances_map.insert(addr.to_string(), coins.to_vec());
+            for coin in coins.iter() {
+                *supplies_map
+                    .entry(coin.denom.clone())
+                    .or_insert_with(Uint128::zero) += coin.amount;
+            }
         }
-        BankQuerier { balances: map }
+        BankQuerier {
+            supplies: supplies_map,
+            balances: balances_map,
+        }
     }
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
+            BankQuery::Supply { denom } => {
+                let amount = self
+                    .supplies
+                    .get(denom)
+                    .cloned()
+                    .unwrap_or_else(Uint128::zero);
+                let bank_res = SupplyResponse {
+                    amount: Coin {
+                        amount,
+                        denom: denom.to_string(),
+                    },
+                };
+                to_binary(&bank_res).into()
+            }
             BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
                 let amount = self
@@ -1058,6 +1084,35 @@ mod tests {
 
         let res = api.ed25519_batch_verify(&msgs, &signatures, &public_keys);
         assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
+    }
+
+    #[test]
+    fn bank_querier_supply() {
+        let addr1 = String::from("foo");
+        let balance1 = vec![coin(123, "ELF"), coin(777, "FLY")];
+
+        let addr2 = String::from("bar");
+        let balance2 = coins(321, "ELF");
+
+        let bank = BankQuerier::new(&[(&addr1, &balance1), (&addr2, &balance2)]);
+
+        let elf = bank
+            .query(&BankQuery::Supply {
+                denom: "ELF".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: SupplyResponse = from_binary(&elf).unwrap();
+        assert_eq!(res.amount, coin(444, "ELF"));
+
+        let fly = bank
+            .query(&BankQuery::Supply {
+                denom: "FLY".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: SupplyResponse = from_binary(&fly).unwrap();
+        assert_eq!(res.amount, coin(777, "FLY"));
     }
 
     #[test]
