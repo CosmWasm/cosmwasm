@@ -14,11 +14,10 @@ use crate::query::{
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
-    DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
+    DelegationResponse, FullDelegation, StakingQuery, SupplyResponse, Validator, ValidatorResponse,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
-use crate::SupplyResponse;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
