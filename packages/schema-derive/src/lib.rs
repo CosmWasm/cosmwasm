@@ -1,5 +1,5 @@
-mod generate_api;
 mod cw_serde;
+mod generate_api;
 mod query_responses;
 
 use quote::ToTokens;
