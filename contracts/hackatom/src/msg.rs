@@ -1,11 +1,8 @@
-use cosmwasm_schema::QueryResponses;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::{cw_serde, QueryResponses};
 
 use cosmwasm_std::{AllBalanceResponse, Binary, Coin};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields)]
+#[cw_serde]
 pub struct InstantiateMsg {
     pub verifier: String,
     pub beneficiary: String,
@@ -18,8 +15,7 @@ pub struct InstantiateMsg {
 ///
 /// Note that the contract doesn't enforce permissions here, this is done
 /// by blockchain logic (in the future by blockchain governance)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields)]
+#[cw_serde]
 pub struct MigrateMsg {
     pub verifier: String,
 }
@@ -27,8 +23,7 @@ pub struct MigrateMsg {
 /// SudoMsg is only exposed for internal Cosmos SDK modules to call.
 /// This is showing how we can expose "admin" functionality than can not be called by
 /// external users or contracts, but only trusted (native/Go) code in the blockchain
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields, rename_all = "snake_case")]
+#[cw_serde]
 pub enum SudoMsg {
     StealFunds {
         recipient: String,
@@ -38,8 +33,7 @@ pub enum SudoMsg {
 
 // failure modes to help test wasmd, based on this comment
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields, rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
     Release {},
@@ -67,8 +61,8 @@ pub enum ExecuteMsg {
     UserErrorsInApiCalls {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
-#[serde(deny_unknown_fields, rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     /// returns a human-readable representation of the verifier
     /// use to ensure query path works in integration tests
@@ -88,21 +82,18 @@ pub enum QueryMsg {
     GetInt {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields)]
+#[cw_serde]
 pub struct VerifierResponse {
     pub verifier: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields)]
+#[cw_serde]
 pub struct RecurseResponse {
     /// hashed is the result of running sha256 "work+1" times on the contract's human address
     pub hashed: Binary,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(deny_unknown_fields)]
+#[cw_serde]
 pub struct IntResponse {
     pub int: u32,
 }
