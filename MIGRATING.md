@@ -49,7 +49,7 @@ major releases of `cosmwasm`. Note that you can also view the
   ```
 
   Derive `cosmwasm_schema::QueryResponses` for your `QueryMsg` type and annotate
-  each query with its return types. This lets the interface description file
+  each query with its return type. This lets the interface description file
   (schema) generation know what return types to include - and therefore, any
   clients relying on the generated schemas will also know how to interpret
   response data from your contract.
