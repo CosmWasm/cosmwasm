@@ -10,6 +10,7 @@ pub use query_response::QueryResponses;
 pub use remove::remove_schemas;
 
 // Re-exports
+pub use cosmwasm_schema_derive::cw_serde;
 /// Generates an [`Api`](crate::Api) for the contract. The body describes the message
 /// types exported in the schema and allows setting contract name and version overrides.
 ///
@@ -36,7 +37,6 @@ pub use remove::remove_schemas;
 /// }.render();
 /// ```
 pub use cosmwasm_schema_derive::generate_api;
-pub use cosmwasm_schema_derive::msg;
 /// Takes care of generating the interface description file for a contract. The body describes
 /// the message types included and allows setting contract name and version overrides.
 ///
