@@ -9,12 +9,13 @@ use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
 use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, SupplyResponse,
+    WasmQuery,
 };
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
-    DelegationResponse, FullDelegation, StakingQuery, SupplyResponse, Validator, ValidatorResponse,
+    DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
