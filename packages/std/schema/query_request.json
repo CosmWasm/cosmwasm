@@ -43,6 +43,27 @@
     "BankQuery": {
       "oneOf": [
         {
+          "description": "This calls into the native bank module for querying the total supply on one denomination. Return value is SupplyResponse",
+          "type": "object",
+          "required": [
+            "supply"
+          ],
+          "properties": {
+            "supply": {
+              "type": "object",
+              "required": [
+                "denom"
+              ],
+              "properties": {
+                "denom": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
           "description": "This calls into the native bank module for one denomination Return value is BalanceResponse",
           "type": "object",
           "required": [
