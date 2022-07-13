@@ -45,6 +45,7 @@ impl Uint128 {
     }
 
     /// Creates a Uint128(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint128(0)
     }

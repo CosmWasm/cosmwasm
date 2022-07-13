@@ -62,6 +62,7 @@ impl Uint256 {
     }
 
     /// Creates a Uint256(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint256(U256::zero())
     }

@@ -57,11 +57,13 @@ impl Decimal256 {
     }
 
     /// Create a 1.0 Decimal256
+    #[inline]
     pub const fn one() -> Self {
         Self(Self::DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal256
+    #[inline]
     pub const fn zero() -> Self {
         Self(Uint256::zero())
     }
