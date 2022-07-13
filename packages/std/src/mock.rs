@@ -1113,6 +1113,16 @@ mod tests {
             .unwrap();
         let res: SupplyResponse = from_binary(&fly).unwrap();
         assert_eq!(res.amount, coin(777, "FLY"));
+
+        // if a denom does not exist, should return zero amount, instead of throwing an error
+        let atom = bank
+            .query(&BankQuery::Supply {
+                denom: "ATOM".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: SupplyResponse = from_binary(&atom).unwrap();
+        assert_eq!(res.amount, coin(0, "ATOM"));
     }
 
     #[test]
