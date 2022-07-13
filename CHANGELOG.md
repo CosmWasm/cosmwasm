@@ -25,6 +25,8 @@ and this project adheres to
 ### Changed
 
 - cosmwasm-vm/cosmwasm-profiler: Upgrade Wasmer to 2.3.0.
+- cosmwasm-std: Enable the `abort` feature by default. This provides more
+  helpful panic messages via a custom panic handler.
 
 ## [1.0.0] - 2022-05-14
 

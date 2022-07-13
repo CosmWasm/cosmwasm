@@ -12,7 +12,7 @@ readme = "README.md"
 features = ["stargate", "staking", "ibc3"]
 
 [features]
-default = ["iterator"]
+default = ["iterator", "abort"]
 abort = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
