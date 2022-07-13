@@ -1884,27 +1884,31 @@ mod tests {
         );
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::zero()),
-            Err(CheckedFromRatioError::DivideByZero { })
+            Err(CheckedFromRatioError::DivideByZero {})
         ));
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::percent(1)),
-            Err(CheckedFromRatioError::Overflow { })
+            Err(CheckedFromRatioError::Overflow {})
         ));
 
-       assert!(matches!(
+        assert!(matches!(
             Decimal::MAX.checked_div_euclid(Decimal::zero()),
             Err(CheckedFromRatioError::DivideByZero {})
         ));
-       assert!(matches!(
+        assert!(matches!(
             Decimal::MAX.checked_div_euclid(Decimal::percent(1)),
             Err(CheckedFromRatioError::Overflow {})
         ));
         assert_eq!(
-            Decimal::percent(600).checked_div_euclid(Decimal::percent(200)).unwrap(),
+            Decimal::percent(600)
+                .checked_div_euclid(Decimal::percent(200))
+                .unwrap(),
             Decimal::percent(300),
         );
         assert_eq!(
-            Decimal::percent(1500).checked_div_euclid(Decimal::percent(700)).unwrap(),
+            Decimal::percent(1500)
+                .checked_div_euclid(Decimal::percent(700))
+                .unwrap(),
             Decimal::percent(200),
         );
 

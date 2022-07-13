@@ -2042,16 +2042,20 @@ mod tests {
             Decimal256::MAX.checked_div_euclid(Decimal256::zero()),
             Err(CheckedFromRatioError::DivideByZero {})
         ));
-       assert!(matches!(
+        assert!(matches!(
             Decimal256::MAX.checked_div_euclid(Decimal256::percent(1)),
             Err(CheckedFromRatioError::Overflow {})
         ));
         assert_eq!(
-            Decimal256::percent(600).checked_div_euclid(Decimal256::percent(200)).unwrap(),
+            Decimal256::percent(600)
+                .checked_div_euclid(Decimal256::percent(200))
+                .unwrap(),
             Decimal256::percent(300),
         );
         assert_eq!(
-            Decimal256::percent(1500).checked_div_euclid(Decimal256::percent(700)).unwrap(),
+            Decimal256::percent(1500)
+                .checked_div_euclid(Decimal256::percent(700))
+                .unwrap(),
             Decimal256::percent(200),
         );
 
