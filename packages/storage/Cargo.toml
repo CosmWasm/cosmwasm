@@ -8,11 +8,15 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage"
 license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [features]
 default = []
+# This enables iterator functionality, as exposed in cosmwasm-std/iterator
+iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std" }
-serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+cosmwasm-std = { path = "../std", default-features = false }
+serde = { version = "1.0.103", default-features = false, features = [
+    "derive",
+    "alloc"
+] }

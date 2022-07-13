@@ -12,8 +12,13 @@ readme = "README.md"
 features = ["stargate", "staking", "ibc3"]
 
 [features]
-abort = []
 default = []
+abort = []
+# iterator allows us to iterate over all DB items in a given range
+# optional as some merkle stores (like tries) don't support this
+# given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
+# we keep this optional, to allow possible future integration (or different Cosmos Backends)
+iterator = []
 # staking exposes bindings to a required staking moudle in the runtime, via new
 # CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
 # that require these types, so other contracts can be used on systems with eg. PoA consensus
@@ -35,7 +40,10 @@ cosmwasm-derive = { path = "../derive", version = "1.0.0" }
 uint = "0.9.3"
 serde-json-wasm = { version = "0.4.1" }
 schemars = "0.8.1"
-serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1.0.103", default-features = false, features = [
+    "derive",
+    "alloc"
+] }
 thiserror = "1.0"
 forward_ref = "1"
 
@@ -45,6 +53,9 @@ cosmwasm-crypto = { path = "../crypto", version = "1.0.0" }
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
-chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
+chrono = { version = "0.4", default-features = false, features = [
+    "alloc",
+    "std"
+] }
 hex = "0.4"
 hex-literal = "0.3.1"
