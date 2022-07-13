@@ -24,7 +24,7 @@ pub enum BankQuery {
 #[serde(rename_all = "snake_case")]
 pub struct SupplyResponse {
     /// Always returns a Coin with the requested denom.
-    /// This may be of 0 amount if no such funds.
+    /// This will be of zero amount if the denom does not exist.
     pub amount: Coin,
 }
 
