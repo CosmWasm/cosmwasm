@@ -30,8 +30,11 @@ impl Decimal {
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
     const DECIMAL_FRACTIONAL_SQUARED: Uint128 =
         Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000u128); // (1*10**18)**2 = 1*10**36
-    pub const DECIMAL_PLACES: u32 = 18; // This needs to be an even number.
 
+    /// The number of decimal places. Since decimal types are fixed-point rather than
+    /// floating-point, this is a constant.
+    pub const DECIMAL_PLACES: u32 = 18; // This needs to be an even number.
+    /// The largest value that can be represented by this decimal type.
     pub const MAX: Self = Self(Uint128::MAX);
 
     /// Creates a Decimal(value)
@@ -404,18 +407,14 @@ impl FromStr for Decimal {
             let fractional = fractional_part
                 .parse::<Uint128>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp = (Self::DECIMAL_PLACES.checked_sub(
-                fractional_part
-                    .len()
-                    .try_into()
-                    .map_err(|_| StdError::generic_err("fractional too long"))?,
-            ))
-            .ok_or_else(|| {
-                StdError::generic_err(format!(
-                    "Cannot parse more than {} fractional digits",
-                    Self::DECIMAL_PLACES
-                ))
-            })?;
+            let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
+                || {
+                    StdError::generic_err(format!(
+                        "Cannot parse more than {} fractional digits",
+                        Self::DECIMAL_PLACES
+                    ))
+                },
+            )?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint128::from(10u128.pow(exp));
             atomics = atomics

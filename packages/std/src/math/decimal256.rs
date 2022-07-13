@@ -40,8 +40,11 @@ impl Decimal256 {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
             75, 159, 16, 0, 0, 0, 0,
         ]);
-    pub const DECIMAL_PLACES: u32 = 18;
 
+    /// The number of decimal places. Since decimal types are fixed-point rather than
+    /// floating-point, this is a constant.
+    pub const DECIMAL_PLACES: u32 = 18;
+    /// The largest value that can be represented by this decimal type.
     pub const MAX: Self = Self(Uint256::MAX);
 
     /// Creates a Decimal256 from Uint256
@@ -429,18 +432,14 @@ impl FromStr for Decimal256 {
             let fractional = fractional_part
                 .parse::<Uint256>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp = (Self::DECIMAL_PLACES.checked_sub(
-                fractional_part
-                    .len()
-                    .try_into()
-                    .map_err(|_| StdError::generic_err("fractional too long"))?,
-            ))
-            .ok_or_else(|| {
-                StdError::generic_err(format!(
-                    "Cannot parse more than {} fractional digits",
-                    Self::DECIMAL_PLACES
-                ))
-            })?;
+            let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
+                || {
+                    StdError::generic_err(format!(
+                        "Cannot parse more than {} fractional digits",
+                        Self::DECIMAL_PLACES
+                    ))
+                },
+            )?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Uint256::from(10u128).pow(exp);
             atomics = atomics
