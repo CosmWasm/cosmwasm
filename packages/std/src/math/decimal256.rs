@@ -30,7 +30,6 @@ pub struct Decimal256(#[schemars(with = "String")] Uint256);
 pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
-    const DECIMAL_PLACES: usize = 18;
     const DECIMAL_FRACTIONAL: Uint256 = // 1*10**18
         Uint256::from_be_bytes([
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
@@ -42,6 +41,10 @@ impl Decimal256 {
             75, 159, 16, 0, 0, 0, 0,
         ]);
 
+    /// The number of decimal places. Since decimal types are fixed-point rather than
+    /// floating-point, this is a constant.
+    pub const DECIMAL_PLACES: u32 = 18;
+    /// The largest value that can be represented by this decimal type.
     pub const MAX: Self = Self(Uint256::MAX);
 
     /// Creates a Decimal256 from Uint256
@@ -108,9 +111,9 @@ impl Decimal256 {
     ) -> Result<Self, Decimal256RangeExceeded> {
         let atomics = atomics.into();
         let ten = Uint256::from(10u64); // TODO: make const
-        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES as u32)) {
+        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES)) {
             Ordering::Less => {
-                let digits = (Self::DECIMAL_PLACES as u32) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
+                let digits = (Self::DECIMAL_PLACES) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
                 let factor = ten.checked_pow(digits).unwrap(); // Safe because digits <= 17
                 Self(
                     atomics
@@ -120,7 +123,7 @@ impl Decimal256 {
             }
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
-                let digits = decimal_places - (Self::DECIMAL_PLACES as u32); // No overflow because decimal_places > DECIMAL_PLACES
+                let digits = decimal_places - (Self::DECIMAL_PLACES); // No overflow because decimal_places > DECIMAL_PLACES
                 if let Ok(factor) = ten.checked_pow(digits) {
                     Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 } else {
@@ -196,7 +199,7 @@ impl Decimal256 {
     /// See also [`Decimal256::atomics()`].
     #[inline]
     pub const fn decimal_places(&self) -> u32 {
-        Self::DECIMAL_PLACES as u32
+        Self::DECIMAL_PLACES
     }
 
     /// Rounds value down after decimal places.
@@ -326,12 +329,10 @@ impl Decimal256 {
     /// Precision *must* be a number between 0 and 9 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
-    fn sqrt_with_precision(&self, precision: usize) -> Option<Self> {
-        let precision = precision as u32;
-
+    fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = Uint256::from(100u128).pow(precision);
         self.0.checked_mul(inner_mul).ok().map(|inner| {
-            let outer_mul = Uint256::from(10u128).pow(Self::DECIMAL_PLACES as u32 / 2 - precision);
+            let outer_mul = Uint256::from(10u128).pow(Self::DECIMAL_PLACES / 2 - precision);
             Self(inner.isqrt().checked_mul(outer_mul).unwrap())
         })
     }
@@ -431,15 +432,16 @@ impl FromStr for Decimal256 {
             let fractional = fractional_part
                 .parse::<Uint256>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp =
-                (Self::DECIMAL_PLACES.checked_sub(fractional_part.len())).ok_or_else(|| {
+            let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
+                || {
                     StdError::generic_err(format!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
-                })?;
+                },
+            )?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
-            let fractional_factor = Uint256::from(10u128).pow(exp as u32);
+            let fractional_factor = Uint256::from(10u128).pow(exp);
             atomics = atomics
                 .checked_add(
                     // The inner multiplication can't overflow because
@@ -465,8 +467,11 @@ impl fmt::Display for Decimal256 {
         if fractional.is_zero() {
             write!(f, "{}", whole)
         } else {
-            let fractional_string =
-                format!("{:0>padding$}", fractional, padding = Self::DECIMAL_PLACES);
+            let fractional_string = format!(
+                "{:0>padding$}",
+                fractional,
+                padding = Self::DECIMAL_PLACES as usize
+            );
             f.write_str(&whole.to_string())?;
             f.write_char('.')?;
             f.write_str(fractional_string.trim_end_matches('0'))?;
