@@ -40,7 +40,8 @@
         "account": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }
