@@ -22,6 +22,10 @@ and this project adheres to
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 
+### Changed
+
+- cosmwasm-vm/cosmwasm-profiler: Upgrade Wasmer to 2.3.0.
+
 ## [1.0.0] - 2022-05-14
 
 ### Added
