@@ -207,7 +207,7 @@ pub fn ibc_channel_close(
 ### Packet Lifecycle
 
 Unfortunately the
-[IBC spec on Pakcet Lifecycle](https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#packet-flow--handling)
+[IBC spec on Packet Lifecycle](https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#packet-flow--handling)
 is missing all useful diagrams, but it may provide some theoretical background
 for this text if you wish to look.
 
