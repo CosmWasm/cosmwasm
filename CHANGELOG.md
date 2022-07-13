@@ -19,8 +19,8 @@ and this project adheres to
 - cosmwasm-std: Implement `ceil`/`floor` for `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
   `Decimal`/`Decimal256`.
-- cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply of
-  a native token
+- cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply
+  of a native token
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 
