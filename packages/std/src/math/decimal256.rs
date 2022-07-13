@@ -302,6 +302,10 @@ impl Decimal256 {
         Decimal256::checked_from_ratio(self.numerator(), other.numerator())
     }
 
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, CheckedFromRatioError> {
+        Ok(self.checked_div(other)?.floor())
+    }
+
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
@@ -2033,6 +2037,23 @@ mod tests {
             Decimal256::MAX.checked_div(Decimal256::percent(1)),
             Err(CheckedFromRatioError::Overflow { .. })
         ));
+
+        assert!(matches!(
+            Decimal256::MAX.checked_div_euclid(Decimal256::zero()),
+            Err(CheckedFromRatioError::DivideByZero {})
+        ));
+       assert!(matches!(
+            Decimal256::MAX.checked_div_euclid(Decimal256::percent(1)),
+            Err(CheckedFromRatioError::Overflow {})
+        ));
+        assert_eq!(
+            Decimal256::percent(600).checked_div_euclid(Decimal256::percent(200)).unwrap(),
+            Decimal256::percent(300),
+        );
+        assert_eq!(
+            Decimal256::percent(1500).checked_div_euclid(Decimal256::percent(700)).unwrap(),
+            Decimal256::percent(200),
+        );
 
         // checked rem
         assert_eq!(
