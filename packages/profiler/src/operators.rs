@@ -15,7 +15,6 @@ pub enum OperatorSymbol {
     Catch,
     Throw,
     Rethrow,
-    Unwind,
     End,
     Br,
     BrIf,
@@ -530,6 +529,25 @@ pub enum OperatorSymbol {
     F64x2ConvertLowI32x4U,
     F32x4DemoteF64x2Zero,
     F64x2PromoteLowF32x4,
+
+    // unsorted
+    I8x16RelaxedSwizzle,
+    I32x4RelaxedTruncSatF32x4S,
+    I32x4RelaxedTruncSatF32x4U,
+    I32x4RelaxedTruncSatF64x2SZero,
+    I32x4RelaxedTruncSatF64x2UZero,
+    F32x4Fma,
+    F32x4Fms,
+    F64x2Fma,
+    F64x2Fms,
+    I8x16LaneSelect,
+    I16x8LaneSelect,
+    I32x4LaneSelect,
+    I64x2LaneSelect,
+    F32x4RelaxedMin,
+    F32x4RelaxedMax,
+    F64x2RelaxedMin,
+    F64x2RelaxedMax,
 }
 
 impl From<&Operator<'_>> for OperatorSymbol {
@@ -545,7 +563,6 @@ impl From<&Operator<'_>> for OperatorSymbol {
             Operator::Catch { .. } => OperatorSymbol::Catch,
             Operator::Throw { .. } => OperatorSymbol::Throw,
             Operator::Rethrow { .. } => OperatorSymbol::Rethrow,
-            Operator::Unwind => OperatorSymbol::Unwind,
             Operator::End => OperatorSymbol::End,
             Operator::Br { .. } => OperatorSymbol::Br,
             Operator::BrIf { .. } => OperatorSymbol::BrIf,
@@ -1060,6 +1077,29 @@ impl From<&Operator<'_>> for OperatorSymbol {
             Operator::F64x2ConvertLowI32x4U => OperatorSymbol::F64x2ConvertLowI32x4U,
             Operator::F32x4DemoteF64x2Zero => OperatorSymbol::F32x4DemoteF64x2Zero,
             Operator::F64x2PromoteLowF32x4 => OperatorSymbol::F64x2PromoteLowF32x4,
+
+            // unsorted
+            Operator::I8x16RelaxedSwizzle => OperatorSymbol::I8x16RelaxedSwizzle,
+            Operator::I32x4RelaxedTruncSatF32x4S => OperatorSymbol::I32x4RelaxedTruncSatF32x4S,
+            Operator::I32x4RelaxedTruncSatF32x4U => OperatorSymbol::I32x4RelaxedTruncSatF32x4U,
+            Operator::I32x4RelaxedTruncSatF64x2SZero => {
+                OperatorSymbol::I32x4RelaxedTruncSatF64x2SZero
+            }
+            Operator::I32x4RelaxedTruncSatF64x2UZero => {
+                OperatorSymbol::I32x4RelaxedTruncSatF64x2UZero
+            }
+            Operator::F32x4Fma => OperatorSymbol::F32x4Fma,
+            Operator::F32x4Fms => OperatorSymbol::F32x4Fms,
+            Operator::F64x2Fma => OperatorSymbol::F64x2Fma,
+            Operator::F64x2Fms => OperatorSymbol::F64x2Fms,
+            Operator::I8x16LaneSelect => OperatorSymbol::I8x16LaneSelect,
+            Operator::I16x8LaneSelect => OperatorSymbol::I16x8LaneSelect,
+            Operator::I32x4LaneSelect => OperatorSymbol::I32x4LaneSelect,
+            Operator::I64x2LaneSelect => OperatorSymbol::I64x2LaneSelect,
+            Operator::F32x4RelaxedMin => OperatorSymbol::F32x4RelaxedMin,
+            Operator::F32x4RelaxedMax => OperatorSymbol::F32x4RelaxedMax,
+            Operator::F64x2RelaxedMin => OperatorSymbol::F64x2RelaxedMin,
+            Operator::F64x2RelaxedMax => OperatorSymbol::F64x2RelaxedMax,
         }
     }
 }
