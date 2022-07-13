@@ -7,8 +7,9 @@ use crate::Coin;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BankQuery {
-    /// This calls into the native bank module for querying the total supply on one denomination.
-    /// Return value is SupplyResponse
+    /// This calls into the native bank module for querying the total supply of one denomination.
+    /// It does the same as the SupplyOf call in Cosmos SDK's RPC API.
+    /// Return value is of type SupplyResponse.
     Supply { denom: String },
     /// This calls into the native bank module for one denomination
     /// Return value is BalanceResponse
