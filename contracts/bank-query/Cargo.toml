@@ -1,0 +1,17 @@
+[package]
+name = "bank-query"
+version = "0.0.0"
+authors = ["larry <gm@larry.engineer>"]
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }

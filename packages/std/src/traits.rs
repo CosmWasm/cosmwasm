@@ -342,7 +342,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
 mod tests {
     use super::*;
     use crate::mock::MockQuerier;
-    use crate::{coins, from_slice, Uint128};
+    use crate::{coin, coins, from_slice, Uint128};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -380,5 +380,23 @@ mod tests {
             .unwrap();
         let balance: BalanceResponse = from_slice(&raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
+    }
+
+    #[test]
+    fn bank_query_helpers_work() {
+        let querier: MockQuerier<Empty> = MockQuerier::new(&[
+            ("foo", &[coin(123, "ELF"), coin(777, "FLY")]),
+            ("bar", &[coin(321, "ELF")]),
+        ]);
+        let wrapper = QuerierWrapper::<Empty>::new(&querier);
+
+        let supply = wrapper.query_supply("ELF").unwrap();
+        assert_eq!(supply, coin(444, "ELF"));
+
+        let balance = wrapper.query_balance("foo", "ELF").unwrap();
+        assert_eq!(balance, coin(123, "ELF"));
+
+        let all_balances = wrapper.query_all_balances("foo").unwrap();
+        assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
 }
