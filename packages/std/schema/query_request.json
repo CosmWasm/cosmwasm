@@ -43,7 +43,7 @@
     "BankQuery": {
       "oneOf": [
         {
-          "description": "This calls into the native bank module for querying the total supply on one denomination. Return value is SupplyResponse",
+          "description": "This calls into the native bank module for querying the total supply of one denomination. It does the same as the SupplyOf call in Cosmos SDK's RPC API. Return value is of type SupplyResponse.",
           "type": "object",
           "required": [
             "supply"
