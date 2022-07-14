@@ -1096,15 +1096,6 @@ mod tests {
             Ok(Uint512::from(3u32)),
         );
         assert!(matches!(
-            Uint512::MAX.checked_div(Uint512::from(0u32)),
-            Err(DivideByZeroError { .. })
-        ));
-        assert_eq!(
-            Uint512::from(6u32).checked_div(Uint512::from(2u32)),
-            Ok(Uint512::from(3u32)),
-        );
-
-        assert!(matches!(
             Uint512::MAX.checked_div_euclid(Uint512::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
@@ -1116,7 +1107,6 @@ mod tests {
             Uint512::from(7u32).checked_div_euclid(Uint512::from(2u32)),
             Ok(Uint512::from(3u32)),
         );
-
         assert!(matches!(
             Uint512::MAX.checked_rem(Uint512::from(0u32)),
             Err(DivideByZeroError { .. })

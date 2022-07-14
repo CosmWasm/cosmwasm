@@ -2038,6 +2038,7 @@ mod tests {
             Err(CheckedFromRatioError::Overflow { .. })
         ));
 
+        // checked div euclid
         assert!(matches!(
             Decimal256::MAX.checked_div_euclid(Decimal256::zero()),
             Err(CheckedFromRatioError::DivideByZero {})

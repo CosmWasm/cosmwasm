@@ -1461,11 +1461,6 @@ mod tests {
             Ok(Uint256::from(3u32)),
         );
         assert!(matches!(
-            Uint256::MAX.checked_rem(Uint256::from(0u32)),
-            Err(DivideByZeroError { .. })
-        ));
-
-        assert!(matches!(
             Uint256::MAX.checked_div_euclid(Uint256::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
@@ -1477,6 +1472,10 @@ mod tests {
             Uint256::from(7u32).checked_div_euclid(Uint256::from(2u32)),
             Ok(Uint256::from(3u32)),
         );
+        assert!(matches!(
+            Uint256::MAX.checked_rem(Uint256::from(0u32)),
+            Err(DivideByZeroError { .. })
+        ));
 
         // saturating_*
         assert_eq!(

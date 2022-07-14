@@ -1891,6 +1891,7 @@ mod tests {
             Err(CheckedFromRatioError::Overflow {})
         ));
 
+        // checked div euclid
         assert!(matches!(
             Decimal::MAX.checked_div_euclid(Decimal::zero()),
             Err(CheckedFromRatioError::DivideByZero {})
