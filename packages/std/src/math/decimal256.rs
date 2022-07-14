@@ -46,6 +46,8 @@ impl Decimal256 {
     pub const DECIMAL_PLACES: u32 = 18;
     /// The largest value that can be represented by this decimal type.
     pub const MAX: Self = Self(Uint256::MAX);
+    /// The smallest value that can be represented by this decimal type.
+    pub const MIN: Self = Self(Uint256::MIN);
 
     /// Creates a Decimal256 from Uint256
     /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.

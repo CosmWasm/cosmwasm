@@ -36,6 +36,7 @@ pub struct Uint128(#[schemars(with = "String")] u128);
 
 impl Uint128 {
     pub const MAX: Self = Self(u128::MAX);
+    pub const MIN: Self = Self(u128::MIN);
 
     /// Creates a Uint128(value).
     ///
