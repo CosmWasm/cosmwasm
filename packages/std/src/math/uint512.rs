@@ -54,6 +54,7 @@ pub struct Uint512(#[schemars(with = "String")] U512);
 
 impl Uint512 {
     pub const MAX: Uint512 = Uint512(U512::MAX);
+    pub const MIN: Uint512 = Uint512(U512::zero());
 
     /// Creates a Uint512(value) from a big endian representation. It's just an alias for
     /// `from_big_endian`.
