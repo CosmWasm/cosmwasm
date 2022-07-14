@@ -32,6 +32,7 @@ pub struct Uint64(#[schemars(with = "String")] u64);
 
 impl Uint64 {
     pub const MAX: Self = Self(u64::MAX);
+    pub const MIN: Self = Self(u64::MIN);
 
     /// Creates a Uint64(value).
     ///

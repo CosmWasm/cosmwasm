@@ -33,6 +33,8 @@ impl Decimal {
     const DECIMAL_PLACES: usize = 18; // This needs to be an even number.
 
     pub const MAX: Self = Self(Uint128::MAX);
+    /// The smallest value that can be represented by this decimal type.
+    pub const MIN: Self = Self(Uint128::MIN);
 
     /// Creates a Decimal(value)
     /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
