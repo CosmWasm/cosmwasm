@@ -14,9 +14,9 @@ cosmwasm-vm = { path = "../vm" }
 cosmwasm-std = { path = "../std" }
 loupe = "0.1.3"
 walrus = "0.19.0"
-wasmer = { version = "=2.2.1", default-features = false, features = ["compiler"] }
-wasmer-types = "=2.2.1"
-wasmer-vm = "=2.2.1"
+wasmer = { version = "=2.3.0", default-features = false, features = ["compiler"] }
+wasmer-types = "=2.3.0"
+wasmer-vm = "=2.3.0"
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["compiler"] }
 # wasmer-types = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c" }
 # wasmer-vm = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c" }
@@ -24,5 +24,5 @@ hackatom = { path = "../../contracts/hackatom", default-features = false }
 csv = "1.1.6"
 
 [dev-dependencies]
-wasmer = { version = "=2.2.1", features = ["compiler"] }
+wasmer = { version = "=2.3.0", features = ["compiler"] }
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", features = ["compiler"] }

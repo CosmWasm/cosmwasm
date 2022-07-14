@@ -62,6 +62,7 @@ impl Uint512 {
     }
 
     /// Creates a Uint512(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint512(U512::zero())
     }
