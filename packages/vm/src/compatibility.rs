@@ -43,6 +43,7 @@ const REQUIRED_EXPORTS: &[&str] = &[
 
 const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
 const SUPPORTED_INTERFACE_VERSIONS: &[&str] = &[
+    "interface_version_9",
     "interface_version_8",
     #[cfg(feature = "allow_interface_version_7")]
     "interface_version_7",

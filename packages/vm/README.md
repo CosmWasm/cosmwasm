@@ -14,18 +14,19 @@ A VM can support one or more contract-VM interface versions. The interface
 version is communicated by the contract via a Wasm import. This is the current
 compatibility list:
 
-| cosmwasm-vm | Supported interface versions | cosmwasm-std |
-| ----------- | ---------------------------- | ------------ |
-| 1.0         | `interface_version_8`        | 1.0          |
-| 0.16        | `interface_version_7`        | 0.16         |
-| 0.15        | `interface_version_6`        | 0.15         |
-| 0.14        | `interface_version_5`        | 0.14         |
-| 0.13        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
-| 0.12        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
-| 0.11        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
-| 0.10        | `cosmwasm_vm_version_3`      | 0.10         |
-| 0.9         | `cosmwasm_vm_version_2`      | 0.9          |
-| 0.8         | `cosmwasm_vm_version_1`      | 0.8          |
+| cosmwasm-vm | Supported interface versions                 | cosmwasm-std |
+| ----------- | -------------------------------------------- | ------------ |
+| 1.1         | `interface_version_9`, `interface_version_8` | 1.0-1.1      |
+| 1.0         | `interface_version_8`                        | 1.0          |
+| 0.16        | `interface_version_7`                        | 0.16         |
+| 0.15        | `interface_version_6`                        | 0.15         |
+| 0.14        | `interface_version_5`                        | 0.14         |
+| 0.13        | `cosmwasm_vm_version_4`                      | 0.11-0.13    |
+| 0.12        | `cosmwasm_vm_version_4`                      | 0.11-0.13    |
+| 0.11        | `cosmwasm_vm_version_4`                      | 0.11-0.13    |
+| 0.10        | `cosmwasm_vm_version_3`                      | 0.10         |
+| 0.9         | `cosmwasm_vm_version_2`                      | 0.9          |
+| 0.8         | `cosmwasm_vm_version_1`                      | 0.8          |
 
 ### Changes between interface versions
 
