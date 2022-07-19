@@ -20,6 +20,10 @@ and this project adheres to
 - cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
+- cosmwasm-vm: Add support for contracts with `interface_version_9`.
+  `interface_version_8` is still supported as well.
+- cosmwasm-std: Bump the interface version to `interface_version_9`. Contracts
+  built on `cosmwasm-std 1.1` will only work with `cosmwasm-vm ^1.1`
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 
