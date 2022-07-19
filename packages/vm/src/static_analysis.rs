@@ -88,7 +88,13 @@ mod tests {
     use parity_wasm::elements::Internal;
     use wasmer::{Cranelift, Store, Universal};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     #[test]

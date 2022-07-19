@@ -68,6 +68,7 @@ wat = "1.0"
 clap = "2.33.3"
 rand = "0.8"
 leb128 = "0.2"
+cfg-if = "1.0.0"
 
 [[bench]]
 name = "main"

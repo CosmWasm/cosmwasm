@@ -31,7 +31,13 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
-static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+cfg_if::cfg_if! {
+    if #[cfg(windows)] {
+        static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+    } else {
+        static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    }
+}
 
 fn bench_instance(c: &mut Criterion) {
     let mut group = c.benchmark_group("Instance");

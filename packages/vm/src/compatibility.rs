@@ -196,7 +196,13 @@ mod tests {
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
 
     fn default_features() -> HashSet<String> {
         ["staking".to_string()].iter().cloned().collect()

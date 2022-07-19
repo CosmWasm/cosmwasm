@@ -25,7 +25,13 @@ pub fn compile(
 mod tests {
     use super::*;
 
-    static CONTRACT: &[u8] = include_bytes!("../../testdata/floaty.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../../testdata/floaty_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../../testdata/floaty.wasm");
+        }
+    }
 
     #[test]
     fn contract_with_floats_fails_check() {

@@ -385,8 +385,21 @@ mod tests {
     };
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
-    static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
+
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect_windows.wasm");
+        } else {
+            static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        }
+    }
 
     fn default_features() -> HashSet<String> {
         features_from_csv("iterator,staking")
@@ -523,8 +536,21 @@ mod tests {
 
         match cache.load_wasm(&checksum).unwrap_err() {
             VmError::CacheErr { msg, .. } => {
-                assert!(msg
-                    .starts_with("Error opening Wasm file for reading: No such file or directory"))
+                cfg_if::cfg_if! {
+                    if #[cfg(windows)] {
+                        assert!(
+                            msg.starts_with(
+                                "Error opening Wasm file for reading: The system cannot find the file specified"
+                            )
+                        )
+                    } else {
+                        assert!(
+                            msg.starts_with(
+                                "Error opening Wasm file for reading: No such file or directory"
+                            )
+                        )
+                    }
+                }
             }
             e => panic!("Unexpected error: {:?}", e),
         }

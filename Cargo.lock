@@ -350,6 +350,7 @@ dependencies = [
 name = "cosmwasm-vm"
 version = "1.0.0"
 dependencies = [
+ "cfg-if",
  "clap",
  "clru",
  "cosmwasm-crypto",

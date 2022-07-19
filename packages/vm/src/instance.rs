@@ -403,7 +403,13 @@ mod tests {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
 
     #[test]
     fn required_features_works() {

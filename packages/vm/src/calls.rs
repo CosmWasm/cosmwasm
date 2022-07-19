@@ -594,7 +594,13 @@ mod tests {
     use crate::testing::{mock_env, mock_info, mock_instance};
     use cosmwasm_std::{coins, Empty};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
 
     #[test]
     fn call_instantiate_works() {
@@ -685,7 +691,13 @@ mod tests {
             Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgResponse,
             SubMsgResult,
         };
-        static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        cfg_if::cfg_if! {
+            if #[cfg(windows)] {
+                static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect_windows.wasm");
+            } else {
+                static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+            }
+        }
         const IBC_VERSION: &str = "ibc-reflect-v1";
         fn setup(
             instance: &mut Instance<MockApi, MockStorage, MockQuerier>,

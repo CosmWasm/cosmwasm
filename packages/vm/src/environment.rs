@@ -370,7 +370,13 @@ mod tests {
     };
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
 
     // prepared data
     const INIT_KEY: &[u8] = b"foo";

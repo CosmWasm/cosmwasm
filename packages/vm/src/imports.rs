@@ -475,7 +475,13 @@ mod tests {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    cfg_if::cfg_if! {
+        if #[cfg(windows)] {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom_windows.wasm");
+        } else {
+            static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+        }
+    }
 
     // prepared data
     const KEY1: &[u8] = b"ant";
