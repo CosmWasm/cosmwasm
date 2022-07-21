@@ -30,7 +30,7 @@ use std::str::FromStr;
 /// }
 ///
 /// #[entry_point]
-/// pub fn handle(
+/// pub fn execute(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
