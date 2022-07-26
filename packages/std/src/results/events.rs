@@ -128,7 +128,7 @@ impl Attribute {
         Self {
             key,
             value: value.into(),
-            encrypted: true,
+            encrypted: false,
         }
     }
 }
@@ -181,7 +181,7 @@ pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
     Attribute::new(key, value)
 }
 
-/// Creates a new ENCRYPTED Attribute. `Attribute::new_plaintext` is an alias for this.
+/// Creates a new plaintext Attribute. `Attribute::new_plaintext` is an alias for this.
 #[inline]
 pub fn attr_plaintext(key: impl Into<String>, value: impl Into<String>) -> Attribute {
     Attribute::new_plaintext(key, value)
