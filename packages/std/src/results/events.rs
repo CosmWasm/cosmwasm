@@ -86,10 +86,8 @@ pub struct Attribute {
     pub value: String,
     /// nonstandard late addition, thus optional and only used in deserialization.
     /// The contracts may return this in newer versions that support distinguishing
-    /// encrypted and plaintext logs. We naturally default to encrypted logs, and
-    /// don't serialize the field later so it doesn't leak up to the Go layers.
+    /// encrypted and plaintext logs. We naturally default to encrypted logs.
     #[serde(default = "bool_true")]
-    #[serde(skip_serializing)]
     pub encrypted: bool,
 }
 
