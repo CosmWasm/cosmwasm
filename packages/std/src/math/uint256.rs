@@ -52,6 +52,7 @@ pub struct Uint256(#[schemars(with = "String")] U256);
 
 impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
+    pub const MIN: Uint256 = Uint256(U256::zero());
 
     /// Creates a Uint256(value) from a big endian representation. It's just an alias for
     /// [`Uint256::from_be_bytes`].

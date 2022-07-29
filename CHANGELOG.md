@@ -21,6 +21,7 @@ and this project adheres to
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply
   of a native token
+- cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 
