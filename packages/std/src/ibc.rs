@@ -776,7 +776,7 @@ impl<T> IbcReceiveResponse<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json_wasm::to_string;
+    use serde_json::to_string;
 
     #[test]
     // added this to check json format for go compat, as I was unsure how some messages are snake encoded

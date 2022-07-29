@@ -9,7 +9,7 @@ use crate::binary::Binary;
 use crate::errors::{StdError, StdResult};
 
 pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
-    serde_json_wasm::from_slice(value).map_err(|e| StdError::parse_err(type_name::<T>(), e))
+    serde_json::from_slice(value).map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
 pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
@@ -20,7 +20,7 @@ pub fn to_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    serde_json::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
 pub fn to_binary<T>(data: &T) -> StdResult<Binary>
