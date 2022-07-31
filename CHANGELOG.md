@@ -20,8 +20,7 @@ and this project adheres to
 - cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
-- cosmwasm-std: Implement `checked_div_euclid` for
-  `Uint256`/`Uint512`/`Decimal`/`Decimal256`
+- cosmwasm-std: Implement `checked_div_euclid` for `Uint256`/`Uint512`
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 

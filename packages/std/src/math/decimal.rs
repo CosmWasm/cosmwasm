@@ -289,10 +289,6 @@ impl Decimal {
         Decimal::checked_from_ratio(self.numerator(), other.numerator())
     }
 
-    pub fn checked_div_euclid(self, other: Self) -> Result<Self, CheckedFromRatioError> {
-        Ok(self.checked_div(other)?.floor())
-    }
-
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
@@ -1890,28 +1886,6 @@ mod tests {
             Decimal::MAX.checked_div(Decimal::percent(1)),
             Err(CheckedFromRatioError::Overflow {})
         ));
-
-        // checked div euclid
-        assert!(matches!(
-            Decimal::MAX.checked_div_euclid(Decimal::zero()),
-            Err(CheckedFromRatioError::DivideByZero {})
-        ));
-        assert!(matches!(
-            Decimal::MAX.checked_div_euclid(Decimal::percent(1)),
-            Err(CheckedFromRatioError::Overflow {})
-        ));
-        assert_eq!(
-            Decimal::percent(600)
-                .checked_div_euclid(Decimal::percent(200))
-                .unwrap(),
-            Decimal::percent(300),
-        );
-        assert_eq!(
-            Decimal::percent(1500)
-                .checked_div_euclid(Decimal::percent(700))
-                .unwrap(),
-            Decimal::percent(200),
-        );
 
         // checked rem
         assert_eq!(
