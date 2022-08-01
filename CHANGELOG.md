@@ -29,6 +29,10 @@ and this project adheres to
 - cosmwasm-std: Enable the `abort` feature by default. This provides more
   helpful panic messages via a custom panic handler.
 - cosmwasm-std: Make `Decimal{,256}::DECIMAL_PLACES` a public `u32` value.
+- cosmwasm-crypto: Bumped `k256` `0.10.4 -> 0.11` and `digest` `0.9 -> 0.10`
+  ([#1374]).
+
+[#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
 
 ## [1.0.0] - 2022-05-14
 
