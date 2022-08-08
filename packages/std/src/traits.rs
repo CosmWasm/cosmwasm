@@ -276,6 +276,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
     }
 
+    /// Given a contract address, query information about that contract.
     pub fn query_wasm_contract_info(
         &self,
         contract_addr: impl Into<String>,
