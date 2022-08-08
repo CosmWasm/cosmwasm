@@ -18,6 +18,7 @@ use crate::query::{
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
+use crate::ContractInfoResponse;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -275,6 +276,17 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
     }
 
+    pub fn query_wasm_contract_info(
+        &self,
+        contract_addr: impl Into<String>,
+    ) -> StdResult<ContractInfoResponse> {
+        let request = WasmQuery::ContractInfo {
+            contract_addr: contract_addr.into(),
+        }
+        .into();
+        self.query(&request)
+    }
+
     #[cfg(feature = "staking")]
     pub fn query_all_validators(&self) -> StdResult<Vec<Validator>> {
         let request = StakingQuery::AllValidators {}.into();
@@ -370,5 +382,73 @@ mod tests {
             .unwrap();
         let balance: BalanceResponse = from_slice(&raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
+    }
+
+    #[test]
+    fn contract_info() {
+        const ACCT: &str = "foobar";
+        fn mock_resp() -> ContractInfoResponse {
+            ContractInfoResponse {
+                code_id: 0,
+                creator: "creator".to_string(),
+                admin: None,
+                pinned: false,
+                ibc_port: None,
+            }
+        }
+
+        let mut querier: MockQuerier<Empty> = MockQuerier::new(&[(ACCT, &coins(5, "BTC"))]);
+        querier.update_wasm(|q| -> QuerierResult {
+            if q == &(WasmQuery::ContractInfo {
+                contract_addr: ACCT.to_string(),
+            }) {
+                SystemResult::Ok(ContractResult::Ok(to_binary(&mock_resp()).unwrap()))
+            } else {
+                SystemResult::Err(crate::SystemError::NoSuchContract {
+                    addr: ACCT.to_string(),
+                })
+            }
+        });
+        let wrapper = QuerierWrapper::<Empty>::new(&querier);
+
+        let contract_info = wrapper.query_wasm_contract_info(ACCT).unwrap();
+        assert_eq!(contract_info, mock_resp());
+    }
+
+    #[test]
+    fn contract_info_err() {
+        const ACCT: &str = "foobar";
+        fn mock_resp() -> ContractInfoResponse {
+            ContractInfoResponse {
+                code_id: 0,
+                creator: "creator".to_string(),
+                admin: None,
+                pinned: false,
+                ibc_port: None,
+            }
+        }
+
+        let mut querier: MockQuerier<Empty> = MockQuerier::new(&[(ACCT, &coins(5, "BTC"))]);
+        querier.update_wasm(|q| -> QuerierResult {
+            if q == &(WasmQuery::ContractInfo {
+                contract_addr: ACCT.to_string(),
+            }) {
+                SystemResult::Ok(ContractResult::Ok(to_binary(&mock_resp()).unwrap()))
+            } else {
+                SystemResult::Err(crate::SystemError::NoSuchContract {
+                    addr: ACCT.to_string(),
+                })
+            }
+        });
+        let wrapper = QuerierWrapper::<Empty>::new(&querier);
+
+        let err = wrapper.query_wasm_contract_info("unknown").unwrap_err();
+        assert!(matches!(
+            err,
+            StdError::GenericErr {
+                msg,
+                ..
+            } if msg == "Querier system error: No such contract: foobar"
+        ));
     }
 }
