@@ -1215,12 +1215,8 @@ mod tests {
     fn uint512_partial_eq() {
         let test_cases = [(1, 1, true), (42, 42, true), (42, 24, false), (0, 0, true)]
             .into_iter()
-            .map(|(lhs, rhs, expected)| {
-                (
-                    Uint512::from(lhs as u64),
-                    Uint512::from(rhs as u64),
-                    expected,
-                )
+            .map(|(lhs, rhs, expected): (u64, u64, bool)| {
+                (Uint512::from(lhs), Uint512::from(rhs), expected)
             });
 
         #[allow(clippy::op_ref)]
