@@ -54,6 +54,7 @@ pub struct Uint512(#[schemars(with = "String")] U512);
 
 impl Uint512 {
     pub const MAX: Uint512 = Uint512(U512::MAX);
+    pub const MIN: Uint512 = Uint512(U512::zero());
 
     /// Creates a Uint512(value) from a big endian representation. It's just an alias for
     /// `from_big_endian`.
@@ -62,6 +63,7 @@ impl Uint512 {
     }
 
     /// Creates a Uint512(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint512(U512::zero())
     }
@@ -232,6 +234,10 @@ impl Uint512 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.checked_div(other)
+    }
+
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
@@ -257,6 +263,13 @@ impl Uint512 {
 
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
+    }
+
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
     }
 
     pub fn abs_diff(self, other: Self) -> Self {
@@ -1095,6 +1108,18 @@ mod tests {
             Ok(Uint512::from(3u32)),
         );
         assert!(matches!(
+            Uint512::MAX.checked_div_euclid(Uint512::from(0u32)),
+            Err(DivideByZeroError { .. })
+        ));
+        assert_eq!(
+            Uint512::from(6u32).checked_div_euclid(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
+        assert_eq!(
+            Uint512::from(7u32).checked_div_euclid(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
+        assert!(matches!(
             Uint512::MAX.checked_rem(Uint512::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
@@ -1112,6 +1137,11 @@ mod tests {
             Uint512::MAX.saturating_mul(Uint512::from(2u32)),
             Uint512::MAX
         );
+        assert_eq!(
+            Uint512::from(4u32).saturating_pow(2u32),
+            Uint512::from(16u32)
+        );
+        assert_eq!(Uint512::MAX.saturating_pow(2u32), Uint512::MAX);
     }
 
     #[test]

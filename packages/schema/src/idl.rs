@@ -7,9 +7,8 @@ use thiserror::Error;
 
 /// The version of the CosmWasm IDL.
 ///
-/// Follows Semantic Versioning 2.0.0: https://semver.org/
-///
-/// To determine if a change is breaking, assume consumers allow unknown fields.
+/// Follows Semantic Versioning 2.0.0: <https://semver.org/>
+// To determine if a change is breaking, assume consumers allow unknown fields and bump accordingly.
 pub const IDL_VERSION: &str = "1.0.0";
 
 /// Rust representation of a contract's API.
@@ -22,7 +21,7 @@ pub struct Api {
     pub migrate: Option<RootSchema>,
     pub sudo: Option<RootSchema>,
     /// A mapping of query variants to response types
-    pub responses: BTreeMap<String, RootSchema>,
+    pub responses: Option<BTreeMap<String, RootSchema>>,
 }
 
 impl Api {
@@ -78,7 +77,7 @@ pub struct JsonApi {
     query: Option<RootSchema>,
     migrate: Option<RootSchema>,
     sudo: Option<RootSchema>,
-    responses: BTreeMap<String, RootSchema>,
+    responses: Option<BTreeMap<String, RootSchema>>,
 }
 
 impl JsonApi {

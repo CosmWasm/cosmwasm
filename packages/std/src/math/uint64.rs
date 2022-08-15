@@ -32,6 +32,7 @@ pub struct Uint64(#[schemars(with = "String")] u64);
 
 impl Uint64 {
     pub const MAX: Self = Self(u64::MAX);
+    pub const MIN: Self = Self(u64::MIN);
 
     /// Creates a Uint64(value).
     ///
@@ -41,6 +42,7 @@ impl Uint64 {
     }
 
     /// Creates a Uint64(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint64(0)
     }
@@ -201,8 +203,8 @@ impl Uint64 {
         Self(self.0.saturating_mul(other.0))
     }
 
-    pub fn saturating_pow(self, other: u32) -> Self {
-        Self(self.0.saturating_pow(other))
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        Self(self.0.saturating_pow(exp))
     }
 
     pub const fn abs_diff(self, other: Self) -> Self {

@@ -52,6 +52,7 @@ pub struct Uint256(#[schemars(with = "String")] U256);
 
 impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
+    pub const MIN: Uint256 = Uint256(U256::zero());
 
     /// Creates a Uint256(value) from a big endian representation. It's just an alias for
     /// [`Uint256::from_be_bytes`].
@@ -62,6 +63,7 @@ impl Uint256 {
     }
 
     /// Creates a Uint256(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint256(U256::zero())
     }
@@ -249,6 +251,10 @@ impl Uint256 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.checked_div(other)
+    }
+
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
@@ -282,6 +288,13 @@ impl Uint256 {
 
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
+    }
+
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
     }
 
     pub fn abs_diff(self, other: Self) -> Self {
@@ -1460,6 +1473,18 @@ mod tests {
             Ok(Uint256::from(3u32)),
         );
         assert!(matches!(
+            Uint256::MAX.checked_div_euclid(Uint256::from(0u32)),
+            Err(DivideByZeroError { .. })
+        ));
+        assert_eq!(
+            Uint256::from(6u32).checked_div_euclid(Uint256::from(2u32)),
+            Ok(Uint256::from(3u32)),
+        );
+        assert_eq!(
+            Uint256::from(7u32).checked_div_euclid(Uint256::from(2u32)),
+            Ok(Uint256::from(3u32)),
+        );
+        assert!(matches!(
             Uint256::MAX.checked_rem(Uint256::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
@@ -1477,6 +1502,11 @@ mod tests {
             Uint256::MAX.saturating_mul(Uint256::from(2u32)),
             Uint256::MAX
         );
+        assert_eq!(
+            Uint256::from(4u32).saturating_pow(2u32),
+            Uint256::from(16u32)
+        );
+        assert_eq!(Uint256::MAX.saturating_pow(2u32), Uint256::MAX);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use cosmwasm_schema::{schema_for, Api, IDL_VERSION};
+use cosmwasm_schema::{generate_api, QueryResponses, IDL_VERSION};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -19,9 +19,10 @@ pub enum ExecuteMsg {
     Mint { amount: u128 },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
+    #[returns(u128)]
     Balance { account: String },
 }
 
@@ -39,17 +40,14 @@ pub struct MigrateMsg {
 
 #[test]
 fn test_basic_structure() {
-    let api_str = Api {
-        contract_name: "test".to_string(),
-        contract_version: "0.1.0".to_string(),
-        instantiate: schema_for!(InstantiateMsg),
-        execute: Some(schema_for!(ExecuteMsg)),
-        query: Some(schema_for!(QueryMsg)),
-        migrate: Some(schema_for!(MigrateMsg)),
-        sudo: Some(schema_for!(SudoMsg)),
-        responses: [("balance".to_string(), schema_for!(u128))]
-            .into_iter()
-            .collect(),
+    let api_str = generate_api! {
+        name: "test",
+        version: "0.1.0",
+        instantiate: InstantiateMsg,
+        query: QueryMsg,
+        execute: ExecuteMsg,
+        sudo: SudoMsg,
+        migrate: MigrateMsg,
     }
     .render()
     .to_string()
@@ -83,17 +81,9 @@ fn test_basic_structure() {
 
 #[test]
 fn test_query_responses() {
-    let api_str = Api {
-        contract_name: "test".to_string(),
-        contract_version: "0.1.0".to_string(),
-        instantiate: schema_for!(InstantiateMsg),
-        execute: Some(schema_for!(ExecuteMsg)),
-        query: Some(schema_for!(QueryMsg)),
-        migrate: None,
-        sudo: None,
-        responses: [("balance".to_string(), schema_for!(u128))]
-            .into_iter()
-            .collect(),
+    let api_str = generate_api! {
+        instantiate: InstantiateMsg,
+        query: QueryMsg,
     }
     .render()
     .to_string()

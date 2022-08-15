@@ -1,3 +1,4 @@
+use derivative::Derivative;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -110,11 +111,19 @@ pub enum DistributionMsg {
     },
 }
 
+fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    match std::str::from_utf8(data.as_slice()) {
+        Ok(s) => fmt.write_str(s),
+        Err(_) => write!(fmt, "{:?}", data),
+    }
+}
+
 /// The message types of the wasm module.
 ///
 /// See https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Derivative, PartialEq, JsonSchema)]
+#[derivative(Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum WasmMsg {
     /// Dispatches a call to another contract at a known address (with known ABI).
@@ -124,6 +133,7 @@ pub enum WasmMsg {
     Execute {
         contract_addr: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
+        #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
         funds: Vec<Coin>,
     },
@@ -135,6 +145,7 @@ pub enum WasmMsg {
         admin: Option<String>,
         code_id: u64,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
+        #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
         funds: Vec<Coin>,
         /// A human-readbale label for the contract
@@ -152,6 +163,7 @@ pub enum WasmMsg {
         /// the code_id of the new logic to place in the given contract
         new_code_id: u64,
         /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
+        #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
     },
     /// Sets a new admin (for migrate) on the given contract.
@@ -259,7 +271,7 @@ impl<T> From<GovMsg> for CosmosMsg<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::coins;
+    use crate::{coin, coins};
 
     #[test]
     fn from_bank_msg_works() {
@@ -271,5 +283,41 @@ mod tests {
             CosmosMsg::Bank(msg) => assert_eq!(bank, msg),
             _ => panic!("must encode in Bank variant"),
         }
+    }
+
+    #[cosmwasm_schema::cw_serde]
+    enum ExecuteMsg {
+        Mint { coin: Coin },
+    }
+
+    #[test]
+    fn wasm_msg_debug_decodes_binary_string_when_possible() {
+        let msg = WasmMsg::Execute {
+            contract_addr: "joe".to_string(),
+            msg: to_binary(&ExecuteMsg::Mint {
+                coin: coin(10, "BTC"),
+            })
+            .unwrap(),
+            funds: vec![],
+        };
+
+        assert_eq!(
+            format!("{:?}", msg),
+            "Execute { contract_addr: \"joe\", msg: {\"mint\":{\"coin\":{\"denom\":\"BTC\",\"amount\":\"10\"}}}, funds: [] }"
+        );
+    }
+
+    #[test]
+    fn wasm_msg_debug_dumps_binary_when_not_utf8() {
+        let msg = WasmMsg::Execute {
+            contract_addr: "joe".to_string(),
+            msg: Binary::from([0, 159, 146, 150]),
+            funds: vec![],
+        };
+
+        assert_eq!(
+            format!("{:?}", msg),
+            "Execute { contract_addr: \"joe\", msg: Binary(009f9296), funds: [] }"
+        );
     }
 }

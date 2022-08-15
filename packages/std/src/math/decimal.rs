@@ -30,9 +30,14 @@ impl Decimal {
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18
     const DECIMAL_FRACTIONAL_SQUARED: Uint128 =
         Uint128::new(1_000_000_000_000_000_000_000_000_000_000_000_000u128); // (1*10**18)**2 = 1*10**36
-    const DECIMAL_PLACES: usize = 18; // This needs to be an even number.
 
+    /// The number of decimal places. Since decimal types are fixed-point rather than
+    /// floating-point, this is a constant.
+    pub const DECIMAL_PLACES: u32 = 18; // This needs to be an even number.
+    /// The largest value that can be represented by this decimal type.
     pub const MAX: Self = Self(Uint128::MAX);
+    /// The smallest value that can be represented by this decimal type.
+    pub const MIN: Self = Self(Uint128::MIN);
 
     /// Creates a Decimal(value)
     /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
@@ -47,11 +52,13 @@ impl Decimal {
     }
 
     /// Create a 1.0 Decimal
+    #[inline]
     pub const fn one() -> Self {
         Self(Self::DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal
+    #[inline]
     pub const fn zero() -> Self {
         Self(Uint128::zero())
     }
@@ -93,9 +100,9 @@ impl Decimal {
     ) -> Result<Self, DecimalRangeExceeded> {
         let atomics = atomics.into();
         const TEN: Uint128 = Uint128::new(10);
-        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES as u32)) {
+        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES)) {
             Ordering::Less => {
-                let digits = (Self::DECIMAL_PLACES as u32) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
+                let digits = (Self::DECIMAL_PLACES) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
                 let factor = TEN.checked_pow(digits).unwrap(); // Safe because digits <= 17
                 Self(
                     atomics
@@ -105,7 +112,7 @@ impl Decimal {
             }
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
-                let digits = decimal_places - (Self::DECIMAL_PLACES as u32); // No overflow because decimal_places > DECIMAL_PLACES
+                let digits = decimal_places - (Self::DECIMAL_PLACES); // No overflow because decimal_places > DECIMAL_PLACES
                 if let Ok(factor) = TEN.checked_pow(digits) {
                     Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 } else {
@@ -181,7 +188,7 @@ impl Decimal {
     /// See also [`Decimal::atomics()`].
     #[inline]
     pub const fn decimal_places(&self) -> u32 {
-        Self::DECIMAL_PLACES as u32
+        Self::DECIMAL_PLACES
     }
 
     /// Rounds value down after decimal places.
@@ -278,14 +285,6 @@ impl Decimal {
         })
     }
 
-    /// Raises a value to the power of `exp`, returns MAX on overflow.
-    pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
-    }
-
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
         Decimal::checked_from_ratio(self.numerator(), other.numerator())
     }
@@ -319,18 +318,44 @@ impl Decimal {
     /// Precision *must* be a number between 0 and 9 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
-    fn sqrt_with_precision(&self, precision: usize) -> Option<Self> {
-        let precision = precision as u32;
-
+    fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = 100u128.pow(precision);
         self.0.checked_mul(inner_mul.into()).ok().map(|inner| {
-            let outer_mul = 10u128.pow(Self::DECIMAL_PLACES as u32 / 2 - precision);
+            let outer_mul = 10u128.pow(Self::DECIMAL_PLACES / 2 - precision);
             Decimal(inner.isqrt().checked_mul(Uint128::from(outer_mul)).unwrap())
         })
     }
 
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(self.0.abs_diff(other.0))
+    }
+
+    pub fn saturating_add(self, other: Self) -> Self {
+        match self.checked_add(other) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn saturating_sub(self, other: Self) -> Self {
+        match self.checked_sub(other) {
+            Ok(value) => value,
+            Err(_) => Self::zero(),
+        }
+    }
+
+    pub fn saturating_mul(self, other: Self) -> Self {
+        match self.checked_mul(other) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
+    }
+
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        match self.checked_pow(exp) {
+            Ok(value) => value,
+            Err(_) => Self::MAX,
+        }
     }
 }
 
@@ -384,15 +409,16 @@ impl FromStr for Decimal {
             let fractional = fractional_part
                 .parse::<Uint128>()
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-            let exp =
-                (Self::DECIMAL_PLACES.checked_sub(fractional_part.len())).ok_or_else(|| {
+            let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
+                || {
                     StdError::generic_err(format!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
-                })?;
+                },
+            )?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
-            let fractional_factor = Uint128::from(10u128.pow(exp as u32));
+            let fractional_factor = Uint128::from(10u128.pow(exp));
             atomics = atomics
                 .checked_add(
                     // The inner multiplication can't overflow because
@@ -418,8 +444,11 @@ impl fmt::Display for Decimal {
         if fractional.is_zero() {
             write!(f, "{}", whole)
         } else {
-            let fractional_string =
-                format!("{:0>padding$}", fractional, padding = Self::DECIMAL_PLACES);
+            let fractional_string = format!(
+                "{:0>padding$}",
+                fractional,
+                padding = Self::DECIMAL_PLACES as usize
+            );
             f.write_str(&whole.to_string())?;
             f.write_char('.')?;
             f.write_str(fractional_string.trim_end_matches('0'))?;
@@ -1863,11 +1892,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::zero()),
-            Err(CheckedFromRatioError::DivideByZero { .. })
+            Err(CheckedFromRatioError::DivideByZero {})
         ));
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::percent(1)),
-            Err(CheckedFromRatioError::Overflow { .. })
+            Err(CheckedFromRatioError::Overflow {})
         ));
 
         // checked rem
@@ -1902,7 +1931,31 @@ mod tests {
     }
 
     #[test]
-    fn decimal_saturating_pow() {
+    fn decimal_saturating_works() {
+        assert_eq!(
+            Decimal::percent(200).saturating_add(Decimal::percent(200)),
+            Decimal::percent(400)
+        );
+        assert_eq!(
+            Decimal::MAX.saturating_add(Decimal::percent(200)),
+            Decimal::MAX
+        );
+        assert_eq!(
+            Decimal::percent(200).saturating_sub(Decimal::percent(100)),
+            Decimal::percent(100)
+        );
+        assert_eq!(
+            Decimal::zero().saturating_sub(Decimal::percent(200)),
+            Decimal::zero()
+        );
+        assert_eq!(
+            Decimal::percent(200).saturating_mul(Decimal::percent(50)),
+            Decimal::percent(100)
+        );
+        assert_eq!(
+            Decimal::MAX.saturating_mul(Decimal::percent(200)),
+            Decimal::MAX
+        );
         assert_eq!(
             Decimal::percent(400).saturating_pow(2u32),
             Decimal::percent(1600)

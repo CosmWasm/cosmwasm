@@ -1,0 +1,16 @@
+[package]
+name = "cosmwasm-schema-derive"
+version = "1.0.0"
+authors = ["Tomasz Kurcz <tom@confio.gmbh>"]
+edition = "2021"
+description = "Derive macros for cosmwasm-schema"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
+license = "Apache-2.0"
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "1", features = ["full", "printing", "extra-traits"] }
+
+[lib]
+proc-macro = true
