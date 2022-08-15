@@ -1942,4 +1942,24 @@ mod tests {
             Err(RoundUpOverflowError { .. })
         ));
     }
+
+    #[test]
+    fn decimal_partial_eq() {
+        let test_cases = [
+            ("1", "1", true),
+            ("0.5", "0.5", true),
+            ("0.5", "0.51", false),
+            ("0", "0.00000", true),
+        ]
+        .into_iter()
+        .map(|(lhs, rhs, expected)| (dec(lhs), dec(rhs), expected));
+
+        #[allow(clippy::op_ref)]
+        for (lhs, rhs, expected) in test_cases {
+            assert_eq!(lhs == rhs, expected);
+            assert_eq!(&lhs == rhs, expected);
+            assert_eq!(lhs == &rhs, expected);
+            assert_eq!(&lhs == &rhs, expected);
+        }
+    }
 }
