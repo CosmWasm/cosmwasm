@@ -1880,11 +1880,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::zero()),
-            Err(CheckedFromRatioError::DivideByZero { .. })
+            Err(CheckedFromRatioError::DivideByZero {})
         ));
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::percent(1)),
-            Err(CheckedFromRatioError::Overflow { .. })
+            Err(CheckedFromRatioError::Overflow {})
         ));
 
         // checked rem

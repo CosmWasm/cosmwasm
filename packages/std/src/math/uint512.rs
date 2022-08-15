@@ -234,6 +234,10 @@ impl Uint512 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.checked_div(other)
+    }
+
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
@@ -1089,6 +1093,18 @@ mod tests {
         ));
         assert_eq!(
             Uint512::from(6u32).checked_div(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
+        assert!(matches!(
+            Uint512::MAX.checked_div_euclid(Uint512::from(0u32)),
+            Err(DivideByZeroError { .. })
+        ));
+        assert_eq!(
+            Uint512::from(6u32).checked_div_euclid(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
+        assert_eq!(
+            Uint512::from(7u32).checked_div_euclid(Uint512::from(2u32)),
             Ok(Uint512::from(3u32)),
         );
         assert!(matches!(
