@@ -517,6 +517,12 @@ impl PartialEq<&Uint128> for Uint128 {
     }
 }
 
+impl PartialEq<Uint128> for &Uint128 {
+    fn eq(&self, rhs: &Uint128) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -649,6 +649,12 @@ impl PartialEq<&Decimal256> for Decimal256 {
     }
 }
 
+impl PartialEq<Decimal256> for &Decimal256 {
+    fn eq(&self, rhs: &Decimal256) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

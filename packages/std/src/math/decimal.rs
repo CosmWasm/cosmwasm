@@ -624,6 +624,12 @@ impl PartialEq<&Decimal> for Decimal {
     }
 }
 
+impl PartialEq<Decimal> for &Decimal {
+    fn eq(&self, rhs: &Decimal) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

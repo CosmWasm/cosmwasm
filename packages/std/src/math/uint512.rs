@@ -575,6 +575,12 @@ impl PartialEq<&Uint512> for Uint512 {
     }
 }
 
+impl PartialEq<Uint512> for &Uint512 {
+    fn eq(&self, rhs: &Uint512) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

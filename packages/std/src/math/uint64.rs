@@ -471,6 +471,12 @@ impl PartialEq<&Uint64> for Uint64 {
     }
 }
 
+impl PartialEq<Uint64> for &Uint64 {
+    fn eq(&self, rhs: &Uint64) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
