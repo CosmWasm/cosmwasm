@@ -17,6 +17,8 @@ and this project adheres to
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `pow`/`saturating_pow` for `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `ceil`/`floor` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `PartialEq` for reference on one side and owned value
+  on the other for all `Uint` and `Decimal` types
 - cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
