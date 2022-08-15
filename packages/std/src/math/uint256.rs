@@ -627,6 +627,12 @@ impl PartialEq<&Uint256> for Uint256 {
     }
 }
 
+impl PartialEq<Uint256> for &Uint256 {
+    fn eq(&self, rhs: &Uint256) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
