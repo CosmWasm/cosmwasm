@@ -21,6 +21,8 @@ and this project adheres to
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
 - cosmwasm-std: Implement `checked_div_euclid` for `Uint256`/`Uint512`
+- cosmwasm-std: Add `QuerierWrapper::query_wasm_contract_info` - this is just a
+  convenience helper for querying `WasmQuery::ContractInfo`.
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 
@@ -30,6 +32,10 @@ and this project adheres to
 - cosmwasm-std: Enable the `abort` feature by default. This provides more
   helpful panic messages via a custom panic handler.
 - cosmwasm-std: Make `Decimal{,256}::DECIMAL_PLACES` a public `u32` value.
+- cosmwasm-crypto: Bumped `k256` `0.10.4 -> 0.11` and `digest` `0.9 -> 0.10`
+  ([#1374]).
+
+[#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
 
 ## [1.0.0] - 2022-05-14
 

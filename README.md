@@ -159,7 +159,7 @@ functionality:
 
 ```rust
 // in-place contract migrations
-extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 
 // support submessage callbacks
 extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
