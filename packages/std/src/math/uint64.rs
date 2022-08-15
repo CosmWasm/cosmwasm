@@ -471,6 +471,12 @@ impl PartialEq<&Uint64> for Uint64 {
     }
 }
 
+impl PartialEq<Uint64> for &Uint64 {
+    fn eq(&self, rhs: &Uint64) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -900,5 +906,20 @@ mod tests {
         let expected = Uint64::from(37u32);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
+    }
+
+    #[test]
+    fn uint64_partial_eq() {
+        let test_cases = [(1, 1, true), (42, 42, true), (42, 24, false), (0, 0, true)]
+            .into_iter()
+            .map(|(lhs, rhs, expected)| (Uint64::new(lhs), Uint64::new(rhs), expected));
+
+        #[allow(clippy::op_ref)]
+        for (lhs, rhs, expected) in test_cases {
+            assert_eq!(lhs == rhs, expected);
+            assert_eq!(&lhs == rhs, expected);
+            assert_eq!(lhs == &rhs, expected);
+            assert_eq!(&lhs == &rhs, expected);
+        }
     }
 }

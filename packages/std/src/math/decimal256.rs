@@ -649,6 +649,12 @@ impl PartialEq<&Decimal256> for Decimal256 {
     }
 }
 
+impl PartialEq<Decimal256> for &Decimal256 {
+    fn eq(&self, rhs: &Decimal256) -> bool {
+        *self == rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2082,5 +2088,25 @@ mod tests {
             Ok(Decimal256::percent(200))
         );
         assert_eq!(Decimal256::MAX.checked_ceil(), Err(RoundUpOverflowError));
+    }
+
+    #[test]
+    fn decimal256_partial_eq() {
+        let test_cases = [
+            ("1", "1", true),
+            ("0.5", "0.5", true),
+            ("0.5", "0.51", false),
+            ("0", "0.00000", true),
+        ]
+        .into_iter()
+        .map(|(lhs, rhs, expected)| (dec(lhs), dec(rhs), expected));
+
+        #[allow(clippy::op_ref)]
+        for (lhs, rhs, expected) in test_cases {
+            assert_eq!(lhs == rhs, expected);
+            assert_eq!(&lhs == rhs, expected);
+            assert_eq!(lhs == &rhs, expected);
+            assert_eq!(&lhs == &rhs, expected);
+        }
     }
 }
