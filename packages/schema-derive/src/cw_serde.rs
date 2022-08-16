@@ -11,6 +11,7 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
                 PartialEq,
                 schemars::JsonSchema
             )]
+            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
             #[serde(deny_unknown_fields)]
             #input
         },
@@ -23,6 +24,7 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
                 PartialEq,
                 schemars::JsonSchema
             )]
+            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
             #[serde(deny_unknown_fields, rename_all = "snake_case")]
             #input
         },
@@ -52,6 +54,7 @@ mod tests {
                 PartialEq,
                 schemars::JsonSchema
             )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(deny_unknown_fields)]
             pub struct InstantiateMsg {
                 pub verifier: String,
@@ -82,6 +85,7 @@ mod tests {
                 PartialEq,
                 schemars::JsonSchema
             )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(deny_unknown_fields, rename_all = "snake_case")]
             pub enum SudoMsg {
                 StealFunds {
