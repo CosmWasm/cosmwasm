@@ -31,6 +31,8 @@ pub enum StakingQuery {
         /// The validator's address (e.g. (e.g. cosmosvaloper1...))
         address: String,
     },
+    /// Returns total rewards of the given address
+    Rewards { delegator: HumanAddr },
 }
 
 /// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
