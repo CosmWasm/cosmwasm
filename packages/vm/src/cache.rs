@@ -6,10 +6,10 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
+use crate::capabilities::required_capabilities_from_module;
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
-use crate::features::required_capabilities_from_module;
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
@@ -369,8 +369,8 @@ fn load_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult
 mod tests {
     use super::*;
     use crate::calls::{call_execute, call_instantiate};
+    use crate::capabilities::capabilities_from_csv;
     use crate::errors::VmError;
-    use crate::features::capabilities_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;

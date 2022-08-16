@@ -5,10 +5,10 @@ use std::sync::Mutex;
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
+use crate::capabilities::required_capabilities_from_module;
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
-use crate::features::required_capabilities_from_module;
 use crate::imports::{
     do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
     do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,

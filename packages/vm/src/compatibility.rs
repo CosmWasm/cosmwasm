@@ -2,8 +2,8 @@ use parity_wasm::elements::{External, ImportEntry, Module};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
+use crate::capabilities::required_capabilities_from_module;
 use crate::errors::{VmError, VmResult};
-use crate::features::required_capabilities_from_module;
 use crate::limited::LimitedDisplay;
 use crate::static_analysis::{deserialize_wasm, ExportInfo};
 
