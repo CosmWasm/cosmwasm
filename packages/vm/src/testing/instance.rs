@@ -5,7 +5,7 @@ use cosmwasm_std::Coin;
 use std::collections::HashSet;
 
 use crate::compatibility::check_wasm;
-use crate::features::features_from_csv;
+use crate::features::capabilities_from_csv;
 use crate::instance::{Instance, InstanceOptions};
 use crate::size::Size;
 use crate::{Backend, BackendApi, Querier, Storage};
@@ -85,7 +85,7 @@ pub struct MockInstanceOptions<'a> {
     pub backend_error: Option<&'static str>,
 
     // instance
-    pub supported_features: HashSet<String>,
+    pub supported_capabilities: HashSet<String>,
     pub gas_limit: u64,
     pub print_debug: bool,
     /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
@@ -93,9 +93,9 @@ pub struct MockInstanceOptions<'a> {
 }
 
 impl MockInstanceOptions<'_> {
-    fn default_features() -> HashSet<String> {
+    fn default_capabilities() -> HashSet<String> {
         #[allow(unused_mut)]
-        let mut out = features_from_csv("iterator,staking");
+        let mut out = capabilities_from_csv("iterator,staking");
         #[cfg(feature = "stargate")]
         out.insert("stargate".to_string());
         out
@@ -111,7 +111,7 @@ impl Default for MockInstanceOptions<'_> {
             backend_error: None,
 
             // instance
-            supported_features: Self::default_features(),
+            supported_capabilities: Self::default_capabilities(),
             gas_limit: DEFAULT_GAS_LIMIT,
             print_debug: DEFAULT_PRINT_DEBUG,
             memory_limit: DEFAULT_MEMORY_LIMIT,
@@ -123,7 +123,7 @@ pub fn mock_instance_with_options(
     wasm: &[u8],
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
-    check_wasm(wasm, &options.supported_features).unwrap();
+    check_wasm(wasm, &options.supported_capabilities).unwrap();
     let contract_address = MOCK_CONTRACT_ADDR;
 
     // merge balances

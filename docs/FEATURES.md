@@ -61,13 +61,13 @@ implementation.
 
 ## Supported features
 
-An instance of the main `Cache` has `supported_features` in its `CacheOptions`.
-This value is set in the caller, such as
+An instance of the main `Cache` has `supported_capabilities` in its
+`CacheOptions`. This value is set in the caller, such as
 [here](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-rc.0/libwasmvm/src/cache.rs#L75)
 and
 [here](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-rc.0/libwasmvm/src/cache.rs#L62).
-`features_from_csv` takes a comma separated list and returns a set of features.
-This features list is set
+`capabilities_from_csv` takes a comma separated list and returns a set of
+features. This features list is set
 [in keeper.go](https://github.com/CosmWasm/wasmd/blob/v0.27.0-rc0/x/wasm/keeper/keeper.go#L100)
 and
 [in app.go](https://github.com/CosmWasm/wasmd/blob/v0.27.0-rc0/app/app.go#L475-L496).

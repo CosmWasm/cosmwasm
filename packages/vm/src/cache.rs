@@ -9,7 +9,7 @@ use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
-use crate::features::required_features_from_module;
+use crate::features::required_capabilities_from_module;
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
@@ -44,7 +44,7 @@ pub struct Metrics {
 #[derive(Clone, Debug)]
 pub struct CacheOptions {
     pub base_dir: PathBuf,
-    pub supported_features: HashSet<String>,
+    pub supported_capabilities: HashSet<String>,
     pub memory_cache_size: Size,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
@@ -63,9 +63,9 @@ pub struct CacheInner {
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
-    /// Supported features are immutable for the lifetime of the cache,
+    /// Supported capabilities are immutable for the lifetime of the cache,
     /// i.e. any number of read-only references is allowed to access it concurrently.
-    supported_features: HashSet<String>,
+    supported_capabilities: HashSet<String>,
     inner: Mutex<CacheInner>,
     // Those two don't store data but only fix type information
     type_api: PhantomData<A>,
@@ -78,7 +78,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
 #[derive(PartialEq, Eq, Debug)]
 pub struct AnalysisReport {
     pub has_ibc_entry_points: bool,
-    pub required_features: HashSet<String>,
+    pub required_capabilities: HashSet<String>,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -97,7 +97,7 @@ where
     pub unsafe fn new(options: CacheOptions) -> VmResult<Self> {
         let CacheOptions {
             base_dir,
-            supported_features,
+            supported_capabilities,
             memory_cache_size,
             instance_memory_limit,
         } = options;
@@ -121,7 +121,7 @@ where
         let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(Cache {
-            supported_features,
+            supported_capabilities,
             inner: Mutex::new(CacheInner {
                 wasm_path,
                 instance_memory_limit,
@@ -153,7 +153,7 @@ where
     }
 
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.supported_features)?;
+        check_wasm(wasm, &self.supported_capabilities)?;
         let module = compile(wasm, None, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
@@ -191,7 +191,7 @@ where
         let module = deserialize_wasm(&wasm)?;
         Ok(AnalysisReport {
             has_ibc_entry_points: has_ibc_entry_points(&module),
-            required_features: required_features_from_module(&module),
+            required_capabilities: required_capabilities_from_module(&module),
         })
     }
 
@@ -370,7 +370,7 @@ mod tests {
     use super::*;
     use crate::calls::{call_execute, call_instantiate};
     use crate::errors::VmError;
-    use crate::features::features_from_csv;
+    use crate::features::capabilities_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;
@@ -388,25 +388,25 @@ mod tests {
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
 
-    fn default_features() -> HashSet<String> {
-        features_from_csv("iterator,staking")
+    fn default_capabilities() -> HashSet<String> {
+        capabilities_from_csv("iterator,staking")
     }
 
     fn make_testing_options() -> CacheOptions {
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_features: default_features(),
+            supported_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
     }
 
     fn make_stargate_testing_options() -> CacheOptions {
-        let mut feature = default_features();
-        feature.insert("stargate".into());
+        let mut capabilities = default_capabilities();
+        capabilities.insert("stargate".into());
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_features: feature,
+            supported_capabilities: capabilities,
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
@@ -489,7 +489,7 @@ mod tests {
         {
             let options1 = CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
-                supported_features: default_features(),
+                supported_capabilities: default_capabilities(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
@@ -501,7 +501,7 @@ mod tests {
         {
             let options2 = CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
-                supported_features: default_features(),
+                supported_capabilities: default_capabilities(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
@@ -535,7 +535,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let options = CacheOptions {
             base_dir: tmp_dir.path().to_path_buf(),
-            supported_features: default_features(),
+            supported_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         };
@@ -986,7 +986,7 @@ mod tests {
             report1,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                required_features: HashSet::new(),
+                required_capabilities: HashSet::new(),
             }
         );
 
@@ -996,7 +996,7 @@ mod tests {
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
-                required_features: HashSet::from_iter(vec![
+                required_capabilities: HashSet::from_iter(vec![
                     "iterator".to_string(),
                     "staking".to_string(),
                     "stargate".to_string()

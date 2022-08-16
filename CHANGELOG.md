@@ -36,6 +36,15 @@ and this project adheres to
 - cosmwasm-std: Make `Decimal{,256}::DECIMAL_PLACES` a public `u32` value.
 - cosmwasm-crypto: Bumped `k256` `0.10.4 -> 0.11` and `digest` `0.9 -> 0.10`
   ([#1374]).
+- cosmwasm-vm: Rename features to capabilities, including
+  1. `features_from_csv` to `capabilities_from_csv`;
+  2. `CacheOptions::supported_features` to
+     `CacheOptions::supported_capabilities`;
+  3. `MockInstanceOptions::supported_features` to
+     `MockInstanceOptions::supported_capabilities`
+  4. `Instance::required_features` to `Instance::required_capabilities`
+  5. `AnalysisReport::required_features` to
+     `AnalysisReport::required_capabilities`.
 
 [#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
 

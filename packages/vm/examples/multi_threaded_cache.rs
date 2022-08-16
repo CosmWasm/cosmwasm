@@ -5,7 +5,8 @@ use tempfile::TempDir;
 use cosmwasm_std::{coins, Empty};
 use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
 use cosmwasm_vm::{
-    call_execute, call_instantiate, features_from_csv, Cache, CacheOptions, InstanceOptions, Size,
+    call_execute, call_instantiate, capabilities_from_csv, Cache, CacheOptions, InstanceOptions,
+    Size,
 };
 
 // Instance
@@ -27,7 +28,7 @@ const THREADS: usize = SAVE_WASM_THREADS + INSTANTIATION_THREADS;
 pub fn main() {
     let options = CacheOptions {
         base_dir: TempDir::new().unwrap().into_path(),
-        supported_features: features_from_csv("iterator,staking"),
+        supported_capabilities: capabilities_from_csv("iterator,staking"),
         memory_cache_size: MEMORY_CACHE_SIZE,
         instance_memory_limit: DEFAULT_MEMORY_LIMIT,
     };
