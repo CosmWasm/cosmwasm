@@ -119,3 +119,16 @@ pub struct Validator {
     /// TODO: what units are these (in terms of time)?
     pub max_change_rate: Decimal,
 }
+
+/// Rewards response
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct RewardsResponse {
+    pub rewards: Vec<ValidatorRewards>,
+    pub total: Vec<Coin>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorRewards {
+    pub validator_address: HumanAddr,
+    pub reward: Vec<Coin>,
+}
