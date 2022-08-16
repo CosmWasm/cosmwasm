@@ -16,6 +16,8 @@ if [ "$PROFILE" = "release" ]; then
 else
   cargo build --features iterator --example $PROG
 fi
+echo "\`check_contract\` will be removed from the next version of \`cosmwasm-vm\` - please use \`cw-check-contract\` instead." >&2
+echo "> cargo install cw-check-contract" >&2
 
 for W in $@; do
   echo -n "Checking $(basename "$W")... "
