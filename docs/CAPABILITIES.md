@@ -1,25 +1,29 @@
-# Features
+# Capabilities
 
-Features are a mechanism to negotiate functionality between a contract and an
-environment (i.e. the chain that embeds cosmwasm-vm/[wasmvm]) in a very
-primitive way. The contract defines required features. The environment defines
-supported features. If the required features are all supported, the contract can
-be used. Doing this check when the contract is first stored ensures missing
-features are detected early and not when a user tries to execute a certain code
-path.
+Capabilities are a mechanism to negotiate functionality between a contract and
+an environment (i.e. the chain that embeds cosmwasm-vm/[wasmvm]) in a very
+primitive way. The contract defines required capabilities. The environment
+defines it's capabilities. If the required capabilities are all available, the
+contract can be used. Doing this check when the contract is first stored ensures
+missing capabilities are detected early and not when a user tries to execute a
+certain code path.
 
-## Disambiguation
+## Origin and Disambiguation
 
-This document is about app level features in the CosmWasm VM. Features should
-not be confused with Cargo's build system features, even when connected.
-Features can be implemented in any language that compiles to Wasm.
+Before August 2022, we had two types of "features": app level features in the
+CosmWasm VM and Cargo's build system features. In order to avoid the confusion,
+the former have been renamed to capabilities.
 
-## Required features
+Capabilities can be implemented in any language that compiles to Wasm whereas
+features are Rust build system specific.
 
-The contract defines required features using a marker export function that takes
-no arguments and returns no value. The name of the export needs to start with
-"requires\_" followed by the name of the feature. Do yourself a favor and keep
-the name all lower ASCII alphanumerical.
+## Required capabilities
+
+The contract defines required capabilities using marker export functions that
+take no arguments and return no value. The name of the export needs to start
+with "requires\_" followed by the name of the capability. When creating a new
+capability, do yourself a favor and keep the name all lower ASCII
+alphanumerical.
 
 An example of such markers in cosmwasm-std are those:
 
@@ -51,15 +55,15 @@ which in Wasm compile to this:
   (type (;12;) (func))
 ```
 
-As mentioned above, the Cargo features are independent of the features we talk
-about and it is perfectly fine to have a requires\_\* export that is
+As mentioned above, the Cargo features are independent of the capabilities we
+talk about and it is perfectly fine to have a requires\_\* export that is
 unconditional in a library or a contract.
 
 The marker export functions can be executed, but the VM does not require such a
 call to succeed. So a contract can use no-op implementation or crashing
 implementation.
 
-## Supported features
+## Available capabilities
 
 An instance of the main `Cache` has `supported_capabilities` in its
 `CacheOptions`. This value is set in the caller, such as
@@ -67,15 +71,15 @@ An instance of the main `Cache` has `supported_capabilities` in its
 and
 [here](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-rc.0/libwasmvm/src/cache.rs#L62).
 `capabilities_from_csv` takes a comma separated list and returns a set of
-features. This features list is set
+capabilities. This capabilities list is set
 [in keeper.go](https://github.com/CosmWasm/wasmd/blob/v0.27.0-rc0/x/wasm/keeper/keeper.go#L100)
 and
 [in app.go](https://github.com/CosmWasm/wasmd/blob/v0.27.0-rc0/app/app.go#L475-L496).
 
-## Common features
+## Common capabilities
 
-Here is a list of features created in the past. Since features can be created
-between contract and environment, we don't know them all in the VM.
+Here is a list of capabilities created in the past. Since capabilities can be
+created between contract and environment, we don't know them all in the VM.
 
 - `iterator` is for storage backends that allow range queries. Not all types of
   databases do that. There are trees that don't allow it and Secret Network does
@@ -85,13 +89,17 @@ between contract and environment, we don't know them all in the VM.
 - `staking` is for chains with the Cosmos SDK staking module. There are Cosmos
   chains that don't use this (e.g. Tgrade).
 
-## What's a good feature?
+## What's a good capability?
 
-A good feature makes sense to be disabled. The examples above explain why the
-feature is not present in some environments.
+A good capability makes sense to be disabled. The examples above explain why the
+capability is not present in some environments.
+
+Also when the environment adds new functionality in a way that does not break
+existing contracts (such as new queries), capabilities can be used to ensure the
+contract checks the availability early on.
 
 When functionality is always present in the VM (such as a new import implemented
-directly in the VM, see [#1299]), we should not use features. They just create
+directly in the VM, see [#1299]), we should not use capability. They just create
 fragmentation in the CosmWasm ecosystem and increase the barrier for adoption.
 Instead the `check_wasm_imports` check is used to validate this when the
 contract is stored.
