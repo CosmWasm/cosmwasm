@@ -44,7 +44,7 @@ pub struct Metrics {
 #[derive(Clone, Debug)]
 pub struct CacheOptions {
     pub base_dir: PathBuf,
-    pub supported_capabilities: HashSet<String>,
+    pub available_capabilities: HashSet<String>,
     pub memory_cache_size: Size,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
@@ -63,9 +63,9 @@ pub struct CacheInner {
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
-    /// Supported capabilities are immutable for the lifetime of the cache,
+    /// Available capabilities are immutable for the lifetime of the cache,
     /// i.e. any number of read-only references is allowed to access it concurrently.
-    supported_capabilities: HashSet<String>,
+    available_capabilities: HashSet<String>,
     inner: Mutex<CacheInner>,
     // Those two don't store data but only fix type information
     type_api: PhantomData<A>,
@@ -97,7 +97,7 @@ where
     pub unsafe fn new(options: CacheOptions) -> VmResult<Self> {
         let CacheOptions {
             base_dir,
-            supported_capabilities,
+            available_capabilities,
             memory_cache_size,
             instance_memory_limit,
         } = options;
@@ -121,7 +121,7 @@ where
         let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(Cache {
-            supported_capabilities,
+            available_capabilities,
             inner: Mutex::new(CacheInner {
                 wasm_path,
                 instance_memory_limit,
@@ -153,7 +153,7 @@ where
     }
 
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.supported_capabilities)?;
+        check_wasm(wasm, &self.available_capabilities)?;
         let module = compile(wasm, None, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
@@ -395,7 +395,7 @@ mod tests {
     fn make_testing_options() -> CacheOptions {
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_capabilities: default_capabilities(),
+            available_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
@@ -406,7 +406,7 @@ mod tests {
         capabilities.insert("stargate".into());
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_capabilities: capabilities,
+            available_capabilities: capabilities,
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
@@ -489,7 +489,7 @@ mod tests {
         {
             let options1 = CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
-                supported_capabilities: default_capabilities(),
+                available_capabilities: default_capabilities(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
@@ -501,7 +501,7 @@ mod tests {
         {
             let options2 = CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
-                supported_capabilities: default_capabilities(),
+                available_capabilities: default_capabilities(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
@@ -535,7 +535,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let options = CacheOptions {
             base_dir: tmp_dir.path().to_path_buf(),
-            supported_capabilities: default_capabilities(),
+            available_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         };

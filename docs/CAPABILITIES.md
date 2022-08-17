@@ -65,7 +65,7 @@ implementation.
 
 ## Available capabilities
 
-An instance of the main `Cache` has `supported_capabilities` in its
+An instance of the main `Cache` has `available_capabilities` in its
 `CacheOptions`. This value is set in the caller, such as
 [here](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-rc.0/libwasmvm/src/cache.rs#L75)
 and

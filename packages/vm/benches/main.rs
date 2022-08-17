@@ -123,7 +123,7 @@ fn bench_cache(c: &mut Criterion) {
 
     let options = CacheOptions {
         base_dir: TempDir::new().unwrap().into_path(),
-        supported_capabilities: capabilities_from_csv("iterator,staking"),
+        available_capabilities: capabilities_from_csv("iterator,staking"),
         memory_cache_size: MEMORY_CACHE_SIZE,
         instance_memory_limit: DEFAULT_MEMORY_LIMIT,
     };
@@ -163,7 +163,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("instantiate from fs", |b| {
         let non_memcache = CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_capabilities: capabilities_from_csv("iterator,staking"),
+            available_capabilities: capabilities_from_csv("iterator,staking"),
             memory_cache_size: Size(0),
             instance_memory_limit: DEFAULT_MEMORY_LIMIT,
         };
@@ -229,7 +229,7 @@ pub fn bench_instance_threads(c: &mut Criterion) {
     c.bench_function("multi-threaded get_instance", |b| {
         let options = CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
-            supported_capabilities: capabilities_from_csv("iterator,staking"),
+            available_capabilities: capabilities_from_csv("iterator,staking"),
             memory_cache_size: MEMORY_CACHE_SIZE,
             instance_memory_limit: DEFAULT_MEMORY_LIMIT,
         };

@@ -85,7 +85,7 @@ pub struct MockInstanceOptions<'a> {
     pub backend_error: Option<&'static str>,
 
     // instance
-    pub supported_capabilities: HashSet<String>,
+    pub available_capabilities: HashSet<String>,
     pub gas_limit: u64,
     pub print_debug: bool,
     /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
@@ -111,7 +111,7 @@ impl Default for MockInstanceOptions<'_> {
             backend_error: None,
 
             // instance
-            supported_capabilities: Self::default_capabilities(),
+            available_capabilities: Self::default_capabilities(),
             gas_limit: DEFAULT_GAS_LIMIT,
             print_debug: DEFAULT_PRINT_DEBUG,
             memory_limit: DEFAULT_MEMORY_LIMIT,
@@ -123,7 +123,7 @@ pub fn mock_instance_with_options(
     wasm: &[u8],
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
-    check_wasm(wasm, &options.supported_capabilities).unwrap();
+    check_wasm(wasm, &options.available_capabilities).unwrap();
     let contract_address = MOCK_CONTRACT_ADDR;
 
     // merge balances

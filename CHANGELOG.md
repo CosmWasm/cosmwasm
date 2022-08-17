@@ -39,9 +39,9 @@ and this project adheres to
 - cosmwasm-vm: Rename features to capabilities, including
   1. `features_from_csv` to `capabilities_from_csv`;
   2. `CacheOptions::supported_features` to
-     `CacheOptions::supported_capabilities`;
+     `CacheOptions::available_capabilities`;
   3. `MockInstanceOptions::supported_features` to
-     `MockInstanceOptions::supported_capabilities`
+     `MockInstanceOptions::available_capabilities`
   4. `Instance::required_features` to `Instance::required_capabilities`
   5. `AnalysisReport::required_features` to
      `AnalysisReport::required_capabilities`.
