@@ -1334,7 +1334,7 @@ mod tests {
         ];
 
         // The regular std::ops::Mul is our source of truth for these tests.
-        for (x, y) in test_data.iter().cloned() {
+        for (x, y) in test_data.into_iter() {
             assert_eq!(x * y, x.checked_mul(y).unwrap());
         }
     }
