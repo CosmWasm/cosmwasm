@@ -9,6 +9,9 @@ use cosmwasm_vm::internals::{check_wasm, compile};
 const DEFAULT_SUPPORTED_FEATURES: &str = "iterator,staking,stargate";
 
 pub fn main() {
+    eprintln!("`check_contract` will be removed from the next version of `cosmwasm-vm` - please use `cw-check-contract` instead.");
+    eprintln!("> cargo install cw-check-contract");
+
     let matches = App::new("Contract checking")
         .version("0.1.0")
         .long_about("Checks the given wasm file (memories, exports, imports, supported features, and non-determinism).")
