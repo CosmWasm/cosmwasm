@@ -1188,7 +1188,7 @@ jobs:
           command: |
             echo "Checking all contracts under ./artifacts"
             docker run --volumes-from with_code rust:1.59.0 \
-              /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; ./examples/check_contract.sh ../../artifacts/*.wasm'
+              /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; cargo install cw-check-contract; cw-check_contract ../../artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
       - run:
           name: Publish artifacts on GitHub
