@@ -1216,7 +1216,8 @@ jobs:
           command: |
             echo "Checking all contracts under ./artifacts"
             docker run --volumes-from with_code rust:1.59.0 \
-              /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; find ../../artifacts/ -type f -name "*.wasm" -exec cargo run --bin cw-check-contract {} \;
+              /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; \
+              find ../../artifacts/ -type f -name "*.wasm" ! -name "floaty.wasm" -exec cargo run --bin cw-check-contract {} \;
             docker cp with_code:/code/artifacts .
       - run:
           name: Publish artifacts on GitHub
