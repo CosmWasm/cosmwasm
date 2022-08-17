@@ -3,7 +3,7 @@ use std::io::Read;
 
 use clap::{App, Arg};
 
-use cosmwasm_vm::features_from_csv;
+use cosmwasm_vm::capabilities_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
 
 const DEFAULT_SUPPORTED_FEATURES: &str = "iterator,staking,stargate";
@@ -33,7 +33,7 @@ pub fn main() {
     let supported_features_csv = matches
         .value_of("FEATURES")
         .unwrap_or(DEFAULT_SUPPORTED_FEATURES);
-    let supported_features = features_from_csv(supported_features_csv);
+    let supported_features = capabilities_from_csv(supported_features_csv);
     println!("Supported features: {:?}", supported_features);
 
     // File
