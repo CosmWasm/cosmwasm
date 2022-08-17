@@ -11,7 +11,7 @@ pub const KEY_CONFIG: &[u8] = b"config";
 pub const KEY_PENDING_CHANNEL: &[u8] = b"pending";
 pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config {
     pub reflect_code_id: u64,
 }

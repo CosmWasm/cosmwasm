@@ -25,7 +25,7 @@ use super::Uint256;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 #[error("Decimal256 range exceeded")]
 pub struct Decimal256RangeExceeded;
 

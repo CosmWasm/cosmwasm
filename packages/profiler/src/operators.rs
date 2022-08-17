@@ -3,7 +3,7 @@ use std::hash::Hash;
 use loupe::MemoryUsage;
 use wasmer::wasmparser::Operator;
 
-#[derive(Debug, Clone, Hash, PartialEq, MemoryUsage)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, MemoryUsage)]
 pub enum OperatorSymbol {
     Unreachable,
     Nop,

@@ -22,7 +22,7 @@ use super::{Uint128, Uint256};
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] Uint128);
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 #[error("Decimal range exceeded")]
 pub struct DecimalRangeExceeded;
 

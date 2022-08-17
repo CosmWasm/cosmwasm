@@ -69,7 +69,7 @@ impl BlockStore {
 }
 
 /// Represents a non-branching Wasm code block.
-#[derive(Debug, MemoryUsage, Hash, PartialEq)]
+#[derive(Debug, MemoryUsage, Hash, PartialEq, Eq)]
 pub struct CodeBlock {
     inner: Vec<OperatorSymbol>,
 }

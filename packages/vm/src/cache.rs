@@ -75,7 +75,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     instantiation_lock: Mutex<()>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct AnalysisReport {
     pub has_ibc_entry_points: bool,
     pub required_features: HashSet<String>,

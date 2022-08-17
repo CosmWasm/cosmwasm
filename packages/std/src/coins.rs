@@ -4,7 +4,7 @@ use std::fmt;
 
 use crate::math::Uint128;
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
     pub denom: String,
     pub amount: Uint128,

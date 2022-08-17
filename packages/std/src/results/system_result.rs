@@ -29,7 +29,7 @@ use super::super::errors::SystemError;
 /// let result: SystemResult<Binary> = SystemResult::Err(error);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SystemResult<S> {
     Ok(S),
