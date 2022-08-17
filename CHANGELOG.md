@@ -36,6 +36,8 @@ and this project adheres to
 - cosmwasm-std: Make `Decimal{,256}::DECIMAL_PLACES` a public `u32` value.
 - cosmwasm-crypto: Bumped `k256` `0.10.4 -> 0.11` and `digest` `0.9 -> 0.10`
   ([#1374]).
+- cosmwasm-vm/check_contract: Copied to cosmwasm/packages.
+  cosmwasm-vm/check_contract will soon be deprecated.
 
 [#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
 
