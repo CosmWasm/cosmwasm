@@ -652,8 +652,7 @@ mod tests {
             "sun".to_string(),
             "freedom".to_string(),
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect();
         check_wasm_capabilities(&module, &available).unwrap();
     }
@@ -681,8 +680,7 @@ mod tests {
             "nutrients".to_string(),
             "freedom".to_string(),
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect();
         match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
@@ -698,8 +696,7 @@ mod tests {
             "freedom".to_string(),
             "Water".to_string(), // capabilities are case sensitive (and lowercase by convention)
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect();
         match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
@@ -710,7 +707,7 @@ mod tests {
         }
 
         // Available set 3
-        let available = ["freedom".to_string()].iter().cloned().collect();
+        let available = ["freedom".to_string()].into_iter().collect();
         match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
@@ -720,7 +717,7 @@ mod tests {
         }
 
         // Available set 4
-        let available = [].iter().cloned().collect();
+        let available = [].into_iter().collect();
         match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
