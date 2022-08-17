@@ -45,6 +45,8 @@ and this project adheres to
   4. `Instance::required_features` to `Instance::required_capabilities`
   5. `AnalysisReport::required_features` to
      `AnalysisReport::required_capabilities`.
+- cosmwasm-vm/check_contract: Copied to cosmwasm/packages.
+  cosmwasm-vm/check_contract will soon be deprecated.
 
 [#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
 
