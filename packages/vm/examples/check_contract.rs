@@ -9,8 +9,8 @@ use cosmwasm_vm::internals::{check_wasm, compile};
 const DEFAULT_AVAILABLE_CAPABILITIES: &str = "iterator,staking,stargate";
 
 pub fn main() {
-    eprintln!("`check_contract` will be removed from the next version of `cosmwasm-vm` - please use `cw-check-contract` instead.");
-    eprintln!("> cargo install cw-check-contract");
+    eprintln!("`check_contract` will be removed from the next version of `cosmwasm-vm` - please use `cosmwasm-check` instead.");
+    eprintln!("> cargo install cosmwasm-check");
 
     let matches = App::new("Contract checking")
         .version("0.1.0")

@@ -274,6 +274,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-check"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "cosmwasm-std",
+ "cosmwasm-vm",
+]
+
+[[package]]
 name = "cosmwasm-crypto"
 version = "1.0.0"
 dependencies = [
@@ -611,17 +622,6 @@ dependencies = [
  "rand_core 0.5.1",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "cw-check-contract"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "cosmwasm-std",
- "cosmwasm-vm",
 ]
 
 [[package]]

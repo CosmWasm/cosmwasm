@@ -33,7 +33,7 @@ pub fn current_wasmer_module_version() -> u32 {
     }
 
     let metadata = &header[header.len() - METADATA_HEADER_LEN..];
-    u32::from_le_bytes((&metadata[8..12]).try_into().unwrap())
+    u32::from_le_bytes((metadata[8..12]).try_into().unwrap())
 }
 
 #[cfg(test)]
