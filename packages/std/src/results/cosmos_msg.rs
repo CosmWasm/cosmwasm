@@ -34,6 +34,9 @@ pub enum CosmosMsg<T = Empty> {
     /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
     #[cfg(feature = "stargate")]
     Stargate {
+        /// this is the fully qualified msg path used for routing,
+        /// e.g. /cosmos.bank.v1beta1.MsgSend
+        /// NOTE: the type_url can be changed after a chain upgrade
         type_url: String,
         value: Binary,
     },

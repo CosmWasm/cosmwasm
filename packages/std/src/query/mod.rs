@@ -35,7 +35,8 @@ pub enum QueryRequest<C> {
     #[cfg(feature = "stargate")]
     Stargate {
         /// this is the fully qualified service path used for routing,
-        /// eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance
+        /// e.g. "/cosmos.bank.v1beta1.Query.Balance"
+        /// NOTE: the path can be changed after a chain upgrade
         path: String,
         /// this is the expected protobuf message type (not any), binary encoded
         data: Binary,
