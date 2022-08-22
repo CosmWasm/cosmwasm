@@ -14,7 +14,7 @@ const DEFAULT_AVAILABLE_CAPABILITIES: &str = "iterator,staking,stargate";
 
 pub fn main() {
     let matches = App::new("Contract checking")
-        .version("0.1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .long_about("Checks the given wasm file (memories, exports, imports, available capabilities, and non-determinism).")
         .author("Mauro Lacy <mauro@lacy.com.es>")
         .arg(
