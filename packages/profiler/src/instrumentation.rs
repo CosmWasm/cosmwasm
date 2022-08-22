@@ -257,7 +257,7 @@ impl FunctionMiddleware for FunctionProfiling {
                         Operator::Call{ function_index: self.indexes.start_measurement.as_u32() },
                     ]);
                 }
-                self.accumulated_ops.push((&operator).into());
+                self.accumulated_ops.push(OperatorSymbol::from(&operator));
             }
         }
 
