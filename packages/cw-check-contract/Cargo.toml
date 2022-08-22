@@ -12,3 +12,5 @@ anyhow = "1"
 cosmwasm-vm = { path = "../vm", version = "1.0.0" }
 cosmwasm-std = { path = "../std", version = "1.0.0" }
 clap = "2.33"
+termcolor = "1.1.3"
+colored = "2.0.0"

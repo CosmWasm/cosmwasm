@@ -5,6 +5,7 @@ use std::path::Path;
 use std::process::exit;
 
 use clap::{App, Arg};
+use colored::Colorize;
 
 use cosmwasm_vm::capabilities_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
@@ -49,9 +50,9 @@ pub fn main() {
         .map(|p| {
             let result = check_contract(p, &available_capabilities);
             match &result {
-                Ok(_) => println!("{}: pass", p),
+                Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
-                    println!("{}: failure", p);
+                    println!("{}: {}", p, "failure".red());
                     println!("{}", e);
                 }
             };
@@ -61,9 +62,19 @@ pub fn main() {
     println!();
 
     if failures.is_empty() {
-        println!("All contracts ({}) passed checks!", passes.len());
+        println!(
+            "All contracts ({}) {} checks!",
+            passes.len(),
+            "passed".green()
+        );
     } else {
-        println!("Passes: {}, failures: {}", passes.len(), failures.len());
+        println!(
+            "{}: {}, {}: {}",
+            "Passes".green(),
+            passes.len(),
+            "failures".red(),
+            failures.len()
+        );
         exit(1);
     }
 }
