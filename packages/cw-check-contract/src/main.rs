@@ -6,19 +6,20 @@ use clap::{App, Arg};
 use cosmwasm_vm::capabilities_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
 
-const DEFAULT_SUPPORTED_FEATURES: &str = "iterator,staking,stargate";
+const DEFAULT_AVAILABLE_CAPABILITIES: &str = "iterator,staking,stargate";
 
 pub fn main() {
     let matches = App::new("Contract checking")
         .version("0.1.0")
-        .long_about("Checks the given wasm file (memories, exports, imports, supported features, and non-determinism).")
+        .long_about("Checks the given wasm file (memories, exports, imports, available capabilities, and non-determinism).")
         .author("Mauro Lacy <mauro@lacy.com.es>")
         .arg(
-            Arg::with_name("FEATURES")
+            Arg::with_name("CAPABILITIES")
                 // `long` setting required to turn the position argument into an option 🤷
-                .long("supported-features")
-                .value_name("FEATURES")
-                .help("Sets the supported features that the desired target chain supports")
+                .long("available-capabilities")
+                .aliases(&["FEATURES", "supported-features"]) // Old names
+                .value_name("CAPABILITIES")
+                .help("Sets the available capabilities that the desired target chain has")
                 .takes_value(true)
         )
         .arg(
@@ -29,12 +30,12 @@ pub fn main() {
         )
         .get_matches();
 
-    // Supported features
-    let supported_features_csv = matches
-        .value_of("FEATURES")
-        .unwrap_or(DEFAULT_SUPPORTED_FEATURES);
-    let supported_features = capabilities_from_csv(supported_features_csv);
-    println!("Supported features: {:?}", supported_features);
+    // Available capabilities
+    let available_capabilities_csv = matches
+        .value_of("CAPABILITIES")
+        .unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES);
+    let available_capabilities = capabilities_from_csv(available_capabilities_csv);
+    println!("Available capabilities: {:?}", available_capabilities);
 
     // File
     let path = matches.value_of("WASM").expect("Error parsing file name");
@@ -45,7 +46,7 @@ pub fn main() {
     file.read_to_end(&mut wasm).unwrap();
 
     // Check wasm
-    check_wasm(&wasm, &supported_features).unwrap();
+    check_wasm(&wasm, &available_capabilities).unwrap();
 
     // Compile module
     compile(&wasm, None, &[]).unwrap();
