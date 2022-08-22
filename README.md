@@ -148,16 +148,20 @@ extern "C" fn interface_version_8() -> () {}
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
-// main contract entry points
+// creates an initial state of a contract with a configuration send in the argument msg_ptr
 extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Contracts may also implement one or more of the following to extend their
 functionality:
 
 ```rust
+// modify the state of the contract
+extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+
+// query the state of the contract
+extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
+
 // in-place contract migrations
 extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 
