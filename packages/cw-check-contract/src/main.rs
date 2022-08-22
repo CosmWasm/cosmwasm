@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::process::exit;
 
 use clap::{App, Arg};
 
@@ -39,15 +40,32 @@ pub fn main() {
         .unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES);
     let available_capabilities = capabilities_from_csv(available_capabilities_csv);
     println!("Available capabilities: {:?}", available_capabilities);
+    println!();
 
     // File
     let paths = matches.values_of("WASM").expect("Error parsing file names");
 
-    for path in paths {
-        check_contract(path, &available_capabilities).unwrap();
-    }
+    let (passes, failures): (Vec<_>, _) = paths
+        .map(|p| {
+            let result = check_contract(p, &available_capabilities);
+            match &result {
+                Ok(_) => println!("{}: pass", p),
+                Err(e) => {
+                    println!("{}: failure", p);
+                    println!("{}", e);
+                }
+            };
+            result
+        })
+        .partition(|result| result.is_ok());
+    println!();
 
-    println!("contract checks passed.")
+    if failures.is_empty() {
+        println!("All {} contracts passed checks!", passes.len());
+    } else {
+        println!("Passes: {}, failures: {}", passes.len(), failures.len());
+        exit(1);
+    }
 }
 
 fn check_contract(
