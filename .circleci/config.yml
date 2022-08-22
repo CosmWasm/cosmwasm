@@ -27,6 +27,7 @@ workflows:
       - contract_staking
       - fmt
       - fmt_extra
+      - delete-me-just-testing-cosmwasm-check-ci-script
       - clippy:
           matrix:
             parameters:
@@ -1183,6 +1184,41 @@ jobs:
       - codecov/upload:
           file: reports/storage/cobertura.xml
           flags: cosmwasm-storage
+
+  delete-me-just-testing-cosmwasm-check-ci-script:
+    docker:
+      # Image from https://github.com/cibuilds/github, based on alpine
+      - image: cibuilds/github:0.13
+    steps:
+      - run:
+          name: Install Docker client
+          command: apk add docker-cli
+      - setup_remote_docker
+      - checkout
+      - run:
+          # We cannot mount local folders, see https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
+          name: Prepare volume with source code
+          command: |
+            # create a dummy container which will hold a volume with config
+            docker create -v /code --name with_code alpine /bin/true
+            # copy a config file into this volume
+            docker cp ./Cargo.lock with_code:/code
+            docker cp ./Cargo.toml with_code:/code
+            docker cp ./contracts with_code:/code
+            docker cp ./packages with_code:/code
+      - run:
+          name: Build development contracts
+          command: |
+            echo "Building all contracts under ./contracts"
+            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.12.5 ./contracts/*/
+      - run:
+          name: Check development contracts
+          command: |
+            echo "Checking all contracts under ./artifacts"
+            docker run --volumes-from with_code rust:1.59.0 \
+              /bin/bash -e -c 'export GLOBIGNORE="artifacts/floaty.wasm"; cd ./code; cargo run --bin cw-check-contract artifacts/*.wasm'
+            docker cp with_code:/code/artifacts .
+
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:
