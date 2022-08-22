@@ -1,7 +1,11 @@
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
+use std::process::exit;
 
 use clap::{App, Arg};
+use colored::Colorize;
 
 use cosmwasm_vm::capabilities_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
@@ -26,7 +30,8 @@ pub fn main() {
             Arg::with_name("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
-                .index(1),
+                .index(1)
+                .multiple(true),
         )
         .get_matches();
 
@@ -36,19 +41,59 @@ pub fn main() {
         .unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES);
     let available_capabilities = capabilities_from_csv(available_capabilities_csv);
     println!("Available capabilities: {:?}", available_capabilities);
+    println!();
 
     // File
-    let path = matches.value_of("WASM").expect("Error parsing file name");
-    let mut file = File::open(path).unwrap();
+    let paths = matches.values_of("WASM").expect("Error parsing file names");
+
+    let (passes, failures): (Vec<_>, _) = paths
+        .map(|p| {
+            let result = check_contract(p, &available_capabilities);
+            match &result {
+                Ok(_) => println!("{}: {}", p, "pass".green()),
+                Err(e) => {
+                    println!("{}: {}", p, "failure".red());
+                    println!("{}", e);
+                }
+            };
+            result
+        })
+        .partition(|result| result.is_ok());
+    println!();
+
+    if failures.is_empty() {
+        println!(
+            "All contracts ({}) {} checks!",
+            passes.len(),
+            "passed".green()
+        );
+    } else {
+        println!(
+            "{}: {}, {}: {}",
+            "Passes".green(),
+            passes.len(),
+            "failures".red(),
+            failures.len()
+        );
+        exit(1);
+    }
+}
+
+fn check_contract(
+    path: impl AsRef<Path>,
+    available_capabilities: &HashSet<String>,
+) -> anyhow::Result<()> {
+    let mut file = File::open(path)?;
 
     // Read wasm
     let mut wasm = Vec::<u8>::new();
-    file.read_to_end(&mut wasm).unwrap();
+    file.read_to_end(&mut wasm)?;
 
     // Check wasm
-    check_wasm(&wasm, &available_capabilities).unwrap();
+    check_wasm(&wasm, available_capabilities)?;
 
     // Compile module
-    compile(&wasm, None, &[]).unwrap();
-    println!("contract checks passed.")
+    compile(&wasm, None, &[])?;
+
+    Ok(())
 }
