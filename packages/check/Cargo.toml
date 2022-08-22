@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "A CLI tool for verifying CosmWasm smart contracts"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/cw-check-contract"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/check"
 license = "Apache-2.0"
 
 [dependencies]
