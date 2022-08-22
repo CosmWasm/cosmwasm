@@ -61,7 +61,7 @@ pub fn main() {
     println!();
 
     if failures.is_empty() {
-        println!("All {} contracts passed checks!", passes.len());
+        println!("All contracts ({}) passed checks!", passes.len());
     } else {
         println!("Passes: {}, failures: {}", passes.len(), failures.len());
         exit(1);
