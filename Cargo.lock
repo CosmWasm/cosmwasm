@@ -606,6 +606,7 @@ dependencies = [
 name = "cw-check-contract"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "clap",
  "cosmwasm-std",
  "cosmwasm-vm",

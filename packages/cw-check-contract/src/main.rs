@@ -1,5 +1,7 @@
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
 use clap::{App, Arg};
 
@@ -26,7 +28,8 @@ pub fn main() {
             Arg::with_name("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
-                .index(1),
+                .index(1)
+                .multiple(true),
         )
         .get_matches();
 
@@ -38,17 +41,30 @@ pub fn main() {
     println!("Available capabilities: {:?}", available_capabilities);
 
     // File
-    let path = matches.value_of("WASM").expect("Error parsing file name");
-    let mut file = File::open(path).unwrap();
+    let paths = matches.values_of("WASM").expect("Error parsing file names");
+
+    for path in paths {
+        check_contract(path, &available_capabilities).unwrap();
+    }
+
+    println!("contract checks passed.")
+}
+
+fn check_contract(
+    path: impl AsRef<Path>,
+    available_capabilities: &HashSet<String>,
+) -> anyhow::Result<()> {
+    let mut file = File::open(path)?;
 
     // Read wasm
     let mut wasm = Vec::<u8>::new();
-    file.read_to_end(&mut wasm).unwrap();
+    file.read_to_end(&mut wasm)?;
 
     // Check wasm
-    check_wasm(&wasm, &available_capabilities).unwrap();
+    check_wasm(&wasm, available_capabilities)?;
 
     // Compile module
-    compile(&wasm, None, &[]).unwrap();
-    println!("contract checks passed.")
+    compile(&wasm, None, &[])?;
+
+    Ok(())
 }

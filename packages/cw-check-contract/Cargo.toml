@@ -8,6 +8,7 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/cw-check-c
 license = "Apache-2.0"
 
 [dependencies]
+anyhow = "1"
 cosmwasm-vm = { path = "../vm", version = "1.0.0" }
 cosmwasm-std = { path = "../std", version = "1.0.0" }
-clap = "2.33.3"
+clap = "2.33"
