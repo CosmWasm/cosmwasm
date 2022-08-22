@@ -1,7 +1,7 @@
 [package]
 name = "cosmwasm-check"
 version = "1.0.0"
-authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+authors = ["Mauro Lacy <mauro@lacy.com.es>"]
 edition = "2021"
 description = "A CLI tool for verifying CosmWasm smart contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/check"
