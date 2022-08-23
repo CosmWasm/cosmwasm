@@ -1,4 +1,4 @@
-use digest::Digest; // trait
+use digest::{Digest, Update}; // trait
 use k256::{
     ecdsa::recoverable,
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
@@ -94,7 +94,7 @@ pub fn secp256k1_recover_pubkey(
     // Recover
     let message_digest = Identity256::new().chain(message_hash);
     let pubkey = extended_signature
-        .recover_verify_key_from_digest(message_digest)
+        .recover_verifying_key_from_digest(message_digest)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
     Ok(encoded)

@@ -77,7 +77,7 @@ fn check_api_integrity<T: QueryResponses + ?Sized>(
     Ok(())
 }
 
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum IntegrityError {
     #[error("the structure of the QueryMsg schema was unexpected")]
     InvalidQueryMsgSchema,

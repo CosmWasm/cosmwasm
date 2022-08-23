@@ -19,9 +19,9 @@ backtraces = []
 bench = false
 
 [dependencies]
-k256 = { version = "0.10.4", features = ["ecdsa"] }
+k256 = { version = "0.11", features = ["ecdsa"] }
 ed25519-zebra = "3"
-digest = "0.9"
+digest = "0.10"
 rand_core = { version = "0.6", features = ["getrandom"] }
 thiserror = "1.0"
 
@@ -29,7 +29,7 @@ thiserror = "1.0"
 criterion = "0.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0"
-sha2 = "0.9"
+sha2 = "0.10"
 base64 = "0.13.0"
 hex = "0.4"
 hex-literal = "0.3.1"

@@ -9,6 +9,7 @@ workflows:
     jobs:
       - arm64
       - package_crypto
+      - package_check
       - package_schema
       - package_schema_derive
       - package_std
@@ -30,7 +31,7 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
-              rust-version: ["1.59.0", "1.62.0"]
+              rust-version: ["1.59.0", "1.63.0"]
       - benchmarking:
           requires:
             - package_vm
@@ -159,6 +160,33 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_crypto-rust:1.59.0-{{ checksum "Cargo.lock" }}
+
+  package_check:
+    docker:
+      - image: rust:1.59.0
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_check-rust:1.59.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/check
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/check
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_check-rust:1.59.0-{{ checksum "Cargo.lock" }}
 
   package_schema:
     docker:
@@ -1188,7 +1216,7 @@ jobs:
           command: |
             echo "Checking all contracts under ./artifacts"
             docker run --volumes-from with_code rust:1.59.0 \
-              /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; ./examples/check_contract.sh ../../artifacts/*.wasm'
+              /bin/bash -e -c 'export GLOBIGNORE="artifacts/floaty.wasm"; cd ./code; cargo run --bin cosmwasm-check artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
       - run:
           name: Publish artifacts on GitHub

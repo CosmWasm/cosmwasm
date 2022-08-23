@@ -22,7 +22,7 @@ use super::{Uint128, Uint256};
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] Uint128);
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 #[error("Decimal range exceeded")]
 pub struct DecimalRangeExceeded;
 
@@ -207,7 +207,7 @@ impl Decimal {
     /// Rounds value up after decimal places. Returns OverflowError on overflow.
     pub fn checked_ceil(&self) -> Result<Self, RoundUpOverflowError> {
         let floor = self.floor();
-        if &floor == self {
+        if floor == self {
             Ok(floor)
         } else {
             floor
@@ -644,6 +644,18 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
         }
+    }
+}
+
+impl PartialEq<&Decimal> for Decimal {
+    fn eq(&self, rhs: &&Decimal) -> bool {
+        self == *rhs
+    }
+}
+
+impl PartialEq<Decimal> for &Decimal {
+    fn eq(&self, rhs: &Decimal) -> bool {
+        *self == rhs
     }
 }
 
@@ -1322,7 +1334,7 @@ mod tests {
         ];
 
         // The regular std::ops::Mul is our source of truth for these tests.
-        for (x, y) in test_data.iter().cloned() {
+        for (x, y) in test_data.into_iter() {
             assert_eq!(x * y, x.checked_mul(y).unwrap());
         }
     }
@@ -1750,7 +1762,7 @@ mod tests {
         );
 
         let empty: Vec<Decimal> = vec![];
-        assert_eq!(Decimal::zero(), empty.iter().sum());
+        assert_eq!(Decimal::zero(), empty.iter().sum::<Decimal>());
     }
 
     #[test]
@@ -1880,11 +1892,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::zero()),
-            Err(CheckedFromRatioError::DivideByZero { .. })
+            Err(CheckedFromRatioError::DivideByZero {})
         ));
         assert!(matches!(
             Decimal::MAX.checked_div(Decimal::percent(1)),
-            Err(CheckedFromRatioError::Overflow { .. })
+            Err(CheckedFromRatioError::Overflow {})
         ));
 
         // checked rem
@@ -1982,5 +1994,25 @@ mod tests {
             Decimal::MAX.checked_ceil(),
             Err(RoundUpOverflowError { .. })
         ));
+    }
+
+    #[test]
+    fn decimal_partial_eq() {
+        let test_cases = [
+            ("1", "1", true),
+            ("0.5", "0.5", true),
+            ("0.5", "0.51", false),
+            ("0", "0.00000", true),
+        ]
+        .into_iter()
+        .map(|(lhs, rhs, expected)| (dec(lhs), dec(rhs), expected));
+
+        #[allow(clippy::op_ref)]
+        for (lhs, rhs, expected) in test_cases {
+            assert_eq!(lhs == rhs, expected);
+            assert_eq!(&lhs == rhs, expected);
+            assert_eq!(lhs == &rhs, expected);
+            assert_eq!(&lhs == &rhs, expected);
+        }
     }
 }

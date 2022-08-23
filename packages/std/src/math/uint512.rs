@@ -234,6 +234,10 @@ impl Uint512 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.checked_div(other)
+    }
+
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
@@ -575,6 +579,18 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
+    }
+}
+
+impl PartialEq<&Uint512> for Uint512 {
+    fn eq(&self, rhs: &&Uint512) -> bool {
+        self == *rhs
+    }
+}
+
+impl PartialEq<Uint512> for &Uint512 {
+    fn eq(&self, rhs: &Uint512) -> bool {
+        *self == rhs
     }
 }
 
@@ -1041,10 +1057,10 @@ mod tests {
         ];
         let expected = Uint512::from(762u32);
 
-        let sum_as_ref = nums.iter().sum();
+        let sum_as_ref: Uint512 = nums.iter().sum();
         assert_eq!(expected, sum_as_ref);
 
-        let sum_as_owned = nums.into_iter().sum();
+        let sum_as_owned: Uint512 = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
     }
 
@@ -1089,6 +1105,18 @@ mod tests {
         ));
         assert_eq!(
             Uint512::from(6u32).checked_div(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
+        assert!(matches!(
+            Uint512::MAX.checked_div_euclid(Uint512::from(0u32)),
+            Err(DivideByZeroError { .. })
+        ));
+        assert_eq!(
+            Uint512::from(6u32).checked_div_euclid(Uint512::from(2u32)),
+            Ok(Uint512::from(3u32)),
+        );
+        assert_eq!(
+            Uint512::from(7u32).checked_div_euclid(Uint512::from(2u32)),
             Ok(Uint512::from(3u32)),
         );
         assert!(matches!(
@@ -1181,5 +1209,22 @@ mod tests {
         let expected = Uint512::from(37u32);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
+    }
+
+    #[test]
+    fn uint512_partial_eq() {
+        let test_cases = [(1, 1, true), (42, 42, true), (42, 24, false), (0, 0, true)]
+            .into_iter()
+            .map(|(lhs, rhs, expected): (u64, u64, bool)| {
+                (Uint512::from(lhs), Uint512::from(rhs), expected)
+            });
+
+        #[allow(clippy::op_ref)]
+        for (lhs, rhs, expected) in test_cases {
+            assert_eq!(lhs == rhs, expected);
+            assert_eq!(&lhs == rhs, expected);
+            assert_eq!(lhs == &rhs, expected);
+            assert_eq!(&lhs == &rhs, expected);
+        }
     }
 }

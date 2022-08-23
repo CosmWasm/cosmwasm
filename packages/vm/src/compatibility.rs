@@ -2,8 +2,8 @@ use parity_wasm::elements::{External, ImportEntry, Module};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
+use crate::capabilities::required_capabilities_from_module;
 use crate::errors::{VmError, VmResult};
-use crate::features::required_features_from_module;
 use crate::limited::LimitedDisplay;
 use crate::static_analysis::{deserialize_wasm, ExportInfo};
 
@@ -51,13 +51,13 @@ const SUPPORTED_INTERFACE_VERSIONS: &[&str] = &[
 const MEMORY_LIMIT: u32 = 512; // in pages
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
-pub fn check_wasm(wasm_code: &[u8], supported_features: &HashSet<String>) -> VmResult<()> {
+pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
     let module = deserialize_wasm(wasm_code)?;
     check_wasm_memories(&module)?;
     check_interface_version(&module)?;
     check_wasm_exports(&module)?;
     check_wasm_imports(&module, SUPPORTED_IMPORTS)?;
-    check_wasm_features(&module, supported_features)?;
+    check_wasm_capabilities(&module, available_capabilities)?;
     Ok(())
 }
 
@@ -174,14 +174,19 @@ fn full_import_name(ie: &ImportEntry) -> String {
     format!("{}.{}", ie.module(), ie.field())
 }
 
-fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) -> VmResult<()> {
-    let required_features = required_features_from_module(module);
-    if !required_features.is_subset(supported_features) {
+fn check_wasm_capabilities(
+    module: &Module,
+    available_capabilities: &HashSet<String>,
+) -> VmResult<()> {
+    let required_capabilities = required_capabilities_from_module(module);
+    if !required_capabilities.is_subset(available_capabilities) {
         // We switch to BTreeSet to get a sorted error message
-        let unsupported: BTreeSet<_> = required_features.difference(supported_features).collect();
+        let unavailable: BTreeSet<_> = required_capabilities
+            .difference(available_capabilities)
+            .collect();
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract requires unsupported features: {}",
-            unsupported.to_string_limited(200)
+            "Wasm contract requires unavailable capabilities: {}",
+            unavailable.to_string_limited(200)
         )));
     }
     Ok(())
@@ -198,19 +203,19 @@ mod tests {
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
-    fn default_features() -> HashSet<String> {
-        ["staking".to_string()].iter().cloned().collect()
+    fn default_capabilities() -> HashSet<String> {
+        ["staking".to_string()].into_iter().collect()
     }
 
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
-        check_wasm(CONTRACT, &default_features()).unwrap();
+        check_wasm(CONTRACT, &default_capabilities()).unwrap();
     }
 
     #[test]
     fn check_wasm_old_contract() {
-        match check_wasm(CONTRACT_0_15, &default_features()) {
+        match check_wasm(CONTRACT_0_15, &default_capabilities()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -219,7 +224,7 @@ mod tests {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_14, &default_features()) {
+        match check_wasm(CONTRACT_0_14, &default_capabilities()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -228,7 +233,7 @@ mod tests {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_12, &default_features()) {
+        match check_wasm(CONTRACT_0_12, &default_capabilities()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract missing a required marker export: interface_version_*"
@@ -237,7 +242,7 @@ mod tests {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_7, &default_features()) {
+        match check_wasm(CONTRACT_0_7, &default_capabilities()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract missing a required marker export: interface_version_*"
@@ -626,7 +631,7 @@ mod tests {
     }
 
     #[test]
-    fn check_wasm_features_ok() {
+    fn check_wasm_capabilities_ok() {
         let wasm = wat::parse_str(
             r#"(module
             (type (func))
@@ -641,20 +646,19 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        let supported = [
+        let available = [
             "water".to_string(),
             "nutrients".to_string(),
             "sun".to_string(),
             "freedom".to_string(),
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect();
-        check_wasm_features(&module, &supported).unwrap();
+        check_wasm_capabilities(&module, &available).unwrap();
     }
 
     #[test]
-    fn check_wasm_features_fails_for_missing() {
+    fn check_wasm_capabilities_fails_for_missing() {
         let wasm = wat::parse_str(
             r#"(module
             (type (func))
@@ -670,56 +674,54 @@ mod tests {
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
 
-        // Support set 1
-        let supported = [
+        // Available set 1
+        let available = [
             "water".to_string(),
             "nutrients".to_string(),
             "freedom".to_string(),
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect();
-        match check_wasm_features(&module, &supported).unwrap_err() {
+        match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
-                "Wasm contract requires unsupported features: {\"sun\"}"
+                "Wasm contract requires unavailable capabilities: {\"sun\"}"
             ),
             _ => panic!("Got unexpected error"),
         }
 
-        // Support set 2
-        let supported = [
+        // Available set 2
+        let available = [
             "nutrients".to_string(),
             "freedom".to_string(),
-            "Water".to_string(), // features are case sensitive (and lowercase by convention)
+            "Water".to_string(), // capabilities are case sensitive (and lowercase by convention)
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect();
-        match check_wasm_features(&module, &supported).unwrap_err() {
+        match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
-                "Wasm contract requires unsupported features: {\"sun\", \"water\"}"
+                "Wasm contract requires unavailable capabilities: {\"sun\", \"water\"}"
             ),
             _ => panic!("Got unexpected error"),
         }
 
-        // Support set 3
-        let supported = ["freedom".to_string()].iter().cloned().collect();
-        match check_wasm_features(&module, &supported).unwrap_err() {
+        // Available set 3
+        let available = ["freedom".to_string()].into_iter().collect();
+        match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
-                "Wasm contract requires unsupported features: {\"nutrients\", \"sun\", \"water\"}"
+                "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
             ),
             _ => panic!("Got unexpected error"),
         }
 
-        // Support set 4
-        let supported = [].iter().cloned().collect();
-        match check_wasm_features(&module, &supported).unwrap_err() {
+        // Available set 4
+        let available = [].into_iter().collect();
+        match check_wasm_capabilities(&module, &available).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
-                "Wasm contract requires unsupported features: {\"nutrients\", \"sun\", \"water\"}"
+                "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
             ),
             _ => panic!("Got unexpected error"),
         }

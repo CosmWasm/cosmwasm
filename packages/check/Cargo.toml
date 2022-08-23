@@ -1,0 +1,15 @@
+[package]
+name = "cosmwasm-check"
+version = "1.0.0"
+authors = ["Mauro Lacy <mauro@lacy.com.es>"]
+edition = "2021"
+description = "A CLI tool for verifying CosmWasm smart contracts"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/check"
+license = "Apache-2.0"
+
+[dependencies]
+anyhow = "1"
+clap = "2"
+colored = "2"
+cosmwasm-vm = { path = "../vm", version = "1.0.0" }
+cosmwasm-std = { path = "../std", version = "1.0.0" }

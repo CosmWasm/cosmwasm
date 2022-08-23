@@ -16,6 +16,7 @@ The following packages are maintained here:
 | cosmwasm-std     | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)             | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)         | [![Coverage][cov-badge-std]][cov-link-std]         |
 | cosmwasm-storage | Contract development | [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage) | [![Docs](https://docs.rs/cosmwasm-storage/badge.svg)](https://docs.rs/cosmwasm-storage) | [![Coverage][cov-badge-storage]][cov-link-storage] |
 | cosmwasm-vm      | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)                | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)           | ([#1151])                                          |
+| cosmwasm-check   | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)       | `cosmwasm-check -h`                                                                     | N/A                                                |
 
 [cov-badge-crypto]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
@@ -96,6 +97,10 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   WebAssembly smart contracts. It can be run as is, or you can import the
   `x/wasm` module from it and use it in your blockchain. It is designed to be
   imported and customized for other blockchains, rather than forked.
+- [cosmwasm-check](https://github.com/CosmWasm/cosmwasm/tree/main/packages/check) -
+  A CLI tool and a crate in this workspace. Used to verify a Wasm binary is a
+  CosmWasm smart contract suitable for uploading to a blockchain with a given
+  set of capabilities.
 
 ## Creating a Smart Contract
 
@@ -148,18 +153,22 @@ extern "C" fn interface_version_8() -> () {}
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
-// main contract entry points
+// creates an initial state of a contract with a configuration send in the argument msg_ptr
 extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 Contracts may also implement one or more of the following to extend their
 functionality:
 
 ```rust
+// modify the state of the contract
+extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+
+// query the state of the contract
+extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
+
 // in-place contract migrations
-extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 
 // support submessage callbacks
 extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
