@@ -21,6 +21,9 @@ pub enum WasmQuery {
     },
     /// returns a ContractInfoResponse with metadata on the contract from the runtime
     ContractInfo { contract_addr: String },
+    /// Raw queries are unsupported in Secret Network - keys and values in raw storage are encrypted,
+    /// and must be queried through a smart query
+    Raw { key: Binary, contract_addr: String },
 }
 
 #[non_exhaustive]
