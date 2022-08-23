@@ -274,19 +274,19 @@ jobs:
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --features abort,iterator,staking,stargate
+          command: cargo build --locked --features abort,iterator,staking,stargate,cosmwasm_1_1
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --features abort,iterator,staking,stargate
+          command: cargo wasm --locked --features abort,iterator,staking,stargate,cosmwasm_1_1
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features abort,iterator,staking,stargate
+          command: cargo test --locked --features abort,iterator,staking,stargate,cosmwasm_1_1
       - run:
           name: Build and run schema generator
           working_directory: ~/project/packages/std
-          command: cargo schema --locked
+          command: cargo schema --features cosmwasm_1_1 --locked
       - run:
           name: Ensure schemas are up-to-date
           command: |
