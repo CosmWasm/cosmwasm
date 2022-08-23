@@ -8,9 +8,10 @@ use crate::coins::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+#[cfg(feature = "cosmwasm_1_1")]
+use crate::query::SupplyResponse;
 use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, SupplyResponse,
-    WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
 #[cfg(feature = "staking")]
 use crate::query::{
@@ -199,6 +200,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
     }
 
+    #[cfg(feature = "cosmwasm_1_1")]
     pub fn query_supply(&self, denom: impl Into<String>) -> StdResult<Coin> {
         let request = BankQuery::Supply {
             denom: denom.into(),
@@ -355,7 +357,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
 mod tests {
     use super::*;
     use crate::mock::MockQuerier;
-    use crate::{coin, coins, from_slice, Uint128};
+    use crate::{coins, from_slice, Uint128};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -395,8 +397,11 @@ mod tests {
         assert_eq!(balance.amount.amount, Uint128::new(5));
     }
 
+    #[cfg(feature = "cosmwasm_1_1")]
     #[test]
     fn bank_query_helpers_work() {
+        use crate::coin;
+
         let querier: MockQuerier<Empty> = MockQuerier::new(&[
             ("foo", &[coin(123, "ELF"), coin(777, "FLY")]),
             ("bar", &[coin(321, "ELF")]),

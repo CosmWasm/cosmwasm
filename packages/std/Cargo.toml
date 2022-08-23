@@ -33,6 +33,9 @@ stargate = []
 # ibc3 extends ibc messages with ibc-v3 only features. This should only be enabled on contracts
 # that require these types. Without this, they get the smaller ibc-v1 API.
 ibc3 = ["stargate"]
+# This feature makes `BankQuery::Supply` available for the contract to call, but requires
+# the host blockchain to run CosmWasm `1.1.0` or higher.
+cosmwasm_1_1 = []
 
 [dependencies]
 base64 = "0.13.0"

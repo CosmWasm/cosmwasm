@@ -16,9 +16,10 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 use crate::math::Uint128;
+#[cfg(feature = "cosmwasm_1_1")]
+use crate::query::SupplyResponse;
 use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, SupplyResponse,
-    WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
 #[cfg(feature = "staking")]
 use crate::query::{
@@ -566,6 +567,7 @@ impl Default for WasmQuerier {
 
 #[derive(Clone, Default)]
 pub struct BankQuerier {
+    #[allow(dead_code)]
     supplies: HashMap<String, Uint128>,
     balances: HashMap<String, Vec<Coin>>,
 }
@@ -590,6 +592,7 @@ impl BankQuerier {
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
+            #[cfg(feature = "cosmwasm_1_1")]
             BankQuery::Supply { denom } => {
                 let amount = self
                     .supplies
@@ -1086,6 +1089,7 @@ mod tests {
         assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
     }
 
+    #[cfg(feature = "cosmwasm_1_1")]
     #[test]
     fn bank_querier_supply() {
         let addr1 = String::from("foo");

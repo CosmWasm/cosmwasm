@@ -10,6 +10,7 @@ pub enum BankQuery {
     /// This calls into the native bank module for querying the total supply of one denomination.
     /// It does the same as the SupplyOf call in Cosmos SDK's RPC API.
     /// Return value is of type SupplyResponse.
+    #[cfg(feature = "cosmwasm_1_1")]
     Supply { denom: String },
     /// This calls into the native bank module for one denomination
     /// Return value is BalanceResponse
@@ -20,6 +21,7 @@ pub enum BankQuery {
     AllBalances { address: String },
 }
 
+#[cfg(feature = "cosmwasm_1_1")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
