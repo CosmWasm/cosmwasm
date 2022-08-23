@@ -411,7 +411,9 @@ mod tests {
 
         let all_balances = wrapper.query_all_balances("foo").unwrap();
         assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
+    }
 
+    #[test]
     fn contract_info() {
         const ACCT: &str = "foobar";
         fn mock_resp() -> ContractInfoResponse {
