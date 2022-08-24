@@ -455,7 +455,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         addr: impl Into<String>,
         balance: Vec<Coin>,
     ) -> Option<Vec<Coin>> {
-        self.bank.balances.insert(addr.into(), balance)
+        self.bank.update_balance(addr, balance)
     }
 
     #[cfg(feature = "staking")]
@@ -568,26 +568,48 @@ impl Default for WasmQuerier {
 #[derive(Clone, Default)]
 pub struct BankQuerier {
     #[allow(dead_code)]
+    /// HashMap<denom, amount>
     supplies: HashMap<String, Uint128>,
+    /// HashMap<address, coins>
     balances: HashMap<String, Vec<Coin>>,
 }
 
 impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
-        let mut supplies_map = HashMap::new();
-        let mut balances_map = HashMap::new();
-        for (addr, coins) in balances.iter() {
-            balances_map.insert(addr.to_string(), coins.to_vec());
-            for coin in coins.iter() {
-                *supplies_map
-                    .entry(coin.denom.clone())
-                    .or_insert_with(Uint128::zero) += coin.amount;
-            }
-        }
+        let balances: HashMap<_, _> = balances
+            .iter()
+            .map(|(s, c)| (s.to_string(), c.to_vec()))
+            .collect();
+
         BankQuerier {
-            supplies: supplies_map,
-            balances: balances_map,
+            supplies: Self::calculate_supplies(&balances),
+            balances,
         }
+    }
+
+    pub fn update_balance(
+        &mut self,
+        addr: impl Into<String>,
+        balance: Vec<Coin>,
+    ) -> Option<Vec<Coin>> {
+        let result = self.balances.insert(addr.into(), balance);
+        self.supplies = Self::calculate_supplies(&self.balances);
+
+        result
+    }
+
+    fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
+        let mut supplies = HashMap::new();
+
+        let all_coins = balances.iter().flat_map(|(_, coins)| coins);
+
+        for coin in all_coins {
+            *supplies
+                .entry(coin.denom.clone())
+                .or_insert_with(Uint128::zero) += coin.amount;
+        }
+
+        supplies
     }
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
