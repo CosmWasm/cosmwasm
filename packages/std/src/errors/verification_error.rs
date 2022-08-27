@@ -80,11 +80,11 @@ impl From<CryptoError> for VerificationError {
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => VerificationError::BatchErr,
-            CryptoError::InvalidPrivateKeyFormat { backtrace } => {
+            CryptoError::InvalidPrivateKeyFormat { .. } => {
                 // should never get here
                 VerificationError::UnknownErr {
                     error_code: 0,
-                    backtrace,
+                    backtrace: Backtrace::capture(),
                 }
             }
         }
