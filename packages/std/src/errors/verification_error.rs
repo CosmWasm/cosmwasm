@@ -80,9 +80,12 @@ impl From<CryptoError> for VerificationError {
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => VerificationError::BatchErr,
-            CryptoError::InvalidPrivateKeyFormat { .. } => {
+            CryptoError::InvalidPrivateKeyFormat { backtrace } => {
                 // should never get here
-                VerificationError::UnknownErr { error_code: 0 }
+                VerificationError::UnknownErr {
+                    error_code: 0,
+                    backtrace,
+                }
             }
         }
     }
