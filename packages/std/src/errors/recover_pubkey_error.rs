@@ -74,6 +74,7 @@ impl From<CryptoError> for RecoverPubkeyError {
                 // should never get here
                 RecoverPubkeyError::UnknownErr {
                     error_code: 0,
+                    #[cfg(feature = "backtraces")]
                     backtrace: Backtrace::capture(),
                 }
             }
