@@ -564,7 +564,7 @@ impl Default for WasmQuerier {
             let addr = match request {
                 WasmQuery::Smart { contract_addr, .. } => contract_addr,
                 WasmQuery::ContractInfo { contract_addr, .. } => contract_addr,
-                WasmQuery::Raw => {
+                WasmQuery::Raw { .. } => {
                     return SystemResult::Err(SystemError::InvalidRequest {
                         error: "raw queries are unsupported".to_string(),
                         request: Default::default(),

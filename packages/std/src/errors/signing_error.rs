@@ -54,7 +54,11 @@ impl From<CryptoError> for SigningError {
     fn from(original: CryptoError) -> Self {
         match original {
             CryptoError::InvalidPrivateKeyFormat { .. } => SigningError::InvalidPrivateKeyFormat,
-            _ => SigningError::UnknownErr { error_code: 0 }, // should never get here
+            _ => SigningError::UnknownErr {
+                error_code: 0,
+                #[cfg(feature = "backtraces")]
+                backtrace: Backtrace::capture(),
+            }, // should never get here
         }
     }
 }

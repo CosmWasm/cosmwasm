@@ -82,7 +82,11 @@ impl From<CryptoError> for VerificationError {
             CryptoError::BatchErr { .. } => VerificationError::BatchErr,
             CryptoError::InvalidPrivateKeyFormat { .. } => {
                 // should never get here
-                VerificationError::UnknownErr { error_code: 0 }
+                VerificationError::UnknownErr {
+                    error_code: 0,
+                    #[cfg(feature = "backtraces")]
+                    backtrace: Backtrace::capture(),
+                }
             }
         }
     }
