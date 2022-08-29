@@ -24,7 +24,7 @@ use cosmwasm_vm::testing::{
 
 use cyberpunk::msg::{ExecuteMsg, QueryMsg};
 
-static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/tests.wasm");
+static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cyberpunk.wasm");
 
 #[test]
 fn execute_argon2() {
