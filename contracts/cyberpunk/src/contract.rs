@@ -32,35 +32,39 @@ pub fn execute(
         Argon2 {
             mem_cost,
             time_cost,
-        } => execute_argon2(mem_cost, time_cost),
-        MirrorEnv {} => execute_mirror_env(env),
+        } => execute::argon2(mem_cost, time_cost),
+        MirrorEnv {} => execute::mirror_env(env),
     }
 }
 
-fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
-    let password = b"password";
-    let salt = b"othersalt";
-    let config = argon2::Config {
-        variant: argon2::Variant::Argon2i,
-        version: argon2::Version::Version13,
-        mem_cost,
-        time_cost,
-        lanes: 4,
-        thread_mode: argon2::ThreadMode::Sequential,
-        secret: &[],
-        ad: &[],
-        hash_length: 32,
-    };
-    let hash = argon2::hash_encoded(password, salt, &config)
-        .map_err(|e| StdError::generic_err(format!("hash_encoded errored: {}", e)))?;
-    // let matches = argon2::verify_encoded(&hash, password).unwrap();
-    // assert!(matches);
-    Ok(Response::new().set_data(hash.into_bytes()))
-    //Ok(Response::new())
-}
+mod execute {
+    use super::*;
 
-fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {
-    Ok(Response::new().set_data(to_binary(&env)?))
+    pub fn argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
+        let password = b"password";
+        let salt = b"othersalt";
+        let config = argon2::Config {
+            variant: argon2::Variant::Argon2i,
+            version: argon2::Version::Version13,
+            mem_cost,
+            time_cost,
+            lanes: 4,
+            thread_mode: argon2::ThreadMode::Sequential,
+            secret: &[],
+            ad: &[],
+            hash_length: 32,
+        };
+        let hash = argon2::hash_encoded(password, salt, &config)
+            .map_err(|e| StdError::generic_err(format!("hash_encoded errored: {}", e)))?;
+        // let matches = argon2::verify_encoded(&hash, password).unwrap();
+        // assert!(matches);
+        Ok(Response::new().set_data(hash.into_bytes()))
+        //Ok(Response::new())
+    }
+
+    pub fn mirror_env(env: Env) -> Result<Response, ContractError> {
+        Ok(Response::new().set_data(to_binary(&env)?))
+    }
 }
 
 #[entry_point]
@@ -68,6 +72,14 @@ pub fn query(_deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     use QueryMsg::*;
 
     match msg {
-        MirrorEnv {} => to_binary(&env),
+        MirrorEnv {} => to_binary(&query::mirror_env(env)),
+    }
+}
+
+mod query {
+    use super::*;
+
+    pub fn mirror_env(env: Env) -> Env {
+        env
     }
 }
