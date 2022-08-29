@@ -21,9 +21,7 @@ features are Rust build system specific.
 
 The contract defines required capabilities using marker export functions that
 take no arguments and return no value. The name of the export needs to start
-with "requires\_" followed by the name of the capability. When creating a new
-capability, do yourself a favor and keep the name all lower ASCII
-alphanumerical.
+with "requires\_" followed by the name of the capability.
 
 An example of such markers in cosmwasm-std are those:
 
@@ -75,6 +73,13 @@ capabilities. This capabilities list is set
 [in keeper.go](https://github.com/CosmWasm/wasmd/blob/v0.27.0-rc0/x/wasm/keeper/keeper.go#L100)
 and
 [in app.go](https://github.com/CosmWasm/wasmd/blob/v0.27.0-rc0/app/app.go#L475-L496).
+
+## Format
+
+The capability name needs to be allowed as a Wasm export names and be a legal
+function name in Rust and other CosmWasm smart contract languages such as Go. By
+convention, the name should be short and all lower ASCII alphanumerical plus
+underscores.
 
 ## Common capabilities
 
