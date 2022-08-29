@@ -22,7 +22,7 @@ use cosmwasm_vm::testing::{
     execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_with_gas_limit, query,
 };
 
-use tests::msg::{ExecuteMsg, QueryMsg};
+use cyberpunk::msg::{ExecuteMsg, QueryMsg};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/tests.wasm");
 

@@ -1,5 +1,5 @@
 {
-  "contract_name": "tests",
+  "contract_name": "cyberpunk",
   "contract_version": "0.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

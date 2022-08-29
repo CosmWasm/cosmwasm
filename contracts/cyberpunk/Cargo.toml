@@ -1,5 +1,5 @@
 [package]
-name = "tests"
+name = "cyberpunk"
 version = "0.0.0"
 authors = ["Tomasz Kurcz <uint@users.noreply.github.com>"]
 edition = "2021"
