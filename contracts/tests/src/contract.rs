@@ -1,7 +1,10 @@
-use cosmwasm_std::{entry_point, DepsMut, Empty, Env, MessageInfo, Response, StdError};
+use cosmwasm_std::{
+    entry_point, to_binary, Deps, DepsMut, Empty, Env, MessageInfo, QueryResponse, Response,
+    StdError, StdResult,
+};
 
 use crate::errors::HackError;
-use crate::msg::ExecuteMsg;
+use crate::msg::{ExecuteMsg, QueryMsg};
 
 #[entry_point]
 pub fn instantiate(
@@ -19,15 +22,18 @@ pub fn instantiate(
 #[entry_point]
 pub fn execute(
     _deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, HackError> {
+    use ExecuteMsg::*;
+
     match msg {
-        ExecuteMsg::Argon2 {
+        Argon2 {
             mem_cost,
             time_cost,
         } => do_argon2(mem_cost, time_cost),
+        MirrorEnv {} => Ok(Response::new().set_data(to_binary(&env)?)),
     }
 }
 
@@ -53,7 +59,11 @@ fn do_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, HackError> {
     //Ok(Response::new())
 }
 
-// #[entry_point]
-// pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
-//     match msg {}
-// }
+#[entry_point]
+pub fn query(_deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+    use QueryMsg::*;
+
+    match msg {
+        MirrorEnv {} => to_binary(&env),
+    }
+}

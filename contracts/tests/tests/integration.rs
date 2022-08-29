@@ -17,12 +17,12 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{Empty, Response};
+use cosmwasm_std::{from_binary, Empty, Env, Response};
 use cosmwasm_vm::testing::{
-    execute, instantiate, mock_env, mock_info, mock_instance_with_gas_limit,
+    execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_with_gas_limit, query,
 };
 
-use tests::msg::ExecuteMsg;
+use tests::msg::{ExecuteMsg, QueryMsg};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/tests.wasm");
 
@@ -51,4 +51,32 @@ fn execute_argon2() {
     let expected = 8635688250000; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+}
+
+#[test]
+fn test_env() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let init_info = mock_info("admin", &[]);
+    let init_res: Response = instantiate(&mut deps, mock_env(), init_info, Empty {}).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let env = mock_env();
+    let res: Response = execute(
+        &mut deps,
+        env.clone(),
+        mock_info("admin", &[]),
+        ExecuteMsg::MirrorEnv {},
+    )
+    .unwrap();
+
+    let received_env: Env = from_binary(&res.data.unwrap()).unwrap();
+
+    assert_eq!(received_env, env);
+
+    let env = mock_env();
+    let received_env: Env =
+        from_binary(&query(&mut deps, env.clone(), QueryMsg::MirrorEnv {}).unwrap()).unwrap();
+
+    assert_eq!(received_env, env);
 }

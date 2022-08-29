@@ -5,7 +5,7 @@ use crate::addresses::Addr;
 use crate::coins::Coin;
 use crate::timestamp::Timestamp;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
@@ -15,7 +15,7 @@ pub struct Env {
     pub contract: ContractInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
@@ -105,7 +105,7 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfo {
     pub address: Addr,
 }
