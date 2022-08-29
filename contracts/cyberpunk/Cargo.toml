@@ -1,12 +1,10 @@
 [package]
-name = "hackatom"
+name = "cyberpunk"
 version = "0.0.0"
-authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+authors = ["Tomasz Kurcz <uint@users.noreply.github.com>"]
 edition = "2021"
 publish = false
 license = "Apache-2.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -33,9 +31,9 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort"] }
+rust-argon2 = "0.8"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-sha2 = "0.9.1"
 thiserror = "1.0"
 
 [dev-dependencies]
