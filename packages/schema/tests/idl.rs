@@ -11,8 +11,6 @@ pub struct InstantiateMsg {
     pub cap: u128,
 }
 
-// failure modes to help test wasmd, based on this comment
-// https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {

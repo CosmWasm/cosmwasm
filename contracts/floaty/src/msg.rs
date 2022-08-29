@@ -7,8 +7,6 @@ pub struct InstantiateMsg {
     pub beneficiary: String,
 }
 
-// failure modes to help test wasmd, based on this comment
-// https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[cw_serde]
 pub enum ExecuteMsg {
     /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
