@@ -3,7 +3,7 @@ use cosmwasm_std::{
     StdError, StdResult,
 };
 
-use crate::errors::HackError;
+use crate::errors::ContractError;
 use crate::msg::{ExecuteMsg, QueryMsg};
 
 #[entry_point]
@@ -12,7 +12,7 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     _msg: Empty,
-) -> Result<Response, HackError> {
+) -> Result<Response, ContractError> {
     deps.api.debug("here we go 🚀");
 
     // This adds some unrelated event attribute for testing purposes
@@ -25,7 +25,7 @@ pub fn execute(
     env: Env,
     _info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, HackError> {
+) -> Result<Response, ContractError> {
     use ExecuteMsg::*;
 
     match msg {
@@ -37,7 +37,7 @@ pub fn execute(
     }
 }
 
-fn do_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, HackError> {
+fn do_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
     let password = b"password";
     let salt = b"othersalt";
     let config = argon2::Config {

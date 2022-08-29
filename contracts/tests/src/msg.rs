@@ -1,5 +1,4 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Env;
 
 // failure modes to help test wasmd, based on this comment
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
@@ -20,6 +19,6 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Returns the env for testing
-    #[returns(Env)]
+    #[returns(cosmwasm_std::Env)]
     MirrorEnv {},
 }
