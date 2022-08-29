@@ -1,0 +1,41 @@
+[package]
+name = "tests"
+version = "0.0.0"
+authors = ["Tomasz Kurcz <uint@users.noreply.github.com>"]
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# Add feature "cranelift" to default if you need 32 bit or ARM support
+default = []
+# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
+cranelift = ["cosmwasm-vm/cranelift"]
+# For quicker tests, cargo test --lib. for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
+
+[dependencies]
+cosmwasm-schema = { path = "../../packages/schema" }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort"] }
+rust-argon2 = "0.8"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+thiserror = "1.0"
+
+[dev-dependencies]
+cosmwasm-storage = { path = "../../packages/storage", default-features = false }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false }
