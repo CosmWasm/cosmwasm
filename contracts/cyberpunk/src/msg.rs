@@ -1,7 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
-// failure modes to help test wasmd, based on this comment
-// https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[cw_serde]
 pub enum ExecuteMsg {
     /// Hashes some data. Uses CPU and memory, but no external calls.
