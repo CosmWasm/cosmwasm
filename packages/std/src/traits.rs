@@ -8,6 +8,8 @@ use crate::coins::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+#[cfg(feature = "cosmwasm_1_1")]
+use crate::query::SupplyResponse;
 use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
@@ -198,6 +200,16 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
     }
 
+    #[cfg(feature = "cosmwasm_1_1")]
+    pub fn query_supply(&self, denom: impl Into<String>) -> StdResult<Coin> {
+        let request = BankQuery::Supply {
+            denom: denom.into(),
+        }
+        .into();
+        let res: SupplyResponse = self.query(&request)?;
+        Ok(res.amount)
+    }
+
     pub fn query_balance(
         &self,
         address: impl Into<String>,
@@ -383,6 +395,27 @@ mod tests {
             .unwrap();
         let balance: BalanceResponse = from_slice(&raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
+    }
+
+    #[cfg(feature = "cosmwasm_1_1")]
+    #[test]
+    fn bank_query_helpers_work() {
+        use crate::coin;
+
+        let querier: MockQuerier<Empty> = MockQuerier::new(&[
+            ("foo", &[coin(123, "ELF"), coin(777, "FLY")]),
+            ("bar", &[coin(321, "ELF")]),
+        ]);
+        let wrapper = QuerierWrapper::<Empty>::new(&querier);
+
+        let supply = wrapper.query_supply("ELF").unwrap();
+        assert_eq!(supply, coin(444, "ELF"));
+
+        let balance = wrapper.query_balance("foo", "ELF").unwrap();
+        assert_eq!(balance, coin(123, "ELF"));
+
+        let all_balances = wrapper.query_all_balances("foo").unwrap();
+        assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
 
     #[test]

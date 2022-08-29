@@ -18,8 +18,9 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
-    StakingMsg, SubMsg, SubMsgResponse, SubMsgResult, SystemResult,
+    coin, coins, from_binary, BankMsg, BankQuery, Binary, Coin, ContractResult, Event,
+    QueryRequest, Reply, Response, StakingMsg, SubMsg, SubMsgResponse, SubMsgResult,
+    SupplyResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -30,8 +31,8 @@ use cosmwasm_vm::{
 };
 
 use reflect::msg::{
-    CapitalizedResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg,
-    SpecialQuery,
+    CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse,
+    QueryMsg, SpecialQuery,
 };
 use reflect::testing::custom_query_execute;
 
@@ -48,6 +49,19 @@ pub fn mock_dependencies_with_custom_querier(
     let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
+
+    Backend {
+        api: MockApi::default(),
+        storage: MockStorage::default(),
+        querier: custom_querier,
+    }
+}
+
+pub fn mock_dependencies_with_custom_querier_and_balances(
+    balances: &[(&str, &[Coin])],
+) -> Backend<MockApi, MockStorage, MockQuerier<SpecialQuery>> {
+    let custom_querier: MockQuerier<SpecialQuery> = MockQuerier::new(balances)
+        .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Backend {
         api: MockApi::default(),
@@ -164,6 +178,34 @@ fn transfer_requires_owner() {
     let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
+}
+
+#[test]
+fn supply_query() {
+    // stub gives us defaults. Consume it and override...
+    let custom = mock_dependencies_with_custom_querier_and_balances(&[
+        ("ryan_reynolds", &[coin(5, "ATOM"), coin(10, "OSMO")]),
+        ("huge_ackman", &[coin(15, "OSMO"), coin(5, "BTC")]),
+    ]);
+    // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
+    let (instance_options, memory_limit) = mock_instance_options();
+    let mut deps = Instance::from_code(WASM, custom, instance_options, memory_limit).unwrap();
+
+    // we don't even initialize, just trigger a query
+    let res = query(
+        &mut deps,
+        mock_env(),
+        QueryMsg::Chain {
+            request: QueryRequest::Bank(BankQuery::Supply {
+                denom: "OSMO".to_string(),
+            }),
+        },
+    )
+    .unwrap();
+
+    let res: ChainResponse = from_binary(&res).unwrap();
+    let res: SupplyResponse = from_binary(&res.data).unwrap();
+    assert_eq!(res.amount, coin(25, "OSMO"));
 }
 
 #[test]

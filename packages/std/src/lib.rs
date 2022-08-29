@@ -46,6 +46,8 @@ pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,
     Uint256, Uint512, Uint64,
 };
+#[cfg(feature = "cosmwasm_1_1")]
+pub use crate::query::SupplyResponse;
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, ContractInfoResponse, CustomQuery,
     QueryRequest, WasmQuery,

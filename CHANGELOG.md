@@ -21,6 +21,8 @@ and this project adheres to
   on the other for all `Uint` and `Decimal` types
 - cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
   `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply
+  of a native token
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
 - cosmwasm-std: Implement `checked_div_euclid` for `Uint256`/`Uint512`
 - cosmwasm-std: Add `QuerierWrapper::query_wasm_contract_info` - this is just a

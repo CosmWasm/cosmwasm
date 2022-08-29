@@ -15,6 +15,9 @@ use crate::ibc::{
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
+use crate::math::Uint128;
+#[cfg(feature = "cosmwasm_1_1")]
+use crate::query::SupplyResponse;
 use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
@@ -452,7 +455,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         addr: impl Into<String>,
         balance: Vec<Coin>,
     ) -> Option<Vec<Coin>> {
-        self.bank.balances.insert(addr.into(), balance)
+        self.bank.update_balance(addr, balance)
     }
 
     #[cfg(feature = "staking")]
@@ -564,20 +567,68 @@ impl Default for WasmQuerier {
 
 #[derive(Clone, Default)]
 pub struct BankQuerier {
+    #[allow(dead_code)]
+    /// HashMap<denom, amount>
+    supplies: HashMap<String, Uint128>,
+    /// HashMap<address, coins>
     balances: HashMap<String, Vec<Coin>>,
 }
 
 impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
-        let mut map = HashMap::new();
-        for (addr, coins) in balances.iter() {
-            map.insert(addr.to_string(), coins.to_vec());
+        let balances: HashMap<_, _> = balances
+            .iter()
+            .map(|(s, c)| (s.to_string(), c.to_vec()))
+            .collect();
+
+        BankQuerier {
+            supplies: Self::calculate_supplies(&balances),
+            balances,
         }
-        BankQuerier { balances: map }
+    }
+
+    pub fn update_balance(
+        &mut self,
+        addr: impl Into<String>,
+        balance: Vec<Coin>,
+    ) -> Option<Vec<Coin>> {
+        let result = self.balances.insert(addr.into(), balance);
+        self.supplies = Self::calculate_supplies(&self.balances);
+
+        result
+    }
+
+    fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
+        let mut supplies = HashMap::new();
+
+        let all_coins = balances.iter().flat_map(|(_, coins)| coins);
+
+        for coin in all_coins {
+            *supplies
+                .entry(coin.denom.clone())
+                .or_insert_with(Uint128::zero) += coin.amount;
+        }
+
+        supplies
     }
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
+            #[cfg(feature = "cosmwasm_1_1")]
+            BankQuery::Supply { denom } => {
+                let amount = self
+                    .supplies
+                    .get(denom)
+                    .cloned()
+                    .unwrap_or_else(Uint128::zero);
+                let bank_res = SupplyResponse {
+                    amount: Coin {
+                        amount,
+                        denom: denom.to_string(),
+                    },
+                };
+                to_binary(&bank_res).into()
+            }
             BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
                 let amount = self
@@ -1058,6 +1109,46 @@ mod tests {
 
         let res = api.ed25519_batch_verify(&msgs, &signatures, &public_keys);
         assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
+    }
+
+    #[cfg(feature = "cosmwasm_1_1")]
+    #[test]
+    fn bank_querier_supply() {
+        let addr1 = String::from("foo");
+        let balance1 = vec![coin(123, "ELF"), coin(777, "FLY")];
+
+        let addr2 = String::from("bar");
+        let balance2 = coins(321, "ELF");
+
+        let bank = BankQuerier::new(&[(&addr1, &balance1), (&addr2, &balance2)]);
+
+        let elf = bank
+            .query(&BankQuery::Supply {
+                denom: "ELF".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: SupplyResponse = from_binary(&elf).unwrap();
+        assert_eq!(res.amount, coin(444, "ELF"));
+
+        let fly = bank
+            .query(&BankQuery::Supply {
+                denom: "FLY".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: SupplyResponse = from_binary(&fly).unwrap();
+        assert_eq!(res.amount, coin(777, "FLY"));
+
+        // if a denom does not exist, should return zero amount, instead of throwing an error
+        let atom = bank
+            .query(&BankQuery::Supply {
+                denom: "ATOM".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: SupplyResponse = from_binary(&atom).unwrap();
+        assert_eq!(res.amount, coin(0, "ATOM"));
     }
 
     #[test]
