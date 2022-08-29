@@ -32,12 +32,12 @@ pub fn execute(
         Argon2 {
             mem_cost,
             time_cost,
-        } => do_argon2(mem_cost, time_cost),
-        MirrorEnv {} => Ok(Response::new().set_data(to_binary(&env)?)),
+        } => execute_argon2(mem_cost, time_cost),
+        MirrorEnv {} => execute_mirror_env(env),
     }
 }
 
-fn do_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
+fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
     let password = b"password";
     let salt = b"othersalt";
     let config = argon2::Config {
@@ -57,6 +57,10 @@ fn do_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
     // assert!(matches);
     Ok(Response::new().set_data(hash.into_bytes()))
     //Ok(Response::new())
+}
+
+fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {
+    Ok(Response::new().set_data(to_binary(&env)?))
 }
 
 #[entry_point]
