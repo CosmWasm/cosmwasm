@@ -22,7 +22,7 @@ and this project adheres to
 - cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
   `Decimal`/`Decimal256`.
 - cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply
-  of a native token - in order to use this query in a contract, the
+  of a native token. In order to use this query in a contract, the
   `cosmwasm_1_1` feature needs to be enabled for the `cosmwasm_std` dependency.
   This makes the contract incompatible with chains running CosmWasm `1.0`.
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
