@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "digest 0.10.3",
  "ed25519-zebra",
@@ -187,14 +187,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "syn",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -205,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "base64",
  "cosmwasm-crypto",
@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -238,7 +238,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 dependencies = [
  "clru",
  "cosmwasm-crypto",

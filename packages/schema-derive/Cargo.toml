@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-schema-derive"
-version = "1.0.0"
+version = "1.1.0-rc.1"
 authors = ["Tomasz Kurcz <tom@confio.gmbh>"]
 edition = "2021"
 description = "Derive macros for cosmwasm-schema"
