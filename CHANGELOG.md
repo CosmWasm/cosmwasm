@@ -24,8 +24,8 @@ and this project adheres to
 - cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply
   of a native token. In order to use this query in a contract, the
   `cosmwasm_1_1` feature needs to be enabled for the `cosmwasm_std` dependency.
-  ([#1356]) This makes the contract incompatible with chains running CosmWasm
-  `1.0`.
+  This makes the contract incompatible with chains running CosmWasm `1.0`.
+  ([#1356])
 - cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
 - cosmwasm-std: Implement `checked_div_euclid` for `Uint256`/`Uint512`
 - cosmwasm-std: Add `QuerierWrapper::query_wasm_contract_info` - this is just a
