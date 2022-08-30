@@ -9,6 +9,7 @@ mod compatibility;
 mod conversion;
 mod environment;
 mod errors;
+mod filesystem;
 mod imports;
 mod instance;
 mod limited;

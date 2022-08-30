@@ -1,12 +1,13 @@
-use std::fs;
 use std::io;
 use std::path::PathBuf;
+use thiserror::Error;
 
 use wasmer::{DeserializeError, Module, Store};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
 
+use crate::filesystem::mkdir_p;
 use crate::modules::current_wasmer_module_version;
 
 /// Bump this version whenever the module system changes in a way
@@ -47,6 +48,20 @@ pub struct FileSystemCache {
     wasmer_module_version: u32,
 }
 
+/// An error type that hides system specific error information
+/// to ensure deterministic errors across operating systems.
+#[derive(Error, Debug)]
+pub enum NewFileSystemCacheError {
+    #[error("Could not get metadata of cache path")]
+    CouldntGetMetadata,
+    #[error("The supplied path is readonly")]
+    ReadonlyPath,
+    #[error("The supplied path already exists but is no directory")]
+    ExistsButNoDirectory,
+    #[error("Could not create cache path")]
+    CouldntCreatePath,
+}
+
 impl FileSystemCache {
     /// Construct a new `FileSystemCache` around the specified directory.
     /// The contents of the cache are stored in sub-versioned directories.
@@ -55,12 +70,14 @@ impl FileSystemCache {
     ///
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
-    pub unsafe fn new(path: impl Into<PathBuf>) -> io::Result<Self> {
+    pub unsafe fn new(path: impl Into<PathBuf>) -> Result<Self, NewFileSystemCacheError> {
         let wasmer_module_version = current_wasmer_module_version();
 
         let path: PathBuf = path.into();
         if path.exists() {
-            let metadata = path.metadata()?;
+            let metadata = path
+                .metadata()
+                .map_err(|_e| NewFileSystemCacheError::CouldntGetMetadata)?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
                     Ok(Self {
@@ -68,25 +85,14 @@ impl FileSystemCache {
                         wasmer_module_version,
                     })
                 } else {
-                    // This directory is readonly.
-                    Err(io::Error::new(
-                        io::ErrorKind::PermissionDenied,
-                        format!("the supplied path is readonly: {}", path.display()),
-                    ))
+                    Err(NewFileSystemCacheError::ReadonlyPath)
                 }
             } else {
-                // This path points to a file.
-                Err(io::Error::new(
-                    io::ErrorKind::PermissionDenied,
-                    format!(
-                        "the supplied path already points to a file: {}",
-                        path.display()
-                    ),
-                ))
+                Err(NewFileSystemCacheError::ExistsButNoDirectory)
             }
         } else {
             // Create the directory and any parent directories if they don't yet exist.
-            fs::create_dir_all(&path)?;
+            mkdir_p(&path).map_err(|_e| NewFileSystemCacheError::CouldntCreatePath)?;
             Ok(Self {
                 base_path: path,
                 wasmer_module_version,
@@ -120,8 +126,9 @@ impl FileSystemCache {
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
         let modules_dir = self.latest_modules_path();
-        fs::create_dir_all(&modules_dir)
-            .map_err(|e| VmError::cache_err(format!("Error creating directory: {}", e)))?;
+        mkdir_p(&modules_dir)
+            .map_err(|_e| VmError::cache_err("Error creating modules directory"))?;
+
         let filename = checksum.to_hex();
         let path = modules_dir.join(filename);
         module
@@ -142,6 +149,8 @@ impl FileSystemCache {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use super::*;
     use crate::size::Size;
     use crate::wasm_backend::{compile, make_runtime_store};
