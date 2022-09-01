@@ -1,12 +1,10 @@
-use sha2::{Digest, Sha256};
-
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Deps, DepsMut,
-    Env, Event, MessageInfo, QueryRequest, QueryResponse, Response, StdError, StdResult, WasmQuery,
+    entry_point, from_slice, to_binary, to_vec, AllBalanceResponse, BankMsg, Deps, DepsMut, Env,
+    Event, MessageInfo, QueryResponse, Response, StdError, StdResult,
 };
 
 use crate::errors::HackError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, RecurseResponse, VerifierResponse};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, VerifierResponse};
 use crate::state::{State, CONFIG_KEY};
 
 #[entry_point]
@@ -67,13 +65,10 @@ pub fn execute(
     }
 }
 
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
-        QueryMsg::Recurse { depth, work } => {
-            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
-        }
     }
 }
 
@@ -93,32 +88,6 @@ fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceRespo
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
-    // perform all hashes as requested
-    let mut hashed: Vec<u8> = contract.as_str().into();
-    for _ in 0..work {
-        hashed = Sha256::digest(&hashed).to_vec()
-    }
-
-    // the last contract should return the response
-    if depth == 0 {
-        Ok(RecurseResponse {
-            hashed: hashed.into(),
-        })
-    } else {
-        // otherwise, we go one level deeper and return the response of the next level
-        let req = QueryMsg::Recurse {
-            depth: depth - 1,
-            work,
-        };
-        let query = QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: contract.into(),
-            msg: to_binary(&req)?,
-        });
-        deps.querier.query(&query)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,7 +96,7 @@ mod tests {
     };
     use cosmwasm_std::Api as _;
     // import trait Storage to get access to read
-    use cosmwasm_std::{attr, coins, Binary, Storage, SubMsg};
+    use cosmwasm_std::{attr, coins, Addr, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
@@ -286,27 +255,5 @@ mod tests {
                 funder: Addr::unchecked(creator),
             }
         );
-    }
-
-    #[test]
-    fn query_recursive() {
-        // the test framework doesn't handle contracts querying contracts yet,
-        // let's just make sure the last step looks right
-
-        let deps = mock_dependencies();
-        let contract = Addr::unchecked("my-contract");
-        let bin_contract: &[u8] = b"my-contract";
-
-        // return the unhashed value here
-        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract.clone()).unwrap();
-        assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
-
-        // let's see if 5 hashes are done right
-        let mut expected_hash = Sha256::digest(bin_contract);
-        for _ in 0..4 {
-            expected_hash = Sha256::digest(&expected_hash);
-        }
-        let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
-        assert_eq!(work_query.hashed, expected_hash.to_vec());
     }
 }
