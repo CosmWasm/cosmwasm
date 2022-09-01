@@ -32,12 +32,6 @@ impl Binary {
     }
 
     /// Copies content into fixed-sized array.
-    /// The result type `A: ByteArray` is a workaround for
-    /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
-    /// `A` is a fixed-sized array like `[u8; 8]`.
-    ///
-    /// ByteArray is implemented for `[u8; 0]` to `[u8; 64]`, such that
-    /// we are limited to 64 bytes for now.
     ///
     /// # Examples
     ///
@@ -418,8 +412,7 @@ mod tests {
         let a: Binary = b"................................".into();
         assert_eq!(a.len(), 32);
 
-        // for length > 32 we need to cast
-        let a: Binary = (b"................................." as &[u8]).into();
+        let a: Binary = b".................................".into();
         assert_eq!(a.len(), 33);
     }
 
