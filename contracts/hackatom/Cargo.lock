@@ -713,7 +713,7 @@ dependencies = [
  "cosmwasm-vm",
  "schemars",
  "serde",
- "sha2 0.9.5",
+ "sha2 0.10.3",
  "thiserror",
 ]
 
