@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.0] - 2022-09-05
+
 ### Added
 
 - cosmwasm-std: Implement PartialEq for `Binary` and `u8` arrays.
@@ -1408,7 +1410,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...v1.0.0
 [1.0.0-rc.0]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta8...v1.0.0-rc.0
