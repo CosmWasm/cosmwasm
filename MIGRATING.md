@@ -6,6 +6,20 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 1.0.0 -> 1.1.0
 
+- Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "1.1.0"
+  cosmwasm-storage = "1.1.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "1.1.0"
+  cosmwasm-vm = "1.1.0"
+  # ...
+  ```
+
 - There are changes to how we generate schemas, resulting in less boilerplace
   maintenance for smart contract devs. Old contracts will continue working for a
   while, but it's highly recommended to migrate now.
@@ -15,15 +29,15 @@ major releases of `cosmwasm`. Note that you can also view the
 
   ```diff
     [dependencies]
-  + cosmwasm-schema = { version = "1.0.0" }
-    cosmwasm-std = { version = "1.0.0", features = ["stargate"] }
+  + cosmwasm-schema = { version = "1.1.0" }
+    cosmwasm-std = { version = "1.1.0", features = ["stargate"] }
     cw-storage-plus = { path = "../../packages/storage-plus", version = "0.10.0" }
     schemars = "0.8.1"
     serde = { version = "1.0.103", default-features = false, features = ["derive"] }
     thiserror = { version = "1.0.23" }
 
     [dev-dependencies]
-  - cosmwasm-schema = { version = "1.0.0" }
+  - cosmwasm-schema = { version = "1.1.0" }
   ```
 
   Types you send to the contract and receive back are annotated with a bunch of
