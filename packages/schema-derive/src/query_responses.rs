@@ -92,6 +92,28 @@ mod tests {
     }
 
     #[test]
+    fn empty_query_msg() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            pub enum QueryMsg {}
+        };
+
+        assert_eq!(
+            query_responses_derive_impl(input),
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl cosmwasm_schema::QueryResponses for QueryMsg {
+                    fn response_schemas_impl() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
+                        std::collections::BTreeMap::from([])
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
     #[should_panic(expected = "missing return type for query: Supply")]
     fn missing_return() {
         let input: ItemEnum = parse_quote! {

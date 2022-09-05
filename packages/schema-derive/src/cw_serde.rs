@@ -66,6 +66,29 @@ mod tests {
     }
 
     #[test]
+    fn empty_struct() {
+        let expanded = cw_serde_impl(parse_quote! {
+            pub struct InstantiateMsg {}
+        });
+
+        let expected = parse_quote! {
+            #[derive(
+                serde::Serialize,
+                serde::Deserialize,
+                Clone,
+                Debug,
+                PartialEq,
+                schemars::JsonSchema
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(deny_unknown_fields)]
+            pub struct InstantiateMsg {}
+        };
+
+        assert_eq!(expanded, expected);
+    }
+
+    #[test]
     fn enums() {
         let expanded = cw_serde_impl(parse_quote! {
             pub enum SudoMsg {

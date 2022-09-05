@@ -126,6 +126,23 @@ mod tests {
     }
 
     #[derive(Debug, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
+    #[allow(dead_code)]
+    pub enum EmptyMsg {}
+
+    impl QueryResponses for EmptyMsg {
+        fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
+            BTreeMap::from([])
+        }
+    }
+
+    #[test]
+    fn empty_msg_works() {
+        let response_schemas = EmptyMsg::response_schemas().unwrap();
+        assert_eq!(response_schemas, BTreeMap::from([]));
+    }
+
+    #[derive(Debug, JsonSchema)]
     #[serde(rename_all = "kebab-case")]
     #[allow(dead_code)]
     pub enum BadMsg {
