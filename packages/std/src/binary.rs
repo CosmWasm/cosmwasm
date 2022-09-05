@@ -32,12 +32,6 @@ impl Binary {
     }
 
     /// Copies content into fixed-sized array.
-    /// The result type `A: ByteArray` is a workaround for
-    /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
-    /// `A` is a fixed-sized array like `[u8; 8]`.
-    ///
-    /// ByteArray is implemented for `[u8; 0]` to `[u8; 64]`, such that
-    /// we are limited to 64 bytes for now.
     ///
     /// # Examples
     ///
@@ -162,6 +156,34 @@ impl PartialEq<Binary> for &[u8] {
     fn eq(&self, rhs: &Binary) -> bool {
         // Use &[u8] == &[u8]
         *self == rhs.as_slice()
+    }
+}
+
+/// Implement `Binary == &[u8; LENGTH]`
+impl<const LENGTH: usize> PartialEq<&[u8; LENGTH]> for Binary {
+    fn eq(&self, rhs: &&[u8; LENGTH]) -> bool {
+        self.as_slice() == rhs.as_slice()
+    }
+}
+
+/// Implement `&[u8; LENGTH] == Binary`
+impl<const LENGTH: usize> PartialEq<Binary> for &[u8; LENGTH] {
+    fn eq(&self, rhs: &Binary) -> bool {
+        self.as_slice() == rhs.as_slice()
+    }
+}
+
+/// Implement `Binary == [u8; LENGTH]`
+impl<const LENGTH: usize> PartialEq<[u8; LENGTH]> for Binary {
+    fn eq(&self, rhs: &[u8; LENGTH]) -> bool {
+        self.as_slice() == rhs.as_slice()
+    }
+}
+
+/// Implement `[u8; LENGTH] == Binary`
+impl<const LENGTH: usize> PartialEq<Binary> for [u8; LENGTH] {
+    fn eq(&self, rhs: &Binary) -> bool {
+        self.as_slice() == rhs.as_slice()
     }
 }
 
@@ -390,8 +412,7 @@ mod tests {
         let a: Binary = b"................................".into();
         assert_eq!(a.len(), 32);
 
-        // for length > 32 we need to cast
-        let a: Binary = (b"................................." as &[u8]).into();
+        let a: Binary = b".................................".into();
         assert_eq!(a.len(), 33);
     }
 
@@ -525,11 +546,25 @@ mod tests {
     }
 
     #[test]
-    fn binary_implements_partial_eq_with_slice() {
+    fn binary_implements_partial_eq_with_slice_and_array() {
         let a = Binary(vec![0xAA, 0xBB]);
+
+        // Slice: &[u8]
         assert_eq!(a, b"\xAA\xBB" as &[u8]);
         assert_eq!(b"\xAA\xBB" as &[u8], a);
         assert_ne!(a, b"\x11\x22" as &[u8]);
         assert_ne!(b"\x11\x22" as &[u8], a);
+
+        // Array reference: &[u8; 2]
+        assert_eq!(a, b"\xAA\xBB");
+        assert_eq!(b"\xAA\xBB", a);
+        assert_ne!(a, b"\x11\x22");
+        assert_ne!(b"\x11\x22", a);
+
+        // Array: [u8; 2]
+        assert_eq!(a, [0xAA, 0xBB]);
+        assert_eq!([0xAA, 0xBB], a);
+        assert_ne!(a, [0x11, 0x22]);
+        assert_ne!([0x11, 0x22], a);
     }
 }

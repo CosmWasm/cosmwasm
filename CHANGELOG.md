@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- cosmwasm-std: Implement PartialEq for `Binary` and `u8` arrays.
 - cosmwasm-std: Add `Uint{64,128,256,512}::one`.
 - cosmwasm-std: Add `Uint{64,128,256,512}::abs_diff` and
   `Decimal{,256}::abs_diff` ([#1334]).
