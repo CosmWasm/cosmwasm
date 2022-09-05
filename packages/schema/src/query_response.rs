@@ -50,23 +50,24 @@ fn check_api_integrity<T: QueryResponses + ?Sized>(
 
     // something more readable below?
 
-    let schema_queries: BTreeSet<_> = schema
-        .schema
-        .subschemas
-        .ok_or(IntegrityError::InvalidQueryMsgSchema)?
-        .one_of
-        .ok_or(IntegrityError::InvalidQueryMsgSchema)?
-        .into_iter()
-        .map(|s| {
-            s.into_object()
-                .object
-                .ok_or(IntegrityError::InvalidQueryMsgSchema)?
-                .required
-                .into_iter()
-                .next()
-                .ok_or(IntegrityError::InvalidQueryMsgSchema)
-        })
-        .collect::<Result<_, _>>()?;
+    let schema_queries: BTreeSet<_> = match schema.schema.subschemas {
+        Some(subschemas) => subschemas
+            .one_of
+            .ok_or(IntegrityError::InvalidQueryMsgSchema)?
+            .into_iter()
+            .map(|s| {
+                s.into_object()
+                    .object
+                    .ok_or(IntegrityError::InvalidQueryMsgSchema)?
+                    .required
+                    .into_iter()
+                    .next()
+                    .ok_or(IntegrityError::InvalidQueryMsgSchema)
+            })
+            .collect::<Result<_, _>>()?,
+        None => BTreeSet::new(),
+    };
+
     if schema_queries != generated_queries {
         return Err(IntegrityError::InconsistentQueries {
             query_msg: schema_queries,
