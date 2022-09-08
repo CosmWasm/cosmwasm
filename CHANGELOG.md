@@ -33,6 +33,9 @@ and this project adheres to
 - cosmwasm-std: Implement `checked_div_euclid` for `Uint256`/`Uint512`
 - cosmwasm-std: Add `QuerierWrapper::query_wasm_contract_info` - this is just a
   convenience helper for querying `WasmQuery::ContractInfo`.
+- cosmwasm-check: This is a new binary package that allows running various
+  CosmWasm compatibility checks on compiled .wasm files. See
+  https://crates.io/crates/cosmwasm-check for usage info.
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 [#1356]: https://github.com/CosmWasm/cosmwasm/pull/1356
@@ -54,10 +57,16 @@ and this project adheres to
   4. `Instance::required_features` to `Instance::required_capabilities`
   5. `AnalysisReport::required_features` to
      `AnalysisReport::required_capabilities`.
-- cosmwasm-vm/check_contract: Copied to cosmwasm/packages.
-  cosmwasm-vm/check_contract will soon be deprecated.
 
 [#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
+
+### Deprecated
+
+- cosmwasm-vm: The `check_contract` example was deprecated. Please use the new
+  crate [cosmwasm-check](https://crates.io/crates/cosmwasm-check) instead
+  ([#1371]).
+
+[#1371]: https://github.com/CosmWasm/cosmwasm/issues/1371
 
 ## [1.0.0] - 2022-05-14
 
