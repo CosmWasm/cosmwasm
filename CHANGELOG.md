@@ -20,6 +20,8 @@ and this project adheres to
   ```
   It's still recommended to only use struct variants, even if there are no
   fields.
+- cosmwasm-schema: It is no longer necessary to specify `serde` or `schemars` as
+  a dependency in order to make `cosmwasm-schema` macros work.
 
 ## [1.1.0] - 2022-09-05
 
