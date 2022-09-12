@@ -1,6 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use schemars::{schema::RootSchema, JsonSchema};
+use schemars::{
+    schema::{InstanceType, RootSchema, SingleOrVec},
+    JsonSchema,
+};
 use thiserror::Error;
 
 pub use cosmwasm_schema_derive::QueryResponses;
@@ -56,13 +59,37 @@ fn check_api_integrity<T: QueryResponses + ?Sized>(
             .ok_or(IntegrityError::InvalidQueryMsgSchema)?
             .into_iter()
             .map(|s| {
-                s.into_object()
-                    .object
-                    .ok_or(IntegrityError::InvalidQueryMsgSchema)?
-                    .required
-                    .into_iter()
-                    .next()
-                    .ok_or(IntegrityError::InvalidQueryMsgSchema)
+                let s = s.into_object();
+
+                if let Some(SingleOrVec::Single(ty)) = s.instance_type {
+                    match *ty {
+                        // We'll have an object if the Rust enum variant was C-like or tuple-like
+                        InstanceType::Object => s
+                            .object
+                            .ok_or(IntegrityError::InvalidQueryMsgSchema)?
+                            .required
+                            .into_iter()
+                            .next()
+                            .ok_or(IntegrityError::InvalidQueryMsgSchema),
+                        // We might have a string here if the Rust enum variant was unit-like
+                        InstanceType::String => {
+                            let values =
+                                s.enum_values.ok_or(IntegrityError::InvalidQueryMsgSchema)?;
+
+                            if values.len() != 1 {
+                                return Err(IntegrityError::InvalidQueryMsgSchema);
+                            }
+
+                            values[0]
+                                .as_str()
+                                .map(String::from)
+                                .ok_or(IntegrityError::InvalidQueryMsgSchema)
+                        }
+                        _ => Err(IntegrityError::InvalidQueryMsgSchema),
+                    }
+                } else {
+                    Err(IntegrityError::InvalidQueryMsgSchema)
+                }
             })
             .collect::<Result<_, _>>()?,
         None => BTreeSet::new(),
@@ -102,14 +129,20 @@ mod tests {
     #[allow(dead_code)]
     pub enum GoodMsg {
         BalanceFor { account: String },
+        AccountIdFor { account: String },
         Supply {},
+        Liquidity,
+        AccountCount(),
     }
 
     impl QueryResponses for GoodMsg {
         fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([
                 ("balance_for".to_string(), schema_for!(u128)),
+                ("account_id_for".to_string(), schema_for!(u128)),
                 ("supply".to_string(), schema_for!(u128)),
+                ("liquidity".to_string(), schema_for!(u128)),
+                ("account_count".to_string(), schema_for!(u128)),
             ])
         }
     }
@@ -121,7 +154,10 @@ mod tests {
             response_schemas,
             BTreeMap::from([
                 ("balance_for".to_string(), schema_for!(u128)),
-                ("supply".to_string(), schema_for!(u128))
+                ("account_id_for".to_string(), schema_for!(u128)),
+                ("supply".to_string(), schema_for!(u128)),
+                ("liquidity".to_string(), schema_for!(u128)),
+                ("account_count".to_string(), schema_for!(u128))
             ])
         );
     }
