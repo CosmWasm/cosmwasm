@@ -89,7 +89,7 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
         )));
     }
 
-    if limits.maximum() != None {
+    if limits.maximum().is_some() {
         return Err(VmError::static_validation_err(
             "Wasm contract memory's maximum must be unset. The host will set it for you.",
         ));
