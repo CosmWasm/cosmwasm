@@ -6,6 +6,21 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-schema: Using `QueryResponses` with a `QueryMsg` containing a
+  unit-like variant will no longer crash. The different variant types in Rust
+  are:
+  ```rust
+  enum QueryMsg {
+      UnitLike,
+      Tuple(),
+      Struct {},
+  }
+  ```
+  It's still recommended to only use struct variants, even if there are no
+  fields.
+
 ## [1.1.0] - 2022-09-05
 
 ### Added
