@@ -129,7 +129,7 @@ mod tests {
     #[allow(dead_code)]
     pub enum GoodMsg {
         BalanceFor { account: String },
-        AccountIdFor { account: String },
+        AccountIdFor(String),
         Supply {},
         Liquidity,
         AccountCount(),
