@@ -92,3 +92,7 @@ pub use cosmwasm_schema_derive::generate_api;
 /// ```
 pub use cosmwasm_schema_derive::write_api;
 pub use schemars::schema_for;
+
+// For use in macro expansions
+pub use schemars;
+pub use serde;

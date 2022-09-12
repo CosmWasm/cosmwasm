@@ -10,9 +10,9 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     parse_quote! {
         #[automatically_derived]
         #[cfg(not(target_arch = "wasm32"))]
-        impl cosmwasm_schema::QueryResponses for #ident {
-            fn response_schemas_impl() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
-                std::collections::BTreeMap::from([
+        impl ::cosmwasm_schema::QueryResponses for #ident {
+            fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                ::std::collections::BTreeMap::from([
                     #( #mappings, )*
                 ])
             }
@@ -33,7 +33,7 @@ fn parse_query(v: Variant) -> (String, Expr) {
 
     (
         query,
-        parse_quote!(cosmwasm_schema::schema_for!(#response_ty)),
+        parse_quote!(::cosmwasm_schema::schema_for!(#response_ty)),
     )
 }
 
@@ -79,11 +79,11 @@ mod tests {
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl cosmwasm_schema::QueryResponses for QueryMsg {
-                    fn response_schemas_impl() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
-                        std::collections::BTreeMap::from([
-                            ("supply".to_string(), cosmwasm_schema::schema_for!(some_crate::AnotherType)),
-                            ("balance".to_string(), cosmwasm_schema::schema_for!(SomeType)),
+                impl ::cosmwasm_schema::QueryResponses for QueryMsg {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        ::std::collections::BTreeMap::from([
+                            ("supply".to_string(), ::cosmwasm_schema::schema_for!(some_crate::AnotherType)),
+                            ("balance".to_string(), ::cosmwasm_schema::schema_for!(SomeType)),
                         ])
                     }
                 }
@@ -104,9 +104,9 @@ mod tests {
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl cosmwasm_schema::QueryResponses for QueryMsg {
-                    fn response_schemas_impl() -> std::collections::BTreeMap<String, schemars::schema::RootSchema> {
-                        std::collections::BTreeMap::from([])
+                impl ::cosmwasm_schema::QueryResponses for QueryMsg {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        ::std::collections::BTreeMap::from([])
                     }
                 }
             }
@@ -156,7 +156,7 @@ mod tests {
         assert_eq!(
             parse_tuple(parse_query(variant)),
             parse_quote! {
-                ("get_foo".to_string(), cosmwasm_schema::schema_for!(Foo))
+                ("get_foo".to_string(), ::cosmwasm_schema::schema_for!(Foo))
             }
         );
 
@@ -167,7 +167,7 @@ mod tests {
 
         assert_eq!(
             parse_tuple(parse_query(variant)),
-            parse_quote! { ("get_foo".to_string(), cosmwasm_schema::schema_for!(some_crate::Foo)) }
+            parse_quote! { ("get_foo".to_string(), ::cosmwasm_schema::schema_for!(some_crate::Foo)) }
         );
     }
 

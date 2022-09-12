@@ -13,10 +13,10 @@ pub fn write_api_impl(input: Options) -> Block {
 
     parse_quote! {
         {
-            use std::env::current_dir;
-            use std::fs::{create_dir_all, write};
+            use ::std::env::current_dir;
+            use ::std::fs::{create_dir_all, write};
 
-            use cosmwasm_schema::{remove_schemas, Api, QueryResponses};
+            use ::cosmwasm_schema::{remove_schemas, Api, QueryResponses};
 
             let mut out_dir = current_dir().unwrap();
             out_dir.push("schema");
@@ -47,10 +47,10 @@ pub fn generate_api_impl(input: &Options) -> ExprStruct {
     } = input;
 
     parse_quote! {
-        cosmwasm_schema::Api {
+        ::cosmwasm_schema::Api {
             contract_name: #name.to_string(),
             contract_version: #version.to_string(),
-            instantiate: cosmwasm_schema::schema_for!(#instantiate),
+            instantiate: ::cosmwasm_schema::schema_for!(#instantiate),
             execute: #execute,
             query: #query,
             migrate: #migrate,
@@ -131,7 +131,7 @@ impl Parse for Options {
             }
         } else {
             quote! {
-                env!("CARGO_PKG_NAME")
+                ::std::env!("CARGO_PKG_NAME")
             }
         };
 
@@ -142,7 +142,7 @@ impl Parse for Options {
             }
         } else {
             quote! {
-                env!("CARGO_PKG_VERSION")
+                ::std::env!("CARGO_PKG_VERSION")
             }
         };
 
@@ -154,7 +154,7 @@ impl Parse for Options {
         let execute = match map.remove(&parse_quote!(execute)) {
             Some(ty) => {
                 let ty = ty.unwrap_type();
-                quote! {Some(cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -163,8 +163,8 @@ impl Parse for Options {
             Some(ty) => {
                 let ty = ty.unwrap_type();
                 (
-                    quote! {Some(cosmwasm_schema::schema_for!(#ty))},
-                    quote! { Some(#ty::response_schemas().unwrap()) },
+                    quote! {Some(::cosmwasm_schema::schema_for!(#ty))},
+                    quote! { Some(<#ty as QueryResponses>::response_schemas().unwrap()) },
                 )
             }
             None => (quote! { None }, quote! { None }),
@@ -173,7 +173,7 @@ impl Parse for Options {
         let migrate = match map.remove(&parse_quote!(migrate)) {
             Some(ty) => {
                 let ty = ty.unwrap_type();
-                quote! {Some(cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -181,7 +181,7 @@ impl Parse for Options {
         let sudo = match map.remove(&parse_quote!(sudo)) {
             Some(ty) => {
                 let ty = ty.unwrap_type();
-                quote! {Some(cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -214,10 +214,10 @@ mod tests {
                 instantiate: InstantiateMsg,
             }),
             parse_quote! {
-                cosmwasm_schema::Api {
-                    contract_name: env!("CARGO_PKG_NAME").to_string(),
-                    contract_version: env!("CARGO_PKG_VERSION").to_string(),
-                    instantiate: cosmwasm_schema::schema_for!(InstantiateMsg),
+                ::cosmwasm_schema::Api {
+                    contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
+                    contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
+                    instantiate: ::cosmwasm_schema::schema_for!(InstantiateMsg),
                     execute: None,
                     query: None,
                     migrate: None,
@@ -237,10 +237,10 @@ mod tests {
                 instantiate: InstantiateMsg,
             }),
             parse_quote! {
-                cosmwasm_schema::Api {
+                ::cosmwasm_schema::Api {
                     contract_name: "foo".to_string(),
                     contract_version: "bar".to_string(),
-                    instantiate: cosmwasm_schema::schema_for!(InstantiateMsg),
+                    instantiate: ::cosmwasm_schema::schema_for!(InstantiateMsg),
                     execute: None,
                     query: None,
                     migrate: None,
@@ -262,15 +262,15 @@ mod tests {
                 sudo: SudoMsg,
             }),
             parse_quote! {
-                cosmwasm_schema::Api {
-                    contract_name: env!("CARGO_PKG_NAME").to_string(),
-                    contract_version: env!("CARGO_PKG_VERSION").to_string(),
-                    instantiate: cosmwasm_schema::schema_for!(InstantiateMsg),
-                    execute: Some(cosmwasm_schema::schema_for!(ExecuteMsg)),
-                    query: Some(cosmwasm_schema::schema_for!(QueryMsg)),
-                    migrate: Some(cosmwasm_schema::schema_for!(MigrateMsg)),
-                    sudo: Some(cosmwasm_schema::schema_for!(SudoMsg)),
-                    responses: Some(QueryMsg::response_schemas().unwrap()),
+                ::cosmwasm_schema::Api {
+                    contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
+                    contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
+                    instantiate: ::cosmwasm_schema::schema_for!(InstantiateMsg),
+                    execute: Some(::cosmwasm_schema::schema_for!(ExecuteMsg)),
+                    query: Some(::cosmwasm_schema::schema_for!(QueryMsg)),
+                    migrate: Some(::cosmwasm_schema::schema_for!(MigrateMsg)),
+                    sudo: Some(::cosmwasm_schema::schema_for!(SudoMsg)),
+                    responses: Some(<QueryMsg as QueryResponses>::response_schemas().unwrap()),
                 }
             }
         );

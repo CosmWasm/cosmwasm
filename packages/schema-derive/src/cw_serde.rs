@@ -4,12 +4,12 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
     match input.data {
         syn::Data::Struct(_) => parse_quote! {
             #[derive(
-                serde::Serialize,
-                serde::Deserialize,
-                Clone,
-                Debug,
-                PartialEq,
-                schemars::JsonSchema
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
             #[serde(deny_unknown_fields)]
@@ -17,12 +17,12 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
         },
         syn::Data::Enum(_) => parse_quote! {
             #[derive(
-                serde::Serialize,
-                serde::Deserialize,
-                Clone,
-                Debug,
-                PartialEq,
-                schemars::JsonSchema
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
             #[serde(deny_unknown_fields, rename_all = "snake_case")]
@@ -47,12 +47,12 @@ mod tests {
 
         let expected = parse_quote! {
             #[derive(
-                serde::Serialize,
-                serde::Deserialize,
-                Clone,
-                Debug,
-                PartialEq,
-                schemars::JsonSchema
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(deny_unknown_fields)]
@@ -73,12 +73,12 @@ mod tests {
 
         let expected = parse_quote! {
             #[derive(
-                serde::Serialize,
-                serde::Deserialize,
-                Clone,
-                Debug,
-                PartialEq,
-                schemars::JsonSchema
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(deny_unknown_fields)]
@@ -101,12 +101,12 @@ mod tests {
 
         let expected = parse_quote! {
             #[derive(
-                serde::Serialize,
-                serde::Deserialize,
-                Clone,
-                Debug,
-                PartialEq,
-                schemars::JsonSchema
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(deny_unknown_fields, rename_all = "snake_case")]
