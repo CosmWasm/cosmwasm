@@ -451,8 +451,6 @@ dependencies = [
  "cosmwasm-storage",
  "cosmwasm-vm",
  "rust-argon2",
- "schemars",
- "serde",
  "thiserror",
 ]
 
