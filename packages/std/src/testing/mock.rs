@@ -1550,7 +1550,7 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Err(err)) => {
-                assert_eq!(err, "Error parsing into type cosmwasm_std::mock::tests::wasm_querier_works::{{closure}}::MyMsg: Invalid type")
+                assert_eq!(err, "Error parsing into type cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg: Invalid type")
             }
             res => panic!("Unexpected result: {:?}", res),
         }
