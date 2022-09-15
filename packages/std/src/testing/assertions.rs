@@ -90,15 +90,19 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "assertion failed: `(left ≈ right)`\nleft: 17\nright: 20\nrelative difference: 0.15\nmax allowed relative difference: 0.12\n: some extra info about the error"
+        expected = "assertion failed: `(left ≈ right)`\nleft: 17\nright: 20\nrelative difference: 0.15\nmax allowed relative difference: 0.12\n: some extra info about the error: Foo(8)"
     )]
     fn assert_approx_with_custom_panic_msg() {
+        let adjective = "extra";
+        #[derive(Debug)]
+        struct Foo(u32);
         assert_approx_eq!(
             17_u32,
             20_u32,
             "0.12",
-            "some extra {} about the error",
-            "info"
+            "some {adjective} {} about the error: {:?}",
+            "info",
+            Foo(8),
         );
     }
 }
