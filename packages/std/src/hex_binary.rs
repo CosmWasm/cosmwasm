@@ -276,11 +276,30 @@ mod tests {
             }
             _ => panic!("Unexpected error type"),
         }
+        // 0x prefixed
+        match HexBinary::from_hex("0xaa").unwrap_err() {
+            StdError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "Invalid hex: Invalid character 'x' at position 1")
+            }
+            _ => panic!("Unexpected error type"),
+        }
         // spaces
-        HexBinary::from_hex("aa ").unwrap_err();
-        HexBinary::from_hex(" aa").unwrap_err();
-        HexBinary::from_hex("a a").unwrap_err();
-        HexBinary::from_hex(" aa ").unwrap_err();
+        assert!(matches!(
+            HexBinary::from_hex("aa ").unwrap_err(),
+            StdError::GenericErr { .. }
+        ));
+        assert!(matches!(
+            HexBinary::from_hex(" aa").unwrap_err(),
+            StdError::GenericErr { .. }
+        ));
+        assert!(matches!(
+            HexBinary::from_hex("a a").unwrap_err(),
+            StdError::GenericErr { .. }
+        ));
+        assert!(matches!(
+            HexBinary::from_hex(" aa ").unwrap_err(),
+            StdError::GenericErr { .. }
+        ));
     }
 
     #[test]
