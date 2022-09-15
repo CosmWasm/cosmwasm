@@ -28,6 +28,7 @@ types as well as cosmwasm_std types and how they are encoded in JSON.
 | [Decimal]           | string containing decimal number | `"55.6584"`          |                                                                                                                  |
 | [Decimal256]        | string containing decimal number | `"55.6584"`          |                                                                                                                  |
 | [Binary]            | string containing base64 data    | `"MTIzCg=="`         |                                                                                                                  |
+| [HexBinary]         | string containing hex data       | `"b5d7d24e428c"`     |                                                                                                                  |
 
 [uint64]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Uint64.html
 [uint128]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Uint128.html
@@ -37,5 +38,7 @@ types as well as cosmwasm_std types and how they are encoded in JSON.
 [decimal256]:
   https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Decimal256.html
 [binary]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Binary.html
+[hexbinary]:
+  https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.HexBinary.html
 
 [^1]: https://www.json.org/
