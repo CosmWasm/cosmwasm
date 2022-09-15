@@ -4,7 +4,7 @@ use std::ops::Deref;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::{StdError, StdResult};
+use crate::{Binary, StdError, StdResult};
 
 /// This is a wrapper around Vec<u8> to add hex de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -122,6 +122,18 @@ impl From<Vec<u8>> for HexBinary {
 impl From<HexBinary> for Vec<u8> {
     fn from(original: HexBinary) -> Vec<u8> {
         original.0
+    }
+}
+
+impl From<Binary> for HexBinary {
+    fn from(original: Binary) -> Self {
+        Self(original.into())
+    }
+}
+
+impl From<HexBinary> for Binary {
+    fn from(original: HexBinary) -> Binary {
+        Binary::from(original.0)
     }
 }
 
@@ -449,6 +461,32 @@ mod tests {
         let vec = Vec::<u8>::from(original);
         assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(vec.as_ptr(), original_ptr, "vector must not be copied");
+    }
+
+    #[test]
+    fn from_binary_works() {
+        let original = Binary::from([0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = original.as_ptr();
+        let binary: HexBinary = original.into();
+        assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(binary.0.as_ptr(), original_ptr, "vector must not be copied");
+    }
+
+    #[test]
+    fn into_binary_works() {
+        // Into<Binary> for HexBinary
+        let original = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = original.0.as_ptr();
+        let bin: Binary = original.into();
+        assert_eq!(bin.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(bin.as_ptr(), original_ptr, "vector must not be copied");
+
+        // From<HexBinary> for Binary
+        let original = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
+        let original_ptr = original.0.as_ptr();
+        let bin = Binary::from(original);
+        assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(bin.as_ptr(), original_ptr, "vector must not be copied");
     }
 
     #[test]
