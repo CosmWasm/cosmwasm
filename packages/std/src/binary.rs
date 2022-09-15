@@ -9,7 +9,8 @@ use crate::errors::{StdError, StdResult};
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///
-/// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
+/// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
+/// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
