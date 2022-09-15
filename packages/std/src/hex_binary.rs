@@ -16,8 +16,7 @@ pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
 
 impl HexBinary {
     pub fn from_hex(input: &str) -> StdResult<Self> {
-        let vec =
-            hex::decode(input).map_err(|e| StdError::generic_err(format!("Invalid hex: {e}")))?;
+        let vec = hex::decode(input).map_err(StdError::invalid_hex)?;
         Ok(Self(vec))
     }
 
@@ -264,41 +263,41 @@ mod tests {
 
         // odd
         match HexBinary::from_hex("123").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Invalid hex: Odd number of digits")
+            StdError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "Odd number of digits")
             }
             _ => panic!("Unexpected error type"),
         }
         // non-hex
         match HexBinary::from_hex("efgh").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Invalid hex: Invalid character 'g' at position 2")
+            StdError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "Invalid character 'g' at position 2")
             }
             _ => panic!("Unexpected error type"),
         }
         // 0x prefixed
         match HexBinary::from_hex("0xaa").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Invalid hex: Invalid character 'x' at position 1")
+            StdError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "Invalid character 'x' at position 1")
             }
             _ => panic!("Unexpected error type"),
         }
         // spaces
         assert!(matches!(
             HexBinary::from_hex("aa ").unwrap_err(),
-            StdError::GenericErr { .. }
+            StdError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex(" aa").unwrap_err(),
-            StdError::GenericErr { .. }
+            StdError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex("a a").unwrap_err(),
-            StdError::GenericErr { .. }
+            StdError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex(" aa ").unwrap_err(),
-            StdError::GenericErr { .. }
+            StdError::InvalidHex { .. }
         ));
     }
 

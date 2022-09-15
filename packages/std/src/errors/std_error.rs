@@ -54,6 +54,12 @@ pub enum StdError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Invalid hex string: {msg}")]
+    InvalidHex {
+        msg: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[error("Cannot decode UTF8 bytes into string: {msg}")]
     InvalidUtf8 {
@@ -142,6 +148,14 @@ impl StdError {
             // Cast is safe because usize is 32 or 64 bit large in all environments we support
             expected: expected as u64,
             actual: actual as u64,
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub fn invalid_hex(msg: impl ToString) -> Self {
+        StdError::InvalidHex {
+            msg: msg.to_string(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -279,6 +293,22 @@ impl PartialEq<StdError> for StdError {
                 } = rhs
                 {
                     expected == rhs_expected && actual == rhs_actual
+                } else {
+                    false
+                }
+            }
+            StdError::InvalidHex {
+                msg,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::InvalidHex {
+                    msg: rhs_msg,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    msg == rhs_msg
                 } else {
                     false
                 }
@@ -610,6 +640,29 @@ mod tests {
             } => {
                 assert_eq!(expected, 31);
                 assert_eq!(actual, 14);
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_hex_works_for_strings() {
+        let error = StdError::invalid_hex("my text");
+        match error {
+            StdError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "my text");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_hex_works_for_errors() {
+        let original = hex::FromHexError::OddLength;
+        let error = StdError::invalid_hex(original);
+        match error {
+            StdError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "Odd number of digits");
             }
             _ => panic!("expect different error"),
         }
