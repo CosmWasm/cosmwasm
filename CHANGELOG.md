@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add testing macro `assert_approx_eq!` for comparing two integers
+  to be relatively close to each other ([#1417]).
+
+[#1417]: https://github.com/CosmWasm/cosmwasm/issues/1417
+
 ## [1.1.1] - 2022-09-15
 
 ### Fixed
