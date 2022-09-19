@@ -12,7 +12,7 @@ and this project adheres to
   to be relatively close to each other ([#1417]).
 - cosmwasm-std: Add `HexBinary` which is like `Binary` but encodes to hex
   strings in JSON. Add `StdError::InvalidHex` error case. ([#1425])
-  
+
 [#1417]: https://github.com/CosmWasm/cosmwasm/issues/1417
 [#1425]: https://github.com/CosmWasm/cosmwasm/pull/1425
 
