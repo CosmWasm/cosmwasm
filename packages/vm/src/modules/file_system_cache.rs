@@ -32,7 +32,12 @@ use crate::modules::current_wasmer_module_version;
 ///   Version for cosmwasm_vm 1.0.0-beta5 / wasmvm 1.0.0-beta6 that ships with Wasmer 2.1.1.
 /// - **v3**:<br>
 ///   Version for Wasmer 2.2.0 which contains a [module breaking change to 2.1.x](https://github.com/wasmerio/wasmer/pull/2747).
-const MODULE_SERIALIZATION_VERSION: &str = "v3";
+/// - **v4**:<br>
+///   Version for Wasmer 2.3.0 which contains a module breaking change to 2.2.0 that was not reflected in
+///   the module header version (<https://github.com/wasmerio/wasmer/issues/3193>). In cosmwasm-vm 1.1.0-1.1.1
+///   the old value "v3" is still used along with Wasmer 2.3.0 (bug). From cosmwasm 1.1.2 onwards, this is
+///   fixed by bumping to "v4".
+const MODULE_SERIALIZATION_VERSION: &str = "v4";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -205,7 +210,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let file_path = format!(
-            "{}/v3-wasmer1/{}",
+            "{}/v4-wasmer1/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         );
