@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.2] - 2022-09-19
+
 ### Added
 
 - cosmwasm-std: Add testing macro `assert_approx_eq!` for comparing two integers
