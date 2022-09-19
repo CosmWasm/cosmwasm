@@ -24,7 +24,7 @@ and this project adheres to
   with generics. ([#1429])
 
 [#1426]: https://github.com/CosmWasm/cosmwasm/issues/1426
-[#1429]: https://github.com/CosmWasm/cosmwasm/issues/1429
+[#1429]: https://github.com/CosmWasm/cosmwasm/pull/1429
 
 ## [1.1.1] - 2022-09-15
 
