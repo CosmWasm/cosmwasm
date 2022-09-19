@@ -42,6 +42,7 @@ base64 = "0.13.0"
 cosmwasm-derive = { path = "../derive", version = "1.1.1" }
 derivative = "2"
 forward_ref = "1"
+hex = "0.4"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde-json-wasm = { version = "0.4.1" }
@@ -55,5 +56,4 @@ cosmwasm-crypto = { path = "../crypto", version = "1.1.1" }
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
-hex = "0.4"
 hex-literal = "0.3.1"

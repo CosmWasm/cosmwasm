@@ -9,6 +9,7 @@ mod coins;
 mod conversion;
 mod deps;
 mod errors;
+mod hex_binary;
 mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
@@ -33,6 +34,7 @@ pub use crate::errors::{
     OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
     VerificationError,
 };
+pub use crate::hex_binary::HexBinary;
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
