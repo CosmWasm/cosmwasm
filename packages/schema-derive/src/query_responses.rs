@@ -7,10 +7,13 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     queries.sort();
     let mappings = mappings.map(parse_tuple);
 
+    // Handle generics if the type has any
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+
     parse_quote! {
         #[automatically_derived]
         #[cfg(not(target_arch = "wasm32"))]
-        impl ::cosmwasm_schema::QueryResponses for #ident {
+        impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
             fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                 ::std::collections::BTreeMap::from([
                     #( #mappings, )*
@@ -107,6 +110,95 @@ mod tests {
                 impl ::cosmwasm_schema::QueryResponses for QueryMsg {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([])
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn generics() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            pub enum QueryMsg<T> {
+                #[returns(bool)]
+                Foo,
+                #[returns(u32)]
+                Bar(T),
+            }
+        };
+
+        let input2: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            pub enum QueryMsg<T: std::fmt::Debug + SomeTrait> {
+                #[returns(bool)]
+                Foo,
+                #[returns(u32)]
+                Bar { data: T },
+            }
+        };
+
+        let input3: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            pub enum QueryMsg<T>
+                where T: std::fmt::Debug + SomeTrait,
+            {
+                #[returns(bool)]
+                Foo,
+                #[returns(u32)]
+                Bar { data: T },
+            }
+        };
+
+        let result = query_responses_derive_impl(input);
+        dbg!(&result);
+        assert_eq!(
+            result,
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl<T> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        ::std::collections::BTreeMap::from([
+                            ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
+                            ("bar".to_string(), ::cosmwasm_schema::schema_for!(u32)),
+                        ])
+                    }
+                }
+            }
+        );
+        assert_eq!(
+            query_responses_derive_impl(input2),
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl<T: std::fmt::Debug + SomeTrait> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        ::std::collections::BTreeMap::from([
+                            ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
+                            ("bar".to_string(), ::cosmwasm_schema::schema_for!(u32)),
+                        ])
+                    }
+                }
+            }
+        );
+        let a = query_responses_derive_impl(input3);
+        assert_eq!(
+            a,
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl<T> ::cosmwasm_schema::QueryResponses for QueryMsg<T>
+                    where T: std::fmt::Debug + SomeTrait,
+                {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        ::std::collections::BTreeMap::from([
+                            ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
+                            ("bar".to_string(), ::cosmwasm_schema::schema_for!(u32)),
+                        ])
                     }
                 }
             }

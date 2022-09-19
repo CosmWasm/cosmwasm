@@ -20,8 +20,11 @@ and this project adheres to
 
 - cosmwasm-vm: Bump `MODULE_SERIALIZATION_VERSION` to "v4" because the module
   serialization format changed between Wasmer 2.2 and 2.3 ([#1426]).
+- cosmwasm-schema: The `QueryResponses` derive macro now supports `QueryMsg`s
+  with generics. ([#1429])
 
 [#1426]: https://github.com/CosmWasm/cosmwasm/issues/1426
+[#1429]: https://github.com/CosmWasm/cosmwasm/pull/1429
 
 ## [1.1.1] - 2022-09-15
 
