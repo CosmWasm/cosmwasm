@@ -11,6 +11,7 @@ use cosmwasm_crypto::{
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
+use wasmer::{AsStoreMut, FunctionEnv};
 
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -66,12 +67,15 @@ const MAX_LENGTH_ABORT: usize = 2 * MI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_db_read<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    store: &impl AsStoreMut,
+    env: &FunctionEnv<Environment<A, S, Q>>,
     key_ptr: u32,
 ) -> VmResult<u32> {
-    let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&env.as_ref(store).memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
-    let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
+    let (result, gas_info) = env
+        .as_ref(store)
+        .with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
     process_gas_info::<A, S, Q>(env, gas_info)?;
     let value = result?;
 
@@ -468,7 +472,7 @@ mod tests {
     };
     use hex_literal::hex;
     use std::ptr::NonNull;
-    use wasmer::{imports, Function, Instance as WasmerInstance};
+    use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
     use crate::backend::{BackendError, Storage};
     use crate::size::Size;
@@ -505,39 +509,39 @@ mod tests {
     ) -> (
         Environment<MockApi, MockStorage, MockQuerier>,
         Box<WasmerInstance>,
+        Store,
     ) {
         let gas_limit = TESTING_GAS_LIMIT;
         let env = Environment::new(api, gas_limit, false);
 
-        let module = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
-        let store = module.store();
+        let (module, store) = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                "db_read" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "db_write" => Function::new_native(store, |_a: u32, _b: u32| {}),
-                "db_remove" => Function::new_native(store, |_a: u32| {}),
-                "db_scan" => Function::new_native(store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
-                "db_next" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "query_chain" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "addr_validate" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "addr_canonicalize" => Function::new_native(store, |_a: u32, _b: u32| -> u32 { 0 }),
-                "addr_humanize" => Function::new_native(store, |_a: u32, _b: u32| -> u32 { 0 }),
-                "secp256k1_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "secp256k1_recover_pubkey" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
-                "ed25519_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "ed25519_batch_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "debug" => Function::new_native(store, |_a: u32| {}),
+                "db_read" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "db_write" => Function::new_typed(&mut store, |_a: u32, _b: u32| {}),
+                "db_remove" => Function::new_typed(&mut store, |_a: u32| {}),
+                "db_scan" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
+                "db_next" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "query_chain" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "addr_validate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "addr_canonicalize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "addr_humanize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
+                "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "debug" => Function::new_typed(&mut store, |_a: u32| {}),
             },
         };
-        let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
+        let instance = Box::from(WasmerInstance::new(&mut store, &module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
         env.set_storage_readonly(false);
 
-        (env, instance)
+        (env, instance, store)
     }
 
     fn leave_default_data(env: &Environment<MockApi, MockStorage, MockQuerier>) {
@@ -560,12 +564,13 @@ mod tests {
     }
 
     fn create_empty(wasmer_instance: &mut WasmerInstance, capacity: u32) -> u32 {
+        let store = Store::default();
         let allocate = wasmer_instance
             .exports
             .get_function("allocate")
             .expect("error getting function");
         let result = allocate
-            .call(&[capacity.into()])
+            .call(&mut store, &[capacity.into()])
             .expect("error calling allocate");
         ref_to_u32(&result[0]).expect("error converting result")
     }
@@ -581,11 +586,11 @@ mod tests {
     #[test]
     fn do_db_read_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, KEY1);
-        let result = do_db_read(&env, key_ptr);
+        let result = do_db_read(&mut store, &FunctionEnv::new(&mut store, env), key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
         assert_eq!(force_read(&env, value_ptr as u32), VALUE1);
@@ -594,22 +599,22 @@ mod tests {
     #[test]
     fn do_db_read_works_for_non_existent_key() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, b"I do not exist in storage");
-        let result = do_db_read(&env, key_ptr);
+        let result = do_db_read(&mut store, &FunctionEnv::new(&mut store, env), key_ptr);
         assert_eq!(result.unwrap(), 0);
     }
 
     #[test]
     fn do_db_read_fails_for_large_key() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, &vec![7u8; 300 * 1024]);
-        let result = do_db_read(&env, key_ptr);
+        let result = do_db_read(&mut store, &FunctionEnv::new(&mut store, env), key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -622,7 +627,7 @@ mod tests {
     #[test]
     fn do_db_write_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, b"new value");
@@ -645,7 +650,7 @@ mod tests {
     #[test]
     fn do_db_write_can_override() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, KEY1);
         let value_ptr = write_data(&env, VALUE2);
@@ -665,7 +670,7 @@ mod tests {
     #[test]
     fn do_db_write_works_for_empty_value() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, b"");
@@ -688,7 +693,7 @@ mod tests {
     #[test]
     fn do_db_write_fails_for_large_key() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, &vec![4u8; 300 * 1024]);
         let value_ptr = write_data(&env, b"new value");
@@ -714,7 +719,7 @@ mod tests {
     #[test]
     fn do_db_write_fails_for_large_value() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, &vec![5u8; 300 * 1024]);
@@ -740,7 +745,7 @@ mod tests {
     #[test]
     fn do_db_write_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, b"new value");
@@ -758,7 +763,7 @@ mod tests {
     #[test]
     fn do_db_remove_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let existing_key = KEY1;
         let key_ptr = write_data(&env, existing_key);
@@ -790,7 +795,7 @@ mod tests {
     #[test]
     fn do_db_remove_works_for_non_existent_key() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let non_existent_key = b"I do not exist";
         let key_ptr = write_data(&env, non_existent_key);
@@ -811,7 +816,7 @@ mod tests {
     #[test]
     fn do_db_remove_fails_for_large_key() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, &vec![26u8; 300 * 1024]);
 
@@ -836,7 +841,7 @@ mod tests {
     #[test]
     fn do_db_remove_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"a storage key");
 
@@ -853,7 +858,7 @@ mod tests {
     #[test]
     fn do_addr_validate_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let source_ptr1 = write_data(&env, b"foo");
         let source_ptr2 = write_data(&env, b"eth1n48g2mjh9ezz7zjtya37wtgg5r5emr0drkwlgw");
@@ -867,7 +872,7 @@ mod tests {
     #[test]
     fn do_addr_validate_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
@@ -898,7 +903,7 @@ mod tests {
     #[test]
     fn do_addr_validate_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo");
 
@@ -917,7 +922,7 @@ mod tests {
     #[test]
     fn do_addr_validate_fails_for_large_inputs() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 333]);
 
@@ -942,7 +947,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_works() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
         let api = MockApi::default();
 
         let source_ptr = write_data(&env, b"foo");
@@ -960,7 +965,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
@@ -988,7 +993,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, 7);
@@ -1008,7 +1013,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_large_inputs() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 333]);
         let dest_ptr = create_empty(&mut instance, 8);
@@ -1034,7 +1039,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_small_destination_region() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, 7);
@@ -1057,7 +1062,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_works() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
@@ -1074,7 +1079,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo"); // too short
         let dest_ptr = create_empty(&mut instance, 70);
@@ -1090,7 +1095,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo\0\0\0\0\0");
         let dest_ptr = create_empty(&mut instance, 70);
@@ -1110,7 +1115,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_input_too_long() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 65]);
         let dest_ptr = create_empty(&mut instance, 70);
@@ -1136,7 +1141,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_destination_region_too_small() {
         let api = MockApi::default();
-        let (env, mut instance) = make_instance(api);
+        let (env, mut instance, _store) = make_instance(api);
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
@@ -1161,7 +1166,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_works() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1179,7 +1184,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_hash_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // alter hash
@@ -1199,7 +1204,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_hash_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // extend / break hash
@@ -1223,7 +1228,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_hash_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // reduce / break hash
@@ -1243,7 +1248,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1263,7 +1268,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1287,7 +1292,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1307,7 +1312,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_format_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1327,7 +1332,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1347,7 +1352,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1371,7 +1376,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1391,7 +1396,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1409,7 +1414,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let hash_ptr = write_data(&env, &hash);
@@ -1427,7 +1432,7 @@ mod tests {
     #[test]
     fn do_secp256k1_recover_pubkey_works() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
         let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
@@ -1447,7 +1452,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_works() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1465,7 +1470,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_msg_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // alter msg
@@ -1485,7 +1490,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_msg_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // extend / break msg
@@ -1509,7 +1514,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1529,7 +1534,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1553,7 +1558,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1573,7 +1578,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_pubkey_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1593,7 +1598,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1617,7 +1622,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1637,7 +1642,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1655,7 +1660,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api);
+        let (env, mut _instance, _store) = make_instance(api);
 
         let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let msg_ptr = write_data(&env, &msg);
@@ -1673,7 +1678,7 @@ mod tests {
     #[test]
     fn do_query_chain_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
             address: INIT_ADDR.to_string(),
@@ -1697,7 +1702,7 @@ mod tests {
     #[test]
     fn do_query_chain_fails_for_broken_request() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let request = b"Not valid JSON for sure";
         let request_ptr = write_data(&env, request);
@@ -1721,7 +1726,7 @@ mod tests {
     #[test]
     fn do_query_chain_fails_for_missing_contract() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let request: QueryRequest<Empty> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: String::from("non-existent"),
@@ -1750,7 +1755,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_unbound_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
@@ -1777,7 +1782,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_unbound_descending_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
@@ -1804,7 +1809,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_bound_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         let start = write_data(&env, b"anna");
         let end = write_data(&env, b"bert");
@@ -1828,7 +1833,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_multiple_iterators() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
         leave_default_data(&env);
 
         // unbounded, ascending and descending
@@ -1872,7 +1877,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_errors_for_invalid_order_value() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
@@ -1890,7 +1895,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_next_works() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         leave_default_data(&env);
 
@@ -1920,7 +1925,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_next_fails_for_non_existent_id() {
         let api = MockApi::default();
-        let (env, _instance) = make_instance(api);
+        let (env, _instance, _store) = make_instance(api);
 
         leave_default_data(&env);
 

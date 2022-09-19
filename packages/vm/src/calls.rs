@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use wasmer::Val;
+use wasmer::Value;
 
 use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
@@ -574,7 +574,7 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
 {
-    let mut arg_region_ptrs = Vec::<Val>::with_capacity(args.len());
+    let mut arg_region_ptrs = Vec::<Value>::with_capacity(args.len());
     for arg in args {
         let region_ptr = instance.allocate(arg.len())?;
         instance.write_memory(region_ptr, arg)?;
@@ -593,12 +593,14 @@ mod tests {
     use super::*;
     use crate::testing::{mock_env, mock_info, mock_instance};
     use cosmwasm_std::{coins, Empty};
+    use wasmer::Store;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn call_instantiate_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let store = Store::default();
+        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -610,7 +612,8 @@ mod tests {
 
     #[test]
     fn call_execute_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let store = Store::default();
+        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -629,7 +632,8 @@ mod tests {
 
     #[test]
     fn call_migrate_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let store = Store::default();
+        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -654,7 +658,8 @@ mod tests {
 
     #[test]
     fn call_query_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let store = Store::default();
+        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));

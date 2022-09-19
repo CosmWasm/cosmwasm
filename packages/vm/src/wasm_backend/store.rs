@@ -5,7 +5,7 @@ use wasmer::Cranelift;
 use wasmer::Singlepass;
 use wasmer::{
     wasmparser::Operator, BaseTunables, CompilerConfig, Engine, ModuleMiddleware, Pages, Store,
-    Target, Universal, WASM_PAGE_SIZE,
+    Target, WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::Metering;
 
@@ -48,33 +48,32 @@ pub fn make_compile_time_store(
         }
         config.push_middleware(deterministic);
         config.push_middleware(metering);
-        let engine = Universal::new(config).engine();
+        let engine = Engine::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
     }
 
     #[cfg(not(feature = "cranelift"))]
     {
-        let mut config = Singlepass::default();
+        let mut compiler = Singlepass::default();
         for middleware in middlewares {
-            config.push_middleware(middleware.clone());
+            compiler.push_middleware(middleware.clone());
         }
-        config.push_middleware(deterministic);
-        config.push_middleware(metering);
-        let engine = Universal::new(config).engine();
-        make_store_with_engine(&engine, memory_limit)
+        compiler.push_middleware(deterministic);
+        compiler.push_middleware(metering);
+        make_store_with_engine(compiler, memory_limit)
     }
 }
 
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
-    let engine = Universal::headless().engine();
+    let engine = Engine::headless();
     make_store_with_engine(&engine, memory_limit)
 }
 
 /// Creates a store from an engine and an optional memory limit.
 /// If no limit is set, the no custom tunables will be used.
-fn make_store_with_engine(engine: &dyn Engine, memory_limit: Option<Size>) -> Store {
+fn make_store_with_engine(engine: impl Into<Engine>, memory_limit: Option<Size>) -> Store {
     match memory_limit {
         Some(limit) => {
             let base = BaseTunables::for_target(&Target::default());
@@ -102,7 +101,7 @@ fn limit_to_pages(limit: Size) -> Pages {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasmer::{ImportObject, Instance, Memory, Module};
+    use wasmer::{Imports, Instance, Memory, Module};
 
     /// A Wasm module with an exported memory (min: 4 pages, max: none)
     const EXPORTED_MEMORY_WAT: &str = r#"(module
@@ -136,7 +135,7 @@ mod tests {
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
         assert_eq!(module_memory.maximum, None);
-        let instance = Instance::new(&module, &ImportObject::new()).unwrap();
+        let instance = Instance::new(&mut store, &module, &Imports::new()).unwrap();
         let instance_memory: Memory = instance
             .exports
             .iter()
@@ -144,8 +143,8 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty().minimum, Pages(4));
-        assert_eq!(instance_memory.ty().maximum, None);
+        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&mut store).maximum, None);
 
         // Set limit
         let store = make_compile_time_store(Some(Size::kibi(23 * 64)), &[]);
@@ -153,7 +152,7 @@ mod tests {
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
         assert_eq!(module_memory.maximum, None);
-        let instance = Instance::new(&module, &ImportObject::new()).unwrap();
+        let instance = Instance::new(&mut store, &module, &Imports::new()).unwrap();
         let instance_memory: Memory = instance
             .exports
             .iter()
@@ -161,8 +160,8 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty().minimum, Pages(4));
-        assert_eq!(instance_memory.ty().maximum, Some(Pages(23)));
+        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&mut store).maximum, Some(Pages(23)));
     }
 
     #[test]
@@ -181,7 +180,7 @@ mod tests {
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
         assert_eq!(module_memory.maximum, None);
-        let instance = Instance::new(&module, &ImportObject::new()).unwrap();
+        let instance = Instance::new(&mut store, &module, &Imports::new()).unwrap();
         let instance_memory: Memory = instance
             .exports
             .iter()
@@ -189,8 +188,8 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty().minimum, Pages(4));
-        assert_eq!(instance_memory.ty().maximum, None);
+        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&mut store).maximum, None);
 
         // Instantiate with limit
         let store = make_runtime_store(Some(Size::kibi(23 * 64)));
@@ -198,7 +197,7 @@ mod tests {
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
         assert_eq!(module_memory.maximum, None);
-        let instance = Instance::new(&module, &ImportObject::new()).unwrap();
+        let instance = Instance::new(&mut store, &module, &Imports::new()).unwrap();
         let instance_memory: Memory = instance
             .exports
             .iter()
@@ -206,7 +205,7 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty().minimum, Pages(4));
-        assert_eq!(instance_memory.ty().maximum, Some(Pages(23)));
+        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&mut store).maximum, Some(Pages(23)));
     }
 }

@@ -87,14 +87,14 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let original = compile(&wasm, None, &[]).unwrap();
+        let (original, store) = compile(&wasm, None, &[]).unwrap();
 
         // Ensure original module can be executed
         {
-            let instance = WasmerInstance::new(&original, &imports! {}).unwrap();
-            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let instance = WasmerInstance::new(&mut store, &original, &imports! {}).unwrap();
+            set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
-            let result = add_one.call(&[42.into()]).unwrap();
+            let result = add_one.call(&mut store, &[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
 
@@ -106,10 +106,10 @@ mod tests {
 
         // Ensure cached module can be executed
         {
-            let instance = WasmerInstance::new(&cached, &imports! {}).unwrap();
-            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let instance = WasmerInstance::new(&mut store, &cached, &imports! {}).unwrap();
+            set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
-            let result = add_one.call(&[42.into()]).unwrap();
+            let result = add_one.call(&mut store, &[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
@@ -134,7 +134,7 @@ mod tests {
         assert!(!cache.has(&checksum));
 
         // Add
-        let original = compile(&wasm, None, &[]).unwrap();
+        let (original, _) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, original, 0).unwrap();
 
         assert!(cache.has(&checksum));
@@ -165,7 +165,7 @@ mod tests {
         assert_eq!(cache.len(), 0);
 
         // Add
-        let original = compile(&wasm, None, &[]).unwrap();
+        let (original, _) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, original, 0).unwrap();
 
         assert_eq!(cache.len(), 1);
@@ -207,12 +207,12 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Add 1
-        let original = compile(&wasm1, None, &[]).unwrap();
+        let (original, _) = compile(&wasm1, None, &[]).unwrap();
         cache.store(&checksum1, original, 500).unwrap();
         assert_eq!(cache.size(), 500);
 
         // Add 2
-        let original = compile(&wasm2, None, &[]).unwrap();
+        let (original, _) = compile(&wasm2, None, &[]).unwrap();
         cache.store(&checksum2, original, 300).unwrap();
         assert_eq!(cache.size(), 800);
 

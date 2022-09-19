@@ -3,7 +3,7 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
+use wasmer::{Instance as WasmerInstance, Memory, Value};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{BackendApi, GasInfo, Querier, Storage};
@@ -94,12 +94,6 @@ impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     }
 }
 
-impl<A: BackendApi, S: Storage, Q: Querier> WasmerEnv for Environment<A, S, Q> {
-    fn init_with_instance(&mut self, _instance: &WasmerInstance) -> Result<(), HostEnvInitError> {
-        Ok(())
-    }
-}
-
 impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     pub fn new(api: A, gas_limit: u64, print_debug: bool) -> Self {
         Environment {
@@ -159,7 +153,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     /// The number of return values is variable and controlled by the guest.
     /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
     /// or [`Self::call_function1`] to ensure the number of return values is checked.
-    fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
+    fn call_function(&self, name: &str, args: &[Value]) -> VmResult<Box<[Value]>> {
         // Clone function before calling it to avoid dead locks
         let func = self.with_wasmer_instance(|instance| {
             let func = instance.exports.get_function(name)?;
@@ -177,7 +171,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
-    pub fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
+    pub fn call_function0(&self, name: &str, args: &[Value]) -> VmResult<()> {
         let result = self.call_function(name, args)?;
         let expected = 0;
         let actual = result.len();
@@ -187,7 +181,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         Ok(())
     }
 
-    pub fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
+    pub fn call_function1(&self, name: &str, args: &[Value]) -> VmResult<Value> {
         let result = self.call_function(name, args)?;
         let expected = 1;
         let actual = result.len();
@@ -392,28 +386,27 @@ mod tests {
     ) {
         let env = Environment::new(MockApi::default(), gas_limit, false);
 
-        let module = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
-        let store = module.store();
+        let (module, store) = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                "db_read" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "db_write" => Function::new_native(store, |_a: u32, _b: u32| {}),
-                "db_remove" => Function::new_native(store, |_a: u32| {}),
-                "db_scan" => Function::new_native(store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
-                "db_next" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "query_chain" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "addr_validate" => Function::new_native(store, |_a: u32| -> u32 { 0 }),
-                "addr_canonicalize" => Function::new_native(store, |_a: u32, _b: u32| -> u32 { 0 }),
-                "addr_humanize" => Function::new_native(store, |_a: u32, _b: u32| -> u32 { 0 }),
-                "secp256k1_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "secp256k1_recover_pubkey" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
-                "ed25519_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "ed25519_batch_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "debug" => Function::new_native(store, |_a: u32| {}),
+                "db_read" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "db_write" => Function::new_typed(&mut store, |_a: u32, _b: u32| {}),
+                "db_remove" => Function::new_typed(&mut store, |_a: u32| {}),
+                "db_scan" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
+                "db_next" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "query_chain" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "addr_validate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "addr_canonicalize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "addr_humanize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
+                "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "debug" => Function::new_typed(&mut store, |_a: u32| {}),
             },
         };
-        let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
+        let instance = Box::from(WasmerInstance::new(&mut store, &module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));

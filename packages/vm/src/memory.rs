@@ -1,4 +1,4 @@
-use wasmer::{Array, ValueType, WasmPtr};
+use wasmer::{ValueType, WasmPtr};
 
 use crate::conversion::to_u32;
 use crate::errors::{
@@ -24,7 +24,11 @@ struct Region {
     pub length: u32,
 }
 
-unsafe impl ValueType for Region {}
+unsafe impl ValueType for Region {
+    fn zero_padding_bytes(&self, bytes: &mut [std::mem::MaybeUninit<u8>]) {
+        todo!()
+    }
+}
 
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
@@ -38,7 +42,7 @@ pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmRe
         );
     }
 
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
+    match WasmPtr::<u8>::new(region.offset).deref(memory, 0, region.length) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
@@ -82,7 +86,7 @@ pub fn write_region(memory: &wasmer::Memory, ptr: u32, data: &[u8]) -> VmResult<
     if data.len() > region_capacity {
         return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
+    match WasmPtr::<u8>::new(region.offset).deref(memory, 0, region.capacity) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81

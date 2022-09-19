@@ -170,7 +170,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (module, _) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
@@ -183,10 +183,10 @@ mod tests {
         {
             let cached_module = cached.unwrap();
             let import_object = imports! {};
-            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
-            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let instance = WasmerInstance::new(&mut store, &cached_module, &import_object).unwrap();
+            set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
-            let result = add_one.call(&[42.into()]).unwrap();
+            let result = add_one.call(&mut store, &[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
@@ -201,7 +201,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (module, _) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let file_path = format!(

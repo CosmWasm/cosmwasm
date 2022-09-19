@@ -3,6 +3,7 @@
 //! use cosmwasm_vm::testing::X
 use cosmwasm_std::Coin;
 use std::collections::HashSet;
+use wasmer::Store;
 
 use crate::capabilities::capabilities_from_csv;
 use crate::compatibility::check_wasm;
@@ -22,10 +23,12 @@ const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
+    store: &mut Store,
     wasm: &[u8],
     contract_balance: &[Coin],
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
+        store,
         wasm,
         MockInstanceOptions {
             contract_balance: Some(contract_balance),
@@ -35,11 +38,13 @@ pub fn mock_instance(
 }
 
 pub fn mock_instance_with_failing_api(
+    store: &mut Store,
     wasm: &[u8],
     contract_balance: &[Coin],
     backend_error: &'static str,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
+        store,
         wasm,
         MockInstanceOptions {
             contract_balance: Some(contract_balance),
@@ -50,10 +55,12 @@ pub fn mock_instance_with_failing_api(
 }
 
 pub fn mock_instance_with_balances(
+    store: &mut Store,
     wasm: &[u8],
     balances: &[(&str, &[Coin])],
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
+        store,
         wasm,
         MockInstanceOptions {
             balances,
@@ -63,10 +70,12 @@ pub fn mock_instance_with_balances(
 }
 
 pub fn mock_instance_with_gas_limit(
+    store: &mut Store,
     wasm: &[u8],
     gas_limit: u64,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
+        store,
         wasm,
         MockInstanceOptions {
             gas_limit,
@@ -120,6 +129,7 @@ impl Default for MockInstanceOptions<'_> {
 }
 
 pub fn mock_instance_with_options(
+    store: &mut Store,
     wasm: &[u8],
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
@@ -152,7 +162,7 @@ pub fn mock_instance_with_options(
         gas_limit: options.gas_limit,
         print_debug: options.print_debug,
     };
-    Instance::from_code(wasm, backend, options, memory_limit).unwrap()
+    Instance::from_code(store, wasm, backend, options, memory_limit).unwrap()
 }
 
 /// Creates InstanceOptions for testing

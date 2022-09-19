@@ -691,7 +691,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Cranelift, Module, Store, Universal};
+    use wasmer::{CompilerConfig, Cranelift, Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {
@@ -708,9 +708,9 @@ mod tests {
         .unwrap();
 
         let deterministic = Arc::new(Gatekeeper::default());
-        let mut compiler_config = Cranelift::default();
-        compiler_config.push_middleware(deterministic);
-        let store = Store::new(&Universal::new(compiler_config).engine());
+        let mut compiler = Cranelift::default();
+        compiler.push_middleware(deterministic);
+        let store = Store::new(compiler);
         let result = Module::new(&store, &wasm);
         assert!(result.is_ok());
     }
@@ -729,9 +729,9 @@ mod tests {
         .unwrap();
 
         let deterministic = Arc::new(Gatekeeper::default());
-        let mut compiler_config = Cranelift::default();
-        compiler_config.push_middleware(deterministic);
-        let store = Store::new(&Universal::new(compiler_config).engine());
+        let mut compiler = Cranelift::default();
+        compiler.push_middleware(deterministic);
+        let store = Store::new(compiler);
         let result = Module::new(&store, &wasm);
         assert!(result
             .unwrap_err()
@@ -756,9 +756,9 @@ mod tests {
         .unwrap();
 
         let deterministic = Arc::new(Gatekeeper::default());
-        let mut compiler_config = Cranelift::default();
-        compiler_config.push_middleware(deterministic);
-        let store = Store::new(&Universal::new(compiler_config).engine());
+        let mut compiler = Cranelift::default();
+        compiler.push_middleware(deterministic);
+        let store = Store::new(compiler);
         let result = Module::new(&store, &wasm);
         assert!(result
             .unwrap_err()
