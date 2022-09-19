@@ -8,12 +8,12 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     let mappings = mappings.map(parse_tuple);
 
     // Handle generics if the type has any
-    let (impl_generics, type_generics, maybe_where) = input.generics.split_for_impl();
+    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
 
     parse_quote! {
         #[automatically_derived]
         #[cfg(not(target_arch = "wasm32"))]
-        impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #maybe_where {
+        impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
             fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                 ::std::collections::BTreeMap::from([
                     #( #mappings, )*
