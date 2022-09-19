@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult, Empty,
-    Response, SubMsg,
+    assert_approx_eq, coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary,
+    ContractResult, Empty, Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
@@ -405,9 +405,7 @@ fn execute_allocate_large_memory() {
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 4413600000; // +/- 20%
-    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
-    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+    assert_approx_eq!(gas_used, 4413600000, "0.2");
     let used = deps.memory_pages();
     assert_eq!(used, pages_before + 48, "Memory used: {} pages", used);
     pages_before += 48;

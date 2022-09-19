@@ -356,7 +356,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::MockQuerier;
+    use crate::testing::MockQuerier;
     use crate::{coins, from_slice, Uint128};
 
     // this is a simple demo helper to prove we can use it
