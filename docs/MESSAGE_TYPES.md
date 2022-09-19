@@ -1,13 +1,13 @@
 ## CosmWasm message types
 
-CosmWasm uses JSON for sending data from the host the Wasm contract and results
-out of the Wasm contract. Such JSON messages are created in the client,
-typically some JavaScript-based application. There the usage of JSON is feels
-very natural for developers. However, JSON has signigicant limitations such as
-the lack of a native binary type and inconsistent support for integers > 53 bit.
-For this reason, the CosmWasm standard limrary `cosmwasm-std` shipts types that
-ensure good user experience in JSON. The following table shows both stadard Rust
-types as well as cosmwasm_std types and how they are encoded in JSON.
+CosmWasm uses JSON for sending data from the host to the Wasm contract and
+results out of the Wasm contract. Such JSON messages are created in the client,
+typically some JavaScript-based application. There the usage of JSON feels very
+natural for developers. However, JSON has significant limitations such as the
+lack of a native binary type and inconsistent support for integers > 53 bit. For
+this reason, the CosmWasm standard library `cosmwasm-std` ships types that
+ensure good user experience in JSON. The following table shows both standard
+Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
 
 | Rust type           | JSON type[^1]                    | Example              | Note                                                                                                             |
 | ------------------- | -------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
