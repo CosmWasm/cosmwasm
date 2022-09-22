@@ -1,7 +1,10 @@
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use wasmer::Val;
 
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
+use cosmwasm_std::{
+    Coin, ContractInfo, ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response,
+};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
@@ -93,6 +96,48 @@ mod deserialization_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
+}
+
+#[derive(Serialize)]
+struct MessageInfoV0_13_2 {
+    pub sender: String,
+    pub sent_funds: Vec<Coin>,
+}
+
+#[derive(Serialize)]
+pub struct EnvV0_13_2 {
+    pub block: BlockInfoV0_13_2,
+    pub contract: ContractInfo,
+}
+
+#[derive(Serialize)]
+pub struct BlockInfoV0_13_2 {
+    pub height: u64,
+    pub time: u64,
+    pub time_nanos: u64,
+    pub chain_id: String,
+}
+
+fn get_old_args(env: &[u8], info: &[u8]) -> VmResult<(Vec<u8>, Vec<u8>)> {
+    let info_struct: MessageInfo = from_slice(info, 1024)?;
+    let old_info_struct = MessageInfoV0_13_2 {
+        sender: info_struct.sender.to_string(),
+        sent_funds: info_struct.funds,
+    };
+
+    let env_struct: Env = from_slice(env, 1024)?;
+    let old_env_struct = EnvV0_13_2 {
+        block: BlockInfoV0_13_2 {
+            // time in seconds
+            time: env_struct.block.time.nanos() / 1_000_000_000,
+            time_nanos: env_struct.block.time.nanos(),
+            height: env_struct.block.height,
+            chain_id: env_struct.block.chain_id,
+        },
+        contract: env_struct.contract,
+    };
+
+    Ok((to_vec(&old_env_struct)?, to_vec(&old_info_struct)?))
 }
 
 pub fn call_instantiate<A, S, Q, U>(
@@ -342,6 +387,21 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
+
+    if instance
+        .call_function0("cosmwasm_vm_version_4", &[])
+        .is_ok()
+    {
+        // this can be called from vm go
+        let (old_env, old_info) = get_old_args(env, info)?;
+
+        return call_raw(
+            instance,
+            "init",
+            &[&old_env, &old_info, msg],
+            read_limits::RESULT_INSTANTIATE,
+        );
+    }
     call_raw(
         instance,
         "instantiate",
@@ -364,6 +424,22 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
+
+    if instance
+        .call_function0("cosmwasm_vm_version_4", &[])
+        .is_ok()
+    {
+        // this can be called from vm go
+        let (old_env, old_info) = get_old_args(env, info)?;
+
+        return call_raw(
+            instance,
+            "handle",
+            &[&old_env, &old_info, msg],
+            read_limits::RESULT_EXECUTE,
+        );
+    }
+
     call_raw(
         instance,
         "execute",

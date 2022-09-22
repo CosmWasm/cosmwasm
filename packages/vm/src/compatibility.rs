@@ -15,7 +15,9 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.db_write",
     "env.db_remove",
     "env.addr_validate",
+    "env.canonicalize_address",
     "env.addr_canonicalize",
+    "env.humanize_address",
     "env.addr_humanize",
     "env.secp256k1_verify",
     "env.secp256k1_recover_pubkey",
@@ -33,12 +35,13 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 /// Other optional exports exist, e.g. "execute", "migrate" and "query".
 /// The marker export interface_version_* is checked separately.
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
+/// uncomment interface_version_5 and instantiate to make compatible with 0.13.2
 const REQUIRED_EXPORTS: &[&str] = &[
     // IO
     "allocate",
     "deallocate",
     // Required entry points
-    "instantiate",
+    // "instantiate",
 ];
 
 const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
@@ -98,6 +101,15 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
 }
 
 fn check_interface_version(module: &Module) -> VmResult<()> {
+    // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
+    if module
+        .exported_function_names(Some("cosmwasm_vm_version_4"))
+        .len()
+        == 1
+    {
+        return Ok(());
+    }
+
     let mut interface_version_exports = module
         .exported_function_names(Some(INTERFACE_VERSION_PREFIX))
         .into_iter();

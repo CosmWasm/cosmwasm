@@ -216,6 +216,17 @@ where
             Function::new_native_with_env(store, env.clone(), do_db_next),
         );
 
+        // old support
+        env_imports.insert(
+            "canonicalize_address",
+            Function::new_native_with_env(store, env.clone(), do_addr_canonicalize),
+        );
+
+        env_imports.insert(
+            "humanize_address",
+            Function::new_native_with_env(store, env.clone(), do_addr_humanize),
+        );
+
         import_obj.register("env", env_imports);
 
         if let Some(extra_imports) = extra_imports {
