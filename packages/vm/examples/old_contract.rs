@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 use cosmwasm_std::{coins, to_vec};
-use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info};
+use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi};
 use cosmwasm_vm::{
     call_execute_raw, call_instantiate_raw, Cache, CacheOptions, InstanceOptions, Size,
 };
@@ -31,9 +31,11 @@ pub fn main() {
     let cache = Arc::new(unsafe { Cache::new(options).unwrap() });
 
     let checksum = cache.save_wasm(CONTRACT).unwrap();
+    let mut backend = mock_backend(&[]);
+    backend.api = MockApi::new(32);
 
     let mut instance = cache
-        .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
+        .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
         .unwrap();
 
     let msg = br#"{"name": "name", "version": "version", "symbol": "symbol","minter":"creator"}"#;

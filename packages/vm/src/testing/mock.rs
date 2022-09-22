@@ -54,6 +54,14 @@ pub struct MockApi {
 }
 
 impl MockApi {
+    // add new to override cannonical length
+    pub fn new(canonical_length: usize) -> Self {
+        MockApi {
+            canonical_length,
+            backend_error: None,
+        }
+    }
+
     /// Read-only getter for `canonical_length`, which must not be changed by the caller.
     pub fn canonical_length(&self) -> usize {
         self.canonical_length
