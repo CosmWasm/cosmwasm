@@ -3,7 +3,7 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{Instance as WasmerInstance, Memory, Value};
+use wasmer::{AsStoreMut, Instance as WasmerInstance, Memory, Value};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{BackendApi, GasInfo, Querier, Storage};
@@ -153,15 +153,20 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     /// The number of return values is variable and controlled by the guest.
     /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
     /// or [`Self::call_function1`] to ensure the number of return values is checked.
-    fn call_function(&self, name: &str, args: &[Value]) -> VmResult<Box<[Value]>> {
+    fn call_function(
+        &self,
+        ctx: &mut impl AsStoreMut,
+        name: &str,
+        args: &[Value],
+    ) -> VmResult<Box<[Value]>> {
         // Clone function before calling it to avoid dead locks
         let func = self.with_wasmer_instance(|instance| {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
         })?;
-        func.call(args).map_err(|runtime_err| -> VmError {
+        func.call(ctx, args).map_err(|runtime_err| -> VmError {
             self.with_wasmer_instance::<_, Never>(|instance| {
-                let err: VmError = match get_remaining_points(instance) {
+                let err: VmError = match get_remaining_points(ctx, instance) {
                     MeteringPoints::Remaining(_) => VmError::from(runtime_err),
                     MeteringPoints::Exhausted => VmError::gas_depletion(),
                 };
@@ -171,8 +176,13 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
-    pub fn call_function0(&self, name: &str, args: &[Value]) -> VmResult<()> {
-        let result = self.call_function(name, args)?;
+    pub fn call_function0(
+        &self,
+        ctx: &mut impl AsStoreMut,
+        name: &str,
+        args: &[Value],
+    ) -> VmResult<()> {
+        let result = self.call_function(ctx, name, args)?;
         let expected = 0;
         let actual = result.len();
         if actual != expected {
@@ -181,8 +191,13 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         Ok(())
     }
 
-    pub fn call_function1(&self, name: &str, args: &[Value]) -> VmResult<Value> {
-        let result = self.call_function(name, args)?;
+    pub fn call_function1(
+        &self,
+        ctx: &mut impl AsStoreMut,
+        name: &str,
+        args: &[Value],
+    ) -> VmResult<Value> {
+        let result = self.call_function(ctx, name, args)?;
         let expected = 1;
         let actual = result.len();
         if actual != expected {
@@ -362,7 +377,7 @@ mod tests {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
-    use wasmer::{imports, Function, Instance as WasmerInstance};
+    use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -383,6 +398,7 @@ mod tests {
     ) -> (
         Environment<MockApi, MockStorage, MockQuerier>,
         Box<WasmerInstance>,
+        Store,
     ) {
         let env = Environment::new(MockApi::default(), gas_limit, false);
 
@@ -412,7 +428,7 @@ mod tests {
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
 
-        (env, instance)
+        (env, instance, store)
     }
 
     fn leave_default_data(env: &Environment<MockApi, MockStorage, MockQuerier>) {
@@ -429,7 +445,7 @@ mod tests {
 
     #[test]
     fn move_out_works() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
 
         // empty data on start
         let (inits, initq) = env.move_out();
@@ -454,7 +470,7 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_for_cost() {
-        let (env, _instance) = make_instance(100);
+        let (env, _instance, _store) = make_instance(100);
         assert_eq!(env.get_gas_left(), 100);
 
         // Consume all the Gas that we allocated
@@ -476,7 +492,7 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_for_externally_used() {
-        let (env, _instance) = make_instance(100);
+        let (env, _instance, _store) = make_instance(100);
         assert_eq!(env.get_gas_left(), 100);
 
         // Consume all the Gas that we allocated
@@ -498,7 +514,7 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_for_cost_and_externally_used() {
-        let (env, _instance) = make_instance(100);
+        let (env, _instance, _store) = make_instance(100);
         assert_eq!(env.get_gas_left(), 100);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
@@ -547,7 +563,7 @@ mod tests {
     fn process_gas_info_zeros_gas_left_when_exceeded() {
         // with_externally_used
         {
-            let (env, _instance) = make_instance(100);
+            let (env, _instance, _store) = make_instance(100);
             let result = process_gas_info(&env, GasInfo::with_externally_used(120));
             match result.unwrap_err() {
                 VmError::GasDepletion { .. } => {}
@@ -561,7 +577,7 @@ mod tests {
 
         // with_cost
         {
-            let (env, _instance) = make_instance(100);
+            let (env, _instance, _store) = make_instance(100);
             let result = process_gas_info(&env, GasInfo::with_cost(120));
             match result.unwrap_err() {
                 VmError::GasDepletion { .. } => {}
@@ -576,7 +592,7 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_correctly_with_gas_consumption_in_wasmer() {
-        let (env, _instance) = make_instance(100);
+        let (env, _instance, _store) = make_instance(100);
         assert_eq!(env.get_gas_left(), 100);
 
         // Some gas was consumed externally
@@ -603,7 +619,7 @@ mod tests {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         assert!(env.is_storage_readonly());
@@ -611,7 +627,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // change
@@ -629,23 +645,25 @@ mod tests {
 
     #[test]
     fn call_function_works() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let result = env.call_function("allocate", &[10u32.into()]).unwrap();
+        let result = env
+            .call_function(&mut store, "allocate", &[10u32.into()])
+            .unwrap();
         let ptr = ref_to_u32(&result[0]).unwrap();
         assert!(ptr > 0);
     }
 
     #[test]
     fn call_function_fails_for_missing_instance() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // Clear context's wasmer_instance
         env.set_wasmer_instance(None);
 
-        let res = env.call_function("allocate", &[]);
+        let res = env.call_function(&mut store, "allocate", &[]);
         match res.unwrap_err() {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
             err => panic!("Unexpected error: {:?}", err),
@@ -654,10 +672,10 @@ mod tests {
 
     #[test]
     fn call_function_fails_for_missing_function() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let res = env.call_function("doesnt_exist", &[]);
+        let res = env.call_function(&mut store, "doesnt_exist", &[]);
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
                 assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
@@ -668,18 +686,19 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        env.call_function0("interface_version_8", &[]).unwrap();
+        env.call_function0(&mut store, "interface_version_8", &[])
+            .unwrap();
     }
 
     #[test]
     fn call_function0_errors_for_wrong_result_count() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let result = env.call_function0("allocate", &[10u32.into()]);
+        let result = env.call_function0(&mut store, "allocate", &[10u32.into()]);
         match result.unwrap_err() {
             VmError::ResultMismatch {
                 function_name,
@@ -697,24 +716,28 @@ mod tests {
 
     #[test]
     fn call_function1_works() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
+        let result = env
+            .call_function1(&mut store, "allocate", &[10u32.into()])
+            .unwrap();
         let ptr = ref_to_u32(&result).unwrap();
         assert!(ptr > 0);
     }
 
     #[test]
     fn call_function1_errors_for_wrong_result_count() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
+        let result = env
+            .call_function1(&mut store, "allocate", &[10u32.into()])
+            .unwrap();
         let ptr = ref_to_u32(&result).unwrap();
         assert!(ptr > 0);
 
-        let result = env.call_function1("deallocate", &[ptr.into()]);
+        let result = env.call_function1(&mut store, "deallocate", &[ptr.into()]);
         match result.unwrap_err() {
             VmError::ResultMismatch {
                 function_name,
@@ -732,7 +755,7 @@ mod tests {
 
     #[test]
     fn with_storage_from_context_set_get() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let val = env
@@ -765,7 +788,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_storage_from_context::<_, ()>(|_store| {
@@ -776,7 +799,7 @@ mod tests {
 
     #[test]
     fn with_querier_from_context_works() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let res = env
@@ -799,7 +822,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
-        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_querier_from_context::<_, ()>(|_querier| {

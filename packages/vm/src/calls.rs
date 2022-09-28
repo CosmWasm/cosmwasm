@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use wasmer::Value;
+use wasmer::{AsStoreMut, Value};
 
 use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
@@ -96,6 +96,7 @@ mod deserialization_limits {
 }
 
 pub fn call_instantiate<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
@@ -109,13 +110,14 @@ where
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
-    let data = call_instantiate_raw(instance, &env, &info, msg)?;
+    let data = call_instantiate_raw(ctx, instance, &env, &info, msg)?;
     let result: ContractResult<Response<U>> =
         from_slice(&data, deserialization_limits::RESULT_INSTANTIATE)?;
     Ok(result)
 }
 
 pub fn call_execute<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
@@ -129,13 +131,14 @@ where
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
-    let data = call_execute_raw(instance, &env, &info, msg)?;
+    let data = call_execute_raw(ctx, instance, &env, &info, msg)?;
     let result: ContractResult<Response<U>> =
         from_slice(&data, deserialization_limits::RESULT_EXECUTE)?;
     Ok(result)
 }
 
 pub fn call_migrate<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
@@ -147,13 +150,14 @@ where
     U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
-    let data = call_migrate_raw(instance, &env, msg)?;
+    let data = call_migrate_raw(ctx, instance, &env, msg)?;
     let result: ContractResult<Response<U>> =
         from_slice(&data, deserialization_limits::RESULT_MIGRATE)?;
     Ok(result)
 }
 
 pub fn call_sudo<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
@@ -165,13 +169,14 @@ where
     U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
-    let data = call_sudo_raw(instance, &env, msg)?;
+    let data = call_sudo_raw(ctx, instance, &env, msg)?;
     let result: ContractResult<Response<U>> =
         from_slice(&data, deserialization_limits::RESULT_SUDO)?;
     Ok(result)
 }
 
 pub fn call_reply<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &Reply,
@@ -184,13 +189,14 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_reply_raw(instance, &env, &msg)?;
+    let data = call_reply_raw(ctx, instance, &env, &msg)?;
     let result: ContractResult<Response<U>> =
         from_slice(&data, deserialization_limits::RESULT_REPLY)?;
     Ok(result)
 }
 
 pub fn call_query<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
@@ -201,7 +207,7 @@ where
     Q: Querier + 'static,
 {
     let env = to_vec(env)?;
-    let data = call_query_raw(instance, &env, msg)?;
+    let data = call_query_raw(ctx, instance, &env, msg)?;
     let result: ContractResult<QueryResponse> =
         from_slice(&data, deserialization_limits::RESULT_QUERY)?;
     // Ensure query response is valid JSON
@@ -216,6 +222,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_channel_open<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcChannelOpenMsg,
@@ -227,7 +234,7 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_channel_open_raw(instance, &env, &msg)?;
+    let data = call_ibc_channel_open_raw(ctx, instance, &env, &msg)?;
     let result: ContractResult<Option<Ibc3ChannelOpenResponse>> =
         from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_OPEN)?;
     Ok(result)
@@ -235,6 +242,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_channel_connect<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcChannelConnectMsg,
@@ -247,13 +255,14 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_channel_connect_raw(instance, &env, &msg)?;
+    let data = call_ibc_channel_connect_raw(ctx, instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_CONNECT)?;
     Ok(result)
 }
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_channel_close<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcChannelCloseMsg,
@@ -266,13 +275,14 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_channel_close_raw(instance, &env, &msg)?;
+    let data = call_ibc_channel_close_raw(ctx, instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_CLOSE)?;
     Ok(result)
 }
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_packet_receive<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketReceiveMsg,
@@ -285,13 +295,14 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_packet_receive_raw(instance, &env, &msg)?;
+    let data = call_ibc_packet_receive_raw(ctx, instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
     Ok(result)
 }
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_packet_ack<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketAckMsg,
@@ -304,13 +315,14 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_packet_ack_raw(instance, &env, &msg)?;
+    let data = call_ibc_packet_ack_raw(ctx, instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_ACK)?;
     Ok(result)
 }
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_packet_timeout<A, S, Q, U>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketTimeoutMsg,
@@ -323,7 +335,7 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_packet_timeout_raw(instance, &env, &msg)?;
+    let data = call_ibc_packet_timeout_raw(ctx, instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_TIMEOUT)?;
     Ok(result)
 }
@@ -331,6 +343,7 @@ where
 /// Calls Wasm export "instantiate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_instantiate_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     info: &[u8],
@@ -343,6 +356,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "instantiate",
         &[env, info, msg],
@@ -353,6 +367,7 @@ where
 /// Calls Wasm export "execute" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_execute_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     info: &[u8],
@@ -365,6 +380,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "execute",
         &[env, info, msg],
@@ -375,6 +391,7 @@ where
 /// Calls Wasm export "migrate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_migrate_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -386,6 +403,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "migrate",
         &[env, msg],
@@ -396,6 +414,7 @@ where
 /// Calls Wasm export "sudo" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_sudo_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -406,12 +425,13 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "sudo", &[env, msg], read_limits::RESULT_SUDO)
+    call_raw(ctx, instance, "sudo", &[env, msg], read_limits::RESULT_SUDO)
 }
 
 /// Calls Wasm export "reply" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_reply_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -422,12 +442,19 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "reply", &[env, msg], read_limits::RESULT_REPLY)
+    call_raw(
+        ctx,
+        instance,
+        "reply",
+        &[env, msg],
+        read_limits::RESULT_REPLY,
+    )
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_query_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -438,11 +465,18 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(true);
-    call_raw(instance, "query", &[env, msg], read_limits::RESULT_QUERY)
+    call_raw(
+        ctx,
+        instance,
+        "query",
+        &[env, msg],
+        read_limits::RESULT_QUERY,
+    )
 }
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_channel_open_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -454,6 +488,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "ibc_channel_open",
         &[env, msg],
@@ -463,6 +498,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_channel_connect_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -474,6 +510,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "ibc_channel_connect",
         &[env, msg],
@@ -483,6 +520,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_channel_close_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -494,6 +532,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "ibc_channel_close",
         &[env, msg],
@@ -503,6 +542,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_packet_receive_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -514,6 +554,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "ibc_packet_receive",
         &[env, msg],
@@ -523,6 +564,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_packet_ack_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -534,6 +576,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "ibc_packet_ack",
         &[env, msg],
@@ -543,6 +586,7 @@ where
 
 #[cfg(feature = "stargate")]
 pub fn call_ibc_packet_timeout_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -554,6 +598,7 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(
+        ctx,
         instance,
         "ibc_packet_timeout",
         &[env, msg],
@@ -564,6 +609,7 @@ where
 /// Calls a function with the given arguments.
 /// The exported function must return exactly one result (an offset to the result Region).
 pub(crate) fn call_raw<A, S, Q>(
+    ctx: &mut impl AsStoreMut,
     instance: &mut Instance<A, S, Q>,
     name: &str,
     args: &[&[u8]],
@@ -580,11 +626,11 @@ where
         instance.write_memory(region_ptr, arg)?;
         arg_region_ptrs.push(region_ptr.into());
     }
-    let result = instance.call_function1(name, &arg_region_ptrs)?;
+    let result = instance.call_function1(ctx, name, &arg_region_ptrs)?;
     let res_region_ptr = ref_to_u32(&result)?;
     let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
-    instance.deallocate(res_region_ptr)?;
+    instance.deallocate(ctx, res_region_ptr)?;
     Ok(data)
 }
 

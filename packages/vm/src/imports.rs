@@ -8,10 +8,7 @@ use cosmwasm_crypto::{
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
-
-#[cfg(feature = "iterator")]
-use cosmwasm_std::Order;
-use wasmer::{AsStoreMut, FunctionEnv};
+use wasmer::FunctionEnvMut;
 
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -25,6 +22,8 @@ use crate::sections::decode_sections;
 use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
+#[cfg(feature = "iterator")]
+use cosmwasm_std::Order;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -67,168 +66,173 @@ const MAX_LENGTH_ABORT: usize = 2 * MI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_db_read<A: BackendApi, S: Storage, Q: Querier>(
-    store: &impl AsStoreMut,
-    env: &FunctionEnv<Environment<A, S, Q>>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
 ) -> VmResult<u32> {
-    let key = read_region(&env.as_ref(store).memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&env.data().memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) = env
-        .as_ref(store)
+        .data()
         .with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     let value = result?;
 
     let out_data = match value {
         Some(data) => data,
         None => return Ok(0),
     };
-    write_to_contract::<A, S, Q>(env, &out_data)
+    write_to_contract::<A, S, Q>(env.data(), &out_data)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
 pub fn do_db_write<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
-    if env.is_storage_readonly() {
+    if env.data().is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
-    let value = read_region(&env.memory(), value_ptr, MAX_LENGTH_DB_VALUE)?;
+    let key = read_region(&env.data().memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let value = read_region(&env.data().memory(), value_ptr, MAX_LENGTH_DB_VALUE)?;
 
-    let (result, gas_info) =
-        env.with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let (result, gas_info) = env
+        .data()
+        .with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     result?;
 
     Ok(())
 }
 
 pub fn do_db_remove<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
 ) -> VmResult<()> {
-    if env.is_storage_readonly() {
+    if env.data().is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&env.data().memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
-    let (result, gas_info) =
-        env.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
-    process_gas_info(env, gas_info)?;
+    let (result, gas_info) = env
+        .data()
+        .with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
+    process_gas_info(env.data(), gas_info)?;
     result?;
 
     Ok(())
 }
 
 pub fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     source_ptr: u32,
 ) -> VmResult<u32> {
-    let source_data = read_region(&env.memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    let source_data = read_region(&env.data().memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return write_to_contract::<A, S, Q>(env, b"Input is empty");
+        return write_to_contract::<A, S, Q>(env.data(), b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => return write_to_contract::<A, S, Q>(env, b"Input is not valid UTF-8"),
+        Err(_) => return write_to_contract::<A, S, Q>(env.data(), b"Input is not valid UTF-8"),
     };
 
-    let (result, gas_info) = env.api.canonical_address(&source_string);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let (result, gas_info) = env.data().api.canonical_address(&source_string);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     let canonical = match result {
         Ok(data) => data,
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract::<A, S, Q>(env, msg.as_bytes())
+            return write_to_contract::<A, S, Q>(env.data(), msg.as_bytes())
         }
         Err(err) => return Err(VmError::from(err)),
     };
 
-    let (result, gas_info) = env.api.human_address(&canonical);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let (result, gas_info) = env.data().api.human_address(&canonical);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     let normalized = match result {
         Ok(addr) => addr,
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract::<A, S, Q>(env, msg.as_bytes())
+            return write_to_contract::<A, S, Q>(env.data(), msg.as_bytes())
         }
         Err(err) => return Err(VmError::from(err)),
     };
 
     if normalized != source_string {
-        return write_to_contract::<A, S, Q>(env, b"Address is not normalized");
+        return write_to_contract::<A, S, Q>(env.data(), b"Address is not normalized");
     }
 
     Ok(0)
 }
 
 pub fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let source_data = read_region(&env.memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    let source_data = read_region(&env.data().memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return write_to_contract::<A, S, Q>(env, b"Input is empty");
+        return write_to_contract::<A, S, Q>(env.data(), b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => return write_to_contract::<A, S, Q>(env, b"Input is not valid UTF-8"),
+        Err(_) => return write_to_contract::<A, S, Q>(env.data(), b"Input is not valid UTF-8"),
     };
 
-    let (result, gas_info) = env.api.canonical_address(&source_string);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let (result, gas_info) = env.data().api.canonical_address(&source_string);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     match result {
         Ok(canonical) => {
-            write_region(&env.memory(), destination_ptr, canonical.as_slice())?;
+            write_region(&env.data().memory(), destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {
-            Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
+            Ok(write_to_contract::<A, S, Q>(env.data(), msg.as_bytes())?)
         }
         Err(err) => Err(VmError::from(err)),
     }
 }
 
 pub fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let canonical = read_region(&env.memory(), source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?;
+    let canonical = read_region(
+        &env.data().memory(),
+        source_ptr,
+        MAX_LENGTH_CANONICAL_ADDRESS,
+    )?;
 
-    let (result, gas_info) = env.api.human_address(&canonical);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let (result, gas_info) = env.data().api.human_address(&canonical);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     match result {
         Ok(human) => {
-            write_region(&env.memory(), destination_ptr, human.as_bytes())?;
+            write_region(&env.data().memory(), destination_ptr, human.as_bytes())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {
-            Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
+            Ok(write_to_contract::<A, S, Q>(env.data(), msg.as_bytes())?)
         }
         Err(err) => Err(VmError::from(err)),
     }
 }
 
 pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     hash_ptr: u32,
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-    let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+    let hash = read_region(&env.data().memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.data().memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(&env.data().memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_verify_cost);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let gas_info = GasInfo::with_cost(env.data().gas_config.secp256k1_verify_cost);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidHashFormat { .. }
@@ -244,24 +248,24 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     hash_ptr: u32,
     signature_ptr: u32,
     recover_param: u32,
 ) -> VmResult<u64> {
-    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let hash = read_region(&env.data().memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.data().memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
     let recover_param: u8 = match recover_param.try_into() {
         Ok(rp) => rp,
         Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
     };
 
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
-    let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_recover_pubkey_cost);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let gas_info = GasInfo::with_cost(env.data().gas_config.secp256k1_recover_pubkey_cost);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     match result {
         Ok(pubkey) => {
-            let pubkey_ptr = write_to_contract::<A, S, Q>(env, pubkey.as_ref())?;
+            let pubkey_ptr = write_to_contract::<A, S, Q>(env.data(), pubkey.as_ref())?;
             Ok(to_low_half(pubkey_ptr))
         }
         Err(err) => match err {
@@ -277,18 +281,26 @@ pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let message = read_region(&env.memory(), message_ptr, MAX_LENGTH_ED25519_MESSAGE)?;
-    let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_ED25519_SIGNATURE)?;
-    let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
+    let message = read_region(
+        &env.data().memory(),
+        message_ptr,
+        MAX_LENGTH_ED25519_MESSAGE,
+    )?;
+    let signature = read_region(
+        &env.data().memory(),
+        signature_ptr,
+        MAX_LENGTH_ED25519_SIGNATURE,
+    )?;
+    let pubkey = read_region(&env.data().memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let result = ed25519_verify(&message, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(env.gas_config.ed25519_verify_cost);
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let gas_info = GasInfo::with_cost(env.data().gas_config.ed25519_verify_cost);
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidPubkeyFormat { .. }
@@ -305,23 +317,23 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     messages_ptr: u32,
     signatures_ptr: u32,
     public_keys_ptr: u32,
 ) -> VmResult<u32> {
     let messages = read_region(
-        &env.memory(),
+        &env.data().memory(),
         messages_ptr,
         (MAX_LENGTH_ED25519_MESSAGE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let signatures = read_region(
-        &env.memory(),
+        &env.data().memory(),
         signatures_ptr,
         (MAX_LENGTH_ED25519_SIGNATURE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let public_keys = read_region(
-        &env.memory(),
+        &env.data().memory(),
         public_keys_ptr,
         (EDDSA_PUBKEY_LEN + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
@@ -332,12 +344,12 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
 
     let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
     let gas_cost = if public_keys.len() == 1 {
-        env.gas_config.ed25519_batch_verify_one_pubkey_cost
+        env.data().gas_config.ed25519_batch_verify_one_pubkey_cost
     } else {
-        env.gas_config.ed25519_batch_verify_cost
+        env.data().gas_config.ed25519_batch_verify_cost
     } * signatures.len() as u64;
-    let gas_info = GasInfo::with_cost(max(gas_cost, env.gas_config.ed25519_verify_cost));
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let gas_info = GasInfo::with_cost(max(gas_cost, env.data().gas_config.ed25519_verify_cost));
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::BatchErr { .. }
@@ -355,11 +367,11 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    if env.print_debug {
-        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+    if env.data().print_debug {
+        let message_data = read_region(&env.data().memory(), message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
         println!("{}", msg);
     }
@@ -368,10 +380,10 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
 
 /// Aborts the contract and shows the given error message
 pub fn do_abort<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_ABORT)?;
+    let message_data = read_region(&env.data().memory(), message_ptr, MAX_LENGTH_ABORT)?;
     let msg = String::from_utf8_lossy(&message_data);
     Err(VmError::aborted(msg))
 }
@@ -392,55 +404,60 @@ fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     request_ptr: u32,
 ) -> VmResult<u32> {
-    let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
+    let request = read_region(
+        &env.data().memory(),
+        request_ptr,
+        MAX_LENGTH_QUERY_CHAIN_REQUEST,
+    )?;
 
-    let gas_remaining = env.get_gas_left();
-    let (result, gas_info) = env.with_querier_from_context::<_, _>(|querier| {
+    let gas_remaining = env.data().get_gas_left();
+    let (result, gas_info) = env.data().with_querier_from_context::<_, _>(|querier| {
         Ok(querier.query_raw(&request, gas_remaining))
     })?;
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     let serialized = to_vec(&result?)?;
-    write_to_contract::<A, S, Q>(env, &serialized)
+    write_to_contract::<A, S, Q>(env.data(), &serialized)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_db_scan<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
 ) -> VmResult<u32> {
-    let start = maybe_read_region(&env.memory(), start_ptr, MAX_LENGTH_DB_KEY)?;
-    let end = maybe_read_region(&env.memory(), end_ptr, MAX_LENGTH_DB_KEY)?;
+    let start = maybe_read_region(&env.data().memory(), start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(&env.data().memory(), end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
-    let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| {
+    let (result, gas_info) = env.data().with_storage_from_context::<_, _>(|store| {
         Ok(store.scan(start.as_deref(), end.as_deref(), order))
     })?;
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
     let iterator_id = result?;
     Ok(iterator_id)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_db_next<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+    env: &FunctionEnvMut<Environment<A, S, Q>>,
     iterator_id: u32,
 ) -> VmResult<u32> {
-    let (result, gas_info) =
-        env.with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let (result, gas_info) = env
+        .data()
+        .with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
+    process_gas_info::<A, S, Q>(env.data(), gas_info)?;
 
     // Empty key will later be treated as _no more element_.
     let (key, value) = result?.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
     let out_data = encode_sections(&[key, value])?;
-    write_to_contract::<A, S, Q>(env, &out_data)
+    write_to_contract::<A, S, Q>(env.data(), &out_data)
 }
 
 /// Returns the data shifted by 32 bits towards the most significant bit.
@@ -472,7 +489,7 @@ mod tests {
     };
     use hex_literal::hex;
     use std::ptr::NonNull;
-    use wasmer::{imports, Function, Instance as WasmerInstance, Store};
+    use wasmer::{imports, Function, FunctionEnv, Instance as WasmerInstance, Store};
 
     use crate::backend::{BackendError, Storage};
     use crate::size::Size;
@@ -590,7 +607,10 @@ mod tests {
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, KEY1);
-        let result = do_db_read(&mut store, &FunctionEnv::new(&mut store, env), key_ptr);
+        let result = do_db_read(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+        );
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
         assert_eq!(force_read(&env, value_ptr as u32), VALUE1);
@@ -603,7 +623,10 @@ mod tests {
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, b"I do not exist in storage");
-        let result = do_db_read(&mut store, &FunctionEnv::new(&mut store, env), key_ptr);
+        let result = do_db_read(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+        );
         assert_eq!(result.unwrap(), 0);
     }
 
@@ -614,7 +637,10 @@ mod tests {
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, &vec![7u8; 300 * 1024]);
-        let result = do_db_read(&mut store, &FunctionEnv::new(&mut store, env), key_ptr);
+        let result = do_db_read(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -627,14 +653,19 @@ mod tests {
     #[test]
     fn do_db_write_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, b"new value");
 
         leave_default_data(&env);
 
-        do_db_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+            value_ptr,
+        )
+        .unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -650,14 +681,19 @@ mod tests {
     #[test]
     fn do_db_write_can_override() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, KEY1);
         let value_ptr = write_data(&env, VALUE2);
 
         leave_default_data(&env);
 
-        do_db_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+            value_ptr,
+        )
+        .unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -670,14 +706,19 @@ mod tests {
     #[test]
     fn do_db_write_works_for_empty_value() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, b"");
 
         leave_default_data(&env);
 
-        do_db_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+            value_ptr,
+        )
+        .unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -693,14 +734,18 @@ mod tests {
     #[test]
     fn do_db_write_fails_for_large_key() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, &vec![4u8; 300 * 1024]);
         let value_ptr = write_data(&env, b"new value");
 
         leave_default_data(&env);
 
-        let result = do_db_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+            value_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -719,14 +764,18 @@ mod tests {
     #[test]
     fn do_db_write_fails_for_large_value() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, &vec![5u8; 300 * 1024]);
 
         leave_default_data(&env);
 
-        let result = do_db_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+            value_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -745,7 +794,7 @@ mod tests {
     #[test]
     fn do_db_write_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"new storage key");
         let value_ptr = write_data(&env, b"new value");
@@ -753,7 +802,11 @@ mod tests {
         leave_default_data(&env);
         env.set_storage_readonly(true);
 
-        let result = do_db_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+            value_ptr,
+        );
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -763,7 +816,7 @@ mod tests {
     #[test]
     fn do_db_remove_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let existing_key = KEY1;
         let key_ptr = write_data(&env, existing_key);
@@ -776,7 +829,11 @@ mod tests {
         })
         .unwrap();
 
-        do_db_remove(&env, key_ptr).unwrap();
+        do_db_remove(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+        )
+        .unwrap();
 
         env.with_storage_from_context::<_, _>(|store| {
             println!("{:?}", store);
@@ -795,7 +852,7 @@ mod tests {
     #[test]
     fn do_db_remove_works_for_non_existent_key() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let non_existent_key = b"I do not exist";
         let key_ptr = write_data(&env, non_existent_key);
@@ -803,7 +860,11 @@ mod tests {
         leave_default_data(&env);
 
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        do_db_remove(&env, key_ptr).unwrap();
+        do_db_remove(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            key_ptr,
+        )
+        .unwrap();
 
         let value = env
             .with_storage_from_context::<_, _>(|store| {
@@ -816,11 +877,13 @@ mod tests {
     #[test]
     fn do_db_remove_fails_for_large_key() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, &vec![26u8; 300 * 1024]);
 
         leave_default_data(&env);
+
+        let env = FunctionEnv::new(&mut store, env).into_mut(&mut store);
 
         let result = do_db_remove(&env, key_ptr);
         match result.unwrap_err() {
@@ -841,12 +904,14 @@ mod tests {
     #[test]
     fn do_db_remove_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let key_ptr = write_data(&env, b"a storage key");
 
         leave_default_data(&env);
         env.set_storage_readonly(true);
+
+        let env = FunctionEnv::new(&mut store, env).into_mut(&mut store);
 
         let result = do_db_remove(&env, key_ptr);
         match result.unwrap_err() {
@@ -858,10 +923,12 @@ mod tests {
     #[test]
     fn do_addr_validate_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let source_ptr1 = write_data(&env, b"foo");
         let source_ptr2 = write_data(&env, b"eth1n48g2mjh9ezz7zjtya37wtgg5r5emr0drkwlgw");
+
+        let env = FunctionEnv::new(&mut store, env).into_mut(&mut store);
 
         let res = do_addr_validate(&env, source_ptr1).unwrap();
         assert_eq!(res, 0);
@@ -872,29 +939,31 @@ mod tests {
     #[test]
     fn do_addr_validate_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
         let source_ptr3 = write_data(&env, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
         let source_ptr4 = write_data(&env, b"fooBar"); // Not normalized. The definition of normalized is chain-dependent but the MockApi requires lower case.
 
-        let res = do_addr_validate(&env, source_ptr1).unwrap();
+        let fenv = FunctionEnv::new(&mut store, env).into_mut(&mut store);
+
+        let res = do_addr_validate(&fenv, source_ptr1).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Input is not valid UTF-8");
 
-        let res = do_addr_validate(&env, source_ptr2).unwrap();
+        let res = do_addr_validate(&fenv, source_ptr2).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let res = do_addr_validate(&env, source_ptr3).unwrap();
+        let res = do_addr_validate(&fenv, source_ptr3).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Invalid input: human address too long");
 
-        let res = do_addr_validate(&env, source_ptr4).unwrap();
+        let res = do_addr_validate(&fenv, source_ptr4).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Address is not normalized");
@@ -903,13 +972,16 @@ mod tests {
     #[test]
     fn do_addr_validate_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo");
 
         leave_default_data(&env);
 
-        let result = do_addr_validate(&env, source_ptr);
+        let result = do_addr_validate(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+        );
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
@@ -922,13 +994,16 @@ mod tests {
     #[test]
     fn do_addr_validate_fails_for_large_inputs() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 333]);
 
         leave_default_data(&env);
 
-        let result = do_addr_validate(&env, source_ptr);
+        let result = do_addr_validate(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -947,7 +1022,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_works() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
         let api = MockApi::default();
 
         let source_ptr = write_data(&env, b"foo");
@@ -956,7 +1031,12 @@ mod tests {
         leave_default_data(&env);
 
         let api = MockApi::default();
-        let res = do_addr_canonicalize(&env, source_ptr, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        )
+        .unwrap();
         assert_eq!(res, 0);
         let data = force_read(&env, dest_ptr);
         assert_eq!(data.len(), api.canonical_length());
@@ -965,7 +1045,7 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
@@ -974,17 +1054,32 @@ mod tests {
 
         leave_default_data(&env);
 
-        let res = do_addr_canonicalize(&env, source_ptr1, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr1,
+            dest_ptr,
+        )
+        .unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Input is not valid UTF-8");
 
-        let res = do_addr_canonicalize(&env, source_ptr2, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr2,
+            dest_ptr,
+        )
+        .unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let res = do_addr_canonicalize(&env, source_ptr3, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr3,
+            dest_ptr,
+        )
+        .unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Invalid input: human address too long");
@@ -993,14 +1088,18 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, 7);
 
         leave_default_data(&env);
 
-        let result = do_addr_canonicalize(&env, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        );
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
@@ -1013,14 +1112,18 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_large_inputs() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 333]);
         let dest_ptr = create_empty(&mut instance, 8);
 
         leave_default_data(&env);
 
-        let result = do_addr_canonicalize(&env, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -1039,14 +1142,18 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_small_destination_region() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, 7);
 
         leave_default_data(&env);
 
-        let result = do_addr_canonicalize(&env, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
@@ -1062,7 +1169,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_works() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
@@ -1071,7 +1178,12 @@ mod tests {
 
         leave_default_data(&env);
 
-        let error_ptr = do_addr_humanize(&env, source_ptr, dest_ptr).unwrap();
+        let error_ptr = do_addr_humanize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        )
+        .unwrap();
         assert_eq!(error_ptr, 0);
         assert_eq!(force_read(&env, dest_ptr), source_data);
     }
@@ -1079,14 +1191,19 @@ mod tests {
     #[test]
     fn do_addr_humanize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo"); // too short
         let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
-        let res = do_addr_humanize(&env, source_ptr, dest_ptr).unwrap();
+        let res = do_addr_humanize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        )
+        .unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Invalid input: canonical address length not correct");
@@ -1095,14 +1212,18 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo\0\0\0\0\0");
         let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
-        let result = do_addr_humanize(&env, source_ptr, dest_ptr);
+        let result = do_addr_humanize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        );
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
@@ -1115,14 +1236,18 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_input_too_long() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 65]);
         let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
-        let result = do_addr_humanize(&env, source_ptr, dest_ptr);
+        let result = do_addr_humanize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -1141,7 +1266,7 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_destination_region_too_small() {
         let api = MockApi::default();
-        let (env, mut instance, _store) = make_instance(api);
+        let (env, mut instance, store) = make_instance(api);
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
@@ -1150,7 +1275,11 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_addr_humanize(&env, source_ptr, dest_ptr);
+        let result = do_addr_humanize(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            source_ptr,
+            dest_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
@@ -1166,7 +1295,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_works() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1176,7 +1305,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             0
         );
     }
@@ -1184,7 +1319,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_hash_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // alter hash
@@ -1196,7 +1331,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             1
         );
     }
@@ -1204,7 +1345,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_hash_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // extend / break hash
@@ -1215,7 +1356,12 @@ mod tests {
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        let result = do_secp256k1_verify(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            hash_ptr,
+            sig_ptr,
+            pubkey_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1228,7 +1374,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_hash_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // reduce / break hash
@@ -1240,7 +1386,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             3 // mapped InvalidHashFormat
         );
     }
@@ -1248,7 +1400,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1260,7 +1412,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             1
         );
     }
@@ -1268,7 +1426,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1279,7 +1437,12 @@ mod tests {
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        let result = do_secp256k1_verify(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            hash_ptr,
+            sig_ptr,
+            pubkey_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1292,7 +1455,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1304,7 +1467,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             4 // mapped InvalidSignatureFormat
         )
     }
@@ -1312,7 +1481,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_format_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1324,7 +1493,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1332,7 +1507,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1344,7 +1519,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             10 // mapped GenericErr
         )
     }
@@ -1352,7 +1533,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1363,7 +1544,12 @@ mod tests {
         pubkey.push(0x00);
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        let result = do_secp256k1_verify(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            hash_ptr,
+            sig_ptr,
+            pubkey_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1376,7 +1562,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1388,7 +1574,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1396,7 +1588,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1406,7 +1598,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1414,7 +1612,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let hash_ptr = write_data(&env, &hash);
@@ -1424,7 +1622,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256k1_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                hash_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             10 // mapped GenericErr
         )
     }
@@ -1432,7 +1636,7 @@ mod tests {
     #[test]
     fn do_secp256k1_recover_pubkey_works() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
         let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
@@ -1442,7 +1646,13 @@ mod tests {
 
         let hash_ptr = write_data(&env, &hash);
         let sig_ptr = write_data(&env, &sig);
-        let result = do_secp256k1_recover_pubkey(&env, hash_ptr, sig_ptr, recovery_param).unwrap();
+        let result = do_secp256k1_recover_pubkey(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            hash_ptr,
+            sig_ptr,
+            recovery_param,
+        )
+        .unwrap();
         let error = result >> 32;
         let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
         assert_eq!(error, 0);
@@ -1452,7 +1662,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_works() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1462,7 +1672,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             0
         );
     }
@@ -1470,7 +1686,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_msg_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // alter msg
@@ -1482,7 +1698,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             1
         );
     }
@@ -1490,7 +1712,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_msg_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // extend / break msg
@@ -1501,7 +1723,12 @@ mod tests {
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr);
+        let result = do_ed25519_verify(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            msg_ptr,
+            sig_ptr,
+            pubkey_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1514,7 +1741,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1526,7 +1753,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             1
         );
     }
@@ -1534,7 +1767,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1545,7 +1778,12 @@ mod tests {
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr);
+        let result = do_ed25519_verify(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            msg_ptr,
+            sig_ptr,
+            pubkey_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1558,7 +1796,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1570,7 +1808,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             4 // mapped InvalidSignatureFormat
         )
     }
@@ -1578,7 +1822,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_pubkey_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1590,7 +1834,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             1
         );
     }
@@ -1598,7 +1848,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1609,7 +1859,12 @@ mod tests {
         pubkey.push(0x00);
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr);
+        let result = do_ed25519_verify(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            msg_ptr,
+            sig_ptr,
+            pubkey_ptr,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1622,7 +1877,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1634,7 +1889,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1642,7 +1903,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1652,7 +1913,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1660,7 +1927,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (env, mut _instance, _store) = make_instance(api);
+        let (env, mut _instance, store) = make_instance(api);
 
         let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let msg_ptr = write_data(&env, &msg);
@@ -1670,7 +1937,13 @@ mod tests {
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
-            do_ed25519_verify(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_ed25519_verify(
+                &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+                msg_ptr,
+                sig_ptr,
+                pubkey_ptr
+            )
+            .unwrap(),
             1 // verification failure
         )
     }
@@ -1678,7 +1951,7 @@ mod tests {
     #[test]
     fn do_query_chain_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
             address: INIT_ADDR.to_string(),
@@ -1688,7 +1961,11 @@ mod tests {
 
         leave_default_data(&env);
 
-        let response_ptr = do_query_chain(&env, request_ptr).unwrap();
+        let response_ptr = do_query_chain(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            request_ptr,
+        )
+        .unwrap();
         let response = force_read(&env, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
@@ -1702,14 +1979,18 @@ mod tests {
     #[test]
     fn do_query_chain_fails_for_broken_request() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let request = b"Not valid JSON for sure";
         let request_ptr = write_data(&env, request);
 
         leave_default_data(&env);
 
-        let response_ptr = do_query_chain(&env, request_ptr).unwrap();
+        let response_ptr = do_query_chain(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            request_ptr,
+        )
+        .unwrap();
         let response = force_read(&env, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
@@ -1726,7 +2007,7 @@ mod tests {
     #[test]
     fn do_query_chain_fails_for_missing_contract() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let request: QueryRequest<Empty> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: String::from("non-existent"),
@@ -1737,7 +2018,11 @@ mod tests {
 
         leave_default_data(&env);
 
-        let response_ptr = do_query_chain(&env, request_ptr).unwrap();
+        let response_ptr = do_query_chain(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            request_ptr,
+        )
+        .unwrap();
         let response = force_read(&env, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
@@ -1755,11 +2040,17 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_unbound_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let id = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            0,
+            0,
+            Order::Ascending.into(),
+        )
+        .unwrap();
         assert_eq!(1, id);
 
         let item = env
@@ -1782,11 +2073,17 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_unbound_descending_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let id = do_db_scan(&env, 0, 0, Order::Descending.into()).unwrap();
+        let id = do_db_scan(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            0,
+            0,
+            Order::Descending.into(),
+        )
+        .unwrap();
         assert_eq!(1, id);
 
         let item = env
@@ -1809,7 +2106,7 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_bound_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         let start = write_data(&env, b"anna");
         let end = write_data(&env, b"bert");
@@ -1833,12 +2130,24 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_multiple_iterators() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         // unbounded, ascending and descending
-        let id1 = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
-        let id2 = do_db_scan(&env, 0, 0, Order::Descending.into()).unwrap();
+        let id1 = do_db_scan(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            0,
+            0,
+            Order::Ascending.into(),
+        )
+        .unwrap();
+        let id2 = do_db_scan(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            0,
+            0,
+            Order::Descending.into(),
+        )
+        .unwrap();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
@@ -1877,11 +2186,16 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_scan_errors_for_invalid_order_value() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let result = do_db_scan(&env, 0, 0, 42);
+        let result = do_db_scan(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            0,
+            0,
+            42,
+        );
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::InvalidOrder { .. },
@@ -1895,28 +2209,37 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_next_works() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         leave_default_data(&env);
 
-        let id = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            0,
+            0,
+            Order::Ascending.into(),
+        )
+        .unwrap();
 
         // Entry 1
-        let kv_region_ptr = do_db_next(&env, id).unwrap();
+        let kv_region_ptr =
+            do_db_next(&FunctionEnv::new(&mut store, env).into_mut(&mut store), id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
             [KEY1, b"\0\0\0\x03", VALUE1, b"\0\0\0\x06"].concat()
         );
 
         // Entry 2
-        let kv_region_ptr = do_db_next(&env, id).unwrap();
+        let kv_region_ptr =
+            do_db_next(&FunctionEnv::new(&mut store, env).into_mut(&mut store), id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
             [KEY2, b"\0\0\0\x04", VALUE2, b"\0\0\0\x05"].concat()
         );
 
         // End
-        let kv_region_ptr = do_db_next(&env, id).unwrap();
+        let kv_region_ptr =
+            do_db_next(&FunctionEnv::new(&mut store, env).into_mut(&mut store), id).unwrap();
         assert_eq!(force_read(&env, kv_region_ptr), b"\0\0\0\0\0\0\0\0");
         // API makes no guarantees for value_ptr in this case
     }
@@ -1925,12 +2248,15 @@ mod tests {
     #[cfg(feature = "iterator")]
     fn do_db_next_fails_for_non_existent_id() {
         let api = MockApi::default();
-        let (env, _instance, _store) = make_instance(api);
+        let (env, _instance, store) = make_instance(api);
 
         leave_default_data(&env);
 
         let non_existent_id = 42u32;
-        let result = do_db_next(&env, non_existent_id);
+        let result = do_db_next(
+            &FunctionEnv::new(&mut store, env).into_mut(&mut store),
+            non_existent_id,
+        );
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::IteratorDoesNotExist { id, .. },

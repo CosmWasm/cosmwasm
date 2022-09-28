@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
 use std::sync::Mutex;
@@ -50,7 +49,7 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     ///
     /// This instance should only be accessed via the Environment, which provides safe access.
     _inner: Box<WasmerInstance>,
-    env: FunctionEnv<Environment<A, S, Q>>,
+    env: Environment<A, S, Q>,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -104,14 +103,14 @@ where
         // Ownership of the value pointer is transferred to the contract.
         env_imports.insert(
             "db_read",
-            Function::new_typed_with_env(store, &env, do_db_read),
+            Function::new_typed_with_env(&mut store, &env, do_db_read),
         );
 
         // Writes the given value into the database entry at the given key.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "db_write",
-            Function::new_typed_with_env(store, &env, do_db_write),
+            Function::new_typed_with_env(&mut store, &env, do_db_write),
         );
 
         // Removes the value at the given key. Different than writing &[] as future
@@ -120,7 +119,7 @@ where
         // Ownership of both key pointer is not transferred to the host.
         env_imports.insert(
             "db_remove",
-            Function::new_typed_with_env(store, &env, do_db_remove),
+            Function::new_typed_with_env(&mut store, &env, do_db_remove),
         );
 
         // Reads human address from source_ptr and checks if it is valid.
@@ -128,7 +127,7 @@ where
         // Ownership of the input pointer is not transferred to the host.
         env_imports.insert(
             "addr_validate",
-            Function::new_typed_with_env(store, &env, do_addr_validate),
+            Function::new_typed_with_env(&mut store, &env, do_addr_validate),
         );
 
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
@@ -137,7 +136,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "addr_canonicalize",
-            Function::new_typed_with_env(store, &env, do_addr_canonicalize),
+            Function::new_typed_with_env(&mut store, &env, do_addr_canonicalize),
         );
 
         // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
@@ -146,7 +145,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "addr_humanize",
-            Function::new_typed_with_env(store, &env, do_addr_humanize),
+            Function::new_typed_with_env(&mut store, &env, do_addr_humanize),
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.
@@ -154,12 +153,12 @@ where
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "secp256k1_verify",
-            Function::new_typed_with_env(store, &env, do_secp256k1_verify),
+            Function::new_typed_with_env(&mut store, &env, do_secp256k1_verify),
         );
 
         env_imports.insert(
             "secp256k1_recover_pubkey",
-            Function::new_typed_with_env(store, &env, do_secp256k1_recover_pubkey),
+            Function::new_typed_with_env(&mut store, &env, do_secp256k1_recover_pubkey),
         );
 
         // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
@@ -167,7 +166,7 @@ where
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "ed25519_verify",
-            Function::new_typed_with_env(store, &env, do_ed25519_verify),
+            Function::new_typed_with_env(&mut store, &env, do_ed25519_verify),
         );
 
         // Verifies a batch of messages against a batch of signatures with a batch of public keys,
@@ -177,23 +176,29 @@ where
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "ed25519_batch_verify",
-            Function::new_typed_with_env(store, &env, do_ed25519_batch_verify),
+            Function::new_typed_with_env(&mut store, &env, do_ed25519_batch_verify),
         );
 
         // Allows the contract to emit debug logs that the host can either process or ignore.
         // This is never written to chain.
         // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
         // Ownership of both input and output pointer is not transferred to the host.
-        env_imports.insert("debug", Function::new_typed_with_env(store, &env, do_debug));
+        env_imports.insert(
+            "debug",
+            Function::new_typed_with_env(&store, &env, do_debug),
+        );
 
         // Aborts the contract execution with an error message provided by the contract.
         // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
         // Ownership of both input and output pointer is not transferred to the host.
-        env_imports.insert("abort", Function::new_typed_with_env(store, &env, do_abort));
+        env_imports.insert(
+            "abort",
+            Function::new_typed_with_env(&mut store, &env, do_abort),
+        );
 
         env_imports.insert(
             "query_chain",
-            Function::new_typed_with_env(store, &env, do_query_chain),
+            Function::new_typed_with_env(&mut store, &env, do_query_chain),
         );
 
         // Creates an iterator that will go from start to end.
@@ -205,7 +210,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_scan",
-            Function::new_typed_with_env(store, &env, do_db_scan),
+            Function::new_typed_with_env(&mut store, &env, do_db_scan),
         );
 
         // Get next element of iterator with ID `iterator_id`.
@@ -216,7 +221,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next",
-            Function::new_typed_with_env(store, &env, do_db_next),
+            Function::new_typed_with_env(&mut store, &env, do_db_next),
         );
 
         import_obj.register("env", env_imports);
@@ -248,15 +253,15 @@ where
         Ok(instance)
     }
 
-    pub fn api(&self, store: &impl AsStoreMut) -> &A {
-        &self.env.as_ref(store).api
+    pub fn api(&self) -> &A {
+        &self.env.api
     }
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(self, store: &impl AsStoreMut) -> Option<Backend<A, S, Q>> {
-        if let (Some(storage), Some(querier)) = self.env.as_ref(store).move_out() {
-            let api = self.env.as_ref(store).api;
+    pub fn recycle(self) -> Option<Backend<A, S, Q>> {
+        if let (Some(storage), Some(querier)) = self.env.move_out() {
+            let api = self.env.api;
             Some(Backend {
                 api,
                 storage,
@@ -280,25 +285,21 @@ where
     /// This provides a rough idea of the peak memory consumption. Note that
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
-    pub fn memory_pages(&self, store: &impl AsStoreMut) -> usize {
-        //self.env.as_ref(store).memory().size().0 as _
+    pub fn memory_pages(&self) -> usize {
         todo!()
     }
 
     /// Returns the currently remaining gas.
-    pub fn get_gas_left(&self, store: &impl AsStoreMut) -> u64 {
-        self.env.as_ref(store).get_gas_left()
+    pub fn get_gas_left(&self) -> u64 {
+        self.env.get_gas_left()
     }
 
     /// Creates and returns a gas report.
     /// This is a snapshot and multiple reports can be created during the lifetime of
     /// an instance.
-    pub fn create_gas_report(&self, store: &impl AsStoreMut) -> GasReport {
-        let state = self
-            .env
-            .as_ref(store)
-            .with_gas_state(|gas_state| gas_state.clone());
-        let gas_left = self.env.as_ref(store).get_gas_left();
+    pub fn create_gas_report(&self) -> GasReport {
+        let state = self.env.with_gas_state(|gas_state| gas_state.clone());
+        let gas_left = self.env.get_gas_left();
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,
@@ -316,34 +317,22 @@ where
     /// Sets the readonly storage flag on this instance. Since one instance can be used
     /// for multiple calls in integration tests, this should be set to the desired value
     /// right before every call.
-    pub fn set_storage_readonly(&mut self, new_value: bool, store: &impl AsStoreMut) {
-        self.env.as_ref(store).set_storage_readonly(new_value);
+    pub fn set_storage_readonly(&mut self, new_value: bool) {
+        self.env.set_storage_readonly(new_value);
     }
 
-    pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(
-        &mut self,
-        store: &impl AsStoreMut,
-        func: F,
-    ) -> VmResult<T> {
-        self.env
-            .as_ref(store)
-            .with_storage_from_context::<F, T>(func)
+    pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+        self.env.with_storage_from_context::<F, T>(func)
     }
 
-    pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(
-        &mut self,
-        store: &impl AsStoreMut,
-        func: F,
-    ) -> VmResult<T> {
-        self.env
-            .as_ref(store)
-            .with_querier_from_context::<F, T>(func)
+    pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+        self.env.with_querier_from_context::<F, T>(func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
-    pub(crate) fn allocate(&mut self, store: &impl AsStoreMut, size: usize) -> VmResult<u32> {
-        let ret = self.call_function1(store, "allocate", &[to_u32(size)?.into()])?;
+    pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
+        let ret = self.call_function1("allocate", &[to_u32(size)?.into()])?;
         let ptr = ref_to_u32(&ret)?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
@@ -354,29 +343,19 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub(crate) fn deallocate(&mut self, store: &impl AsStoreMut, ptr: u32) -> VmResult<()> {
-        self.call_function0(store, "deallocate", &[ptr.into()])?;
+    pub(crate) fn deallocate(&mut self, ctx: &mut impl AsStoreMut, ptr: u32) -> VmResult<()> {
+        self.call_function0(ctx, "deallocate", &[ptr.into()])?;
         Ok(())
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
-    pub(crate) fn read_memory(
-        &self,
-        store: &impl AsStoreMut,
-        region_ptr: u32,
-        max_length: usize,
-    ) -> VmResult<Vec<u8>> {
-        read_region(&self.env.as_ref(store).memory(), region_ptr, max_length)
+    pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
+        read_region(&self.env.memory(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
-    pub(crate) fn write_memory(
-        &mut self,
-        store: &impl AsStoreMut,
-        region_ptr: u32,
-        data: &[u8],
-    ) -> VmResult<()> {
-        write_region(&self.env.memory(store), region_ptr, data)?;
+    pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
+        write_region(&self.env.memory(), region_ptr, data)?;
         Ok(())
     }
 
@@ -384,22 +363,22 @@ where
     /// The function is expected to return no value. Otherwise this calls errors.
     pub(crate) fn call_function0(
         &self,
-        store: &impl AsStoreMut,
+        ctx: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<()> {
-        self.env.as_ref(store).call_function0(name, args)
+        self.env.call_function0(ctx, name, args)
     }
 
     /// Calls a function exported by the instance.
     /// The function is expected to return one value. Otherwise this calls errors.
     pub(crate) fn call_function1(
         &self,
-        store: &impl AsStoreMut,
+        ctx: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<Value> {
-        self.env.as_ref(store).call_function1(name, args)
+        self.env.call_function1(ctx, name, args)
     }
 }
 
@@ -817,24 +796,24 @@ mod tests {
     #[test]
     fn set_storage_readonly_works() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         assert!(instance.env.as_ref(&mut store).is_storage_readonly());
 
-        instance.set_storage_readonly(false, &mut store);
+        instance.set_storage_readonly(&mut store, false);
         assert!(!instance.env.as_ref(&mut store).is_storage_readonly());
 
-        instance.set_storage_readonly(false, &mut store);
+        instance.set_storage_readonly(&mut store, false);
         assert!(!instance.env.as_ref(&mut store).is_storage_readonly());
 
-        instance.set_storage_readonly(true, &mut store);
+        instance.set_storage_readonly(&mut store, true);
         assert!(instance.env.as_ref(&mut store).is_storage_readonly());
     }
 
     #[test]
     fn with_storage_works() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // initial check
         instance
@@ -866,7 +845,7 @@ mod tests {
     fn with_storage_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
         instance
             .with_storage::<_, ()>(&mut store, |_store| panic!("trigger failure"))
             .unwrap();
@@ -878,8 +857,7 @@ mod tests {
 
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance =
-            mock_instance_with_balances(&mut store, CONTRACT, &[(&rich_addr, &rich_balance)]);
+        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance)]);
 
         // query one
         instance
@@ -937,8 +915,7 @@ mod tests {
         let rich_addr = String::from("foobar");
         let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
         let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance =
-            mock_instance_with_balances(&mut store, CONTRACT, &[(&rich_addr, &rich_balance1)]);
+        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance1)]);
 
         // Get initial state
         instance
@@ -993,8 +970,9 @@ mod tests {
 
     #[test]
     fn contract_deducts_gas_init() {
-        let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut store = Store::default();
+
+        let mut instance = mock_instance(CONTRACT, &[]);
         let orig_gas = instance.get_gas_left(&mut store);
 
         // init contract
@@ -1010,8 +988,9 @@ mod tests {
 
     #[test]
     fn contract_deducts_gas_execute() {
-        let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut store = Store::default();
+
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -1034,8 +1013,9 @@ mod tests {
 
     #[test]
     fn contract_enforces_gas_limit() {
-        let store = Store::default();
-        let mut instance = mock_instance_with_gas_limit(&mut store, CONTRACT, 20_000);
+        let mut store = Store::default();
+
+        let mut instance = mock_instance_with_gas_limit(CONTRACT, 20_000);
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -1046,8 +1026,9 @@ mod tests {
 
     #[test]
     fn query_works_with_gas_metering() {
-        let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut store = Store::default();
+
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));

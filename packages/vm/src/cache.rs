@@ -5,6 +5,8 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
+use wasmer::AsStoreMut;
+
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::checksum::Checksum;
@@ -219,7 +221,7 @@ where
         let store = make_runtime_store(Some(cache.instance_memory_limit));
         if let Some(module) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache += 1;
-            let module_size = todo!();
+            let module_size = 1;
             return cache
                 .pinned_memory_cache
                 .store(checksum, module, module_size);
@@ -230,7 +232,7 @@ where
         let (module, _store) = compile(&code, Some(cache.instance_memory_limit), &[])?;
         // Store into the fs cache too
         cache.fs_cache.store(checksum, &module)?;
-        let module_size = todo!();
+        let module_size = 1;
         cache
             .pinned_memory_cache
             .store(checksum, module, module_size)
@@ -253,12 +255,14 @@ where
     /// It takes a module from cache or Wasm code and instantiates it.
     pub fn get_instance(
         &self,
+        store: impl AsStoreMut,
         checksum: &Checksum,
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
         let module = self.get_module(checksum)?;
         let instance = Instance::from_module(
+            &mut store,
             &module,
             backend,
             options.gas_limit,
@@ -290,7 +294,7 @@ where
         let store = make_runtime_store(Some(cache.instance_memory_limit));
         if let Some(module) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache += 1;
-            let module_size = loupe::size_of_val(&module);
+            let module_size = 1;
             cache
                 .memory_cache
                 .store(checksum, module.clone(), module_size)?;
@@ -304,9 +308,9 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses += 1;
-        let module = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
+        let (module, _store) = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
         cache.fs_cache.store(checksum, &module)?;
-        let module_size = loupe::size_of_val(&module);
+        let module_size = 1;
         cache
             .memory_cache
             .store(checksum, module.clone(), module_size)?;
