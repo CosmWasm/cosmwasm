@@ -5,4 +5,5 @@ mod store;
 
 pub use compile::compile;
 pub use limiting_tunables::LimitingTunables;
+pub use store::make_compile_time_store;
 pub use store::make_runtime_store;

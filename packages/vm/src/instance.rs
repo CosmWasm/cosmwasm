@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
 use std::sync::Mutex;
@@ -21,7 +22,7 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::compile;
+use crate::wasm_backend::{compile, make_compile_time_store};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -61,12 +62,13 @@ where
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
-        store: &mut Store,
         code: &[u8],
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
+        let store = make_compile_time_store(memory_limit, &[]);
+
         let (module, _) = compile(code, memory_limit, &[])?;
         Instance::from_module(
             store,
@@ -79,8 +81,8 @@ where
         )
     }
 
-    pub(crate) fn from_module(
-        store: &mut Store,
+    pub(crate) fn from_module<'s>(
+        store: impl wasmer::AsStoreMut,
         module: &Module,
         backend: Backend<A, S, Q>,
         gas_limit: u64,
