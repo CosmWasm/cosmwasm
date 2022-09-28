@@ -42,14 +42,14 @@ pub fn make_compile_time_store(
 
     #[cfg(feature = "cranelift")]
     {
-        let mut config = Cranelift::default();
+        let mut compiler = Cranelift::default();
         for middleware in middlewares {
-            config.push_middleware(middleware.clone());
+            compiler.push_middleware(middleware.clone());
         }
-        config.push_middleware(deterministic);
-        config.push_middleware(metering);
-        let engine = Engine::new(config).engine();
-        make_store_with_engine(&engine, memory_limit)
+        compiler.push_middleware(deterministic);
+        compiler.push_middleware(metering);
+
+        make_store_with_engine(compiler.into(), memory_limit)
     }
 
     #[cfg(not(feature = "cranelift"))]
@@ -60,7 +60,8 @@ pub fn make_compile_time_store(
         }
         compiler.push_middleware(deterministic);
         compiler.push_middleware(metering);
-        make_store_with_engine(compiler, memory_limit)
+
+        make_store_with_engine(compiler.into(), memory_limit)
     }
 }
 
@@ -68,12 +69,12 @@ pub fn make_compile_time_store(
 /// If memory_limit is None, no limit is applied.
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
     let engine = Engine::headless();
-    make_store_with_engine(&engine, memory_limit)
+    make_store_with_engine(engine, memory_limit)
 }
 
 /// Creates a store from an engine and an optional memory limit.
 /// If no limit is set, the no custom tunables will be used.
-fn make_store_with_engine(engine: impl Into<Engine>, memory_limit: Option<Size>) -> Store {
+fn make_store_with_engine(engine: Engine, memory_limit: Option<Size>) -> Store {
     match memory_limit {
         Some(limit) => {
             let base = BaseTunables::for_target(&Target::default());
