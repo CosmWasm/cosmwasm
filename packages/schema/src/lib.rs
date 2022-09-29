@@ -6,7 +6,7 @@ mod remove;
 
 pub use export::{export_schema, export_schema_with_title};
 pub use idl::{Api, IDL_VERSION};
-pub use query_response::QueryResponses;
+pub use query_response::{IntegrityError, QueryResponses};
 pub use remove::remove_schemas;
 
 // Re-exports
