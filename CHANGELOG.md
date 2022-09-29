@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.3] - 2022-09-29
+
 ### Fixed
 
 - cosmwasm-schema: `IntegrityError` is now public
