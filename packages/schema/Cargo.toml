@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-schema"
-version = "1.1.2"
+version = "1.1.3"
 authors = ["Simon Warta <webmaster128@users.noreply.github.com>", "Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "A dev-dependency for CosmWasm contracts to generate JSON Schema files."
@@ -8,7 +8,7 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/schema"
 license = "Apache-2.0"
 
 [dependencies]
-cosmwasm-schema-derive = { version = "=1.1.2", path = "../schema-derive" }
+cosmwasm-schema-derive = { version = "=1.1.3", path = "../schema-derive" }
 schemars = "0.8.1"
 serde = "1.0"
 serde_json = "1.0"
