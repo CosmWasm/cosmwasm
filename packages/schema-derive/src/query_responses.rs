@@ -85,14 +85,10 @@ fn parse_subquery(v: Variant) -> Expr {
 
 /// Checks whether the input has the given #[query_responses($attr))] attribute
 fn has_attr(input: &ItemEnum, path: &str, attr: &str) -> bool {
-    input
-        .attrs
-        .iter()
-        .find(|a| {
-            a.path.get_ident().unwrap() == path
-                && a.parse_args::<Ident>().ok().map_or(false, |i| i == attr)
-        })
-        .is_some()
+    input.attrs.iter().any(|a| {
+        a.path.get_ident().unwrap() == path
+            && a.parse_args::<Ident>().ok().map_or(false, |i| i == attr)
+    })
 }
 
 fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {

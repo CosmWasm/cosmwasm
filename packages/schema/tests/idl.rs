@@ -147,7 +147,7 @@ fn test_query_responses_generics() {
     api.get("responses").unwrap().get("query_data").unwrap();
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
 #[serde(untagged)]
 #[query_responses(nested)]
 pub enum NestedQueryMsg {
@@ -155,7 +155,7 @@ pub enum NestedQueryMsg {
     Sub(SubQueryMsg1),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
 #[serde(rename_all = "snake_case")]
 pub enum SubQueryMsg1 {
     #[returns(u128)]
