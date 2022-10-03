@@ -6,7 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
-- cosmwasm-schema: Properly analyzing schemas generated for `untagged` enums
+## [1.1.4] - 2022-10-03
+
+### Fixed
+
+- cosmwasm-schema: Properly analyze schemas generated for `untagged` enums
 
 ## [1.1.3] - 2022-09-29
 
