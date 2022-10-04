@@ -30,6 +30,20 @@ pub use cosmwasm_schema_derive::QueryResponses;
 ///     #[returns(AccountInfo)]
 ///     AccountInfo { account: String },
 /// }
+///
+/// // You can also compose multiple queries using #[query_responses(nested)]:
+/// #[derive(JsonSchema, QueryResponses)]
+/// #[query_responses(nested)]
+/// #[serde(untagged)]
+/// enum QueryMsg2 {
+///     MsgA(QueryMsg),
+///     MsgB(QueryB),
+/// }
+/// #[derive(JsonSchema, QueryResponses)]
+/// enum QueryB {
+///     #[returns(AccountInfo)]
+///     AccountInfo { account: String },
+/// }
 /// ```
 pub trait QueryResponses: JsonSchema {
     fn response_schemas() -> Result<BTreeMap<String, RootSchema>, IntegrityError> {
@@ -43,6 +57,22 @@ pub trait QueryResponses: JsonSchema {
     }
 
     fn response_schemas_impl() -> BTreeMap<String, RootSchema>;
+}
+
+/// Combines multiple response schemas into one. Panics if there are name collisions.
+/// Used internally in the implementation of [`QueryResponses`] when using `#[query_responses(nested)]`
+pub fn combine_subqueries<const N: usize, T>(
+    subqueries: [BTreeMap<String, RootSchema>; N],
+) -> BTreeMap<String, RootSchema> {
+    let sub_count = subqueries.iter().flatten().count();
+    let map: BTreeMap<_, _> = subqueries.into_iter().flatten().collect();
+    if map.len() != sub_count {
+        panic!(
+            "name collision in subqueries for {}",
+            std::any::type_name::<T>()
+        )
+    }
+    map
 }
 
 /// Returns possible enum variants from `one_of` analysis

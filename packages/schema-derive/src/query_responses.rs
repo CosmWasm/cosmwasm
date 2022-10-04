@@ -1,23 +1,47 @@
-use syn::{parse_quote, Expr, ExprTuple, ItemEnum, ItemImpl, Type, Variant};
+use syn::{parse_quote, Expr, ExprTuple, Ident, ItemEnum, ItemImpl, Type, Variant};
 
 pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
-    let ident = input.ident;
-    let mappings = input.variants.into_iter().map(parse_query);
-    let mut queries: Vec<_> = mappings.clone().map(|(q, _)| q).collect();
-    queries.sort();
-    let mappings = mappings.map(parse_tuple);
+    let is_nested = has_attr(&input, "query_responses", "nested");
 
-    // Handle generics if the type has any
-    let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+    if is_nested {
+        let ident = input.ident;
+        let subquery_calls = input.variants.into_iter().map(parse_subquery);
 
-    parse_quote! {
-        #[automatically_derived]
-        #[cfg(not(target_arch = "wasm32"))]
-        impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
-            fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
-                ::std::collections::BTreeMap::from([
-                    #( #mappings, )*
-                ])
+        // Handle generics if the type has any
+        let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+
+        let subquery_len = subquery_calls.len();
+        parse_quote! {
+            #[automatically_derived]
+            #[cfg(not(target_arch = "wasm32"))]
+            impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
+                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    let subqueries = [
+                        #( #subquery_calls, )*
+                    ];
+                    ::cosmwasm_schema::combine_subqueries::<#subquery_len, #ident>(subqueries)
+                }
+            }
+        }
+    } else {
+        let ident = input.ident;
+        let mappings = input.variants.into_iter().map(parse_query);
+        let mut queries: Vec<_> = mappings.clone().map(|(q, _)| q).collect();
+        queries.sort();
+        let mappings = mappings.map(parse_tuple);
+
+        // Handle generics if the type has any
+        let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+
+        parse_quote! {
+            #[automatically_derived]
+            #[cfg(not(target_arch = "wasm32"))]
+            impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
+                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    ::std::collections::BTreeMap::from([
+                        #( #mappings, )*
+                    ])
+                }
             }
         }
     }
@@ -38,6 +62,30 @@ fn parse_query(v: Variant) -> (String, Expr) {
         query,
         parse_quote!(::cosmwasm_schema::schema_for!(#response_ty)),
     )
+}
+
+/// Extract the nested query  -> response mapping out of an enum variant.
+fn parse_subquery(v: Variant) -> Expr {
+    let submsg = match v.fields {
+        syn::Fields::Named(_) => panic!("a struct variant is not a valid subquery"),
+        syn::Fields::Unnamed(fields) => {
+            if fields.unnamed.len() != 1 {
+                panic!("invalid number of subquery parameters");
+            }
+
+            fields.unnamed[0].ty.clone()
+        }
+        syn::Fields::Unit => panic!("a unit variant is not a valid subquery"),
+    };
+    parse_quote!(<#submsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl())
+}
+
+/// Checks whether the input has the given `#[$path($attr))]` attribute
+fn has_attr(input: &ItemEnum, path: &str, attr: &str) -> bool {
+    input.attrs.iter().any(|a| {
+        a.path.get_ident().unwrap() == path
+            && a.parse_args::<Ident>().ok().map_or(false, |i| i == attr)
+    })
 }
 
 fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {
@@ -267,5 +315,108 @@ mod tests {
     fn to_snake_case_works() {
         assert_eq!(to_snake_case("SnakeCase"), "snake_case");
         assert_eq!(to_snake_case("Wasm123AndCo"), "wasm123_and_co");
+    }
+
+    #[test]
+    fn nested_works() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(untagged)]
+            #[query_responses(nested)]
+            pub enum ContractQueryMsg {
+                Cw1(QueryMsg1),
+                Whitelist(whitelist::QueryMsg),
+                Cw1WhitelistContract(QueryMsg),
+            }
+        };
+        let result = query_responses_derive_impl(input);
+        assert_eq!(
+            result,
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl ::cosmwasm_schema::QueryResponses for ContractQueryMsg {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        let subqueries = [
+                            <QueryMsg1 as ::cosmwasm_schema::QueryResponses>::response_schemas_impl(),
+                            <whitelist::QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl(),
+                            <QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl(),
+                        ];
+                        ::cosmwasm_schema::combine_subqueries::<3usize, ContractQueryMsg>(subqueries)
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn nested_empty() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(untagged)]
+            #[query_responses(nested)]
+            pub enum EmptyMsg {}
+        };
+        let result = query_responses_derive_impl(input);
+        assert_eq!(
+            result,
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl ::cosmwasm_schema::QueryResponses for EmptyMsg {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                        let subqueries = [];
+                        ::cosmwasm_schema::combine_subqueries::<0usize, EmptyMsg>(subqueries)
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid number of subquery parameters")]
+    fn nested_too_many_params() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(untagged)]
+            #[query_responses(nested)]
+            pub enum ContractQueryMsg {
+                Msg1(QueryMsg1, QueryMsg2),
+                Whitelist(whitelist::QueryMsg),
+            }
+        };
+        query_responses_derive_impl(input);
+    }
+
+    #[test]
+    #[should_panic(expected = "a struct variant is not a valid subquery")]
+    fn nested_mixed() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(untagged)]
+            #[query_responses(nested)]
+            pub enum ContractQueryMsg {
+                Cw1(cw1::QueryMsg),
+                Test {
+                    mixed: bool,
+                }
+            }
+        };
+        query_responses_derive_impl(input);
+    }
+
+    #[test]
+    #[should_panic(expected = "a unit variant is not a valid subquery")]
+    fn nested_unit_variant() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(untagged)]
+            #[query_responses(nested)]
+            pub enum ContractQueryMsg {
+                Cw1(cw1::QueryMsg),
+                Whitelist,
+            }
+        };
+        query_responses_derive_impl(input);
     }
 }

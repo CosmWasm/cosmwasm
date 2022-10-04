@@ -136,13 +136,119 @@ fn test_query_responses_generics() {
         .as_array()
         .unwrap();
 
-    // Find the "balance" query in the queries schema
+    // Find the "query_data" query in the queries schema
     assert_eq!(queries.len(), 1);
     assert_eq!(
         queries[0].get("required").unwrap().get(0).unwrap(),
         "query_data"
     );
 
-    // Find the "balance" query in responses
+    // Find the "query_data" query in responses
     api.get("responses").unwrap().get("query_data").unwrap();
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[serde(untagged)]
+#[query_responses(nested)]
+pub enum NestedQueryMsg {
+    Query(QueryMsg),
+    Sub(SubQueryMsg1),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[serde(rename_all = "snake_case")]
+pub enum SubQueryMsg1 {
+    #[returns(u128)]
+    Variant1 { test: String },
+}
+
+#[test]
+fn test_nested_query_responses() {
+    let api_str = generate_api! {
+        instantiate: InstantiateMsg,
+        query: NestedQueryMsg,
+    }
+    .render()
+    .to_string()
+    .unwrap();
+
+    let api: Value = serde_json::from_str(&api_str).unwrap();
+    let queries = api
+        .get("query")
+        .unwrap()
+        .get("anyOf")
+        .unwrap()
+        .as_array()
+        .unwrap();
+    let definitions = api.get("query").unwrap().get("definitions").unwrap();
+
+    // Find the subqueries
+    assert_eq!(queries.len(), 2);
+    assert_eq!(
+        queries[0].get("$ref").unwrap().as_str().unwrap(),
+        "#/definitions/QueryMsg"
+    );
+    assert_eq!(
+        queries[1].get("$ref").unwrap().as_str().unwrap(),
+        "#/definitions/SubQueryMsg1"
+    );
+    let query_msg_queries = definitions
+        .get("QueryMsg")
+        .unwrap()
+        .get("oneOf")
+        .unwrap()
+        .as_array()
+        .unwrap();
+    let sub_query_msg_queries = definitions
+        .get("SubQueryMsg1")
+        .unwrap()
+        .get("oneOf")
+        .unwrap()
+        .as_array()
+        .unwrap();
+
+    // Find "balance" and "variant1" queries in the query schema
+    assert_eq!(
+        query_msg_queries[0]
+            .get("required")
+            .unwrap()
+            .get(0)
+            .unwrap(),
+        "balance"
+    );
+    assert_eq!(
+        sub_query_msg_queries[0]
+            .get("required")
+            .unwrap()
+            .get(0)
+            .unwrap(),
+        "variant1"
+    );
+
+    // Find "balance" and "variant1" queries in responses
+    api.get("responses").unwrap().get("balance").unwrap();
+    api.get("responses").unwrap().get("variant1").unwrap();
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[serde(rename_all = "snake_case")]
+enum QueryMsg2 {
+    #[returns(u128)]
+    Balance {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[query_responses(nested)]
+enum NestedNameCollision {
+    Q1(QueryMsg),
+    Q2(QueryMsg2),
+}
+
+#[test]
+#[should_panic = "name collision in subqueries for idl::NestedNameCollision"]
+fn nested_name_collision_caught() {
+    generate_api! {
+        instantiate: InstantiateMsg,
+        query: NestedNameCollision,
+    };
 }
