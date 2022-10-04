@@ -83,7 +83,7 @@ fn parse_subquery(v: Variant) -> Expr {
     parse_quote!(<#submsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl())
 }
 
-/// Checks whether the input has the given #[query_responses($attr))] attribute
+/// Checks whether the input has the given `#[$path($attr))]` attribute
 fn has_attr(input: &ItemEnum, path: &str, attr: &str) -> bool {
     input.attrs.iter().any(|a| {
         a.path.get_ident().unwrap() == path
