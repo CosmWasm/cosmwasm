@@ -4,9 +4,6 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     let is_nested = has_attr(&input, "query_responses", "nested");
 
     if is_nested {
-        if !has_attr(&input, "serde", "untagged") {
-            panic!("#[query_responses(nested)] only makes sense in conjunction with #[serde(untagged)]");
-        }
         let ident = input.ident;
         let subquery_calls = input.variants.into_iter().map(parse_subquery);
 
@@ -403,21 +400,6 @@ mod tests {
                 Test {
                     mixed: bool,
                 }
-            }
-        };
-        query_responses_derive_impl(input);
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "#[query_responses(nested)] only makes sense in conjunction with #[serde(untagged)]"
-    )]
-    fn nested_without_untagged() {
-        let input: ItemEnum = parse_quote! {
-            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
-            #[query_responses(nested)]
-            pub enum ContractQueryMsg {
-                Cw1(cw1::QueryMsg),
             }
         };
         query_responses_derive_impl(input);
