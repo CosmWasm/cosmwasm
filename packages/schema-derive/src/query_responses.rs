@@ -70,7 +70,7 @@ fn parse_query(v: Variant) -> (String, Expr) {
 /// Extract the nested query  -> response mapping out of an enum variant.
 fn parse_subquery(v: Variant) -> Expr {
     let submsg = match v.fields {
-        syn::Fields::Named(_) => panic!("nested query response can only contain tuple structs"),
+        syn::Fields::Named(_) => panic!("a struct variant is not a valid subquery"),
         syn::Fields::Unnamed(fields) => {
             if fields.unnamed.len() != 1 {
                 panic!("invalid number of subquery parameters");
@@ -392,7 +392,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "nested query response can only contain tuple structs")]
+    #[should_panic(expected = "a struct variant is not a valid subquery")]
     fn nested_mixed() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
