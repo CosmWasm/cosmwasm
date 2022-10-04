@@ -229,3 +229,26 @@ fn test_nested_query_responses() {
     api.get("responses").unwrap().get("balance").unwrap();
     api.get("responses").unwrap().get("variant1").unwrap();
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[serde(rename_all = "snake_case")]
+enum QueryMsg2 {
+    #[returns(u128)]
+    Balance {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[query_responses(nested)]
+enum NestedNameCollision {
+    Q1(QueryMsg),
+    Q2(QueryMsg2),
+}
+
+#[test]
+#[should_panic = "name collision in subqueries for idl::NestedNameCollision"]
+fn nested_name_collision_caught() {
+    generate_api! {
+        instantiate: InstantiateMsg,
+        query: NestedNameCollision,
+    };
+}
