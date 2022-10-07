@@ -14,6 +14,10 @@ and this project adheres to
   `ed25519_verify` and `ed25519_batch_verify` import implementations we now exit
   early if the gas left is not sufficient to perform the operation.
 
+### Changed
+
+- cosmwasm-std: Remove non_exhaustive from IBC message types
+
 ## [1.1.4] - 2022-10-03
 
 ### Fixed
