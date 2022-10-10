@@ -13,6 +13,8 @@ pub fn write_api_impl(input: Options) -> Block {
 
     parse_quote! {
         {
+            #[cfg(target_arch = "wasm32")]
+            compile_error!("can't compile schema generator for the `wasm32` arch\nhint: are you trying to compile a smart contract without specifying `--lib`?");
             use ::std::env::current_dir;
             use ::std::fs::{create_dir_all, write};
 

@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-schema: Better error messaging when attempting to compile schema
+  generator for `wasm32`
+
 ## [1.1.4] - 2022-10-03
 
 ### Fixed
