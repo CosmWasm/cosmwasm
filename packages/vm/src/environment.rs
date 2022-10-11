@@ -244,9 +244,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
-    pub fn get_gas_left(&self) -> u64 {
+    pub fn get_gas_left(&self, store: &mut impl AsStoreMut) -> u64 {
         self.with_wasmer_instance(|instance| {
-            Ok(match get_remaining_points(instance) {
+            Ok(match get_remaining_points(store, instance) {
                 MeteringPoints::Remaining(count) => count,
                 MeteringPoints::Exhausted => 0,
             })
@@ -254,9 +254,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
-    pub fn set_gas_left(&self, new_value: u64) {
+    pub fn set_gas_left(&self, store: &mut impl AsStoreMut, new_value: u64) {
         self.with_wasmer_instance(|instance| {
-            set_remaining_points(instance, new_value);
+            set_remaining_points(store, instance, new_value);
             Ok(())
         })
         .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
@@ -266,17 +266,17 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     /// If the amount exceeds the available gas, the remaining gas is set to 0 and
     /// an VmError::GasDepletion error is returned.
     #[allow(unused)] // used in tests
-    pub fn decrease_gas_left(&self, amount: u64) -> VmResult<()> {
+    pub fn decrease_gas_left(&self, store: &mut impl AsStoreMut, amount: u64) -> VmResult<()> {
         self.with_wasmer_instance(|instance| {
-            let remaining = match get_remaining_points(instance) {
+            let remaining = match get_remaining_points(store, instance) {
                 MeteringPoints::Remaining(count) => count,
                 MeteringPoints::Exhausted => 0,
             };
             if amount > remaining {
-                set_remaining_points(instance, 0);
+                set_remaining_points(store, instance, 0);
                 Err(VmError::gas_depletion())
             } else {
-                set_remaining_points(instance, remaining - amount);
+                set_remaining_points(store, instance, remaining - amount);
                 Ok(())
             }
         })
@@ -341,10 +341,11 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
 }
 
 pub fn process_gas_info<A: BackendApi, S: Storage, Q: Querier>(
+    store: &mut impl AsStoreMut,
     env: &Environment<A, S, Q>,
     info: GasInfo,
 ) -> VmResult<()> {
-    let gas_left = env.get_gas_left();
+    let gas_left = env.get_gas_left(store);
 
     let new_limit = env.with_gas_state_mut(|gas_state| {
         gas_state.externally_used_gas += info.externally_used;
@@ -356,7 +357,7 @@ pub fn process_gas_info<A: BackendApi, S: Storage, Q: Querier>(
     });
 
     // This tells wasmer how much more gas it can consume from this point in time.
-    env.set_gas_left(new_limit);
+    env.set_gas_left(store, new_limit);
 
     if info.externally_used + info.cost > gas_left {
         Err(VmError::gas_depletion())
@@ -426,7 +427,7 @@ mod tests {
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
-        env.set_gas_left(gas_limit);
+        env.set_gas_left(&mut store, gas_limit);
 
         (env, instance, store)
     }
@@ -470,21 +471,21 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_for_cost() {
-        let (env, _instance, _store) = make_instance(100);
-        assert_eq!(env.get_gas_left(), 100);
+        let (env, _instance, store) = make_instance(100);
+        assert_eq!(env.get_gas_left(&mut store), 100);
 
         // Consume all the Gas that we allocated
-        process_gas_info(&env, GasInfo::with_cost(70)).unwrap();
-        assert_eq!(env.get_gas_left(), 30);
-        process_gas_info(&env, GasInfo::with_cost(4)).unwrap();
-        assert_eq!(env.get_gas_left(), 26);
-        process_gas_info(&env, GasInfo::with_cost(6)).unwrap();
-        assert_eq!(env.get_gas_left(), 20);
-        process_gas_info(&env, GasInfo::with_cost(20)).unwrap();
-        assert_eq!(env.get_gas_left(), 0);
+        process_gas_info(&mut store, &env, GasInfo::with_cost(70)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 30);
+        process_gas_info(&mut store, &env, GasInfo::with_cost(4)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 26);
+        process_gas_info(&mut store, &env, GasInfo::with_cost(6)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 20);
+        process_gas_info(&mut store, &env, GasInfo::with_cost(20)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 0);
 
         // Using one more unit of gas triggers a failure
-        match process_gas_info(&env, GasInfo::with_cost(1)).unwrap_err() {
+        match process_gas_info(&mut store, &env, GasInfo::with_cost(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -492,21 +493,21 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_for_externally_used() {
-        let (env, _instance, _store) = make_instance(100);
-        assert_eq!(env.get_gas_left(), 100);
+        let (env, _instance, store) = make_instance(100);
+        assert_eq!(env.get_gas_left(&mut store), 100);
 
         // Consume all the Gas that we allocated
-        process_gas_info(&env, GasInfo::with_externally_used(70)).unwrap();
-        assert_eq!(env.get_gas_left(), 30);
-        process_gas_info(&env, GasInfo::with_externally_used(4)).unwrap();
-        assert_eq!(env.get_gas_left(), 26);
-        process_gas_info(&env, GasInfo::with_externally_used(6)).unwrap();
-        assert_eq!(env.get_gas_left(), 20);
-        process_gas_info(&env, GasInfo::with_externally_used(20)).unwrap();
-        assert_eq!(env.get_gas_left(), 0);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(70)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 30);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(4)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 26);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(6)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 20);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(20)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 0);
 
         // Using one more unit of gas triggers a failure
-        match process_gas_info(&env, GasInfo::with_externally_used(1)).unwrap_err() {
+        match process_gas_info(&mut store, &env, GasInfo::with_externally_used(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -514,46 +515,46 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_for_cost_and_externally_used() {
-        let (env, _instance, _store) = make_instance(100);
-        assert_eq!(env.get_gas_left(), 100);
+        let (env, _instance, store) = make_instance(100);
+        assert_eq!(env.get_gas_left(&mut store), 100);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 0);
 
-        process_gas_info(&env, GasInfo::new(17, 4)).unwrap();
-        assert_eq!(env.get_gas_left(), 79);
+        process_gas_info(&mut store, &env, GasInfo::new(17, 4)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 79);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 4);
 
-        process_gas_info(&env, GasInfo::new(9, 0)).unwrap();
-        assert_eq!(env.get_gas_left(), 70);
+        process_gas_info(&mut store, &env, GasInfo::new(9, 0)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 70);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 4);
 
-        process_gas_info(&env, GasInfo::new(0, 70)).unwrap();
-        assert_eq!(env.get_gas_left(), 0);
+        process_gas_info(&mut store, &env, GasInfo::new(0, 70)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 0);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 74);
 
         // More cost fail but do not change stats
-        match process_gas_info(&env, GasInfo::new(1, 0)).unwrap_err() {
+        match process_gas_info(&mut store, &env, GasInfo::new(1, 0)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
-        assert_eq!(env.get_gas_left(), 0);
+        assert_eq!(env.get_gas_left(&mut store), 0);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 74);
 
         // More externally used fails and changes stats
-        match process_gas_info(&env, GasInfo::new(0, 1)).unwrap_err() {
+        match process_gas_info(&mut store, &env, GasInfo::new(0, 1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
-        assert_eq!(env.get_gas_left(), 0);
+        assert_eq!(env.get_gas_left(&mut store), 0);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 75);
@@ -563,13 +564,13 @@ mod tests {
     fn process_gas_info_zeros_gas_left_when_exceeded() {
         // with_externally_used
         {
-            let (env, _instance, _store) = make_instance(100);
-            let result = process_gas_info(&env, GasInfo::with_externally_used(120));
+            let (env, _instance, store) = make_instance(100);
+            let result = process_gas_info(&mut store, &env, GasInfo::with_externally_used(120));
             match result.unwrap_err() {
                 VmError::GasDepletion { .. } => {}
                 err => panic!("unexpected error: {:?}", err),
             }
-            assert_eq!(env.get_gas_left(), 0);
+            assert_eq!(env.get_gas_left(&mut store), 0);
             let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
             assert_eq!(gas_state.gas_limit, 100);
             assert_eq!(gas_state.externally_used_gas, 120);
@@ -577,13 +578,13 @@ mod tests {
 
         // with_cost
         {
-            let (env, _instance, _store) = make_instance(100);
-            let result = process_gas_info(&env, GasInfo::with_cost(120));
+            let (env, _instance, store) = make_instance(100);
+            let result = process_gas_info(&mut store, &env, GasInfo::with_cost(120));
             match result.unwrap_err() {
                 VmError::GasDepletion { .. } => {}
                 err => panic!("unexpected error: {:?}", err),
             }
-            assert_eq!(env.get_gas_left(), 0);
+            assert_eq!(env.get_gas_left(&mut store), 0);
             let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
             assert_eq!(gas_state.gas_limit, 100);
             assert_eq!(gas_state.externally_used_gas, 0);
@@ -592,26 +593,26 @@ mod tests {
 
     #[test]
     fn process_gas_info_works_correctly_with_gas_consumption_in_wasmer() {
-        let (env, _instance, _store) = make_instance(100);
-        assert_eq!(env.get_gas_left(), 100);
+        let (env, _instance, store) = make_instance(100);
+        assert_eq!(env.get_gas_left(&mut store), 100);
 
         // Some gas was consumed externally
-        process_gas_info(&env, GasInfo::with_externally_used(50)).unwrap();
-        assert_eq!(env.get_gas_left(), 50);
-        process_gas_info(&env, GasInfo::with_externally_used(4)).unwrap();
-        assert_eq!(env.get_gas_left(), 46);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(50)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 50);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(4)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 46);
 
         // Consume 20 gas directly in wasmer
-        env.decrease_gas_left(20).unwrap();
-        assert_eq!(env.get_gas_left(), 26);
+        env.decrease_gas_left(&mut store, 20).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 26);
 
-        process_gas_info(&env, GasInfo::with_externally_used(6)).unwrap();
-        assert_eq!(env.get_gas_left(), 20);
-        process_gas_info(&env, GasInfo::with_externally_used(20)).unwrap();
-        assert_eq!(env.get_gas_left(), 0);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(6)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 20);
+        process_gas_info(&mut store, &env, GasInfo::with_externally_used(20)).unwrap();
+        assert_eq!(env.get_gas_left(&mut store), 0);
 
         // Using one more unit of gas triggers a failure
-        match process_gas_info(&env, GasInfo::with_externally_used(1)).unwrap_err() {
+        match process_gas_info(&mut store, &env, GasInfo::with_externally_used(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -619,7 +620,7 @@ mod tests {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (env, _instance, _store) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _instance, store) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         assert!(env.is_storage_readonly());

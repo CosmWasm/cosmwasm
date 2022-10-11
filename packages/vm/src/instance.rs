@@ -65,10 +65,9 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
         memory_limit: Option<Size>,
-    ) -> VmResult<Self> {
-        let store = make_compile_time_store(memory_limit, &[]);
+    ) -> VmResult<(Self, Store)> {
+        let (module, store) = compile(code, memory_limit, &[])?;
 
-        let (module, _) = compile(code, memory_limit, &[])?;
         Instance::from_module(
             store,
             &module,
@@ -78,6 +77,7 @@ where
             None,
             None,
         )
+        .map(|instance| (instance, store))
     }
 
     pub(crate) fn from_module<'s>(
@@ -185,7 +185,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "debug",
-            Function::new_typed_with_env(&store, &env, do_debug),
+            Function::new_typed_with_env(&mut store, &env, do_debug),
         );
 
         // Aborts the contract execution with an error message provided by the contract.
@@ -224,11 +224,11 @@ where
             Function::new_typed_with_env(&mut store, &env, do_db_next),
         );
 
-        import_obj.register("env", env_imports);
+        import_obj.register_namespace("env", env_imports);
 
         if let Some(extra_imports) = extra_imports {
             for (namespace, exports_obj) in extra_imports {
-                import_obj.register(namespace, exports_obj);
+                import_obj.register_namespace(namespace, exports_obj);
             }
         }
 
@@ -244,11 +244,11 @@ where
 
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.as_ref(&store).set_wasmer_instance(Some(instance_ptr));
-        env.as_ref(&store).set_gas_left(gas_limit);
+        env.as_ref(&store).set_gas_left(&mut store, gas_limit);
         env.as_ref(&store).move_in(backend.storage, backend.querier);
         let instance = Instance {
             _inner: wasmer_instance,
-            env,
+            env: env.as_ref(&store).clone(),
         };
         Ok(instance)
     }
@@ -290,16 +290,16 @@ where
     }
 
     /// Returns the currently remaining gas.
-    pub fn get_gas_left(&self) -> u64 {
-        self.env.get_gas_left()
+    pub fn get_gas_left(&self, store: &mut impl AsStoreMut) -> u64 {
+        self.env.get_gas_left(store)
     }
 
     /// Creates and returns a gas report.
     /// This is a snapshot and multiple reports can be created during the lifetime of
     /// an instance.
-    pub fn create_gas_report(&self) -> GasReport {
+    pub fn create_gas_report(&self, store: &mut impl AsStoreMut) -> GasReport {
         let state = self.env.with_gas_state(|gas_state| gas_state.clone());
-        let gas_left = self.env.get_gas_left();
+        let gas_left = self.env.get_gas_left(store);
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,
@@ -331,8 +331,8 @@ where
 
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
-    pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
-        let ret = self.call_function1("allocate", &[to_u32(size)?.into()])?;
+    pub(crate) fn allocate(&mut self, store: &mut impl AsStoreMut, size: usize) -> VmResult<u32> {
+        let ret = self.call_function1(store, "allocate", &[to_u32(size)?.into()])?;
         let ptr = ref_to_u32(&ret)?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());

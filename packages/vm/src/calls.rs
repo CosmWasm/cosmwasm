@@ -628,7 +628,7 @@ where
 {
     let mut arg_region_ptrs = Vec::<Value>::with_capacity(args.len());
     for arg in args {
-        let region_ptr = instance.allocate(arg.len())?;
+        let region_ptr = instance.allocate(store, arg.len())?;
         instance.write_memory(region_ptr, arg)?;
         arg_region_ptrs.push(region_ptr.into());
     }
@@ -652,12 +652,12 @@ mod tests {
     #[test]
     fn call_instantiate_works() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
     }
@@ -665,19 +665,19 @@ mod tests {
     #[test]
     fn call_execute_works() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_execute::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
     }
@@ -685,22 +685,22 @@ mod tests {
     #[test]
     fn call_migrate_works() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         // change the verifier via migrate
         let msg = br#"{"verifier": "someone else"}"#;
-        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg);
+        let _res = call_migrate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), msg);
 
         // query the new_verifier with verifier
         let msg = br#"{"verifier":{}}"#;
-        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let contract_result = call_query(&mut store, &mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(
             query_response.as_slice(),
@@ -711,18 +711,18 @@ mod tests {
     #[test]
     fn call_query_works() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         // query
         let msg = br#"{"verifier":{}}"#;
-        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let contract_result = call_query(&mut store, &mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
     }
@@ -752,7 +752,7 @@ mod tests {
             // init
             let info = mock_info("creator", &[]);
             let msg = br#"{"reflect_code_id":77}"#;
-            call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            call_instantiate::<_, _, _, Empty>(&mut store, instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             // first we try to open with a valid handshake
@@ -790,51 +790,56 @@ mod tests {
                     data: None,
                 }),
             };
-            call_reply::<_, _, _, Empty>(instance, &mock_env(), &response).unwrap();
+            call_reply::<_, _, _, Empty>(&mut store, instance, &mock_env(), &response).unwrap();
         }
         const CHANNEL_ID: &str = "channel-123";
         const ACCOUNT: &str = "account-456";
         #[test]
         fn call_ibc_channel_open_and_connect_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
         }
         #[test]
         fn call_ibc_channel_close_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let handshake_close =
                 mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
-            call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
-                .unwrap()
-                .unwrap();
+            call_ibc_channel_close::<_, _, _, Empty>(
+                &mut store,
+                &mut instance,
+                &mock_env(),
+                &handshake_close,
+            )
+            .unwrap()
+            .unwrap();
         }
         #[test]
         fn call_ibc_packet_ack_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let ack = IbcAcknowledgement::new(br#"{}"#);
             let msg = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap();
-            call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_ack::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
         #[test]
         fn call_ibc_packet_timeout_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
-            call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_timeout::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
         #[test]
         fn call_ibc_packet_receive_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let (mut instance, mut store) = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
             let msg = mock_ibc_packet_recv(CHANNEL_ID, who_am_i).unwrap();
-            call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_receive::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
