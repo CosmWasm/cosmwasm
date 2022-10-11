@@ -155,7 +155,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     /// or [`Self::call_function1`] to ensure the number of return values is checked.
     fn call_function(
         &self,
-        ctx: &mut impl AsStoreMut,
+        store: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<Box<[Value]>> {
@@ -164,9 +164,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
         })?;
-        func.call(ctx, args).map_err(|runtime_err| -> VmError {
+        func.call(store, args).map_err(|runtime_err| -> VmError {
             self.with_wasmer_instance::<_, Never>(|instance| {
-                let err: VmError = match get_remaining_points(ctx, instance) {
+                let err: VmError = match get_remaining_points(store, instance) {
                     MeteringPoints::Remaining(_) => VmError::from(runtime_err),
                     MeteringPoints::Exhausted => VmError::gas_depletion(),
                 };
@@ -178,11 +178,11 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     pub fn call_function0(
         &self,
-        ctx: &mut impl AsStoreMut,
+        store: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<()> {
-        let result = self.call_function(ctx, name, args)?;
+        let result = self.call_function(store, name, args)?;
         let expected = 0;
         let actual = result.len();
         if actual != expected {
@@ -193,11 +193,11 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     pub fn call_function1(
         &self,
-        ctx: &mut impl AsStoreMut,
+        store: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<Value> {
-        let result = self.call_function(ctx, name, args)?;
+        let result = self.call_function(store, name, args)?;
         let expected = 1;
         let actual = result.len();
         if actual != expected {

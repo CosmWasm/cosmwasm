@@ -343,8 +343,8 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub(crate) fn deallocate(&mut self, ctx: &mut impl AsStoreMut, ptr: u32) -> VmResult<()> {
-        self.call_function0(ctx, "deallocate", &[ptr.into()])?;
+    pub(crate) fn deallocate(&mut self, store: &mut impl AsStoreMut, ptr: u32) -> VmResult<()> {
+        self.call_function0(store, "deallocate", &[ptr.into()])?;
         Ok(())
     }
 
@@ -363,22 +363,22 @@ where
     /// The function is expected to return no value. Otherwise this calls errors.
     pub(crate) fn call_function0(
         &self,
-        ctx: &mut impl AsStoreMut,
+        store: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<()> {
-        self.env.call_function0(ctx, name, args)
+        self.env.call_function0(store, name, args)
     }
 
     /// Calls a function exported by the instance.
     /// The function is expected to return one value. Otherwise this calls errors.
     pub(crate) fn call_function1(
         &self,
-        ctx: &mut impl AsStoreMut,
+        store: &mut impl AsStoreMut,
         name: &str,
         args: &[Value],
     ) -> VmResult<Value> {
-        self.env.call_function1(ctx, name, args)
+        self.env.call_function1(store, name, args)
     }
 }
 
