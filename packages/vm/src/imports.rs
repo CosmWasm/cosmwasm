@@ -222,9 +222,9 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
     let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
-    let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
+    let result = secp256k1_verify(&hash, &signature, &pubkey);
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidHashFormat { .. }
@@ -252,9 +252,9 @@ pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
         Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
     };
 
-    let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
     let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_recover_pubkey_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
+    let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
     match result {
         Ok(pubkey) => {
             let pubkey_ptr = write_to_contract::<A, S, Q>(env, pubkey.as_ref())?;
@@ -282,9 +282,9 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_ED25519_SIGNATURE)?;
     let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
-    let result = ed25519_verify(&message, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(env.gas_config.ed25519_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
+    let result = ed25519_verify(&message, &signature, &pubkey);
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidPubkeyFormat { .. }
@@ -326,7 +326,6 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     let signatures = decode_sections(&signatures);
     let public_keys = decode_sections(&public_keys);
 
-    let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
     let gas_cost = if public_keys.len() == 1 {
         env.gas_config.ed25519_batch_verify_one_pubkey_cost
     } else {
@@ -334,6 +333,7 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     } * signatures.len() as u64;
     let gas_info = GasInfo::with_cost(max(gas_cost, env.gas_config.ed25519_verify_cost));
     process_gas_info::<A, S, Q>(env, gas_info)?;
+    let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::BatchErr { .. }
