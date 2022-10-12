@@ -1218,13 +1218,15 @@ jobs:
       - checkout
       - run:
           name: Run tests with coverage
+          # See https://github.com/xd009642/tarpaulin/blob/develop/CHANGELOG.md and https://hub.docker.com/r/xd009642/tarpaulin/tags
+          # for tarpaulin versions.
           command: |
             mkdir -p reports/crypto
             mkdir -p reports/derive
             mkdir -p reports/schema
             mkdir -p reports/std
             mkdir -p reports/storage
-            docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin \
+            docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin:0.21.0 \
               sh -c "cargo tarpaulin --skip-clean --out Xml --output-dir reports/crypto --packages cosmwasm-crypto && cargo tarpaulin --skip-clean --out Xml --output-dir reports/derive --packages cosmwasm-derive && cargo tarpaulin --skip-clean --out Xml --output-dir reports/schema --packages cosmwasm-schema && cargo tarpaulin --skip-clean --out Xml --output-dir reports/std --packages cosmwasm-std && cargo tarpaulin --skip-clean --out Xml --output-dir reports/storage --packages cosmwasm-storage"
       - codecov/upload:
           file: reports/crypto/cobertura.xml
