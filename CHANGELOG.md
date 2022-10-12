@@ -10,6 +10,9 @@ and this project adheres to
 
 - cosmwasm-schema: Better error messaging when attempting to compile schema
   generator for `wasm32`
+- cosmwasm-vm: In the `secp256k1_verify`, `secp256k1_recover_pubkey`,
+  `ed25519_verify` and `ed25519_batch_verify` import implementations we now exit
+  early if the gas left is not sufficient to perform the operation.
 
 ## [1.1.4] - 2022-10-03
 
