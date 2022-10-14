@@ -14,6 +14,15 @@ and this project adheres to
   `ed25519_verify` and `ed25519_batch_verify` import implementations we now exit
   early if the gas left is not sufficient to perform the operation.
 
+### Changed
+
+- cosmwasm-std: Remove `non_exhaustive` from IBC types `IbcChannelOpenMsg`,
+  `IbcChannelConnectMsg` and `IbcChannelCloseMsg` in order to allow exhaustive
+  matching over the possible scenarios without an unused fallback case
+  ([#1449]).
+
+[#1449]: https://github.com/CosmWasm/cosmwasm/pull/1449
+
 ## [1.1.4] - 2022-10-03
 
 ### Fixed
