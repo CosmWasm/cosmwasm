@@ -16,7 +16,12 @@ and this project adheres to
 
 ### Changed
 
-- cosmwasm-std: Remove non_exhaustive from IBC message types
+- cosmwasm-std: Remove `non_exhaustive` from IBC types `IbcChannelOpenMsg`,
+  `IbcChannelConnectMsg` and `IbcChannelCloseMsg` in order to allow exhaustive
+  matching over the possible scenarios without an unused fallback case
+  ([#1449]).
+
+[#1449]: https://github.com/CosmWasm/cosmwasm/pull/1449
 
 ## [1.1.4] - 2022-10-03
 
