@@ -175,18 +175,22 @@ impl Uint64 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
         Self(self.0.wrapping_add(other.0))
     }
 
+    #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
 
+    #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
         Self(self.0.wrapping_mul(other.0))
     }
 
+    #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
         Self(self.0.wrapping_pow(other))
     }
@@ -835,12 +839,28 @@ mod tests {
         assert_eq!(Uint64(0).saturating_sub(Uint64(1)), Uint64(0));
         assert_eq!(Uint64::MAX.saturating_mul(Uint64(2)), Uint64::MAX);
         assert_eq!(Uint64::MAX.saturating_pow(2), Uint64::MAX);
+    }
 
-        // wrapping_*
-        assert_eq!(Uint64::MAX.wrapping_add(Uint64(1)), Uint64(0));
-        assert_eq!(Uint64(0).wrapping_sub(Uint64(1)), Uint64::MAX);
-        assert_eq!(Uint64::MAX.wrapping_mul(Uint64(2)), Uint64(u64::MAX - 1));
-        assert_eq!(Uint64::MAX.wrapping_pow(2), Uint64(1));
+    #[test]
+    fn uint64_wrapping_methods() {
+        // wrapping_add
+        assert_eq!(Uint64(2).wrapping_add(Uint64(2)), Uint64(4)); // non-wrapping
+        assert_eq!(Uint64::MAX.wrapping_add(Uint64(1)), Uint64(0)); // wrapping
+
+        // wrapping_sub
+        assert_eq!(Uint64(7).wrapping_sub(Uint64(5)), Uint64(2)); // non-wrapping
+        assert_eq!(Uint64(0).wrapping_sub(Uint64(1)), Uint64::MAX); // wrapping
+
+        // wrapping_mul
+        assert_eq!(Uint64(3).wrapping_mul(Uint64(2)), Uint64(6)); // non-wrapping
+        assert_eq!(
+            Uint64::MAX.wrapping_mul(Uint64(2)),
+            Uint64::MAX - Uint64::one()
+        ); // wrapping
+
+        // wrapping_pow
+        assert_eq!(Uint64(2).wrapping_pow(3), Uint64(8)); // non-wrapping
+        assert_eq!(Uint64::MAX.wrapping_pow(2), Uint64(1)); // wrapping
     }
 
     #[test]
