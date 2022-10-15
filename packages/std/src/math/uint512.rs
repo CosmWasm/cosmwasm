@@ -253,6 +253,30 @@ impl Uint512 {
         Ok(Self(self.0.shr(other)))
     }
 
+    #[inline]
+    pub fn wrapping_add(self, other: Self) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_add(other.0);
+        Self(value)
+    }
+
+    #[inline]
+    pub fn wrapping_sub(self, other: Self) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_sub(other.0);
+        Self(value)
+    }
+
+    #[inline]
+    pub fn wrapping_mul(self, other: Self) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_mul(other.0);
+        Self(value)
+    }
+
+    #[inline]
+    pub fn wrapping_pow(self, other: u32) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_pow(other.into());
+        Self(value)
+    }
+
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
@@ -866,6 +890,43 @@ mod tests {
 
         assert!(!Uint512::from(1u32).is_zero());
         assert!(!Uint512::from(123u32).is_zero());
+    }
+
+    #[test]
+    fn uint512_wrapping_methods() {
+        // wrapping_add
+        assert_eq!(
+            Uint512::from(2u32).wrapping_add(Uint512::from(2u32)),
+            Uint512::from(4u32)
+        ); // non-wrapping
+        assert_eq!(
+            Uint512::MAX.wrapping_add(Uint512::from(1u32)),
+            Uint512::from(0u32)
+        ); // wrapping
+
+        // wrapping_sub
+        assert_eq!(
+            Uint512::from(7u32).wrapping_sub(Uint512::from(5u32)),
+            Uint512::from(2u32)
+        ); // non-wrapping
+        assert_eq!(
+            Uint512::from(0u32).wrapping_sub(Uint512::from(1u32)),
+            Uint512::MAX
+        ); // wrapping
+
+        // wrapping_mul
+        assert_eq!(
+            Uint512::from(3u32).wrapping_mul(Uint512::from(2u32)),
+            Uint512::from(6u32)
+        ); // non-wrapping
+        assert_eq!(
+            Uint512::MAX.wrapping_mul(Uint512::from(2u32)),
+            Uint512::MAX - Uint512::one()
+        ); // wrapping
+
+        // wrapping_pow
+        assert_eq!(Uint512::from(2u32).wrapping_pow(3), Uint512::from(8u32)); // non-wrapping
+        assert_eq!(Uint512::MAX.wrapping_pow(2), Uint512::from(1u32)); // wrapping
     }
 
     #[test]
