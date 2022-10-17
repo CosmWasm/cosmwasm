@@ -8,6 +8,8 @@ and this project adheres to
 
 ### Added
 
+- cosmwasm-std: Add `wrapping_add`, `wrapping_sub`, `wrapping_mul` and
+  `wrapping_pow` to `Uint256`/`Uint512`.
 - cosmwasm-schema: Better error messaging when attempting to compile schema
   generator for `wasm32`
 - cosmwasm-vm: In the `secp256k1_verify`, `secp256k1_recover_pubkey`,
