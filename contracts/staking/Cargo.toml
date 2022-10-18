@@ -35,9 +35,9 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["staking"] }
 cosmwasm-storage = { path = "../../packages/storage", default-features = false }
-schemars = "0.8.1"
+schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-snafu = "0.6"
+snafu = "0.6.6"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["staking"] }
