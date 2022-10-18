@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::fmt;
 use std::ops::Deref;
 
-use crate::binary::Binary;
+use crate::{binary::Binary, HexBinary};
 
 /// A human readable address.
 ///
@@ -144,14 +144,44 @@ impl From<&[u8]> for CanonicalAddr {
     }
 }
 
+// Owned vector -> CanonicalAddr
 impl From<Vec<u8>> for CanonicalAddr {
     fn from(source: Vec<u8>) -> Self {
         Self(source.into())
     }
 }
 
+// CanonicalAddr -> Owned vector
 impl From<CanonicalAddr> for Vec<u8> {
     fn from(source: CanonicalAddr) -> Vec<u8> {
+        source.0.into()
+    }
+}
+
+// Owned Binary -> CanonicalAddr
+impl From<Binary> for CanonicalAddr {
+    fn from(source: Binary) -> Self {
+        Self(source)
+    }
+}
+
+// CanonicalAddr -> Owned Binary
+impl From<CanonicalAddr> for Binary {
+    fn from(source: CanonicalAddr) -> Binary {
+        source.0
+    }
+}
+
+// Owned HexBinary -> CanonicalAddr
+impl From<HexBinary> for CanonicalAddr {
+    fn from(source: HexBinary) -> Self {
+        Self(source.into())
+    }
+}
+
+// CanonicalAddr -> Owned HexBinary
+impl From<CanonicalAddr> for HexBinary {
+    fn from(source: CanonicalAddr) -> HexBinary {
         source.0.into()
     }
 }
@@ -278,8 +308,9 @@ mod tests {
     }
 
     #[test]
-    fn canonical_addr_from_vec_works() {
+    fn canonical_addr_implements_from_and_to_vector() {
         // Into<CanonicalAddr> for Vec<u8>
+        // This test is a bit pointless because we get Into from the From implementation
         let original = vec![0u8, 187, 61, 11, 250, 0];
         let original_ptr = original.as_ptr();
         let addr: CanonicalAddr = original.into();
@@ -292,11 +323,9 @@ mod tests {
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
-    }
 
-    #[test]
-    fn canonical_addr_into_vec_works() {
         // Into<Vec<u8>> for CanonicalAddr
+        // This test is a bit pointless because we get Into from the From implementation
         let original = CanonicalAddr::from(vec![0u8, 187, 61, 11, 250, 0]);
         let original_ptr = (original.0).0.as_ptr();
         let vec: Vec<u8> = original.into();
@@ -309,6 +338,40 @@ mod tests {
         let vec = Vec::<u8>::from(original);
         assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
+    }
+
+    #[test]
+    fn canonical_addr_implements_from_and_to_binary() {
+        // From<Binary> for CanonicalAddr
+        let original = Binary::from([0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = original.as_ptr();
+        let addr = CanonicalAddr::from(original);
+        assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+
+        // From<CanonicalAddr> for Binary
+        let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
+        let original_ptr = (original.0).0.as_ptr();
+        let bin = Binary::from(original);
+        assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(bin.as_ptr(), original_ptr, "must not be copied");
+    }
+
+    #[test]
+    fn canonical_addr_implements_from_and_to_hex_binary() {
+        // From<HexBinary> for CanonicalAddr
+        let original = HexBinary::from([0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = original.as_ptr();
+        let addr = CanonicalAddr::from(original);
+        assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+
+        // From<CanonicalAddr> for HexBinary
+        let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
+        let original_ptr = (original.0).0.as_ptr();
+        let bin = HexBinary::from(original);
+        assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(bin.as_ptr(), original_ptr, "must not be copied");
     }
 
     #[test]

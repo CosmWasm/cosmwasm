@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `From` implementations to convert between
+  `CanonicalAddr`/`Binary` as well as `CanonicalAddr`/`HexBinary` ([#1463]).
+
+[#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
+
 ## [1.1.5] - 2022-10-17
 
 ### Added
