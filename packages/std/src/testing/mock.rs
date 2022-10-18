@@ -902,7 +902,7 @@ mod tests {
     #[should_panic(expected = "length not correct")]
     fn addr_humanize_input_length() {
         let api = MockApi::default();
-        let input = CanonicalAddr(Binary(vec![61; 11]));
+        let input = CanonicalAddr::from(vec![61; 11]);
         api.addr_humanize(&input).unwrap();
     }
 

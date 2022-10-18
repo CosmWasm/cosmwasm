@@ -1,7 +1,6 @@
 use std::vec::Vec;
 
 use crate::addresses::{Addr, CanonicalAddr};
-use crate::binary::Binary;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -224,7 +223,7 @@ impl Api for ExternalApi {
         }
 
         let out = unsafe { consume_region(canon) };
-        Ok(CanonicalAddr(Binary(out)))
+        Ok(CanonicalAddr::from(out))
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
