@@ -717,5 +717,22 @@ mod tests {
             instantiate2_address(&checksum1, &creator1, &too_long, None).unwrap_err(),
             Instantiate2AddressError::InvalidSaltLength
         ));
+
+        // invalid checksum length
+        let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2");
+        assert!(matches!(
+            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            Instantiate2AddressError::InvalidChecksumLength
+        ));
+        let broken_cs = hex!("");
+        assert!(matches!(
+            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            Instantiate2AddressError::InvalidChecksumLength
+        ));
+        let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2aaaa");
+        assert!(matches!(
+            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            Instantiate2AddressError::InvalidChecksumLength
+        ));
     }
 }
