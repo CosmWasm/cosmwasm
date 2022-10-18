@@ -135,6 +135,21 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
     }
 }
 
+/// A blockchain address in its binary form.
+///
+/// The specific implementation is up to the underlying chain and CosmWasm as well as
+/// contracts should not make assumptions on that data. In Ethereum for example, an
+/// `Addr` would contain a user visible address like 0x14d3cc818735723ab86eaf9502376e847a64ddad
+/// and the corresponding `CanonicalAddr` would store the 20 bytes 0x14, 0xD3, ..., 0xAD.
+/// In Cosmos, the bech32 format is used for `Addr`s and the `CanonicalAddr` holds the
+/// encoded bech32 data without the checksum. Typical sizes are 20 bytes for externally
+/// owned addresses and 32 bytes for module addresses (such as x/wasm contract addresses).
+/// That being said, a chain might decide to use any size other than 20 or 32 bytes.
+///
+/// The safe way to obtain a valid `CanonicalAddr` is using `Api::addr_canonicalize`. In
+/// addition to that there are many unsafe ways to convert any binary data into an instance.
+/// So the type shoud be treated as a marker to express the intended data type, not as
+/// a validity guarantee of any sort.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
