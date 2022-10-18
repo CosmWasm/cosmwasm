@@ -735,4 +735,73 @@ mod tests {
             Instantiate2AddressError::InvalidChecksumLength
         ));
     }
+
+    #[test]
+    fn instantiate2_address_works_for_cosmjs_testvectors() {
+        // Test data from https://github.com/cosmos/cosmjs/pull/1253
+        const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/instantiate2_addresses.json";
+
+        #[derive(Deserialize, Debug)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(dead_code)]
+        struct In {
+            checksum: HexBinary,
+            creator: String,
+            creator_data: HexBinary,
+            salt: HexBinary,
+            msg: Option<String>,
+        }
+
+        #[derive(Deserialize, Debug)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(dead_code)]
+        struct Intermediate {
+            key: HexBinary,
+            address_data: HexBinary,
+        }
+
+        #[derive(Deserialize, Debug)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(dead_code)]
+        struct Out {
+            address: String,
+        }
+
+        #[derive(Deserialize, Debug)]
+        #[allow(dead_code)]
+        struct Row {
+            #[serde(rename = "in")]
+            input: In,
+            intermediate: Intermediate,
+            out: Out,
+        }
+
+        fn read_tests() -> Vec<Row> {
+            use std::fs::File;
+            use std::io::BufReader;
+
+            // Open the file in read-only mode with buffer.
+            let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
+            let reader = BufReader::new(file);
+
+            serde_json::from_reader(reader).unwrap()
+        }
+
+        for Row {
+            input,
+            intermediate,
+            out: _,
+        } in read_tests()
+        {
+            let msg = input.msg.map(|msg| msg.into_bytes());
+            let addr = instantiate2_address(
+                &input.checksum,
+                &input.creator_data.into(),
+                &input.salt,
+                msg.as_deref(),
+            )
+            .unwrap();
+            assert_eq!(addr, intermediate.address_data);
+        }
+    }
 }

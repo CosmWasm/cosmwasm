@@ -321,6 +321,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde-json-wasm",
+ "serde_json",
  "sha2 0.10.3",
  "thiserror",
  "uint",
