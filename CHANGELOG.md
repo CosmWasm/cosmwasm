@@ -12,6 +12,8 @@ and this project adheres to
   `CanonicalAddr`/`Binary` as well as `CanonicalAddr`/`HexBinary` ([#1463]).
 - cosmwasm-std: Add `From` implementations to convert `u8` arrays to
   `CanonicalAddr` ([#1463]).
+- cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
+  `HexBinary`/`Binary` ([#1463]).
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
 

@@ -138,6 +138,34 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
+/// Implement `CanonicalAddr == Binary`
+impl PartialEq<Binary> for CanonicalAddr {
+    fn eq(&self, rhs: &Binary) -> bool {
+        &self.0 == rhs
+    }
+}
+
+/// Implement `Binary == CanonicalAddr`
+impl PartialEq<CanonicalAddr> for Binary {
+    fn eq(&self, rhs: &CanonicalAddr) -> bool {
+        self == &rhs.0
+    }
+}
+
+/// Implement `CanonicalAddr == HexBinary`
+impl PartialEq<HexBinary> for CanonicalAddr {
+    fn eq(&self, rhs: &HexBinary) -> bool {
+        self.as_slice() == rhs.as_slice()
+    }
+}
+
+/// Implement `HexBinary == CanonicalAddr`
+impl PartialEq<CanonicalAddr> for HexBinary {
+    fn eq(&self, rhs: &CanonicalAddr) -> bool {
+        self.as_slice() == rhs.0.as_slice()
+    }
+}
+
 impl From<&[u8]> for CanonicalAddr {
     fn from(source: &[u8]) -> Self {
         Self(source.into())
@@ -319,6 +347,30 @@ mod tests {
         let bytes: Vec<u8> = vec![0u8, 187, 61, 11, 250, 0];
         let canonical_addr_vec = CanonicalAddr::from(bytes);
         assert_eq!(canonical_addr_vec.as_slice(), &[0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn canonical_addr_implements_partial_eq_with_binary() {
+        let addr = CanonicalAddr::from([1, 2, 3]);
+        let bin1 = Binary::from([1, 2, 3]);
+        let bin2 = Binary::from([42, 43]);
+
+        assert_eq!(addr, bin1);
+        assert_eq!(bin1, addr);
+        assert_ne!(addr, bin2);
+        assert_ne!(bin2, addr);
+    }
+
+    #[test]
+    fn canonical_addr_implements_partial_eq_with_hex_binary() {
+        let addr = CanonicalAddr::from([1, 2, 3]);
+        let bin1 = HexBinary::from([1, 2, 3]);
+        let bin2 = HexBinary::from([42, 43]);
+
+        assert_eq!(addr, bin1);
+        assert_eq!(bin1, addr);
+        assert_ne!(addr, bin2);
+        assert_ne!(bin2, addr);
     }
 
     #[test]
