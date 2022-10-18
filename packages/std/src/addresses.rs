@@ -499,17 +499,17 @@ mod tests {
 
     #[test]
     fn canonical_addr_implements_hash() {
-        let alice1 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let mut hasher = DefaultHasher::new();
         alice1.hash(&mut hasher);
         let alice1_hash = hasher.finish();
 
-        let alice2 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let mut hasher = DefaultHasher::new();
         alice2.hash(&mut hasher);
         let alice2_hash = hasher.finish();
 
-        let bob = CanonicalAddr(Binary::from([16, 21, 33, 0, 255, 9]));
+        let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
         let mut hasher = DefaultHasher::new();
         bob.hash(&mut hasher);
         let bob_hash = hasher.finish();
@@ -521,9 +521,9 @@ mod tests {
     /// This requires Hash and Eq to be implemented
     #[test]
     fn canonical_addr_can_be_used_in_hash_set() {
-        let alice1 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
-        let alice2 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
-        let bob = CanonicalAddr(Binary::from([16, 21, 33, 0, 255, 9]));
+        let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
+        let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
+        let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
 
         let mut set = HashSet::new();
         set.insert(alice1.clone());
