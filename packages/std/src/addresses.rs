@@ -144,6 +144,20 @@ impl From<&[u8]> for CanonicalAddr {
     }
 }
 
+// Array reference
+impl<const LENGTH: usize> From<&[u8; LENGTH]> for CanonicalAddr {
+    fn from(source: &[u8; LENGTH]) -> Self {
+        Self(source.into())
+    }
+}
+
+// Owned array
+impl<const LENGTH: usize> From<[u8; LENGTH]> for CanonicalAddr {
+    fn from(source: [u8; LENGTH]) -> Self {
+        Self(source.into())
+    }
+}
+
 // Owned vector -> CanonicalAddr
 impl From<Vec<u8>> for CanonicalAddr {
     fn from(source: Vec<u8>) -> Self {
@@ -305,6 +319,17 @@ mod tests {
         let bytes: Vec<u8> = vec![0u8, 187, 61, 11, 250, 0];
         let canonical_addr_vec = CanonicalAddr::from(bytes);
         assert_eq!(canonical_addr_vec.as_slice(), &[0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn canonical_addr_implements_from_array() {
+        let array = [1, 2, 3];
+        let addr = CanonicalAddr::from(array);
+        assert_eq!(addr.as_slice(), [1, 2, 3]);
+
+        let array_ref = b"foo";
+        let addr = CanonicalAddr::from(array_ref);
+        assert_eq!(addr.as_slice(), [0x66, 0x6f, 0x6f]);
     }
 
     #[test]
