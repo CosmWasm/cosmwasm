@@ -53,12 +53,14 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   build a smart contract.
 - [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage) -
   A crate in this workspace. This optional addition to `cosmwasm-std` includes
-  convenience helpers for interacting with storage.
-- [cw-storage-plus](https://github.com/CosmWasm/cosmwasm-plus/tree/main/packages/storage-plus) -
-  A crate in `cosmwasm-plus`, which fills the same role as `cosmwasm-storage`,
-  but with much more powerful types supporting composite primary keys, secondary
-  indexes, automatic snapshotting, and more. This is newer and a bit less stable
-  than `cosmwasm-storage` but used in most modern contracts.
+  convenience helpers for interacting with storage. **This is being deprecated
+  in favor of
+  [`cw-storage-plus`](https://github.com/CosmWasm/cw-storage-plus).**
+- [cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus) - A crate which
+  fills the same role as `cosmwasm-storage`, but with much more powerful types
+  supporting composite primary keys, secondary indexes, automatic snapshotting,
+  and more. This is used in most modern contracts and likely going to be
+  stabilized (version `1.0.0`) soon.
 
 **Building contracts:**
 
