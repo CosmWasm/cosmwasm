@@ -17,6 +17,13 @@ and this project adheres to
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
 
+### Changed
+
+- all: Bump a few dependency versions to make the codebase compile with
+  `-Zminimal-versions` ([#1465]).
+
+[#1465]: https://github.com/CosmWasm/cosmwasm/pull/1465
+
 ## [1.1.5] - 2022-10-17
 
 ### Added
