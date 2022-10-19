@@ -325,14 +325,11 @@ name = "cosmwasm-std"
 version = "1.1.5"
 dependencies = [
  "base64",
- "bitflags",
- "bytecheck",
  "chrono",
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "cosmwasm-schema",
  "derivative",
- "enumset",
  "forward_ref",
  "hex",
  "hex-literal",
@@ -355,11 +352,14 @@ dependencies = [
 name = "cosmwasm-vm"
 version = "1.1.5"
 dependencies = [
+ "bitflags",
+ "bytecheck",
  "clap",
  "clru",
  "cosmwasm-crypto",
  "cosmwasm-std",
  "criterion",
+ "enumset",
  "hex",
  "hex-literal",
  "leb128",
