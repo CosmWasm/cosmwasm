@@ -352,11 +352,14 @@ dependencies = [
 name = "cosmwasm-vm"
 version = "1.1.5"
 dependencies = [
+ "bitflags",
+ "bytecheck",
  "clap",
  "clru",
  "cosmwasm-crypto",
  "cosmwasm-std",
  "criterion",
+ "enumset",
  "hex",
  "hex-literal",
  "leb128",
