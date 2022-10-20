@@ -8,7 +8,7 @@ use cosmwasm_crypto::{
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
-use wasmer::{AsStoreMut, FunctionEnvMut};
+use wasmer::{AsStoreMut, AsStoreRef, FunctionEnvMut, Store};
 
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -66,135 +66,151 @@ const MAX_LENGTH_ABORT: usize = 2 * MI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_db_read<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
 ) -> VmResult<u32> {
-    let key = read_region(&env.data().memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let store = env.as_store_mut();
+    let env = env.data();
 
-    let (result, gas_info) = env
-        .data()
-        .with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let key = read_region(&env.memory(), &store, key_ptr, MAX_LENGTH_DB_KEY)?;
+
+    let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     let value = result?;
 
     let out_data = match value {
         Some(data) => data,
         None => return Ok(0),
     };
-    write_to_contract::<A, S, Q>(&mut env, env.data(), &out_data)
+    write_to_contract::<A, S, Q>(env, &mut store, &out_data)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
 pub fn do_db_write<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
-    if env.data().is_storage_readonly() {
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&env.data().memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
-    let value = read_region(&env.data().memory(), value_ptr, MAX_LENGTH_DB_VALUE)?;
+    let key = read_region(&env.memory(), &store, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let value = read_region(&env.memory(), &store, value_ptr, MAX_LENGTH_DB_VALUE)?;
 
-    let (result, gas_info) = env
-        .data()
-        .with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let (result, gas_info) =
+        env.with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     result?;
 
     Ok(())
 }
 
 pub fn do_db_remove<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
 ) -> VmResult<()> {
-    if env.data().is_storage_readonly() {
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&env.data().memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&env.memory(), &store, key_ptr, MAX_LENGTH_DB_KEY)?;
 
-    let (result, gas_info) = env
-        .data()
-        .with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
-    process_gas_info(&mut env, env.data(), gas_info)?;
+    let (result, gas_info) =
+        env.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
+    process_gas_info(env, &mut store, gas_info)?;
     result?;
 
     Ok(())
 }
 
 pub fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     source_ptr: u32,
 ) -> VmResult<u32> {
-    let source_data = read_region(&env.data().memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let source_data = read_region(&env.memory(), &store, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return write_to_contract::<A, S, Q>(&mut env, env.data(), b"Input is empty");
+        return write_to_contract::<A, S, Q>(env, &mut store, b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
         Err(_) => {
-            return write_to_contract::<A, S, Q>(&mut env, env.data(), b"Input is not valid UTF-8")
+            return write_to_contract::<A, S, Q>(env, &mut store, b"Input is not valid UTF-8")
         }
     };
 
-    let (result, gas_info) = env.data().api.canonical_address(&source_string);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let (result, gas_info) = env.api.canonical_address(&source_string);
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     let canonical = match result {
         Ok(data) => data,
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract::<A, S, Q>(&mut env, env.data(), msg.as_bytes())
+            return write_to_contract::<A, S, Q>(env, &mut store, msg.as_bytes())
         }
         Err(err) => return Err(VmError::from(err)),
     };
 
-    let (result, gas_info) = env.data().api.human_address(&canonical);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let (result, gas_info) = env.api.human_address(&canonical);
+    process_gas_info::<A, S, Q>(&mut env, &mut store, gas_info)?;
     let normalized = match result {
         Ok(addr) => addr,
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract::<A, S, Q>(&mut env, env.data(), msg.as_bytes())
+            return write_to_contract::<A, S, Q>(env, &mut store, msg.as_bytes())
         }
         Err(err) => return Err(VmError::from(err)),
     };
 
     if normalized != source_string {
-        return write_to_contract::<A, S, Q>(&mut env, env.data(), b"Address is not normalized");
+        return write_to_contract::<A, S, Q>(env, &mut store, b"Address is not normalized");
     }
 
     Ok(0)
 }
 
 pub fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let source_data = read_region(&env.data().memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let source_data = read_region(&env.memory(), &store, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return write_to_contract::<A, S, Q>(&mut env, env.data(), b"Input is empty");
+        return write_to_contract::<A, S, Q>(env, &mut store, b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
         Err(_) => {
-            return write_to_contract::<A, S, Q>(&mut env, env.data(), b"Input is not valid UTF-8")
+            return write_to_contract::<A, S, Q>(env, &mut store, b"Input is not valid UTF-8")
         }
     };
 
-    let (result, gas_info) = env.data().api.canonical_address(&source_string);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let (result, gas_info) = env.api.canonical_address(&source_string);
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     match result {
         Ok(canonical) => {
-            write_region(&env.data().memory(), destination_ptr, canonical.as_slice())?;
+            write_region(
+                &env.memory(),
+                &mut store,
+                destination_ptr,
+                canonical.as_slice(),
+            )?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => Ok(write_to_contract::<A, S, Q>(
-            &mut env,
-            env.data(),
+            env,
+            &mut store,
             msg.as_bytes(),
         )?),
         Err(err) => Err(VmError::from(err)),
@@ -202,26 +218,30 @@ pub fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
+    let store = env.as_store_mut();
+    let env = env.data();
+
     let canonical = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &store,
         source_ptr,
         MAX_LENGTH_CANONICAL_ADDRESS,
     )?;
 
-    let (result, gas_info) = env.data().api.human_address(&canonical);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let (result, gas_info) = env.api.human_address(&canonical);
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     match result {
         Ok(human) => {
-            write_region(&env.data().memory(), destination_ptr, human.as_bytes())?;
+            write_region(&env.memory(), &store, destination_ptr, human.as_bytes())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => Ok(write_to_contract::<A, S, Q>(
-            &mut env,
-            env.data(),
+            env,
+            &mut store,
             msg.as_bytes(),
         )?),
         Err(err) => Err(VmError::from(err)),
@@ -229,18 +249,21 @@ pub fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     hash_ptr: u32,
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = read_region(&env.data().memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&env.data().memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-    let pubkey = read_region(&env.data().memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let hash = read_region(&env.memory(), &store, hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.memory(), &store, signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(&env.memory(), &store, pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(env.data().gas_config.secp256k1_verify_cost);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_verify_cost);
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidHashFormat { .. }
@@ -256,24 +279,27 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     hash_ptr: u32,
     signature_ptr: u32,
     recover_param: u32,
 ) -> VmResult<u64> {
-    let hash = read_region(&env.data().memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&env.data().memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let hash = read_region(&env.memory(), &store, hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.memory(), &store, signature_ptr, ECDSA_SIGNATURE_LEN)?;
     let recover_param: u8 = match recover_param.try_into() {
         Ok(rp) => rp,
         Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
     };
 
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
-    let gas_info = GasInfo::with_cost(env.data().gas_config.secp256k1_recover_pubkey_cost);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_recover_pubkey_cost);
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     match result {
         Ok(pubkey) => {
-            let pubkey_ptr = write_to_contract::<A, S, Q>(&mut env, env.data(), pubkey.as_ref())?;
+            let pubkey_ptr = write_to_contract::<A, S, Q>(env, &mut store, pubkey.as_ref())?;
             Ok(to_low_half(pubkey_ptr))
         }
         Err(err) => match err {
@@ -289,26 +315,31 @@ pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
+    let store = env.as_store_mut();
+    let env = env.data();
+
     let message = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &store,
         message_ptr,
         MAX_LENGTH_ED25519_MESSAGE,
     )?;
     let signature = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &store,
         signature_ptr,
         MAX_LENGTH_ED25519_SIGNATURE,
     )?;
-    let pubkey = read_region(&env.data().memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
+    let pubkey = read_region(&env.memory(), &store, pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let result = ed25519_verify(&message, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(env.data().gas_config.ed25519_verify_cost);
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let gas_info = GasInfo::with_cost(env.gas_config.ed25519_verify_cost);
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidPubkeyFormat { .. }
@@ -325,23 +356,29 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     messages_ptr: u32,
     signatures_ptr: u32,
     public_keys_ptr: u32,
 ) -> VmResult<u32> {
+    let store = env.as_store_mut();
+    let env = env.data();
+
     let messages = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &store,
         messages_ptr,
         (MAX_LENGTH_ED25519_MESSAGE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let signatures = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &store,
         signatures_ptr,
         (MAX_LENGTH_ED25519_SIGNATURE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let public_keys = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &store,
         public_keys_ptr,
         (EDDSA_PUBKEY_LEN + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
@@ -352,12 +389,12 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
 
     let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
     let gas_cost = if public_keys.len() == 1 {
-        env.data().gas_config.ed25519_batch_verify_one_pubkey_cost
+        env.gas_config.ed25519_batch_verify_one_pubkey_cost
     } else {
-        env.data().gas_config.ed25519_batch_verify_cost
+        env.gas_config.ed25519_batch_verify_cost
     } * signatures.len() as u64;
-    let gas_info = GasInfo::with_cost(max(gas_cost, env.data().gas_config.ed25519_verify_cost));
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let gas_info = GasInfo::with_cost(max(gas_cost, env.gas_config.ed25519_verify_cost));
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::BatchErr { .. }
@@ -375,11 +412,14 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    if env.data().print_debug {
-        let message_data = read_region(&env.data().memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    if env.print_debug {
+        let message_data = read_region(&env.memory(), &store, message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
         println!("{}", msg);
     }
@@ -388,18 +428,21 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
 
 /// Aborts the contract and shows the given error message
 pub fn do_abort<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    let message_data = read_region(&env.data().memory(), message_ptr, MAX_LENGTH_ABORT)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let message_data = read_region(&env.memory(), &store, message_ptr, MAX_LENGTH_ABORT)?;
     let msg = String::from_utf8_lossy(&message_data);
     Err(VmError::aborted(msg))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
 fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
-    store: &mut impl AsStoreMut,
     env: &Environment<A, S, Q>,
+    store: &mut impl AsStoreMut,
     input: &[u8],
 ) -> VmResult<u32> {
     let out_size = to_u32(input.len())?;
@@ -408,65 +451,74 @@ fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
     if target_ptr == 0 {
         return Err(CommunicationError::zero_address().into());
     }
-    write_region(&env.memory(), target_ptr, input)?;
+    write_region(&env.memory(), &store, target_ptr, input)?;
     Ok(target_ptr)
 }
 
 pub fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     request_ptr: u32,
 ) -> VmResult<u32> {
+    let store = env.as_store_mut();
+    let env = env.data();
+
     let request = read_region(
-        &env.data().memory(),
+        &env.memory(),
+        &mut store,
         request_ptr,
         MAX_LENGTH_QUERY_CHAIN_REQUEST,
     )?;
 
-    let gas_remaining = env.data().get_gas_left(&mut env);
-    let (result, gas_info) = env.data().with_querier_from_context::<_, _>(|querier| {
+    let gas_remaining = env.get_gas_left(&mut store);
+    let (result, gas_info) = env.with_querier_from_context::<_, _>(|querier| {
         Ok(querier.query_raw(&request, gas_remaining))
     })?;
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
     let serialized = to_vec(&result?)?;
-    write_to_contract::<A, S, Q>(&mut env, env.data(), &serialized)
+    write_to_contract::<A, S, Q>(env, &mut store, &serialized)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_db_scan<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
 ) -> VmResult<u32> {
-    let start = maybe_read_region(&env.data().memory(), start_ptr, MAX_LENGTH_DB_KEY)?;
-    let end = maybe_read_region(&env.data().memory(), end_ptr, MAX_LENGTH_DB_KEY)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let start = maybe_read_region(&env.memory(), &store, start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(&env.memory(), &store, end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
-    let (result, gas_info) = env.data().with_storage_from_context::<_, _>(|store| {
+    let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| {
         Ok(store.scan(start.as_deref(), end.as_deref(), order))
     })?;
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    process_gas_info::<A, S, Q>(&env, &mut store, gas_info)?;
     let iterator_id = result?;
     Ok(iterator_id)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_db_next<A: BackendApi, S: Storage, Q: Querier>(
-    env: FunctionEnvMut<Environment<A, S, Q>>,
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     iterator_id: u32,
 ) -> VmResult<u32> {
-    let (result, gas_info) = env
-        .data()
-        .with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
-    process_gas_info::<A, S, Q>(&mut env, env.data(), gas_info)?;
+    let store = env.as_store_mut();
+    let env = env.data();
+
+    let (result, gas_info) =
+        env.with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
+    process_gas_info::<A, S, Q>(env, &mut store, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
     let (key, value) = result?.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
     let out_data = encode_sections(&[key, value])?;
-    write_to_contract::<A, S, Q>(&mut env, env.data(), &out_data)
+    write_to_contract::<A, S, Q>(env, &mut store, &out_data)
 }
 
 /// Returns the data shifted by 32 bits towards the most significant bit.
@@ -589,7 +641,7 @@ mod tests {
             .call_function1(store, "allocate", &[(data.len() as u32).into()])
             .unwrap();
         let region_ptr = ref_to_u32(&result).unwrap();
-        write_region(&env.memory(), region_ptr, data).expect("error writing");
+        write_region(&env.memory(), &mut store, region_ptr, data).expect("error writing");
         region_ptr
     }
 
@@ -608,9 +660,10 @@ mod tests {
     /// A Region reader that is just good enough for the tests in this file
     fn force_read(
         env: &Environment<MockApi, MockStorage, MockQuerier>,
+        store: &mut impl AsStoreMut,
         region_ptr: u32,
     ) -> Vec<u8> {
-        read_region(&env.memory(), region_ptr, 5000).unwrap()
+        read_region(&env.memory(), &mut store, region_ptr, 5000).unwrap()
     }
 
     #[test]
@@ -626,7 +679,7 @@ mod tests {
         );
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
-        assert_eq!(force_read(&env, value_ptr as u32), VALUE1);
+        assert_eq!(force_read(&env, &mut store, value_ptr as u32), VALUE1);
     }
 
     #[test]

@@ -3,8 +3,7 @@ use std::ptr::NonNull;
 use std::sync::Mutex;
 
 use wasmer::{
-    AsStoreMut, Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store,
-    Value,
+    Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
 };
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
@@ -50,6 +49,7 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     /// This instance should only be accessed via the Environment, which provides safe access.
     _inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
+    pub store: Store,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -65,7 +65,7 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
         memory_limit: Option<Size>,
-    ) -> VmResult<(Self, Store)> {
+    ) -> VmResult<Self> {
         let (module, store) = compile(code, memory_limit, &[])?;
 
         Instance::from_module(
@@ -77,11 +77,10 @@ where
             None,
             None,
         )
-        .map(|instance| (instance, store))
     }
 
-    pub(crate) fn from_module<'s>(
-        store: impl wasmer::AsStoreMut,
+    pub(crate) fn from_module(
+        mut store: Store,
         module: &Module,
         backend: Backend<A, S, Q>,
         gas_limit: u64,
@@ -249,6 +248,7 @@ where
         let instance = Instance {
             _inner: wasmer_instance,
             env: env.as_ref(&store).clone(),
+            store,
         };
         Ok(instance)
     }
@@ -290,16 +290,16 @@ where
     }
 
     /// Returns the currently remaining gas.
-    pub fn get_gas_left(&self, store: &mut impl AsStoreMut) -> u64 {
-        self.env.get_gas_left(store)
+    pub fn get_gas_left(&self) -> u64 {
+        self.env.get_gas_left(&mut self.store)
     }
 
     /// Creates and returns a gas report.
     /// This is a snapshot and multiple reports can be created during the lifetime of
     /// an instance.
-    pub fn create_gas_report(&self, store: &mut impl AsStoreMut) -> GasReport {
+    pub fn create_gas_report(&self) -> GasReport {
         let state = self.env.with_gas_state(|gas_state| gas_state.clone());
-        let gas_left = self.env.get_gas_left(store);
+        let gas_left = self.env.get_gas_left(&mut self.store);
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,
@@ -331,8 +331,8 @@ where
 
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
-    pub(crate) fn allocate(&mut self, store: &mut impl AsStoreMut, size: usize) -> VmResult<u32> {
-        let ret = self.call_function1(store, "allocate", &[to_u32(size)?.into()])?;
+    pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
+        let ret = self.call_function1("allocate", &[to_u32(size)?.into()])?;
         let ptr = ref_to_u32(&ret)?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
@@ -343,49 +343,39 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub(crate) fn deallocate(&mut self, store: &mut impl AsStoreMut, ptr: u32) -> VmResult<()> {
-        self.call_function0(store, "deallocate", &[ptr.into()])?;
+    pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
+        self.call_function0("deallocate", &[ptr.into()])?;
         Ok(())
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(&self.env.memory(), region_ptr, max_length)
+        read_region(&self.env.memory(), &self.store, region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(&self.env.memory(), region_ptr, data)?;
+        write_region(&self.env.memory(), &self.store, region_ptr, data)?;
         Ok(())
     }
 
     /// Calls a function exported by the instance.
     /// The function is expected to return no value. Otherwise this calls errors.
-    pub(crate) fn call_function0(
-        &self,
-        store: &mut impl AsStoreMut,
-        name: &str,
-        args: &[Value],
-    ) -> VmResult<()> {
-        self.env.call_function0(store, name, args)
+    pub(crate) fn call_function0(&self, name: &str, args: &[Value]) -> VmResult<()> {
+        self.env.call_function0(&mut self.store, name, args)
     }
 
     /// Calls a function exported by the instance.
     /// The function is expected to return one value. Otherwise this calls errors.
-    pub(crate) fn call_function1(
-        &self,
-        store: &mut impl AsStoreMut,
-        name: &str,
-        args: &[Value],
-    ) -> VmResult<Value> {
-        self.env.call_function1(store, name, args)
+    pub(crate) fn call_function1(&self, name: &str, args: &[Value]) -> VmResult<Value> {
+        self.env.call_function1(&mut self.store, name, args)
     }
 }
 
 /// This exists only to be exported through `internals` for use by crates that are
 /// part of Cosmwasm.
 pub fn instance_from_module<A, S, Q>(
-    store: &mut Store,
+    store: Store,
     module: &Module,
     backend: Backend<A, S, Q>,
     gas_limit: u64,
@@ -435,25 +425,15 @@ mod tests {
 
     #[test]
     fn required_capabilities_works() {
-        let store = Store::default();
-
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
-        let instance = Instance::from_code(
-            &mut store,
-            CONTRACT,
-            backend,
-            instance_options,
-            memory_limit,
-        )
-        .unwrap();
+        let instance =
+            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_capabilities().len(), 0);
     }
 
     #[test]
     fn required_capabilities_works_for_many_exports() {
-        let store = Store::default();
-
         let wasm = wat::parse_str(
             r#"(module
             (type (func))
@@ -470,9 +450,7 @@ mod tests {
 
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
-        let instance =
-            Instance::from_code(&mut store, &wasm, backend, instance_options, memory_limit)
-                .unwrap();
+        let instance = Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_capabilities().len(), 3);
         assert!(instance.required_capabilities().contains("nutrients"));
         assert!(instance.required_capabilities().contains("sun"));
@@ -515,7 +493,7 @@ mod tests {
         let mut extra_imports = HashMap::new();
         extra_imports.insert("foo", exports);
         let instance = Instance::from_module(
-            &mut store,
+            store,
             &module,
             backend,
             instance_options.gas_limit,
@@ -533,12 +511,10 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let store = Store::default();
-
-        let instance = mock_instance(&mut store, CONTRACT, &[]);
+        let instance = mock_instance(CONTRACT, &[]);
 
         instance
-            .call_function0(&mut store, "interface_version_8", &[])
+            .call_function0("interface_version_8", &[])
             .expect("error calling function");
     }
 
@@ -546,31 +522,28 @@ mod tests {
     fn call_function1_works() {
         let store = Store::default();
 
-        let instance = mock_instance(&mut store, CONTRACT, &[]);
+        let instance = mock_instance(CONTRACT, &[]);
 
         // can call function few times
         let result = instance
-            .call_function1(&mut store, "allocate", &[0u32.into()])
+            .call_function1("allocate", &[0u32.into()])
             .expect("error calling allocate");
         assert_ne!(result.unwrap_i32(), 0);
 
         let result = instance
-            .call_function1(&mut store, "allocate", &[1u32.into()])
+            .call_function1("allocate", &[1u32.into()])
             .expect("error calling allocate");
         assert_ne!(result.unwrap_i32(), 0);
 
         let result = instance
-            .call_function1(&mut store, "allocate", &[33u32.into()])
+            .call_function1("allocate", &[33u32.into()])
             .expect("error calling allocate");
         assert_ne!(result.unwrap_i32(), 0);
     }
 
     #[test]
     fn allocate_deallocate_works() {
-        let store = Store::default();
-
         let mut instance = mock_instance_with_options(
-            &mut store,
             CONTRACT,
             MockInstanceOptions {
                 memory_limit: Some(Size::mebi(500)),
@@ -591,20 +564,14 @@ mod tests {
             400 * MIB,
         ];
         for size in sizes.into_iter() {
-            let region_ptr = instance
-                .allocate(&mut store, size)
-                .expect("error allocating");
-            instance
-                .deallocate(&mut store, region_ptr)
-                .expect("error deallocating");
+            let region_ptr = instance.allocate(size).expect("error allocating");
+            instance.deallocate(region_ptr).expect("error deallocating");
         }
     }
 
     #[test]
     fn write_and_read_memory_works() {
-        let store = Store::default();
-
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -620,20 +587,16 @@ mod tests {
             // 400 * MIB,
         ];
         for size in sizes.into_iter() {
-            let region_ptr = instance
-                .allocate(&mut store, size)
-                .expect("error allocating");
+            let region_ptr = instance.allocate(size).expect("error allocating");
             let original = vec![170u8; size];
             instance
-                .write_memory(&mut store, region_ptr, &original)
+                .write_memory(region_ptr, &original)
                 .expect("error writing");
             let data = instance
-                .read_memory(&mut store, region_ptr, size)
+                .read_memory(region_ptr, size)
                 .expect("error reading");
             assert_eq!(data, original);
-            instance
-                .deallocate(&mut store, region_ptr)
-                .expect("error deallocating");
+            instance.deallocate(region_ptr).expect("error deallocating");
         }
     }
 
@@ -643,7 +606,7 @@ mod tests {
 
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
-        let mut instance = mock_instance_with_failing_api(&mut store, CONTRACT, &[], error_message);
+        let mut instance = mock_instance_with_failing_api(CONTRACT, &[], error_message);
         let init_result = call_instantiate::<_, _, _, Empty>(
             &mut instance,
             &mock_env(),
@@ -659,22 +622,18 @@ mod tests {
 
     #[test]
     fn read_memory_errors_when_when_length_is_too_long() {
-        let store = Store::default();
-
         let length = 6;
         let max_length = 5;
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
         // Allocate sets length to 0. Write some data to increase length.
-        let region_ptr = instance
-            .allocate(&mut store, length)
-            .expect("error allocating");
+        let region_ptr = instance.allocate(length).expect("error allocating");
         let data = vec![170u8; length];
         instance
-            .write_memory(&mut store, region_ptr, &data)
+            .write_memory(region_ptr, &data)
             .expect("error writing");
 
-        let result = instance.read_memory(&mut store, region_ptr, max_length);
+        let result = instance.read_memory(region_ptr, max_length);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -689,9 +648,7 @@ mod tests {
             err => panic!("unexpected error: {:?}", err),
         };
 
-        instance
-            .deallocate(&mut store, region_ptr)
-            .expect("error deallocating");
+        instance.deallocate(region_ptr).expect("error deallocating");
     }
 
     #[test]
@@ -713,8 +670,8 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let instance = mock_instance(&mut store, &wasm, &[]);
-        assert_eq!(instance.memory_pages(&mut store), 0);
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.memory_pages(), 0);
 
         // min: 3 pages, max: none
         let wasm = wat::parse_str(
@@ -731,46 +688,40 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let instance = mock_instance(&mut store, &wasm, &[]);
-        assert_eq!(instance.memory_pages(&mut store,), 3);
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.memory_pages(), 3);
     }
 
     #[test]
     fn memory_pages_grows_with_usage() {
         let store = Store::default();
-        let mut instance = mock_instance(&mut store, CONTRACT, &[]);
+        let mut instance = mock_instance(CONTRACT, &[]);
 
-        assert_eq!(instance.memory_pages(&mut store,), 17);
+        assert_eq!(instance.memory_pages(), 17);
 
         // 100 KiB require two more pages
-        let region_ptr = instance
-            .allocate(&mut store, 100 * 1024)
-            .expect("error allocating");
+        let region_ptr = instance.allocate(100 * 1024).expect("error allocating");
 
-        assert_eq!(instance.memory_pages(&mut store,), 19);
+        assert_eq!(instance.memory_pages(), 19);
 
         // Deallocating does not shrink memory
-        instance
-            .deallocate(&mut store, region_ptr)
-            .expect("error deallocating");
-        assert_eq!(instance.memory_pages(&mut store,), 19);
+        instance.deallocate(region_ptr).expect("error deallocating");
+        assert_eq!(instance.memory_pages(), 19);
     }
 
     #[test]
     fn get_gas_left_works() {
-        let store = Store::default();
-        let instance = mock_instance_with_gas_limit(&mut store, CONTRACT, 123321);
-        let orig_gas = instance.get_gas_left(&mut store);
+        let instance = mock_instance_with_gas_limit(CONTRACT, 123321);
+        let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
 
     #[test]
     fn create_gas_report_works() {
-        let store = Store::default();
         const LIMIT: u64 = 700_000_000_000;
-        let mut instance = mock_instance_with_gas_limit(&mut store, CONTRACT, LIMIT);
+        let mut instance = mock_instance_with_gas_limit(CONTRACT, LIMIT);
 
-        let report1 = instance.create_gas_report(&mut store);
+        let report1 = instance.create_gas_report();
         assert_eq!(report1.used_externally, 0);
         assert_eq!(report1.used_internally, 0);
         assert_eq!(report1.limit, LIMIT);
@@ -783,7 +734,7 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        let report2 = instance.create_gas_report(&mut store);
+        let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 73);
         assert_eq!(report2.used_internally, 5775750198);
         assert_eq!(report2.limit, LIMIT);
@@ -795,19 +746,18 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_works() {
-        let store = Store::default();
         let mut instance = mock_instance(CONTRACT, &[]);
 
-        assert!(instance.env.as_ref(&mut store).is_storage_readonly());
+        assert!(instance.env.is_storage_readonly());
 
-        instance.set_storage_readonly(&mut store, false);
-        assert!(!instance.env.as_ref(&mut store).is_storage_readonly());
+        instance.set_storage_readonly(false);
+        assert!(!instance.env.is_storage_readonly());
 
-        instance.set_storage_readonly(&mut store, false);
-        assert!(!instance.env.as_ref(&mut store).is_storage_readonly());
+        instance.set_storage_readonly(false);
+        assert!(!instance.env.is_storage_readonly());
 
-        instance.set_storage_readonly(&mut store, true);
-        assert!(instance.env.as_ref(&mut store).is_storage_readonly());
+        instance.set_storage_readonly(true);
+        assert!(instance.env.is_storage_readonly());
     }
 
     #[test]
@@ -817,7 +767,7 @@ mod tests {
 
         // initial check
         instance
-            .with_storage(&mut store, |store| {
+            .with_storage(|store| {
                 assert!(store.get(b"foo").0.unwrap().is_none());
                 Ok(())
             })
@@ -825,7 +775,7 @@ mod tests {
 
         // write some data
         instance
-            .with_storage(&mut store, |store| {
+            .with_storage(|store| {
                 store.set(b"foo", b"bar").0.unwrap();
                 Ok(())
             })
@@ -833,7 +783,7 @@ mod tests {
 
         // read some data
         instance
-            .with_storage(&mut store, |store| {
+            .with_storage(|store| {
                 assert_eq!(store.get(b"foo").0.unwrap(), Some(b"bar".to_vec()));
                 Ok(())
             })
@@ -847,7 +797,7 @@ mod tests {
         let store = Store::default();
         let mut instance = mock_instance(CONTRACT, &[]);
         instance
-            .with_storage::<_, ()>(&mut store, |_store| panic!("trigger failure"))
+            .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
     }
 
@@ -861,7 +811,7 @@ mod tests {
 
         // query one
         instance
-            .with_querier(&mut store, |querier| {
+            .with_querier(|querier| {
                 let response = querier
                     .query::<Empty>(
                         &QueryRequest::Bank(BankQuery::Balance {
@@ -883,7 +833,7 @@ mod tests {
 
         // query all
         instance
-            .with_querier(&mut store, |querier| {
+            .with_querier(|querier| {
                 let response = querier
                     .query::<Empty>(
                         &QueryRequest::Bank(BankQuery::AllBalances {
@@ -919,7 +869,7 @@ mod tests {
 
         // Get initial state
         instance
-            .with_querier(&mut store, |querier| {
+            .with_querier(|querier| {
                 let response = querier
                     .query::<Empty>(
                         &QueryRequest::Bank(BankQuery::Balance {
@@ -940,7 +890,7 @@ mod tests {
 
         // Update balance
         instance
-            .with_querier(&mut store, |querier| {
+            .with_querier(|querier| {
                 querier.update_balance(&rich_addr, rich_balance2);
                 Ok(())
             })
@@ -948,7 +898,7 @@ mod tests {
 
         // Get updated state
         instance
-            .with_querier(&mut store, |querier| {
+            .with_querier(|querier| {
                 let response = querier
                     .query::<Empty>(
                         &QueryRequest::Bank(BankQuery::Balance {
@@ -970,10 +920,8 @@ mod tests {
 
     #[test]
     fn contract_deducts_gas_init() {
-        let mut store = Store::default();
-
         let mut instance = mock_instance(CONTRACT, &[]);
-        let orig_gas = instance.get_gas_left(&mut store);
+        let orig_gas = instance.get_gas_left();
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -982,7 +930,7 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        let init_used = orig_gas - instance.get_gas_left(&mut store);
+        let init_used = orig_gas - instance.get_gas_left();
         assert_eq!(init_used, 5775750271);
     }
 
@@ -1000,14 +948,14 @@ mod tests {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_execute = instance.get_gas_left(&mut store);
+        let gas_before_execute = instance.get_gas_left();
         let info = mock_info("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
-        let execute_used = gas_before_execute - instance.get_gas_left(&mut store);
+        let execute_used = gas_before_execute - instance.get_gas_left();
         assert_eq!(execute_used, 8627053606);
     }
 
@@ -1038,14 +986,14 @@ mod tests {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_query = instance.get_gas_left(&mut store);
+        let gas_before_query = instance.get_gas_left();
         // we need to encode the key in base64
         let msg = br#"{"verifier":{}}"#;
         let res = call_query(&mut instance, &mock_env(), msg).unwrap();
         let answer = res.unwrap();
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
-        let query_used = gas_before_query - instance.get_gas_left(&mut store);
+        let query_used = gas_before_query - instance.get_gas_left();
         assert_eq!(query_used, 4438350006);
     }
 }

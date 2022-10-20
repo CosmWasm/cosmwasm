@@ -1,4 +1,4 @@
-use wasmer::{Store, ValueType, WasmPtr};
+use wasmer::{AsStoreRef, ValueType, WasmPtr};
 
 use crate::conversion::to_u32;
 use crate::errors::{
@@ -35,7 +35,7 @@ unsafe impl ValueType for Region {
 /// Errors if the length of the region exceeds `max_length`.
 pub fn read_region(
     memory: &wasmer::Memory,
-    store: &Store,
+    store: &impl AsStoreRef,
     ptr: u32,
     max_length: usize,
 ) -> VmResult<Vec<u8>> {
@@ -80,7 +80,7 @@ pub fn read_region(
 #[cfg(feature = "iterator")]
 pub fn maybe_read_region(
     memory: &wasmer::Memory,
-    store: &Store,
+    store: &impl AsStoreRef,
     ptr: u32,
     max_length: usize,
 ) -> VmResult<Option<Vec<u8>>> {
@@ -94,7 +94,12 @@ pub fn maybe_read_region(
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.
-pub fn write_region(memory: &wasmer::Memory, store: &Store, ptr: u32, data: &[u8]) -> VmResult<()> {
+pub fn write_region(
+    memory: &wasmer::Memory,
+    store: &impl AsStoreRef,
+    ptr: u32,
+    data: &[u8],
+) -> VmResult<()> {
     let mut region = get_region(memory, store, ptr)?;
 
     let region_capacity = region.capacity as usize;
@@ -133,7 +138,11 @@ pub fn write_region(memory: &wasmer::Memory, store: &Store, ptr: u32, data: &[u8
 }
 
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
-fn get_region(memory: &wasmer::Memory, store: &Store, ptr: u32) -> CommunicationResult<Region> {
+fn get_region(
+    memory: &wasmer::Memory,
+    store: &impl AsStoreRef,
+    ptr: u32,
+) -> CommunicationResult<Region> {
     let view = memory.view(store);
     let wptr = WasmPtr::<Region>::new(ptr);
 
@@ -173,7 +182,7 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
 /// Overrides a Region at `offset` in wasm memory with data
 fn set_region(
     memory: &wasmer::Memory,
-    store: &Store,
+    store: &impl AsStoreRef,
     offset: u32,
     data: Region,
 ) -> CommunicationResult<()> {

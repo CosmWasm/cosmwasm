@@ -8,7 +8,6 @@ use crate::size::Size;
 use crate::{Backend, BackendApi, Querier, Storage};
 use cosmwasm_std::Coin;
 use std::collections::HashSet;
-use wasmer::{AsStoreMut, Store};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
@@ -24,7 +23,7 @@ const DEFAULT_PRINT_DEBUG: bool = true;
 pub fn mock_instance(
     wasm: &[u8],
     contract_balance: &[Coin],
-) -> (Instance<MockApi, MockStorage, MockQuerier>, Store) {
+) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
         wasm,
         MockInstanceOptions {
@@ -38,7 +37,7 @@ pub fn mock_instance_with_failing_api(
     wasm: &[u8],
     contract_balance: &[Coin],
     backend_error: &'static str,
-) -> (Instance<MockApi, MockStorage, MockQuerier>, Store) {
+) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
         wasm,
         MockInstanceOptions {
@@ -52,7 +51,7 @@ pub fn mock_instance_with_failing_api(
 pub fn mock_instance_with_balances(
     wasm: &[u8],
     balances: &[(&str, &[Coin])],
-) -> (Instance<MockApi, MockStorage, MockQuerier>, Store) {
+) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
         wasm,
         MockInstanceOptions {
@@ -65,7 +64,7 @@ pub fn mock_instance_with_balances(
 pub fn mock_instance_with_gas_limit(
     wasm: &[u8],
     gas_limit: u64,
-) -> (Instance<MockApi, MockStorage, MockQuerier>, Store) {
+) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
         wasm,
         MockInstanceOptions {
@@ -122,7 +121,7 @@ impl Default for MockInstanceOptions<'_> {
 pub fn mock_instance_with_options(
     wasm: &[u8],
     options: MockInstanceOptions,
-) -> (Instance<MockApi, MockStorage, MockQuerier>, Store) {
+) -> Instance<MockApi, MockStorage, MockQuerier> {
     check_wasm(wasm, &options.available_capabilities).unwrap();
     let contract_address = MOCK_CONTRACT_ADDR;
 
@@ -168,7 +167,7 @@ pub fn mock_instance_options() -> (InstanceOptions, Option<Size>) {
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
 /// This could be especially useful when run with some kind of leak detector.
-pub fn test_io<A, S, Q>(store: &mut impl AsStoreMut, instance: &mut Instance<A, S, Q>)
+pub fn test_io<A, S, Q>(instance: &mut Instance<A, S, Q>)
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
@@ -193,7 +192,7 @@ where
                 size, original, wasm_data
             );
             instance
-                .deallocate(store, wasm_ptr)
+                .deallocate(wasm_ptr)
                 .expect("Could not deallocate memory");
         }
     }

@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use wasmer::AsStoreMut;
+use wasmer::Store;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -255,14 +255,14 @@ where
     /// It takes a module from cache or Wasm code and instantiates it.
     pub fn get_instance(
         &self,
-        store: impl AsStoreMut,
         checksum: &Checksum,
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
+        let store = Store::default();
         let module = self.get_module(checksum)?;
         let instance = Instance::from_module(
-            &mut store,
+            store,
             &module,
             backend,
             options.gas_limit,
@@ -460,8 +460,6 @@ mod tests {
 
     #[test]
     fn save_wasm_fills_file_system_but_not_memory_cache() {
-        let store = Store::default();
-
         // Who knows if and when the uploaded contract will be executed. Don't pollute
         // memory cache before the init call.
 
@@ -470,7 +468,7 @@ mod tests {
 
         let backend = mock_backend(&[]);
         let _ = cache
-            .get_instance(&mut store, &checksum, backend, TESTING_OPTIONS)
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -569,13 +567,11 @@ mod tests {
 
     #[test]
     fn get_instance_finds_cached_module() {
-        let store = Store::default();
-
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
         let backend = mock_backend(&[]);
         let _instance = cache
-            .get_instance(&mut store, &checksum, backend, TESTING_OPTIONS)
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -597,7 +593,7 @@ mod tests {
 
         // from file system
         let _instance1 = cache
-            .get_instance(&mut store, &checksum, backend1, TESTING_OPTIONS)
+            .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -606,7 +602,7 @@ mod tests {
 
         // from memory
         let _instance2 = cache
-            .get_instance(&mut store, &checksum, backend2, TESTING_OPTIONS)
+            .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 1);
@@ -615,7 +611,7 @@ mod tests {
 
         // from memory again
         let _instance3 = cache
-            .get_instance(&mut store, &checksum, backend3, TESTING_OPTIONS)
+            .get_instance(&checksum, backend3, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 2);
@@ -631,7 +627,7 @@ mod tests {
 
         // from pinned memory cache
         let _instance4 = cache
-            .get_instance(&mut store, &checksum, backend4, TESTING_OPTIONS)
+            .get_instance(&checksum, backend4, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 3);
@@ -640,7 +636,7 @@ mod tests {
 
         // from pinned memory cache again
         let _instance5 = cache
-            .get_instance(&mut store, &checksum, backend5, TESTING_OPTIONS)
+            .get_instance(&checksum, backend5, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 2);
         assert_eq!(cache.stats().hits_memory_cache, 3);
@@ -655,9 +651,8 @@ mod tests {
 
         // from file system
         {
-            let store = Store::default();
             let mut instance = cache
-                .get_instance(&mut store, &checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -667,23 +662,16 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res = call_instantiate::<_, _, _, Empty>(
-                &mut store,
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg,
-            )
-            .unwrap();
+            let res =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
         }
 
         // from memory
         {
-            let store = Store::default();
             let mut instance = cache
-                .get_instance(&mut store, &checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 1);
@@ -693,26 +681,18 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res = call_instantiate::<_, _, _, Empty>(
-                &mut store,
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg,
-            )
-            .unwrap();
+            let res =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
         }
 
         // from pinned memory
         {
-            let store = Store::default();
-
             cache.pin(&checksum).unwrap();
 
             let mut instance = cache
-                .get_instance(&mut store, &checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
             assert_eq!(cache.stats().hits_memory_cache, 2);
@@ -722,14 +702,8 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res = call_instantiate::<_, _, _, Empty>(
-                &mut store,
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg,
-            )
-            .unwrap();
+            let res =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
         }
@@ -742,9 +716,8 @@ mod tests {
 
         // from file system
         {
-            let store = Store::default();
             let mut instance = cache
-                .get_instance(&mut store, &checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -754,32 +727,25 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let response = call_instantiate::<_, _, _, Empty>(
-                &mut store,
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg,
-            )
-            .unwrap()
-            .unwrap();
+            let response =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(response.messages.len(), 0);
 
             // execute
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
-            let response =
-                call_execute::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                    .unwrap()
-                    .unwrap();
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
             assert_eq!(response.messages.len(), 1);
         }
 
         // from memory
         {
-            let store = Store::default();
             let mut instance = cache
-                .get_instance(&mut store, &checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 1);
@@ -789,35 +755,27 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let response = call_instantiate::<_, _, _, Empty>(
-                &mut store,
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg,
-            )
-            .unwrap()
-            .unwrap();
+            let response =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(response.messages.len(), 0);
 
             // execute
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
-            let response =
-                call_execute::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                    .unwrap()
-                    .unwrap();
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
             assert_eq!(response.messages.len(), 1);
         }
 
         // from pinned memory
         {
-            let store = Store::default();
-
             cache.pin(&checksum).unwrap();
 
             let mut instance = cache
-                .get_instance(&mut store, &checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
             assert_eq!(cache.stats().hits_memory_cache, 2);
@@ -827,24 +785,18 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let response = call_instantiate::<_, _, _, Empty>(
-                &mut store,
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg,
-            )
-            .unwrap()
-            .unwrap();
+            let response =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(response.messages.len(), 0);
 
             // execute
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
-            let response =
-                call_execute::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                    .unwrap()
-                    .unwrap();
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
             assert_eq!(response.messages.len(), 1);
         }
     }
@@ -862,51 +814,45 @@ mod tests {
 
         // init instance 1
         let mut instance = cache
-            .get_instance(&mut store, &checksum, backend1, TESTING_OPTIONS)
+            .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
         let res =
-            call_instantiate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                .unwrap();
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let backend1 = instance.recycle().unwrap();
 
         // init instance 2
         let mut instance = cache
-            .get_instance(&mut store, &checksum, backend2, TESTING_OPTIONS)
+            .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("owner2", &coins(500, "earth"));
         let msg = br#"{"verifier": "bob", "beneficiary": "john"}"#;
         let res =
-            call_instantiate::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                .unwrap();
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let backend2 = instance.recycle().unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache
-            .get_instance(&mut store, &checksum, backend2, TESTING_OPTIONS)
+            .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res =
-            call_execute::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                .unwrap();
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache
-            .get_instance(&mut store, &checksum, backend1, TESTING_OPTIONS)
+            .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res =
-            call_execute::<_, _, _, Empty>(&mut store, &mut instance, &mock_env(), &info, msg)
-                .unwrap();
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
@@ -923,7 +869,7 @@ mod tests {
 
         // Init from module cache
         let mut instance1 = cache
-            .get_instance(&mut store, &checksum, backend1, TESTING_OPTIONS)
+            .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -934,14 +880,14 @@ mod tests {
         // Consume some gas
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut store, &mut instance1, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
 
         // Init from memory cache
         let instance2 = cache
-            .get_instance(&mut store, &checksum, backend2, TESTING_OPTIONS)
+            .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 1);
@@ -952,8 +898,6 @@ mod tests {
 
     #[test]
     fn recovers_from_out_of_gas() {
-        let store = Store::default();
-
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
@@ -965,23 +909,15 @@ mod tests {
             gas_limit: 10,
             print_debug: false,
         };
-        let mut instance1 = cache
-            .get_instance(&mut store, &checksum, backend1, options)
-            .unwrap();
+        let mut instance1 = cache.get_instance(&checksum, backend1, options).unwrap();
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
         // Consume some gas. This fails
         let info1 = mock_info("owner1", &coins(1000, "earth"));
         let msg1 = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
-        match call_instantiate::<_, _, _, Empty>(
-            &mut store,
-            &mut instance1,
-            &mock_env(),
-            &info1,
-            msg1,
-        )
-        .unwrap_err()
+        match call_instantiate::<_, _, _, Empty>(&mut instance1, &mock_env(), &info1, msg1)
+            .unwrap_err()
         {
             VmError::GasDepletion { .. } => (), // all good, continue
             e => panic!("unexpected error, {:?}", e),
@@ -993,9 +929,7 @@ mod tests {
             gas_limit: TESTING_GAS_LIMIT,
             print_debug: false,
         };
-        let mut instance2 = cache
-            .get_instance(&mut store, &checksum, backend2, options)
-            .unwrap();
+        let mut instance2 = cache.get_instance(&checksum, backend2, options).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 1);
         assert_eq!(cache.stats().hits_fs_cache, 1);
@@ -1005,7 +939,7 @@ mod tests {
         // Now it works
         let info2 = mock_info("owner2", &coins(500, "earth"));
         let msg2 = br#"{"verifier": "bob", "beneficiary": "john"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut store, &mut instance2, &mock_env(), &info2, msg2)
+        call_instantiate::<_, _, _, Empty>(&mut instance2, &mock_env(), &info2, msg2)
             .unwrap()
             .unwrap();
     }
@@ -1092,7 +1026,7 @@ mod tests {
         // check not pinned
         let backend = mock_backend(&[]);
         let _instance = cache
-            .get_instance(&mut store, &checksum, backend, TESTING_OPTIONS)
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
@@ -1116,7 +1050,7 @@ mod tests {
         // check pinned
         let backend = mock_backend(&[]);
         let _instance = cache
-            .get_instance(&mut store, &checksum, backend, TESTING_OPTIONS)
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 1);
@@ -1129,7 +1063,7 @@ mod tests {
         // verify unpinned
         let backend = mock_backend(&[]);
         let _instance = cache
-            .get_instance(&mut store, &checksum, backend, TESTING_OPTIONS)
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 2);
