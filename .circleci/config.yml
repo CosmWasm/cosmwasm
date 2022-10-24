@@ -15,7 +15,6 @@ workflows:
       - package_std
       - package_storage
       - package_vm
-      - package_profiler
       - contract_burner
       - contract_crypto_verify
       - contract_cyberpunk
@@ -376,33 +375,6 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_vm-rust:1.59.0-{{ checksum "Cargo.lock" }}
-
-  package_profiler:
-    docker:
-      - image: rust:1.59.0
-    steps:
-      - checkout
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_profiler-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Build
-          working_directory: ~/project/packages/profiler
-          command: cargo build --locked
-      - run:
-          name: Run tests
-          working_directory: ~/project/packages/profiler
-          command: cargo test --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_profiler-rust:1.59.0-{{ checksum "Cargo.lock" }}
 
   contract_burner:
     docker:
@@ -1036,10 +1008,6 @@ jobs:
       - run:
           name: Clippy linting on derive
           working_directory: ~/project/packages/derive
-          command: cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on profiler
-          working_directory: ~/project/packages/profiler
           command: cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on schema
