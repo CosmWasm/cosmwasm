@@ -55,7 +55,8 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   A crate in this workspace. This optional addition to `cosmwasm-std` includes
   convenience helpers for interacting with storage. **This is being deprecated
   in favor of
-  [`cw-storage-plus`](https://github.com/CosmWasm/cw-storage-plus).**
+  [`cw-storage-plus`](https://github.com/CosmWasm/cw-storage-plus).** See
+  [issue #1457](https://github.com/CosmWasm/cosmwasm/issues/1457).
 - [cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus) - A crate which
   fills the same role as `cosmwasm-storage`, but with much more powerful types
   supporting composite primary keys, secondary indexes, automatic snapshotting,
