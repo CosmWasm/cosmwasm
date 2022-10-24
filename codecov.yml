@@ -11,7 +11,6 @@ coverage:
 
 ignore:
   - "contracts"
-  - "packages/profiler"
   # Disabled due to "cargo_tarpaulin: Failed to get test coverage! Error: Failed to run tests: Error running test - SIGILL raised in 5835"
   - "packages/vm"
 
