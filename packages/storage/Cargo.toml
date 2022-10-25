@@ -1,11 +1,12 @@
 [package]
-name = "cosmwasm-storage"
+name = "secret-cosmwasm-storage"
 version = "1.0.0"
-authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>", "SCRT Labs <info@scrtlabs.com>"]
 edition = "2021"
 description = "CosmWasm library with useful helpers for Storage patterns"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage"
+repository = "https://github.com/scrtlabs/cosmwasm/tree/secret/packages/storage"
 license = "Apache-2.0"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
