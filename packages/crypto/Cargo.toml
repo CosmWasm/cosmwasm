@@ -1,10 +1,10 @@
 [package]
-name = "cosmwasm-crypto"
+name = "secret-cosmwasm-crypto"
 version = "1.0.0"
-authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
+authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>", "SCRT Labs <info@scrtlabs.com>"]
 edition = "2021"
 description = "Crypto bindings for cosmwasm contracts"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto"
+repository = "https://github.com/scrtlabs/cosmwasm/tree/secret/packages/crypto"
 license = "Apache-2.0"
 
 [features]

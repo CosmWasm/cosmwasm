@@ -1,5 +1,5 @@
 [package]
-name = "cosmwasm-std"
+name = "secret-cosmwasm-std"
 version = "1.0.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>", "SCRT Labs <info@scrtlabs.com>"]
 edition = "2021"
@@ -48,7 +48,7 @@ thiserror = "1.0"
 forward_ref = "1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cosmwasm-crypto = { path = "../crypto", version = "1.0.0" }
+cosmwasm-crypto = { path = "../crypto", package = "secret-cosmwasm-crypto", version = "1.0.0" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
