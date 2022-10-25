@@ -42,7 +42,7 @@ required-features = ["iterator"]
 clru = "0.4.0"
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", package = "secret-cosmwasm-std", version = "1.0.0", default-features = false }
-cosmwasm-crypto = { path = "../crypto", version = "1.0.0" }
+cosmwasm-crypto = { path = "../crypto", package = "secret-cosmwasm-crypto", version = "1.0.0" }
 hex = "0.4"
 parity-wasm = "0.42"
 schemars = "0.8.1"

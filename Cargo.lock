@@ -241,25 +241,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
-name = "cosmwasm-crypto"
-version = "1.0.0"
-dependencies = [
- "base64",
- "criterion",
- "digest",
- "ed25519-zebra",
- "english-numbers",
- "hex",
- "hex-literal",
- "k256",
- "rand_core 0.6.3",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
-]
-
-[[package]]
 name = "cosmwasm-derive"
 version = "1.0.0"
 dependencies = [
@@ -296,7 +277,6 @@ version = "1.0.0"
 dependencies = [
  "clap",
  "clru",
- "cosmwasm-crypto",
  "criterion",
  "hex",
  "hex-literal",
@@ -305,6 +285,7 @@ dependencies = [
  "parity-wasm",
  "rand",
  "schemars",
+ "secret-cosmwasm-crypto",
  "secret-cosmwasm-std",
  "serde",
  "serde_json",
@@ -1526,18 +1507,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "secret-cosmwasm-crypto"
+version = "1.0.0"
+dependencies = [
+ "base64",
+ "criterion",
+ "digest",
+ "ed25519-zebra",
+ "english-numbers",
+ "hex",
+ "hex-literal",
+ "k256",
+ "rand_core 0.6.3",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
 name = "secret-cosmwasm-std"
 version = "1.0.0"
 dependencies = [
  "base64",
  "chrono",
- "cosmwasm-crypto",
  "cosmwasm-derive",
  "cosmwasm-schema",
  "forward_ref",
  "hex",
  "hex-literal",
  "schemars",
+ "secret-cosmwasm-crypto",
  "serde",
  "serde-json-wasm",
  "thiserror",
