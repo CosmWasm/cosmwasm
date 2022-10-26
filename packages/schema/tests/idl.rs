@@ -109,10 +109,7 @@ fn test_query_responses() {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryMsgWithGenerics<T: std::fmt::Debug>
-where
-    T: JsonSchema,
-{
+pub enum QueryMsgWithGenerics<T: std::fmt::Debug> {
     #[returns(u128)]
     QueryData { data: T },
 }

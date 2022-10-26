@@ -1,4 +1,4 @@
-use syn::{parse_quote, Expr, ExprTuple, Ident, ItemEnum, ItemImpl, Type, Variant};
+use syn::{parse_quote, Expr, ExprTuple, Generics, Ident, ItemEnum, ItemImpl, Type, Variant};
 
 pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     let is_nested = has_attr(&input, "query_responses", "nested");
@@ -8,7 +8,8 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
         let subquery_calls = input.variants.into_iter().map(parse_subquery);
 
         // Handle generics if the type has any
-        let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+        let (_, type_generics, where_clause) = input.generics.split_for_impl();
+        let impl_generics = impl_generics(&input.generics);
 
         let subquery_len = subquery_calls.len();
         parse_quote! {
@@ -31,7 +32,8 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
         let mappings = mappings.map(parse_tuple);
 
         // Handle generics if the type has any
-        let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+        let (_, type_generics, where_clause) = input.generics.split_for_impl();
+        let impl_generics = impl_generics(&input.generics);
 
         parse_quote! {
             #[automatically_derived]
@@ -45,6 +47,17 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
             }
         }
     }
+}
+
+fn impl_generics(impl_generics: &Generics) -> Generics {
+    let mut impl_generics = impl_generics.to_owned();
+    for param in impl_generics.type_params_mut() {
+        param
+            .bounds
+            .push(parse_quote! {::cosmwasm_schema::schemars::JsonSchema})
+    }
+
+    impl_generics
 }
 
 /// Extract the query -> response mapping out of an enum variant.
@@ -202,13 +215,13 @@ mod tests {
         };
 
         let result = query_responses_derive_impl(input);
-        dbg!(&result);
+
         assert_eq!(
             result,
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl<T> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
+                impl<T: ::cosmwasm_schema::schemars::JsonSchema> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
@@ -223,7 +236,7 @@ mod tests {
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl<T: std::fmt::Debug + SomeTrait> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
+                impl<T: std::fmt::Debug + SomeTrait + ::cosmwasm_schema::schemars::JsonSchema> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
@@ -239,7 +252,7 @@ mod tests {
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl<T> ::cosmwasm_schema::QueryResponses for QueryMsg<T>
+                impl<T: ::cosmwasm_schema::schemars::JsonSchema> ::cosmwasm_schema::QueryResponses for QueryMsg<T>
                     where T: std::fmt::Debug + SomeTrait,
                 {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
