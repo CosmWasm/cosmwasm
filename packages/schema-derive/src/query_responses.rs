@@ -1,14 +1,11 @@
-use std::collections::HashSet;
+mod context;
 
-use syn::{
-    parse_quote, Expr, ExprTuple, Generics, Ident, ItemEnum, ItemImpl, Meta, NestedMeta, Type,
-    Variant,
-};
+use syn::{parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, Variant};
 
-const ATTR_PATH: &str = "query_responses";
+use self::context::Context;
 
 pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
-    let ctx = get_context(&input);
+    let ctx = context::get_context(&input);
 
     if ctx.is_nested {
         let ident = input.ident;
@@ -56,62 +53,10 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
     }
 }
 
-struct Context {
-    is_nested: bool,
-    no_bounds_for: HashSet<Ident>,
-}
-
-fn get_context(input: &ItemEnum) -> Context {
-    let params = input
-        .attrs
-        .iter()
-        .filter(|attr| matches!(attr.path.get_ident(), Some(id) if *id == ATTR_PATH))
-        .flat_map(|attr| {
-            if let Meta::List(l) = attr.parse_meta().unwrap() {
-                l.nested
-            } else {
-                panic!("{} attribute must contain a meta list", ATTR_PATH);
-            }
-        })
-        .map(|nested_meta| {
-            if let NestedMeta::Meta(m) = nested_meta {
-                m
-            } else {
-                panic!("no literals allowed in QueryResponses params")
-            }
-        });
-
-    let mut ctx = Context {
-        is_nested: false,
-        no_bounds_for: HashSet::new(),
-    };
-
-    for param in params {
-        match param.path().get_ident().unwrap().to_string().as_str() {
-            "no_bounds_for" => {
-                if let Meta::List(l) = param {
-                    for item in l.nested {
-                        match item {
-                            NestedMeta::Meta(Meta::Path(p)) => {
-                                ctx.no_bounds_for.insert(p.get_ident().unwrap().clone());
-                            }
-                            _ => panic!("`no_bounds_for` only accepts a list of type params"),
-                        }
-                    }
-                } else {
-                    panic!("expected a list for `no_bounds_for`")
-                }
-            }
-            "nested" => ctx.is_nested = true,
-            path => panic!("unrecognized QueryResponses param: {}", path),
-        }
-    }
-
-    ctx
-}
-
-fn impl_generics(ctx: &Context, impl_generics: &Generics) -> Generics {
-    let mut impl_generics = impl_generics.to_owned();
+/// Takes a list of generics from the type definition and produces a list of generics
+/// for the expanded `impl` block, adding trait bounds like `JsonSchema` as appropriate.
+fn impl_generics(ctx: &Context, generics: &Generics) -> Generics {
+    let mut impl_generics = generics.to_owned();
     for param in impl_generics.type_params_mut() {
         if !ctx.no_bounds_for.contains(&param.ident) {
             param
