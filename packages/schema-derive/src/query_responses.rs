@@ -65,15 +65,14 @@ fn get_context(input: &ItemEnum) -> Context {
     let params = input
         .attrs
         .iter()
-        .filter(|attr| matches!(attr.path.get_ident(), Some(id) if id.to_string() == ATTR_PATH))
-        .map(|attr| {
+        .filter(|attr| matches!(attr.path.get_ident(), Some(id) if *id == ATTR_PATH))
+        .flat_map(|attr| {
             if let Meta::List(l) = attr.parse_meta().unwrap() {
                 l.nested
             } else {
                 panic!("{} attribute must contain a meta list", ATTR_PATH);
             }
         })
-        .flatten()
         .map(|nested_meta| {
             if let NestedMeta::Meta(m) = nested_meta {
                 m
