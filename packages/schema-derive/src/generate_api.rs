@@ -15,23 +15,46 @@ pub fn write_api_impl(input: Options) -> Block {
         {
             #[cfg(target_arch = "wasm32")]
             compile_error!("can't compile schema generator for the `wasm32` arch\nhint: are you trying to compile a smart contract without specifying `--lib`?");
-            use ::std::env::current_dir;
+            use ::std::env;
             use ::std::fs::{create_dir_all, write};
 
             use ::cosmwasm_schema::{remove_schemas, Api, QueryResponses};
 
-            let mut out_dir = current_dir().unwrap();
+            if env::args().find(|arg| arg == "--help").is_some() {
+                println!("USAGE:");
+                println!("    cargo schema [OPTIONS]");
+                println!();
+                println!("FLAGS:");
+                println!("    --basic");
+                println!("            Generate pure JSON schema files rather than the \"unified\" format.");
+                println!("    --help");
+                println!("            Print this helpfile.");
+                return;
+            }
+
+            let basic = env::args().find(|arg| arg == "--basic").is_some();
+
+            let mut out_dir = env::current_dir().unwrap();
             out_dir.push("schema");
             create_dir_all(&out_dir).unwrap();
             remove_schemas(&out_dir).unwrap();
 
-            let path = out_dir.join(concat!(#name, ".json"));
-
             let api = #api_object.render();
 
-            let json = api.to_string().unwrap();
-            write(&path, json + "\n").unwrap();
-            println!("Exported the full API as {}", path.to_str().unwrap());
+            if basic {
+                for (filename, json) in api.to_schema_files().unwrap() {
+                    let path = out_dir.join(filename);
+
+                    write(&path, json + "\n").unwrap();
+                    println!("Exported {}", path.to_str().unwrap());
+                }
+            } else {
+                let path = out_dir.join(concat!(#name, ".json"));
+
+                let json = api.to_string().unwrap();
+                write(&path, json + "\n").unwrap();
+                println!("Exported the full API as {}", path.to_str().unwrap());
+            }
         }
     }
 }
