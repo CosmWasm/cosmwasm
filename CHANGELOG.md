@@ -25,8 +25,13 @@ and this project adheres to
   `CanonicalAddr` ([#1463]).
 - cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
   `HexBinary`/`Binary` ([#1463]).
+- cosmwasm-std: Add `GovMsg::VoteWeighted`. In order to use this in a contract,
+  the `cosmwasm_1_2` feature needs to be enabled for the `cosmwasm_std`
+  dependency. This makes the contract incompatible with chains running versions
+  of CosmWasm earlier than 1.2.0 ([#1481]).
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
+[#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
 
 ### Changed
 
