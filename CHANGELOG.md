@@ -34,6 +34,9 @@ and this project adheres to
   `CanonicalAddr` ([#1463]).
 - cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
   `HexBinary`/`Binary` ([#1463]).
+- cosmwasm-schema: In contracts, `cosmwasm schema` now accepts the `--basic`
+  flag. This will output a separate JSON Schema file for each entrypoint,
+  similar to the old way. No unified file is produced this way.
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
 
