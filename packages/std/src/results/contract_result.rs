@@ -1,6 +1,6 @@
-use schemars::JsonSchema;
+use alloc::fmt;
+use alloc::string::{String, ToString};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// This is the final result type that is created and serialized in a contract for
 /// every init/execute/migrate call. The VM then deserializes this type to distinguish
@@ -29,7 +29,8 @@ use std::fmt;
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {
     Ok(S),
@@ -155,9 +156,15 @@ mod tests {
 
         let original: Result<Response, StdError> = Err(StdError::generic_err("broken"));
         let converted: ContractResult<Response> = original.into();
+        #[cfg(feature = "std")]
         assert_eq!(
             converted,
             ContractResult::Err("Generic error: broken".to_string())
+        );
+        #[cfg(not(feature = "std"))]
+        assert_eq!(
+            converted,
+            ContractResult::Err("GenericErr { msg: \"broken\" }".to_string())
         );
     }
 

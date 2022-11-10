@@ -1,10 +1,12 @@
-use schemars::JsonSchema;
+use alloc::fmt;
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::math::Uint128;
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Coin {
     pub denom: String,
     pub amount: Uint128,
@@ -86,6 +88,7 @@ pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::string::ToString;
 
     #[test]
     fn coin_implements_display() {

@@ -1,10 +1,10 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt::{self};
-use std::ops::{
+use alloc::fmt::{self};
+use alloc::string::{String, ToString};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -28,8 +28,9 @@ use crate::{impl_mul_fraction, Fraction, Uint128};
 /// let b = Uint64::from(70u32);
 /// assert_eq!(b.u64(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint64(#[schemars(with = "String")] u64);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Uint64(#[cfg_attr(feature = "std", schemars(with = "String"))] u64);
 
 impl Uint64 {
     pub const MAX: Self = Self(u64::MAX);
@@ -471,7 +472,7 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint64
+impl<A> core::iter::Sum<A> for Uint64
 where
     Self: Add<A, Output = Self>,
 {

@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::errors::StdError;
 
 /// A record of a key-value storage that is created through an iterator API.

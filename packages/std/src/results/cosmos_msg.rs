@@ -1,7 +1,7 @@
-use derivative::Derivative;
-use schemars::JsonSchema;
+use alloc::fmt;
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::binary::Binary;
 use crate::coin::Coin;
@@ -16,12 +16,16 @@ use super::Empty;
 
 /// Like CustomQuery for better type clarity.
 /// Also makes it shorter to use as a trait bound.
-pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema {}
+#[cfg(feature = "std")]
+pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + schemars::JsonSchema {}
+#[cfg(not(feature = "std"))]
+pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq {}
 
 impl CustomMsg for Empty {}
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
 pub enum CosmosMsg<T = Empty> {
@@ -51,7 +55,8 @@ pub enum CosmosMsg<T = Empty> {
 ///
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BankMsg {
     /// Sends native tokens from the contract to the given address.
@@ -73,7 +78,8 @@ pub enum BankMsg {
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto
 #[cfg(feature = "staking")]
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingMsg {
     /// This is translated to a [MsgDelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L81-L90).
@@ -96,7 +102,8 @@ pub enum StakingMsg {
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto
 #[cfg(feature = "staking")]
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DistributionMsg {
     /// This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37).
@@ -113,8 +120,9 @@ pub enum DistributionMsg {
     },
 }
 
-fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-    match std::str::from_utf8(data.as_slice()) {
+#[cfg(feature = "std")]
+fn binary_to_string(data: &Binary, fmt: &mut alloc::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    match core::str::from_utf8(data.as_slice()) {
         Ok(s) => fmt.write_str(s),
         Err(_) => write!(fmt, "{:?}", data),
     }
@@ -124,8 +132,11 @@ fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), 
 ///
 /// See https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Derivative, PartialEq, Eq, JsonSchema)]
-#[derivative(Debug)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "std", derive(derivative::Derivative))]
+#[cfg_attr(not(feature = "std"), derive(Debug))]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derivative(Debug))]
 #[serde(rename_all = "snake_case")]
 pub enum WasmMsg {
     /// Dispatches a call to another contract at a known address (with known ABI).
@@ -135,7 +146,7 @@ pub enum WasmMsg {
     Execute {
         contract_addr: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[cfg_attr(feature = "std", derivative(Debug(format_with = "binary_to_string")))]
         msg: Binary,
         funds: Vec<Coin>,
     },
@@ -152,7 +163,7 @@ pub enum WasmMsg {
         admin: Option<String>,
         code_id: u64,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[cfg_attr(feature = "std", derivative(Debug(format_with = "binary_to_string")))]
         msg: Binary,
         funds: Vec<Coin>,
         /// A human-readbale label for the contract
@@ -189,7 +200,7 @@ pub enum WasmMsg {
         /// the code_id of the new logic to place in the given contract
         new_code_id: u64,
         /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[cfg_attr(feature = "std", derivative(Debug(format_with = "binary_to_string")))]
         msg: Binary,
     },
     /// Sets a new admin (for migrate) on the given contract.
@@ -273,7 +284,8 @@ pub enum WasmMsg {
 /// }
 /// ```
 #[cfg(feature = "stargate")]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum GovMsg {
     /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
@@ -294,7 +306,8 @@ pub enum GovMsg {
 }
 
 #[cfg(feature = "stargate")]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum VoteOption {
     Yes,
@@ -386,7 +399,10 @@ impl<T> From<GovMsg> for CosmosMsg<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coin, coins};
+    #[cfg(feature = "std")]
+    use crate::coin;
+    use crate::coins;
+    use alloc::string::ToString;
 
     #[test]
     fn from_bank_msg_works() {
@@ -463,6 +479,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn wasm_msg_debug_decodes_binary_string_when_possible() {
         #[cosmwasm_schema::cw_serde]

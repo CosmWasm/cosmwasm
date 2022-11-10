@@ -1,14 +1,17 @@
 #![cfg(feature = "stargate")]
 
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::ibc::IbcChannel;
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection. These will return errors if the contract is not "ibc enabled"
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcQuery {
     /// Gets the Port ID the current contract is bound to.
@@ -32,17 +35,20 @@ pub enum IbcQuery {
     // TODO: Add more
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PortIdResponse {
     pub port_id: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ListChannelsResponse {
     pub channels: Vec<IbcChannel>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,
 }

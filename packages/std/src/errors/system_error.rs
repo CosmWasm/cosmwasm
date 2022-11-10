@@ -1,4 +1,4 @@
-use schemars::JsonSchema;
+use alloc::string::String;
 use serde::{Deserialize, Serialize};
 
 use crate::Binary;
@@ -12,7 +12,8 @@ use crate::Binary;
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
@@ -39,10 +40,11 @@ pub enum SystemError {
     },
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for SystemError {}
 
-impl std::fmt::Display for SystemError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SystemError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             SystemError::InvalidRequest { error, request } => write!(
                 f,

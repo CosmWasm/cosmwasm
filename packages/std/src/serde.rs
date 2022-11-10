@@ -2,8 +2,9 @@
 // The reason is two fold:
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
+use alloc::vec::Vec;
+use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
-use std::any::type_name;
 
 use crate::binary::Binary;
 use crate::errors::{StdError, StdResult};
@@ -33,6 +34,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::string::{String, ToString};
     use serde::Deserialize;
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]

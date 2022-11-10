@@ -1,8 +1,11 @@
-use std::fmt::{self};
-use std::ops::{
+use alloc::fmt::{self};
+use alloc::string::{String, ToString};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
@@ -33,8 +36,9 @@ use crate::{impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint6
 /// let c = Uint128::from(70u32);
 /// assert_eq!(c.u128(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint128(#[schemars(with = "String")] u128);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Uint128(#[cfg_attr(feature = "std", schemars(with = "String"))] u128);
 
 impl Uint128 {
     pub const MAX: Self = Self(u128::MAX);
@@ -518,7 +522,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint128
+impl<A> core::iter::Sum<A> for Uint128
 where
     Self: Add<A, Output = Self>,
 {

@@ -2,21 +2,23 @@
 use cosmwasm_crypto::CryptoError;
 #[cfg(feature = "backtraces")]
 use std::backtrace::Backtrace;
-use std::fmt::Debug;
-use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug)]
 pub enum RecoverPubkeyError {
-    #[error("Invalid hash format")]
+    #[cfg_attr(feature = "std", error("Invalid hash format"))]
     InvalidHashFormat,
-    #[error("Invalid signature format")]
+    #[cfg_attr(feature = "std", error("Invalid signature format"))]
     InvalidSignatureFormat,
-    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[cfg_attr(
+        feature = "std",
+        error("Invalid recovery parameter. Supported values: 0 and 1.")
+    )]
     InvalidRecoveryParam,
-    #[error("Unknown error: {error_code}")]
+    #[cfg_attr(feature = "std", error("Unknown error: {error_code}"))]
     UnknownErr {
         error_code: u32,
-        #[cfg(feature = "backtraces")]
+        #[cfg(all(feature = "backtraces", feature = "std"))]
         backtrace: Backtrace,
     },
 }
@@ -25,7 +27,7 @@ impl RecoverPubkeyError {
     pub fn unknown_err(error_code: u32) -> Self {
         RecoverPubkeyError::UnknownErr {
             error_code,
-            #[cfg(feature = "backtraces")]
+            #[cfg(all(feature = "backtraces", feature = "std"))]
             backtrace: Backtrace::capture(),
         }
     }

@@ -1,11 +1,10 @@
+use alloc::fmt::{self, Write};
+use alloc::str::FromStr;
+use alloc::string::ToString;
+use core::cmp::Ordering;
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
-use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -19,11 +18,13 @@ use super::{Uint128, Uint256};
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal(#[schemars(with = "String")] Uint128);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Decimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint128);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Decimal range exceeded")]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", error("Decimal range exceeded"))]
 pub struct DecimalRangeExceeded;
 
 impl Decimal {
@@ -604,7 +605,7 @@ impl RemAssign<Decimal> for Decimal {
 }
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal, Decimal);
 
-impl<A> std::iter::Sum<A> for Decimal
+impl<A> core::iter::Sum<A> for Decimal
 where
     Self: Add<A, Output = Self>,
 {
@@ -669,6 +670,7 @@ impl PartialEq<Decimal> for &Decimal {
 mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal {
         Decimal::from_str(input).unwrap()

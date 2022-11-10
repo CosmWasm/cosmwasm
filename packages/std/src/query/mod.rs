@@ -1,4 +1,5 @@
-use schemars::JsonSchema;
+#[cfg(feature = "stargate")]
+use alloc::string::String;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "stargate")]
@@ -26,7 +27,8 @@ pub use wasm::CodeInfoResponse;
 pub use wasm::{ContractInfoResponse, WasmQuery};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest<C> {
     Bank(BankQuery),
@@ -58,9 +60,9 @@ pub enum QueryRequest<C> {
 ///
 /// ```
 /// # use cosmwasm_std::CustomQuery;
-/// # use schemars::JsonSchema;
 /// # use serde::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 /// #[serde(rename_all = "snake_case")]
 /// pub enum MyCustomQuery {
 ///     Ping {},

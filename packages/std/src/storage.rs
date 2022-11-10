@@ -1,9 +1,12 @@
-use std::collections::BTreeMap;
-use std::fmt;
 #[cfg(feature = "iterator")]
-use std::iter;
+use alloc::boxed::Box;
+use alloc::collections::BTreeMap;
+use alloc::fmt;
+use alloc::vec::Vec;
 #[cfg(feature = "iterator")]
-use std::ops::{Bound, RangeBounds};
+use core::iter;
+#[cfg(feature = "iterator")]
+use core::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};

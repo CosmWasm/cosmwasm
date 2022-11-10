@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use alloc::fmt;
+use alloc::string::{String, ToString};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, Shr, ShrAssign, Sub,
     SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
@@ -47,8 +47,9 @@ use uints::U256;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint256(#[schemars(with = "String")] U256);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Uint256(#[cfg_attr(feature = "std", schemars(with = "String"))] U256);
 
 impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
@@ -139,7 +140,7 @@ impl Uint256 {
             (self.0).0[1].to_be_bytes(),
             (self.0).0[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -150,7 +151,7 @@ impl Uint256 {
             (self.0).0[2].to_le_bytes(),
             (self.0).0[3].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     pub const fn is_zero(&self) -> bool {
@@ -644,7 +645,7 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint256
+impl<A> core::iter::Sum<A> for Uint256
 where
     Self: Add<A, Output = Self>,
 {

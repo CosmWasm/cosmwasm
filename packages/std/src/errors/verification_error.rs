@@ -1,29 +1,31 @@
 #[cfg(feature = "backtraces")]
 use std::backtrace::Backtrace;
-use std::fmt::Debug;
-use thiserror::Error;
 
 #[cfg(not(target_arch = "wasm32"))]
 use cosmwasm_crypto::CryptoError;
 
-#[derive(Error, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug)]
 pub enum VerificationError {
-    #[error("Batch error")]
+    #[cfg_attr(feature = "std", error("Batch error"))]
     BatchErr,
-    #[error("Generic error")]
+    #[cfg_attr(feature = "std", error("Generic error"))]
     GenericErr,
-    #[error("Invalid hash format")]
+    #[cfg_attr(feature = "std", error("Invalid hash format"))]
     InvalidHashFormat,
-    #[error("Invalid signature format")]
+    #[cfg_attr(feature = "std", error("Invalid signature format"))]
     InvalidSignatureFormat,
-    #[error("Invalid public key format")]
+    #[cfg_attr(feature = "std", error("Invalid public key format"))]
     InvalidPubkeyFormat,
-    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[cfg_attr(
+        feature = "std",
+        error("Invalid recovery parameter. Supported values: 0 and 1.")
+    )]
     InvalidRecoveryParam,
-    #[error("Unknown error: {error_code}")]
+    #[cfg_attr(feature = "std", error("Unknown error: {error_code}"))]
     UnknownErr {
         error_code: u32,
-        #[cfg(feature = "backtraces")]
+        #[cfg(all(feature = "backtraces", feature = "std"))]
         backtrace: Backtrace,
     },
 }
@@ -32,7 +34,7 @@ impl VerificationError {
     pub fn unknown_err(error_code: u32) -> Self {
         VerificationError::UnknownErr {
             error_code,
-            #[cfg(feature = "backtraces")]
+            #[cfg(all(feature = "backtraces", feature = "std"))]
             backtrace: Backtrace::capture(),
         }
     }

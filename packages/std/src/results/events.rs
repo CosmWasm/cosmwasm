@@ -1,4 +1,5 @@
-use schemars::JsonSchema;
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 /// A full [*Cosmos SDK* event].
@@ -9,7 +10,8 @@ use serde::{Deserialize, Serialize};
 ///
 /// [*Cosmos SDK* event]: https://docs.cosmos.network/main/core/events.html
 /// [*Cosmos SDK* StringEvent]: https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Event {
     /// The event type. This is renamed to "ty" because "type" is reserved in Rust. This sucks, we know.
@@ -55,7 +57,8 @@ impl Event {
 }
 
 /// An key value pair that is used in the context of event attributes in logs
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Attribute {
     pub key: String,
     pub value: String,
@@ -133,6 +136,7 @@ pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
 mod tests {
     use super::*;
     use crate::Uint128;
+    use alloc::string::ToString;
 
     #[test]
     fn event_construction() {

@@ -1,6 +1,10 @@
+#[cfg(feature = "iterator")]
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
+use core::ops::Deref;
 use serde::{de::DeserializeOwned, Serialize};
-use std::marker::PhantomData;
-use std::ops::Deref;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
@@ -371,6 +375,7 @@ mod tests {
     use super::*;
     use crate::testing::MockQuerier;
     use crate::{coins, from_slice, Uint128};
+    use alloc::string::ToString;
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {

@@ -1,13 +1,13 @@
-use schemars::JsonSchema;
+use alloc::borrow::Cow;
+use alloc::fmt;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::ops::Deref;
 use serde::{Deserialize, Serialize};
 use sha2::{
     digest::{Digest, Update},
     Sha256,
 };
-use std::borrow::Cow;
-use std::fmt;
-use std::ops::Deref;
-use thiserror::Error;
 
 use crate::{binary::Binary, HexBinary};
 
@@ -27,9 +27,8 @@ use crate::{binary::Binary, HexBinary};
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
-)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Addr(String);
 
 impl Addr {
@@ -155,7 +154,8 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 /// addition to that there are many unsafe ways to convert any binary data into an instance.
 /// So the type shoud be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct CanonicalAddr(pub Binary);
 
 /// Implement `CanonicalAddr == Binary`
@@ -276,7 +276,8 @@ impl fmt::Display for CanonicalAddr {
     }
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Instantiate2AddressError {
     /// Checksum must be 32 bytes
     InvalidChecksumLength,
@@ -382,10 +383,18 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+<<<<<<< HEAD
     use crate::HexBinary;
     use hex_literal::hex;
+=======
+    use alloc::string::ToString;
+    use alloc::vec::Vec;
+    #[cfg(feature = "std")]
+>>>>>>> 059adae7 (feat(std): no_std)
     use std::collections::hash_map::DefaultHasher;
+    #[cfg(feature = "std")]
     use std::collections::HashSet;
+    #[cfg(feature = "std")]
     use std::hash::{Hash, Hasher};
 
     #[test]
@@ -623,6 +632,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn canonical_addr_implements_hash() {
         let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let mut hasher = DefaultHasher::new();
@@ -645,6 +655,7 @@ mod tests {
 
     /// This requires Hash and Eq to be implemented
     #[test]
+    #[cfg(feature = "std")]
     fn canonical_addr_can_be_used_in_hash_set() {
         let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);

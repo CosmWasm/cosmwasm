@@ -1,11 +1,10 @@
+use alloc::fmt::{self, Write};
+use alloc::str::FromStr;
+use alloc::string::ToString;
+use core::cmp::Ordering;
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
-use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -22,11 +21,13 @@ use super::Uint256;
 /// The greatest possible value that can be represented is
 /// 115792089237316195423570985008687907853269984665640564039457.584007913129639935
 /// (which is (2^256 - 1) / 10^18)
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal256(#[schemars(with = "String")] Uint256);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Decimal256(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint256);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Decimal256 range exceeded")]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", error("Decimal256 range exceeded"))]
 pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
@@ -629,7 +630,7 @@ impl RemAssign<Decimal256> for Decimal256 {
 }
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal256, Decimal256);
 
-impl<A> std::iter::Sum<A> for Decimal256
+impl<A> core::iter::Sum<A> for Decimal256
 where
     Self: Add<A, Output = Self>,
 {
@@ -695,6 +696,7 @@ mod tests {
     use super::*;
     use crate::errors::StdError;
     use crate::{from_slice, to_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal256 {
         Decimal256::from_str(input).unwrap()

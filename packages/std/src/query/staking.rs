@@ -1,12 +1,12 @@
 #![cfg(feature = "staking")]
 
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{Addr, Coin, Decimal};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingQuery {
     /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
@@ -34,14 +34,16 @@ pub enum StakingQuery {
 }
 
 /// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct BondedDenomResponse {
     pub denom: String,
 }
 
 /// DelegationsResponse is data format returned from StakingRequest::AllDelegations query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct AllDelegationsResponse {
     pub delegations: Vec<Delegation>,
@@ -50,7 +52,8 @@ pub struct AllDelegationsResponse {
 /// Delegation is basic (cheap to query) data about a delegation.
 ///
 /// Instances are created in the querier.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Delegation {
     pub delegator: Addr,
     /// A validator address (e.g. cosmosvaloper1...)
@@ -70,7 +73,8 @@ impl From<FullDelegation> for Delegation {
 }
 
 /// DelegationResponse is data format returned from StakingRequest::Delegation query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct DelegationResponse {
     pub delegation: Option<FullDelegation>,
@@ -80,7 +84,8 @@ pub struct DelegationResponse {
 /// is expensive to query.
 ///
 /// Instances are created in the querier.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct FullDelegation {
     pub delegator: Addr,
     /// A validator address (e.g. cosmosvaloper1...)
@@ -96,19 +101,22 @@ pub struct FullDelegation {
 }
 
 /// The data format returned from StakingRequest::AllValidators query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct AllValidatorsResponse {
     pub validators: Vec<Validator>,
 }
 
 /// The data format returned from StakingRequest::Validator query
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ValidatorResponse {
     pub validator: Option<Validator>,
 }
 
 /// Instances are created in the querier.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Validator {
     /// A validator address (e.g. cosmosvaloper1...)
     pub address: String,
