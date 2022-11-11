@@ -1,5 +1,7 @@
 #![cfg(feature = "staking")]
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::{Addr, Coin, Decimal};
