@@ -1,5 +1,6 @@
-use std::mem;
-use std::vec::Vec;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use core::mem;
 
 /// Describes some data allocated in Wasm's linear memory.
 /// A pointer to an instance of this can be returned over FFI boundaries.
