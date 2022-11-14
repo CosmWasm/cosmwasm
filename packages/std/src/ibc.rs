@@ -9,7 +9,7 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 #[cfg(feature = "ibc3")]
 use crate::addresses::Addr;
 use crate::binary::Binary;
-use crate::coins::Coin;
+use crate::coin::Coin;
 use crate::errors::StdResult;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::serde::to_binary;
