@@ -14,7 +14,6 @@ and this project adheres to
   `CanonicalAddr` ([#1463]).
 - cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
   `HexBinary`/`Binary` ([#1463]).
-- cosmwasm-schema: `QueryResponses`
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
 
