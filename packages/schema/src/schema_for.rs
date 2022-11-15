@@ -6,7 +6,8 @@
 ///
 /// # Example
 /// ```
-/// use schemars::{schema_for, JsonSchema};
+/// use cosmwasm_schema::schema_for;
+/// use schemars::JsonSchema;
 ///
 /// #[derive(JsonSchema)]
 /// struct MyStruct {
