@@ -35,6 +35,7 @@ pub struct GasReport {
 
 #[derive(Copy, Clone, Debug)]
 pub struct InstanceOptions {
+    /// Gas limit measured in [CosmWasm gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     pub gas_limit: u64,
     pub print_debug: bool,
 }

@@ -33,6 +33,7 @@ pub struct SubMsg<T = Empty> {
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
     pub id: u64,
     pub msg: CosmosMsg<T>,
+    /// Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     pub gas_limit: Option<u64>,
     pub reply_on: ReplyOn,
 }
@@ -67,6 +68,7 @@ impl<T> SubMsg<T> {
     }
 
     /// Add a gas limit to the message.
+    /// This gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     ///
     /// ## Examples
     ///
