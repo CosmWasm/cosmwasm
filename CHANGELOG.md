@@ -14,6 +14,7 @@ and this project adheres to
   `CanonicalAddr` ([#1463]).
 - cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
   `HexBinary`/`Binary` ([#1463]).
+- cosmwasm-schema: `QueryResponses`
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
 
@@ -25,6 +26,9 @@ and this project adheres to
   cannot properly measure different runtimes for differet Wasm opcodes.
 - cosmwasm-schema: schema generation is now locked to produce strictly
   `draft-07` schemas
+- cosmwasm-schema: `QueryResponses` derive now sets the `JsonSchema` trait bound
+  on the generated `impl` block. This allows the contract dev to not add a
+  `JsonSchema` trait bound on the type itself.
 
 [#1465]: https://github.com/CosmWasm/cosmwasm/pull/1465
 
