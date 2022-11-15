@@ -1,14 +1,19 @@
-use syn::{parse_quote, Expr, ExprTuple, Ident, ItemEnum, ItemImpl, Type, Variant};
+mod context;
+
+use syn::{parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, Variant};
+
+use self::context::Context;
 
 pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
-    let is_nested = has_attr(&input, "query_responses", "nested");
+    let ctx = context::get_context(&input);
 
-    if is_nested {
+    if ctx.is_nested {
         let ident = input.ident;
         let subquery_calls = input.variants.into_iter().map(parse_subquery);
 
         // Handle generics if the type has any
-        let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+        let (_, type_generics, where_clause) = input.generics.split_for_impl();
+        let impl_generics = impl_generics(&ctx, &input.generics);
 
         let subquery_len = subquery_calls.len();
         parse_quote! {
@@ -31,7 +36,8 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
         let mappings = mappings.map(parse_tuple);
 
         // Handle generics if the type has any
-        let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
+        let (_, type_generics, where_clause) = input.generics.split_for_impl();
+        let impl_generics = impl_generics(&ctx, &input.generics);
 
         parse_quote! {
             #[automatically_derived]
@@ -45,6 +51,21 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
             }
         }
     }
+}
+
+/// Takes a list of generics from the type definition and produces a list of generics
+/// for the expanded `impl` block, adding trait bounds like `JsonSchema` as appropriate.
+fn impl_generics(ctx: &Context, generics: &Generics) -> Generics {
+    let mut impl_generics = generics.to_owned();
+    for param in impl_generics.type_params_mut() {
+        if !ctx.no_bounds_for.contains(&param.ident) {
+            param
+                .bounds
+                .push(parse_quote! {::cosmwasm_schema::schemars::JsonSchema})
+        }
+    }
+
+    impl_generics
 }
 
 /// Extract the query -> response mapping out of an enum variant.
@@ -78,14 +99,6 @@ fn parse_subquery(v: Variant) -> Expr {
         syn::Fields::Unit => panic!("a unit variant is not a valid subquery"),
     };
     parse_quote!(<#submsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl())
-}
-
-/// Checks whether the input has the given `#[$path($attr))]` attribute
-fn has_attr(input: &ItemEnum, path: &str, attr: &str) -> bool {
-    input.attrs.iter().any(|a| {
-        a.path.get_ident().unwrap() == path
-            && a.parse_args::<Ident>().ok().map_or(false, |i| i == attr)
-    })
 }
 
 fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {
@@ -202,13 +215,13 @@ mod tests {
         };
 
         let result = query_responses_derive_impl(input);
-        dbg!(&result);
+
         assert_eq!(
             result,
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl<T> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
+                impl<T: ::cosmwasm_schema::schemars::JsonSchema> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
@@ -223,7 +236,7 @@ mod tests {
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl<T: std::fmt::Debug + SomeTrait> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
+                impl<T: std::fmt::Debug + SomeTrait + ::cosmwasm_schema::schemars::JsonSchema> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
@@ -239,7 +252,7 @@ mod tests {
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
-                impl<T> ::cosmwasm_schema::QueryResponses for QueryMsg<T>
+                impl<T: ::cosmwasm_schema::schemars::JsonSchema> ::cosmwasm_schema::QueryResponses for QueryMsg<T>
                     where T: std::fmt::Debug + SomeTrait,
                 {
                     fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {

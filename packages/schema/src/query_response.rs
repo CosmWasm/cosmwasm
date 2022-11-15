@@ -13,7 +13,7 @@ pub use cosmwasm_schema_derive::QueryResponses;
 ///
 /// Using the derive macro is the preferred way of implementing this trait.
 ///
-/// # Example
+/// # Examples
 /// ```
 /// use cosmwasm_schema::QueryResponses;
 /// use schemars::JsonSchema;
@@ -30,20 +30,40 @@ pub use cosmwasm_schema_derive::QueryResponses;
 ///     #[returns(AccountInfo)]
 ///     AccountInfo { account: String },
 /// }
+/// ```
 ///
-/// // You can also compose multiple queries using #[query_responses(nested)]:
+/// You can compose multiple queries using `#[query_responses(nested)]`. This might be useful
+/// together with `#[serde(untagged)]`. If the `nested` flag is set, no `returns` attributes
+/// are necessary on the enum variants. Instead, the response types are collected from the
+/// nested enums.
+///
+/// ```
+/// # use cosmwasm_schema::QueryResponses;
+/// # use schemars::JsonSchema;
 /// #[derive(JsonSchema, QueryResponses)]
 /// #[query_responses(nested)]
 /// #[serde(untagged)]
-/// enum QueryMsg2 {
-///     MsgA(QueryMsg),
+/// enum QueryMsg {
+///     MsgA(QueryA),
 ///     MsgB(QueryB),
 /// }
+///
+/// #[derive(JsonSchema, QueryResponses)]
+/// enum QueryA {
+///     #[returns(Vec<String>)]
+///     Denoms {},
+/// }
+///
 /// #[derive(JsonSchema, QueryResponses)]
 /// enum QueryB {
 ///     #[returns(AccountInfo)]
 ///     AccountInfo { account: String },
 /// }
+///
+/// # #[derive(JsonSchema)]
+/// # struct AccountInfo {
+/// #     IcqHandle: String,
+/// # }
 /// ```
 pub trait QueryResponses: JsonSchema {
     fn response_schemas() -> Result<BTreeMap<String, RootSchema>, IntegrityError> {

@@ -109,9 +109,16 @@ fn test_query_responses() {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryMsgWithGenerics<T: std::fmt::Debug>
+pub enum QueryMsgWithGenerics<T> {
+    #[returns(u128)]
+    QueryData { data: T },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsgWithGenericsAndTraitBounds<T: std::fmt::Debug>
 where
-    T: JsonSchema,
+    T: PartialEq,
 {
     #[returns(u128)]
     QueryData { data: T },
@@ -122,6 +129,36 @@ fn test_query_responses_generics() {
     let api_str = generate_api! {
         instantiate: InstantiateMsg,
         query: QueryMsgWithGenerics<u32>,
+    }
+    .render()
+    .to_string()
+    .unwrap();
+
+    let api: Value = serde_json::from_str(&api_str).unwrap();
+    let queries = api
+        .get("query")
+        .unwrap()
+        .get("oneOf")
+        .unwrap()
+        .as_array()
+        .unwrap();
+
+    // Find the "query_data" query in the queries schema
+    assert_eq!(queries.len(), 1);
+    assert_eq!(
+        queries[0].get("required").unwrap().get(0).unwrap(),
+        "query_data"
+    );
+
+    // Find the "query_data" query in responses
+    api.get("responses").unwrap().get("query_data").unwrap();
+}
+
+#[test]
+fn test_query_responses_generics_and_trait_bounds() {
+    let api_str = generate_api! {
+        instantiate: InstantiateMsg,
+        query: QueryMsgWithGenericsAndTraitBounds<u32>,
     }
     .render()
     .to_string()

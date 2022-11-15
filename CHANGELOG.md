@@ -25,6 +25,9 @@ and this project adheres to
   cannot properly measure different runtimes for differet Wasm opcodes.
 - cosmwasm-schema: schema generation is now locked to produce strictly
   `draft-07` schemas
+- cosmwasm-schema: `QueryResponses` derive now sets the `JsonSchema` trait bound
+  on the generated `impl` block. This allows the contract dev to not add a
+  `JsonSchema` trait bound on the type itself.
 
 [#1465]: https://github.com/CosmWasm/cosmwasm/pull/1465
 
