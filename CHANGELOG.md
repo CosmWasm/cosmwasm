@@ -23,6 +23,8 @@ and this project adheres to
   `-Zminimal-versions` ([#1465]).
 - cosmwasm-profiler: Package was removed 🪦. It served its job showing us that we
   cannot properly measure different runtimes for differet Wasm opcodes.
+- cosmwasm-schema: schema generation is now locked to produce strictly
+  `draft-07` schemas
 
 [#1465]: https://github.com/CosmWasm/cosmwasm/pull/1465
 

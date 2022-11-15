@@ -3,6 +3,7 @@ mod export;
 mod idl;
 mod query_response;
 mod remove;
+mod schema_for;
 
 pub use export::{export_schema, export_schema_with_title};
 pub use idl::{Api, IDL_VERSION};
@@ -91,7 +92,6 @@ pub use cosmwasm_schema_derive::generate_api;
 /// };
 /// ```
 pub use cosmwasm_schema_derive::write_api;
-pub use schemars::schema_for;
 
 // For use in macro expansions
 pub use schemars;
