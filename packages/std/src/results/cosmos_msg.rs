@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::binary::Binary;
 use crate::coin::Coin;
+#[cfg(feature = "std")]
 use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;

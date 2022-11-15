@@ -11,6 +11,7 @@ use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::errors::StdResult;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+#[cfg(feature = "std")]
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
@@ -249,6 +250,7 @@ impl IbcAcknowledgement {
         IbcAcknowledgement { data: data.into() }
     }
 
+    #[cfg(feature = "std")]
     pub fn encode_json(data: &impl Serialize) -> StdResult<Self> {
         Ok(IbcAcknowledgement {
             data: to_binary(data)?,
