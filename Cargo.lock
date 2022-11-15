@@ -313,7 +313,6 @@ dependencies = [
  "base64",
  "chrono",
  "cosmwasm-crypto",
- "cosmwasm-derive",
  "cosmwasm-schema",
  "derivative",
  "forward_ref",

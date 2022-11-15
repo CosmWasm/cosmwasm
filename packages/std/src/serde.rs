@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 // This file simply re-exports some methods from serde_json
 // The reason is two fold:
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)

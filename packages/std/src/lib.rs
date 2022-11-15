@@ -33,6 +33,7 @@ extern crate alloc;
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
 pub use crate::coin::{coin, coins, has_coins, Coin};
+#[cfg(feature = "std")]
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, ConversionOverflowError, DivideByZeroError,
@@ -74,17 +75,21 @@ pub use crate::results::SubMsgExecutionResponse;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;
 pub use crate::results::{
-    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, CustomMsg,
-    Empty, Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubMsgResponse, SubMsgResult,
-    SystemResult, WasmMsg,
+    attr, Attribute, BankMsg, ContractResult, CosmosMsg, CustomMsg, Empty, Event, QueryResponse,
+    Reply, ReplyOn, Response, SubMsg, SubMsgResponse, SubMsgResult, SystemResult, WasmMsg,
 };
+#[cfg(feature = "std")]
+pub use crate::results::{wasm_execute, wasm_instantiate};
 #[cfg(feature = "staking")]
 pub use crate::results::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use crate::results::{GovMsg, VoteOption};
+#[cfg(feature = "std")]
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
+#[cfg(feature = "std")]
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
+#[cfg(feature = "std")]
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 
@@ -114,4 +119,4 @@ pub mod testing;
 
 // Re-exports
 
-pub use cosmwasm_derive::entry_point;
+//pub use cosmwasm_derive::entry_point;

@@ -4,6 +4,7 @@ use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -357,6 +358,7 @@ impl Sub<Uint128> for Uint128 {
         )
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Uint128, Uint128);
 
 impl SubAssign<Uint128> for Uint128 {
@@ -364,6 +366,7 @@ impl SubAssign<Uint128> for Uint128 {
         *self = *self - rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint128, Uint128);
 
 impl Mul<Uint128> for Uint128 {
@@ -377,6 +380,7 @@ impl Mul<Uint128> for Uint128 {
         )
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Uint128, Uint128);
 
 impl MulAssign<Uint128> for Uint128 {
@@ -384,6 +388,7 @@ impl MulAssign<Uint128> for Uint128 {
         *self = *self * rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint128, Uint128);
 
 impl Div<Uint128> for Uint128 {
@@ -461,6 +466,7 @@ impl Rem for Uint128 {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
 
 impl RemAssign<Uint128> for Uint128 {
@@ -468,6 +474,7 @@ impl RemAssign<Uint128> for Uint128 {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint128, Uint128);
 
 impl ShrAssign<u32> for Uint128 {

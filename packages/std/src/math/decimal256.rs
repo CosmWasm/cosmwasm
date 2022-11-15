@@ -3,6 +3,7 @@ use alloc::str::FromStr;
 use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -496,6 +497,7 @@ impl Add for Decimal256 {
         Self(self.0 + other.0)
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Add, add for Decimal256, Decimal256);
 
 impl AddAssign for Decimal256 {
@@ -503,6 +505,7 @@ impl AddAssign for Decimal256 {
         *self = *self + rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl AddAssign, add_assign for Decimal256, Decimal256);
 
 impl Sub for Decimal256 {
@@ -512,6 +515,7 @@ impl Sub for Decimal256 {
         Self(self.0 - other.0)
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Decimal256, Decimal256);
 
 impl SubAssign for Decimal256 {
@@ -519,6 +523,7 @@ impl SubAssign for Decimal256 {
         *self = *self - rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal256, Decimal256);
 
 impl Mul for Decimal256 {
@@ -539,6 +544,7 @@ impl Mul for Decimal256 {
         }
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Decimal256, Decimal256);
 
 impl MulAssign for Decimal256 {
@@ -546,6 +552,7 @@ impl MulAssign for Decimal256 {
         *self = *self * rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal256, Decimal256);
 
 /// Both d*u and u*d with d: Decimal256 and u: Uint256 returns an Uint256. There is no
@@ -587,6 +594,7 @@ impl Div for Decimal256 {
         }
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Div, div for Decimal256, Decimal256);
 
 impl DivAssign for Decimal256 {
@@ -594,6 +602,7 @@ impl DivAssign for Decimal256 {
         *self = *self / rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl DivAssign, div_assign for Decimal256, Decimal256);
 
 impl Div<Uint256> for Decimal256 {
@@ -621,6 +630,7 @@ impl Rem for Decimal256 {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Decimal256, Decimal256);
 
 impl RemAssign<Decimal256> for Decimal256 {
@@ -628,6 +638,7 @@ impl RemAssign<Decimal256> for Decimal256 {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal256, Decimal256);
 
 impl<A> core::iter::Sum<A> for Decimal256

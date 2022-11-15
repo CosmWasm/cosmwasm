@@ -4,6 +4,7 @@ use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -443,6 +444,7 @@ impl Sub<Uint512> for Uint512 {
         Uint512(self.0.checked_sub(rhs.0).unwrap())
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Uint512, Uint512);
 
 impl SubAssign<Uint512> for Uint512 {
@@ -450,6 +452,7 @@ impl SubAssign<Uint512> for Uint512 {
         self.0 = self.0.checked_sub(rhs.0).unwrap();
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint512, Uint512);
 
 impl Div<Uint512> for Uint512 {
@@ -479,6 +482,7 @@ impl Rem for Uint512 {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Uint512, Uint512);
 
 impl RemAssign<Uint512> for Uint512 {
@@ -486,6 +490,7 @@ impl RemAssign<Uint512> for Uint512 {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint512, Uint512);
 
 impl Mul<Uint512> for Uint512 {
@@ -495,6 +500,7 @@ impl Mul<Uint512> for Uint512 {
         Self(self.0.checked_mul(rhs.0).unwrap())
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Uint512, Uint512);
 
 impl MulAssign<Uint512> for Uint512 {
@@ -502,6 +508,7 @@ impl MulAssign<Uint512> for Uint512 {
         self.0 = self.0.checked_mul(rhs.0).unwrap();
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint512, Uint512);
 
 impl Shr<u32> for Uint512 {

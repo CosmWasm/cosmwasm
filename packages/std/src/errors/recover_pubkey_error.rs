@@ -1,4 +1,4 @@
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 use cosmwasm_crypto::CryptoError;
 #[cfg(feature = "backtraces")]
 use std::backtrace::Backtrace;
@@ -60,7 +60,7 @@ impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 impl From<CryptoError> for RecoverPubkeyError {
     fn from(original: CryptoError) -> Self {
         match original {

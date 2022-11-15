@@ -5,6 +5,7 @@ use core::ops::{
     SubAssign,
 };
 use core::str::FromStr;
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -461,6 +462,7 @@ impl Sub<Uint256> for Uint256 {
         )
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Uint256, Uint256);
 
 impl SubAssign<Uint256> for Uint256 {
@@ -468,6 +470,7 @@ impl SubAssign<Uint256> for Uint256 {
         *self = *self - rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint256, Uint256);
 
 impl Div<Uint256> for Uint256 {
@@ -501,6 +504,7 @@ impl Rem for Uint256 {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Uint256, Uint256);
 
 impl RemAssign<Uint256> for Uint256 {
@@ -508,6 +512,7 @@ impl RemAssign<Uint256> for Uint256 {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint256, Uint256);
 
 impl Mul<Uint256> for Uint256 {
@@ -521,6 +526,7 @@ impl Mul<Uint256> for Uint256 {
         )
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Uint256, Uint256);
 
 impl MulAssign<Uint256> for Uint256 {
@@ -528,6 +534,7 @@ impl MulAssign<Uint256> for Uint256 {
         *self = *self * rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint256, Uint256);
 
 impl Shr<u32> for Uint256 {
