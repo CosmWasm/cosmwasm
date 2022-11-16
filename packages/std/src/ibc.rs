@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coin::Coin;
+#[cfg(feature = "std")]
 use crate::errors::StdResult;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 #[cfg(feature = "std")]
