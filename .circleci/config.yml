@@ -356,21 +356,21 @@ jobs:
           working_directory: ~/project/packages/std
           command: cargo wasm --locked --no-default-features
       - run:
-          name: Run unit tests (no features)
+          name: Run unit tests (only "std" feature)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --no-default-features
+          command: cargo test --locked --no-default-features --features std
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --features abort,iterator,staking,stargate,cosmwasm_1_2
+          command: cargo build --locked --features abort,iterator,staking,stargate,std,cosmwasm_1_2
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --features abort,iterator,staking,stargate,cosmwasm_1_2
+          command: cargo wasm --locked --features abort,iterator,staking,stargate,std,cosmwasm_1_2
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features abort,iterator,staking,stargate,cosmwasm_1_2
+          command: cargo test --locked --features abort,iterator,staking,stargate,std,cosmwasm_1_2
       - save_cache:
           paths:
             - /usr/local/cargo/registry

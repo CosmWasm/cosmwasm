@@ -95,22 +95,23 @@ pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInf
 
 // Exposed in wasm build only
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "std"))]
 mod exports;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "std"))]
 mod imports;
-#[cfg(target_arch = "wasm32")]
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "std"))]
 pub use crate::exports::{do_execute, do_instantiate, do_migrate, do_query, do_reply, do_sudo};
-#[cfg(all(feature = "stargate", target_arch = "wasm32"))]
+#[cfg(all(feature = "stargate", target_arch = "wasm32", feature = "std"))]
 pub use crate::exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
     do_ibc_packet_receive, do_ibc_packet_timeout,
 };
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "std"))]
 pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
+
+pub use memory::Region;
 
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.

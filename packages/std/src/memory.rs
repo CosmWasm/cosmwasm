@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::mem;
