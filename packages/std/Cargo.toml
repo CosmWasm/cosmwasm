@@ -39,7 +39,7 @@ cosmwasm_1_1 = []
 # This feature makes `GovMsg::VoteWeighted` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.2.0` or higher.
 cosmwasm_1_2 = ["cosmwasm_1_1"]
-std = ["forward_ref", "schemars", "serde-json-wasm", "thiserror", "cosmwasm-crypto", "derivative"]
+std = ["forward_ref", "schemars", "serde-json-wasm", "thiserror", "cosmwasm-crypto"]
 
 [dependencies]
 base64 = "0.13.0"
@@ -51,7 +51,7 @@ hex = "0.4"
 [dependencies]
 base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
 cosmwasm-derive = { path = "../derive", version = "1.1.6" }
-derivative = { version = "2", features = ["use_core"], optional = true }
+derivative = { version = "2", features = ["use_core"] }
 forward_ref = { version = "1", optional = true }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 schemars = { version = "0.8.3", optional = true }

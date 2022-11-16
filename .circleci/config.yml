@@ -348,17 +348,25 @@ jobs:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
-          name: Build library for native target (no features)
+          name: Build library for native target (no_std)
           working_directory: ~/project/packages/std
           command: cargo build --locked --no-default-features
       - run:
-          name: Build library for wasm target (no features)
+          name: Build library for native target (only "std" feature)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --no-default-features
+          command: cargo build --locked --no-default-features --features std
+      - run:
+          name: Build library for wasm target (only "std" feature)
+          working_directory: ~/project/packages/std
+          command: cargo wasm --locked --no-default-features --features std
       - run:
           name: Run unit tests (only "std" feature)
           working_directory: ~/project/packages/std
           command: cargo test --locked --no-default-features --features std
+      - run:
+          name: Build library for native target (all features "no_std")
+          working_directory: ~/project/packages/std
+          command: cargo build --locked --no-default-features --features abort,iterator,staking,stargate,std,cosmwasm_1_1
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std

@@ -99,6 +99,7 @@ pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInf
 mod exports;
 #[cfg(all(target_arch = "wasm32", feature = "std"))]
 mod imports;
+#[cfg(all(target_arch = "wasm32", feature = "std"))]
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
 #[cfg(all(target_arch = "wasm32", feature = "std"))]
@@ -111,11 +112,9 @@ pub use crate::exports::{
 #[cfg(all(target_arch = "wasm32", feature = "std"))]
 pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 
-pub use memory::Region;
-
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 pub mod testing;
 
 // Re-exports

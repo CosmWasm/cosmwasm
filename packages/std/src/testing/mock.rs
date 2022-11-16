@@ -227,9 +227,8 @@ impl Api for MockApi {
         )?)
     }
 
-    fn debug(&self, _message: &str) {
-        #[cfg(feature = "std")]
-        println!("{}", _message);
+    fn debug(&self, message: &str) {
+        println!("{}", message);
     }
 }
 
@@ -1552,10 +1551,7 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Err(err)) => {
-                #[cfg(feature = "std")]
                 assert_eq!(err, "Error parsing into type cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg: Invalid type");
-                #[cfg(not(feature = "std"))]
-                assert_eq!(err, "ParseErr { target_type: \"cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg\", msg: \"Invalid type\" }");
             }
             res => panic!("Unexpected result: {:?}", res),
         }
