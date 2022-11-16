@@ -566,6 +566,24 @@ pub enum CheckedMultiplyRatioError {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
+pub enum CheckedMultiplyCeiledError {
+    #[error("Denominator must not be zero")]
+    DivideByZero,
+
+    #[error("Multiplication overflow")]
+    Overflow,
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum CheckedMultiplyFlooredError {
+    #[error("Denominator must not be zero")]
+    DivideByZero,
+
+    #[error("Multiplication overflow")]
+    Overflow,
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedFromRatioError {
     #[error("Denominator must not be zero")]
     DivideByZero,

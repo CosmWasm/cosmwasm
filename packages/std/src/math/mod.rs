@@ -2,6 +2,7 @@ mod decimal;
 mod decimal256;
 mod fraction;
 mod isqrt;
+mod macros;
 mod uint128;
 mod uint256;
 mod uint512;

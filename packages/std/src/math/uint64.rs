@@ -226,6 +226,8 @@ impl Uint64 {
     }
 }
 
+//impl_mul_arithmetic!(Uint64);
+
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
 // using `impl<T: Into<u64>> From<T> for Uint64` because
 // of the conflict with `TryFrom<&str>` as described here
