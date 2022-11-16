@@ -638,6 +638,7 @@
         ],
         "properties": {
           "gas_limit": {
+            "description": "Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).",
             "type": [
               "integer",
               "null"
