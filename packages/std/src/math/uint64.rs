@@ -76,7 +76,10 @@ impl Uint64 {
         self.0.pow(exp).into()
     }
 
-    /// Returns `self * numerator / denominator`
+    /// Returns `self * numerator / denominator`.
+    ///
+    /// Due to the nature of the integer division involved, the result is always floored.
+    /// E.g. 5 * 99/100 = 4.
     pub fn multiply_ratio<A: Into<u64>, B: Into<u64>>(
         &self,
         numerator: A,
@@ -91,7 +94,10 @@ impl Uint64 {
         }
     }
 
-    /// Returns `self * numerator / denominator`
+    /// Returns `self * numerator / denominator`.
+    ///
+    /// Due to the nature of the integer division involved, the result is always floored.
+    /// E.g. 5 * 99/100 = 4.
     pub fn checked_multiply_ratio<A: Into<u64>, B: Into<u64>>(
         &self,
         numerator: A,
