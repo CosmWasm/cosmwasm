@@ -58,7 +58,7 @@ pub fn execute(
                 to_address: to_addr.into(),
                 amount: balance,
             })
-            .set_data(&[0xF0, 0x0B, 0xAA]);
+            .set_data([0xF0, 0x0B, 0xAA]);
         Ok(resp)
     } else {
         Err(HackError::Unauthorized {})

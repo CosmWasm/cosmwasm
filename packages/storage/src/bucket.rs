@@ -295,7 +295,7 @@ mod tests {
             d.age += 1;
             Ok(d)
         };
-        let output = bucket.update(b"maria", &birthday).unwrap();
+        let output = bucket.update(b"maria", birthday).unwrap();
         let expected = Data {
             name: "Maria".to_string(),
             age: 43,
