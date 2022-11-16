@@ -103,7 +103,7 @@ pub fn ed25519_batch_verify(
     }
 
     // Batch verification
-    match batch.verify(&mut OsRng) {
+    match batch.verify(OsRng) {
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
@@ -182,7 +182,7 @@ mod tests {
     fn test_ed25519_verify() {
         let message = MSG.as_bytes();
         // Signing
-        let secret_key = SigningKey::new(&mut OsRng);
+        let secret_key = SigningKey::new(OsRng);
         let signature = secret_key.sign(message);
 
         let public_key = VerificationKey::from(&secret_key);
@@ -199,7 +199,7 @@ mod tests {
         assert!(!ed25519_verify(&bad_message, &signature_bytes, &public_key_bytes).unwrap());
 
         // Other pubkey fails
-        let other_secret_key = SigningKey::new(&mut OsRng);
+        let other_secret_key = SigningKey::new(OsRng);
         let other_public_key = VerificationKey::from(&other_secret_key);
         let other_public_key_bytes: [u8; 32] = other_public_key.into();
         assert!(!ed25519_verify(message, &signature_bytes, &other_public_key_bytes).unwrap());
@@ -226,7 +226,7 @@ mod tests {
 
         assert_eq!(
             signature_bytes,
-            hex::decode(&COSMOS_ED25519_SIGNATURE_HEX)
+            hex::decode(COSMOS_ED25519_SIGNATURE_HEX)
                 .unwrap()
                 .as_slice()
         );

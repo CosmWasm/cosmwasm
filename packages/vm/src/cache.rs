@@ -172,7 +172,7 @@ where
     }
 
     fn load_wasm_with_path(&self, wasm_path: &Path, checksum: &Checksum) -> VmResult<Vec<u8>> {
-        let code = load_wasm_from_disk(&wasm_path, checksum)?;
+        let code = load_wasm_from_disk(wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {
             Err(VmError::integrity_err())

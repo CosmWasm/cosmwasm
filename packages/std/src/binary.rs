@@ -18,7 +18,7 @@ impl Binary {
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
     pub fn from_base64(encoded: &str) -> StdResult<Self> {
-        let binary = base64::decode(&encoded).map_err(StdError::invalid_base64)?;
+        let binary = base64::decode(encoded).map_err(StdError::invalid_base64)?;
         Ok(Binary(binary))
     }
 

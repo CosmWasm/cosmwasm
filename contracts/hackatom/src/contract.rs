@@ -99,7 +99,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
                 to_address: to_addr.into(),
                 amount: balance,
             })
-            .set_data(&[0xF0, 0x0B, 0xAA]);
+            .set_data([0xF0, 0x0B, 0xAA]);
         Ok(resp)
     } else {
         Err(HackError::Unauthorized {})
@@ -596,7 +596,7 @@ mod tests {
         // let's see if 5 hashes are done right
         let mut expected_hash = Sha256::digest(bin_contract);
         for _ in 0..4 {
-            expected_hash = Sha256::digest(&expected_hash);
+            expected_hash = Sha256::digest(expected_hash);
         }
         let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
         assert_eq!(work_query.hashed, expected_hash.to_vec());
