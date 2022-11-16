@@ -117,9 +117,9 @@ and this project adheres to
   `CanonicalAddr` ([#1463]).
 - cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
   `HexBinary`/`Binary` ([#1463]).
-- cosmwasm-std: Add `std` feature to support `no_std` if this feature
-  is not enabled.
-- cosmwasm-std: Add `std` feature to default features.
+- cosmwasm-std: Add `std` feature to support `no_std` if this feature is not
+  enabled ([#1483]).
+- cosmwasm-std: Add `std` feature to default features ([#1483]).
 
 [#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
 [#1483]: https://github.com/CosmWasm/cosmwasm/pull/1483
