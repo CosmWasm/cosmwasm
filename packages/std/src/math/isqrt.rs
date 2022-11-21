@@ -1,4 +1,4 @@
-use std::{cmp, ops};
+use core::{cmp, ops};
 
 use crate::{Uint128, Uint256, Uint512, Uint64};
 

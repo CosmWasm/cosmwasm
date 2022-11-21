@@ -1,4 +1,6 @@
-use schemars::JsonSchema;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::Binary;
@@ -8,7 +10,8 @@ use super::{CosmosMsg, Empty, Event};
 /// Use this to define when the contract gets a response callback.
 /// If you only need it for errors or success you can select just those in order
 /// to save gas.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ReplyOn {
     /// Always perform a callback after SubMsg is processed
@@ -27,7 +30,8 @@ pub enum ReplyOn {
 /// Note: On error the submessage execution will revert any partial state changes due to this message,
 /// but not revert any state changes in the calling contract. If this is required, it must be done
 /// manually in the `reply` entry point.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubMsg<T = Empty> {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
@@ -97,7 +101,8 @@ impl<T> SubMsg<T> {
 
 /// The result object returned to `reply`. We always get the ID from the submessage
 /// back and then must handle success and error cases ourselves.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
@@ -137,7 +142,8 @@ pub struct Reply {
 /// let result = SubMsgResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SubMsgResult {
     Ok(SubMsgResponse),
@@ -193,7 +199,8 @@ impl From<SubMsgResult> for Result<SubMsgResponse, String> {
 
 /// The information we get back from a successful sub message execution,
 /// with full Cosmos SDK events.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubMsgResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
@@ -341,9 +348,15 @@ mod tests {
 
         let original: Result<SubMsgResponse, StdError> = Err(StdError::generic_err("broken"));
         let converted: SubMsgResult = original.into();
+        #[cfg(feature = "std")]
         assert_eq!(
             converted,
             SubMsgResult::Err("Generic error: broken".to_string())
+        );
+        #[cfg(not(feature = "std"))]
+        assert_eq!(
+            converted,
+            SubMsgResult::Err("GenericErr { msg: \"broken\" }".to_string())
         );
     }
 

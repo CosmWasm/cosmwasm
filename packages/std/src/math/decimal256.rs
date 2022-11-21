@@ -1,11 +1,11 @@
+use alloc::fmt::{self, Write};
+use alloc::str::FromStr;
+use alloc::string::ToString;
+use core::cmp::Ordering;
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
-use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -22,11 +22,13 @@ use super::Uint256;
 /// The greatest possible value that can be represented is
 /// 115792089237316195423570985008687907853269984665640564039457.584007913129639935
 /// (which is (2^256 - 1) / 10^18)
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal256(#[schemars(with = "String")] Uint256);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Decimal256(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint256);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Decimal256 range exceeded")]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", error("Decimal256 range exceeded"))]
 pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
@@ -489,6 +491,7 @@ impl Add for Decimal256 {
         Self(self.0 + other.0)
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Add, add for Decimal256, Decimal256);
 
 impl AddAssign for Decimal256 {
@@ -496,6 +499,7 @@ impl AddAssign for Decimal256 {
         *self = *self + rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl AddAssign, add_assign for Decimal256, Decimal256);
 
 impl Sub for Decimal256 {
@@ -505,6 +509,7 @@ impl Sub for Decimal256 {
         Self(self.0 - other.0)
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Decimal256, Decimal256);
 
 impl SubAssign for Decimal256 {
@@ -512,6 +517,7 @@ impl SubAssign for Decimal256 {
         *self = *self - rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal256, Decimal256);
 
 impl Mul for Decimal256 {
@@ -532,6 +538,7 @@ impl Mul for Decimal256 {
         }
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Decimal256, Decimal256);
 
 impl MulAssign for Decimal256 {
@@ -539,6 +546,7 @@ impl MulAssign for Decimal256 {
         *self = *self * rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal256, Decimal256);
 
 /// Both d*u and u*d with d: Decimal256 and u: Uint256 returns an Uint256. There is no
@@ -580,6 +588,7 @@ impl Div for Decimal256 {
         }
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Div, div for Decimal256, Decimal256);
 
 impl DivAssign for Decimal256 {
@@ -587,6 +596,7 @@ impl DivAssign for Decimal256 {
         *self = *self / rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl DivAssign, div_assign for Decimal256, Decimal256);
 
 impl Div<Uint256> for Decimal256 {
@@ -614,6 +624,7 @@ impl Rem for Decimal256 {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Decimal256, Decimal256);
 
 impl RemAssign<Decimal256> for Decimal256 {
@@ -621,9 +632,10 @@ impl RemAssign<Decimal256> for Decimal256 {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal256, Decimal256);
 
-impl<A> std::iter::Sum<A> for Decimal256
+impl<A> core::iter::Sum<A> for Decimal256
 where
     Self: Add<A, Output = Self>,
 {
@@ -689,6 +701,7 @@ mod tests {
     use super::*;
     use crate::errors::StdError;
     use crate::{from_slice, to_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal256 {
         Decimal256::from_str(input).unwrap()

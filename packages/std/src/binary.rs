@@ -1,7 +1,7 @@
-use std::fmt;
-use std::ops::Deref;
-
-use schemars::JsonSchema;
+use alloc::fmt;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::ops::Deref;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
@@ -11,8 +11,9 @@ use crate::errors::{StdError, StdResult};
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
-pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Binary(#[cfg_attr(feature = "std", schemars(with = "String"))] pub Vec<u8>);
 
 impl Binary {
     /// take an (untrusted) string and decode it into bytes.
@@ -233,8 +234,11 @@ mod tests {
     use super::*;
     use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};
+    #[cfg(feature = "std")]
     use std::collections::hash_map::DefaultHasher;
+    #[cfg(feature = "std")]
     use std::collections::HashSet;
+    #[cfg(feature = "std")]
     use std::hash::{Hash, Hasher};
 
     #[test]
@@ -497,6 +501,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn binary_implements_hash() {
         let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
         let mut hasher = DefaultHasher::new();
@@ -519,6 +524,7 @@ mod tests {
 
     /// This requires Hash and Eq to be implemented
     #[test]
+    #[cfg(feature = "std")]
     fn binary_can_be_used_in_hash_set() {
         let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
         let a2 = Binary::from([0, 187, 61, 11, 250, 0]);

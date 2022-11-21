@@ -1,4 +1,3 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// An empty struct that serves as a placeholder in different places,
@@ -7,7 +6,8 @@ use serde::{Deserialize, Serialize};
 /// It is designed to be expressable in correct JSON and JSON Schema but
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
 pub struct Empty {}
 
 #[cfg(test)]

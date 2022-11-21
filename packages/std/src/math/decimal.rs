@@ -1,11 +1,11 @@
+use alloc::fmt::{self, Write};
+use alloc::str::FromStr;
+use alloc::string::ToString;
+use core::cmp::Ordering;
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
-use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -19,11 +19,13 @@ use super::{Uint128, Uint256};
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal(#[schemars(with = "String")] Uint128);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Decimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint128);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Decimal range exceeded")]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", error("Decimal range exceeded"))]
 pub struct DecimalRangeExceeded;
 
 impl Decimal {
@@ -464,6 +466,7 @@ impl Add for Decimal {
         Decimal(self.0 + other.0)
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Add, add for Decimal, Decimal);
 
 impl AddAssign for Decimal {
@@ -471,6 +474,7 @@ impl AddAssign for Decimal {
         *self = *self + rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl AddAssign, add_assign for Decimal, Decimal);
 
 impl Sub for Decimal {
@@ -480,6 +484,7 @@ impl Sub for Decimal {
         Decimal(self.0 - other.0)
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Decimal, Decimal);
 
 impl SubAssign for Decimal {
@@ -487,6 +492,7 @@ impl SubAssign for Decimal {
         *self = *self - rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal, Decimal);
 
 impl Mul for Decimal {
@@ -507,6 +513,7 @@ impl Mul for Decimal {
         }
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Decimal, Decimal);
 
 impl MulAssign for Decimal {
@@ -514,6 +521,7 @@ impl MulAssign for Decimal {
         *self = *self * rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal, Decimal);
 
 /// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
@@ -555,6 +563,7 @@ impl Div for Decimal {
         }
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Div, div for Decimal, Decimal);
 
 impl DivAssign for Decimal {
@@ -562,6 +571,7 @@ impl DivAssign for Decimal {
         *self = *self / rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl DivAssign, div_assign for Decimal, Decimal);
 
 impl Div<Uint128> for Decimal {
@@ -589,6 +599,7 @@ impl Rem for Decimal {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Decimal, Decimal);
 
 impl RemAssign<Decimal> for Decimal {
@@ -596,9 +607,10 @@ impl RemAssign<Decimal> for Decimal {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal, Decimal);
 
-impl<A> std::iter::Sum<A> for Decimal
+impl<A> core::iter::Sum<A> for Decimal
 where
     Self: Add<A, Output = Self>,
 {
@@ -663,6 +675,7 @@ impl PartialEq<Decimal> for &Decimal {
 mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal {
         Decimal::from_str(input).unwrap()

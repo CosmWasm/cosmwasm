@@ -9,10 +9,10 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["stargate", "staking", "ibc3"]
+features = ["std", "stargate", "staking", "ibc3"]
 
 [features]
-default = ["iterator", "abort"]
+default = ["std", "iterator", "abort"]
 abort = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
@@ -36,21 +36,23 @@ ibc3 = ["stargate"]
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []
+# enable std support
+std = ["forward_ref", "schemars", "serde-json-wasm", "thiserror", "cosmwasm-crypto"]
 
 [dependencies]
-base64 = "0.13.0"
+base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
 cosmwasm-derive = { path = "../derive", version = "1.1.6" }
-derivative = "2"
-forward_ref = "1"
-hex = "0.4"
-schemars = "0.8.3"
+derivative = { version = "2", features = ["use_core"] }
+forward_ref = { version = "1", optional = true }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+schemars = { version = "0.8.3", optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
-serde-json-wasm = { version = "0.4.1" }
-thiserror = "1.0.13"
-uint = "0.9.3"
+serde-json-wasm = { version = "0.4.1", optional = true }
+thiserror = { version = "1.0.13", optional = true }
+uint = { version = "0.9.3", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cosmwasm-crypto = { path = "../crypto", version = "1.1.6" }
+cosmwasm-crypto = { path = "../crypto", version = "1.1.6", optional = true }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }

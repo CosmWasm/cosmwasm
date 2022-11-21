@@ -2,23 +2,28 @@
 // The CosmosMsg variants are defined in results/cosmos_msg.rs
 // The rest of the IBC related functionality is defined here
 
-use schemars::JsonSchema;
+use core::cmp::{Ord, Ordering, PartialOrd};
 use serde::{Deserialize, Serialize};
-use std::cmp::{Ord, Ordering, PartialOrd};
 
 #[cfg(feature = "ibc3")]
 use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coin::Coin;
+#[cfg(feature = "std")]
 use crate::errors::StdResult;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+#[cfg(feature = "std")]
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
+
+use alloc::string::String;
+use alloc::vec::Vec;
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcMsg {
     /// Sends bank tokens owned by the contract to the given address on another chain.
@@ -51,7 +56,8 @@ pub enum IbcMsg {
     CloseChannel { channel_id: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct IbcEndpoint {
     pub port_id: String,
     pub channel_id: String,
@@ -60,7 +66,8 @@ pub struct IbcEndpoint {
 /// In IBC each package must set at least one type of timeout:
 /// the timestamp or the block height. Using this rather complex enum instead of
 /// two timeout fields we ensure that at least one timeout is set.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct IbcTimeout {
     // use private fields to enforce the use of constructors, which ensure that at least one is set
@@ -115,7 +122,8 @@ impl From<IbcTimeoutBlock> for IbcTimeout {
 
 /// IbcChannel defines all information on a channel.
 /// This is generally used in the hand-shake process, but can be queried directly.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
@@ -150,7 +158,8 @@ impl IbcChannel {
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
 /// Naming comes from the protobuf files and go translations.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum IbcOrder {
     #[serde(rename = "ORDER_UNORDERED")]
     Unordered,
@@ -162,7 +171,8 @@ pub enum IbcOrder {
 /// that can be compared against another Height for the purposes of updating and
 /// freezing clients.
 /// Ordering is (revision_number, timeout_height)
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq)]
 pub struct IbcTimeoutBlock {
     /// the version that the client is currently on
     /// (eg. after reseting the chain this could increment 1 as height drops to 0)
@@ -193,7 +203,8 @@ impl Ord for IbcTimeoutBlock {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcPacket {
     /// The raw data sent from the other side in the packet
@@ -226,7 +237,8 @@ impl IbcPacket {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcAcknowledgement {
     pub data: Binary,
@@ -239,6 +251,7 @@ impl IbcAcknowledgement {
         IbcAcknowledgement { data: data.into() }
     }
 
+    #[cfg(feature = "std")]
     pub fn encode_json(data: &impl Serialize) -> StdResult<Self> {
         Ok(IbcAcknowledgement {
             data: to_binary(data)?,
@@ -247,7 +260,8 @@ impl IbcAcknowledgement {
 }
 
 /// The message that is passed into `ibc_channel_open`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelOpenMsg {
     /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
@@ -305,14 +319,15 @@ pub type IbcChannelOpenResponse = ();
 #[cfg(feature = "ibc3")]
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Ibc3ChannelOpenResponse {
     /// We can set the channel version to a different one than we were called with
     pub version: String,
 }
 
 /// The message that is passed into `ibc_channel_connect`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelConnectMsg {
     /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
@@ -364,7 +379,8 @@ impl From<IbcChannelConnectMsg> for IbcChannel {
 }
 
 /// The message that is passed into `ibc_channel_close`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelCloseMsg {
     /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
@@ -400,7 +416,8 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 }
 
 /// The message that is passed into `ibc_packet_receive`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
@@ -421,7 +438,8 @@ impl IbcPacketReceiveMsg {
 }
 
 /// The message that is passed into `ibc_packet_ack`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
@@ -454,7 +472,8 @@ impl IbcPacketAckMsg {
 }
 
 /// The message that is passed into `ibc_packet_timeout`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
@@ -481,7 +500,8 @@ impl IbcPacketTimeoutMsg {
 /// Callbacks that have return values (like receive_packet)
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.
@@ -623,7 +643,8 @@ impl<T> IbcBasicResponse<T> {
 // Where the acknowledgement bytes contain an encoded error message to be returned to
 // the calling chain. (Returning ContractResult::Err will abort processing of this packet
 // and not inform the calling chain).
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty> {
     /// The bytes we return to the contract that sent the packet.
@@ -773,6 +794,7 @@ impl<T> IbcReceiveResponse<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::string::ToString;
     use serde_json_wasm::to_string;
 
     #[test]

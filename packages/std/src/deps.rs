@@ -1,4 +1,6 @@
-use std::marker::PhantomData;
+#![cfg(feature = "std")]
+
+use core::marker::PhantomData;
 
 use crate::query::CustomQuery;
 use crate::results::Empty;

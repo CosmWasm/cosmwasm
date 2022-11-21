@@ -1,4 +1,5 @@
-use schemars::JsonSchema;
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::Binary;
@@ -59,7 +60,8 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     Ok(response)
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Response<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.
@@ -236,10 +238,11 @@ mod tests {
     use super::*;
     use crate::results::submessages::{ReplyOn, UNUSED_MSG_ID};
     use crate::{coins, from_slice, to_vec, ContractResult};
+    use alloc::string::ToString;
 
     #[test]
     fn response_add_attributes_works() {
-        let res = Response::<Empty>::new().add_attributes(std::iter::empty::<Attribute>());
+        let res = Response::<Empty>::new().add_attributes(core::iter::empty::<Attribute>());
         assert_eq!(res.attributes.len(), 0);
 
         let res = Response::<Empty>::new().add_attributes([Attribute::new("test", "ing")]);

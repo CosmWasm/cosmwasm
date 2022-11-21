@@ -1,11 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt::{self};
-use std::ops::{
+use alloc::fmt::{self};
+use alloc::string::{String, ToString};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+#[cfg(feature = "std")]
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
@@ -31,8 +32,9 @@ use crate::{ConversionOverflowError, Uint256, Uint64};
 /// let c = Uint128::from(70u32);
 /// assert_eq!(c.u128(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint128(#[schemars(with = "String")] u128);
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Uint128(#[cfg_attr(feature = "std", schemars(with = "String"))] u128);
 
 impl Uint128 {
     pub const MAX: Self = Self(u128::MAX);
@@ -349,6 +351,7 @@ impl Sub<Uint128> for Uint128 {
         )
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Uint128, Uint128);
 
 impl SubAssign<Uint128> for Uint128 {
@@ -356,6 +359,7 @@ impl SubAssign<Uint128> for Uint128 {
         *self = *self - rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint128, Uint128);
 
 impl Mul<Uint128> for Uint128 {
@@ -369,6 +373,7 @@ impl Mul<Uint128> for Uint128 {
         )
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Uint128, Uint128);
 
 impl MulAssign<Uint128> for Uint128 {
@@ -376,6 +381,7 @@ impl MulAssign<Uint128> for Uint128 {
         *self = *self * rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint128, Uint128);
 
 impl Div<Uint128> for Uint128 {
@@ -453,6 +459,7 @@ impl Rem for Uint128 {
         Self(self.0.rem(rhs.0))
     }
 }
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
 
 impl RemAssign<Uint128> for Uint128 {
@@ -460,6 +467,7 @@ impl RemAssign<Uint128> for Uint128 {
         *self = *self % rhs;
     }
 }
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint128, Uint128);
 
 impl ShrAssign<u32> for Uint128 {
@@ -514,7 +522,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint128
+impl<A> core::iter::Sum<A> for Uint128
 where
     Self: Add<A, Output = Self>,
 {

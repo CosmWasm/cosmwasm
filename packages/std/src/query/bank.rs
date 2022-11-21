@@ -1,10 +1,12 @@
-use schemars::JsonSchema;
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::Coin;
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BankQuery {
     /// This calls into the native bank module for querying the total supply of one denomination.
@@ -22,7 +24,8 @@ pub enum BankQuery {
 }
 
 #[cfg(feature = "cosmwasm_1_1")]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct SupplyResponse {
@@ -31,7 +34,8 @@ pub struct SupplyResponse {
     pub amount: Coin,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct BalanceResponse {
     /// Always returns a Coin with the requested denom.
@@ -39,7 +43,8 @@ pub struct BalanceResponse {
     pub amount: Coin,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct AllBalanceResponse {
     /// Returns all non-zero coins held by this account.

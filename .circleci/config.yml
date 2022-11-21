@@ -262,29 +262,40 @@ jobs:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
-          name: Build library for native target (no features)
-          working_directory: ~/project/packages/std
-          command: cargo build --locked --no-default-features
+          name: Add no_std target
+          command: rustup target add thumbv7em-none-eabi && rustup target list --installed
       - run:
-          name: Build library for wasm target (no features)
+          name: Build library for no_std target
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --no-default-features
+          command: cargo build --locked --no-default-features --target thumbv7em-none-eabi
       - run:
-          name: Run unit tests (no features)
+          name: Build library for native target (only "std" feature)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --no-default-features
+          command: cargo build --locked --no-default-features --features std
+      - run:
+          name: Build library for wasm target (only "std" feature)
+          working_directory: ~/project/packages/std
+          command: cargo wasm --locked --no-default-features --features std
+      - run:
+          name: Run unit tests (only "std" feature)
+          working_directory: ~/project/packages/std
+          command: cargo test --locked --no-default-features --features std
+      - run:
+          name: Build library for no_std target (all features "no_std")
+          working_directory: ~/project/packages/std
+          command: cargo build --locked --no-default-features --features abort,iterator,staking,stargate,cosmwasm_1_1 --target thumbv7em-none-eabi
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --features abort,iterator,staking,stargate,cosmwasm_1_1
+          command: cargo build --locked --features abort,iterator,staking,stargate,std,cosmwasm_1_1
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --features abort,iterator,staking,stargate,cosmwasm_1_1
+          command: cargo wasm --locked --features abort,iterator,staking,stargate,std,cosmwasm_1_1
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features abort,iterator,staking,stargate,cosmwasm_1_1
+          command: cargo test --locked --features abort,iterator,staking,stargate,std,cosmwasm_1_1
       - run:
           name: Build and run schema generator
           working_directory: ~/project/packages/std

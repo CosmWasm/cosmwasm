@@ -1,3 +1,4 @@
+#![cfg(feature = "std")]
 #![cfg(not(target_arch = "wasm32"))]
 
 // Exposed for testing only
