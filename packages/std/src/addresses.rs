@@ -804,4 +804,14 @@ mod tests {
             assert_eq!(addr, intermediate.address_data);
         }
     }
+
+    #[test]
+    fn hash_works() {
+        // Test case from https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-alpha1/types/address/hash_test.go#L19-L24
+        let expected = [
+            195, 235, 23, 251, 9, 99, 177, 195, 81, 122, 182, 124, 36, 113, 245, 156, 76, 188, 221,
+            83, 181, 192, 227, 82, 100, 177, 161, 133, 240, 160, 5, 25,
+        ];
+        assert_eq!(hash("1", &[1]), expected);
+    }
 }
