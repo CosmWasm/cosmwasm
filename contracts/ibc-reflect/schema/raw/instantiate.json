@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "description": "Just needs to know the code_id of a reflect contract to spawn sub-accounts",
+  "type": "object",
+  "required": [
+    "reflect_code_id"
+  ],
+  "properties": {
+    "reflect_code_id": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": false
+}

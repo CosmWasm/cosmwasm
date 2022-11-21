@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ListVerificationsResponse",
+  "type": "object",
+  "required": [
+    "verification_schemes"
+  ],
+  "properties": {
+    "verification_schemes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

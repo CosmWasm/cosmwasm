@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
+      "type": "object",
+      "required": [
+        "release"
+      ],
+      "properties": {
+        "release": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
+      "type": "object",
+      "required": [
+        "cpu_loop"
+      ],
+      "properties": {
+        "cpu_loop": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Infinite loop making storage calls (to test when their limit hits)",
+      "type": "object",
+      "required": [
+        "storage_loop"
+      ],
+      "properties": {
+        "storage_loop": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Infinite loop reading and writing memory",
+      "type": "object",
+      "required": [
+        "memory_loop"
+      ],
+      "properties": {
+        "memory_loop": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Infinite loop sending message to itself",
+      "type": "object",
+      "required": [
+        "message_loop"
+      ],
+      "properties": {
+        "message_loop": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Allocate large amounts of memory without consuming much gas",
+      "type": "object",
+      "required": [
+        "allocate_large_memory"
+      ],
+      "properties": {
+        "allocate_large_memory": {
+          "type": "object",
+          "required": [
+            "pages"
+          ],
+          "properties": {
+            "pages": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Trigger a panic to ensure framework handles gracefully",
+      "type": "object",
+      "required": [
+        "panic"
+      ],
+      "properties": {
+        "panic": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Starting with CosmWasm 0.10, some API calls return user errors back to the contract. This triggers such user errors, ensuring the transaction does not fail in the backend.",
+      "type": "object",
+      "required": [
+        "user_errors_in_api_calls"
+      ],
+      "properties": {
+        "user_errors_in_api_calls": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

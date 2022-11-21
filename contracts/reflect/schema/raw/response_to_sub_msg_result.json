@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Reply",
+  "description": "The result object returned to `reply`. We always get the ID from the submessage back and then must handle success and error cases ourselves.",
+  "type": "object",
+  "required": [
+    "id",
+    "result"
+  ],
+  "properties": {
+    "id": {
+      "description": "The ID that the contract set when emitting the `SubMsg`. Use this to identify which submessage triggered the `reply`.",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "result": {
+      "$ref": "#/definitions/SubMsgResult"
+    }
+  },
+  "definitions": {
+    "Attribute": {
+      "description": "An key value pair that is used in the context of event attributes in logs",
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
+    },
+    "Event": {
+      "description": "A full [*Cosmos SDK* event].\n\nThis version uses string attributes (similar to [*Cosmos SDK* StringEvent]), which then get magically converted to bytes for Tendermint somewhere between the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.\n\n[*Cosmos SDK* event]: https://docs.cosmos.network/main/core/events.html [*Cosmos SDK* StringEvent]: https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70",
+      "type": "object",
+      "required": [
+        "attributes",
+        "type"
+      ],
+      "properties": {
+        "attributes": {
+          "description": "The attributes to be included in the event.\n\nYou can learn more about these from [*Cosmos SDK* docs].\n\n[*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          }
+        },
+        "type": {
+          "description": "The event type. This is renamed to \"ty\" because \"type\" is reserved in Rust. This sucks, we know.",
+          "type": "string"
+        }
+      }
+    },
+    "SubMsgResponse": {
+      "description": "The information we get back from a successful sub message execution, with full Cosmos SDK events.",
+      "type": "object",
+      "required": [
+        "events"
+      ],
+      "properties": {
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Event"
+          }
+        }
+      }
+    },
+    "SubMsgResult": {
+      "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to define the serialization, which is a public interface. Every language that compiles to Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead of this type. Once serialized, the two types are the same. However, in the Rust type system we want different types for clarity and documenation reasons.\n\n# Examples\n\nSuccess:\n\n``` # use cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult}; let response = SubMsgResponse { data: Some(Binary::from_base64(\"MTIzCg==\").unwrap()), events: vec![Event::new(\"wasm\").add_attribute(\"fo\", \"ba\")], }; let result: SubMsgResult = SubMsgResult::Ok(response); assert_eq!(to_vec(&result).unwrap(), br#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"fo\",\"value\":\"ba\"}]}],\"data\":\"MTIzCg==\"}}\"#); ```\n\nFailure:\n\n``` # use cosmwasm_std::{to_vec, SubMsgResult, Response}; let error_msg = String::from(\"Something went wrong\"); let result = SubMsgResult::Err(error_msg); assert_eq!(to_vec(&result).unwrap(), br#\"{\"error\":\"Something went wrong\"}\"#); ```",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "ok"
+          ],
+          "properties": {
+            "ok": {
+              "$ref": "#/definitions/SubMsgResponse"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "An error type that every custom error created by contract developers can be converted to. This could potientially have more structure, but String is the easiest.",
+          "type": "object",
+          "required": [
+            "error"
+          ],
+          "properties": {
+            "error": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
