@@ -36,6 +36,9 @@ ibc3 = ["stargate"]
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []
+# This feature makes `GovMsg::VoteWeighted` available for the contract to call, but requires
+# the host blockchain to run CosmWasm `1.2.0` or higher.
+cosmwasm_1_2 = []
 
 [dependencies]
 base64 = "0.13.0"

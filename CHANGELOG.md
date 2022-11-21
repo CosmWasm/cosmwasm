@@ -6,6 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `GovMsg::VoteWeighted`. In order to use this in a contract,
+  the `cosmwasm_1_2` feature needs to be enabled for the `cosmwasm_std`
+  dependency. This makes the contract incompatible with chains running versions
+  of CosmWasm earlier than 1.2.0 ([#1481]).
+
+[#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
+
 ### Changed
 
 - cosmwasm-vm: Avoid exposing OS specific file system errors in order to test
