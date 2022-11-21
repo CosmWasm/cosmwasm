@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::fs::{create_dir_all, File, OpenOptions};
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
@@ -10,6 +10,7 @@ use crate::capabilities::required_capabilities_from_module;
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
+use crate::filesystem::mkdir_p;
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
@@ -108,15 +109,9 @@ where
         let wasm_path = state_path.join(WASM_DIR);
 
         // Ensure all the needed directories exist on disk.
-        for path in [&state_path, &cache_path, &wasm_path].iter() {
-            create_dir_all(path).map_err(|e| {
-                VmError::cache_err(format!(
-                    "Error creating directory {}: {}",
-                    path.display(),
-                    e
-                ))
-            })?;
-        }
+        mkdir_p(&state_path).map_err(|_e| VmError::cache_err("Error creating state directory"))?;
+        mkdir_p(&cache_path).map_err(|_e| VmError::cache_err("Error creating cache directory"))?;
+        mkdir_p(&wasm_path).map_err(|_e| VmError::cache_err("Error creating wasm directory"))?;
 
         let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
@@ -356,12 +351,12 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
 fn load_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult<Vec<u8>> {
     // this requires the directory and file to exist
     let path = dir.into().join(checksum.to_hex());
-    let mut file = File::open(path)
-        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for reading: {}", e)))?;
+    let mut file =
+        File::open(path).map_err(|_e| VmError::cache_err("Error opening Wasm file for reading"))?;
 
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)
-        .map_err(|e| VmError::cache_err(format!("Error reading Wasm file: {}", e)))?;
+        .map_err(|_e| VmError::cache_err("Error reading Wasm file"))?;
     Ok(wasm)
 }
 
@@ -373,7 +368,7 @@ mod tests {
     use crate::errors::VmError;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
-    use std::fs::OpenOptions;
+    use std::fs::{create_dir_all, OpenOptions};
     use std::io::Write;
     use tempfile::TempDir;
 
@@ -523,8 +518,7 @@ mod tests {
 
         match cache.load_wasm(&checksum).unwrap_err() {
             VmError::CacheErr { msg, .. } => {
-                assert!(msg
-                    .starts_with("Error opening Wasm file for reading: No such file or directory"))
+                assert_eq!(msg, "Error opening Wasm file for reading")
             }
             e => panic!("Unexpected error: {:?}", e),
         }

@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   codecov: codecov/codecov@3.2.0
+  win: circleci/windows@5.0
 
 workflows:
   test:
@@ -15,6 +16,7 @@ workflows:
       - package_std
       - package_storage
       - package_vm
+      - package_vm_windows
       - contract_burner
       - contract_crypto_verify
       - contract_cyberpunk
@@ -375,6 +377,49 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_vm-rust:1.59.0-{{ checksum "Cargo.lock" }}
+
+  package_vm_windows:
+    executor:
+      name: win/default
+      shell: bash.exe
+    steps:
+      - run:
+          name: Enable symlinks for the checkout
+          command: git config --global core.symlinks true
+      - checkout
+      - run:
+          name: Reset git config set by CircleCI to make Cargo work
+          command: git config --global --unset url.ssh://git@github.com.insteadof
+      - run:
+          name: Install Rust
+          command: |
+            set -o errexit
+            curl -sS --output rustup-init.exe https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe
+            ./rustup-init.exe --default-toolchain 1.65.0 -y
+            echo 'export PATH="$PATH;$USERPROFILE/.cargo/bin"' >> "$BASH_ENV"
+      - run:
+          name: Version information
+          command: |
+            set -o errexit
+            rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Test
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked
+      - run:
+          name: Test with all features
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features allow_interface_version_7,iterator,staking,stargate
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
 
   contract_burner:
     docker:
