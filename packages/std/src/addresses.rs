@@ -285,7 +285,7 @@ pub enum Instantiate2AddressError {
 
 /// Creates a contract address using the predictable address format introduced with
 /// wasmd 0.29. When using instantiate2, this is a way to precompute the address.
-/// Then using instantiate, the contract address will use a different algorithm and
+/// When using instantiate, the contract address will use a different algorithm and
 /// cannot be pre-computed as it contains inputs from the chain's state at the time of
 /// message execution.
 ///
