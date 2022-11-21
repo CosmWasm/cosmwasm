@@ -6,6 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Avoid exposing OS specific file system errors in order to test
+  cosmwasm-vm on Windows. This gives us confidence for integrating cosmwasm-vm
+  in a libwasmvm build on Windows. This change is likely to be consensus
+  breaking as error messages change. ([#1406])
+
+[#1406]: https://github.com/CosmWasm/cosmwasm/pull/1406
+
 ## [1.1.6] - 2022-11-16
 
 ### Added
