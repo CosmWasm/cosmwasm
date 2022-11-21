@@ -47,6 +47,7 @@ derivative = "2"
 forward_ref = "1"
 hex = "0.4"
 schemars = "0.8.3"
+sha2 = "0.10.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde-json-wasm = { version = "0.4.1" }
 thiserror = "1.0.13"
