@@ -246,7 +246,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-check"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "anyhow",
  "clap",
@@ -257,7 +257,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "base64",
  "criterion",
@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "cosmwasm-std",
  "syn",
@@ -284,7 +284,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
@@ -298,7 +298,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -307,7 +307,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "base64",
  "chrono",
@@ -329,7 +329,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -337,7 +337,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "1.1.6"
+version = "1.1.8"
 dependencies = [
  "bitflags",
  "bytecheck",
