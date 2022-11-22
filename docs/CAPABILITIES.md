@@ -81,18 +81,9 @@ function name in Rust and other CosmWasm smart contract languages such as Go. By
 convention, the name should be short and all lower ASCII alphanumerical plus
 underscores.
 
-## Common capabilities
+## Built-in capabilities
 
-Here is a list of capabilities created in the past. Since capabilities can be
-created between contract and environment, we don't know them all in the VM.
-
-- `iterator` is for storage backends that allow range queries. Not all types of
-  databases do that. There are trees that don't allow it and Secret Network does
-  not support iterators for other technical reasons.
-- `stargate` is for messages and queries that came with the Cosmos SDK upgrade
-  "Stargate". It primarily includes protobuf messages and IBC support.
-- `staking` is for chains with the Cosmos SDK staking module. There are Cosmos
-  chains that don't use this (e.g. Tgrade).
+Here is a list of all [built-in capabilities](CAPABILITIES-BUILT-IN.md).
 
 ## What's a good capability?
 

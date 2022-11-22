@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ListAccountsResponse",
+  "type": "object",
+  "required": [
+    "accounts"
+  ],
+  "properties": {
+    "accounts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AccountInfo"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "AccountInfo": {
+      "type": "object",
+      "required": [
+        "account",
+        "channel_id"
+      ],
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "channel_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

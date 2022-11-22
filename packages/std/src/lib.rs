@@ -25,7 +25,7 @@ mod timestamp;
 mod traits;
 mod types;
 
-pub use crate::addresses::{Addr, CanonicalAddr};
+pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr};
 pub use crate::binary::Binary;
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
@@ -63,6 +63,8 @@ pub use crate::query::{
 pub use crate::query::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[allow(deprecated)]
 pub use crate::results::SubMsgExecutionResponse;
+#[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
+pub use crate::results::WeightedVoteOption;
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, CustomMsg,
     Empty, Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubMsgResponse, SubMsgResult,

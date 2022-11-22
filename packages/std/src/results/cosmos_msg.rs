@@ -9,6 +9,8 @@ use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
 use crate::serde::to_binary;
+#[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
+use crate::Decimal;
 
 use super::Empty;
 
@@ -183,6 +185,12 @@ pub enum WasmMsg {
 pub enum GovMsg {
     /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
     Vote { proposal_id: u64, vote: VoteOption },
+    /// This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.
+    #[cfg(feature = "cosmwasm_1_2")]
+    VoteWeighted {
+        proposal_id: u64,
+        vote: WeightedVoteOption,
+    },
 }
 
 #[cfg(feature = "stargate")]
@@ -193,6 +201,13 @@ pub enum VoteOption {
     No,
     Abstain,
     NoWithVeto,
+}
+
+#[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct WeightedVoteOption {
+    option: VoteOption,
+    weight: Decimal,
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.

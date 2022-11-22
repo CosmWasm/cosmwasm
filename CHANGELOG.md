@@ -6,6 +6,29 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `GovMsg::VoteWeighted`. In order to use this in a contract,
+  the `cosmwasm_1_2` feature needs to be enabled for the `cosmwasm_std`
+  dependency. This makes the contract incompatible with chains running versions
+  of CosmWasm earlier than 1.2.0 ([#1481]).
+- cosmwasm-std: Add `instantiate2_address` which allows calculating the
+  predictable addresses for `MsgInstantiateContract2` ([#1437]).
+- cosmwasm-schema: In contracts, `cosmwasm schema` will now output a separate
+  JSON Schema file for each entrypoint in the `raw` subdirectory.
+
+[#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
+[#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
+
+### Changed
+
+- cosmwasm-vm: Avoid exposing OS specific file system errors in order to test
+  cosmwasm-vm on Windows. This gives us confidence for integrating cosmwasm-vm
+  in a libwasmvm build on Windows. This change is likely to be consensus
+  breaking as error messages change. ([#1406])
+
+[#1406]: https://github.com/CosmWasm/cosmwasm/pull/1406
+
 ## [1.1.8] - 2022-11-22
 
 ### Fixed
@@ -30,8 +53,8 @@ and this project adheres to
 
 - all: Bump a few dependency versions to make the codebase compile with
   `-Zminimal-versions` ([#1465]).
-- cosmwasm-profiler: Package was removed 🪦. It served its job showing us that we
-  cannot properly measure different runtimes for differet Wasm opcodes.
+- cosmwasm-profiler: Package was removed 🪦. It served its job showing us that
+  we cannot properly measure different runtimes for differet Wasm opcodes.
 - cosmwasm-schema: schema generation is now locked to produce strictly
   `draft-07` schemas
 - cosmwasm-schema: `QueryResponses` derive now sets the `JsonSchema` trait bound

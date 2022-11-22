@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "description": "A placeholder where we don't take any input",
+  "type": "object",
+  "additionalProperties": false
+}

@@ -1,5 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sha2::{
+    digest::{Digest, Update},
+    Sha256,
+};
 use std::borrow::Cow;
 use std::fmt;
 use std::ops::Deref;
@@ -271,9 +275,95 @@ impl fmt::Display for CanonicalAddr {
     }
 }
 
+#[derive(Debug)]
+pub enum Instantiate2AddressError {
+    /// Checksum must be 32 bytes
+    InvalidChecksumLength,
+    /// Salt must be between 1 and 64 bytes
+    InvalidSaltLength,
+}
+
+/// Creates a contract address using the predictable address format introduced with
+/// wasmd 0.29. When using instantiate2, this is a way to precompute the address.
+/// When using instantiate, the contract address will use a different algorithm and
+/// cannot be pre-computed as it contains inputs from the chain's state at the time of
+/// message execution.
+///
+/// The predicable address format of instantiate2 is stable. But bear in mind this is
+/// a powerful tool that requires multiple software components to work together smoothly.
+/// It should be used carefully and tested thoroughly to avoid the loss of funds.
+///
+/// This method operates on [`CanonicalAddr`] to be implemented without chain interaction.
+/// The typical usage looks like this:
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     HexBinary,
+/// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+/// #     Response, QueryResponse,
+/// # };
+/// # type ExecuteMsg = ();
+/// use cosmwasm_std::instantiate2_address;
+///
+/// #[entry_point]
+/// pub fn execute(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: ExecuteMsg,
+/// ) -> Result<Response, StdError> {
+///     let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
+///     let checksum = HexBinary::from_hex("9af782a3a1bcbcd22dbb6a45c751551d9af782a3a1bcbcd22dbb6a45c751551d")?;
+///     let salt = b"instance 1231";
+///     let canonical_addr = instantiate2_address(&checksum, &canonical_creator, salt, None)
+///         .map_err(|_| StdError::generic_err("Could not calculate addr"))?;
+///     let addr = deps.api.addr_humanize(&canonical_addr)?;
+///
+/// #   Ok(Default::default())
+/// }
+/// ```
+pub fn instantiate2_address(
+    checksum: &[u8],
+    creator: &CanonicalAddr,
+    salt: &[u8],
+    msg: Option<&[u8]>,
+) -> Result<CanonicalAddr, Instantiate2AddressError> {
+    if checksum.len() != 32 {
+        return Err(Instantiate2AddressError::InvalidChecksumLength);
+    }
+
+    if salt.is_empty() || salt.len() > 64 {
+        return Err(Instantiate2AddressError::InvalidSaltLength);
+    };
+
+    let msg = msg.unwrap_or_default();
+
+    let mut key = Vec::<u8>::new();
+    key.extend_from_slice(b"wasm\0");
+    key.extend_from_slice(&(checksum.len() as u64).to_be_bytes());
+    key.extend_from_slice(checksum);
+    key.extend_from_slice(&(creator.len() as u64).to_be_bytes());
+    key.extend_from_slice(creator);
+    key.extend_from_slice(&(salt.len() as u64).to_be_bytes());
+    key.extend_from_slice(salt);
+    key.extend_from_slice(&(msg.len() as u64).to_be_bytes());
+    key.extend_from_slice(msg);
+    let address_data = hash("module", &key);
+    Ok(address_data.into())
+}
+
+/// The "Basic Address" Hash from
+/// https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/docs/architecture/adr-028-public-key-addresses.md
+fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
+    let inner = Sha256::digest(ty.as_bytes());
+    Sha256::new().chain(inner).chain(key).finalize().to_vec()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::HexBinary;
+    use hex_literal::hex;
     use std::collections::hash_map::DefaultHasher;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
@@ -566,5 +656,162 @@ mod tests {
         assert_eq!(value, &flexible(&addr));
         // pass by value
         assert_eq!(value, &flexible(addr));
+    }
+
+    #[test]
+    fn instantiate2_address_works() {
+        let checksum1 =
+            HexBinary::from_hex("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5")
+                .unwrap();
+        let creator1 = CanonicalAddr::from(hex!("9999999999aaaaaaaaaabbbbbbbbbbcccccccccc"));
+        let salt1 = hex!("61");
+        let salt2 = hex!("aabbccddeeffffeeddbbccddaa66551155aaaabbcc787878789900aabbccddeeffffeeddbbccddaa66551155aaaabbcc787878789900aabbbbcc221100acadae");
+        let msg1: Option<&[u8]> = None;
+        let msg2: Option<&[u8]> = Some(b"{}");
+        let msg3: Option<&[u8]> = Some(b"{\"some\":123,\"structure\":{\"nested\":[\"ok\",true]}}");
+
+        // No msg
+        let expected = CanonicalAddr::from(hex!(
+            "5e865d3e45ad3e961f77fd77d46543417ced44d924dc3e079b5415ff6775f847"
+        ));
+        assert_eq!(
+            instantiate2_address(&checksum1, &creator1, &salt1, msg1).unwrap(),
+            expected
+        );
+
+        // With msg
+        let expected = CanonicalAddr::from(hex!(
+            "0995499608947a5281e2c7ebd71bdb26a1ad981946dad57f6c4d3ee35de77835"
+        ));
+        assert_eq!(
+            instantiate2_address(&checksum1, &creator1, &salt1, msg2).unwrap(),
+            expected
+        );
+
+        // Long msg
+        let expected = CanonicalAddr::from(hex!(
+            "83326e554723b15bac664ceabc8a5887e27003abe9fbd992af8c7bcea4745167"
+        ));
+        assert_eq!(
+            instantiate2_address(&checksum1, &creator1, &salt1, msg3).unwrap(),
+            expected
+        );
+
+        // Long salt
+        let expected = CanonicalAddr::from(hex!(
+            "9384c6248c0bb171e306fd7da0993ec1e20eba006452a3a9e078883eb3594564"
+        ));
+        assert_eq!(
+            instantiate2_address(&checksum1, &creator1, &salt2, None).unwrap(),
+            expected
+        );
+
+        // Salt too short or too long
+        let empty = Vec::<u8>::new();
+        assert!(matches!(
+            instantiate2_address(&checksum1, &creator1, &empty, None).unwrap_err(),
+            Instantiate2AddressError::InvalidSaltLength
+        ));
+        let too_long = vec![0x11; 65];
+        assert!(matches!(
+            instantiate2_address(&checksum1, &creator1, &too_long, None).unwrap_err(),
+            Instantiate2AddressError::InvalidSaltLength
+        ));
+
+        // invalid checksum length
+        let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2");
+        assert!(matches!(
+            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            Instantiate2AddressError::InvalidChecksumLength
+        ));
+        let broken_cs = hex!("");
+        assert!(matches!(
+            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            Instantiate2AddressError::InvalidChecksumLength
+        ));
+        let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2aaaa");
+        assert!(matches!(
+            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            Instantiate2AddressError::InvalidChecksumLength
+        ));
+    }
+
+    #[test]
+    fn instantiate2_address_works_for_cosmjs_testvectors() {
+        // Test data from https://github.com/cosmos/cosmjs/pull/1253
+        const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/instantiate2_addresses.json";
+
+        #[derive(Deserialize, Debug)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(dead_code)]
+        struct In {
+            checksum: HexBinary,
+            creator: String,
+            creator_data: HexBinary,
+            salt: HexBinary,
+            msg: Option<String>,
+        }
+
+        #[derive(Deserialize, Debug)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(dead_code)]
+        struct Intermediate {
+            key: HexBinary,
+            address_data: HexBinary,
+        }
+
+        #[derive(Deserialize, Debug)]
+        #[serde(rename_all = "camelCase")]
+        #[allow(dead_code)]
+        struct Out {
+            address: String,
+        }
+
+        #[derive(Deserialize, Debug)]
+        #[allow(dead_code)]
+        struct Row {
+            #[serde(rename = "in")]
+            input: In,
+            intermediate: Intermediate,
+            out: Out,
+        }
+
+        fn read_tests() -> Vec<Row> {
+            use std::fs::File;
+            use std::io::BufReader;
+
+            // Open the file in read-only mode with buffer.
+            let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
+            let reader = BufReader::new(file);
+
+            serde_json::from_reader(reader).unwrap()
+        }
+
+        for Row {
+            input,
+            intermediate,
+            out: _,
+        } in read_tests()
+        {
+            let msg = input.msg.map(|msg| msg.into_bytes());
+            let addr = instantiate2_address(
+                &input.checksum,
+                &input.creator_data.into(),
+                &input.salt,
+                msg.as_deref(),
+            )
+            .unwrap();
+            assert_eq!(addr, intermediate.address_data);
+        }
+    }
+
+    #[test]
+    fn hash_works() {
+        // Test case from https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-alpha1/types/address/hash_test.go#L19-L24
+        let expected = [
+            195, 235, 23, 251, 9, 99, 177, 195, 81, 122, 182, 124, 36, 113, 245, 156, 76, 188, 221,
+            83, 181, 192, 227, 82, 100, 177, 161, 133, 240, 160, 5, 25,
+        ];
+        assert_eq!(hash("1", &[1]), expected);
     }
 }
