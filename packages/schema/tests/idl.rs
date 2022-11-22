@@ -124,6 +124,13 @@ where
     QueryData { data: T },
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, QueryResponses)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsgWithGenericsAndDefaultType<T = u128> {
+    #[returns(u128)]
+    QueryData { data: T },
+}
+
 #[test]
 fn test_query_responses_generics() {
     let api_str = generate_api! {
