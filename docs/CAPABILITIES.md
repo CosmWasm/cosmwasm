@@ -81,7 +81,7 @@ function name in Rust and other CosmWasm smart contract languages such as Go. By
 convention, the name should be short and all lower ASCII alphanumerical plus
 underscores.
 
-## Common capabilities
+## Built-in capabilities
 
 Here is a list of all [built-in capabilities](CAPABILITIES-BUILT-IN.md).
 
