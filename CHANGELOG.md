@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.8] - 2022-11-22
+
 ### Fixed
 
 - cosmwasm-schema: Fix type params on `QueryMsg` causing a compiler error when
