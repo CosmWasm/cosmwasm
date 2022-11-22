@@ -58,6 +58,10 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
 fn impl_generics(ctx: &Context, generics: &Generics) -> Generics {
     let mut impl_generics = generics.to_owned();
     for param in impl_generics.type_params_mut() {
+        // remove the default type if present, as those are invalid in
+        // a trait implementation
+        param.default = None;
+
         if !ctx.no_bounds_for.contains(&param.ident) {
             param
                 .bounds

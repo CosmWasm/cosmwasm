@@ -29,6 +29,13 @@ and this project adheres to
 
 [#1406]: https://github.com/CosmWasm/cosmwasm/pull/1406
 
+## [1.1.8] - 2022-11-22
+
+### Fixed
+
+- cosmwasm-schema: Fix type params on `QueryMsg` causing a compiler error when
+  used with the `QueryResponses` derive macro.
+
 ## [1.1.6] - 2022-11-16
 
 ### Added
