@@ -28,8 +28,8 @@ and this project adheres to
 
 - all: Bump a few dependency versions to make the codebase compile with
   `-Zminimal-versions` ([#1465]).
-- cosmwasm-profiler: Package was removed 🪦. It served its job showing us that
-  we cannot properly measure different runtimes for differet Wasm opcodes.
+- cosmwasm-profiler: Package was removed 🪦. It served its job showing us that we
+  cannot properly measure different runtimes for differet Wasm opcodes.
 - cosmwasm-schema: schema generation is now locked to produce strictly
   `draft-07` schemas
 - cosmwasm-schema: `QueryResponses` derive now sets the `JsonSchema` trait bound
