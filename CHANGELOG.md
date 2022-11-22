@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-schema: Fix type params on `QueryMsg` causing a compiler error when
+  used with the `QueryResponses` derive macro.
+
 ## [1.1.6] - 2022-11-16
 
 ### Added
