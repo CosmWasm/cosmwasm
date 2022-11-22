@@ -12,6 +12,8 @@ and this project adheres to
   the `cosmwasm_1_2` feature needs to be enabled for the `cosmwasm_std`
   dependency. This makes the contract incompatible with chains running versions
   of CosmWasm earlier than 1.2.0 ([#1481]).
+- cosmwasm-schema: In contracts, `cosmwasm schema` will now output a separate
+  JSON Schema file for each entrypoint in the `raw` subdirectory.
 
 [#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
 

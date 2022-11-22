@@ -85,6 +85,48 @@ impl JsonApi {
         serde_json::to_string_pretty(&self).map_err(Into::into)
     }
 
+    pub fn to_schema_files(&self) -> Result<Vec<(String, String)>, EncodeError> {
+        let mut result = vec![(
+            "instantiate.json".to_string(),
+            serde_json::to_string_pretty(&self.instantiate)?,
+        )];
+
+        if let Some(execute) = &self.execute {
+            result.push((
+                "execute.json".to_string(),
+                serde_json::to_string_pretty(&execute)?,
+            ));
+        }
+        if let Some(query) = &self.execute {
+            result.push((
+                "query.json".to_string(),
+                serde_json::to_string_pretty(&query)?,
+            ));
+        }
+        if let Some(migrate) = &self.execute {
+            result.push((
+                "migrate.json".to_string(),
+                serde_json::to_string_pretty(&migrate)?,
+            ));
+        }
+        if let Some(sudo) = &self.execute {
+            result.push((
+                "sudo.json".to_string(),
+                serde_json::to_string_pretty(&sudo)?,
+            ));
+        }
+        if let Some(responses) = &self.responses {
+            for (name, response) in responses {
+                result.push((
+                    format!("response_to_{}.json", name),
+                    serde_json::to_string_pretty(&response)?,
+                ));
+            }
+        }
+
+        Ok(result)
+    }
+
     pub fn to_writer(&self, writer: impl std::io::Write) -> Result<(), EncodeError> {
         serde_json::to_writer_pretty(writer, self).map_err(Into::into)
     }

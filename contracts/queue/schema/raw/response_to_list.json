@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ListResponse",
+  "type": "object",
+  "required": [
+    "early",
+    "empty",
+    "late"
+  ],
+  "properties": {
+    "early": {
+      "description": "List all IDs lower than 0x20",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0.0
+      }
+    },
+    "empty": {
+      "description": "List an empty range, both bounded",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0.0
+      }
+    },
+    "late": {
+      "description": "List all IDs starting from 0x20",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0.0
+      }
+    }
+  },
+  "additionalProperties": false
+}

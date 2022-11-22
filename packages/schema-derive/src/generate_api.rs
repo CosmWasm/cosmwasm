@@ -15,23 +15,34 @@ pub fn write_api_impl(input: Options) -> Block {
         {
             #[cfg(target_arch = "wasm32")]
             compile_error!("can't compile schema generator for the `wasm32` arch\nhint: are you trying to compile a smart contract without specifying `--lib`?");
-            use ::std::env::current_dir;
+            use ::std::env;
             use ::std::fs::{create_dir_all, write};
 
             use ::cosmwasm_schema::{remove_schemas, Api, QueryResponses};
 
-            let mut out_dir = current_dir().unwrap();
+            let mut out_dir = env::current_dir().unwrap();
             out_dir.push("schema");
             create_dir_all(&out_dir).unwrap();
             remove_schemas(&out_dir).unwrap();
 
-            let path = out_dir.join(concat!(#name, ".json"));
-
             let api = #api_object.render();
+
+
+            let path = out_dir.join(concat!(#name, ".json"));
 
             let json = api.to_string().unwrap();
             write(&path, json + "\n").unwrap();
             println!("Exported the full API as {}", path.to_str().unwrap());
+
+            let raw_dir = out_dir.join("raw");
+            create_dir_all(&raw_dir).unwrap();
+
+            for (filename, json) in api.to_schema_files().unwrap() {
+                let path = raw_dir.join(filename);
+
+                write(&path, json + "\n").unwrap();
+                println!("Exported {}", path.to_str().unwrap());
+            }
         }
     }
 }

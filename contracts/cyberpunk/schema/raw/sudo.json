@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "description": "Hashes some data. Uses CPU and memory, but no external calls.",
+      "type": "object",
+      "required": [
+        "argon2"
+      ],
+      "properties": {
+        "argon2": {
+          "type": "object",
+          "required": [
+            "mem_cost",
+            "time_cost"
+          ],
+          "properties": {
+            "mem_cost": {
+              "description": "The amount of memory requested (KB).",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "time_cost": {
+              "description": "The number of passes.",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns the env for testing",
+      "type": "object",
+      "required": [
+        "mirror_env"
+      ],
+      "properties": {
+        "mirror_env": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
