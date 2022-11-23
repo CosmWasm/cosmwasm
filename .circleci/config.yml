@@ -404,7 +404,7 @@ jobs:
             rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
+            - cachev3-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Test
           working_directory: ~/project/packages/vm
@@ -415,11 +415,12 @@ jobs:
           command: cargo test --locked --features allow_interface_version_7,iterator,staking,stargate
       - save_cache:
           paths:
-            - /usr/local/cargo/registry
+            # ".." is the easiest way to get $HOME here (pwd is $HOME\project)
+            - ../.cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
+          key: cachev3-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
 
   contract_burner:
     docker:
