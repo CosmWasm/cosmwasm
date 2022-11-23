@@ -26,8 +26,11 @@ and this project adheres to
   cosmwasm-vm on Windows. This gives us confidence for integrating cosmwasm-vm
   in a libwasmvm build on Windows. This change is likely to be consensus
   breaking as error messages change. ([#1406])
+- cosmwasm-vm: Use `Display` representation for embedding Wasmer
+  `InstantiationError`s ([#1508]).
 
 [#1406]: https://github.com/CosmWasm/cosmwasm/pull/1406
+[#1508]: https://github.com/CosmWasm/cosmwasm/issues/1508
 
 ## [1.1.8] - 2022-11-22
 

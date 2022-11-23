@@ -231,7 +231,7 @@ where
                 WasmerInstance::new(module, &import_obj)
             }
             .map_err(|original| {
-                VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
+                VmError::instantiation_err(format!("Error instantiating module: {original}"))
             })?,
         );
 
