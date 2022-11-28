@@ -170,7 +170,7 @@ fn check_api_integrity<T: QueryResponses + ?Sized>(
         // If `any_of` exists, we assume schema is generated from untagged enum
         any_of
             .into_iter()
-            .map(|schema| dbg!(schema.into_object()))
+            .map(|schema| schema.into_object())
             .filter_map(|obj| {
                 if let Some(reference) = obj.reference {
                     // Subschemas can be hidden behind references - we want to map them to proper
