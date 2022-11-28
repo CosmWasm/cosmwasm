@@ -1,6 +1,8 @@
 mod context;
 
-use syn::{parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, Variant};
+use syn::{
+    parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, TypeParamBound, Variant,
+};
 
 use self::context::Context;
 
@@ -13,7 +15,11 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
 
         // Handle generics if the type has any
         let (_, type_generics, where_clause) = input.generics.split_for_impl();
-        let impl_generics = impl_generics(&ctx, &input.generics);
+        let impl_generics = impl_generics(
+            &ctx,
+            &input.generics,
+            &[parse_quote! {::cosmwasm_schema::QueryResponses}],
+        );
 
         let subquery_len = subquery_calls.len();
         parse_quote! {
@@ -24,7 +30,7 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
                     let subqueries = [
                         #( #subquery_calls, )*
                     ];
-                    ::cosmwasm_schema::combine_subqueries::<#subquery_len, #ident>(subqueries)
+                    ::cosmwasm_schema::combine_subqueries::<#subquery_len, #ident #type_generics>(subqueries)
                 }
             }
         }
@@ -37,7 +43,7 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
 
         // Handle generics if the type has any
         let (_, type_generics, where_clause) = input.generics.split_for_impl();
-        let impl_generics = impl_generics(&ctx, &input.generics);
+        let impl_generics = impl_generics(&ctx, &input.generics, &[]);
 
         parse_quote! {
             #[automatically_derived]
@@ -55,7 +61,7 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
 
 /// Takes a list of generics from the type definition and produces a list of generics
 /// for the expanded `impl` block, adding trait bounds like `JsonSchema` as appropriate.
-fn impl_generics(ctx: &Context, generics: &Generics) -> Generics {
+fn impl_generics(ctx: &Context, generics: &Generics, bounds: &[TypeParamBound]) -> Generics {
     let mut impl_generics = generics.to_owned();
     for param in impl_generics.type_params_mut() {
         // remove the default type if present, as those are invalid in
@@ -65,7 +71,8 @@ fn impl_generics(ctx: &Context, generics: &Generics) -> Generics {
         if !ctx.no_bounds_for.contains(&param.ident) {
             param
                 .bounds
-                .push(parse_quote! {::cosmwasm_schema::schemars::JsonSchema})
+                .push(parse_quote! {::cosmwasm_schema::schemars::JsonSchema});
+            param.bounds.extend(bounds.to_owned());
         }
     }
 
