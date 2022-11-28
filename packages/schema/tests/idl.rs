@@ -203,76 +203,15 @@ pub enum SubQueryMsg1 {
     Variant1 { test: String },
 }
 
-fn test_nested_query_responses_impl(api: &str) {
-    let api: Value = serde_json::from_str(api).unwrap();
-    let queries = api
-        .get("query")
-        .unwrap()
-        .get("anyOf")
-        .unwrap()
-        .as_array()
-        .unwrap();
-    let definitions = api.get("query").unwrap().get("definitions").unwrap();
-
-    // Find the subqueries
-    assert_eq!(queries.len(), 2);
-    assert_eq!(
-        queries[0].get("$ref").unwrap().as_str().unwrap(),
-        "#/definitions/QueryMsg"
-    );
-    assert_eq!(
-        queries[1].get("$ref").unwrap().as_str().unwrap(),
-        "#/definitions/SubQueryMsg1"
-    );
-    let query_msg_queries = definitions
-        .get("QueryMsg")
-        .unwrap()
-        .get("oneOf")
-        .unwrap()
-        .as_array()
-        .unwrap();
-    let sub_query_msg_queries = definitions
-        .get("SubQueryMsg1")
-        .unwrap()
-        .get("oneOf")
-        .unwrap()
-        .as_array()
-        .unwrap();
-
-    // Find "balance" and "variant1" queries in the query schema
-    assert_eq!(
-        query_msg_queries[0]
-            .get("required")
-            .unwrap()
-            .get(0)
-            .unwrap(),
-        "balance"
-    );
-    assert_eq!(
-        sub_query_msg_queries[0]
-            .get("required")
-            .unwrap()
-            .get(0)
-            .unwrap(),
-        "variant1"
-    );
-
-    // Find "balance" and "variant1" queries in responses
-    api.get("responses").unwrap().get("balance").unwrap();
-    api.get("responses").unwrap().get("variant1").unwrap();
-}
-
 #[test]
 fn test_nested_query_responses() {
-    let api_str = generate_api! {
+    generate_api! {
         instantiate: InstantiateMsg,
         query: NestedQueryMsg,
     }
     .render()
     .to_string()
     .unwrap();
-
-    test_nested_query_responses_impl(&api_str);
 }
 
 #[cw_serde]
@@ -280,21 +219,20 @@ fn test_nested_query_responses() {
 #[serde(untagged)]
 #[query_responses(nested)]
 pub enum NestedQueryMsgGenerics<T, U> {
+    /// doc comment
     Query(T),
     Sub(U),
 }
 
 #[test]
 fn test_nested_query_responses_with_generics() {
-    let api_str = generate_api! {
+    generate_api! {
         instantiate: InstantiateMsg,
         query: NestedQueryMsgGenerics<QueryMsg, SubQueryMsg1>,
     }
     .render()
     .to_string()
     .unwrap();
-
-    test_nested_query_responses_impl(&api_str);
 }
 
 #[cw_serde]
