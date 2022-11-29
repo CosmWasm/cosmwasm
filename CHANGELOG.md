@@ -32,6 +32,15 @@ and this project adheres to
 [#1406]: https://github.com/CosmWasm/cosmwasm/pull/1406
 [#1508]: https://github.com/CosmWasm/cosmwasm/issues/1508
 
+### Fixed
+
+- cosmwasm-schema: Nested QueryMsg with generics is now supported by the
+  QueryResponses macro ([#1516]).
+- cosmwasm-schema: A nested QueryMsg no longer causes runtime errors if it
+  contains doc comments.
+
+[#1516]: https://github.com/CosmWasm/cosmwasm/issues/1516
+
 ## [1.1.8] - 2022-11-22
 
 ### Fixed

@@ -16,5 +16,6 @@ thiserror = "1.0.13"
 
 [dev-dependencies]
 anyhow = "1.0.57"
+cosmwasm-std = { version = "1.1.8", path = "../std" }
 semver = "1"
 tempfile = "3"

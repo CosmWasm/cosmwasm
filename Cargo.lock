@@ -288,6 +288,7 @@ version = "1.1.8"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
+ "cosmwasm-std",
  "schemars",
  "semver",
  "serde",
