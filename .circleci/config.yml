@@ -94,7 +94,7 @@ jobs:
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-arm64-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cachev3-arm64-rust:1.59.0-{{ checksum "Cargo.lock" }}
       - run:
           name: "contracts/crypto-verify: integration-test"
           working_directory: ~/project/contracts/crypto-verify
@@ -134,7 +134,42 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-arm64-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            # crypto-verify
+            - contracts/crypto-verify/target/debug/.fingerprint
+            - contracts/crypto-verify/target/debug/build
+            - contracts/crypto-verify/target/debug/deps
+            - contracts/crypto-verify/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/crypto-verify/target/wasm32-unknown-unknown/release/build
+            - contracts/crypto-verify/target/wasm32-unknown-unknown/release/deps
+            # hackatom
+            - contracts/hackatom/target/debug/.fingerprint
+            - contracts/hackatom/target/debug/build
+            - contracts/hackatom/target/debug/deps
+            - contracts/hackatom/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/hackatom/target/wasm32-unknown-unknown/release/build
+            - contracts/hackatom/target/wasm32-unknown-unknown/release/deps
+            # queue
+            - contracts/queue/target/debug/.fingerprint
+            - contracts/queue/target/debug/build
+            - contracts/queue/target/debug/deps
+            - contracts/queue/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/queue/target/wasm32-unknown-unknown/release/build
+            - contracts/queue/target/wasm32-unknown-unknown/release/deps
+            # reflect
+            - contracts/reflect/target/debug/.fingerprint
+            - contracts/reflect/target/debug/build
+            - contracts/reflect/target/debug/deps
+            - contracts/reflect/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/reflect/target/wasm32-unknown-unknown/release/build
+            - contracts/reflect/target/wasm32-unknown-unknown/release/deps
+            # staking
+            - contracts/staking/target/debug/.fingerprint
+            - contracts/staking/target/debug/build
+            - contracts/staking/target/debug/deps
+            - contracts/staking/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/staking/target/wasm32-unknown-unknown/release/build
+            - contracts/staking/target/wasm32-unknown-unknown/release/deps
+          key: cachev3-arm64-rust:1.59.0-{{ checksum "Cargo.lock" }}
 
   package_crypto:
     docker:
