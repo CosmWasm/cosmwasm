@@ -44,6 +44,15 @@ and this project adheres to
 
 [#1516]: https://github.com/CosmWasm/cosmwasm/issues/1516
 
+## [1.1.9] - 2022-12-06
+
+### Fixed
+
+- cosmwasm-schema: Fix type fully qualified path to symbol `QueryResponses` in
+  macro `cosmwasm_schema::generate_api!` ([#1527]).
+
+[#1527]: https://github.com/CosmWasm/cosmwasm/issues/1527
+
 ## [1.1.8] - 2022-11-22
 
 ### Fixed
@@ -1568,7 +1577,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...HEAD
+[1.1.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.8...v1.1.9
+[1.1.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...v1.1.8
 [1.1.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.3...v1.1.4
