@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-schema: Fix type fully qualified path to symbol `QueryResponses` in
+  macro `cosmwasm_schema::generate_api!` ([#1527]).
+
+[#1527]: https://github.com/CosmWasm/cosmwasm/issues/1527
+
 ## [1.1.8] - 2022-11-22
 
 ### Fixed
