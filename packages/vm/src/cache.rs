@@ -44,6 +44,10 @@ pub struct Metrics {
 
 #[derive(Clone, Debug)]
 pub struct CacheOptions {
+    /// The base directory of this cache.
+    ///
+    /// If this does not exist, it will be created. Not sure if this behaviour
+    /// is desired but wasmd relies on it.
     pub base_dir: PathBuf,
     pub available_capabilities: HashSet<String>,
     pub memory_cache_size: Size,
@@ -405,6 +409,20 @@ mod tests {
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
+    }
+
+    #[test]
+    fn new_base_dir_will_be_created() {
+        let dir = TempDir::new()
+            .unwrap()
+            .into_path()
+            .join("non-existent-sub-dir");
+        let options = CacheOptions {
+            base_dir: dir.clone(),
+            ..make_testing_options()
+        };
+        let _cache = unsafe { Cache::<MockApi, MockStorage, MockQuerier>::new(options).unwrap() };
+        assert!(dir.is_dir());
     }
 
     #[test]
