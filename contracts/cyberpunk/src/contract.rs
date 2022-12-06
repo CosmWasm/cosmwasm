@@ -33,6 +33,7 @@ pub fn execute(
             mem_cost,
             time_cost,
         } => execute::argon2(mem_cost, time_cost),
+        CpuLoop {} => execute::cpu_loop(),
         MirrorEnv {} => execute::mirror_env(env),
     }
 }
@@ -60,6 +61,16 @@ mod execute {
         // assert!(matches);
         Ok(Response::new().set_data(hash.into_bytes()))
         //Ok(Response::new())
+    }
+
+    pub fn cpu_loop() -> Result<Response, ContractError> {
+        let mut counter = 0u64;
+        loop {
+            counter += 1;
+            if counter >= 9_000_000_000 {
+                counter = 0;
+            }
+        }
     }
 
     pub fn mirror_env(env: Env) -> Result<Response, ContractError> {

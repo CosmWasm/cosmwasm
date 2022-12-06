@@ -9,6 +9,8 @@ pub enum ExecuteMsg {
         /// The number of passes.
         time_cost: u32,
     },
+    /// Infinite loop to burn cpu cycles (only run when metering is enabled)
+    CpuLoop {},
     /// Returns the env for testing
     MirrorEnv {},
 }

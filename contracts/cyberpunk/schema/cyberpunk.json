@@ -45,6 +45,20 @@
         "additionalProperties": false
       },
       {
+        "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
+        "type": "object",
+        "required": [
+          "cpu_loop"
+        ],
+        "properties": {
+          "cpu_loop": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
         "description": "Returns the env for testing",
         "type": "object",
         "required": [
