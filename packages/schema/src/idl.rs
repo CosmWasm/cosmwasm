@@ -97,19 +97,19 @@ impl JsonApi {
                 serde_json::to_string_pretty(&execute)?,
             ));
         }
-        if let Some(query) = &self.execute {
+        if let Some(query) = &self.query {
             result.push((
                 "query.json".to_string(),
                 serde_json::to_string_pretty(&query)?,
             ));
         }
-        if let Some(migrate) = &self.execute {
+        if let Some(migrate) = &self.migrate {
             result.push((
                 "migrate.json".to_string(),
                 serde_json::to_string_pretty(&migrate)?,
             ));
         }
-        if let Some(sudo) = &self.execute {
+        if let Some(sudo) = &self.sudo {
             result.push((
                 "sudo.json".to_string(),
                 serde_json::to_string_pretty(&sudo)?,
