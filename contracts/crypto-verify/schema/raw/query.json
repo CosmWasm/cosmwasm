@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "description": "Cosmos format (secp256k1 verification scheme).",
+      "type": "object",
+      "required": [
+        "verify_cosmos_signature"
+      ],
+      "properties": {
+        "verify_cosmos_signature": {
+          "type": "object",
+          "required": [
+            "message",
+            "public_key",
+            "signature"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "public_key": {
+              "description": "Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signature": {
+              "description": "Serialized signature. Cosmos format (64 bytes).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Ethereum text verification (compatible to the eth_sign RPC/web3 enpoint). This cannot be used to verify transaction.\n\nSee https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign",
+      "type": "object",
+      "required": [
+        "verify_ethereum_text"
+      ],
+      "properties": {
+        "verify_ethereum_text": {
+          "type": "object",
+          "required": [
+            "message",
+            "signature",
+            "signer_address"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify. This will be wrapped in the standard container `\"\\x19Ethereum Signed Message:\\n\" + len(message) + message` before verification.",
+              "type": "string"
+            },
+            "signature": {
+              "description": "Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signer_address": {
+              "description": "Signer address. This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "verify_ethereum_transaction"
+      ],
+      "properties": {
+        "verify_ethereum_transaction": {
+          "type": "object",
+          "required": [
+            "chain_id",
+            "data",
+            "from",
+            "gas_limit",
+            "gas_price",
+            "nonce",
+            "r",
+            "s",
+            "to",
+            "v",
+            "value"
+          ],
+          "properties": {
+            "chain_id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "data": {
+              "$ref": "#/definitions/Binary"
+            },
+            "from": {
+              "description": "Ethereum address in hex format (42 characters, starting with 0x)",
+              "type": "string"
+            },
+            "gas_limit": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "gas_price": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "nonce": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "r": {
+              "$ref": "#/definitions/Binary"
+            },
+            "s": {
+              "$ref": "#/definitions/Binary"
+            },
+            "to": {
+              "description": "Ethereum address in hex format (42 characters, starting with 0x)",
+              "type": "string"
+            },
+            "v": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "value": {
+              "$ref": "#/definitions/Uint128"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Tendermint format (ed25519 verification scheme).",
+      "type": "object",
+      "required": [
+        "verify_tendermint_signature"
+      ],
+      "properties": {
+        "verify_tendermint_signature": {
+          "type": "object",
+          "required": [
+            "message",
+            "public_key",
+            "signature"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "public_key": {
+              "description": "Serialized public key. Tendermint format (32 bytes).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signature": {
+              "description": "Serialized signature. Tendermint format (64 bytes).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Tendermint format (batch ed25519 verification scheme).",
+      "type": "object",
+      "required": [
+        "verify_tendermint_batch"
+      ],
+      "properties": {
+        "verify_tendermint_batch": {
+          "type": "object",
+          "required": [
+            "messages",
+            "public_keys",
+            "signatures"
+          ],
+          "properties": {
+            "messages": {
+              "description": "Messages to verify.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Binary"
+              }
+            },
+            "public_keys": {
+              "description": "Serialized public keys. Tendermint format (32 bytes).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Binary"
+              }
+            },
+            "signatures": {
+              "description": "Serialized signatures. Tendermint format (64 bytes).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Binary"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns a list of supported verification schemes. No pagination - this is a short list.",
+      "type": "object",
+      "required": [
+        "list_verification_schemes"
+      ],
+      "properties": {
+        "list_verification_schemes": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
+    },
+    "Uint128": {
+      "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding, such that the full u128 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n``` # use cosmwasm_std::Uint128; let a = Uint128::from(123u128); assert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64); assert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32); assert_eq!(c.u128(), 70); ```",
+      "type": "string"
+    }
+  }
+}
