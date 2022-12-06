@@ -413,16 +413,17 @@ mod tests {
 
     #[test]
     fn new_base_dir_will_be_created() {
-        let dir = TempDir::new()
+        let my_base_dir = TempDir::new()
             .unwrap()
             .into_path()
             .join("non-existent-sub-dir");
         let options = CacheOptions {
-            base_dir: dir.clone(),
+            base_dir: my_base_dir.clone(),
             ..make_testing_options()
         };
+        assert!(!my_base_dir.is_dir());
         let _cache = unsafe { Cache::<MockApi, MockStorage, MockQuerier>::new(options).unwrap() };
-        assert!(dir.is_dir());
+        assert!(my_base_dir.is_dir());
     }
 
     #[test]
