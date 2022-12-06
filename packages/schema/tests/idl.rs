@@ -77,6 +77,32 @@ fn test_basic_structure() {
     );
 }
 
+// Test to reproduce https://github.com/CosmWasm/cosmwasm/issues/1527
+#[test]
+fn generate_api_works_when_only_types_are_imported() {
+    mod my_api_generator {
+        // Note super::QueryResponses is not imported in that case.
+        use super::generate_api;
+        use super::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
+
+        pub fn generate() {
+            let _api_str = generate_api! {
+                name: "test",
+                version: "0.1.0",
+                instantiate: InstantiateMsg,
+                query: QueryMsg,
+                execute: ExecuteMsg,
+                sudo: SudoMsg,
+                migrate: MigrateMsg,
+            }
+            .render()
+            .to_string()
+            .unwrap();
+        }
+    }
+    my_api_generator::generate();
+}
+
 #[test]
 fn test_query_responses() {
     let api_str = generate_api! {
