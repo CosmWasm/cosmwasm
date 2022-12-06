@@ -94,7 +94,12 @@ jobs:
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - restore_cache:
           keys:
-            - cachev3-arm64-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - v4-arm64-workspace-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - v4-arm64-workspace-rust:1.59.0-
+      - restore_cache:
+          keys:
+            - v4-arm64-contracts-rust:1.59.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - v4-arm64-contracts-rust:1.59.0-
       - run:
           name: "contracts/crypto-verify: integration-test"
           working_directory: ~/project/contracts/crypto-verify
@@ -129,11 +134,16 @@ jobs:
           # use all features
           command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
+          key: v4-arm64-workspace-rust:1.59.0-{{ checksum "Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
+      - save_cache:
+          key: v4-arm64-contracts-rust:1.59.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          paths:
+            - ~/.cargo/registry
             # crypto-verify
             - contracts/crypto-verify/target/debug/.fingerprint
             - contracts/crypto-verify/target/debug/build
@@ -169,7 +179,6 @@ jobs:
             - contracts/staking/target/wasm32-unknown-unknown/release/.fingerprint
             - contracts/staking/target/wasm32-unknown-unknown/release/build
             - contracts/staking/target/wasm32-unknown-unknown/release/deps
-          key: cachev3-arm64-rust:1.59.0-{{ checksum "Cargo.lock" }}
 
   package_crypto:
     docker:
