@@ -15,10 +15,13 @@ and this project adheres to
 - cosmwasm-std: Add `instantiate2_address` which allows calculating the
   predictable addresses for `MsgInstantiateContract2` ([#1437]).
 - cosmwasm-schema: In contracts, `cosmwasm schema` will now output a separate
-  JSON Schema file for each entrypoint in the `raw` subdirectory.
+  JSON Schema file for each entrypoint in the `raw` subdirectory ([#1478],
+  [#1533]).
 
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
 [#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
+[#1478]: https://github.com/CosmWasm/cosmwasm/pull/1478
+[#1533]: https://github.com/CosmWasm/cosmwasm/pull/1533
 
 ### Changed
 

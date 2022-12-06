@@ -1,15 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg",
+  "title": "QueryMsg",
   "oneOf": [
     {
-      "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
+      "description": "returns a human-readable representation of the verifier use to ensure query path works in integration tests",
       "type": "object",
       "required": [
-        "release"
+        "verifier"
       ],
       "properties": {
-        "release": {
+        "verifier": {
           "type": "object",
           "additionalProperties": false
         }
@@ -17,75 +17,47 @@
       "additionalProperties": false
     },
     {
-      "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
+      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
       "type": "object",
       "required": [
-        "cpu_loop"
+        "other_balance"
       ],
       "properties": {
-        "cpu_loop": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Infinite loop making storage calls (to test when their limit hits)",
-      "type": "object",
-      "required": [
-        "storage_loop"
-      ],
-      "properties": {
-        "storage_loop": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Infinite loop reading and writing memory",
-      "type": "object",
-      "required": [
-        "memory_loop"
-      ],
-      "properties": {
-        "memory_loop": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Infinite loop sending message to itself",
-      "type": "object",
-      "required": [
-        "message_loop"
-      ],
-      "properties": {
-        "message_loop": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Allocate large amounts of memory without consuming much gas",
-      "type": "object",
-      "required": [
-        "allocate_large_memory"
-      ],
-      "properties": {
-        "allocate_large_memory": {
+        "other_balance": {
           "type": "object",
           "required": [
-            "pages"
+            "address"
           ],
           "properties": {
-            "pages": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Recurse will execute a query into itself up to depth-times and return Each step of the recursion may perform some extra work to test gas metering (`work` rounds of sha256 on contract). Now that we have Env, we can auto-calculate the address to recurse into",
+      "type": "object",
+      "required": [
+        "recurse"
+      ],
+      "properties": {
+        "recurse": {
+          "type": "object",
+          "required": [
+            "depth",
+            "work"
+          ],
+          "properties": {
+            "depth": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "work": {
               "type": "integer",
               "format": "uint32",
               "minimum": 0.0
@@ -97,27 +69,13 @@
       "additionalProperties": false
     },
     {
-      "description": "Trigger a panic to ensure framework handles gracefully",
+      "description": "GetInt returns a hardcoded u32 value",
       "type": "object",
       "required": [
-        "panic"
+        "get_int"
       ],
       "properties": {
-        "panic": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Starting with CosmWasm 0.10, some API calls return user errors back to the contract. This triggers such user errors, ensuring the transaction does not fail in the backend.",
-      "type": "object",
-      "required": [
-        "user_errors_in_api_calls"
-      ],
-      "properties": {
-        "user_errors_in_api_calls": {
+        "get_int": {
           "type": "object",
           "additionalProperties": false
         }

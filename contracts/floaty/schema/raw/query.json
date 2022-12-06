@@ -1,16 +1,38 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg",
+  "title": "QueryMsg",
   "oneOf": [
     {
-      "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
+      "description": "returns a human-readable representation of the verifier use to ensure query path works in integration tests",
       "type": "object",
       "required": [
-        "release"
+        "verifier"
       ],
       "properties": {
-        "release": {
+        "verifier": {
           "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
+      "type": "object",
+      "required": [
+        "other_balance"
+      ],
+      "properties": {
+        "other_balance": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
           "additionalProperties": false
         }
       },
