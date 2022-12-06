@@ -166,7 +166,7 @@ impl Parse for Options {
                 let ty = ty.unwrap_type();
                 (
                     quote! {Some(::cosmwasm_schema::schema_for!(#ty))},
-                    quote! { Some(<#ty as QueryResponses>::response_schemas().unwrap()) },
+                    quote! { Some(<#ty as ::cosmwasm_schema::QueryResponses>::response_schemas().unwrap()) },
                 )
             }
             None => (quote! { None }, quote! { None }),
@@ -272,7 +272,7 @@ mod tests {
                     query: Some(::cosmwasm_schema::schema_for!(QueryMsg)),
                     migrate: Some(::cosmwasm_schema::schema_for!(MigrateMsg)),
                     sudo: Some(::cosmwasm_schema::schema_for!(SudoMsg)),
-                    responses: Some(<QueryMsg as QueryResponses>::response_schemas().unwrap()),
+                    responses: Some(<QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas().unwrap()),
                 }
             }
         );
