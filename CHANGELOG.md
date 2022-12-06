@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.9] - 2022-12-06
+
 ### Fixed
 
 - cosmwasm-schema: Fix type fully qualified path to symbol `QueryResponses` in
@@ -1537,7 +1539,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...HEAD
+[1.1.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.8...v1.1.9
+[1.1.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...v1.1.8
 [1.1.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.5...v1.1.6
 [1.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.3...v1.1.4
