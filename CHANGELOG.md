@@ -17,6 +17,8 @@ and this project adheres to
 - cosmwasm-schema: In contracts, `cosmwasm schema` will now output a separate
   JSON Schema file for each entrypoint in the `raw` subdirectory ([#1478],
   [#1533]).
+- cosmwasm-std: Upgrade `serde-json-wasm` dependency to 0.5.0 which adds map
+  support to `to_vec`/`to_binary` and friends.
 
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
 [#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
