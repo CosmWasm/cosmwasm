@@ -51,6 +51,12 @@ To rebuild the test contracts, go to the repo root and do
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_cyberpunk",target=/code/contracts/cyberpunk/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.10 ./contracts/cyberpunk \
+  && cp artifacts/cyberpunk.wasm packages/vm/testdata/cyberpunk.wasm
+
+docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.12.9 ./contracts/hackatom \

@@ -595,6 +595,7 @@ mod tests {
     use cosmwasm_std::{coins, Empty};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
     #[test]
     fn call_instantiate_works() {
@@ -625,6 +626,24 @@ mod tests {
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
+    }
+
+    #[test]
+    fn call_execute_runs_out_of_gas() {
+        let mut instance = mock_instance(CYBERPUNK, &[]);
+
+        // init
+        let info = mock_info("creator", &[]);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            .unwrap()
+            .unwrap();
+
+        // execute
+        let info = mock_info("looper", &[]);
+        let msg = br#"{"cpu_loop":{}}"#;
+        let err =
+            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        assert!(matches!(err, VmError::GasDepletion {}));
     }
 
     #[test]
