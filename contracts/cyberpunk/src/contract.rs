@@ -8,15 +8,12 @@ use crate::msg::{ExecuteMsg, QueryMsg};
 
 #[entry_point]
 pub fn instantiate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: Empty,
 ) -> Result<Response, ContractError> {
-    deps.api.debug("here we go 🚀");
-
-    // This adds some unrelated event attribute for testing purposes
-    Ok(Response::new().add_attribute("Let the", "hacking begin"))
+    Ok(Response::default())
 }
 
 #[entry_point]
