@@ -21,6 +21,11 @@ pub enum ExecuteMsg {
     AllocateLargeMemory { pages: u32 },
     /// Trigger a panic to ensure framework handles gracefully
     Panic {},
+    /// In contrast to Panic, this does not use the panic handler.
+    ///
+    /// From <https://doc.rust-lang.org/beta/core/arch/wasm32/fn.unreachable.html>:
+    /// "Generates the unreachable instruction, which causes an unconditional trap."
+    Unreachable {},
     /// Returns the env for testing
     MirrorEnv {},
 }

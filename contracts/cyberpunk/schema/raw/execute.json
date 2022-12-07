@@ -129,6 +129,20 @@
       "additionalProperties": false
     },
     {
+      "description": "In contrast to Panic, this does not use the panic handler.\n\nFrom <https://doc.rust-lang.org/beta/core/arch/wasm32/fn.unreachable.html>: \"Generates the unreachable instruction, which causes an unconditional trap.\"",
+      "type": "object",
+      "required": [
+        "unreachable"
+      ],
+      "properties": {
+        "unreachable": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Returns the env for testing",
       "type": "object",
       "required": [

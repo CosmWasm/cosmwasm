@@ -39,6 +39,7 @@ pub fn execute(
         MessageLoop {} => execute_message_loop(env),
         AllocateLargeMemory { pages } => execute_allocate_large_memory(pages),
         Panic {} => execute_panic(),
+        Unreachable {} => execute_unreachable(),
         MirrorEnv {} => execute_mirror_env(env),
     }
 }
@@ -138,6 +139,14 @@ fn execute_panic() -> Result<Response, ContractError> {
     // panicked at 'no entry found for key', src/contract.rs:62:13
     // let map = std::collections::HashMap::<String, String>::new();
     // let _ = map["foo"];
+}
+
+fn execute_unreachable() -> Result<Response, ContractError> {
+    #[cfg(target_arch = "wasm32")]
+    core::arch::wasm32::unreachable();
+
+    #[cfg(not(target_arch = "wasm32"))]
+    Err(StdError::generic_err("Unsupported architecture").into())
 }
 
 fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {
