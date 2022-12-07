@@ -647,6 +647,52 @@ mod tests {
     }
 
     #[test]
+    fn call_execute_handles_panic() {
+        let mut instance = mock_instance(CYBERPUNK, &[]);
+
+        let info = mock_info("creator", &[]);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            .unwrap()
+            .unwrap();
+
+        // execute
+        let info = mock_info("troll", &[]);
+        let msg = br#"{"panic":{}}"#;
+        let err =
+            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        match err {
+            VmError::RuntimeErr { msg } => {
+                assert!(msg.contains(
+                    "RuntimeError: Aborted: panicked at 'This page intentionally faulted'"
+                ))
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_execute_handles_unreachable() {
+        let mut instance = mock_instance(CYBERPUNK, &[]);
+
+        let info = mock_info("creator", &[]);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            .unwrap()
+            .unwrap();
+
+        // execute
+        let info = mock_info("troll", &[]);
+        let msg = br#"{"unreachable":{}}"#;
+        let err =
+            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        match err {
+            VmError::RuntimeErr { msg } => {
+                assert!(msg.contains("RuntimeError: unreachable"))
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
     fn call_migrate_works() {
         let mut instance = mock_instance(CONTRACT, &[]);
 
