@@ -4,6 +4,39 @@ Those contracts are made for development purpose only. For more realistic
 example contracts, see
 [cosmwasm-examples](https://github.com/CosmWasm/cosmwasm-examples).
 
+## The contracts
+
+Introducing the development contracts in the order they were created.
+
+1. **hackatom** is the very first development contract that was created at a
+   Cosmos Hackatom in Berlin in 2019, the event where CosmWasm was born. It is a
+   very basic escrow contract. During the years of CosmWasm development, many
+   more test cases were hacked into it.
+2. **queue** shows and tests the newly added iterator support
+   ([#181](https://github.com/CosmWasm/cosmwasm/pull/181)).
+3. **reflect** is an evolution of the
+   [mask contract](https://medium.com/cosmwasm/introducing-the-mask-41d11e51bccf),
+   which allows the user to send messages to the contract which are then emitted
+   with the contract as the sender. It later got support to handle sub messages
+   and replys ([#796](https://github.com/CosmWasm/cosmwasm/pull/796)).
+4. **staking** is a staking derivates example showing how the contract itself
+   can be a delegator.
+5. **burner** shows how contract migrations work, which were added in CosmWasm
+   0.9 ([#413](https://github.com/CosmWasm/cosmwasm/pull/413)). It shuts down
+   the contract my clearing all state and sending all tokens to a given address.
+6. **ibc-reflect**/**ibc-reflect-send** are inspired by the idea of Interchain
+   Accounts and demonstrate the power of contract to contract IBC.
+   ibc-reflect-send receives a message on chain A and sends it to an ibc-reflect
+   instance on chain B where the message is executed.
+7. **crypto-verify** shows how to use the CosmWasm crypto APIs for signature
+   verification ([#783](https://github.com/CosmWasm/cosmwasm/pull/783)).
+8. **floaty** emits float operations when compiled to Wasm and allows us to test
+   how tooling and the runtime deal with those operations
+   ([#970](https://github.com/CosmWasm/cosmwasm/pull/970)).
+9. **cyberpunk** is an attempt to cleanup hackatom and make writing runtime
+   tests (cosmwasm-vm/wamsmvm) easier by avoid the need for the escrow setup
+   that hackatom has.
+
 ## Optimized builds
 
 Those development contracts are used for testing in other repos, e.g. in
