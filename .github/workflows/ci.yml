@@ -53,12 +53,13 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: ./.github/actions/install-rust
         with:
           toolchain: ${{ matrix.rust }}
-          target: wasm32-unknown-unknown
-          profile: minimal
-          override: true
+      - name: Add wasm toolchain
+        run: |
+          rustup target add wasm32-unknown-unknown
+
       - name: Build hackatom wasm
         run: cargo wasm --locked
       - name: Unit Test hackatom
