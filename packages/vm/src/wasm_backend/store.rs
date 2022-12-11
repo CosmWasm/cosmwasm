@@ -18,7 +18,7 @@ use super::limiting_tunables::LimitingTunables;
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
 /// most 65536 pages, for a total of 2^32 bytes (4 gibibytes).
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
-const MAX_WASM_MEMORY: usize = 4 * 1024 * 1024 * 1024;
+const MAX_WASM_PAGES: u32 = 65536;
 
 fn cost(_operator: &Operator) -> u64 {
     // A flat fee for each operation
@@ -86,12 +86,17 @@ fn make_store_with_engine(engine: &dyn Engine, memory_limit: Option<Size>) -> St
 }
 
 fn limit_to_pages(limit: Size) -> Pages {
-    let capped = std::cmp::min(limit.0, MAX_WASM_MEMORY);
     // round down to ensure the limit is less than or equal to the config
-    let pages: u32 = (capped / WASM_PAGE_SIZE)
-        .try_into()
-        .expect("Value must be <= 4 GiB/64KiB, i.e. fit in uint32. This is a bug.");
-    Pages(pages)
+    let limit_in_pages: usize = limit.0 / WASM_PAGE_SIZE;
+
+    let capped = match u32::try_from(limit_in_pages) {
+        Ok(x) => std::cmp::min(x, MAX_WASM_PAGES),
+        // The only case where TryFromIntError can happen is when
+        // limit_in_pages exceeds the u32 range. In this case it is way
+        // larger than MAX_WASM_PAGES and needs to be capped.
+        Err(_too_large) => MAX_WASM_PAGES,
+    };
+    Pages(capped)
 }
 
 #[cfg(test)]
@@ -113,10 +118,12 @@ mod tests {
         assert_eq!(limit_to_pages(Size::kibi(63)), Pages(0));
         assert_eq!(limit_to_pages(Size::kibi(64)), Pages(1));
         assert_eq!(limit_to_pages(Size::kibi(65)), Pages(1));
+        assert_eq!(limit_to_pages(Size(u32::MAX as usize)), Pages(65535));
         // caps at 4 GiB
         assert_eq!(limit_to_pages(Size::gibi(3)), Pages(49152));
         assert_eq!(limit_to_pages(Size::gibi(4)), Pages(65536));
         assert_eq!(limit_to_pages(Size::gibi(5)), Pages(65536));
+        assert_eq!(limit_to_pages(Size(usize::MAX)), Pages(65536));
     }
 
     #[test]

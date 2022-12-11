@@ -1,9 +1,8 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::{cw_serde, QueryResponses};
 
 use cosmwasm_std::{Coin, Decimal, Uint128};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InstantiateMsg {
     /// name of the derivative token (FIXME: auto-generate?)
     pub name: String,
@@ -25,8 +24,7 @@ pub struct InstantiateMsg {
     pub min_withdrawal: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     /// Transfer moves the derivative token
     Transfer { recipient: String, amount: Uint128 },
@@ -48,33 +46,37 @@ pub enum ExecuteMsg {
     _BondAllTokens {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Balance shows the number of staking derivatives
+    #[returns(BalanceResponse)]
     Balance { address: String },
     /// Claims shows the number of tokens this address can access when they are done unbonding
+    #[returns(ClaimsResponse)]
     Claims { address: String },
     /// TokenInfo shows the metadata of the token for UIs
+    #[returns(TokenInfoResponse)]
     TokenInfo {},
     /// Investment shows info on total staking tokens under custody,
     /// with which validator, as well as how many derivative tokens are lists.
     /// It also shows with the exit tax.
+    #[returns(InvestmentResponse)]
     Investment {},
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct BalanceResponse {
     pub balance: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct ClaimsResponse {
     pub claims: Uint128,
 }
 
 /// TokenInfoResponse is info to display the derivative token in a UI
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct TokenInfoResponse {
     /// name of the derivative token
     pub name: String,
@@ -84,7 +86,7 @@ pub struct TokenInfoResponse {
     pub decimals: u8,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct InvestmentResponse {
     pub token_supply: Uint128,
     pub staked_tokens: Coin,

@@ -10,6 +10,8 @@ mod ibc;
 mod staking;
 mod wasm;
 
+#[cfg(feature = "cosmwasm_1_1")]
+pub use bank::SupplyResponse;
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
 #[cfg(feature = "stargate")]
 pub use ibc::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
@@ -21,7 +23,7 @@ pub use staking::{
 pub use wasm::{ContractInfoResponse, WasmQuery};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest<C> {
     Bank(BankQuery),

@@ -70,7 +70,6 @@ broken_links = {}
 projects = [
     "cosmwasm_crypto",
     "cosmwasm_derive",
-    "cosmwasm_profiler",
     "cosmwasm_schema",
     "cosmwasm_std",
     "cosmwasm_storage",

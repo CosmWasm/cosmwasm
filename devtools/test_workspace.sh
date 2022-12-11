@@ -7,4 +7,5 @@ cargo fmt
 (cd packages/std && cargo test --features iterator)
 (cd packages/storage && cargo test --features iterator)
 (cd packages/schema && cargo test)
+(cd packages/schema-derive && cargo test)
 (cd packages/vm && cargo test --features iterator,stargate)

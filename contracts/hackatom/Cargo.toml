@@ -31,14 +31,14 @@ cranelift = ["cosmwasm-vm/cranelift"]
 backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 
 [dependencies]
+cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", package = "secret-cosmwasm-std", default-features = false, features = ["abort"] }
 rust-argon2 = "0.8"
-schemars = "0.8.1"
+schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-sha2 = "0.9.1"
+sha2 = "0.10"
 thiserror = "1.0"
 
 [dev-dependencies]
-cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-storage = { path = "../../packages/storage", default-features = false }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }

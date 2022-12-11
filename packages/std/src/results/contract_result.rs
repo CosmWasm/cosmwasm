@@ -29,11 +29,13 @@ use std::fmt;
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.
     /// This could potientially have more structure, but String is the easiest.
+    #[serde(rename = "error")]
     Err(String),
 }
 

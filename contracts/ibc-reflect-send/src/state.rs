@@ -9,12 +9,12 @@ use cosmwasm_storage::{
 pub const KEY_CONFIG: &[u8] = b"config";
 pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Config {
     pub admin: Addr,
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct AccountData {
     /// last block balance was updated (0 is never)
     pub last_update_time: Timestamp,

@@ -18,15 +18,14 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult, Empty,
-    Response, SubMsg,
+    assert_approx_eq, coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary,
+    ContractResult, Empty, Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
     testing::{
         execute, instantiate, migrate, mock_env, mock_info, mock_instance,
-        mock_instance_with_balances, mock_instance_with_gas_limit, query, sudo, test_io,
-        MOCK_CONTRACT_ADDR,
+        mock_instance_with_balances, query, sudo, test_io, MOCK_CONTRACT_ADDR,
     },
     Storage, VmError,
 };
@@ -54,7 +53,7 @@ fn make_init_msg() -> (InstantiateMsg, String) {
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
-    assert_eq!(deps.required_features().len(), 0);
+    assert_eq!(deps.required_capabilities().len(), 0);
 
     let verifier = String::from("verifies");
     let beneficiary = String::from("benefits");
@@ -308,35 +307,6 @@ fn execute_release_fails_for_wrong_sender() {
 }
 
 #[test]
-fn execute_argon2() {
-    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
-
-    let (instantiate_msg, creator) = make_init_msg();
-    let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
-
-    let gas_before = deps.get_gas_left();
-    let _execute_res: Response = execute(
-        &mut deps,
-        mock_env(),
-        mock_info(creator.as_str(), &[]),
-        ExecuteMsg::Argon2 {
-            mem_cost: 256,
-            time_cost: 5,
-        },
-    )
-    .unwrap();
-    let gas_used = gas_before - deps.get_gas_left();
-    // Note: the exact gas usage depends on the Rust version used to compile Wasm,
-    // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 15428758650000; // +/- 20%
-    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
-    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
-}
-
-#[test]
 fn execute_cpu_loop() {
     let mut deps = mock_instance(WASM, &[]);
 
@@ -435,9 +405,7 @@ fn execute_allocate_large_memory() {
     // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 4413600000; // +/- 20%
-    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
-    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+    assert_approx_eq!(gas_used, 4413600000, "0.2");
     let used = deps.memory_pages();
     assert_eq!(used, pages_before + 48, "Memory used: {} pages", used);
     pages_before += 48;
