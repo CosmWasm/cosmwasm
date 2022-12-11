@@ -1,7 +1,7 @@
 name: Contract Development
 
 ## Pushes to long living branches and all PRs
-#on:
+on: [push, pull_request]
 #  push:
 #    branches:
 #      - secret
