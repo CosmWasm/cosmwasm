@@ -15,6 +15,7 @@ use super::super::errors::SystemError;
 /// Success:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult};
 /// let data = Binary::from(b"hello, world");
 /// let result = SystemResult::Ok(ContractResult::Ok(data));
@@ -24,6 +25,7 @@ use super::super::errors::SystemError;
 /// Failure:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult, SystemError};
 /// let error = SystemError::Unknown {};
 /// let result: SystemResult<Binary> = SystemResult::Err(error);

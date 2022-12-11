@@ -94,6 +94,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{Decimal256, Uint256};
     /// let a = Decimal256::from_atomics(1234u64, 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
@@ -178,6 +179,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{Decimal256, Uint256};
     /// # use std::str::FromStr;
     /// // Value with whole and fractional part

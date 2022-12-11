@@ -37,6 +37,7 @@ use uints::U256;
 /// endian bytes:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::Uint256;
 /// let a = Uint256::from(258u128);
 /// let b = Uint256::new([
@@ -207,6 +208,7 @@ impl Uint256 {
     /// # Examples
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// use cosmwasm_std::Uint256;
     ///
     /// let a = Uint256::MAX;

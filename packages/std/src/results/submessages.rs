@@ -73,6 +73,7 @@ impl<T> SubMsg<T> {
     /// ## Examples
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{coins, BankMsg, ReplyOn, SubMsg};
     /// # let msg = BankMsg::Send { to_address: String::from("you"), amount: coins(1015, "earth") };
     /// let sub_msg: SubMsg = SubMsg::reply_always(msg, 1234).with_gas_limit(60_000);
@@ -120,18 +121,20 @@ pub struct Reply {
 /// Success:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult};
 /// let response = SubMsgResponse {
 ///     data: Some(Binary::from_base64("MTIzCg==").unwrap()),
 ///     events: vec![Event::new("wasm").add_attribute("fo", "ba")],
 /// };
 /// let result: SubMsgResult = SubMsgResult::Ok(response);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#);
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba","encrypted":true}]}],"data":"MTIzCg=="}}"#);
 /// ```
 ///
 /// Failure:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, SubMsgResult, Response};
 /// let error_msg = String::from("Something went wrong");
 /// let result = SubMsgResult::Err(error_msg);
@@ -222,9 +225,12 @@ mod tests {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
             events: vec![Event::new("wasm").add_attribute("fo", "ba")],
         });
+
+        println!("deubgggg: {:?}", result);
+
         assert_eq!(
             &to_vec(&result).unwrap(),
-            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#
+            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba","encrypted":true}]}],"data":"MTIzCg=="}}"#
         );
 
         let result: SubMsgResult = SubMsgResult::Err("broken".to_string());
@@ -243,7 +249,7 @@ mod tests {
         );
 
         let result: SubMsgResult = from_slice(
-            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#).unwrap();
+            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba","encrypted":true}]}],"data":"MTIzCg=="}}"#).unwrap();
         assert_eq!(
             result,
             SubMsgResult::Ok(SubMsgResponse {

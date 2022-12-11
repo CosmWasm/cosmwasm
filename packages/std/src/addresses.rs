@@ -39,7 +39,8 @@ impl Addr {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr};
+    /// # use secret_cosmwasm_std as coswasm_std;
+    /// # use coswasm_std::{Addr};
     /// let address = Addr::unchecked("foobar");
     /// assert_eq!(address, "foobar");
     /// ```

@@ -281,7 +281,7 @@ mod tests {
     fn wasm_msg_debug_decodes_binary_string_when_possible() {
         let msg = WasmMsg::Execute {
             contract_addr: "joe".to_string(),
-            code_hash: "".to_string(),
+            code_hash: "aaaa".to_string(),
             msg: to_binary(&ExecuteMsg::Mint {
                 coin: coin(10, "BTC"),
             })
@@ -291,7 +291,7 @@ mod tests {
 
         assert_eq!(
             format!("{:?}", msg),
-            "Execute { contract_addr: \"joe\", msg: {\"mint\":{\"coin\":{\"denom\":\"BTC\",\"amount\":\"10\"}}}, funds: [] }"
+            "Execute { contract_addr: \"joe\", code_hash: \"aaaa\", msg: {\"mint\":{\"coin\":{\"denom\":\"BTC\",\"amount\":\"10\"}}}, funds: [] }"
         );
     }
 
@@ -299,14 +299,14 @@ mod tests {
     fn wasm_msg_debug_dumps_binary_when_not_utf8() {
         let msg = WasmMsg::Execute {
             contract_addr: "joe".to_string(),
-            code_hash: "".to_string(),
+            code_hash: "aaaa".to_string(),
             msg: Binary::from([0, 159, 146, 150]),
             funds: vec![],
         };
 
         assert_eq!(
             format!("{:?}", msg),
-            "Execute { contract_addr: \"joe\", msg: Binary(009f9296), funds: [] }"
+            "Execute { contract_addr: \"joe\", code_hash: \"aaaa\", msg: Binary(009f9296), funds: [] }"
         );
     }
 }

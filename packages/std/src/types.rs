@@ -40,6 +40,7 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
@@ -50,6 +51,7 @@ pub struct BlockInfo {
     /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
+    /// #         code_hash: "".to_string()
     /// #     },
     /// # };
     /// # extern crate chrono;
@@ -62,6 +64,7 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
@@ -72,7 +75,8 @@ pub struct BlockInfo {
     /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
-    /// #     },
+    /// #         code_hash: "".to_string()
+    ///       },
     /// # };
     /// let millis = env.block.time.nanos() / 1_000_000;
     /// ```

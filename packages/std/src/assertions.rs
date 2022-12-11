@@ -15,7 +15,7 @@
 /// #
 /// # fn body() -> Result<(), ContractError> {
 /// # let permissions = Permissions { delegate: true };
-/// use cosmwasm_std::ensure;
+/// use secret_cosmwasm_std::ensure;
 /// ensure!(permissions.delegate, ContractError::DelegatePerm {});
 ///
 /// // is the same as
@@ -39,7 +39,7 @@ macro_rules! ensure {
 /// it returns the third argument `x` wrapped in `Err(x)`.
 ///
 /// ```
-/// # use cosmwasm_std::{MessageInfo, Addr};
+/// # use secret_cosmwasm_std::{MessageInfo, Addr};
 /// #
 /// # enum ContractError {
 /// #     Unauthorized {},
@@ -51,7 +51,7 @@ macro_rules! ensure {
 /// # fn body() -> Result<(), ContractError> {
 /// # let info = MessageInfo { sender: Addr::unchecked("foo"), funds: Vec::new() };
 /// # let cfg = Config { admin: "foo".to_string() };
-/// use cosmwasm_std::ensure_eq;
+/// use secret_cosmwasm_std::ensure_eq;
 ///
 /// ensure_eq!(info.sender, cfg.admin, ContractError::Unauthorized {});
 ///
@@ -83,7 +83,7 @@ macro_rules! ensure_eq {
 /// #
 /// # fn body() -> Result<(), ContractError> {
 /// # let voting_power = 123;
-/// use cosmwasm_std::ensure_ne;
+/// use secret_cosmwasm_std::ensure_ne;
 ///
 /// ensure_ne!(voting_power, 0, ContractError::NotAVoter {});
 ///

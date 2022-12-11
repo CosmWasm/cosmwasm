@@ -35,6 +35,7 @@ use uints::U512;
 /// endian bytes:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::Uint512;
 /// let a = Uint512::from(258u128);
 /// let b = Uint512::new([

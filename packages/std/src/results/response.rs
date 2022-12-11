@@ -16,6 +16,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// Direct:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo};
 /// # type InstantiateMsg = ();
 /// #
@@ -36,6 +37,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// Mutating:
 ///
 /// ```
+/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg};
 /// # type InstantiateMsg = ();
 /// # type MyError = ();
@@ -155,6 +157,7 @@ impl<T> Response<T> {
     /// Adding a list of attributes using the pair notation for key and value:
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// use cosmwasm_std::Response;
     ///
     /// let attrs = vec![
@@ -169,6 +172,7 @@ impl<T> Response<T> {
     /// Adding an optional value as an optional attribute by turning it into a list of 0 or 1 elements:
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// use cosmwasm_std::{Attribute, Response};
     ///
     /// // Some value
@@ -178,6 +182,7 @@ impl<T> Response<T> {
     /// assert_eq!(res.attributes, [Attribute {
     ///     key: "winner".to_string(),
     ///     value: "sarah".to_string(),
+    ///     encrypted: true
     /// }]);
     ///
     /// // No value
@@ -199,6 +204,7 @@ impl<T> Response<T> {
     /// ## Examples
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// use cosmwasm_std::{CosmosMsg, Response};
     ///
     /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> Response {
@@ -214,6 +220,7 @@ impl<T> Response<T> {
     /// ## Examples
     ///
     /// ```
+    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// use cosmwasm_std::{SubMsg, Response};
     ///
     /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> Response {
