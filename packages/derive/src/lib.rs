@@ -52,12 +52,17 @@ use std::str::FromStr;
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
 #[proc_macro_attribute]
-pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
+pub fn entry_point(attr: TokenStream, mut item: TokenStream) -> TokenStream {
     let cloned = item.clone();
     let function = parse_macro_input!(cloned as syn::ItemFn);
     let name = function.sig.ident.to_string();
     // The first argument is `deps`, the rest is region pointers
     let args = function.sig.inputs.len() - 1;
+    let cosmwasm_std_name = if attr.is_empty() {
+        "cosmwasm_std".to_string()
+    } else {
+        attr.to_string()
+    };
 
     // E.g. "ptr0: u32, ptr1: u32, ptr2: u32, "
     let typed_ptrs = (0..args).fold(String::new(), |acc, i| format!("{}ptr{}: u32, ", acc, i));
@@ -70,7 +75,7 @@ pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
         mod __wasm_export_{name} {{ // new module to avoid conflict of function name
             #[no_mangle]
             extern "C" fn {name}({typed_ptrs}) -> u32 {{
-                cosmwasm_std::do_{name}(&super::{name}, {ptrs})
+                {cosmwasm_std_name}::do_{name}(&super::{name}, {ptrs})
             }}
         }}
     "##,
