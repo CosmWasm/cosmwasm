@@ -38,9 +38,9 @@ pub fn mock_backend_with_balances(
 ///
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
 /// See <https://oeis.org/A002326/list> for a table of those values.
-const CANONICAL_LENGTH: usize = 54; // n = 27
+const CANONICAL_LENGTH: usize = 64; // n = 32
 
-const SHUFFLES_ENCODE: usize = 18;
+const SHUFFLES_ENCODE: usize = 10;
 const SHUFFLES_DECODE: usize = 2;
 
 /// Zero-pads all human addresses to make them fit the canonical_length and
@@ -233,6 +233,13 @@ mod tests {
         let canonical = api.canonical_address(&original).0.unwrap();
         let recovered = api.human_address(&canonical).0.unwrap();
         assert_eq!(recovered, "cosmwasmchef");
+
+        // Long input (Juno contract address)
+        let original =
+            String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
+        let canonical = api.canonical_address(&original).0.unwrap();
+        let recovered = api.human_address(&canonical).0.unwrap();
+        assert_eq!(recovered, original);
     }
 
     #[test]

@@ -887,7 +887,10 @@ mod tests {
         let res = do_addr_validate(&env, source_ptr3).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
-        assert_eq!(err, "Invalid input: human address too long");
+        assert_eq!(
+            err,
+            "Invalid input: human address too long for this mock implementation (must be <= 64)."
+        );
 
         let res = do_addr_validate(&env, source_ptr4).unwrap();
         assert_ne!(res, 0);
@@ -982,7 +985,10 @@ mod tests {
         let res = do_addr_canonicalize(&env, source_ptr3, dest_ptr).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
-        assert_eq!(err, "Invalid input: human address too long");
+        assert_eq!(
+            err,
+            "Invalid input: human address too long for this mock implementation (must be <= 64)."
+        );
     }
 
     #[test]
