@@ -1457,6 +1457,10 @@ mod tests {
                     if *contract_addr == constract1 {
                         let response = ContractInfoResponse {
                             code_id: 4,
+                            checksum: Some(
+                                "58d8c1d619e9ac9d0a9d01f81148101730917511ac0dc70ac8e537a68b591c61"
+                                    .to_string(),
+                            ),
                             creator: "lalala".into(),
                             admin: None,
                             pinned: false,
@@ -1519,9 +1523,8 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
-                value,
-                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null}"#
-                    as &[u8]
+                String::from_utf8_lossy(value.as_slice()),
+                r#"{"code_id":4,"checksum":"58d8c1d619e9ac9d0a9d01f81148101730917511ac0dc70ac8e537a68b591c61","creator":"lalala","admin":null,"pinned":false,"ibc_port":null}"#
             ),
             res => panic!("Unexpected result: {:?}", res),
         }

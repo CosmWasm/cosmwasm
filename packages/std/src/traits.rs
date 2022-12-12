@@ -368,6 +368,17 @@ mod tests {
         2
     }
 
+    fn mock_resp() -> ContractInfoResponse {
+        ContractInfoResponse {
+            code_id: 17,
+            checksum: Some("aabbccdd".to_string()),
+            creator: "creator".to_string(),
+            admin: None,
+            pinned: false,
+            ibc_port: None,
+        }
+    }
+
     // this just needs to compile to prove we can use it
     #[test]
     fn use_querier_wrapper_as_querier() {
@@ -425,15 +436,6 @@ mod tests {
     #[test]
     fn contract_info() {
         const ACCT: &str = "foobar";
-        fn mock_resp() -> ContractInfoResponse {
-            ContractInfoResponse {
-                code_id: 0,
-                creator: "creator".to_string(),
-                admin: None,
-                pinned: false,
-                ibc_port: None,
-            }
-        }
 
         let mut querier: MockQuerier<Empty> = MockQuerier::new(&[(ACCT, &coins(5, "BTC"))]);
         querier.update_wasm(|q| -> QuerierResult {
@@ -456,15 +458,6 @@ mod tests {
     #[test]
     fn contract_info_err() {
         const ACCT: &str = "foobar";
-        fn mock_resp() -> ContractInfoResponse {
-            ContractInfoResponse {
-                code_id: 0,
-                creator: "creator".to_string(),
-                admin: None,
-                pinned: false,
-                ibc_port: None,
-            }
-        }
 
         let mut querier: MockQuerier<Empty> = MockQuerier::new(&[(ACCT, &coins(5, "BTC"))]);
         querier.update_wasm(|q| -> QuerierResult {
