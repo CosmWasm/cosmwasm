@@ -12,7 +12,6 @@ cargo fmt
   cargo wasm-debug
   cargo wasm-debug --features iterator,staking,stargate
   cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
-  cargo schema --features cosmwasm_1_1
 )
 (cd packages/storage && cargo build && cargo clippy --all-targets --features iterator -- -D warnings)
 (cd packages/schema && cargo build && cargo clippy --all-targets -- -D warnings)
