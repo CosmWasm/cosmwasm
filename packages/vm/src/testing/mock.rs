@@ -33,10 +33,12 @@ pub fn mock_backend_with_balances(
     }
 }
 
-/// Length of canonical addresses created with this API. Contracts should not make any assumtions
+/// Length of canonical addresses created with this API. Contracts should not make any assumptions
 /// what this value is.
+///
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-const CANONICAL_LENGTH: usize = 54;
+/// See <https://oeis.org/A002326/list> for a table of those values.
+const CANONICAL_LENGTH: usize = 54; // n = 27
 
 const SHUFFLES_ENCODE: usize = 18;
 const SHUFFLES_DECODE: usize = 2;
@@ -46,7 +48,7 @@ const SHUFFLES_DECODE: usize = 2;
 /// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    /// Length of canonical addresses created with this API. Contracts should not make any assumtions
+    /// Length of canonical addresses created with this API. Contracts should not make any assumptions
     /// what this value is.
     canonical_length: usize,
     /// When set, all calls to the API fail with BackendError::Unknown containing this message

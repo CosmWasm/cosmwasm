@@ -77,10 +77,15 @@ pub fn mock_dependencies_with_balances(
 // We can later make simplifications here if needed
 pub type MockStorage = MemoryStorage;
 
-/// Length of canonical addresses created with this API. Contracts should not make any assumtions
+/// Length of canonical addresses created with this API. Contracts should not make any assumptions
 /// what this value is.
+///
+/// The mock API can only canonicalize and humanize addresses up to this length. So it must be
+/// long enough to store common bech32 addresses.
+///
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-const CANONICAL_LENGTH: usize = 54;
+/// See <https://oeis.org/A002326/list> for a table of those values.
+const CANONICAL_LENGTH: usize = 54; // n = 27
 
 const SHUFFLES_ENCODE: usize = 18;
 const SHUFFLES_DECODE: usize = 2;
@@ -90,7 +95,7 @@ const SHUFFLES_DECODE: usize = 2;
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    /// Length of canonical addresses created with this API. Contracts should not make any assumtions
+    /// Length of canonical addresses created with this API. Contracts should not make any assumptions
     /// what this value is.
     canonical_length: usize,
 }
@@ -118,14 +123,16 @@ impl Api for MockApi {
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        if input.len() < 3 {
+        let min_length = 3;
+        let max_length = self.canonical_length;
+        if input.len() < min_length {
             return Err(StdError::generic_err(
-                "Invalid input: human address too short",
+                format!("Invalid input: human address too short for this mock implementation (must be >= {min_length})."),
             ));
         }
-        if input.len() > self.canonical_length {
+        if input.len() > max_length {
             return Err(StdError::generic_err(
-                "Invalid input: human address too long",
+                format!("Invalid input: human address too long for this mock implementation (must be <= {max_length})."),
             ));
         }
 
@@ -822,20 +829,24 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "address too short")]
     fn addr_canonicalize_min_input_length() {
         let api = MockApi::default();
         let human = String::from("1");
-        let _ = api.addr_canonicalize(&human).unwrap();
+        let err = api.addr_canonicalize(&human).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("human address too short for this mock implementation (must be >= 3)"));
     }
 
     #[test]
-    #[should_panic(expected = "address too long")]
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
         let human =
             String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
-        let _ = api.addr_canonicalize(&human).unwrap();
+        let err = api.addr_canonicalize(&human).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("human address too long for this mock implementation (must be <= 54)"));
     }
 
     #[test]
