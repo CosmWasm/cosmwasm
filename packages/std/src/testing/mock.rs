@@ -85,9 +85,9 @@ pub type MockStorage = MemoryStorage;
 ///
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
 /// See <https://oeis.org/A002326/list> for a table of those values.
-const CANONICAL_LENGTH: usize = 54; // n = 27
+const CANONICAL_LENGTH: usize = 90; // n = 45
 
-const SHUFFLES_ENCODE: usize = 18;
+const SHUFFLES_ENCODE: usize = 10;
 const SHUFFLES_DECODE: usize = 2;
 
 // MockPrecompiles zero pads all human addresses to make them fit the canonical_length
@@ -826,6 +826,13 @@ mod tests {
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
         assert_eq!(recovered, "cosmwasmchef");
+
+        // Long input (Juno contract address)
+        let original =
+            String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
+        let canonical = api.addr_canonicalize(&original).unwrap();
+        let recovered = api.addr_humanize(&canonical).unwrap();
+        assert_eq!(recovered, original);
     }
 
     #[test]
@@ -842,11 +849,11 @@ mod tests {
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
         let human =
-            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
+            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-supported------------------------");
         let err = api.addr_canonicalize(&human).unwrap_err();
         assert!(err
             .to_string()
-            .contains("human address too long for this mock implementation (must be <= 54)"));
+            .contains("human address too long for this mock implementation (must be <= 90)"));
     }
 
     #[test]
