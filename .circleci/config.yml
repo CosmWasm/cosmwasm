@@ -4,6 +4,44 @@ orbs:
   codecov: codecov/codecov@3.2.0
   win: circleci/windows@5.0
 
+commands:
+  check_contract:
+    steps:
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Add clippy and rustfmt components
+          command: rustup component add clippy rustfmt
+      - run:
+          name: Check formatting
+          command: cargo fmt -- --check
+      - run:
+          name: Unit tests
+          command: cargo unit-test --locked
+      - run:
+          name: Build wasm binary
+          command: cargo wasm --locked
+      # After wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
+      - run:
+          name: Clippy
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
+
 workflows:
   test:
     # Keep those job names in sync with .mergify.yml
@@ -468,30 +506,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_burner-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -518,30 +533,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_crypto_verify-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -568,30 +560,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_cyberpunk-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -618,30 +587,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_hackatom-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests
-          command: cargo integration-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -668,30 +614,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_ibc_reflect-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -718,30 +641,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_ibc_reflect_send-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -768,30 +668,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_floaty-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -818,30 +695,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_queue-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -868,30 +722,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_reflect-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -918,30 +749,7 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_staking-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -969,34 +777,6 @@ jobs:
           command: rustup component add rustfmt
       - run:
           name: Check formatting of workspace
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract burner
-          working_directory: ~/project/contracts/burner
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract crypto-verify
-          working_directory: ~/project/contracts/crypto-verify
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract hackatom
-          working_directory: ~/project/contracts/hackatom
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract floaty
-          working_directory: ~/project/contracts/floaty
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract reflect
-          working_directory: ~/project/contracts/reflect
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract queue
-          working_directory: ~/project/contracts/queue
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract staking
-          working_directory: ~/project/contracts/staking
           command: cargo fmt -- --check
       - save_cache:
           paths:
