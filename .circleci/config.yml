@@ -4,6 +4,44 @@ orbs:
   codecov: codecov/codecov@3.2.0
   win: circleci/windows@5.0
 
+commands:
+  check_contract:
+    steps:
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Add clippy and rustfmt components
+          command: rustup component add clippy rustfmt
+      - run:
+          name: Check formatting
+          command: cargo fmt -- --check
+      - run:
+          name: Unit tests
+          command: cargo unit-test --locked
+      - run:
+          name: Build wasm binary
+          command: cargo wasm --locked
+      # After wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
+      - run:
+          name: Clippy
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
+
 workflows:
   test:
     # Keep those job names in sync with .mergify.yml
@@ -33,7 +71,7 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
-              rust-version: ["1.59.0", "1.65.0"]
+              rust-version: ["1.60.0", "1.65.0"]
       - benchmarking:
           requires:
             - package_vm
@@ -85,7 +123,7 @@ jobs:
           command: |
             wget https://static.rust-lang.org/rustup/dist/aarch64-unknown-linux-gnu/rustup-init
             chmod +x rustup-init
-            ./rustup-init -y --default-toolchain 1.59.0 --profile minimal
+            ./rustup-init -y --default-toolchain 1.60.0 --profile minimal
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
@@ -94,12 +132,12 @@ jobs:
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - restore_cache:
           keys:
-            - v4-arm64-workspace-rust:1.59.0-{{ checksum "Cargo.lock" }}
-            - v4-arm64-workspace-rust:1.59.0-
+            - v4-arm64-workspace-rust:1.60.0-{{ checksum "Cargo.lock" }}
+            - v4-arm64-workspace-rust:1.60.0-
       - restore_cache:
           keys:
-            - v4-arm64-contracts-rust:1.59.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
-            - v4-arm64-contracts-rust:1.59.0-
+            - v4-arm64-contracts-rust:1.60.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - v4-arm64-contracts-rust:1.60.0-
       - run:
           name: "contracts/crypto-verify: integration-test"
           working_directory: ~/project/contracts/crypto-verify
@@ -134,14 +172,14 @@ jobs:
           # use all features
           command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
-          key: v4-arm64-workspace-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: v4-arm64-workspace-rust:1.60.0-{{ checksum "Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
       - save_cache:
-          key: v4-arm64-contracts-rust:1.59.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: v4-arm64-contracts-rust:1.60.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             # crypto-verify
@@ -182,7 +220,7 @@ jobs:
 
   package_crypto:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -190,7 +228,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_crypto-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_crypto-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/crypto
@@ -205,11 +243,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_crypto-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_crypto-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_check:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -217,7 +255,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_check-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_check-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/check
@@ -232,11 +270,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_check-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_check-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_schema:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -244,7 +282,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_schema-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_schema-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/schema
@@ -259,11 +297,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_schema-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_schema-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_schema_derive:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -271,7 +309,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_schema_derive-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_schema_derive-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/schema-derive
@@ -286,11 +324,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_schema_derive-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_schema_derive-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       # Limit the number of parallel jobs to avoid OOM crashes during doc testing
       RUST_TEST_THREADS: 8
@@ -301,7 +339,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_std-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_std-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -335,11 +373,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_std-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_std-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_storage:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -347,7 +385,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_storage-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_storage-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build library for native target
           working_directory: ~/project/packages/storage
@@ -366,11 +404,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_storage-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_storage-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_vm:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -378,7 +416,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_vm-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -407,7 +445,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_vm-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   package_vm_windows:
     executor:
@@ -455,7 +493,7 @@ jobs:
 
   contract_burner:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/burner
@@ -467,31 +505,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_burner-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_burner-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -501,11 +516,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_burner-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_burner-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_crypto_verify:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/crypto-verify
@@ -517,31 +532,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_crypto_verify-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_crypto_verify-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -551,11 +543,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_crypto_verify-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_crypto_verify-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_cyberpunk:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/cyberpunk
@@ -567,31 +559,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_cyberpunk-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_cyberpunk-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -601,11 +570,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_cyberpunk-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_cyberpunk-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_hackatom:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/hackatom
@@ -617,31 +586,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_hackatom-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests
-          command: cargo integration-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_hackatom-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -651,11 +597,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_hackatom-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_hackatom-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_ibc_reflect:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/ibc-reflect
@@ -667,31 +613,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibc_reflect-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_ibc_reflect-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -701,11 +624,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibc_reflect-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc_reflect-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_ibc_reflect_send:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/ibc-reflect-send
@@ -717,31 +640,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibc_reflect_send-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_ibc_reflect_send-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -751,11 +651,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibc_reflect_send-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc_reflect_send-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_floaty:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/floaty
@@ -767,31 +667,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_floaty-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_floaty-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -801,11 +678,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_floaty-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_floaty-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/queue
@@ -817,31 +694,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_queue-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_queue-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -851,11 +705,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_queue-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_queue-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_reflect:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/reflect
@@ -867,31 +721,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_reflect-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_reflect-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -901,11 +732,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_reflect-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_reflect-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   contract_staking:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/staking
@@ -917,31 +748,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_staking-rust:1.59.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          command: cargo unit-test --locked
-      - run:
-          name: Integration tests (singlepass backend)
-          command: cargo integration-test --locked --no-default-features
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - run:
-          name: Ensure schemas are up-to-date
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-              git status && git --no-pager diff
-              exit 1
-            fi
+            - cargocache-v2-contract_staking-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -951,11 +759,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_staking-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_staking-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -963,40 +771,12 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-fmt-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-fmt-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add rustfmt component
           command: rustup component add rustfmt
       - run:
           name: Check formatting of workspace
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract burner
-          working_directory: ~/project/contracts/burner
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract crypto-verify
-          working_directory: ~/project/contracts/crypto-verify
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract hackatom
-          working_directory: ~/project/contracts/hackatom
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract floaty
-          working_directory: ~/project/contracts/floaty
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract reflect
-          working_directory: ~/project/contracts/reflect
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract queue
-          working_directory: ~/project/contracts/queue
-          command: cargo fmt -- --check
-      - run:
-          name: Check formatting of contract staking
-          working_directory: ~/project/contracts/staking
           command: cargo fmt -- --check
       - save_cache:
           paths:
@@ -1004,7 +784,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-fmt-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-fmt-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   fmt_extra:
     docker:
@@ -1026,7 +806,7 @@ jobs:
 
   deadlinks:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     steps:
       - checkout
       - run:
@@ -1034,7 +814,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-deadlinks-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-deadlinks-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Generate docs
           command: cargo doc
@@ -1054,7 +834,7 @@ jobs:
             - target/debug/build
             - target/debug/deps
             - /root/.cache/pip
-          key: cargocache-v2-deadlinks-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-deadlinks-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   clippy:
     parameters:
@@ -1071,8 +851,8 @@ jobs:
           command: rustc --version && cargo --version
       - restore_cache:
           keys:
-            - v1-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/cyberpunk/Cargo.lock" }}-{{ checksum "contracts/floaty/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
-            - v1-clippy-rust:<< parameters.rust-version >>-
+            - v2-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}
+            - v2-clippy-rust:<< parameters.rust-version >>-
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -1119,79 +899,6 @@ jobs:
           name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
           command: cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
-      #
-      # Contracts
-      #
-      - run:
-          name: Clippy linting on burner
-          working_directory: ~/project/contracts/burner
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/burner.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on crypto-verify
-          working_directory: ~/project/contracts/crypto-verify
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/crypto_verify.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on cyberpunk
-          working_directory: ~/project/contracts/cyberpunk
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/cyberpunk.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on floaty
-          working_directory: ~/project/contracts/floaty
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/floaty.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on hackatom
-          working_directory: ~/project/contracts/hackatom
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/hackatom.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on ibc-reflect
-          working_directory: ~/project/contracts/ibc-reflect
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/ibc_reflect.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on ibc-reflect-send
-          working_directory: ~/project/contracts/ibc-reflect-send
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/ibc_reflect_send.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on queue
-          working_directory: ~/project/contracts/queue
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/queue.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on reflect
-          working_directory: ~/project/contracts/reflect
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/reflect.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on staking
-          working_directory: ~/project/contracts/staking
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/staking.wasm
-            cargo clippy --all-targets -- -D warnings
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -1199,42 +906,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-            # Contracts
-            - contracts/burner/target/debug/.fingerprint
-            - contracts/burner/target/debug/build
-            - contracts/burner/target/debug/deps
-            - contracts/crypto-verify/target/debug/.fingerprint
-            - contracts/crypto-verify/target/debug/build
-            - contracts/crypto-verify/target/debug/deps
-            - contracts/cyberpunk/target/debug/.fingerprint
-            - contracts/cyberpunk/target/debug/build
-            - contracts/cyberpunk/target/debug/deps
-            - contracts/floaty/target/debug/.fingerprint
-            - contracts/floaty/target/debug/build
-            - contracts/floaty/target/debug/deps
-            - contracts/hackatom/target/debug/.fingerprint
-            - contracts/hackatom/target/debug/build
-            - contracts/hackatom/target/debug/deps
-            - contracts/ibc-reflect/target/debug/.fingerprint
-            - contracts/ibc-reflect/target/debug/build
-            - contracts/ibc-reflect/target/debug/deps
-            - contracts/ibc-reflect-send/target/debug/.fingerprint
-            - contracts/ibc-reflect-send/target/debug/build
-            - contracts/ibc-reflect-send/target/debug/deps
-            - contracts/queue/target/debug/.fingerprint
-            - contracts/queue/target/debug/build
-            - contracts/queue/target/debug/deps
-            - contracts/reflect/target/debug/.fingerprint
-            - contracts/reflect/target/debug/build
-            - contracts/reflect/target/debug/deps
-            - contracts/staking/target/debug/.fingerprint
-            - contracts/staking/target/debug/build
-            - contracts/staking/target/debug/deps
-          key: v1-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/cyberpunk/Cargo.lock" }}-{{ checksum "contracts/floaty/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: v2-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}
 
   benchmarking:
     docker:
-      - image: rust:1.59.0
+      - image: rust:1.60.0
     environment:
       RUST_BACKTRACE: 1
     steps:
@@ -1244,7 +920,7 @@ jobs:
           command: rustc --version && cargo --version
       - restore_cache:
           keys:
-            - cargocache-v2-benchmarking-rust:1.59.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-benchmarking-rust:1.60.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Run vm benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
@@ -1262,7 +938,7 @@ jobs:
             - target/release/.fingerprint
             - target/release/build
             - target/release/deps
-          key: cargocache-v2-benchmarking-rust:1.59.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-benchmarking-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   coverage:
     # https://circleci.com/developer/images?imageType=machine
@@ -1329,7 +1005,7 @@ jobs:
           name: Check development contracts
           command: |
             echo "Checking all contracts under ./artifacts"
-            docker run --volumes-from with_code rust:1.59.0 \
+            docker run --volumes-from with_code rust:1.60.0 \
               /bin/bash -e -c 'export GLOBIGNORE="artifacts/floaty.wasm"; cd ./code; cargo run --bin cosmwasm-check artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
       - run:
