@@ -90,18 +90,20 @@ impl BackendApi for MockApi {
         }
 
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        if normalized.len() < 3 {
+        let min_length = 3;
+        let max_length = self.canonical_length;
+        if normalized.len() < min_length {
             return (
                 Err(BackendError::user_err(
-                    "Invalid input: human address too short",
+                    format!("Invalid input: human address too short for this mock implementation (must be >= {min_length})."),
                 )),
                 gas_info,
             );
         }
-        if normalized.len() > self.canonical_length {
+        if normalized.len() > max_length {
             return (
                 Err(BackendError::user_err(
-                    "Invalid input: human address too long",
+                    format!("Invalid input: human address too long for this mock implementation (must be <= {max_length})."),
                 )),
                 gas_info,
             );
@@ -249,7 +251,7 @@ mod tests {
         let api = MockApi::default();
         let human = "1";
         match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { .. } => {}
+            BackendError::UserErr { msg } => assert!(msg.contains("too short")),
             err => panic!("Unexpected error: {:?}", err),
         }
     }
@@ -259,7 +261,7 @@ mod tests {
         let api = MockApi::default();
         let human = "longer-than-the-address-length-supported-by-this-api-longer-than-54";
         match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { .. } => {}
+            BackendError::UserErr { msg } => assert!(msg.contains("too long")),
             err => panic!("Unexpected error: {:?}", err),
         }
     }
