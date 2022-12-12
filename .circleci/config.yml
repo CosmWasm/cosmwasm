@@ -1143,6 +1143,13 @@ jobs:
             touch target/wasm32-unknown-unknown/release/cyberpunk.wasm
             cargo clippy --all-targets -- -D warnings
       - run:
+          name: Clippy linting on floaty
+          working_directory: ~/project/contracts/floaty
+          command: |
+            mkdir -p target/wasm32-unknown-unknown/release
+            touch target/wasm32-unknown-unknown/release/floaty.wasm
+            cargo clippy --all-targets -- -D warnings
+      - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
           command: |
@@ -1162,13 +1169,6 @@ jobs:
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/ibc_reflect_send.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on floaty
-          working_directory: ~/project/contracts/floaty
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/floaty.wasm
             cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on queue
