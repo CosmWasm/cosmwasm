@@ -1071,7 +1071,8 @@ jobs:
           command: rustc --version && cargo --version
       - restore_cache:
           keys:
-            - cargocache-v2-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - v1-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/cyberpunk/Cargo.lock" }}-{{ checksum "contracts/floaty/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - v1-clippy-rust:<< parameters.rust-version >>-
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -1143,6 +1144,13 @@ jobs:
             touch target/wasm32-unknown-unknown/release/cyberpunk.wasm
             cargo clippy --all-targets -- -D warnings
       - run:
+          name: Clippy linting on floaty
+          working_directory: ~/project/contracts/floaty
+          command: |
+            mkdir -p target/wasm32-unknown-unknown/release
+            touch target/wasm32-unknown-unknown/release/floaty.wasm
+            cargo clippy --all-targets -- -D warnings
+      - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
           command: |
@@ -1162,13 +1170,6 @@ jobs:
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/ibc_reflect_send.wasm
-            cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on floaty
-          working_directory: ~/project/contracts/floaty
-          command: |
-            mkdir -p target/wasm32-unknown-unknown/release
-            touch target/wasm32-unknown-unknown/release/floaty.wasm
             cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on queue
@@ -1194,15 +1195,23 @@ jobs:
       - save_cache:
           paths:
             - /usr/local/cargo/registry
+            # Workspace
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
+            # Contracts
             - contracts/burner/target/debug/.fingerprint
             - contracts/burner/target/debug/build
             - contracts/burner/target/debug/deps
             - contracts/crypto-verify/target/debug/.fingerprint
             - contracts/crypto-verify/target/debug/build
             - contracts/crypto-verify/target/debug/deps
+            - contracts/cyberpunk/target/debug/.fingerprint
+            - contracts/cyberpunk/target/debug/build
+            - contracts/cyberpunk/target/debug/deps
+            - contracts/floaty/target/debug/.fingerprint
+            - contracts/floaty/target/debug/build
+            - contracts/floaty/target/debug/deps
             - contracts/hackatom/target/debug/.fingerprint
             - contracts/hackatom/target/debug/build
             - contracts/hackatom/target/debug/deps
@@ -1221,7 +1230,7 @@ jobs:
             - contracts/staking/target/debug/.fingerprint
             - contracts/staking/target/debug/build
             - contracts/staking/target/debug/deps
-          key: cargocache-v2-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: v1-clippy-rust:<< parameters.rust-version >>-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/cyberpunk/Cargo.lock" }}-{{ checksum "contracts/floaty/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect/Cargo.lock" }}-{{ checksum "contracts/ibc-reflect-send/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
 
   benchmarking:
     docker:
