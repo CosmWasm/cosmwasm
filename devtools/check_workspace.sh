@@ -8,7 +8,7 @@ cargo fmt
 (
   cd packages/std
   cargo check
-  cargo check --features iterator,staking,stargate
+  cargo check --features iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2
   cargo wasm-debug
   cargo wasm-debug --features iterator,staking,stargate
   cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
