@@ -141,7 +141,12 @@ pub enum WasmMsg {
     },
     /// Instantiates a new contracts from previously uploaded Wasm code.
     ///
-    /// This is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.16.0-alpha1/x/wasm/internal/types/tx.proto#L47-L61).
+    /// The contract address is non-predictable. But it is guaranteed that
+    /// when emitting the same Instantiate message multiple times,
+    /// multiple instances on different addresses will be generated. See also
+    /// Instantiate2.
+    ///
+    /// This is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L53-L71).
     /// `sender` is automatically filled with the current contract's address.
     Instantiate {
         admin: Option<String>,
@@ -152,6 +157,25 @@ pub enum WasmMsg {
         funds: Vec<Coin>,
         /// A human-readbale label for the contract
         label: String,
+    },
+    /// Instantiates a new contracts from previously uploaded Wasm code
+    /// using a predictable address derivation algorithm implemented in
+    /// [`cosmwasm_std::instantiate2_address`].
+    ///
+    /// This is translated to a [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L73-L96).
+    /// `sender` is automatically filled with the current contract's address.
+    #[cfg(feature = "cosmwasm_1_2")]
+    Instantiate2 {
+        admin: Option<String>,
+        code_id: u64,
+        /// A human-readbale label for the contract
+        label: String,
+        /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
+        #[derivative(Debug(format_with = "binary_to_string"))]
+        msg: Binary,
+        funds: Vec<Coin>,
+        salt: Binary,
+        fix_msg: bool,
     },
     /// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
     /// customize behavior.
