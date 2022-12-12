@@ -34,6 +34,8 @@ use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 use crate::Attribute;
 
+use super::riffle_shuffle;
+
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// Creates all external requirements that can be injected for unit tests.
@@ -75,12 +77,17 @@ pub fn mock_dependencies_with_balances(
 // We can later make simplifications here if needed
 pub type MockStorage = MemoryStorage;
 
-/// Length of canonical addresses created with this API. Contracts should not make any assumtions
+/// Length of canonical addresses created with this API. Contracts should not make any assumptions
 /// what this value is.
+///
+/// The mock API can only canonicalize and humanize addresses up to this length. So it must be
+/// long enough to store common bech32 addresses.
+///
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-const CANONICAL_LENGTH: usize = 54;
+/// See <https://oeis.org/A002326/list> for a table of those values.
+const CANONICAL_LENGTH: usize = 90; // n = 45
 
-const SHUFFLES_ENCODE: usize = 18;
+const SHUFFLES_ENCODE: usize = 10;
 const SHUFFLES_DECODE: usize = 2;
 
 // MockPrecompiles zero pads all human addresses to make them fit the canonical_length
@@ -88,7 +95,7 @@ const SHUFFLES_DECODE: usize = 2;
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    /// Length of canonical addresses created with this API. Contracts should not make any assumtions
+    /// Length of canonical addresses created with this API. Contracts should not make any assumptions
     /// what this value is.
     canonical_length: usize,
 }
@@ -116,14 +123,16 @@ impl Api for MockApi {
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        if input.len() < 3 {
+        let min_length = 3;
+        let max_length = self.canonical_length;
+        if input.len() < min_length {
             return Err(StdError::generic_err(
-                "Invalid input: human address too short",
+                format!("Invalid input: human address too short for this mock implementation (must be >= {min_length})."),
             ));
         }
-        if input.len() > self.canonical_length {
+        if input.len() > max_length {
             return Err(StdError::generic_err(
-                "Invalid input: human address too long",
+                format!("Invalid input: human address too long for this mock implementation (must be <= {max_length})."),
             ));
         }
 
@@ -728,68 +737,6 @@ impl StakingQuerier {
     }
 }
 
-/// Performs a perfect shuffle (in shuffle)
-///
-/// https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles
-/// https://en.wikipedia.org/wiki/In_shuffle
-///
-/// The number of shuffles required to restore the original order are listed in
-/// https://oeis.org/A002326, e.g.:
-///
-/// ```ignore
-/// 2: 2
-/// 4: 4
-/// 6: 3
-/// 8: 6
-/// 10: 10
-/// 12: 12
-/// 14: 4
-/// 16: 8
-/// 18: 18
-/// 20: 6
-/// 22: 11
-/// 24: 20
-/// 26: 18
-/// 28: 28
-/// 30: 5
-/// 32: 10
-/// 34: 12
-/// 36: 36
-/// 38: 12
-/// 40: 20
-/// 42: 14
-/// 44: 12
-/// 46: 23
-/// 48: 21
-/// 50: 8
-/// 52: 52
-/// 54: 20
-/// 56: 18
-/// 58: 58
-/// 60: 60
-/// 62: 6
-/// 64: 12
-/// 66: 66
-/// 68: 22
-/// 70: 35
-/// 72: 9
-/// 74: 20
-/// ```
-pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
-    assert!(
-        input.len() % 2 == 0,
-        "Method only defined for even number of elements"
-    );
-    let mid = input.len() / 2;
-    let (left, right) = input.split_at(mid);
-    let mut out = Vec::<T>::with_capacity(input.len());
-    for i in 0..mid {
-        out.push(right[i].clone());
-        out.push(left[i].clone());
-    }
-    out
-}
-
 pub fn digit_sum(input: &[u8]) -> usize {
     input.iter().fold(0, |sum, val| sum + (*val as usize))
 }
@@ -879,23 +826,34 @@ mod tests {
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
         assert_eq!(recovered, "cosmwasmchef");
+
+        // Long input (Juno contract address)
+        let original =
+            String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
+        let canonical = api.addr_canonicalize(&original).unwrap();
+        let recovered = api.addr_humanize(&canonical).unwrap();
+        assert_eq!(recovered, original);
     }
 
     #[test]
-    #[should_panic(expected = "address too short")]
     fn addr_canonicalize_min_input_length() {
         let api = MockApi::default();
         let human = String::from("1");
-        let _ = api.addr_canonicalize(&human).unwrap();
+        let err = api.addr_canonicalize(&human).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("human address too short for this mock implementation (must be >= 3)"));
     }
 
     #[test]
-    #[should_panic(expected = "address too long")]
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
         let human =
-            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
-        let _ = api.addr_canonicalize(&human).unwrap();
+            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-supported------------------------");
+        let err = api.addr_canonicalize(&human).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("human address too long for this mock implementation (must be <= 90)"));
     }
 
     #[test]
@@ -1567,38 +1525,6 @@ mod tests {
             ),
             res => panic!("Unexpected result: {:?}", res),
         }
-    }
-
-    #[test]
-    fn riffle_shuffle_works() {
-        // Example from https://en.wikipedia.org/wiki/In_shuffle
-        let start = [0xA, 0x2, 0x3, 0x4, 0x5, 0x6];
-        let round1 = riffle_shuffle(&start);
-        assert_eq!(round1, [0x4, 0xA, 0x5, 0x2, 0x6, 0x3]);
-        let round2 = riffle_shuffle(&round1);
-        assert_eq!(round2, [0x2, 0x4, 0x6, 0xA, 0x3, 0x5]);
-        let round3 = riffle_shuffle(&round2);
-        assert_eq!(round3, start);
-
-        // For 14 elements, the original order is restored after 4 executions
-        // See https://en.wikipedia.org/wiki/In_shuffle#Mathematics and https://oeis.org/A002326
-        let original = [12, 33, 76, 576, 0, 44, 1, 14, 78, 99, 871212, -7, 2, -1];
-        let mut result = Vec::from(original);
-        for _ in 0..4 {
-            result = riffle_shuffle(&result);
-        }
-        assert_eq!(result, original);
-
-        // For 24 elements, the original order is restored after 20 executions
-        let original = [
-            7, 4, 2, 4656, 23, 45, 23, 1, 12, 76, 576, 0, 12, 1, 14, 78, 99, 12, 1212, 444, 31,
-            111, 424, 34,
-        ];
-        let mut result = Vec::from(original);
-        for _ in 0..20 {
-            result = riffle_shuffle(&result);
-        }
-        assert_eq!(result, original);
     }
 
     #[test]

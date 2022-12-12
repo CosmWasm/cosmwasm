@@ -43,8 +43,11 @@ and this project adheres to
   QueryResponses macro ([#1516]).
 - cosmwasm-schema: A nested QueryMsg no longer causes runtime errors if it
   contains doc comments.
+- cosmwasm-std/cosmwasm-vm: Increase length limit for address conversion in
+  `MockApi` to support addresses longer than 54 bytes ([#1529]).
 
 [#1516]: https://github.com/CosmWasm/cosmwasm/issues/1516
+[#1529]: https://github.com/CosmWasm/cosmwasm/issues/1529
 
 ## [1.1.9] - 2022-12-06
 

@@ -196,9 +196,9 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         }
     }
 
-    let invalid_bech32 =
-        "bn9hhssomeltvhzgvuqkwjkpwxojfuigltwedayzxljucefikuieillowaticksoistqoynmgcnj219a";
-    match api.addr_canonicalize(invalid_bech32).unwrap_err() {
+    let too_long =
+        "bn9hhssomeltvhzgvuqkwjkpwxojfuigltwedayzxljucefikuieillowaticksoistqoynmgcnj219aewfwefwwegwg";
+    match api.addr_canonicalize(too_long).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
