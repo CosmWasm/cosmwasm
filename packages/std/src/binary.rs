@@ -83,12 +83,6 @@ impl fmt::Debug for Binary {
     }
 }
 
-impl From<&[u8]> for Binary {
-    fn from(binary: &[u8]) -> Self {
-        Self(binary.to_vec())
-    }
-}
-
 /// Just like Vec<u8>, Binary is a smart pointer to [u8].
 /// This implements `*binary` for us and allows us to
 /// do `&*binary`, returning a `&[u8]` from a `&Binary`.
@@ -102,14 +96,21 @@ impl Deref for Binary {
     }
 }
 
-// Reference
+// Slice
+impl From<&[u8]> for Binary {
+    fn from(binary: &[u8]) -> Self {
+        Self(binary.to_vec())
+    }
+}
+
+// Array reference
 impl<const LENGTH: usize> From<&[u8; LENGTH]> for Binary {
     fn from(source: &[u8; LENGTH]) -> Self {
         Self(source.to_vec())
     }
 }
 
-// Owned
+// Owned array
 impl<const LENGTH: usize> From<[u8; LENGTH]> for Binary {
     fn from(source: [u8; LENGTH]) -> Self {
         Self(source.into())

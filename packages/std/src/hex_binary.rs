@@ -79,12 +79,6 @@ impl fmt::Debug for HexBinary {
     }
 }
 
-impl From<&[u8]> for HexBinary {
-    fn from(binary: &[u8]) -> Self {
-        Self(binary.to_vec())
-    }
-}
-
 /// Just like Vec<u8>, HexBinary is a smart pointer to [u8].
 /// This implements `*data` for us and allows us to
 /// do `&*data`, returning a `&[u8]` from a `&HexBinary`.
@@ -98,14 +92,21 @@ impl Deref for HexBinary {
     }
 }
 
-// Reference
+// Slice
+impl From<&[u8]> for HexBinary {
+    fn from(binary: &[u8]) -> Self {
+        Self(binary.to_vec())
+    }
+}
+
+// Array reference
 impl<const LENGTH: usize> From<&[u8; LENGTH]> for HexBinary {
     fn from(source: &[u8; LENGTH]) -> Self {
         Self(source.to_vec())
     }
 }
 
-// Owned
+// Owned array
 impl<const LENGTH: usize> From<[u8; LENGTH]> for HexBinary {
     fn from(source: [u8; LENGTH]) -> Self {
         Self(source.into())
