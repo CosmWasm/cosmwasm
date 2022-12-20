@@ -96,6 +96,12 @@ impl Deref for Binary {
     }
 }
 
+impl AsRef<[u8]> for Binary {
+    fn as_ref(&self) -> &[u8] {
+        self.as_slice()
+    }
+}
+
 // Slice
 impl From<&[u8]> for Binary {
     fn from(binary: &[u8]) -> Self {
@@ -495,6 +501,34 @@ mod tests {
         assert_eq!(binary.len(), 6);
         let binary_slice: &[u8] = &binary;
         assert_eq!(binary_slice, &[7u8, 35, 49, 101, 0, 255]);
+    }
+
+    #[test]
+    fn binary_implements_as_ref() {
+        // Can use as_ref (this we already get via the Deref implementation)
+        let data = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(data.as_ref(), &[7u8, 35, 49, 101, 0, 255]);
+
+        let data = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        let data_ref = &data;
+        assert_eq!(data_ref.as_ref(), &[7u8, 35, 49, 101, 0, 255]);
+
+        // Implements as ref
+
+        // This is a dummy function to mimic the signature of
+        // https://docs.rs/sha2/0.10.6/sha2/trait.Digest.html#tymethod.digest
+        fn hash(data: impl AsRef<[u8]>) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            data.as_ref().hash(&mut hasher);
+            hasher.finish()
+        }
+
+        let data = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        hash(data);
+
+        let data = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        let data_ref = &data;
+        hash(data_ref);
     }
 
     #[test]
