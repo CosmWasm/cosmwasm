@@ -79,12 +79,6 @@ impl fmt::Debug for HexBinary {
     }
 }
 
-impl From<&[u8]> for HexBinary {
-    fn from(binary: &[u8]) -> Self {
-        Self(binary.to_vec())
-    }
-}
-
 /// Just like Vec<u8>, HexBinary is a smart pointer to [u8].
 /// This implements `*data` for us and allows us to
 /// do `&*data`, returning a `&[u8]` from a `&HexBinary`.
@@ -98,14 +92,27 @@ impl Deref for HexBinary {
     }
 }
 
-// Reference
+impl AsRef<[u8]> for HexBinary {
+    fn as_ref(&self) -> &[u8] {
+        self.as_slice()
+    }
+}
+
+// Slice
+impl From<&[u8]> for HexBinary {
+    fn from(binary: &[u8]) -> Self {
+        Self(binary.to_vec())
+    }
+}
+
+// Array reference
 impl<const LENGTH: usize> From<&[u8; LENGTH]> for HexBinary {
     fn from(source: &[u8; LENGTH]) -> Self {
         Self(source.to_vec())
     }
 }
 
-// Owned
+// Owned array
 impl<const LENGTH: usize> From<[u8; LENGTH]> for HexBinary {
     fn from(source: [u8; LENGTH]) -> Self {
         Self(source.into())
@@ -558,6 +565,34 @@ mod tests {
         assert_eq!(data.len(), 6);
         let data_slice: &[u8] = &data;
         assert_eq!(data_slice, &[7u8, 35, 49, 101, 0, 255]);
+    }
+
+    #[test]
+    fn hex_binary_implements_as_ref() {
+        // Can use as_ref (this we already get via the Deref implementation)
+        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(data.as_ref(), &[7u8, 35, 49, 101, 0, 255]);
+
+        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
+        let data_ref = &data;
+        assert_eq!(data_ref.as_ref(), &[7u8, 35, 49, 101, 0, 255]);
+
+        // Implements as ref
+
+        // This is a dummy function to mimic the signature of
+        // https://docs.rs/sha2/0.10.6/sha2/trait.Digest.html#tymethod.digest
+        fn hash(data: impl AsRef<[u8]>) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            data.as_ref().hash(&mut hasher);
+            hasher.finish()
+        }
+
+        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
+        hash(data);
+
+        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
+        let data_ref = &data;
+        hash(data_ref);
     }
 
     #[test]
