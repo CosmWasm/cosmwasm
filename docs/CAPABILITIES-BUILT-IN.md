@@ -13,5 +13,5 @@ might define others.
   chains that don't use this (e.g. Tgrade).
 - `cosmwasm_1_1` enables the `BankQuery::Supply` query. Only chains running
   CosmWasm `1.1.0` or higher support this.
-- `cosmwasm_1_2` enables the `GovMsg::VoteWeighted` message. Only chains running
-  CosmWasm `1.2.0` or higher support this.
+- `cosmwasm_1_2` enables the `GovMsg::VoteWeighted` and `WasmMsg::Instantiate2`
+  messages. Only chains running CosmWasm `1.2.0` or higher support this.

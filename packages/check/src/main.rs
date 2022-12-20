@@ -10,7 +10,7 @@ use colored::Colorize;
 use cosmwasm_vm::capabilities_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
 
-const DEFAULT_AVAILABLE_CAPABILITIES: &str = "iterator,staking,stargate,cosmwasm_1_1";
+const DEFAULT_AVAILABLE_CAPABILITIES: &str = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2";
 
 pub fn main() {
     let matches = App::new("Contract checking")
