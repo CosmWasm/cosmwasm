@@ -164,6 +164,7 @@ pub enum WasmMsg {
     ///
     /// This is translated to a [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L73-L96).
     /// `sender` is automatically filled with the current contract's address.
+    /// `fix_msg` is automatically set to false.
     #[cfg(feature = "cosmwasm_1_2")]
     Instantiate2 {
         admin: Option<String>,
@@ -175,7 +176,6 @@ pub enum WasmMsg {
         msg: Binary,
         funds: Vec<Coin>,
         salt: Binary,
-        fix_msg: bool,
     },
     /// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
     /// customize behavior.

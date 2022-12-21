@@ -315,7 +315,7 @@ pub enum Instantiate2AddressError {
 ///     let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
 ///     let checksum = HexBinary::from_hex("9af782a3a1bcbcd22dbb6a45c751551d9af782a3a1bcbcd22dbb6a45c751551d")?;
 ///     let salt = b"instance 1231";
-///     let canonical_addr = instantiate2_address(&checksum, &canonical_creator, salt, None)
+///     let canonical_addr = instantiate2_address(&checksum, &canonical_creator, salt)
 ///         .map_err(|_| StdError::generic_err("Could not calculate addr"))?;
 ///     let addr = deps.api.addr_humanize(&canonical_addr)?;
 ///
@@ -326,7 +326,19 @@ pub fn instantiate2_address(
     checksum: &[u8],
     creator: &CanonicalAddr,
     salt: &[u8],
-    msg: Option<&[u8]>,
+) -> Result<CanonicalAddr, Instantiate2AddressError> {
+    instantiate2_address_impl(checksum, creator, salt, b"")
+}
+
+/// The instantiate2 address derivation implementation. This API is used for
+/// testing puposes only. The `msg` field is discouraged and should not be used.
+/// Use [`instantiate2_address`].
+#[doc(hidden)]
+fn instantiate2_address_impl(
+    checksum: &[u8],
+    creator: &CanonicalAddr,
+    salt: &[u8],
+    msg: &[u8],
 ) -> Result<CanonicalAddr, Instantiate2AddressError> {
     if checksum.len() != 32 {
         return Err(Instantiate2AddressError::InvalidChecksumLength);
@@ -335,8 +347,6 @@ pub fn instantiate2_address(
     if salt.is_empty() || salt.len() > 64 {
         return Err(Instantiate2AddressError::InvalidSaltLength);
     };
-
-    let msg = msg.unwrap_or_default();
 
     let mut key = Vec::<u8>::new();
     key.extend_from_slice(b"wasm\0");
@@ -659,23 +669,23 @@ mod tests {
     }
 
     #[test]
-    fn instantiate2_address_works() {
+    fn instantiate2_address_impl_works() {
         let checksum1 =
             HexBinary::from_hex("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5")
                 .unwrap();
         let creator1 = CanonicalAddr::from(hex!("9999999999aaaaaaaaaabbbbbbbbbbcccccccccc"));
         let salt1 = hex!("61");
         let salt2 = hex!("aabbccddeeffffeeddbbccddaa66551155aaaabbcc787878789900aabbccddeeffffeeddbbccddaa66551155aaaabbcc787878789900aabbbbcc221100acadae");
-        let msg1: Option<&[u8]> = None;
-        let msg2: Option<&[u8]> = Some(b"{}");
-        let msg3: Option<&[u8]> = Some(b"{\"some\":123,\"structure\":{\"nested\":[\"ok\",true]}}");
+        let msg1: &[u8] = b"";
+        let msg2: &[u8] = b"{}";
+        let msg3: &[u8] = b"{\"some\":123,\"structure\":{\"nested\":[\"ok\",true]}}";
 
         // No msg
         let expected = CanonicalAddr::from(hex!(
             "5e865d3e45ad3e961f77fd77d46543417ced44d924dc3e079b5415ff6775f847"
         ));
         assert_eq!(
-            instantiate2_address(&checksum1, &creator1, &salt1, msg1).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg1).unwrap(),
             expected
         );
 
@@ -684,7 +694,7 @@ mod tests {
             "0995499608947a5281e2c7ebd71bdb26a1ad981946dad57f6c4d3ee35de77835"
         ));
         assert_eq!(
-            instantiate2_address(&checksum1, &creator1, &salt1, msg2).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg2).unwrap(),
             expected
         );
 
@@ -693,7 +703,7 @@ mod tests {
             "83326e554723b15bac664ceabc8a5887e27003abe9fbd992af8c7bcea4745167"
         ));
         assert_eq!(
-            instantiate2_address(&checksum1, &creator1, &salt1, msg3).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg3).unwrap(),
             expected
         );
 
@@ -702,42 +712,42 @@ mod tests {
             "9384c6248c0bb171e306fd7da0993ec1e20eba006452a3a9e078883eb3594564"
         ));
         assert_eq!(
-            instantiate2_address(&checksum1, &creator1, &salt2, None).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt2, b"").unwrap(),
             expected
         );
 
         // Salt too short or too long
         let empty = Vec::<u8>::new();
         assert!(matches!(
-            instantiate2_address(&checksum1, &creator1, &empty, None).unwrap_err(),
+            instantiate2_address_impl(&checksum1, &creator1, &empty, b"").unwrap_err(),
             Instantiate2AddressError::InvalidSaltLength
         ));
         let too_long = vec![0x11; 65];
         assert!(matches!(
-            instantiate2_address(&checksum1, &creator1, &too_long, None).unwrap_err(),
+            instantiate2_address_impl(&checksum1, &creator1, &too_long, b"").unwrap_err(),
             Instantiate2AddressError::InvalidSaltLength
         ));
 
         // invalid checksum length
         let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2");
         assert!(matches!(
-            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"").unwrap_err(),
             Instantiate2AddressError::InvalidChecksumLength
         ));
         let broken_cs = hex!("");
         assert!(matches!(
-            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"").unwrap_err(),
             Instantiate2AddressError::InvalidChecksumLength
         ));
         let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2aaaa");
         assert!(matches!(
-            instantiate2_address(&broken_cs, &creator1, &salt1, None).unwrap_err(),
+            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"").unwrap_err(),
             Instantiate2AddressError::InvalidChecksumLength
         ));
     }
 
     #[test]
-    fn instantiate2_address_works_for_cosmjs_testvectors() {
+    fn instantiate2_address_impl_works_for_cosmjs_testvectors() {
         // Test data from https://github.com/cosmos/cosmjs/pull/1253
         const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/instantiate2_addresses.json";
 
@@ -793,12 +803,12 @@ mod tests {
             out: _,
         } in read_tests()
         {
-            let msg = input.msg.map(|msg| msg.into_bytes());
-            let addr = instantiate2_address(
+            let msg = input.msg.map(|msg| msg.into_bytes()).unwrap_or_default();
+            let addr = instantiate2_address_impl(
                 &input.checksum,
                 &input.creator_data.into(),
                 &input.salt,
-                msg.as_deref(),
+                &msg,
             )
             .unwrap();
             assert_eq!(addr, intermediate.address_data);
