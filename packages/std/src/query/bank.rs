@@ -33,6 +33,11 @@ pub struct SupplyResponse {
 
 #[cfg(feature = "cosmwasm_1_1")]
 impl SupplyResponse {
+    /// Constructor for testing frameworks such as cw-multi-test.
+    /// This is required because query response types should be #[non_exhaustive].
+    /// As a contract developer you should not need this constructor since
+    /// query responses are constructed for you via deserialization.
+    #[doc(hidden)]
     pub fn new(amount: Coin) -> Self {
         Self { amount }
     }
