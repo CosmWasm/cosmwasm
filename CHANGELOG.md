@@ -23,6 +23,7 @@ and this project adheres to
 - cosmwasm-std: Upgrade `serde-json-wasm` dependency to 0.5.0 which adds map
   support to `to_vec`/`to_binary` and friends.
 - cosmwasm-std: Implement `AsRef<[u8]>` for `Binary` and `HexBinary` ([#1550]).
+- cosmwasm-std: Add constructor `SupplyResponse::new` ([#1552]).
 
 [#1436]: https://github.com/CosmWasm/cosmwasm/issues/1436
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
@@ -30,6 +31,7 @@ and this project adheres to
 [#1478]: https://github.com/CosmWasm/cosmwasm/pull/1478
 [#1533]: https://github.com/CosmWasm/cosmwasm/pull/1533
 [#1550]: https://github.com/CosmWasm/cosmwasm/issues/1550
+[#1552]: https://github.com/CosmWasm/cosmwasm/pull/1552
 [#1554]: https://github.com/CosmWasm/cosmwasm/pull/1554
 
 ### Changed

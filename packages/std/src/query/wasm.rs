@@ -41,7 +41,10 @@ pub struct ContractInfoResponse {
 }
 
 impl ContractInfoResponse {
-    /// Convenience constructor for tests / mocks
+    /// Constructor for testing frameworks such as cw-multi-test.
+    /// This is required because query response types should be #[non_exhaustive].
+    /// As a contract developer you should not need this constructor since
+    /// query responses are constructed for you via deserialization.
     #[doc(hidden)]
     pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
         Self {
