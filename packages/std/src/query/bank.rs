@@ -34,12 +34,9 @@ pub struct SupplyResponse {
 #[cfg(feature = "cosmwasm_1_1")]
 impl SupplyResponse {
     pub fn new(amount: Coin) -> Self {
-        Self {
-            amount,
-        }
+        Self { amount }
     }
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
