@@ -253,7 +253,7 @@ mod tests {
             let signature = hex::decode(sig).unwrap();
 
             // Explicit hash
-            let message_hash = Sha256::digest(&message);
+            let message_hash = Sha256::digest(message);
 
             // secp256k1_verify works
             assert!(
@@ -290,7 +290,7 @@ mod tests {
             let message = hex::decode(&encoded.message).unwrap();
 
             let hash = hex::decode(&encoded.message_hash).unwrap();
-            let message_hash = Sha256::digest(&message);
+            let message_hash = Sha256::digest(message);
             assert_eq!(hash.as_slice(), message_hash.as_slice());
 
             let signature = hex::decode(&encoded.signature).unwrap();

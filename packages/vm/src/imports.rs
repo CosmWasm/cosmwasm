@@ -225,6 +225,7 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     let result = secp256k1_verify(&hash, &signature, &pubkey);
+    #[allow(clippy::bool_to_int_with_if)]
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidHashFormat { .. }
@@ -285,6 +286,7 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let gas_info = GasInfo::with_cost(env.gas_config.ed25519_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     let result = ed25519_verify(&message, &signature, &pubkey);
+    #[allow(clippy::bool_to_int_with_if)]
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidPubkeyFormat { .. }
@@ -588,7 +590,7 @@ mod tests {
         let result = do_db_read(&env, key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
-        assert_eq!(force_read(&env, value_ptr as u32), VALUE1);
+        assert_eq!(force_read(&env, value_ptr), VALUE1);
     }
 
     #[test]
