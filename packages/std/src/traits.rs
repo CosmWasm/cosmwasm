@@ -1,4 +1,4 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -208,8 +208,17 @@ pub trait Api {
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+
+pub enum LegacyQueryResult {
+    /// Whenever there is no specific error type available
+    GenericErr { msg: String },
+}
+
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
-pub type QuerierResult = SystemResult<ContractResult<Binary>>;
+pub type QuerierResult = SystemResult<ContractResult<Binary, LegacyQueryResult>>;
 
 pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
@@ -265,7 +274,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
                 system_err
             ))),
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {}", contract_err),
+                format!("Querier contract error: {:?}", contract_err),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }
