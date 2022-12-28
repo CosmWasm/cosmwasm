@@ -30,11 +30,11 @@ use std::fmt;
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum ContractResult<S> {
+pub enum ContractResult<S, E = String> {
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.
     /// This could potientially have more structure, but String is the easiest.
-    Err(String),
+    Err(E),
 }
 
 // Implementations here mimic the Result API and should be implemented via a conversion to Result
