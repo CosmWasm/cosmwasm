@@ -37,7 +37,15 @@ impl SupplyResponse {
     /// This is required because query response types should be #[non_exhaustive].
     /// As a contract developer you should not need this constructor since
     /// query responses are constructed for you via deserialization.
+    #[cfg(not(feature = "cw_sdk"))]
     #[doc(hidden)]
+    pub fn new(amount: Coin) -> Self {
+        Self { amount }
+    }
+
+    /// Constructor for use in cw-sdk.
+    /// This is required because query response types should be #[non_exhaustive].
+    #[cfg(feature = "cw_sdk")]
     pub fn new(amount: Coin) -> Self {
         Self { amount }
     }

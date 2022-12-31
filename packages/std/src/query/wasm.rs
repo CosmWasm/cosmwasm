@@ -45,6 +45,7 @@ impl ContractInfoResponse {
     /// This is required because query response types should be #[non_exhaustive].
     /// As a contract developer you should not need this constructor since
     /// query responses are constructed for you via deserialization.
+    #[cfg(not(feature = "cw_sdk"))]
     #[doc(hidden)]
     pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
         Self {
@@ -53,6 +54,25 @@ impl ContractInfoResponse {
             admin: None,
             pinned: false,
             ibc_port: None,
+        }
+    }
+
+    /// Constructor for use in cw-sdk.
+    /// This is required because query response types should be #[non_exhaustive].
+    #[cfg(feature = "cw_sdk")]
+    pub fn new(
+        code_id: u64,
+        creator: impl Into<String>,
+        admin: Option<impl Into<String>>,
+        pinned: bool,
+        ibc_port: Option<String>,
+    ) -> Self {
+        Self {
+            code_id,
+            creator: creator.into(),
+            admin: admin.map(|addr| addr.into()),
+            pinned,
+            ibc_port,
         }
     }
 }

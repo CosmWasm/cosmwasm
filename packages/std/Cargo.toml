@@ -39,6 +39,11 @@ cosmwasm_1_1 = []
 # This feature makes `GovMsg::VoteWeighted` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.2.0` or higher.
 cosmwasm_1_2 = []
+# This feature adds constructor functions for several query response types. The constructor
+# functions are needed because these types are marked as `#[non_exhaustive]`.
+# Only available for cw-sdk chains. For wasmd chains, these responses are created by
+#  deserialization, so constructor functions are not necessary.
+cw_sdk = []
 
 [dependencies]
 base64 = "0.13.0"
