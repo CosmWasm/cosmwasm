@@ -42,7 +42,7 @@ cosmwasm_1_2 = []
 # This feature adds constructor functions for several query response types. The constructor
 # functions are needed because these types are marked as `#[non_exhaustive]`.
 # Only available for cw-sdk chains. For wasmd chains, these responses are created by
-#  deserialization, so constructor functions are not necessary.
+# deserialization, so constructor functions are not necessary.
 cw_sdk = []
 
 [dependencies]
