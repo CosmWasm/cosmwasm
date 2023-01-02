@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::Binary;
 
+use super::query_response::QueryResponseType;
+
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -22,12 +24,12 @@ pub enum WasmQuery {
         /// Key is the raw key used in the contracts Storage
         key: Binary,
     },
-    /// returns a ContractInfoResponse with metadata on the contract from the runtime
+    /// Returns a [`ContractInfoResponse`] with metadata on the contract from the runtime
     ContractInfo { contract_addr: String },
 }
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfoResponse {
     pub code_id: u64,
     /// address that instantiated this contract
@@ -40,19 +42,22 @@ pub struct ContractInfoResponse {
     pub ibc_port: Option<String>,
 }
 
+impl QueryResponseType for ContractInfoResponse {}
+
 impl ContractInfoResponse {
     /// Constructor for testing frameworks such as cw-multi-test.
     /// This is required because query response types should be #[non_exhaustive].
     /// As a contract developer you should not need this constructor since
     /// query responses are constructed for you via deserialization.
     #[doc(hidden)]
+    #[deprecated(
+        note = "Use ContractInfoResponse::default() and mutate the fields you want to set."
+    )]
     pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
-        Self {
+        ContractInfoResponse {
             code_id,
             creator: creator.into(),
-            admin: None,
-            pinned: false,
-            ibc_port: None,
+            ..Default::default()
         }
     }
 }

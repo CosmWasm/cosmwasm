@@ -1411,7 +1411,7 @@
             "additionalProperties": false
           },
           {
-            "description": "returns a ContractInfoResponse with metadata on the contract from the runtime",
+            "description": "Returns a [`ContractInfoResponse`] with metadata on the contract from the runtime",
             "type": "object",
             "required": [
               "contract_info"
