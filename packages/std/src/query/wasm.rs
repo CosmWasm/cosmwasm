@@ -54,9 +54,10 @@ impl ContractInfoResponse {
         note = "Use ContractInfoResponse::default() and mutate the fields you want to set."
     )]
     pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
-        let mut out = ContractInfoResponse::default();
-        out.code_id = code_id;
-        out.creator = creator.into();
-        out
+        ContractInfoResponse {
+            code_id,
+            creator: creator.into(),
+            ..Default::default()
+        }
     }
 }
