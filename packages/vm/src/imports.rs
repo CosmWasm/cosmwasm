@@ -212,6 +212,12 @@ pub fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
+/// Return code (error code) for a valid signature
+const SECP256K1_VERIFY_CODE_VALID: u32 = 0;
+
+/// Return code (error code) for an invalid signature
+const SECP256K1_VERIFY_CODE_INVALID: u32 = 1;
+
 pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
@@ -225,9 +231,15 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     let result = secp256k1_verify(&hash, &signature, &pubkey);
-    #[allow(clippy::bool_to_int_with_if)]
-    Ok(result.map_or_else(
-        |err| match err {
+    let code = match result {
+        Ok(valid) => {
+            if valid {
+                SECP256K1_VERIFY_CODE_VALID
+            } else {
+                SECP256K1_VERIFY_CODE_INVALID
+            }
+        }
+        Err(err) => match err {
             CryptoError::InvalidHashFormat { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
@@ -236,8 +248,8 @@ pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
                 panic!("Error must not happen for this call")
             }
         },
-        |valid| if valid { 0 } else { 1 },
-    ))
+    };
+    Ok(code)
 }
 
 pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
@@ -273,6 +285,12 @@ pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
+/// Return code (error code) for a valid signature
+const ED25519_VERIFY_CODE_VALID: u32 = 0;
+
+/// Return code (error code) for an invalid signature
+const ED25519_VERIFY_CODE_INVALID: u32 = 1;
+
 pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
@@ -286,9 +304,15 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let gas_info = GasInfo::with_cost(env.gas_config.ed25519_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     let result = ed25519_verify(&message, &signature, &pubkey);
-    #[allow(clippy::bool_to_int_with_if)]
-    Ok(result.map_or_else(
-        |err| match err {
+    let code = match result {
+        Ok(valid) => {
+            if valid {
+                ED25519_VERIFY_CODE_VALID
+            } else {
+                ED25519_VERIFY_CODE_INVALID
+            }
+        }
+        Err(err) => match err {
             CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
@@ -298,8 +322,8 @@ pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
                 panic!("Error must not happen for this call")
             }
         },
-        |valid| if valid { 0 } else { 1 },
-    ))
+    };
+    Ok(code)
 }
 
 pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -336,8 +360,15 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     let gas_info = GasInfo::with_cost(max(gas_cost, env.gas_config.ed25519_verify_cost));
     process_gas_info::<A, S, Q>(env, gas_info)?;
     let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
-    Ok(result.map_or_else(
-        |err| match err {
+    let code = match result {
+        Ok(valid) => {
+            if valid {
+                ED25519_VERIFY_CODE_VALID
+            } else {
+                ED25519_VERIFY_CODE_INVALID
+            }
+        }
+        Err(err) => match err {
             CryptoError::BatchErr { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
@@ -346,8 +377,8 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
                 panic!("Error must not happen for this call")
             }
         },
-        |valid| (!valid).into(),
-    ))
+    };
+    Ok(code)
 }
 
 /// Prints a debug message to console.
