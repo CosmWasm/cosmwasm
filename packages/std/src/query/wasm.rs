@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::Binary;
 
+use super::query_response::QueryResponseType;
+
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -27,7 +29,7 @@ pub enum WasmQuery {
 }
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfoResponse {
     pub code_id: u64,
     /// address that instantiated this contract
@@ -39,6 +41,8 @@ pub struct ContractInfoResponse {
     /// set if this contract has bound an IBC port
     pub ibc_port: Option<String>,
 }
+
+impl QueryResponseType for ContractInfoResponse {}
 
 impl ContractInfoResponse {
     /// Constructor for testing frameworks such as cw-multi-test.

@@ -7,6 +7,7 @@ use crate::Empty;
 
 mod bank;
 mod ibc;
+mod query_response;
 mod staking;
 mod wasm;
 
