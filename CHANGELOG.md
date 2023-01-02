@@ -26,13 +26,15 @@ and this project adheres to
 - cosmwasm-std: Allow constructing `SupplyResponse` via a `Default`
   implementation ([#1552], [#1560]).
 - cosmwasm-std: Add `Never` type which cannot be instantiated. This can be used
-  as the error type for the `ibc_packet_receive` to gain confidence that the
-  implementations never errors and the transaction does not get reverted.
+  as the error type for `ibc_packet_receive` or `ibc_packet_ack` to gain
+  confidence that the implementations never errors and the transaction does not
+  get reverted. ([#1513])
 
 [#1436]: https://github.com/CosmWasm/cosmwasm/issues/1436
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
 [#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
 [#1478]: https://github.com/CosmWasm/cosmwasm/pull/1478
+[#1513]: https://github.com/CosmWasm/cosmwasm/pull/1513
 [#1533]: https://github.com/CosmWasm/cosmwasm/pull/1533
 [#1550]: https://github.com/CosmWasm/cosmwasm/issues/1550
 [#1552]: https://github.com/CosmWasm/cosmwasm/pull/1552
