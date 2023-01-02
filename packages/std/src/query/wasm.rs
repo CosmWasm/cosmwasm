@@ -24,7 +24,7 @@ pub enum WasmQuery {
         /// Key is the raw key used in the contracts Storage
         key: Binary,
     },
-    /// returns a ContractInfoResponse with metadata on the contract from the runtime
+    /// Returns a [`ContractInfoResponse`] with metadata on the contract from the runtime
     ContractInfo { contract_addr: String },
 }
 
