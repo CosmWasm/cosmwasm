@@ -12,8 +12,8 @@ pub enum Never {}
 // The Debug implementation is needed to allow the use of `Result::unwrap`.
 impl core::fmt::Debug for Never {
     fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // This is unreachable because no instance of Never can exist
-        unreachable!()
+        // Unreachable because no instance of Never can exist
+        match *self {}
     }
 }
 
@@ -21,7 +21,7 @@ impl core::fmt::Debug for Never {
 // entry point errors: `Result<IbcReceiveResponse<C>, E>` with `E: ToString`.
 impl core::fmt::Display for Never {
     fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // This is unreachable because no instance of Never can exist
-        unreachable!()
+        // Unreachable because no instance of Never can exist
+        match *self {}
     }
 }
