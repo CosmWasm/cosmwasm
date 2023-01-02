@@ -52,7 +52,7 @@ impl PinnedMemoryCache {
     /// This is based on the values provided with `store`. No actual
     /// memory size is measured here.
     pub fn size(&self) -> usize {
-        self.modules.iter().map(|(_, module)| module.size).sum()
+        self.modules.values().map(|module| module.size).sum()
     }
 }
 

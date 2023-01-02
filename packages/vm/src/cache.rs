@@ -336,7 +336,7 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
     // calculate filename
     let checksum = Checksum::generate(wasm);
     let filename = checksum.to_hex();
-    let filepath = dir.into().join(&filename);
+    let filepath = dir.into().join(filename);
 
     // write data to file
     // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
@@ -561,7 +561,7 @@ mod tests {
             .path()
             .join(STATE_DIR)
             .join(WASM_DIR)
-            .join(&checksum.to_hex());
+            .join(checksum.to_hex());
         let mut file = OpenOptions::new().write(true).open(filepath).unwrap();
         file.write_all(b"broken data").unwrap();
 

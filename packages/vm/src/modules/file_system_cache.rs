@@ -106,7 +106,7 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let file_path = self.latest_modules_path().join(filename);
 
-        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
+        let result = unsafe { Module::deserialize_from_file(store, file_path) };
         match result {
             Ok(module) => Ok(Some(module)),
             Err(DeserializeError::Io(err)) => match err.kind() {
