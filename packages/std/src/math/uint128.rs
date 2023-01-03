@@ -544,7 +544,7 @@ impl PartialEq<Uint128> for &Uint128 {
 mod tests {
     use crate::errors::CheckedMultiplyFractionalError::{ConversionOverflow, DivideByZero};
     use crate::math::fraction::{Fraction, FractionMath};
-    use crate::{from_slice, to_vec, Decimal};
+    use crate::{from_slice, to_vec, Decimal, Decimal256};
 
     use super::*;
 
@@ -1070,8 +1070,22 @@ mod tests {
     }
 
     #[test]
+    fn mul_floored_works_with_higher_bit_sizes() {
+        let fraction = Fraction::new(Uint256::from(8u128), Uint256::from(21u128));
+        let res = Uint128::new(123456).mul_floored(fraction); // 47030.8571
+        assert_eq!(Uint128::new(47030), res)
+    }
+
+    #[test]
     fn mul_floored_works_with_decimal() {
         let decimal = Decimal::from_ratio(8u128, 21u128);
+        let res = Uint128::new(123456).mul_floored(decimal); // 47030.8571
+        assert_eq!(Uint128::new(47030), res)
+    }
+
+    #[test]
+    fn mul_floored_works_with_decimal256() {
+        let decimal = Decimal256::from_ratio(8u128, 21u128);
         let res = Uint128::new(123456).mul_floored(decimal); // 47030.8571
         assert_eq!(Uint128::new(47030), res)
     }
@@ -1136,8 +1150,22 @@ mod tests {
     }
 
     #[test]
+    fn mul_ceil_works_with_higher_bit_sizes() {
+        let fraction = Fraction::new(Uint256::from(8u128), Uint256::from(21u128));
+        let res = Uint128::new(123456).mul_ceil(fraction); // 47030.8571
+        assert_eq!(Uint128::new(47031), res)
+    }
+
+    #[test]
     fn mul_ceil_works_with_decimal() {
         let decimal = Decimal::from_ratio(8u128, 21u128);
+        let res = Uint128::new(123456).mul_ceil(decimal); // 47030.8571
+        assert_eq!(Uint128::new(47031), res)
+    }
+
+    #[test]
+    fn mul_ceil_works_with_decimal256() {
+        let decimal = Decimal256::from_ratio(8u128, 21u128);
         let res = Uint128::new(123456).mul_ceil(decimal); // 47030.8571
         assert_eq!(Uint128::new(47031), res)
     }
