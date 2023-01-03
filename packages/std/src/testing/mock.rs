@@ -1390,7 +1390,7 @@ mod tests {
 
         let any_addr = "foo".to_string();
 
-        // Query WasmQuery::Raw
+        // By default, querier errors for WasmQuery::Raw
         let system_err = querier
             .query(&WasmQuery::Raw {
                 contract_addr: any_addr.clone(),
@@ -1402,7 +1402,7 @@ mod tests {
             err => panic!("Unexpected error: {:?}", err),
         }
 
-        // Query WasmQuery::Smart
+        // By default, querier errors for WasmQuery::Smart
         let system_err = querier
             .query(&WasmQuery::Smart {
                 contract_addr: any_addr.clone(),
@@ -1414,7 +1414,7 @@ mod tests {
             err => panic!("Unexpected error: {:?}", err),
         }
 
-        // Query WasmQuery::ContractInfo
+        // By default, querier errors for WasmQuery::ContractInfo
         let system_err = querier
             .query(&WasmQuery::ContractInfo {
                 contract_addr: any_addr.clone(),
@@ -1423,6 +1423,18 @@ mod tests {
         match system_err {
             SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
             err => panic!("Unexpected error: {:?}", err),
+        }
+
+        #[cfg(feature = "cosmwasm_1_2")]
+        {
+            // By default, querier errors for WasmQuery::CodeInfo
+            let system_err = querier
+                .query(&WasmQuery::CodeInfo { code_id: 4 })
+                .unwrap_err();
+            match system_err {
+                SystemError::NoSuchCode { code_id } => assert_eq!(code_id, 4),
+                err => panic!("Unexpected error: {:?}", err),
+            }
         }
 
         querier.update_handler(|request| {
@@ -1476,6 +1488,23 @@ mod tests {
                         SystemResult::Err(SystemError::NoSuchContract {
                             addr: contract_addr.clone(),
                         })
+                    }
+                }
+                #[cfg(feature = "cosmwasm_1_2")]
+                WasmQuery::CodeInfo { code_id } => {
+                    let code_id = *code_id;
+                    if code_id == 4 {
+                        use crate::CodeInfoResponse;
+                        let response = CodeInfoResponse {
+                            creator: "lalala".into(),
+                            checksum: Binary::from_base64(
+                                "hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0=",
+                            )
+                            .unwrap(),
+                        };
+                        SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+                    } else {
+                        SystemResult::Err(SystemError::NoSuchCode { code_id })
                     }
                 }
             }
@@ -1533,6 +1562,19 @@ mod tests {
                     as &[u8]
             ),
             res => panic!("Unexpected result: {:?}", res),
+        }
+
+        // WasmQuery::ContractInfo
+        #[cfg(feature = "cosmwasm_1_2")]
+        {
+            let result = querier.query(&WasmQuery::CodeInfo { code_id: 4 });
+            match result {
+                SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
+                    value,
+                    br#"{"creator":"lalala","checksum":"hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0="}"#
+                ),
+                res => panic!("Unexpected result: {:?}", res),
+            }
         }
     }
 
