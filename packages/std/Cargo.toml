@@ -50,7 +50,7 @@ schemars = "0.8.3"
 sha2 = "0.10.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde-json-wasm = { version = "0.5.0" }
-thiserror = "1.0.13"
+thiserror = "1.0.26"
 uint = "0.9.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

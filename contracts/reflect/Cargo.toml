@@ -38,7 +38,7 @@ cosmwasm-std = { path = "../../packages/std", default-features = false, features
 cosmwasm-storage = { path = "../../packages/storage", default-features = false }
 schemars = "0.8.3"
 serde = { version = "=1.0.103", default-features = false, features = ["derive"] }
-thiserror = "1.0"
+thiserror = "1.0.26"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["stargate"] }
