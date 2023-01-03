@@ -563,6 +563,9 @@ pub enum CheckedMultiplyFractionalError {
 
     #[error("{0}")]
     ConversionOverflow(#[from] ConversionOverflowError),
+
+    #[error("{0}")]
+    Overflow(#[from] OverflowError),
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]

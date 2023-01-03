@@ -1,17 +1,19 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt::{self};
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 use std::str::FromStr;
 
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
+
+use crate::errors::CheckedMultiplyFractionalError;
 use crate::errors::{
-    CheckedMultiplyFractionalError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, StdError,
+    CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{ConversionOverflowError, Fractional, Uint256, Uint64};
+use crate::math::fraction::FractionMath;
+use crate::{fraction_math, ConversionOverflowError, Fractional, Uint256, Uint512, Uint64};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -137,37 +139,6 @@ impl Uint128 {
             .unwrap()
     }
 
-    pub fn mul_floored<F: Fractional<T>, T: Into<u128>>(self, rhs: F) -> Self {
-        self.checked_mul_floored(rhs).unwrap()
-    }
-
-    pub fn checked_mul_floored<F: Fractional<T>, T: Into<u128>>(
-        self,
-        rhs: F,
-    ) -> Result<Self, CheckedMultiplyFractionalError> {
-        let res = self
-            .full_mul(rhs.numerator())
-            .checked_div(Uint256::from(rhs.denominator().into()))?;
-        Ok(res.try_into()?)
-    }
-
-    pub fn mul_ceil<F: Fractional<T> + Clone, T: Into<u128>>(self, rhs: F) -> Self {
-        self.checked_mul_ceil(rhs).unwrap()
-    }
-
-    pub fn checked_mul_ceil<F: Fractional<T> + Clone, T: Into<u128>>(
-        self,
-        rhs: F,
-    ) -> Result<Self, CheckedMultiplyFractionalError> {
-        let mut result = self.checked_mul_floored(rhs.clone())?;
-        let numerator = Uint256::from(rhs.numerator().into());
-        let denominator = Uint256::from(rhs.denominator().into());
-        if !numerator.checked_rem(denominator)?.is_zero() {
-            result += Uint128::one();
-        };
-        Ok(result)
-    }
-
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -261,6 +232,8 @@ impl Uint128 {
         })
     }
 }
+
+fraction_math!(Uint128);
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
 // using `impl<T: Into<u128>> From<T> for Uint128` because
@@ -569,10 +542,11 @@ impl PartialEq<Uint128> for &Uint128 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::errors::CheckedMultiplyFractionalError::{ConversionOverflow, DivideByZero};
-    use crate::math::fraction::Fraction;
+    use crate::math::fraction::{Fraction, FractionMath};
     use crate::{from_slice, to_vec, Decimal};
+
+    use super::*;
 
     #[test]
     fn size_of_works() {
@@ -1115,7 +1089,7 @@ mod tests {
         assert_eq!(
             Uint128::MAX.checked_mul_floored(fraction),
             Err(ConversionOverflow(ConversionOverflowError {
-                source_type: "Uint256",
+                source_type: "Uint512",
                 target_type: "Uint128",
                 value: "893241213167463466591358344508391555069".to_string()
             })),
@@ -1181,7 +1155,7 @@ mod tests {
         assert_eq!(
             Uint128::MAX.checked_mul_ceil(fraction),
             Err(ConversionOverflow(ConversionOverflowError {
-                source_type: "Uint256",
+                source_type: "Uint512",
                 target_type: "Uint128",
                 value: "893241213167463466591358344508391555069".to_string()
             })),
