@@ -12,7 +12,7 @@ use crate::errors::{
     OverflowOperation, RoundUpOverflowError, StdError,
 };
 
-use super::Fraction;
+use super::Fractional;
 use super::Isqrt;
 use super::{Uint128, Uint256};
 
@@ -359,7 +359,7 @@ impl Decimal {
     }
 }
 
-impl Fraction<Uint128> for Decimal {
+impl Fractional<Uint128> for Decimal {
     #[inline]
     fn numerator(&self) -> Uint128 {
         self.0

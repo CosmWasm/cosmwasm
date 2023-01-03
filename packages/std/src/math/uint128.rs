@@ -8,9 +8,10 @@ use std::ops::{
 use std::str::FromStr;
 
 use crate::errors::{
-    CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+    CheckedMultiplyFractionalError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
 };
-use crate::{ConversionOverflowError, Uint256, Uint64};
+use crate::{ConversionOverflowError, Fractional, Uint256, Uint64};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -134,6 +135,37 @@ impl Uint128 {
         Uint256::from(self.u128())
             .checked_mul(Uint256::from(rhs.into()))
             .unwrap()
+    }
+
+    pub fn mul_floored<F: Fractional<T>, T: Into<u128>>(self, rhs: F) -> Self {
+        self.checked_mul_floored(rhs).unwrap()
+    }
+
+    pub fn checked_mul_floored<F: Fractional<T>, T: Into<u128>>(
+        self,
+        rhs: F,
+    ) -> Result<Self, CheckedMultiplyFractionalError> {
+        let res = self
+            .full_mul(rhs.numerator())
+            .checked_div(Uint256::from(rhs.denominator().into()))?;
+        Ok(res.try_into()?)
+    }
+
+    pub fn mul_ceil<F: Fractional<T> + Clone, T: Into<u128>>(self, rhs: F) -> Self {
+        self.checked_mul_ceil(rhs).unwrap()
+    }
+
+    pub fn checked_mul_ceil<F: Fractional<T> + Clone, T: Into<u128>>(
+        self,
+        rhs: F,
+    ) -> Result<Self, CheckedMultiplyFractionalError> {
+        let mut result = self.checked_mul_floored(rhs.clone())?;
+        let numerator = Uint256::from(rhs.numerator().into());
+        let denominator = Uint256::from(rhs.denominator().into());
+        if !numerator.checked_rem(denominator)?.is_zero() {
+            result += Uint128::one();
+        };
+        Ok(result)
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -538,7 +570,9 @@ impl PartialEq<Uint128> for &Uint128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::errors::CheckedMultiplyFractionalError::{ConversionOverflow, DivideByZero};
+    use crate::math::fraction::Fraction;
+    use crate::{from_slice, to_vec, Decimal};
 
     #[test]
     fn size_of_works() {
@@ -1038,5 +1072,137 @@ mod tests {
             assert_eq!(lhs == &rhs, expected);
             assert_eq!(&lhs == &rhs, expected);
         }
+    }
+
+    #[test]
+    fn mul_floored_works_with_zero() {
+        let fraction = Fraction::new(Uint128::zero(), Uint128::new(21));
+        let res = Uint128::new(123456).mul_floored(fraction);
+        assert_eq!(Uint128::zero(), res)
+    }
+
+    #[test]
+    fn mul_floored_does_nothing_with_one() {
+        let fraction = Fraction::new(Uint128::one(), Uint128::one());
+        let res = Uint128::new(123456).mul_floored(fraction);
+        assert_eq!(Uint128::new(123456), res)
+    }
+
+    #[test]
+    fn mul_floored_rounds_down_with_normal_case() {
+        let fraction = Fraction::new(8u128, 21u128);
+        let res = Uint128::new(123456).mul_floored(fraction); // 47030.8571
+        assert_eq!(Uint128::new(47030), res)
+    }
+
+    #[test]
+    fn mul_floored_works_with_decimal() {
+        let decimal = Decimal::from_ratio(8u128, 21u128);
+        let res = Uint128::new(123456).mul_floored(decimal); // 47030.8571
+        assert_eq!(Uint128::new(47030), res)
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn mul_floored_panics_on_overflow() {
+        let fraction = Fraction::new(21u128, 8u128);
+        Uint128::MAX.mul_floored(fraction);
+    }
+
+    #[test]
+    fn checked_mul_floored_does_not_panic_on_overflow() {
+        let fraction = Fraction::new(21u128, 8u128);
+        assert_eq!(
+            Uint128::MAX.checked_mul_floored(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint256",
+                target_type: "Uint128",
+                value: "893241213167463466591358344508391555069".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn mul_floored_panics_on_zero_div() {
+        let fraction = Fraction::new(21u128, 0u128);
+        Uint128::new(123456).mul_floored(fraction);
+    }
+
+    #[test]
+    fn checked_mul_floored_does_not_panic_on_zero_div() {
+        let fraction = Fraction::new(21u128, 0u128);
+        assert_eq!(
+            Uint128::new(123456).checked_mul_floored(fraction),
+            Err(DivideByZero(DivideByZeroError {
+                operand: "2592576".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    fn mul_ceil_works_with_zero() {
+        let fraction = Fraction::new(Uint128::zero(), Uint128::new(21));
+        let res = Uint128::new(123456).mul_ceil(fraction);
+        assert_eq!(Uint128::zero(), res)
+    }
+
+    #[test]
+    fn mul_ceil_does_nothing_with_one() {
+        let fraction = Fraction::new(Uint128::one(), Uint128::one());
+        let res = Uint128::new(123456).mul_ceil(fraction);
+        assert_eq!(Uint128::new(123456), res)
+    }
+
+    #[test]
+    fn mul_ceil_rounds_up_with_normal_case() {
+        let fraction = Fraction::new(8u128, 21u128);
+        let res = Uint128::new(123456).mul_ceil(fraction); // 47030.8571
+        assert_eq!(Uint128::new(47031), res)
+    }
+
+    #[test]
+    fn mul_ceil_works_with_decimal() {
+        let decimal = Decimal::from_ratio(8u128, 21u128);
+        let res = Uint128::new(123456).mul_ceil(decimal); // 47030.8571
+        assert_eq!(Uint128::new(47031), res)
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn mul_ceil_panics_on_overflow() {
+        let fraction = Fraction::new(21u128, 8u128);
+        Uint128::MAX.mul_ceil(fraction);
+    }
+
+    #[test]
+    fn checked_mul_ceil_does_not_panic_on_overflow() {
+        let fraction = Fraction::new(21u128, 8u128);
+        assert_eq!(
+            Uint128::MAX.checked_mul_ceil(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint256",
+                target_type: "Uint128",
+                value: "893241213167463466591358344508391555069".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn mul_ceil_panics_on_zero_div() {
+        let fraction = Fraction::new(21u128, 0u128);
+        Uint128::new(123456).mul_ceil(fraction);
+    }
+
+    #[test]
+    fn checked_mul_ceil_does_not_panic_on_zero_div() {
+        let fraction = Fraction::new(21u128, 0u128);
+        assert_eq!(
+            Uint128::new(123456).checked_mul_ceil(fraction),
+            Err(DivideByZero(DivideByZeroError {
+                operand: "2592576".to_string()
+            })),
+        );
     }
 }
