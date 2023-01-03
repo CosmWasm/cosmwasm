@@ -959,7 +959,7 @@ jobs:
             CRYPTO=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/crypto  --packages cosmwasm-crypto"
             DERIVE=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/derive  --packages cosmwasm-derive"
             SCHEMA=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/schema  --packages cosmwasm-schema"
-            STD="    cargo tarpaulin --skip-clean --out Xml --output-dir reports/std     --packages cosmwasm-std     --features cosmwasm_1_2"
+            STD="    cargo tarpaulin --skip-clean --out Xml --output-dir reports/std     --packages cosmwasm-std     --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
             STORAGE="cargo tarpaulin --skip-clean --out Xml --output-dir reports/storage --packages cosmwasm-storage"
             docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin:0.21.0 \
               sh -c "$CRYPTO && $DERIVE && $SCHEMA && $STD && $STORAGE"
