@@ -32,7 +32,7 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort"] }
 rust-argon2 = "0.8"
-thiserror = "1.0"
+thiserror = "1.0.26"
 
 [dev-dependencies]
 cosmwasm-storage = { path = "../../packages/storage", default-features = false }
