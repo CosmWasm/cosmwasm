@@ -557,7 +557,7 @@ impl DivideByZeroError {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
-pub enum CheckedMultiplyFractionalError {
+pub enum CheckedMultiplyFractionError {
     #[error("{0}")]
     DivideByZero(#[from] DivideByZeroError),
 

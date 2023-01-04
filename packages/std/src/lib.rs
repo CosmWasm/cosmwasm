@@ -46,7 +46,7 @@ pub use crate::ibc::{
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
-    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fractional, Isqrt, Uint128,
+    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,
     Uint256, Uint512, Uint64,
 };
 pub use crate::never::Never;

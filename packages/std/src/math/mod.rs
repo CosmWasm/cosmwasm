@@ -9,7 +9,7 @@ mod uint64;
 
 pub use decimal::{Decimal, DecimalRangeExceeded};
 pub use decimal256::{Decimal256, Decimal256RangeExceeded};
-pub use fraction::Fractional;
+pub use fraction::Fraction;
 pub use isqrt::Isqrt;
 pub use uint128::Uint128;
 pub use uint256::Uint256;

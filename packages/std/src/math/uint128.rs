@@ -8,12 +8,11 @@ use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::CheckedMultiplyFractionalError;
 use crate::errors::{
-    CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
 };
-use crate::math::fraction::FractionMath;
-use crate::{fraction_math, ConversionOverflowError, Fractional, Uint256, Uint512, Uint64};
+use crate::{impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint64};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -233,7 +232,7 @@ impl Uint128 {
     }
 }
 
-fraction_math!(Uint128);
+impl_mul_fraction!(Uint128, Uint256);
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
 // using `impl<T: Into<u128>> From<T> for Uint128` because
@@ -542,9 +541,8 @@ impl PartialEq<Uint128> for &Uint128 {
 
 #[cfg(test)]
 mod tests {
-    use crate::errors::CheckedMultiplyFractionalError::{ConversionOverflow, DivideByZero};
-    use crate::math::fraction::{Fraction, FractionMath};
-    use crate::{from_slice, to_vec, Decimal, Decimal256};
+    use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
+    use crate::{from_slice, to_vec, Decimal};
 
     use super::*;
 
@@ -1050,30 +1048,33 @@ mod tests {
 
     #[test]
     fn mul_floored_works_with_zero() {
-        let fraction = Fraction::new(Uint128::zero(), Uint128::new(21));
+        let fraction = (Uint128::zero(), Uint128::new(21));
         let res = Uint128::new(123456).mul_floored(fraction);
         assert_eq!(Uint128::zero(), res)
     }
 
     #[test]
     fn mul_floored_does_nothing_with_one() {
-        let fraction = Fraction::new(Uint128::one(), Uint128::one());
+        let fraction = (Uint128::one(), Uint128::one());
         let res = Uint128::new(123456).mul_floored(fraction);
         assert_eq!(Uint128::new(123456), res)
     }
 
     #[test]
     fn mul_floored_rounds_down_with_normal_case() {
-        let fraction = Fraction::new(8u128, 21u128);
+        let fraction = (8u128, 21u128);
         let res = Uint128::new(123456).mul_floored(fraction); // 47030.8571
         assert_eq!(Uint128::new(47030), res)
     }
 
     #[test]
-    fn mul_floored_works_with_higher_bit_sizes() {
-        let fraction = Fraction::new(Uint256::from(8u128), Uint256::from(21u128));
-        let res = Uint128::new(123456).mul_floored(fraction); // 47030.8571
-        assert_eq!(Uint128::new(47030), res)
+    fn mul_floored_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (8u128, 21u128);
+        let res = Uint128::MAX.mul_floored(fraction); // 129_631_377_874_643_224_176_523_659_974_006_937_697.14285
+        assert_eq!(
+            Uint128::new(129_631_377_874_643_224_176_523_659_974_006_937_697),
+            res
+        )
     }
 
     #[test]
@@ -1084,26 +1085,19 @@ mod tests {
     }
 
     #[test]
-    fn mul_floored_works_with_decimal256() {
-        let decimal = Decimal256::from_ratio(8u128, 21u128);
-        let res = Uint128::new(123456).mul_floored(decimal); // 47030.8571
-        assert_eq!(Uint128::new(47030), res)
-    }
-
-    #[test]
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_floored_panics_on_overflow() {
-        let fraction = Fraction::new(21u128, 8u128);
+        let fraction = (21u128, 8u128);
         Uint128::MAX.mul_floored(fraction);
     }
 
     #[test]
     fn checked_mul_floored_does_not_panic_on_overflow() {
-        let fraction = Fraction::new(21u128, 8u128);
+        let fraction = (21u128, 8u128);
         assert_eq!(
             Uint128::MAX.checked_mul_floored(fraction),
             Err(ConversionOverflow(ConversionOverflowError {
-                source_type: "Uint512",
+                source_type: "Uint256",
                 target_type: "Uint128",
                 value: "893241213167463466591358344508391555069".to_string()
             })),
@@ -1113,13 +1107,13 @@ mod tests {
     #[test]
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_floored_panics_on_zero_div() {
-        let fraction = Fraction::new(21u128, 0u128);
+        let fraction = (21u128, 0u128);
         Uint128::new(123456).mul_floored(fraction);
     }
 
     #[test]
     fn checked_mul_floored_does_not_panic_on_zero_div() {
-        let fraction = Fraction::new(21u128, 0u128);
+        let fraction = (21u128, 0u128);
         assert_eq!(
             Uint128::new(123456).checked_mul_floored(fraction),
             Err(DivideByZero(DivideByZeroError {
@@ -1130,30 +1124,33 @@ mod tests {
 
     #[test]
     fn mul_ceil_works_with_zero() {
-        let fraction = Fraction::new(Uint128::zero(), Uint128::new(21));
+        let fraction = (Uint128::zero(), Uint128::new(21));
         let res = Uint128::new(123456).mul_ceil(fraction);
         assert_eq!(Uint128::zero(), res)
     }
 
     #[test]
     fn mul_ceil_does_nothing_with_one() {
-        let fraction = Fraction::new(Uint128::one(), Uint128::one());
+        let fraction = (Uint128::one(), Uint128::one());
         let res = Uint128::new(123456).mul_ceil(fraction);
         assert_eq!(Uint128::new(123456), res)
     }
 
     #[test]
     fn mul_ceil_rounds_up_with_normal_case() {
-        let fraction = Fraction::new(8u128, 21u128);
+        let fraction = (8u128, 21u128);
         let res = Uint128::new(123456).mul_ceil(fraction); // 47030.8571
         assert_eq!(Uint128::new(47031), res)
     }
 
     #[test]
-    fn mul_ceil_works_with_higher_bit_sizes() {
-        let fraction = Fraction::new(Uint256::from(8u128), Uint256::from(21u128));
-        let res = Uint128::new(123456).mul_ceil(fraction); // 47030.8571
-        assert_eq!(Uint128::new(47031), res)
+    fn mul_ceil_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (8u128, 21u128);
+        let res = Uint128::MAX.mul_ceil(fraction); // 129_631_377_874_643_224_176_523_659_974_006_937_697.14285
+        assert_eq!(
+            Uint128::new(129_631_377_874_643_224_176_523_659_974_006_937_698),
+            res
+        )
     }
 
     #[test]
@@ -1164,26 +1161,19 @@ mod tests {
     }
 
     #[test]
-    fn mul_ceil_works_with_decimal256() {
-        let decimal = Decimal256::from_ratio(8u128, 21u128);
-        let res = Uint128::new(123456).mul_ceil(decimal); // 47030.8571
-        assert_eq!(Uint128::new(47031), res)
-    }
-
-    #[test]
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_ceil_panics_on_overflow() {
-        let fraction = Fraction::new(21u128, 8u128);
+        let fraction = (21u128, 8u128);
         Uint128::MAX.mul_ceil(fraction);
     }
 
     #[test]
     fn checked_mul_ceil_does_not_panic_on_overflow() {
-        let fraction = Fraction::new(21u128, 8u128);
+        let fraction = (21u128, 8u128);
         assert_eq!(
             Uint128::MAX.checked_mul_ceil(fraction),
             Err(ConversionOverflow(ConversionOverflowError {
-                source_type: "Uint512",
+                source_type: "Uint256",
                 target_type: "Uint128",
                 value: "893241213167463466591358344508391555069".to_string()
             })),
@@ -1193,13 +1183,13 @@ mod tests {
     #[test]
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_ceil_panics_on_zero_div() {
-        let fraction = Fraction::new(21u128, 0u128);
+        let fraction = (21u128, 0u128);
         Uint128::new(123456).mul_ceil(fraction);
     }
 
     #[test]
     fn checked_mul_ceil_does_not_panic_on_zero_div() {
-        let fraction = Fraction::new(21u128, 0u128);
+        let fraction = (21u128, 0u128);
         assert_eq!(
             Uint128::new(123456).checked_mul_ceil(fraction),
             Err(DivideByZero(DivideByZeroError {

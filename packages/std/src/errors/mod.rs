@@ -5,7 +5,7 @@ mod verification_error;
 
 pub use recover_pubkey_error::RecoverPubkeyError;
 pub use std_error::{
-    CheckedFromRatioError, CheckedMultiplyFractionalError, CheckedMultiplyRatioError,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation,
     RoundUpOverflowError, StdError, StdResult,
 };

@@ -13,7 +13,7 @@ use crate::errors::{
 };
 use crate::{Decimal, Uint512};
 
-use super::Fractional;
+use super::Fraction;
 use super::Isqrt;
 use super::Uint256;
 
@@ -376,7 +376,7 @@ impl Decimal256 {
     }
 }
 
-impl Fractional<Uint256> for Decimal256 {
+impl Fraction<Uint256> for Decimal256 {
     #[inline]
     fn numerator(&self) -> Uint256 {
         self.0
