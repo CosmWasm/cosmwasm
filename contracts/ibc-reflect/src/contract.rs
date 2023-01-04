@@ -2,7 +2,7 @@ use cosmwasm_std::{
     entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
     Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Order,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never, Order,
     QueryResponse, Reply, Response, StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult,
     WasmMsg,
 };
@@ -233,7 +233,7 @@ pub fn ibc_packet_receive(
     deps: DepsMut,
     _env: Env,
     msg: IbcPacketReceiveMsg,
-) -> StdResult<IbcReceiveResponse> {
+) -> Result<IbcReceiveResponse, Never> {
     // put this in a closure so we can convert all error responses into acknowledgements
     (|| {
         let packet = msg.packet;
