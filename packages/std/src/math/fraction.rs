@@ -29,23 +29,24 @@ impl<T: Clone> Fraction<T> for (T, T) {
 
 #[macro_export]
 macro_rules! impl_mul_fraction {
-    ($UintBase:ident, $UintLarger:ident) => {
-        impl $UintBase {
-            pub fn checked_mul_floored<F: Fraction<T>, T: Into<$UintBase>>(
+    ($Uint:ident) => {
+        impl $Uint {
+            pub fn checked_mul_floored<F: Fraction<T>, T: Into<$Uint>>(
                 self,
                 rhs: F,
             ) -> Result<Self, CheckedMultiplyFractionError> {
+                let divisor = rhs.denominator().into();
                 let res = self
                     .full_mul(rhs.numerator().into())
-                    .checked_div($UintLarger::from(rhs.denominator().into()))?;
+                    .checked_div(divisor.into())?;
                 Ok(res.try_into()?)
             }
 
-            pub fn mul_floored<F: Fraction<T>, T: Into<$UintBase>>(self, rhs: F) -> Self {
+            pub fn mul_floored<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_floored(rhs).unwrap()
             }
 
-            pub fn checked_mul_ceil<F: Fraction<T> + Clone, T: Into<$UintBase>>(
+            pub fn checked_mul_ceil<F: Fraction<T> + Clone, T: Into<$Uint>>(
                 self,
                 rhs: F,
             ) -> Result<Self, CheckedMultiplyFractionError> {
@@ -53,14 +54,13 @@ macro_rules! impl_mul_fraction {
                 let numerator = rhs.numerator().into();
                 let denominator = rhs.denominator().into();
                 if !numerator.checked_rem(denominator)?.is_zero() {
-                    let ceil_result = $UintLarger::one().checked_add(floor_result.into())?;
-                    Ok(ceil_result.try_into()?)
+                    Ok($Uint::one().checked_add(floor_result)?)
                 } else {
                     Ok(floor_result)
                 }
             }
 
-            pub fn mul_ceil<F: Fraction<T> + Clone, T: Into<$UintBase>>(self, rhs: F) -> Self {
+            pub fn mul_ceil<F: Fraction<T> + Clone, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_ceil(rhs).unwrap()
             }
         }

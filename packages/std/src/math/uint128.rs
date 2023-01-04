@@ -232,7 +232,7 @@ impl Uint128 {
     }
 }
 
-impl_mul_fraction!(Uint128, Uint256);
+impl_mul_fraction!(Uint128);
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
 // using `impl<T: Into<u128>> From<T> for Uint128` because
@@ -1175,7 +1175,7 @@ mod tests {
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint256",
                 target_type: "Uint128",
-                value: "893241213167463466591358344508391555069".to_string()
+                value: "893241213167463466591358344508391555069".to_string() // raises prior to rounding up
             })),
         );
     }
