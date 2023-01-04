@@ -20,6 +20,7 @@
     ],
     "properties": {
       "payout": {
+        "description": "The address we send all remaining balance to",
         "type": "string"
       }
     },
