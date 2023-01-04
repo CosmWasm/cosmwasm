@@ -25,6 +25,9 @@ and this project adheres to
 - cosmwasm-std: Implement `AsRef<[u8]>` for `Binary` and `HexBinary` ([#1550]).
 - cosmwasm-std: Allow constructing `SupplyResponse` via a `Default`
   implementation ([#1552], [#1560]).
+- cosmwasm-std: Add `Never` type which cannot be instantiated. This can be used
+  as the error type for the `ibc_packet_receive` to gain confidence that the
+  implementations never errors and the transaction does not get reverted.
 
 [#1436]: https://github.com/CosmWasm/cosmwasm/issues/1436
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437

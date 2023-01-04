@@ -264,7 +264,9 @@ pub fn ibc_packet_receive(
     deps: DepsMut,
     env: Env,
     msg: IbcPacketReceiveMsg,
-) -> StdResult<IbcReceiveResponse> { }
+) -> Result<IbcReceiveResponse, Never> {
+    // ...
+}
 ```
 
 This is a very special entry point as it has a unique workflow. (Please see the
@@ -350,27 +352,33 @@ produced 3 suggestions on how to handle errors and rollbacks _inside
    [main dispatch loop in `ibc-reflect`](https://github.com/CosmWasm/cosmwasm/blob/cd784cd1148ee395574f3e564f102d0d7b5adcc3/contracts/ibc-reflect/src/contract.rs#L217-L248):
 
    ```rust
-    (|| {
-        // which local channel did this packet come on
-        let caller = packet.dest.channel_id;
-        let msg: PacketMsg = from_slice(&packet.data)?;
-        match msg {
-            PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
-            PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
-            PacketMsg::Balances {} => receive_balances(deps, caller),
-        }
-    })()
-    .or_else(|e| {
-        // we try to capture all app-level errors and convert them into
-        // acknowledgement packets that contain an error code.
-        let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
-        Ok(IbcReceiveResponse {
-            acknowledgement,
-            submessages: vec![],
-            messages: vec![],
-            attributes: vec![],
-        })
-    })
+   pub fn ibc_packet_receive(
+       deps: DepsMut,
+       _env: Env,
+       msg: IbcPacketReceiveMsg,
+   ) -> Result<IbcReceiveResponse, Never> {
+       (|| {
+           // which local channel did this packet come on
+           let caller = packet.dest.channel_id;
+           let msg: PacketMsg = from_slice(&packet.data)?;
+           match msg {
+               PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
+               PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
+               PacketMsg::Balances {} => receive_balances(deps, caller),
+           }
+       })()
+       .or_else(|e| {
+           // we try to capture all app-level errors and convert them into
+           // acknowledgement packets that contain an error code.
+           let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
+           Ok(IbcReceiveResponse {
+               acknowledgement,
+               submessages: vec![],
+               messages: vec![],
+               attributes: vec![],
+           })
+       })
+   }
    ```
 
 2. If we modify state with an external call, we need to wrap it in a
