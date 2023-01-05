@@ -1492,14 +1492,14 @@ mod tests {
                 }
                 #[cfg(feature = "cosmwasm_1_2")]
                 WasmQuery::CodeInfo { code_id } => {
+                    use crate::{CodeInfoResponse, HexBinary};
                     let code_id = *code_id;
                     if code_id == 4 {
-                        use crate::CodeInfoResponse;
                         let response = CodeInfoResponse {
                             code_id,
                             creator: "lalala".into(),
-                            checksum: Binary::from_base64(
-                                "hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0=",
+                            checksum: HexBinary::from_hex(
+                                "84cf20810fd429caf58898c3210fcb71759a27becddae08dbde8668ea2f4725d",
                             )
                             .unwrap(),
                         };
@@ -1572,7 +1572,7 @@ mod tests {
             match result {
                 SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                     value,
-                    br#"{"code_id":4,"creator":"lalala","checksum":"hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0="}"#
+                    br#"{"code_id":4,"creator":"lalala","checksum":"84cf20810fd429caf58898c3210fcb71759a27becddae08dbde8668ea2f4725d"}"#
                 ),
                 res => panic!("Unexpected result: {:?}", res),
             }
