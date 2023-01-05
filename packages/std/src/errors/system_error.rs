@@ -28,6 +28,11 @@ pub enum SystemError {
         /// The address that was attempted to query
         addr: String,
     },
+    /// A Wasm code was not found.
+    NoSuchCode {
+        /// The code ID that is missing
+        code_id: u64,
+    },
     Unknown {},
     UnsupportedRequest {
         kind: String,
@@ -52,6 +57,7 @@ impl std::fmt::Display for SystemError {
                 String::from_utf8_lossy(response)
             ),
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
+            SystemError::NoSuchCode { code_id } => write!(f, "No such code: {}", code_id),
             SystemError::Unknown {} => write!(f, "Unknown system error"),
             SystemError::UnsupportedRequest { kind } => {
                 write!(f, "Unsupported query type: {}", kind)

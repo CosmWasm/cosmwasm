@@ -562,13 +562,22 @@ impl WasmQuerier {
 impl Default for WasmQuerier {
     fn default() -> Self {
         let handler = Box::from(|request: &WasmQuery| -> QuerierResult {
-            let addr = match request {
-                WasmQuery::Smart { contract_addr, .. } => contract_addr,
-                WasmQuery::Raw { contract_addr, .. } => contract_addr,
-                WasmQuery::ContractInfo { contract_addr, .. } => contract_addr,
-            }
-            .clone();
-            SystemResult::Err(SystemError::NoSuchContract { addr })
+            let err = match request {
+                WasmQuery::Smart { contract_addr, .. } => SystemError::NoSuchContract {
+                    addr: contract_addr.clone(),
+                },
+                WasmQuery::Raw { contract_addr, .. } => SystemError::NoSuchContract {
+                    addr: contract_addr.clone(),
+                },
+                WasmQuery::ContractInfo { contract_addr, .. } => SystemError::NoSuchContract {
+                    addr: contract_addr.clone(),
+                },
+                #[cfg(feature = "cosmwasm_1_2")]
+                WasmQuery::CodeInfo { code_id, .. } => {
+                    SystemError::NoSuchCode { code_id: *code_id }
+                }
+            };
+            SystemResult::Err(err)
         });
         Self::new(handler)
     }

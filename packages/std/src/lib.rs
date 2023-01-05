@@ -50,6 +50,8 @@ pub use crate::math::{
     Uint256, Uint512, Uint64,
 };
 pub use crate::never::Never;
+#[cfg(feature = "cosmwasm_1_2")]
+pub use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 pub use crate::query::SupplyResponse;
 pub use crate::query::{
