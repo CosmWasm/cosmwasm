@@ -76,6 +76,7 @@ impl ContractInfoResponse {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 #[cfg(feature = "cosmwasm_1_2")]
 pub struct CodeInfoResponse {
+    pub code_id: u64,
     /// The address that initially stored the code
     pub creator: String,
     /// The hash of the Wasm blob

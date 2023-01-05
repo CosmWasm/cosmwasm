@@ -1496,6 +1496,7 @@ mod tests {
                     if code_id == 4 {
                         use crate::CodeInfoResponse;
                         let response = CodeInfoResponse {
+                            code_id,
                             creator: "lalala".into(),
                             checksum: Binary::from_base64(
                                 "hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0=",
@@ -1571,7 +1572,7 @@ mod tests {
             match result {
                 SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                     value,
-                    br#"{"creator":"lalala","checksum":"hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0="}"#
+                    br#"{"code_id":4,"creator":"lalala","checksum":"hM8ggQ/UKcr1iJjDIQ/LcXWaJ77N2uCNvehmjqL0cl0="}"#
                 ),
                 res => panic!("Unexpected result: {:?}", res),
             }
