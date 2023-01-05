@@ -362,15 +362,15 @@ jobs:
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2
+          command: cargo build --locked --features abort,iterator,staking,stargate,cosmwasm_1_2
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2
+          command: cargo wasm --locked --features abort,iterator,staking,stargate,cosmwasm_1_2
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2
+          command: cargo test --locked --features abort,iterator,staking,stargate,cosmwasm_1_2
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -913,7 +913,7 @@ jobs:
       - run:
           name: Clippy linting on std (all feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy --all-targets --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2 -- -D warnings
+          command: cargo clippy --all-targets --features abort,iterator,staking,stargate,cosmwasm_1_2 -- -D warnings
       - run:
           name: Clippy linting on storage (no feature flags)
           working_directory: ~/project/packages/storage
@@ -990,7 +990,7 @@ jobs:
             CRYPTO=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/crypto  --packages cosmwasm-crypto"
             DERIVE=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/derive  --packages cosmwasm-derive"
             SCHEMA=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/schema  --packages cosmwasm-schema"
-            STD="    cargo tarpaulin --skip-clean --out Xml --output-dir reports/std     --packages cosmwasm-std     --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
+            STD="    cargo tarpaulin --skip-clean --out Xml --output-dir reports/std     --packages cosmwasm-std     --features abort,iterator,staking,stargate,cosmwasm_1_2"
             STORAGE="cargo tarpaulin --skip-clean --out Xml --output-dir reports/storage --packages cosmwasm-storage"
             docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin:0.21.0 \
               sh -c "$CRYPTO && $DERIVE && $SCHEMA && $STD && $STORAGE"

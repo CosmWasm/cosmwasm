@@ -10,7 +10,7 @@ cargo fmt
   # default, min, all
   cargo check
   cargo check --no-default-features
-  cargo check --features abort,iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2
+  cargo check --features abort,iterator,staking,stargate,cosmwasm_1_2
   cargo wasm-debug
   cargo wasm-debug --features iterator,staking,stargate
   cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
