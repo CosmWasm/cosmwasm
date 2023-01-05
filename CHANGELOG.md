@@ -29,6 +29,8 @@ and this project adheres to
   as the error type for `ibc_packet_receive` or `ibc_packet_ack` to gain
   confidence that the implementations never errors and the transaction does not
   get reverted. ([#1513])
+- cosmwasm-std: Add new `WasmQuery::CodeInfo` to get the checksum of a code ID
+  ([#1561]).
 
 [#1436]: https://github.com/CosmWasm/cosmwasm/issues/1436
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
@@ -40,6 +42,7 @@ and this project adheres to
 [#1552]: https://github.com/CosmWasm/cosmwasm/pull/1552
 [#1554]: https://github.com/CosmWasm/cosmwasm/pull/1554
 [#1560]: https://github.com/CosmWasm/cosmwasm/pull/1560
+[#1561]: https://github.com/CosmWasm/cosmwasm/pull/1561
 
 ### Changed
 

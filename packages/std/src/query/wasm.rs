@@ -2,6 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::Binary;
+#[cfg(feature = "cosmwasm_1_2")]
+use crate::HexBinary;
 
 use super::query_response::QueryResponseType;
 
@@ -26,6 +28,9 @@ pub enum WasmQuery {
     },
     /// Returns a [`ContractInfoResponse`] with metadata on the contract from the runtime
     ContractInfo { contract_addr: String },
+    /// Returns a [`CodeInfoResponse`] with metadata of the code
+    #[cfg(feature = "cosmwasm_1_2")]
+    CodeInfo { code_id: u64 },
 }
 
 #[non_exhaustive]
@@ -61,3 +66,24 @@ impl ContractInfoResponse {
         }
     }
 }
+
+/// The essential data from wasmd's [CodeInfo]/[CodeInfoResponse].
+///
+/// `code_hash`/`data_hash` was renamed to `checksum` to follow the CosmWasm
+/// convention and naming in `instantiate2_address`.
+///
+/// [CodeInfo]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/types.proto#L62-L72
+/// [CodeInfoResponse]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/query.proto#L184-L199
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg(feature = "cosmwasm_1_2")]
+pub struct CodeInfoResponse {
+    pub code_id: u64,
+    /// The address that initially stored the code
+    pub creator: String,
+    /// The hash of the Wasm blob
+    pub checksum: HexBinary,
+}
+
+#[cfg(feature = "cosmwasm_1_2")]
+impl QueryResponseType for CodeInfoResponse {}

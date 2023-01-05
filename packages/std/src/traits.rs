@@ -8,6 +8,8 @@ use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+#[cfg(feature = "cosmwasm_1_2")]
+use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -301,6 +303,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             contract_addr: contract_addr.into(),
         }
         .into();
+        self.query(&request)
+    }
+
+    /// Given a code ID, query information about that code.
+    #[cfg(feature = "cosmwasm_1_2")]
+    pub fn query_wasm_code_info(&self, code_id: u64) -> StdResult<CodeInfoResponse> {
+        let request = WasmQuery::CodeInfo { code_id }.into();
         self.query(&request)
     }
 
