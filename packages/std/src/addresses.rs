@@ -7,6 +7,7 @@ use sha2::{
 use std::borrow::Cow;
 use std::fmt;
 use std::ops::Deref;
+use thiserror::Error;
 
 use crate::{binary::Binary, HexBinary};
 
@@ -275,12 +276,21 @@ impl fmt::Display for CanonicalAddr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum Instantiate2AddressError {
     /// Checksum must be 32 bytes
     InvalidChecksumLength,
     /// Salt must be between 1 and 64 bytes
     InvalidSaltLength,
+}
+
+impl fmt::Display for Instantiate2AddressError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Instantiate2AddressError::InvalidChecksumLength => write!(f, "invalid checksum length"),
+            Instantiate2AddressError::InvalidSaltLength => write!(f, "invalid salt length"),
+        }
+    }
 }
 
 /// Creates a contract address using the predictable address format introduced with

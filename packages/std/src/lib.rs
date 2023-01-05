@@ -26,7 +26,7 @@ mod timestamp;
 mod traits;
 mod types;
 
-pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr};
+pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};

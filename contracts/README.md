@@ -36,6 +36,8 @@ Introducing the development contracts in the order they were created.
 9. **cyberpunk** is an attempt to cleanup hackatom and make writing runtime
    tests (cosmwasm-vm/wamsmvm) easier by avoid the need for the escrow setup
    that hackatom has.
+10. **virus** is a contract that reproduces itself and does nothing useful
+    beyond that, showing how to use instantiate2 from a contract.
 
 ## Optimized builds
 
@@ -92,6 +94,11 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_staking",target=/code/contracts/staking/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.12.9 ./contracts/staking
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_virus",target=/code/contracts/virus/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.9 ./contracts/virus
 ```
 
 ## Entry points
@@ -107,3 +114,4 @@ points in order to demonstrate and test the flexibility we have.
 | queue       | yes         | yes           |
 | reflect     | yes         | no            |
 | staking     | yes         | no            |
+| virus       | no          | no            |
