@@ -31,6 +31,8 @@ and this project adheres to
   get reverted. ([#1513])
 - cosmwasm-std: Add new `WasmQuery::CodeInfo` to get the checksum of a code ID
   ([#1561]).
+- cosmwasm-vm: Add `Cache::remove_wasm` to remove obsolete Wasm blobs and their
+  compiled modules.
 
 [#1436]: https://github.com/CosmWasm/cosmwasm/issues/1436
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437

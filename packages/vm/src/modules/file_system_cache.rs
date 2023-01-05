@@ -1,3 +1,4 @@
+use std::fs;
 use std::io;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -137,6 +138,22 @@ impl FileSystemCache {
         Ok(())
     }
 
+    /// Removes a serialized module from the file system.
+    ///
+    /// Returns true if the file existed and false if the file did not exist.
+    pub fn remove(&mut self, checksum: &Checksum) -> VmResult<bool> {
+        let filename = checksum.to_hex();
+        let file_path = self.latest_modules_path().join(filename);
+
+        if file_path.exists() {
+            fs::remove_file(file_path)
+                .map_err(|_e| VmError::cache_err("Error deleting module from disk"))?;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
     /// The path to the latest version of the modules.
     fn latest_modules_path(&self) -> PathBuf {
         let version = format!(
@@ -224,5 +241,35 @@ mod tests {
             checksum
         );
         let _serialized_module = fs::read(file_path).unwrap();
+    }
+
+    #[test]
+    fn file_system_cache_remove_works() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+
+        // Create module
+        let wasm = wat::parse_str(SOME_WAT).unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        // Store module
+        let module = compile(&wasm, None, &[]).unwrap();
+        cache.store(&checksum, &module).unwrap();
+
+        // It's there
+        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        assert!(cache.load(&checksum, &store).unwrap().is_some());
+
+        // Remove module
+        let existed = cache.remove(&checksum).unwrap();
+        assert!(existed);
+
+        // it's gone now
+        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        assert!(cache.load(&checksum, &store).unwrap().is_none());
+
+        // Remove again
+        let existed = cache.remove(&checksum).unwrap();
+        assert!(!existed);
     }
 }
