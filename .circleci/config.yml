@@ -65,6 +65,7 @@ workflows:
       - contract_queue
       - contract_reflect
       - contract_staking
+      - contract_virus
       - fmt
       - fmt_extra
       - clippy:
@@ -138,6 +139,9 @@ jobs:
           keys:
             - v4-arm64-contracts-rust:1.60.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
             - v4-arm64-contracts-rust:1.60.0-
+      # Test a few contracts that do something potentially interesting in the VM
+      # to test contract execution on ARM64.
+      # No need to add all contracts here.
       - run:
           name: "contracts/crypto-verify: integration-test"
           working_directory: ~/project/contracts/crypto-verify
@@ -760,6 +764,33 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_staking-rust:1.60.0-{{ checksum "Cargo.lock" }}
+
+  contract_virus:
+    docker:
+      - image: rust:1.60.0
+    environment:
+      RUST_BACKTRACE: 1
+    working_directory: ~/cosmwasm/contracts/virus
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_virus-rust:1.60.0-{{ checksum "Cargo.lock" }}
+      - check_contract
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_virus-rust:1.60.0-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:
