@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::fs::{File, OpenOptions};
+use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
@@ -57,6 +57,7 @@ pub struct CacheOptions {
 }
 
 pub struct CacheInner {
+    /// The directory in which the Wasm blobs are stored in the file system.
     wasm_path: PathBuf,
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
@@ -159,6 +160,25 @@ where
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
         cache.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
+    }
+
+    /// Removes the Wasm blob for the given checksum from disk and its
+    /// compiled module from the file system cache.
+    ///
+    /// The existence of the original code is required since the caller (wasmd)
+    /// has to keep track of which entries we have here.
+    pub fn remove_wasm(&self, checksum: &Checksum) -> VmResult<()> {
+        let mut cache = self.inner.lock().unwrap();
+
+        // Remove compiled moduled from disk (if it exists).
+        // Here we could also delete from memory caches but this is not really
+        // necessary as they are pushed out from the LRU over time or disappear
+        // when the node process restarts.
+        cache.fs_cache.remove(checksum)?;
+
+        let path = &cache.wasm_path;
+        remove_wasm_from_disk(path, checksum)?;
+        Ok(())
     }
 
     /// Retrieves a Wasm blob that was previously stored via save_wasm.
@@ -362,6 +382,23 @@ fn load_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult
     file.read_to_end(&mut wasm)
         .map_err(|_e| VmError::cache_err("Error reading Wasm file"))?;
     Ok(wasm)
+}
+
+/// Removes the Wasm blob for the given checksum from disk.
+///
+/// In contrast to the file system cache, the existence of the original
+/// code is required. So a non-existent file leads to an error as it
+/// indicates a bug.
+fn remove_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult<()> {
+    let path = dir.into().join(checksum.to_hex());
+
+    if !path.exists() {
+        return Err(VmError::cache_err("Wasm file does not exist"));
+    }
+
+    fs::remove_file(path).map_err(|_e| VmError::cache_err("Error removing Wasm file from disk"))?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -570,6 +607,37 @@ mod tests {
             Err(VmError::IntegrityErr { .. }) => {}
             Err(e) => panic!("Unexpected error: {:?}", e),
             Ok(_) => panic!("This must not succeed"),
+        }
+    }
+
+    #[test]
+    fn remove_wasm_works() {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+
+        // Store
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        // Exists
+        cache.load_wasm(&checksum).unwrap();
+
+        // Remove
+        cache.remove_wasm(&checksum).unwrap();
+
+        // Does not exist anymore
+        match cache.load_wasm(&checksum).unwrap_err() {
+            VmError::CacheErr { msg, .. } => {
+                assert_eq!(msg, "Error opening Wasm file for reading")
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        // Removing again fails
+        match cache.remove_wasm(&checksum).unwrap_err() {
+            VmError::CacheErr { msg, .. } => {
+                assert_eq!(msg, "Wasm file does not exist")
+            }
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -986,6 +1054,23 @@ mod tests {
 
         let loaded = load_wasm_from_disk(&path, &checksum).unwrap();
         assert_eq!(code, loaded);
+    }
+
+    #[test]
+    fn remove_wasm_from_disk_works() {
+        let tmp_dir = TempDir::new().unwrap();
+        let path = tmp_dir.path();
+        let code = vec![12u8; 17];
+        let checksum = save_wasm_to_disk(path, &code).unwrap();
+
+        remove_wasm_from_disk(path, &checksum).unwrap();
+
+        // removing again fails
+
+        match remove_wasm_from_disk(path, &checksum).unwrap_err() {
+            VmError::CacheErr { msg } => assert_eq!(msg, "Wasm file does not exist"),
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]
