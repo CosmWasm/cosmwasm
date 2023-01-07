@@ -34,6 +34,9 @@ stargate = []
 # that require these types. Without this, they get the smaller ibc-v1 API.
 ibc3 = ["stargate"]
 
+# Add random seed to env in inits and executes
+random = []
+
 [dependencies]
 base64 = "0.13.0"
 cosmwasm-derive = { path = "../derive", version = "1.0.0" }
