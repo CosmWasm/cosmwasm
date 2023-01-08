@@ -1068,6 +1068,13 @@ mod tests {
     }
 
     #[test]
+    fn mul_floored_does_not_round_on_even_divide() {
+        let fraction = (2u128, 5u128);
+        let res = Uint128::new(25).mul_floored(fraction);
+        assert_eq!(Uint128::new(10), res)
+    }
+
+    #[test]
     fn mul_floored_works_when_operation_temporarily_takes_above_max() {
         let fraction = (8u128, 21u128);
         let res = Uint128::MAX.mul_floored(fraction); // 129_631_377_874_643_224_176_523_659_974_006_937_697.14285
@@ -1141,6 +1148,13 @@ mod tests {
         let fraction = (8u128, 21u128);
         let res = Uint128::new(123456).mul_ceil(fraction); // 47030.8571
         assert_eq!(Uint128::new(47031), res)
+    }
+
+    #[test]
+    fn mul_ceil_does_not_round_on_even_divide() {
+        let fraction = (2u128, 5u128);
+        let res = Uint128::new(25).mul_ceil(fraction);
+        assert_eq!(Uint128::new(10), res)
     }
 
     #[test]

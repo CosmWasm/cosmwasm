@@ -56,10 +56,12 @@ macro_rules! impl_mul_fraction {
                 self,
                 rhs: F,
             ) -> Result<Self, CheckedMultiplyFractionError> {
-                let numerator = rhs.numerator().into();
-                let denominator = rhs.denominator().into();
+                let divisor = rhs.denominator().into();
+                let remainder = self
+                    .full_mul(rhs.numerator().into())
+                    .checked_rem(divisor.into())?;
                 let floor_result = self.checked_mul_floored(rhs)?;
-                if !numerator.checked_rem(denominator)?.is_zero() {
+                if !remainder.is_zero() {
                     Ok($Uint::one().checked_add(floor_result)?)
                 } else {
                     Ok(floor_result)
