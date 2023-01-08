@@ -961,52 +961,52 @@ mod tests {
     }
 
     #[test]
-    fn mul_floored_works_with_zero() {
+    fn mul_floor_works_with_zero() {
         let fraction = (0u32, 21u32);
-        let res = Uint64::new(123456).mul_floored(fraction);
+        let res = Uint64::new(123456).mul_floor(fraction);
         assert_eq!(Uint64::zero(), res)
     }
 
     #[test]
-    fn mul_floored_does_nothing_with_one() {
+    fn mul_floor_does_nothing_with_one() {
         let fraction = (Uint64::one(), Uint64::one());
-        let res = Uint64::new(123456).mul_floored(fraction);
+        let res = Uint64::new(123456).mul_floor(fraction);
         assert_eq!(Uint64::new(123456), res)
     }
 
     #[test]
-    fn mul_floored_rounds_down_with_normal_case() {
+    fn mul_floor_rounds_down_with_normal_case() {
         let fraction = (8u64, 21u64);
-        let res = Uint64::new(123456).mul_floored(fraction); // 47030.8571
+        let res = Uint64::new(123456).mul_floor(fraction); // 47030.8571
         assert_eq!(Uint64::new(47030), res)
     }
 
     #[test]
-    fn mul_floored_does_not_round_on_even_divide() {
+    fn mul_floor_does_not_round_on_even_divide() {
         let fraction = (2u64, 5u64);
-        let res = Uint64::new(25).mul_floored(fraction);
+        let res = Uint64::new(25).mul_floor(fraction);
         assert_eq!(Uint64::new(10), res)
     }
 
     #[test]
-    fn mul_floored_works_when_operation_temporarily_takes_above_max() {
+    fn mul_floor_works_when_operation_temporarily_takes_above_max() {
         let fraction = (8u64, 21u64);
-        let res = Uint64::MAX.mul_floored(fraction); // 7_027_331_075_698_876_805.71428571
+        let res = Uint64::MAX.mul_floor(fraction); // 7_027_331_075_698_876_805.71428571
         assert_eq!(Uint64::new(7_027_331_075_698_876_805), res)
     }
 
     #[test]
     #[should_panic(expected = "ConversionOverflowError")]
-    fn mul_floored_panics_on_overflow() {
+    fn mul_floor_panics_on_overflow() {
         let fraction = (21u64, 8u64);
-        Uint64::MAX.mul_floored(fraction);
+        Uint64::MAX.mul_floor(fraction);
     }
 
     #[test]
-    fn checked_mul_floored_does_not_panic_on_overflow() {
+    fn checked_mul_floor_does_not_panic_on_overflow() {
         let fraction = (21u64, 8u64);
         assert_eq!(
-            Uint64::MAX.checked_mul_floored(fraction),
+            Uint64::MAX.checked_mul_floor(fraction),
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint128",
                 target_type: "Uint64",
@@ -1017,16 +1017,16 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "DivideByZeroError")]
-    fn mul_floored_panics_on_zero_div() {
+    fn mul_floor_panics_on_zero_div() {
         let fraction = (21u64, 0u64);
-        Uint64::new(123456).mul_floored(fraction);
+        Uint64::new(123456).mul_floor(fraction);
     }
 
     #[test]
-    fn checked_mul_floored_does_not_panic_on_zero_div() {
+    fn checked_mul_floor_does_not_panic_on_zero_div() {
         let fraction = (21u64, 0u64);
         assert_eq!(
-            Uint64::new(123456).checked_mul_floored(fraction),
+            Uint64::new(123456).checked_mul_floor(fraction),
             Err(DivideByZero(DivideByZeroError {
                 operand: "2592576".to_string()
             })),

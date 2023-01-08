@@ -35,7 +35,7 @@ impl<T: Copy + From<u8> + PartialEq> Fraction<T> for (T, T) {
 macro_rules! impl_mul_fraction {
     ($Uint:ident) => {
         impl $Uint {
-            pub fn checked_mul_floored<F: Fraction<T>, T: Into<$Uint>>(
+            pub fn checked_mul_floor<F: Fraction<T>, T: Into<$Uint>>(
                 self,
                 rhs: F,
             ) -> Result<Self, CheckedMultiplyFractionError> {
@@ -46,8 +46,8 @@ macro_rules! impl_mul_fraction {
                 Ok(res.try_into()?)
             }
 
-            pub fn mul_floored<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
-                self.checked_mul_floored(rhs).unwrap()
+            pub fn mul_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
+                self.checked_mul_floor(rhs).unwrap()
             }
 
             pub fn checked_mul_ceil<F: Fraction<T>, T: Into<$Uint>>(
@@ -58,7 +58,7 @@ macro_rules! impl_mul_fraction {
                 let remainder = self
                     .full_mul(rhs.numerator().into())
                     .checked_rem(divisor.into())?;
-                let floor_result = self.checked_mul_floored(rhs)?;
+                let floor_result = self.checked_mul_floor(rhs)?;
                 if !remainder.is_zero() {
                     Ok($Uint::one().checked_add(floor_result)?)
                 } else {

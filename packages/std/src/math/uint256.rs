@@ -1669,37 +1669,37 @@ mod tests {
     }
 
     #[test]
-    fn mul_floored_works_with_zero() {
+    fn mul_floor_works_with_zero() {
         let fraction = (Uint256::zero(), Uint256::from(21u32));
-        let res = Uint256::from(123456u32).mul_floored(fraction);
+        let res = Uint256::from(123456u32).mul_floor(fraction);
         assert_eq!(Uint256::zero(), res)
     }
 
     #[test]
-    fn mul_floored_does_nothing_with_one() {
+    fn mul_floor_does_nothing_with_one() {
         let fraction = (Uint256::one(), Uint256::one());
-        let res = Uint256::from(123456u32).mul_floored(fraction);
+        let res = Uint256::from(123456u32).mul_floor(fraction);
         assert_eq!(Uint256::from(123456u32), res)
     }
 
     #[test]
-    fn mul_floored_rounds_down_with_normal_case() {
+    fn mul_floor_rounds_down_with_normal_case() {
         let fraction = (Uint256::from(8u128), Uint256::from(21u128));
-        let res = Uint256::from(123456u32).mul_floored(fraction); // 47030.8571
+        let res = Uint256::from(123456u32).mul_floor(fraction); // 47030.8571
         assert_eq!(Uint256::from(47030u32), res)
     }
 
     #[test]
-    fn mul_floored_does_not_round_on_even_divide() {
+    fn mul_floor_does_not_round_on_even_divide() {
         let fraction = (2u128, 5u128);
-        let res = Uint256::from(25u32).mul_floored(fraction);
+        let res = Uint256::from(25u32).mul_floor(fraction);
         assert_eq!(Uint256::from(10u32), res)
     }
 
     #[test]
-    fn mul_floored_works_when_operation_temporarily_takes_above_max() {
+    fn mul_floor_works_when_operation_temporarily_takes_above_max() {
         let fraction = (8u128, 21u128);
-        let res = Uint256::MAX.mul_floored(fraction); // 44_111_272_090_406_169_685_169_899_050_928_726_801_245_708_444_053_548_205_507_651_050_633_573_196_165.71428571
+        let res = Uint256::MAX.mul_floor(fraction); // 44_111_272_090_406_169_685_169_899_050_928_726_801_245_708_444_053_548_205_507_651_050_633_573_196_165.71428571
         assert_eq!(
             Uint256::from_str(
                 "44111272090406169685169899050928726801245708444053548205507651050633573196165"
@@ -1710,31 +1710,31 @@ mod tests {
     }
 
     #[test]
-    fn mul_floored_works_with_decimal() {
+    fn mul_floor_works_with_decimal() {
         let decimal = Decimal::from_ratio(8u128, 21u128);
-        let res = Uint256::from(123456u32).mul_floored(decimal); // 47030.8571
+        let res = Uint256::from(123456u32).mul_floor(decimal); // 47030.8571
         assert_eq!(Uint256::from(47030u32), res)
     }
 
     #[test]
-    fn mul_floored_works_with_decimal256() {
+    fn mul_floor_works_with_decimal256() {
         let decimal = Decimal256::from_ratio(8u128, 21u128);
-        let res = Uint256::from(123456u32).mul_floored(decimal); // 47030.8571
+        let res = Uint256::from(123456u32).mul_floor(decimal); // 47030.8571
         assert_eq!(Uint256::from(47030u32), res)
     }
 
     #[test]
     #[should_panic(expected = "ConversionOverflowError")]
-    fn mul_floored_panics_on_overflow() {
+    fn mul_floor_panics_on_overflow() {
         let fraction = (21u128, 8u128);
-        Uint256::MAX.mul_floored(fraction);
+        Uint256::MAX.mul_floor(fraction);
     }
 
     #[test]
-    fn checked_mul_floored_does_not_panic_on_overflow() {
+    fn checked_mul_floor_does_not_panic_on_overflow() {
         let fraction = (21u128, 8u128);
         assert_eq!(
-            Uint256::MAX.checked_mul_floored(fraction),
+            Uint256::MAX.checked_mul_floor(fraction),
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint512",
                 target_type: "Uint256",
@@ -1747,16 +1747,16 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "DivideByZeroError")]
-    fn mul_floored_panics_on_zero_div() {
+    fn mul_floor_panics_on_zero_div() {
         let fraction = (21u128, 0u128);
-        Uint256::from(123456u32).mul_floored(fraction);
+        Uint256::from(123456u32).mul_floor(fraction);
     }
 
     #[test]
-    fn checked_mul_floored_does_not_panic_on_zero_div() {
+    fn checked_mul_floor_does_not_panic_on_zero_div() {
         let fraction = (21u128, 0u128);
         assert_eq!(
-            Uint256::from(123456u32).checked_mul_floored(fraction),
+            Uint256::from(123456u32).checked_mul_floor(fraction),
             Err(DivideByZero(DivideByZeroError {
                 operand: "2592576".to_string()
             })),
