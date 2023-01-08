@@ -1,5 +1,3 @@
-use crate::Uint256;
-
 /// A fraction `p`/`q` with integers `p` and `q`.
 ///
 /// `p` is called the numerator and `q` is called the denominator.
@@ -15,7 +13,7 @@ pub trait Fraction<T>: Sized {
     fn inv(&self) -> Option<Self>;
 }
 
-impl<T: Copy + Into<Uint256>> Fraction<T> for (T, T) {
+impl<T: Copy + From<u8> + PartialEq> Fraction<T> for (T, T) {
     fn numerator(&self) -> T {
         self.0
     }
@@ -25,7 +23,7 @@ impl<T: Copy + Into<Uint256>> Fraction<T> for (T, T) {
     }
 
     fn inv(&self) -> Option<Self> {
-        if self.numerator().into() == Uint256::zero() {
+        if self.numerator() == 0u8.into() {
             None
         } else {
             Some((self.1, self.0))
