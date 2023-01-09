@@ -213,7 +213,7 @@ pub enum GovMsg {
     #[cfg(feature = "cosmwasm_1_2")]
     VoteWeighted {
         proposal_id: u64,
-        vote: WeightedVoteOption,
+        options: Vec<WeightedVoteOption>,
     },
 }
 
@@ -358,5 +358,48 @@ mod tests {
             format!("{:?}", msg),
             "Execute { contract_addr: \"joe\", msg: Binary(009f9296), funds: [] }"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "stargate")]
+    fn gov_msg_serializes_to_correct_json() {
+        // Vote
+        let msg = GovMsg::Vote {
+            proposal_id: 4,
+            vote: VoteOption::NoWithVeto,
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"vote":{"proposal_id":4,"vote":"no_with_veto"}}"#,
+        );
+
+        // VoteWeighted
+        #[cfg(feature = "cosmwasm_1_2")]
+        {
+            let msg = GovMsg::VoteWeighted {
+                proposal_id: 25,
+                options: vec![
+                    WeightedVoteOption {
+                        weight: Decimal::percent(25),
+                        option: VoteOption::Yes,
+                    },
+                    WeightedVoteOption {
+                        weight: Decimal::percent(25),
+                        option: VoteOption::No,
+                    },
+                    WeightedVoteOption {
+                        weight: Decimal::percent(50),
+                        option: VoteOption::Abstain,
+                    },
+                ],
+            };
+
+            let json = to_binary(&msg).unwrap();
+            assert_eq!(
+                String::from_utf8_lossy(&json),
+                r#"{"vote_weighted":{"proposal_id":25,"options":[{"option":"yes","weight":"0.25"},{"option":"no","weight":"0.25"},{"option":"abstain","weight":"0.5"}]}}"#,
+            );
+        }
     }
 }
