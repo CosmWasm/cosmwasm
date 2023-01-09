@@ -316,7 +316,12 @@
                   "minimum": 0.0
                 },
                 "vote": {
-                  "$ref": "#/definitions/VoteOption"
+                  "description": "The vote option.\n\nThis should be called \"option\" for consistency with Cosmos SDK. Sorry for that. See <https://github.com/CosmWasm/cosmwasm/issues/1571>.",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/VoteOption"
+                    }
+                  ]
                 }
               }
             }
