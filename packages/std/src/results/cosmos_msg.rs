@@ -208,7 +208,14 @@ pub enum WasmMsg {
 #[serde(rename_all = "snake_case")]
 pub enum GovMsg {
     /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
-    Vote { proposal_id: u64, vote: VoteOption },
+    Vote {
+        proposal_id: u64,
+        /// The vote option.
+        ///
+        /// This should be called "option" for consistency with Cosmos SDK. Sorry for that.
+        /// See <https://github.com/CosmWasm/cosmwasm/issues/1571>.
+        vote: VoteOption,
+    },
     /// This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.
     #[cfg(feature = "cosmwasm_1_2")]
     VoteWeighted {
