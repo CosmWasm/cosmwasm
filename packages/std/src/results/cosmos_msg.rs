@@ -331,13 +331,13 @@ mod tests {
         }
     }
 
-    #[cosmwasm_schema::cw_serde]
-    enum ExecuteMsg {
-        Mint { coin: Coin },
-    }
-
     #[test]
     fn wasm_msg_debug_decodes_binary_string_when_possible() {
+        #[cosmwasm_schema::cw_serde]
+        enum ExecuteMsg {
+            Mint { coin: Coin },
+        }
+
         let msg = WasmMsg::Execute {
             contract_addr: "joe".to_string(),
             msg: to_binary(&ExecuteMsg::Mint {
