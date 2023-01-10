@@ -332,6 +332,69 @@ mod tests {
     }
 
     #[test]
+    fn wasm_msg_serializes_to_correct_json() {
+        // Instantiate with admin
+        let msg = WasmMsg::Instantiate {
+            admin: Some("king".to_string()),
+            code_id: 7897,
+            msg: br#"{"claim":{}}"#.into(),
+            funds: vec![],
+            label: "my instance".to_string(),
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"instantiate":{"admin":"king","code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[],"label":"my instance"}}"#,
+        );
+
+        // Instantiate without admin
+        let msg = WasmMsg::Instantiate {
+            admin: None,
+            code_id: 7897,
+            msg: br#"{"claim":{}}"#.into(),
+            funds: vec![],
+            label: "my instance".to_string(),
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"instantiate":{"admin":null,"code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[],"label":"my instance"}}"#,
+        );
+
+        // Instantiate with funds
+        let msg = WasmMsg::Instantiate {
+            admin: None,
+            code_id: 7897,
+            msg: br#"{"claim":{}}"#.into(),
+            funds: vec![coin(321, "stones")],
+            label: "my instance".to_string(),
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"instantiate":{"admin":null,"code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"label":"my instance"}}"#,
+        );
+
+        // Instantiate2
+        #[cfg(feature = "cosmwasm_1_2")]
+        {
+            let msg = WasmMsg::Instantiate2 {
+                admin: None,
+                code_id: 7897,
+                label: "my instance".to_string(),
+                msg: br#"{"claim":{}}"#.into(),
+                funds: vec![coin(321, "stones")],
+                salt: Binary::from_base64("UkOVazhiwoo=").unwrap(),
+            };
+            let json = to_binary(&msg).unwrap();
+            assert_eq!(
+                String::from_utf8_lossy(&json),
+                r#"{"instantiate2":{"admin":null,"code_id":7897,"label":"my instance","msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"salt":"UkOVazhiwoo="}}"#,
+            );
+        }
+    }
+
+    #[test]
     fn wasm_msg_debug_decodes_binary_string_when_possible() {
         #[cosmwasm_schema::cw_serde]
         enum ExecuteMsg {
