@@ -208,12 +208,19 @@ pub enum WasmMsg {
 #[serde(rename_all = "snake_case")]
 pub enum GovMsg {
     /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
-    Vote { proposal_id: u64, vote: VoteOption },
+    Vote {
+        proposal_id: u64,
+        /// The vote option.
+        ///
+        /// This should be called "option" for consistency with Cosmos SDK. Sorry for that.
+        /// See <https://github.com/CosmWasm/cosmwasm/issues/1571>.
+        vote: VoteOption,
+    },
     /// This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.
     #[cfg(feature = "cosmwasm_1_2")]
     VoteWeighted {
         proposal_id: u64,
-        vote: WeightedVoteOption,
+        options: Vec<WeightedVoteOption>,
     },
 }
 
@@ -324,13 +331,76 @@ mod tests {
         }
     }
 
-    #[cosmwasm_schema::cw_serde]
-    enum ExecuteMsg {
-        Mint { coin: Coin },
+    #[test]
+    fn wasm_msg_serializes_to_correct_json() {
+        // Instantiate with admin
+        let msg = WasmMsg::Instantiate {
+            admin: Some("king".to_string()),
+            code_id: 7897,
+            msg: br#"{"claim":{}}"#.into(),
+            funds: vec![],
+            label: "my instance".to_string(),
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"instantiate":{"admin":"king","code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[],"label":"my instance"}}"#,
+        );
+
+        // Instantiate without admin
+        let msg = WasmMsg::Instantiate {
+            admin: None,
+            code_id: 7897,
+            msg: br#"{"claim":{}}"#.into(),
+            funds: vec![],
+            label: "my instance".to_string(),
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"instantiate":{"admin":null,"code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[],"label":"my instance"}}"#,
+        );
+
+        // Instantiate with funds
+        let msg = WasmMsg::Instantiate {
+            admin: None,
+            code_id: 7897,
+            msg: br#"{"claim":{}}"#.into(),
+            funds: vec![coin(321, "stones")],
+            label: "my instance".to_string(),
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"instantiate":{"admin":null,"code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"label":"my instance"}}"#,
+        );
+
+        // Instantiate2
+        #[cfg(feature = "cosmwasm_1_2")]
+        {
+            let msg = WasmMsg::Instantiate2 {
+                admin: None,
+                code_id: 7897,
+                label: "my instance".to_string(),
+                msg: br#"{"claim":{}}"#.into(),
+                funds: vec![coin(321, "stones")],
+                salt: Binary::from_base64("UkOVazhiwoo=").unwrap(),
+            };
+            let json = to_binary(&msg).unwrap();
+            assert_eq!(
+                String::from_utf8_lossy(&json),
+                r#"{"instantiate2":{"admin":null,"code_id":7897,"label":"my instance","msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"salt":"UkOVazhiwoo="}}"#,
+            );
+        }
     }
 
     #[test]
     fn wasm_msg_debug_decodes_binary_string_when_possible() {
+        #[cosmwasm_schema::cw_serde]
+        enum ExecuteMsg {
+            Mint { coin: Coin },
+        }
+
         let msg = WasmMsg::Execute {
             contract_addr: "joe".to_string(),
             msg: to_binary(&ExecuteMsg::Mint {
@@ -358,5 +428,48 @@ mod tests {
             format!("{:?}", msg),
             "Execute { contract_addr: \"joe\", msg: Binary(009f9296), funds: [] }"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "stargate")]
+    fn gov_msg_serializes_to_correct_json() {
+        // Vote
+        let msg = GovMsg::Vote {
+            proposal_id: 4,
+            vote: VoteOption::NoWithVeto,
+        };
+        let json = to_binary(&msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"vote":{"proposal_id":4,"vote":"no_with_veto"}}"#,
+        );
+
+        // VoteWeighted
+        #[cfg(feature = "cosmwasm_1_2")]
+        {
+            let msg = GovMsg::VoteWeighted {
+                proposal_id: 25,
+                options: vec![
+                    WeightedVoteOption {
+                        weight: Decimal::percent(25),
+                        option: VoteOption::Yes,
+                    },
+                    WeightedVoteOption {
+                        weight: Decimal::percent(25),
+                        option: VoteOption::No,
+                    },
+                    WeightedVoteOption {
+                        weight: Decimal::percent(50),
+                        option: VoteOption::Abstain,
+                    },
+                ],
+            };
+
+            let json = to_binary(&msg).unwrap();
+            assert_eq!(
+                String::from_utf8_lossy(&json),
+                r#"{"vote_weighted":{"proposal_id":25,"options":[{"option":"yes","weight":"0.25"},{"option":"no","weight":"0.25"},{"option":"abstain","weight":"0.5"}]}}"#,
+            );
+        }
     }
 }
