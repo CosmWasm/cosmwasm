@@ -65,3 +65,48 @@ impl std::fmt::Display for SystemError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{from_slice, to_vec};
+
+    #[test]
+    fn system_error_no_such_contract_serialization() {
+        let err = SystemError::NoSuchContract {
+            addr: "gibtsnicht".to_string(),
+        };
+
+        // ser
+        let json = to_vec(&err).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"no_such_contract":{"addr":"gibtsnicht"}}"#,
+        );
+
+        // de
+        let err: SystemError = from_slice(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
+        assert_eq!(
+            err,
+            SystemError::NoSuchContract {
+                addr: "nada".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn system_error_no_such_code_serialization() {
+        let err = SystemError::NoSuchCode { code_id: 13 };
+
+        // ser
+        let json = to_vec(&err).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"no_such_code":{"code_id":13}}"#,
+        );
+
+        // de
+        let err: SystemError = from_slice(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
+        assert_eq!(err, SystemError::NoSuchCode { code_id: 987 },);
+    }
+}
