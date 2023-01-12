@@ -69,6 +69,53 @@ macro_rules! impl_mul_fraction {
             pub fn mul_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_ceil(rhs).unwrap()
             }
+
+            pub fn div_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
+            where
+                Self: Sized,
+            {
+                self.checked_div_floor(rhs).unwrap()
+            }
+
+            pub fn checked_div_floor<F: Fraction<T>, T: Into<$Uint>>(
+                self,
+                rhs: F,
+            ) -> Result<Self, CheckedMultiplyFractionError>
+            where
+                Self: Sized,
+            {
+                let divisor = rhs.numerator().into();
+                let res = self
+                    .full_mul(rhs.denominator().into())
+                    .checked_div(divisor.into())?;
+                Ok(res.try_into()?)
+            }
+
+            pub fn div_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
+            where
+                Self: Sized,
+            {
+                self.checked_div_ceil(rhs).unwrap()
+            }
+
+            pub fn checked_div_ceil<F: Fraction<T>, T: Into<$Uint>>(
+                self,
+                rhs: F,
+            ) -> Result<Self, CheckedMultiplyFractionError>
+            where
+                Self: Sized,
+            {
+                let divisor = rhs.numerator().into();
+                let remainder = self
+                    .full_mul(rhs.denominator().into())
+                    .checked_rem(divisor.into())?;
+                let floor_result = self.checked_div_floor(rhs)?;
+                if !remainder.is_zero() {
+                    Ok($Uint::one().checked_add(floor_result)?)
+                } else {
+                    Ok(floor_result)
+                }
+            }
         }
     };
 }

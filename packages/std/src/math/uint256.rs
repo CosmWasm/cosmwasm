@@ -1857,4 +1857,156 @@ mod tests {
             })),
         );
     }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn div_floor_raises_with_zero() {
+        let fraction = (Uint256::zero(), Uint256::from(21u32));
+        Uint256::from(123456u128).div_floor(fraction);
+    }
+
+    #[test]
+    fn div_floor_does_nothing_with_one() {
+        let fraction = (Uint256::one(), Uint256::one());
+        let res = Uint256::from(123456u128).div_floor(fraction);
+        assert_eq!(Uint256::from(123456u128), res)
+    }
+
+    #[test]
+    fn div_floor_rounds_down_with_normal_case() {
+        let fraction = (5u128, 21u128);
+        let res = Uint256::from(123456u128).div_floor(fraction); // 518515.2
+        assert_eq!(Uint256::from(518515u128), res)
+    }
+
+    #[test]
+    fn div_floor_does_not_round_on_even_divide() {
+        let fraction = (5u128, 2u128);
+        let res = Uint256::from(25u128).div_floor(fraction);
+        assert_eq!(Uint256::from(10u128), res)
+    }
+
+    #[test]
+    fn div_floor_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (21u128, 8u128);
+        let res = Uint256::MAX.div_floor(fraction); // 44_111_272_090_406_169_685_169_899_050_928_726_801_245_708_444_053_548_205_507_651_050_633_573_196_165.71428571
+        assert_eq!(
+            Uint256::from_str(
+                "44111272090406169685169899050928726801245708444053548205507651050633573196165"
+            )
+            .unwrap(),
+            res
+        )
+    }
+
+    #[test]
+    fn div_floor_works_with_decimal() {
+        let decimal = Decimal::from_ratio(21u128, 8u128);
+        let res = Uint256::from(123456u128).div_floor(decimal); // 47030.8571
+        assert_eq!(Uint256::from(47030u128), res)
+    }
+
+    #[test]
+    fn div_floor_works_with_decimal_evenly() {
+        let res = Uint256::from(60u128).div_floor(Decimal::from_atomics(6u128, 0).unwrap());
+        assert_eq!(res, Uint256::from(10u128));
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn div_floor_panics_on_overflow() {
+        let fraction = (8u128, 21u128);
+        Uint256::MAX.div_floor(fraction);
+    }
+
+    #[test]
+    fn div_floor_does_not_panic_on_overflow() {
+        let fraction = (8u128, 21u128);
+        assert_eq!(
+            Uint256::MAX.checked_div_floor(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint512",
+                target_type: "Uint256",
+                value:
+                    "303954234247955012986873835647805758114833709747306480603576158020771965304829"
+                        .to_string()
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn div_ceil_raises_with_zero() {
+        let fraction = (Uint256::zero(), Uint256::from(21u128));
+        Uint256::from(123456u128).div_ceil(fraction);
+    }
+
+    #[test]
+    fn div_ceil_does_nothing_with_one() {
+        let fraction = (Uint256::one(), Uint256::one());
+        let res = Uint256::from(123456u128).div_ceil(fraction);
+        assert_eq!(Uint256::from(123456u128), res)
+    }
+
+    #[test]
+    fn div_ceil_rounds_up_with_normal_case() {
+        let fraction = (5u128, 21u128);
+        let res = Uint256::from(123456u128).div_ceil(fraction); // 518515.2
+        assert_eq!(Uint256::from(518516u128), res)
+    }
+
+    #[test]
+    fn div_ceil_does_not_round_on_even_divide() {
+        let fraction = (5u128, 2u128);
+        let res = Uint256::from(25u128).div_ceil(fraction);
+        assert_eq!(Uint256::from(10u128), res)
+    }
+
+    #[test]
+    fn div_ceil_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (21u128, 8u128);
+        let res = Uint256::MAX.div_ceil(fraction); // 44_111_272_090_406_169_685_169_899_050_928_726_801_245_708_444_053_548_205_507_651_050_633_573_196_165.71428571
+        assert_eq!(
+            Uint256::from_str(
+                "44111272090406169685169899050928726801245708444053548205507651050633573196166"
+            )
+            .unwrap(),
+            res
+        )
+    }
+
+    #[test]
+    fn div_ceil_works_with_decimal() {
+        let decimal = Decimal::from_ratio(21u128, 8u128);
+        let res = Uint256::from(123456u128).div_ceil(decimal); // 47030.8571
+        assert_eq!(Uint256::from(47031u128), res)
+    }
+
+    #[test]
+    fn div_ceil_works_with_decimal_evenly() {
+        let res = Uint256::from(60u128).div_ceil(Decimal::from_atomics(6u128, 0).unwrap());
+        assert_eq!(res, Uint256::from(10u128));
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn div_ceil_panics_on_overflow() {
+        let fraction = (8u128, 21u128);
+        Uint256::MAX.div_ceil(fraction);
+    }
+
+    #[test]
+    fn div_ceil_does_not_panic_on_overflow() {
+        let fraction = (8u128, 21u128);
+        assert_eq!(
+            Uint256::MAX.checked_div_ceil(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint512",
+                target_type: "Uint256",
+                value:
+                    "303954234247955012986873835647805758114833709747306480603576158020771965304829"
+                        .to_string() // raises prior to rounding up
+            })),
+        );
+    }
 }
