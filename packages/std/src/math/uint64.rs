@@ -495,6 +495,11 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
+    fn size_of_works() {
+        assert_eq!(std::mem::size_of::<Uint64>(), 8);
+    }
+
+    #[test]
     fn uint64_zero_works() {
         let zero = Uint64::zero();
         assert_eq!(zero.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 0]);

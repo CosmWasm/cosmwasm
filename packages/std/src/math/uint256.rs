@@ -669,6 +669,11 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
+    fn size_of_works() {
+        assert_eq!(std::mem::size_of::<Uint256>(), 32);
+    }
+
+    #[test]
     fn uint256_new_works() {
         let num = Uint256::new([1; 32]);
         let a: [u8; 32] = num.to_be_bytes();
