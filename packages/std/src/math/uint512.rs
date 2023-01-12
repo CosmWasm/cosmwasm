@@ -624,6 +624,11 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
+    fn size_of_works() {
+        assert_eq!(std::mem::size_of::<Uint512>(), 64);
+    }
+
+    #[test]
     fn uint512_new_works() {
         let num = Uint512::new([1; 64]);
         let a: [u8; 64] = num.to_be_bytes();

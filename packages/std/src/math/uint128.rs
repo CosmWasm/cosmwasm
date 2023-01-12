@@ -541,6 +541,11 @@ mod tests {
     use crate::{from_slice, to_vec};
 
     #[test]
+    fn size_of_works() {
+        assert_eq!(std::mem::size_of::<Uint128>(), 16);
+    }
+
+    #[test]
     fn uint128_zero_works() {
         let zero = Uint128::zero();
         assert_eq!(
