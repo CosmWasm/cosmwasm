@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::Addr;
-use crate::Binary;
 use crate::coins::Coin;
 use crate::timestamp::Timestamp;
+use crate::Binary;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
@@ -48,7 +48,6 @@ pub struct BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
-    /// #         random: Binary::default(),
     /// #     },
     /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
@@ -75,7 +74,6 @@ pub struct BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
-    /// #         random: Binary::default(),
     /// #     },
     /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
@@ -87,8 +85,6 @@ pub struct BlockInfo {
     /// ```
     pub time: Timestamp,
     pub chain_id: String,
-    #[cfg(feature = "random")]
-    pub random: Binary,
 }
 
 /// Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed
@@ -114,6 +110,8 @@ pub struct MessageInfo {
     /// or `MsgExecuteContract`. The transfer is processed in bank before the contract
     /// is executed such that the new balance is visible during contract execution.
     pub funds: Vec<Coin>,
+    #[cfg(feature = "random")]
+    pub random: Binary,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
