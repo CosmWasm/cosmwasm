@@ -173,10 +173,10 @@ return an error, the parent call will return an error, thus rolling back state
 of the whole transaction.
 
 Note that the messages are executed
-[_breadth-first_](https://en.wikipedia.org/wiki/Breadth-first_search). This
+[_depth-first_](https://en.wikipedia.org/wiki/Depth-first_search). This
 means if contract A returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`),
 and contract B (from the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg`
-and `DistributionMsg`), the order of execution would be **M1, N1, N2, M2**.
+and `DistributionMsg`), the order of execution would be **M1, M2, N1, N2**.
 
 This may be hard to understand at first. "Why can't I just call another
 contract?", you may ask. However, we do this to prevent one of most widespread
