@@ -33,11 +33,15 @@ and this project adheres to
   ([#1561]).
 - cosmwasm-vm: Add `Cache::remove_wasm` to remove obsolete Wasm blobs and their
   compiled modules.
+- cosmwasm-std: Implement fraction multiplication and division. Assists with
+  Uint & Decimal arithmetic and exposes methods for flooring/ceiling result
+  ([#1485], [#1566]).
 
 [#1436]: https://github.com/CosmWasm/cosmwasm/issues/1436
 [#1437]: https://github.com/CosmWasm/cosmwasm/issues/1437
-[#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
 [#1478]: https://github.com/CosmWasm/cosmwasm/pull/1478
+[#1481]: https://github.com/CosmWasm/cosmwasm/pull/1481
+[#1485]: https://github.com/CosmWasm/cosmwasm/issues/1485
 [#1513]: https://github.com/CosmWasm/cosmwasm/pull/1513
 [#1533]: https://github.com/CosmWasm/cosmwasm/pull/1533
 [#1550]: https://github.com/CosmWasm/cosmwasm/issues/1550
@@ -45,6 +49,7 @@ and this project adheres to
 [#1554]: https://github.com/CosmWasm/cosmwasm/pull/1554
 [#1560]: https://github.com/CosmWasm/cosmwasm/pull/1560
 [#1561]: https://github.com/CosmWasm/cosmwasm/pull/1561
+[#1566]: https://github.com/CosmWasm/cosmwasm/pull/1566
 
 ### Changed
 
