@@ -35,6 +35,17 @@ impl<T: Copy + From<u8> + PartialEq> Fraction<T> for (T, T) {
 macro_rules! impl_mul_fraction {
     ($Uint:ident) => {
         impl $Uint {
+            /// Multiply `self` with a struct implementing [`Fraction`] (e.g. [`crate::Decimal`]).
+            /// Result is rounded down.
+            ///
+            /// ## Examples
+            ///
+            /// ```
+            /// use cosmwasm_std::Uint128;
+            /// let fraction = (8u128, 21u128);
+            /// let res = Uint128::new(123456).checked_mul_floor(fraction).unwrap();
+            /// assert_eq!(Uint128::new(47030), res); // 47030.8571 rounds down
+            /// ```
             pub fn checked_mul_floor<F: Fraction<T>, T: Into<$Uint>>(
                 self,
                 rhs: F,
@@ -46,10 +57,22 @@ macro_rules! impl_mul_fraction {
                 Ok(res.try_into()?)
             }
 
+            /// Same operation as `checked_mul_floor` except unwrapped
             pub fn mul_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_floor(rhs).unwrap()
             }
 
+            /// Multiply `self` with a struct implementing [`Fraction`] (e.g. [`crate::Decimal`]).
+            /// Result is rounded up.
+            ///
+            /// ## Examples
+            ///
+            /// ```
+            /// use cosmwasm_std::Uint128;
+            /// let fraction = (8u128, 21u128);
+            /// let res = Uint128::new(123456).checked_mul_ceil(fraction).unwrap();
+            /// assert_eq!(Uint128::new(47031), res); // 47030.8571 rounds up
+            /// ```
             pub fn checked_mul_ceil<F: Fraction<T>, T: Into<$Uint>>(
                 self,
                 rhs: F,
@@ -65,17 +88,22 @@ macro_rules! impl_mul_fraction {
                 }
             }
 
+            /// Same operation as `checked_mul_ceil` except unwrapped
             pub fn mul_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self {
                 self.checked_mul_ceil(rhs).unwrap()
             }
 
-            pub fn div_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
-            where
-                Self: Sized,
-            {
-                self.checked_div_floor(rhs).unwrap()
-            }
-
+            /// Divide `self` with a struct implementing [`Fraction`] (e.g. [`crate::Decimal`]).
+            /// Result is rounded down.
+            ///
+            /// ## Examples
+            ///
+            /// ```
+            /// use cosmwasm_std::Uint128;
+            /// let fraction = (4u128, 5u128);
+            /// let res = Uint128::new(789).checked_div_floor(fraction).unwrap();
+            /// assert_eq!(Uint128::new(986), res); // 986.25 rounds down
+            /// ```
             pub fn checked_div_floor<F: Fraction<T>, T: Into<$Uint>>(
                 self,
                 rhs: F,
@@ -90,13 +118,25 @@ macro_rules! impl_mul_fraction {
                 Ok(res.try_into()?)
             }
 
-            pub fn div_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
+            /// Same operation as `checked_div_floor` except unwrapped
+            pub fn div_floor<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
             where
                 Self: Sized,
             {
-                self.checked_div_ceil(rhs).unwrap()
+                self.checked_div_floor(rhs).unwrap()
             }
 
+            /// Divide `self` with a struct implementing [`Fraction`] (e.g. [`crate::Decimal`]).
+            /// Result is rounded up.
+            ///
+            /// ## Examples
+            ///
+            /// ```
+            /// use cosmwasm_std::Uint128;
+            /// let fraction = (4u128, 5u128);
+            /// let res = Uint128::new(789).checked_div_ceil(fraction).unwrap();
+            /// assert_eq!(Uint128::new(987), res); // 986.25 rounds up
+            /// ```
             pub fn checked_div_ceil<F: Fraction<T>, T: Into<$Uint>>(
                 self,
                 rhs: F,
@@ -113,6 +153,14 @@ macro_rules! impl_mul_fraction {
                 } else {
                     Ok(floor_result)
                 }
+            }
+
+            /// Same operation as `checked_div_ceil` except unwrapped
+            pub fn div_ceil<F: Fraction<T>, T: Into<$Uint>>(self, rhs: F) -> Self
+            where
+                Self: Sized,
+            {
+                self.checked_div_ceil(rhs).unwrap()
             }
         }
     };
