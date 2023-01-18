@@ -54,11 +54,10 @@ macro_rules! impl_mul_fraction {
                 self,
                 rhs: F,
             ) -> Result<Self, CheckedMultiplyFractionError> {
-                let divisor = rhs.denominator().into();
-                let remainder = self
-                    .full_mul(rhs.numerator().into())
-                    .checked_rem(divisor.into())?;
-                let floor_result = self.checked_mul_floor(rhs)?;
+                let dividend = self.full_mul(rhs.numerator().into());
+                let divisor = rhs.denominator().into().into();
+                let floor_result = dividend.checked_div(divisor)?.try_into()?;
+                let remainder = dividend.checked_rem(divisor)?;
                 if !remainder.is_zero() {
                     Ok($Uint::one().checked_add(floor_result)?)
                 } else {
@@ -105,11 +104,10 @@ macro_rules! impl_mul_fraction {
             where
                 Self: Sized,
             {
-                let divisor = rhs.numerator().into();
-                let remainder = self
-                    .full_mul(rhs.denominator().into())
-                    .checked_rem(divisor.into())?;
-                let floor_result = self.checked_div_floor(rhs)?;
+                let dividend = self.full_mul(rhs.denominator().into());
+                let divisor = rhs.numerator().into().into();
+                let floor_result = dividend.checked_div(divisor)?.try_into()?;
+                let remainder = dividend.checked_rem(divisor)?;
                 if !remainder.is_zero() {
                     Ok($Uint::one().checked_add(floor_result)?)
                 } else {
