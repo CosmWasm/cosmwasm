@@ -19,7 +19,7 @@ use super::super::errors::SystemError;
 /// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult};
 /// let data = Binary::from(b"hello, world");
 /// let result = SystemResult::Ok(ContractResult::Ok(data));
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"ok":"aGVsbG8sIHdvcmxk"}}"#);
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"Ok":{"Ok":"aGVsbG8sIHdvcmxk"}}"#);
 /// ```
 ///
 /// Failure:
@@ -29,13 +29,11 @@ use super::super::errors::SystemError;
 /// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult, SystemError};
 /// let error = SystemError::Unknown {};
 /// let result: SystemResult<Binary> = SystemResult::Err(error);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"Err":{"unknown":{}}}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum SystemResult<S> {
     Ok(S),
-    #[serde(rename = "error")]
     Err(SystemError),
 }
 
