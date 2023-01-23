@@ -6,6 +6,7 @@ use crate::Binary;
 use crate::Empty;
 
 mod bank;
+mod distribution;
 mod ibc;
 mod query_response;
 mod staking;
@@ -16,6 +17,8 @@ pub use bank::SupplyResponse;
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
 #[cfg(feature = "cosmwasm_1_3")]
 pub use bank::{AllDenomMetadataResponse, DenomMetadataResponse};
+#[cfg(feature = "staking")]
+pub use distribution::DistributionQuery;
 #[cfg(feature = "stargate")]
 pub use ibc::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "staking")]
