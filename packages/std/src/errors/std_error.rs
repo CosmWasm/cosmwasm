@@ -543,7 +543,7 @@ impl ConversionOverflowError {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
-#[error("Cannot devide {operand} by zero")]
+#[error("Cannot divide {operand} by zero")]
 pub struct DivideByZeroError {
     pub operand: String,
 }
@@ -554,6 +554,18 @@ impl DivideByZeroError {
             operand: operand.to_string(),
         }
     }
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum CheckedMultiplyFractionError {
+    #[error("{0}")]
+    DivideByZero(#[from] DivideByZeroError),
+
+    #[error("{0}")]
+    ConversionOverflow(#[from] ConversionOverflowError),
+
+    #[error("{0}")]
+    Overflow(#[from] OverflowError),
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]

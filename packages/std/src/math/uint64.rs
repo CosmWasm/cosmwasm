@@ -7,9 +7,10 @@ use std::ops::{
 };
 
 use crate::errors::{
-    CheckedMultiplyRatioError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
 };
-use crate::Uint128;
+use crate::{impl_mul_fraction, Fraction, Uint128};
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
 /// such that the full u64 range can be used for clients that convert JSON numbers to floats,
@@ -225,6 +226,8 @@ impl Uint64 {
         })
     }
 }
+
+impl_mul_fraction!(Uint64);
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
 // using `impl<T: Into<u64>> From<T> for Uint64` because
@@ -492,7 +495,8 @@ impl PartialEq<Uint64> for &Uint64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
+    use crate::{from_slice, to_vec, ConversionOverflowError};
 
     #[test]
     fn size_of_works() {
@@ -954,5 +958,261 @@ mod tests {
             assert_eq!(lhs == &rhs, expected);
             assert_eq!(&lhs == &rhs, expected);
         }
+    }
+
+    #[test]
+    fn mul_floor_works_with_zero() {
+        let fraction = (0u32, 21u32);
+        let res = Uint64::new(123456).mul_floor(fraction);
+        assert_eq!(Uint64::zero(), res)
+    }
+
+    #[test]
+    fn mul_floor_does_nothing_with_one() {
+        let fraction = (Uint64::one(), Uint64::one());
+        let res = Uint64::new(123456).mul_floor(fraction);
+        assert_eq!(Uint64::new(123456), res)
+    }
+
+    #[test]
+    fn mul_floor_rounds_down_with_normal_case() {
+        let fraction = (8u64, 21u64);
+        let res = Uint64::new(123456).mul_floor(fraction); // 47030.8571
+        assert_eq!(Uint64::new(47030), res)
+    }
+
+    #[test]
+    fn mul_floor_does_not_round_on_even_divide() {
+        let fraction = (2u64, 5u64);
+        let res = Uint64::new(25).mul_floor(fraction);
+        assert_eq!(Uint64::new(10), res)
+    }
+
+    #[test]
+    fn mul_floor_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (8u64, 21u64);
+        let res = Uint64::MAX.mul_floor(fraction); // 7_027_331_075_698_876_805.71428571
+        assert_eq!(Uint64::new(7_027_331_075_698_876_805), res)
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn mul_floor_panics_on_overflow() {
+        let fraction = (21u64, 8u64);
+        Uint64::MAX.mul_floor(fraction);
+    }
+
+    #[test]
+    fn checked_mul_floor_does_not_panic_on_overflow() {
+        let fraction = (21u64, 8u64);
+        assert_eq!(
+            Uint64::MAX.checked_mul_floor(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint128",
+                target_type: "Uint64",
+                value: "48422703193487572989".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn mul_floor_panics_on_zero_div() {
+        let fraction = (21u64, 0u64);
+        Uint64::new(123456).mul_floor(fraction);
+    }
+
+    #[test]
+    fn checked_mul_floor_does_not_panic_on_zero_div() {
+        let fraction = (21u64, 0u64);
+        assert_eq!(
+            Uint64::new(123456).checked_mul_floor(fraction),
+            Err(DivideByZero(DivideByZeroError {
+                operand: "2592576".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    fn mul_ceil_works_with_zero() {
+        let fraction = (Uint64::zero(), Uint64::new(21));
+        let res = Uint64::new(123456).mul_ceil(fraction);
+        assert_eq!(Uint64::zero(), res)
+    }
+
+    #[test]
+    fn mul_ceil_does_nothing_with_one() {
+        let fraction = (Uint64::one(), Uint64::one());
+        let res = Uint64::new(123456).mul_ceil(fraction);
+        assert_eq!(Uint64::new(123456), res)
+    }
+
+    #[test]
+    fn mul_ceil_rounds_up_with_normal_case() {
+        let fraction = (8u64, 21u64);
+        let res = Uint64::new(123456).mul_ceil(fraction); // 47030.8571
+        assert_eq!(Uint64::new(47031), res)
+    }
+
+    #[test]
+    fn mul_ceil_does_not_round_on_even_divide() {
+        let fraction = (2u64, 5u64);
+        let res = Uint64::new(25).mul_ceil(fraction);
+        assert_eq!(Uint64::new(10), res)
+    }
+
+    #[test]
+    fn mul_ceil_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (8u64, 21u64);
+        let res = Uint64::MAX.mul_ceil(fraction); // 7_027_331_075_698_876_805.71428571
+        assert_eq!(Uint64::new(7_027_331_075_698_876_806), res)
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn mul_ceil_panics_on_overflow() {
+        let fraction = (21u64, 8u64);
+        Uint64::MAX.mul_ceil(fraction);
+    }
+
+    #[test]
+    fn checked_mul_ceil_does_not_panic_on_overflow() {
+        let fraction = (21u64, 8u64);
+        assert_eq!(
+            Uint64::MAX.checked_mul_ceil(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint128",
+                target_type: "Uint64",
+                value: "48422703193487572989".to_string() // raises prior to rounding up
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn mul_ceil_panics_on_zero_div() {
+        let fraction = (21u64, 0u64);
+        Uint64::new(123456).mul_ceil(fraction);
+    }
+
+    #[test]
+    fn checked_mul_ceil_does_not_panic_on_zero_div() {
+        let fraction = (21u64, 0u64);
+        assert_eq!(
+            Uint64::new(123456).checked_mul_ceil(fraction),
+            Err(DivideByZero(DivideByZeroError {
+                operand: "2592576".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn div_floor_raises_with_zero() {
+        let fraction = (Uint64::zero(), Uint64::new(21));
+        Uint64::new(123456).div_floor(fraction);
+    }
+
+    #[test]
+    fn div_floor_does_nothing_with_one() {
+        let fraction = (Uint64::one(), Uint64::one());
+        let res = Uint64::new(123456).div_floor(fraction);
+        assert_eq!(Uint64::new(123456), res)
+    }
+
+    #[test]
+    fn div_floor_rounds_down_with_normal_case() {
+        let fraction = (5u64, 21u64);
+        let res = Uint64::new(123456).div_floor(fraction); // 518515.2
+        assert_eq!(Uint64::new(518515), res)
+    }
+
+    #[test]
+    fn div_floor_does_not_round_on_even_divide() {
+        let fraction = (5u64, 2u64);
+        let res = Uint64::new(25).div_floor(fraction);
+        assert_eq!(Uint64::new(10), res)
+    }
+
+    #[test]
+    fn div_floor_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (21u64, 8u64);
+        let res = Uint64::MAX.div_floor(fraction); // 7_027_331_075_698_876_805.71428
+        assert_eq!(Uint64::new(7_027_331_075_698_876_805), res)
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn div_floor_panics_on_overflow() {
+        let fraction = (8u64, 21u64);
+        Uint64::MAX.div_floor(fraction);
+    }
+
+    #[test]
+    fn div_floor_does_not_panic_on_overflow() {
+        let fraction = (8u64, 21u64);
+        assert_eq!(
+            Uint64::MAX.checked_div_floor(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint128",
+                target_type: "Uint64",
+                value: "48422703193487572989".to_string()
+            })),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "DivideByZeroError")]
+    fn div_ceil_raises_with_zero() {
+        let fraction = (Uint64::zero(), Uint64::new(21));
+        Uint64::new(123456).div_ceil(fraction);
+    }
+
+    #[test]
+    fn div_ceil_does_nothing_with_one() {
+        let fraction = (Uint64::one(), Uint64::one());
+        let res = Uint64::new(123456).div_ceil(fraction);
+        assert_eq!(Uint64::new(123456), res)
+    }
+
+    #[test]
+    fn div_ceil_rounds_up_with_normal_case() {
+        let fraction = (5u64, 21u64);
+        let res = Uint64::new(123456).div_ceil(fraction); // 518515.2
+        assert_eq!(Uint64::new(518516), res)
+    }
+
+    #[test]
+    fn div_ceil_does_not_round_on_even_divide() {
+        let fraction = (5u64, 2u64);
+        let res = Uint64::new(25).div_ceil(fraction);
+        assert_eq!(Uint64::new(10), res)
+    }
+
+    #[test]
+    fn div_ceil_works_when_operation_temporarily_takes_above_max() {
+        let fraction = (21u64, 8u64);
+        let res = Uint64::MAX.div_ceil(fraction); // 7_027_331_075_698_876_805.71428
+        assert_eq!(Uint64::new(7_027_331_075_698_876_806), res)
+    }
+
+    #[test]
+    #[should_panic(expected = "ConversionOverflowError")]
+    fn div_ceil_panics_on_overflow() {
+        let fraction = (8u64, 21u64);
+        Uint64::MAX.div_ceil(fraction);
+    }
+
+    #[test]
+    fn div_ceil_does_not_panic_on_overflow() {
+        let fraction = (8u64, 21u64);
+        assert_eq!(
+            Uint64::MAX.checked_div_ceil(fraction),
+            Err(ConversionOverflow(ConversionOverflowError {
+                source_type: "Uint128",
+                target_type: "Uint64",
+                value: "48422703193487572989".to_string()
+            })),
+        );
     }
 }
