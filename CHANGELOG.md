@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.2.0] - 2023-01-24
+
 ### Added
 
 - cosmwasm-std: Add `GovMsg::VoteWeighted`. In order to use this in a contract,
@@ -1608,7 +1610,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...v1.2.0
 [1.1.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...v1.1.8
 [1.1.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.5...v1.1.6
