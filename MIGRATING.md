@@ -4,6 +4,47 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 1.1.x -> 1.2.0
+
+- Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "1.2.0"
+  cosmwasm-storage = "1.2.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "1.2.0"
+  cosmwasm-vm = "1.2.0"
+  # ...
+  ```
+
+- If you want to use a fewture that os only available on CosmWasm 1.2+ chains,
+  use this feature:
+
+  ```diff
+  -cosmwasm-std = { version = "1.1.0", features = ["stargate"] }
+  +cosmwasm-std = { version = "1.1.0", features = ["stargate", "cosmwasm_1_2"] }
+  ```
+
+  Please note that `cosmwasm_1_2` implies `cosmwasm_1_1`, so there is no need to
+  set both.
+
+- If you use mixed type multiplication between `Uint{64,128,256}` and
+  `Decimal{,256}`, check out
+  `mul_floor`/`checked_mul_floor`/`mul_ceil`/`checked_mul_ceil`. Mixed type
+  arithmetic [will be removed](https://github.com/CosmWasm/cosmwasm/issues/1485)
+  at some point.
+
+  ```diff
+  let a = Uint128::new(123);
+  let b = Decimal::percent(150)
+
+  -let c = a * b;
+  +let c = a.mul_floor(b);
+  ```
+
 ## 1.0.0 -> 1.1.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
