@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Make fields of `WeightedVoteOption` public to allow constructing
+  it ([#1597]).
+
+[#1597]: https://github.com/CosmWasm/cosmwasm/issues/1597
+
 ## [1.2.0] - 2023-01-24
 
 ### Added

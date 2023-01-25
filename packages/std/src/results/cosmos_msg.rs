@@ -203,6 +203,75 @@ pub enum WasmMsg {
     ClearAdmin { contract_addr: String },
 }
 
+/// This message type allows the contract interact with the [x/gov] module in order
+/// to cast votes.
+///
+/// [x/gov]: https://github.com/cosmos/cosmos-sdk/tree/v0.45.12/x/gov
+///
+/// ## Examples
+///
+/// Cast a simple vote:
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     HexBinary,
+/// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+/// #     Response, QueryResponse,
+/// # };
+/// # type ExecuteMsg = ();
+/// use cosmwasm_std::{GovMsg, VoteOption};
+///
+/// #[entry_point]
+/// pub fn execute(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: ExecuteMsg,
+/// ) -> Result<Response, StdError> {
+///     // ...
+///     Ok(Response::new().add_message(GovMsg::Vote {
+///         proposal_id: 4,
+///         vote: VoteOption::Yes,
+///     }))
+/// }
+/// ```
+///
+/// Cast a weighted vote:
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     HexBinary,
+/// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+/// #     Response, QueryResponse,
+/// # };
+/// # type ExecuteMsg = ();
+/// # #[cfg(feature = "cosmwasm_1_2")]
+/// use cosmwasm_std::{Decimal, GovMsg, VoteOption, WeightedVoteOption};
+///
+/// # #[cfg(feature = "cosmwasm_1_2")]
+/// #[entry_point]
+/// pub fn execute(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: ExecuteMsg,
+/// ) -> Result<Response, StdError> {
+///     // ...
+///     Ok(Response::new().add_message(GovMsg::VoteWeighted {
+///         proposal_id: 4,
+///         options: vec![
+///             WeightedVoteOption {
+///                 option: VoteOption::Yes,
+///                 weight: Decimal::percent(65),
+///             },
+///             WeightedVoteOption {
+///                 option: VoteOption::Abstain,
+///                 weight: Decimal::percent(35),
+///             },
+///         ],
+///     }))
+/// }
+/// ```
 #[cfg(feature = "stargate")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -237,8 +306,8 @@ pub enum VoteOption {
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct WeightedVoteOption {
-    option: VoteOption,
-    weight: Decimal,
+    pub option: VoteOption,
+    pub weight: Decimal,
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
