@@ -1,0 +1,3 @@
+{
+  "rust-analyzer.cargo.features": ["abort", "stargate", "staking", "cosmwasm_1_2"]
+}

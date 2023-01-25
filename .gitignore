@@ -9,7 +9,6 @@ target/
 artifacts/
 
 # IDEs
-.vscode/
 .idea/
 *.iml
 
