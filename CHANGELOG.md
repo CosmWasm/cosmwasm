@@ -13,6 +13,13 @@ and this project adheres to
 
 [#1597]: https://github.com/CosmWasm/cosmwasm/issues/1597
 
+### Changed
+
+- cosmwasm-std: Improve readability of `Debug` output for `Decimal` and
+  `Decimal256` ([#1600]).
+
+[#1600]: https://github.com/CosmWasm/cosmwasm/pull/1600
+
 ## [1.2.0] - 2023-01-24
 
 ### Added

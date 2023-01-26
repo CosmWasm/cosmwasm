@@ -22,7 +22,7 @@ use super::Uint256;
 /// The greatest possible value that can be represented is
 /// 115792089237316195423570985008687907853269984665640564039457.584007913129639935
 /// (which is (2^256 - 1) / 10^18)
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
 
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -479,6 +479,12 @@ impl fmt::Display for Decimal256 {
             f.write_str(fractional_string.trim_end_matches('0'))?;
             Ok(())
         }
+    }
+}
+
+impl fmt::Debug for Decimal256 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Decimal256({})", self)
     }
 }
 
@@ -2160,6 +2166,19 @@ mod tests {
             assert_eq!(&lhs == rhs, expected);
             assert_eq!(lhs == &rhs, expected);
             assert_eq!(&lhs == &rhs, expected);
+        }
+    }
+
+    #[test]
+    fn decimal256_implements_debug() {
+        let decimal = Decimal256::from_str("123.45").unwrap();
+        assert_eq!(format!("{:?}", decimal), "Decimal256(123.45)");
+
+        let test_cases = ["5", "5.01", "42", "0", "2"];
+        for s in test_cases {
+            let decimal256 = Decimal256::from_str(s).unwrap();
+            let expected = format!("Decimal256({})", s);
+            assert_eq!(format!("{:?}", decimal256), expected);
         }
     }
 }
