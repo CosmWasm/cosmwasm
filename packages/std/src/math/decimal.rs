@@ -459,7 +459,7 @@ impl fmt::Display for Decimal {
 
 impl fmt::Debug for Decimal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "Decimal({})", self)
     }
 }
 
@@ -2028,7 +2028,7 @@ mod tests {
 
         for s in test_cases {
             let decimal = Decimal::from_str(s).unwrap();
-            assert_eq!(s, format!("{:?}", decimal));
+            assert_eq!(format!("Decimal({})", s), format!("{:?}", decimal));
         }
     }
 }
