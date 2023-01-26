@@ -357,6 +357,54 @@ impl Decimal {
             Err(_) => Self::MAX,
         }
     }
+
+    /// Converts this decimal to an unsigned integer by truncating
+    /// the fractional part, e.g. 22.5 becomes 22.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal, Uint128};
+    ///
+    /// let d = Decimal::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint128::new(12));
+    ///
+    /// let d = Decimal::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint128::new(12));
+    ///
+    /// let d = Decimal::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint128::new(75));
+    /// ```
+    pub fn to_uint_floor(self) -> Uint128 {
+        self.0 / Self::DECIMAL_FRACTIONAL
+    }
+
+    /// Converts this decimal to an unsigned integer by rounting up
+    /// to the next integer, e.g. 22.3 becomes 23.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal, Uint128};
+    ///
+    /// let d = Decimal::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+    ///
+    /// let d = Decimal::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+    ///
+    /// let d = Decimal::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint128::new(75));
+    /// ```
+    pub fn to_uint_ceil(self) -> Uint128 {
+        if (self.0 % Self::DECIMAL_FRACTIONAL).is_zero() {
+            self.0 / Self::DECIMAL_FRACTIONAL
+        } else {
+            self.0 / Self::DECIMAL_FRACTIONAL + Uint128::one()
+        }
+    }
 }
 
 impl Fraction<Uint128> for Decimal {

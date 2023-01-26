@@ -374,6 +374,54 @@ impl Decimal256 {
             Err(_) => Self::MAX,
         }
     }
+
+    /// Converts this decimal to an unsigned integer by truncating
+    /// the fractional part, e.g. 22.5 becomes 22.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal256, Uint256};
+    ///
+    /// let d = Decimal256::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint256::from(12u64));
+    ///
+    /// let d = Decimal256::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint256::from(12u64));
+    ///
+    /// let d = Decimal256::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint256::from(75u64));
+    /// ```
+    pub fn to_uint_floor(self) -> Uint256 {
+        self.0 / Self::DECIMAL_FRACTIONAL
+    }
+
+    /// Converts this decimal to an unsigned integer by rounting up
+    /// to the next integer, e.g. 22.3 becomes 23.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal256, Uint256};
+    ///
+    /// let d = Decimal256::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint256::from(13u64));
+    ///
+    /// let d = Decimal256::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint256::from(13u64));
+    ///
+    /// let d = Decimal256::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint256::from(75u64));
+    /// ```
+    pub fn to_uint_ceil(self) -> Uint256 {
+        if (self.0 % Self::DECIMAL_FRACTIONAL).is_zero() {
+            self.0 / Self::DECIMAL_FRACTIONAL
+        } else {
+            self.0 / Self::DECIMAL_FRACTIONAL + Uint256::one()
+        }
+    }
 }
 
 impl Fraction<Uint256> for Decimal256 {
