@@ -19,7 +19,7 @@ use super::{Uint128, Uint256};
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] Uint128);
 
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -454,6 +454,12 @@ impl fmt::Display for Decimal {
             f.write_str(fractional_string.trim_end_matches('0'))?;
             Ok(())
         }
+    }
+}
+
+impl fmt::Debug for Decimal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 
@@ -2013,6 +2019,16 @@ mod tests {
             assert_eq!(&lhs == rhs, expected);
             assert_eq!(lhs == &rhs, expected);
             assert_eq!(&lhs == &rhs, expected);
+        }
+    }
+
+    #[test]
+    fn decimal_implements_debug() {
+        let test_cases = ["5", "5.01", "42", "0", "2"];
+
+        for s in test_cases {
+            let decimal = Decimal::from_str(s).unwrap();
+            assert_eq!(s, format!("{:?}", decimal));
         }
     }
 }
