@@ -484,7 +484,7 @@ impl fmt::Display for Decimal256 {
 
 impl fmt::Debug for Decimal256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self)
+        write!(f, "Decimal256({})", self)
     }
 }
 
@@ -2175,7 +2175,7 @@ mod tests {
 
         for s in test_cases {
             let decimal256 = Decimal256::from_str(s).unwrap();
-            assert_eq!(s, format!("{:?}", decimal256));
+            assert_eq!(format!("Decimal256({})", s), format!("{:?}", decimal256));
         }
     }
 }
