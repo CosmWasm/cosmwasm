@@ -2171,11 +2171,14 @@ mod tests {
 
     #[test]
     fn decimal256_implements_debug() {
-        let test_cases = ["5", "5.01", "42", "0", "2"];
+        let decimal = Decimal256::from_str("123.45").unwrap();
+        assert_eq!(format!("{:?}", decimal), "Decimal256(123.45)");
 
+        let test_cases = ["5", "5.01", "42", "0", "2"];
         for s in test_cases {
             let decimal256 = Decimal256::from_str(s).unwrap();
-            assert_eq!(format!("Decimal256({})", s), format!("{:?}", decimal256));
+            let expected = format!("Decimal256({})", s);
+            assert_eq!(format!("{:?}", decimal256), expected);
         }
     }
 }

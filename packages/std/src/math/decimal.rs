@@ -2024,11 +2024,14 @@ mod tests {
 
     #[test]
     fn decimal_implements_debug() {
-        let test_cases = ["5", "5.01", "42", "0", "2"];
+        let decimal = Decimal::from_str("123.45").unwrap();
+        assert_eq!(format!("{:?}", decimal), "Decimal(123.45)");
 
+        let test_cases = ["5", "5.01", "42", "0", "2"];
         for s in test_cases {
             let decimal = Decimal::from_str(s).unwrap();
-            assert_eq!(format!("Decimal({})", s), format!("{:?}", decimal));
+            let expected = format!("Decimal({})", s);
+            assert_eq!(format!("{:?}", decimal), expected);
         }
     }
 }
