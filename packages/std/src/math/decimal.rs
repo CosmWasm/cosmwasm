@@ -2051,6 +2051,42 @@ mod tests {
     }
 
     #[test]
+    fn decimal_to_uint_floor_works() {
+        let d = Decimal::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(12));
+        let d = Decimal::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(12));
+        let d = Decimal::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(12));
+
+        let d = Decimal::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(75));
+        let d = Decimal::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(0));
+
+        let d = Decimal::MAX;
+        assert_eq!(d.to_uint_floor(), Uint128::new(340282366920938463463));
+    }
+
+    #[test]
+    fn decimal_to_uint_ceil_works() {
+        let d = Decimal::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+        let d = Decimal::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+        let d = Decimal::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+
+        let d = Decimal::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(75));
+        let d = Decimal::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(0));
+
+        let d = Decimal::MAX;
+        assert_eq!(d.to_uint_ceil(), Uint128::new(340282366920938463464));
+    }
+
+    #[test]
     fn decimal_partial_eq() {
         let test_cases = [
             ("1", "1", true),

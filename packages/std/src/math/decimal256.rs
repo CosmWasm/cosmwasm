@@ -2198,6 +2198,50 @@ mod tests {
     }
 
     #[test]
+    fn decimal256_to_uint_floor_works() {
+        let d = Decimal256::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        let d = Decimal256::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        let d = Decimal256::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+
+        let d = Decimal256::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(75));
+        let d = Decimal256::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(0));
+
+        let d = Decimal256::MAX;
+        assert_eq!(
+            d.to_uint_floor(),
+            Uint256::from_str("115792089237316195423570985008687907853269984665640564039457")
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn decimal256_to_uint_ceil_works() {
+        let d = Decimal256::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        let d = Decimal256::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        let d = Decimal256::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+
+        let d = Decimal256::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(75));
+        let d = Decimal256::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(0));
+
+        let d = Decimal256::MAX;
+        assert_eq!(
+            d.to_uint_ceil(),
+            Uint256::from_str("115792089237316195423570985008687907853269984665640564039458")
+                .unwrap()
+        );
+    }
+
+    #[test]
     fn decimal256_partial_eq() {
         let test_cases = [
             ("1", "1", true),
