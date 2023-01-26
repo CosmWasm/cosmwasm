@@ -292,11 +292,8 @@ mod tests {
             let message_hash = Sha256::digest(message);
 
             // secp256k1_verify works
-            assert!(
-                secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
-                "secp256k1_verify() failed (test case {})",
-                i
-            );
+            let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
+            assert!(valid, "secp256k1_verify() failed (test case {i})",);
         }
     }
 
@@ -318,10 +315,10 @@ mod tests {
             assert_eq!(hash.as_slice(), message_hash.as_slice());
 
             // secp256k1_verify() works
+            let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
             assert!(
-                secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
-                "verify() failed (test case {})",
-                i
+                valid,
+                "secp256k1_verify failed (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"
             );
         }
     }
