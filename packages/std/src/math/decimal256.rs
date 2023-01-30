@@ -2223,6 +2223,19 @@ mod tests {
             Uint256::from_str("115792089237316195423570985008687907853269984665640564039457")
                 .unwrap()
         );
+
+        // Does the same as the old workaround `Uint256::one() * my_decimal`.
+        // This block can be deleted as part of https://github.com/CosmWasm/cosmwasm/issues/1485.
+        let tests = vec![
+            Decimal256::from_str("12.345").unwrap(),
+            Decimal256::from_str("0.98451384").unwrap(),
+            Decimal256::from_str("178.0").unwrap(),
+            Decimal256::MIN,
+            Decimal256::MAX,
+        ];
+        for my_decimal in tests.into_iter() {
+            assert_eq!(my_decimal.to_uint_floor(), Uint256::one() * my_decimal);
+        }
     }
 
     #[test]
