@@ -416,10 +416,14 @@ impl Decimal256 {
     /// assert_eq!(d.to_uint_ceil(), Uint256::from(75u64));
     /// ```
     pub fn to_uint_ceil(self) -> Uint256 {
-        if (self.0 % Self::DECIMAL_FRACTIONAL).is_zero() {
-            self.0 / Self::DECIMAL_FRACTIONAL
+        // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
+        // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
+        let x = self.0;
+        let y = Self::DECIMAL_FRACTIONAL;
+        if x.is_zero() {
+            Uint256::zero()
         } else {
-            self.0 / Self::DECIMAL_FRACTIONAL + Uint256::one()
+            Uint256::one() + ((x - Uint256::one()) / y)
         }
     }
 }

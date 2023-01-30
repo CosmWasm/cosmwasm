@@ -399,10 +399,14 @@ impl Decimal {
     /// assert_eq!(d.to_uint_ceil(), Uint128::new(75));
     /// ```
     pub fn to_uint_ceil(self) -> Uint128 {
-        if (self.0 % Self::DECIMAL_FRACTIONAL).is_zero() {
-            self.0 / Self::DECIMAL_FRACTIONAL
+        // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
+        // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
+        let x = self.0;
+        let y = Self::DECIMAL_FRACTIONAL;
+        if x.is_zero() {
+            Uint128::zero()
         } else {
-            self.0 / Self::DECIMAL_FRACTIONAL + Uint128::one()
+            Uint128::one() + ((x - Uint128::one()) / y)
         }
     }
 }
