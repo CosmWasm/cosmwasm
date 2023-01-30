@@ -2209,6 +2209,8 @@ mod tests {
         assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
         let d = Decimal256::from_str("12.999").unwrap();
         assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        let d = Decimal256::from_str("0.98451384").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(0));
 
         let d = Decimal256::from_str("75.0").unwrap();
         assert_eq!(d.to_uint_floor(), Uint256::from_u128(75));

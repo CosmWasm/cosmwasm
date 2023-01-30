@@ -2062,6 +2062,8 @@ mod tests {
         assert_eq!(d.to_uint_floor(), Uint128::new(12));
         let d = Decimal::from_str("12.999").unwrap();
         assert_eq!(d.to_uint_floor(), Uint128::new(12));
+        let d = Decimal::from_str("0.98451384").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(0));
 
         let d = Decimal::from_str("75.0").unwrap();
         assert_eq!(d.to_uint_floor(), Uint128::new(75));
