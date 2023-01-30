@@ -7,6 +7,24 @@
 ///
 /// Once the ! type is stable, this is not needed anymore.
 /// See <https://github.com/rust-lang/rust/issues/35121>.
+///
+/// ## Examples
+///
+/// When using `Never` in a `Result`, we can unwrap in a type-safe way:
+///
+/// ```
+/// use cosmwasm_std::Never;
+///
+/// pub fn safe_unwrap<T>(res: Result<T, Never>) -> T {
+///     match res {
+///         Ok(value) => value,
+///         Err(err) => match err {},
+///     }
+/// }
+///
+/// let res: Result<i32, Never> = Ok(5);
+/// assert_eq!(safe_unwrap(res), 5);
+/// ```
 pub enum Never {}
 
 // The Debug implementation is needed to allow the use of `Result::unwrap`.
