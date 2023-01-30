@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     entry_point, instantiate2_address, to_binary, Attribute, Binary, CodeInfoResponse,
-    ContractInfoResponse, DepsMut, Env, MessageInfo, Response, StdError, StdResult, WasmMsg,
+    ContractInfoResponse, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 
 use crate::errors::ContractError;
@@ -13,9 +13,7 @@ pub fn instantiate(
     _info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    Err(StdError::generic_err(
-        "You can only use this contract for migrations",
-    ))
+    Ok(Response::new())
 }
 
 #[entry_point]
@@ -96,4 +94,18 @@ pub fn execute_spread(
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+
+    const CREATOR: &str = "creator";
+
+    #[test]
+    fn instantiate_works() {
+        let mut deps = mock_dependencies();
+        let msg = InstantiateMsg {};
+        let info = mock_info(CREATOR, &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+    }
+}
