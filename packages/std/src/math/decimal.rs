@@ -357,6 +357,58 @@ impl Decimal {
             Err(_) => Self::MAX,
         }
     }
+
+    /// Converts this decimal to an unsigned integer by truncating
+    /// the fractional part, e.g. 22.5 becomes 22.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal, Uint128};
+    ///
+    /// let d = Decimal::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint128::new(12));
+    ///
+    /// let d = Decimal::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint128::new(12));
+    ///
+    /// let d = Decimal::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint128::new(75));
+    /// ```
+    pub fn to_uint_floor(self) -> Uint128 {
+        self.0 / Self::DECIMAL_FRACTIONAL
+    }
+
+    /// Converts this decimal to an unsigned integer by rounting up
+    /// to the next integer, e.g. 22.3 becomes 23.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal, Uint128};
+    ///
+    /// let d = Decimal::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+    ///
+    /// let d = Decimal::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+    ///
+    /// let d = Decimal::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint128::new(75));
+    /// ```
+    pub fn to_uint_ceil(self) -> Uint128 {
+        // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
+        // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
+        let x = self.0;
+        let y = Self::DECIMAL_FRACTIONAL;
+        if x.is_zero() {
+            Uint128::zero()
+        } else {
+            Uint128::one() + ((x - Uint128::one()) / y)
+        }
+    }
 }
 
 impl Fraction<Uint128> for Decimal {
@@ -2000,6 +2052,57 @@ mod tests {
             Decimal::MAX.checked_ceil(),
             Err(RoundUpOverflowError { .. })
         ));
+    }
+
+    #[test]
+    fn decimal_to_uint_floor_works() {
+        let d = Decimal::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(12));
+        let d = Decimal::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(12));
+        let d = Decimal::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(12));
+        let d = Decimal::from_str("0.98451384").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(0));
+
+        let d = Decimal::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(75));
+        let d = Decimal::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint128::new(0));
+
+        let d = Decimal::MAX;
+        assert_eq!(d.to_uint_floor(), Uint128::new(340282366920938463463));
+
+        // Does the same as the old workaround `Uint128::one() * my_decimal`.
+        // This block can be deleted as part of https://github.com/CosmWasm/cosmwasm/issues/1485.
+        let tests = vec![
+            Decimal::from_str("12.345").unwrap(),
+            Decimal::from_str("0.98451384").unwrap(),
+            Decimal::from_str("178.0").unwrap(),
+            Decimal::MIN,
+            Decimal::MAX,
+        ];
+        for my_decimal in tests.into_iter() {
+            assert_eq!(my_decimal.to_uint_floor(), Uint128::one() * my_decimal);
+        }
+    }
+
+    #[test]
+    fn decimal_to_uint_ceil_works() {
+        let d = Decimal::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+        let d = Decimal::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+        let d = Decimal::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(13));
+
+        let d = Decimal::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(75));
+        let d = Decimal::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint128::new(0));
+
+        let d = Decimal::MAX;
+        assert_eq!(d.to_uint_ceil(), Uint128::new(340282366920938463464));
     }
 
     #[test]

@@ -374,6 +374,58 @@ impl Decimal256 {
             Err(_) => Self::MAX,
         }
     }
+
+    /// Converts this decimal to an unsigned integer by truncating
+    /// the fractional part, e.g. 22.5 becomes 22.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal256, Uint256};
+    ///
+    /// let d = Decimal256::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint256::from(12u64));
+    ///
+    /// let d = Decimal256::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint256::from(12u64));
+    ///
+    /// let d = Decimal256::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_floor(), Uint256::from(75u64));
+    /// ```
+    pub fn to_uint_floor(self) -> Uint256 {
+        self.0 / Self::DECIMAL_FRACTIONAL
+    }
+
+    /// Converts this decimal to an unsigned integer by rounting up
+    /// to the next integer, e.g. 22.3 becomes 23.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use std::str::FromStr;
+    /// use cosmwasm_std::{Decimal256, Uint256};
+    ///
+    /// let d = Decimal256::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint256::from(13u64));
+    ///
+    /// let d = Decimal256::from_str("12.999").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint256::from(13u64));
+    ///
+    /// let d = Decimal256::from_str("75.0").unwrap();
+    /// assert_eq!(d.to_uint_ceil(), Uint256::from(75u64));
+    /// ```
+    pub fn to_uint_ceil(self) -> Uint256 {
+        // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
+        // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
+        let x = self.0;
+        let y = Self::DECIMAL_FRACTIONAL;
+        if x.is_zero() {
+            Uint256::zero()
+        } else {
+            Uint256::one() + ((x - Uint256::one()) / y)
+        }
+    }
 }
 
 impl Fraction<Uint256> for Decimal256 {
@@ -2147,6 +2199,65 @@ mod tests {
             Ok(Decimal256::percent(200))
         );
         assert_eq!(Decimal256::MAX.checked_ceil(), Err(RoundUpOverflowError));
+    }
+
+    #[test]
+    fn decimal256_to_uint_floor_works() {
+        let d = Decimal256::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        let d = Decimal256::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        let d = Decimal256::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        let d = Decimal256::from_str("0.98451384").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(0));
+
+        let d = Decimal256::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(75));
+        let d = Decimal256::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_floor(), Uint256::from_u128(0));
+
+        let d = Decimal256::MAX;
+        assert_eq!(
+            d.to_uint_floor(),
+            Uint256::from_str("115792089237316195423570985008687907853269984665640564039457")
+                .unwrap()
+        );
+
+        // Does the same as the old workaround `Uint256::one() * my_decimal`.
+        // This block can be deleted as part of https://github.com/CosmWasm/cosmwasm/issues/1485.
+        let tests = vec![
+            Decimal256::from_str("12.345").unwrap(),
+            Decimal256::from_str("0.98451384").unwrap(),
+            Decimal256::from_str("178.0").unwrap(),
+            Decimal256::MIN,
+            Decimal256::MAX,
+        ];
+        for my_decimal in tests.into_iter() {
+            assert_eq!(my_decimal.to_uint_floor(), Uint256::one() * my_decimal);
+        }
+    }
+
+    #[test]
+    fn decimal256_to_uint_ceil_works() {
+        let d = Decimal256::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        let d = Decimal256::from_str("12.345").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        let d = Decimal256::from_str("12.999").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+
+        let d = Decimal256::from_str("75.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(75));
+        let d = Decimal256::from_str("0.0").unwrap();
+        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(0));
+
+        let d = Decimal256::MAX;
+        assert_eq!(
+            d.to_uint_ceil(),
+            Uint256::from_str("115792089237316195423570985008687907853269984665640564039458")
+                .unwrap()
+        );
     }
 
     #[test]
