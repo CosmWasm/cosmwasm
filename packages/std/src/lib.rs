@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "backtraces", feature(backtrace))]
+#![cfg_attr(all(feature = "backtraces", feature = "std"), feature(backtrace))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // Exposed on all platforms

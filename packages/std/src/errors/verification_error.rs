@@ -1,4 +1,4 @@
-#[cfg(feature = "backtraces")]
+#[cfg(all(feature = "backtraces", feature = "std"))]
 use std::backtrace::Backtrace;
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "std"))]

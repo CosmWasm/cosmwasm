@@ -8,15 +8,12 @@ use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, StdError,
 };
-use crate::{impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint64};
+use crate::{impl_mul_fraction, Fraction};
+use crate::{ConversionOverflowError, Uint256, Uint64};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,

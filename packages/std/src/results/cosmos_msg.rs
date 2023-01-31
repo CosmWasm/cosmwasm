@@ -320,7 +320,8 @@ pub enum VoteOption {
 }
 
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct WeightedVoteOption {
     pub option: VoteOption,
     pub weight: Decimal,

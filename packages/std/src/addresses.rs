@@ -383,14 +383,11 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-<<<<<<< HEAD
     use crate::HexBinary;
-    use hex_literal::hex;
-=======
     use alloc::string::ToString;
     use alloc::vec::Vec;
+    use hex_literal::hex;
     #[cfg(feature = "std")]
->>>>>>> 059adae7 (feat(std): no_std)
     use std::collections::hash_map::DefaultHasher;
     #[cfg(feature = "std")]
     use std::collections::HashSet;

@@ -35,7 +35,6 @@ pub enum WasmQuery {
 }
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct ContractInfoResponse {
@@ -78,7 +77,8 @@ impl ContractInfoResponse {
 /// [CodeInfo]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/types.proto#L62-L72
 /// [CodeInfoResponse]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/query.proto#L184-L199
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[cfg(feature = "cosmwasm_1_2")]
 pub struct CodeInfoResponse {
     pub code_id: u64,

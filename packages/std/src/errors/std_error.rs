@@ -579,15 +579,43 @@ impl DivideByZeroError {
 
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[derive(Debug, PartialEq, Eq)]
+pub enum CheckedMultiplyFractionError {
+    #[cfg_attr(feature = "std", error("{0}"))]
+    DivideByZero(DivideByZeroError),
+
+    #[cfg_attr(feature = "std", error("{0}"))]
+    ConversionOverflow(ConversionOverflowError),
+
+    #[cfg_attr(feature = "std", error("{0}"))]
+    Overflow(OverflowError),
+}
+
+impl From<DivideByZeroError> for CheckedMultiplyFractionError {
+    fn from(e: DivideByZeroError) -> Self {
+        Self::DivideByZero(e)
+    }
+}
+
+impl From<ConversionOverflowError> for CheckedMultiplyFractionError {
+    fn from(e: ConversionOverflowError) -> Self {
+        Self::ConversionOverflow(e)
+    }
+}
+
+impl From<OverflowError> for CheckedMultiplyFractionError {
+    fn from(e: OverflowError) -> Self {
+        Self::Overflow(e)
+    }
+}
+
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyRatioError {
-    #[cfg_attr(feature = "std", error("{0}"))]
-    DivideByZero(#[from] DivideByZeroError),
+    #[cfg_attr(feature = "std", error("Denominator must not be zero"))]
+    DivideByZero,
 
-    #[cfg_attr(feature = "std", error("{0}"))]
-    ConversionOverflow(#[from] ConversionOverflowError),
-
-    #[cfg_attr(feature = "std", error("{0}"))]
-    Overflow(#[from] OverflowError),
+    #[cfg_attr(feature = "std", error("Multiplication overflow"))]
+    Overflow,
 }
 
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
