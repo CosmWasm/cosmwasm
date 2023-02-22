@@ -15,7 +15,6 @@ use std::fmt;
 /// Success:
 ///
 /// ```
-/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let response: Response = Response::default();
 /// let result: ContractResult<Response> = ContractResult::Ok(response);
@@ -25,7 +24,6 @@ use std::fmt;
 /// Failure:
 ///
 /// ```
-/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let error_msg = String::from("Something went wrong");
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);

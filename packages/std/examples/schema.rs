@@ -2,7 +2,7 @@ use std::env::current_dir;
 use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
-use secret_cosmwasm_std::{BlockInfo, CosmosMsg, Empty, QueryRequest, Timestamp};
+use cosmwasm_std::{BlockInfo, CosmosMsg, Empty, QueryRequest, Timestamp};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

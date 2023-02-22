@@ -81,7 +81,7 @@ mod tests {
         let parsed = must_deserialize::<Person>(&None);
         match parsed.unwrap_err() {
             StdError::NotFound { kind, .. } => {
-                assert_eq!(kind, "secret_cosmwasm_storage::type_helpers::tests::Person")
+                assert_eq!(kind, "cosmwasm_storage::type_helpers::tests::Person")
             }
             e => panic!("Unexpected error {}", e),
         }

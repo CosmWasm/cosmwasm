@@ -73,7 +73,6 @@ impl<T> SubMsg<T> {
     /// ## Examples
     ///
     /// ```
-    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{coins, BankMsg, ReplyOn, SubMsg};
     /// # let msg = BankMsg::Send { to_address: String::from("you"), amount: coins(1015, "earth") };
     /// let sub_msg: SubMsg = SubMsg::reply_always(msg, 1234).with_gas_limit(60_000);
@@ -121,7 +120,6 @@ pub struct Reply {
 /// Success:
 ///
 /// ```
-/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult};
 /// let response = SubMsgResponse {
 ///     data: Some(Binary::from_base64("MTIzCg==").unwrap()),
@@ -134,7 +132,6 @@ pub struct Reply {
 /// Failure:
 ///
 /// ```
-/// # use secret_cosmwasm_std as cosmwasm_std;
 /// # use cosmwasm_std::{to_vec, SubMsgResult, Response};
 /// let error_msg = String::from("Something went wrong");
 /// let result = SubMsgResult::Err(error_msg);

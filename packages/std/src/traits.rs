@@ -84,7 +84,6 @@ pub trait Api {
     /// ## Examples
     ///
     /// ```
-    /// # use secret_cosmwasm_std as cosmwasm_std;
     /// # use cosmwasm_std::{Api, Addr};
     /// # use cosmwasm_std::testing::MockApi;
     /// # let api = MockApi::default();
@@ -445,5 +444,4 @@ mod tests {
         let all_balances = wrapper.query_all_balances("foo").unwrap();
         assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
-
 }
