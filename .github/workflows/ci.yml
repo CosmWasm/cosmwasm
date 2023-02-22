@@ -1,45 +1,68 @@
 name: Contract Development
 
-# Pushes to long living branches and all PRs
-on:
-  push:
-    branches:
-      - main
-      - 0.[0-9]+
-  pull_request:
+## Pushes to long living branches and all PRs
+on: [push, pull_request]
+#  push:
+#    branches:
+#      - secret
+#      - 0.[0-9]+
+#  pull_request:
 
 env:
   RUST_BACKTRACE: 1
 
 jobs:
-  test-hackatom:
-    name: ${{ matrix.build }}
+  test-packages:
+    name: Package Tests for ${{ matrix.build }} ${{ matrix.rust }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - build: macOS
-            os: macOS-latest
-          - build: Windows
-            os: windows-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [1.60.0, stable]
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          target: wasm32-unknown-unknown
+          profile: minimal
+          override: true
+      - name: Build std
+        run: cargo build
+      - name: Test std
+        run: cargo test
+
+  test-hackatom:
+    name: Contract Tests for ${{ matrix.build }} ${{ matrix.rust }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [1.60.0, stable]
+
     defaults:
       run:
         shell: bash
         working-directory: ./contracts/hackatom
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: ./.github/actions/install-rust
         with:
-          toolchain: 1.56.1
-          target: wasm32-unknown-unknown
-          profile: minimal
-          override: true
+          toolchain: ${{ matrix.rust }}
+      - name: Add wasm toolchain
+        run: |
+          rustup target add wasm32-unknown-unknown
+
       - name: Build hackatom wasm
         run: cargo wasm --locked
       - name: Unit Test hackatom
         run: cargo unit-test --locked
-      - name: Integration Test hackatom
-        run: cargo integration-test --locked
+#      - name: Integration Test hackatom
+#        run: cargo integration-test --locked

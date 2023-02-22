@@ -9,7 +9,6 @@ pull_request_rules:
       - label!=WIP
       # We need to list them all individually. Here is why: https://doc.mergify.io/conditions.html#validating-all-status-check
       - "status-success=ci/circleci: package_crypto"
-      - "status-success=ci/circleci: package_profiler"
       - "status-success=ci/circleci: package_schema"
       - "status-success=ci/circleci: package_std"
       - "status-success=ci/circleci: package_storage"

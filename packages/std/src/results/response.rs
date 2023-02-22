@@ -59,7 +59,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     Ok(response)
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct Response<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.
@@ -72,14 +72,14 @@ pub struct Response<T = Empty> {
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/master/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
     pub attributes: Vec<Attribute>,
     /// Extra, custom events separate from the main `wasm` one. These will have
     /// `wasm-` prepended to the type.
     ///
     /// More info about events can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/master/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
     pub events: Vec<Event>,
     /// The binary payload to include in the response.
     pub data: Option<Binary>,
@@ -178,6 +178,7 @@ impl<T> Response<T> {
     /// assert_eq!(res.attributes, [Attribute {
     ///     key: "winner".to_string(),
     ///     value: "sarah".to_string(),
+    ///     encrypted: true
     /// }]);
     ///
     /// // No value
