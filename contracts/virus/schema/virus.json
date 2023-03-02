@@ -5,8 +5,7 @@
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
-    "type": "object",
-    "additionalProperties": false
+    "type": "object"
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -35,8 +34,7 @@
                 "description": "A slash separated path to the instance creating this one. The root is the empty string.",
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false

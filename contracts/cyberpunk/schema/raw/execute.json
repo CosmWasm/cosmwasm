@@ -28,8 +28,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -42,8 +41,7 @@
       ],
       "properties": {
         "cpu_loop": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -56,8 +54,7 @@
       ],
       "properties": {
         "storage_loop": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -70,8 +67,7 @@
       ],
       "properties": {
         "memory_loop": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -84,8 +80,7 @@
       ],
       "properties": {
         "message_loop": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -108,8 +103,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -122,8 +116,7 @@
       ],
       "properties": {
         "panic": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -136,8 +129,7 @@
       ],
       "properties": {
         "unreachable": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -150,8 +142,7 @@
       ],
       "properties": {
         "mirror_env": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false

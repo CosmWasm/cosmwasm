@@ -5,8 +5,7 @@
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
-    "type": "object",
-    "additionalProperties": false
+    "type": "object"
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -30,8 +29,7 @@
                   "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
                 }
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -54,8 +52,7 @@
                   "$ref": "#/definitions/SubMsg_for_CustomMsg"
                 }
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -75,8 +72,7 @@
               "owner": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -902,8 +898,7 @@
         ],
         "properties": {
           "owner": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -924,8 +919,7 @@
               "text": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -946,8 +940,7 @@
               "request": {
                 "$ref": "#/definitions/QueryRequest_for_SpecialQuery"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -972,8 +965,7 @@
               "key": {
                 "$ref": "#/definitions/Binary"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -996,8 +988,7 @@
                 "format": "uint64",
                 "minimum": 0.0
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -1250,8 +1241,7 @@
             ],
             "properties": {
               "ping": {
-                "type": "object",
-                "additionalProperties": false
+                "type": "object"
               }
             },
             "additionalProperties": false
@@ -1271,8 +1261,7 @@
                   "text": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               }
             },
             "additionalProperties": false
@@ -1478,8 +1467,7 @@
         "text": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     },
     "chain": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1493,7 +1481,6 @@
           "$ref": "#/definitions/Binary"
         }
       },
-      "additionalProperties": false,
       "definitions": {
         "Binary": {
           "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
@@ -1512,8 +1499,7 @@
         "owner": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     },
     "raw": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1532,7 +1518,6 @@
           ]
         }
       },
-      "additionalProperties": false,
       "definitions": {
         "Binary": {
           "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",

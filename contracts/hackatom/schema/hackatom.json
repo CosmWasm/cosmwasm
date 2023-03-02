@@ -17,8 +17,7 @@
       "verifier": {
         "type": "string"
       }
-    },
-    "additionalProperties": false
+    }
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -32,8 +31,7 @@
         ],
         "properties": {
           "release": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -46,8 +44,7 @@
         ],
         "properties": {
           "cpu_loop": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -60,8 +57,7 @@
         ],
         "properties": {
           "storage_loop": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -74,8 +70,7 @@
         ],
         "properties": {
           "memory_loop": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -88,8 +83,7 @@
         ],
         "properties": {
           "message_loop": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -112,8 +106,7 @@
                 "format": "uint32",
                 "minimum": 0.0
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -126,8 +119,7 @@
         ],
         "properties": {
           "panic": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -140,8 +132,7 @@
         ],
         "properties": {
           "user_errors_in_api_calls": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -160,8 +151,7 @@
         ],
         "properties": {
           "verifier": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -182,8 +172,7 @@
               "address": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -212,8 +201,7 @@
                 "format": "uint32",
                 "minimum": 0.0
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -226,8 +214,7 @@
         ],
         "properties": {
           "get_int": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -246,8 +233,7 @@
       "verifier": {
         "type": "string"
       }
-    },
-    "additionalProperties": false
+    }
   },
   "sudo": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -276,8 +262,7 @@
               "recipient": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -319,8 +304,7 @@
           "format": "uint32",
           "minimum": 0.0
         }
-      },
-      "additionalProperties": false
+      }
     },
     "other_balance": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -377,7 +361,6 @@
           ]
         }
       },
-      "additionalProperties": false,
       "definitions": {
         "Binary": {
           "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
@@ -396,8 +379,7 @@
         "verifier": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
   }
 }

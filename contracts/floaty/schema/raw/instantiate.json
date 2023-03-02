@@ -13,6 +13,5 @@
     "verifier": {
       "type": "string"
     }
-  },
-  "additionalProperties": false
+  }
 }

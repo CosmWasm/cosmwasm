@@ -9,6 +9,5 @@
     "verifies": {
       "type": "boolean"
     }
-  },
-  "additionalProperties": false
+  }
 }

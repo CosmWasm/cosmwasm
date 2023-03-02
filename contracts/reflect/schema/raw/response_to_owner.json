@@ -9,6 +9,5 @@
     "owner": {
       "type": "string"
     }
-  },
-  "additionalProperties": false
+  }
 }

@@ -23,6 +23,5 @@
       "description": "symbol / ticker of the derivative token",
       "type": "string"
     }
-  },
-  "additionalProperties": false
+  }
 }

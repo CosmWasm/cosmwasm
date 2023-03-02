@@ -9,8 +9,7 @@
       ],
       "properties": {
         "owner": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -31,8 +30,7 @@
             "text": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -53,8 +51,7 @@
             "request": {
               "$ref": "#/definitions/QueryRequest_for_SpecialQuery"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -79,8 +76,7 @@
             "key": {
               "$ref": "#/definitions/Binary"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -103,8 +99,7 @@
               "format": "uint64",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -357,8 +352,7 @@
           ],
           "properties": {
             "ping": {
-              "type": "object",
-              "additionalProperties": false
+              "type": "object"
             }
           },
           "additionalProperties": false
@@ -378,8 +372,7 @@
                 "text": {
                   "type": "string"
                 }
-              },
-              "additionalProperties": false
+              }
             }
           },
           "additionalProperties": false

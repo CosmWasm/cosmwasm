@@ -16,8 +16,7 @@
         "format": "uint64",
         "minimum": 0.0
       }
-    },
-    "additionalProperties": false
+    }
   },
   "execute": null,
   "query": {
@@ -40,8 +39,7 @@
               "channel_id": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -54,8 +52,7 @@
         ],
         "properties": {
           "list_accounts": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -81,8 +78,7 @@
             "null"
           ]
         }
-      },
-      "additionalProperties": false
+      }
     },
     "list_accounts": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -99,7 +95,6 @@
           }
         }
       },
-      "additionalProperties": false,
       "definitions": {
         "AccountInfo": {
           "type": "object",
@@ -114,8 +109,7 @@
             "channel_id": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       }
     }

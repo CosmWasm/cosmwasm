@@ -41,8 +41,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -78,8 +77,7 @@
               "description": "Signer address. This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.",
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -147,8 +145,7 @@
             "value": {
               "$ref": "#/definitions/Uint128"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -192,8 +189,7 @@
                 }
               ]
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -234,8 +230,7 @@
                 "$ref": "#/definitions/Binary"
               }
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -248,8 +243,7 @@
       ],
       "properties": {
         "list_verification_schemes": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false

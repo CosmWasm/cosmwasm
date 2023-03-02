@@ -6,8 +6,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
     "description": "This needs no info. Owner of the contract is whoever signed the InstantiateMsg.",
-    "type": "object",
-    "additionalProperties": false
+    "type": "object"
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -29,8 +28,7 @@
               "admin": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -57,8 +55,7 @@
                   "$ref": "#/definitions/CosmosMsg_for_Empty"
                 }
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -78,8 +75,7 @@
               "channel_id": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -106,8 +102,7 @@
                 "description": "The channel to use for ibctransfer. This is bound to a different port and handled by a different module. It should connect to the same chain as the reflect_channel_id does",
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -843,8 +838,7 @@
         ],
         "properties": {
           "admin": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -856,8 +850,7 @@
         ],
         "properties": {
           "list_accounts": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -877,8 +870,7 @@
               "channel_id": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -923,7 +915,6 @@
           }
         }
       },
-      "additionalProperties": false,
       "definitions": {
         "Coin": {
           "type": "object",
@@ -969,8 +960,7 @@
         "admin": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     },
     "list_accounts": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -987,7 +977,6 @@
           }
         }
       },
-      "additionalProperties": false,
       "definitions": {
         "AccountInfo": {
           "type": "object",
@@ -1021,8 +1010,7 @@
                 "$ref": "#/definitions/Coin"
               }
             }
-          },
-          "additionalProperties": false
+          }
         },
         "Coin": {
           "type": "object",

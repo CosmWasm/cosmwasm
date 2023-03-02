@@ -47,8 +47,7 @@
             "$ref": "#/definitions/Coin"
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "Coin": {
       "type": "object",

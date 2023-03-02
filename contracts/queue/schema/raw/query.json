@@ -9,8 +9,7 @@
       ],
       "properties": {
         "count": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -22,8 +21,7 @@
       ],
       "properties": {
         "sum": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -35,8 +33,7 @@
       ],
       "properties": {
         "reducer": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -48,8 +45,7 @@
       ],
       "properties": {
         "list": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -72,8 +68,7 @@
               "format": "uint32",
               "minimum": 0.0
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

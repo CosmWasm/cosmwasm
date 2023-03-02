@@ -18,8 +18,7 @@
             "admin": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -46,8 +45,7 @@
                 "$ref": "#/definitions/CosmosMsg_for_Empty"
               }
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -67,8 +65,7 @@
             "channel_id": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -95,8 +92,7 @@
               "description": "The channel to use for ibctransfer. This is bound to a different port and handled by a different module. It should connect to the same chain as the reflect_channel_id does",
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

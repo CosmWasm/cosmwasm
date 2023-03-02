@@ -17,8 +17,7 @@
       "verifier": {
         "type": "string"
       }
-    },
-    "additionalProperties": false
+    }
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -32,8 +31,7 @@
         ],
         "properties": {
           "release": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -52,8 +50,7 @@
         ],
         "properties": {
           "verifier": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -74,8 +71,7 @@
               "address": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -134,8 +130,7 @@
         "verifier": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
   }
 }

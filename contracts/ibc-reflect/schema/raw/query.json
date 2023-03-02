@@ -18,8 +18,7 @@
             "channel_id": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -32,8 +31,7 @@
       ],
       "properties": {
         "list_accounts": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false

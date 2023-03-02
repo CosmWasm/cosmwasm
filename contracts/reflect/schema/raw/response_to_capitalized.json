@@ -9,6 +9,5 @@
     "text": {
       "type": "string"
     }
-  },
-  "additionalProperties": false
+  }
 }

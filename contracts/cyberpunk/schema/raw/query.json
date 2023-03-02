@@ -10,8 +10,7 @@
       ],
       "properties": {
         "mirror_env": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false

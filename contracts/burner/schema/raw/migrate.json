@@ -9,6 +9,5 @@
     "payout": {
       "type": "string"
     }
-  },
-  "additionalProperties": false
+  }
 }

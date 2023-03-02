@@ -5,8 +5,7 @@
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
-    "type": "object",
-    "additionalProperties": false
+    "type": "object"
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -28,8 +27,7 @@
                 "type": "integer",
                 "format": "int32"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -41,8 +39,7 @@
         ],
         "properties": {
           "dequeue": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -60,8 +57,7 @@
         ],
         "properties": {
           "count": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -73,8 +69,7 @@
         ],
         "properties": {
           "sum": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -86,8 +81,7 @@
         ],
         "properties": {
           "reducer": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -99,8 +93,7 @@
         ],
         "properties": {
           "list": {
-            "type": "object",
-            "additionalProperties": false
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -123,8 +116,7 @@
                 "format": "uint32",
                 "minimum": 0.0
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -134,8 +126,7 @@
   "migrate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "MigrateMsg",
-    "type": "object",
-    "additionalProperties": false
+    "type": "object"
   },
   "sudo": null,
   "responses": {
@@ -152,8 +143,7 @@
           "format": "uint32",
           "minimum": 0.0
         }
-      },
-      "additionalProperties": false
+      }
     },
     "list": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -192,8 +182,7 @@
             "minimum": 0.0
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "open_iterators": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -227,8 +216,7 @@
             "minItems": 2
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "sum": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -242,8 +230,7 @@
           "type": "integer",
           "format": "int32"
         }
-      },
-      "additionalProperties": false
+      }
     }
   }
 }

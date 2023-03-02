@@ -18,8 +18,7 @@
             "address": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -40,8 +39,7 @@
             "address": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -54,8 +52,7 @@
       ],
       "properties": {
         "token_info": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -68,8 +65,7 @@
       ],
       "properties": {
         "investment": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false

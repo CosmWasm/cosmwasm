@@ -13,7 +13,6 @@
       }
     }
   },
-  "additionalProperties": false,
   "definitions": {
     "AccountInfo": {
       "type": "object",
@@ -28,8 +27,7 @@
         "channel_id": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
   }
 }

@@ -13,7 +13,6 @@
       }
     }
   },
-  "additionalProperties": false,
   "definitions": {
     "AccountInfo": {
       "type": "object",
@@ -47,8 +46,7 @@
             "$ref": "#/definitions/Coin"
           }
         }
-      },
-      "additionalProperties": false
+      }
     },
     "Coin": {
       "type": "object",

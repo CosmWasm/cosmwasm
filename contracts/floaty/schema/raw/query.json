@@ -10,8 +10,7 @@
       ],
       "properties": {
         "verifier": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false
@@ -32,8 +31,7 @@
             "address": {
               "type": "string"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

@@ -18,8 +18,7 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false
@@ -31,8 +30,7 @@
       ],
       "properties": {
         "dequeue": {
-          "type": "object",
-          "additionalProperties": false
+          "type": "object"
         }
       },
       "additionalProperties": false

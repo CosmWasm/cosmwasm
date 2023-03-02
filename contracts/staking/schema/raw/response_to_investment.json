@@ -46,7 +46,6 @@
       "type": "string"
     }
   },
-  "additionalProperties": false,
   "definitions": {
     "Coin": {
       "type": "object",
