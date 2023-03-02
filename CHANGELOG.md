@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Add missing export `CheckedMultiplyFractionError` ([#1608]).
+
+[#1608]: https://github.com/CosmWasm/cosmwasm/pull/1608
+
 ## [1.2.1] - 2023-01-30
 
 ### Added
