@@ -32,9 +32,9 @@ pub use crate::binary::Binary;
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, ConversionOverflowError, DivideByZeroError,
-    OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
-    VerificationError,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation,
+    RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError,
 };
 pub use crate::hex_binary::HexBinary;
 #[cfg(feature = "stargate")]

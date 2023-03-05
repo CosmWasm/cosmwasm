@@ -532,12 +532,35 @@
     },
     "ReplyOn": {
       "description": "Use this to define when the contract gets a response callback. If you only need it for errors or success you can select just those in order to save gas.",
-      "type": "string",
-      "enum": [
-        "always",
-        "error",
-        "success",
-        "never"
+      "oneOf": [
+        {
+          "description": "Always perform a callback after SubMsg is processed",
+          "type": "string",
+          "enum": [
+            "always"
+          ]
+        },
+        {
+          "description": "Only callback if SubMsg returned an error, no callback on success case",
+          "type": "string",
+          "enum": [
+            "error"
+          ]
+        },
+        {
+          "description": "Only callback if SubMsg was successful, no callback on error case",
+          "type": "string",
+          "enum": [
+            "success"
+          ]
+        },
+        {
+          "description": "Never make a callback - this is like the original CosmosMsg semantics",
+          "type": "string",
+          "enum": [
+            "never"
+          ]
+        }
       ]
     },
     "StakingMsg": {
