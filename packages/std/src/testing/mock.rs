@@ -33,6 +33,8 @@ use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 use crate::Attribute;
+#[cfg(feature = "stargate")]
+use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 
 use super::riffle_shuffle;
 
@@ -435,6 +437,8 @@ pub struct MockQuerier<C: DeserializeOwned = Empty> {
     #[cfg(feature = "staking")]
     staking: StakingQuerier,
     wasm: WasmQuerier,
+    #[cfg(feature = "stargate")]
+    ibc: IbcQuerier,
     /// A handler to handle custom queries. This is set to a dummy handler that
     /// always errors by default. Update it via `with_custom_handler`.
     ///
@@ -449,6 +453,8 @@ impl<C: DeserializeOwned> MockQuerier<C> {
             #[cfg(feature = "staking")]
             staking: StakingQuerier::default(),
             wasm: WasmQuerier::default(),
+            #[cfg(feature = "stargate")]
+            ibc: IbcQuerier::default(),
             // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
             custom_handler: Box::from(|_: &_| -> MockQuerierCustomHandlerResult {
                 SystemResult::Err(SystemError::UnsupportedRequest {
@@ -475,6 +481,11 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         delegations: &[crate::query::FullDelegation],
     ) {
         self.staking = StakingQuerier::new(denom, validators, delegations);
+    }
+
+    #[cfg(feature = "stargate")]
+    pub fn update_ibc(&mut self, port_id: &str, channels: &[IbcChannel]) {
+        self.ibc = IbcQuerier::new(port_id, channels);
     }
 
     pub fn update_wasm<WH: 'static>(&mut self, handler: WH)
@@ -527,9 +538,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
                 kind: "Stargate".to_string(),
             }),
             #[cfg(feature = "stargate")]
-            QueryRequest::Ibc(_) => SystemResult::Err(SystemError::UnsupportedRequest {
-                kind: "Ibc".to_string(),
-            }),
+            QueryRequest::Ibc(msg) => self.ibc.query(msg),
         }
     }
 }
@@ -668,6 +677,70 @@ impl BankQuerier {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 to_binary(&bank_res).into()
+            }
+        };
+        // system result is always ok in the mock implementation
+        SystemResult::Ok(contract_result)
+    }
+}
+
+#[cfg(feature = "stargate")]
+#[derive(Clone, Default)]
+pub struct IbcQuerier {
+    port_id: String,
+    channels: Vec<IbcChannel>,
+}
+
+#[cfg(feature = "stargate")]
+impl IbcQuerier {
+    /// Create a mock querier where:
+    /// - port_id is the port the "contract" is bound to
+    /// - channels are a list of ibc channels
+    pub fn new(port_id: &str, channels: &[IbcChannel]) -> Self {
+        IbcQuerier {
+            port_id: port_id.to_string(),
+            channels: channels.to_vec(),
+        }
+    }
+
+    pub fn query(&self, request: &IbcQuery) -> QuerierResult {
+        let contract_result: ContractResult<Binary> = match request {
+            IbcQuery::Channel {
+                channel_id,
+                port_id,
+            } => {
+                let channel = self
+                    .channels
+                    .iter()
+                    .find(|c| match port_id {
+                        Some(p) => c.endpoint.channel_id.eq(channel_id) && c.endpoint.port_id.eq(p),
+                        None => {
+                            c.endpoint.channel_id.eq(channel_id)
+                                && c.endpoint.port_id == self.port_id
+                        }
+                    })
+                    .cloned();
+                let res = ChannelResponse { channel };
+                to_binary(&res).into()
+            }
+            IbcQuery::ListChannels { port_id } => {
+                let channels = self
+                    .channels
+                    .iter()
+                    .filter(|c| match port_id {
+                        Some(p) => c.endpoint.port_id.eq(p),
+                        None => c.endpoint.port_id == self.port_id,
+                    })
+                    .cloned()
+                    .collect();
+                let res = ListChannelsResponse { channels };
+                to_binary(&res).into()
+            }
+            IbcQuery::PortId {} => {
+                let res = PortIdResponse {
+                    port_id: self.port_id.clone(),
+                };
+                to_binary(&res).into()
             }
         };
         // system result is always ok in the mock implementation
@@ -1187,6 +1260,118 @@ mod tests {
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
+    }
+
+    #[cfg(feature = "stargate")]
+    #[test]
+    fn ibc_querier_channel_existing() {
+        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
+        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
+
+        let ibc = IbcQuerier::new("myport", &[chan1.clone(), chan2]);
+
+        // query existing
+        let query = &IbcQuery::Channel {
+            channel_id: "channel-0".to_string(),
+            port_id: Some("my_port".to_string()),
+        };
+        let raw = ibc.query(query).unwrap().unwrap();
+        let chan: ChannelResponse = from_binary(&raw).unwrap();
+        assert_eq!(chan.channel, Some(chan1));
+    }
+
+    #[cfg(feature = "stargate")]
+    #[test]
+    fn ibc_querier_channel_existing_no_port() {
+        let chan1 = IbcChannel {
+            endpoint: IbcEndpoint {
+                port_id: "myport".to_string(),
+                channel_id: "channel-0".to_string(),
+            },
+            counterparty_endpoint: IbcEndpoint {
+                port_id: "their_port".to_string(),
+                channel_id: "channel-7".to_string(),
+            },
+            order: IbcOrder::Ordered,
+            version: "ibc".to_string(),
+            connection_id: "connection-2".to_string(),
+        };
+        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
+
+        let ibc = IbcQuerier::new("myport", &[chan1.clone(), chan2]);
+
+        // query existing
+        let query = &IbcQuery::Channel {
+            channel_id: "channel-0".to_string(),
+            port_id: Some("myport".to_string()),
+        };
+        let raw = ibc.query(query).unwrap().unwrap();
+        let chan: ChannelResponse = from_binary(&raw).unwrap();
+        assert_eq!(chan.channel, Some(chan1));
+    }
+
+    #[cfg(feature = "stargate")]
+    #[test]
+    fn ibc_querier_channel_none() {
+        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
+        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
+
+        let ibc = IbcQuerier::new("myport", &[chan1, chan2]);
+
+        // query non-existing
+        let query = &IbcQuery::Channel {
+            channel_id: "channel-0".to_string(),
+            port_id: None,
+        };
+        let raw = ibc.query(query).unwrap().unwrap();
+        let chan: ChannelResponse = from_binary(&raw).unwrap();
+        assert_eq!(chan.channel, None);
+    }
+
+    #[cfg(feature = "stargate")]
+    #[test]
+    fn ibc_querier_channels_matching() {
+        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
+        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
+
+        let ibc = IbcQuerier::new("myport", &[chan1.clone(), chan2.clone()]);
+
+        // query channels matching "my_port" (should match both above)
+        let query = &&IbcQuery::ListChannels {
+            port_id: Some("my_port".to_string()),
+        };
+        let raw = ibc.query(query).unwrap().unwrap();
+        let res: ListChannelsResponse = from_binary(&raw).unwrap();
+        assert_eq!(res.channels, vec![chan1, chan2]);
+    }
+
+    #[cfg(feature = "stargate")]
+    #[test]
+    fn ibc_querier_channels_no_matching() {
+        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
+        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
+
+        let ibc = IbcQuerier::new("myport", &[chan1, chan2]);
+
+        // query channels matching "myport" (should be none)
+        let query = &&IbcQuery::ListChannels { port_id: None };
+        let raw = ibc.query(query).unwrap().unwrap();
+        let res: ListChannelsResponse = from_binary(&raw).unwrap();
+        assert_eq!(res.channels, vec![]);
+    }
+
+    #[cfg(feature = "stargate")]
+    #[test]
+    fn ibc_querier_port() {
+        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
+
+        let ibc = IbcQuerier::new("myport", &[chan1]);
+
+        // query channels matching "myport" (should be none)
+        let query = &&IbcQuery::PortId {};
+        let raw = ibc.query(query).unwrap().unwrap();
+        let res: PortIdResponse = from_binary(&raw).unwrap();
+        assert_eq!(res.port_id, "myport");
     }
 
     #[cfg(feature = "staking")]
