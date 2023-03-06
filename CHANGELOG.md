@@ -8,9 +8,12 @@ and this project adheres to
 
 ### Fixed
 
+- all: Fix `backtraces` feature for newer versions of Rust. This still requires
+  Rust nightly ([#1613]).
 - cosmwasm-std: Add missing export `CheckedMultiplyFractionError` ([#1608]).
 
 [#1608]: https://github.com/CosmWasm/cosmwasm/pull/1608
+[#1613]: https://github.com/CosmWasm/cosmwasm/pull/1613
 
 ## [1.2.1] - 2023-01-30
 

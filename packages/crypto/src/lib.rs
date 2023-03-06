@@ -2,7 +2,8 @@
 //! Please don't use any of these types directly, as
 //! they might change frequently, or be removed in the future.
 //! This crate does not adhere to semantic versioning.
-#![cfg_attr(feature = "backtraces", feature(backtrace))]
+#![cfg_attr(feature = "backtraces", feature(error_generic_member_access))]
+#![cfg_attr(feature = "backtraces", feature(provide_any))]
 
 mod ed25519;
 mod errors;

@@ -1,4 +1,5 @@
-#![cfg_attr(feature = "backtraces", feature(backtrace))]
+#![cfg_attr(feature = "backtraces", feature(error_generic_member_access))]
+#![cfg_attr(feature = "backtraces", feature(provide_any))]
 
 mod backend;
 mod cache;
