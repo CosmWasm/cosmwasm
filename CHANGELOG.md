@@ -6,6 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add an IBC querier implementation to `testing::MockQuerier`
+  ([#1620], [#1624]).
+
+[#1620]: https://github.com/CosmWasm/cosmwasm/pull/1620
+[#1624]: https://github.com/CosmWasm/cosmwasm/pull/1624
+
 ### Fixed
 
 - all: Fix `backtraces` feature for newer versions of Rust. This still requires
