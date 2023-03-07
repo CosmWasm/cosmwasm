@@ -1337,7 +1337,7 @@ mod tests {
         let ibc = IbcQuerier::new("myport", &[chan1.clone(), chan2.clone()]);
 
         // query channels matching "my_port" (should match both above)
-        let query = &&IbcQuery::ListChannels {
+        let query = &IbcQuery::ListChannels {
             port_id: Some("my_port".to_string()),
         };
         let raw = ibc.query(query).unwrap().unwrap();
@@ -1354,7 +1354,7 @@ mod tests {
         let ibc = IbcQuerier::new("myport", &[chan1, chan2]);
 
         // query channels matching "myport" (should be none)
-        let query = &&IbcQuery::ListChannels { port_id: None };
+        let query = &IbcQuery::ListChannels { port_id: None };
         let raw = ibc.query(query).unwrap().unwrap();
         let res: ListChannelsResponse = from_binary(&raw).unwrap();
         assert_eq!(res.channels, vec![]);
@@ -1368,7 +1368,7 @@ mod tests {
         let ibc = IbcQuerier::new("myport", &[chan1]);
 
         // query channels matching "myport" (should be none)
-        let query = &&IbcQuery::PortId {};
+        let query = &IbcQuery::PortId {};
         let raw = ibc.query(query).unwrap().unwrap();
         let res: PortIdResponse = from_binary(&raw).unwrap();
         assert_eq!(res.port_id, "myport");
