@@ -38,19 +38,23 @@ impl Timestamp {
         Timestamp(Uint64::new(seconds_since_epoch * 1_000_000_000))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn plus_seconds(&self, addition: u64) -> Timestamp {
         self.plus_nanos(addition * 1_000_000_000)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn plus_nanos(&self, addition: u64) -> Timestamp {
         let nanos = Uint64::new(self.0.u64() + addition);
         Timestamp(nanos)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn minus_seconds(&self, subtrahend: u64) -> Timestamp {
         self.minus_nanos(subtrahend * 1_000_000_000)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn minus_nanos(&self, subtrahend: u64) -> Timestamp {
         let nanos = Uint64::new(self.0.u64() - subtrahend);
         Timestamp(nanos)
