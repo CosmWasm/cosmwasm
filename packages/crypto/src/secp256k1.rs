@@ -95,7 +95,7 @@ pub fn secp256k1_verify(
 /// Please note that restricting signatures to low-S does not make signatures unique
 /// in the sense that for each (pubkey, message) there is only one signature. The
 /// signer can generate an arbitrary amount of valid signatures.
-/// <https://medium.com/@simonwarta/signature-determinism-for-blockchain-developers-dbd84865a93es>
+/// <https://medium.com/@simonwarta/signature-determinism-for-blockchain-developers-dbd84865a93e>
 ///
 /// [EIP-2]: https://eips.ethereum.org/EIPS/eip-2
 pub fn secp256k1_recover_pubkey(
