@@ -380,7 +380,7 @@ mod tests {
             let message_hash = Sha256::digest(message);
             assert_eq!(hash.as_slice(), message_hash.as_slice());
 
-            // Since the recovery param is mossing in the test vectors, we try both 0 and 1
+            // Since the recovery param is missing in the test vectors, we try both 0 and 1
             let try0 = secp256k1_recover_pubkey(&message_hash, &signature, 0);
             let try1 = secp256k1_recover_pubkey(&message_hash, &signature, 1);
             match (try0, try1) {
