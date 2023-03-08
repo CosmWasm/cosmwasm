@@ -385,7 +385,7 @@ mod tests {
             let try1 = secp256k1_recover_pubkey(&message_hash, &signature, 1);
             match (try0, try1) {
                 (Ok(recovered0), Ok(recovered1)) => {
-                    // Got two different pubkeys. Without the recoverey param, we don't know which one is the right one.
+                    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
                     assert!(recovered0 == public_key || recovered1 == public_key)
                 },
                 (Ok(recovered), Err(_)) => assert_eq!(recovered, public_key),
