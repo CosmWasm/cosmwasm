@@ -38,7 +38,7 @@ pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
 ///
 /// This implementation accepts both high-S and low-S signatures. Some applications
 /// including Ethereum transactions consider high-S signatures invalid in order to
-/// avoid maleability. If that's the case for your protocol, the signature needs
+/// avoid malleability. If that's the case for your protocol, the signature needs
 /// to be tested for low-S in addition to this verification.
 pub fn secp256k1_verify(
     message_hash: &[u8],
