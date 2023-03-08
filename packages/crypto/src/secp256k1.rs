@@ -35,6 +35,11 @@ pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
 /// - signature:  Serialized "compact" signature (64 bytes).
 /// - public key: [Serialized according to SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html)
 /// (33 or 65 bytes).
+///
+/// This implementation accepts both high-S and low-S signatures. Some applications
+/// including Ethereum transactions consider high-S signatures invalid in order to
+/// avoid malleability. If that's the case for your protocol, the signature needs
+/// to be tested for low-S in addition to this verification.
 pub fn secp256k1_verify(
     message_hash: &[u8],
     signature: &[u8],
@@ -49,7 +54,10 @@ pub fn secp256k1_verify(
 
     let mut signature =
         Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
-    // Non low-S signatures require normalization
+
+    // High-S signatures require normalization since our verification implementation
+    // rejects them by default. If we had a verifier that does not restrict to
+    // low-S only, this step was not needed.
     if let Some(normalized) = signature.normalize_s() {
         signature = normalized;
     }
@@ -74,6 +82,22 @@ pub fn secp256k1_verify(
 ///
 /// Returns the recovered pubkey in compressed form, which can be used
 /// in secp256k1_verify directly.
+///
+/// This implementation accepts both high-S and low-S signatures. This is the
+/// same behavior as Ethereum's `ecrecover`. The reason is that high-S signatures
+/// may be perfectly valid if the application protocol does not disallow them.
+/// Or as [EIP-2] put it "The ECDSA recover precompiled contract remains unchanged
+/// and will keep accepting high s-values; this is useful e.g. if a contract
+/// recovers old Bitcoin signatures.".
+///
+/// See also OpenZeppelin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
+/// which adds further restrictions to avoid potential signature malleability.
+/// Please note that restricting signatures to low-S does not make signatures unique
+/// in the sense that for each (pubkey, message) there is only one signature. The
+/// signer can generate an arbitrary amount of valid signatures.
+/// <https://medium.com/@simonwarta/signature-determinism-for-blockchain-developers-dbd84865a93e>
+///
+/// [EIP-2]: https://eips.ethereum.org/EIPS/eip-2
 pub fn secp256k1_recover_pubkey(
     message_hash: &[u8],
     signature: &[u8],
@@ -161,7 +185,10 @@ mod tests {
         elliptic_curve::rand_core::OsRng,
         elliptic_curve::sec1::ToEncodedPoint,
     };
+    use serde::Deserialize;
     use sha2::Sha256;
+    use std::fs::File;
+    use std::io::BufReader;
 
     // For generic signature verification
     const MSG: &str = "Hello World!";
@@ -180,6 +207,15 @@ mod tests {
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
     const COSMOS_SECP256K1_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
+
+    #[derive(Deserialize, Debug)]
+    struct Encoded {
+        message: String,
+        message_hash: String,
+        signature: String,
+        #[serde(rename = "pubkey")]
+        public_key: String,
+    }
 
     #[test]
     fn test_secp256k1_verify() {
@@ -256,30 +292,13 @@ mod tests {
             let message_hash = Sha256::digest(message);
 
             // secp256k1_verify works
-            assert!(
-                secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
-                "secp256k1_verify() failed (test case {})",
-                i
-            );
+            let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
+            assert!(valid, "secp256k1_verify() failed (test case {i})",);
         }
     }
 
     #[test]
     fn test_cosmos_extra_secp256k1_verify() {
-        use std::fs::File;
-        use std::io::BufReader;
-
-        use serde::Deserialize;
-
-        #[derive(Deserialize, Debug)]
-        struct Encoded {
-            message: String,
-            message_hash: String,
-            signature: String,
-            #[serde(rename = "pubkey")]
-            public_key: String,
-        }
-
         // Open the file in read-only mode with buffer.
         let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
@@ -288,20 +307,18 @@ mod tests {
 
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
+            let signature = hex::decode(&encoded.signature).unwrap();
+            let public_key = hex::decode(&encoded.public_key).unwrap();
 
             let hash = hex::decode(&encoded.message_hash).unwrap();
             let message_hash = Sha256::digest(message);
             assert_eq!(hash.as_slice(), message_hash.as_slice());
 
-            let signature = hex::decode(&encoded.signature).unwrap();
-
-            let public_key = hex::decode(&encoded.public_key).unwrap();
-
             // secp256k1_verify() works
+            let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
             assert!(
-                secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
-                "verify() failed (test case {})",
-                i
+                valid,
+                "secp256k1_verify failed (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"
             );
         }
     }
@@ -327,6 +344,7 @@ mod tests {
         }
 
         // Test data from https://github.com/randombit/botan/blob/2.9.0/src/tests/data/pubkey/ecdsa_key_recovery.vec
+        // This is a high-s value (`0x81F1A4457589F30D76AB9F89E748A68C8A94C30FE0BAC8FB5C0B54EA70BF6D2F > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0` is true)
         {
             let expected_x = "F3F8BB913AA68589A2C8C607A877AB05252ADBD963E1BE846DDEB8456942AEDC";
             let expected_y = "A2ED51F08CA3EF3DAC0A7504613D54CD539FC1B3CBC92453CD704B6A2D012B2C";
@@ -348,6 +366,32 @@ mod tests {
                 hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
             let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
             assert_eq!(pubkey, expected);
+        }
+
+        let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
+        let reader = BufReader::new(file);
+        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        for (i, encoded) in (1..).zip(codes) {
+            let message = hex::decode(&encoded.message).unwrap();
+            let signature = hex::decode(&encoded.signature).unwrap();
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+
+            let hash = hex::decode(&encoded.message_hash).unwrap();
+            let message_hash = Sha256::digest(message);
+            assert_eq!(hash.as_slice(), message_hash.as_slice());
+
+            // Since the recovery param is missing in the test vectors, we try both 0 and 1
+            let try0 = secp256k1_recover_pubkey(&message_hash, &signature, 0);
+            let try1 = secp256k1_recover_pubkey(&message_hash, &signature, 1);
+            match (try0, try1) {
+                (Ok(recovered0), Ok(recovered1)) => {
+                    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
+                    assert!(recovered0 == public_key || recovered1 == public_key)
+                },
+                (Ok(recovered), Err(_)) => assert_eq!(recovered, public_key),
+                (Err(_), Ok(recovered)) => assert_eq!(recovered, public_key),
+                (Err(_), Err(_)) => panic!("secp256k1_recover_pubkey failed (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"),
+            }
         }
     }
 
