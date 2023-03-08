@@ -91,7 +91,7 @@ pub fn secp256k1_verify(
 /// recovers old Bitcoin signatures.".
 ///
 /// See also OpenZeppelin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
-/// which adds further restrictions to avoid potential siganture maleability.
+/// which adds further restrictions to avoid potential signature malleability.
 /// Please note that restricting signatures to low-S does not make signatures unique
 /// in the sense that for each (pubkey, message) there is only one signature. The
 /// signer can generate an arbitrary amount of valid signatures.
