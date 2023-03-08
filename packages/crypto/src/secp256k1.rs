@@ -90,7 +90,7 @@ pub fn secp256k1_verify(
 /// and will keep accepting high s-values; this is useful e.g. if a contract
 /// recovers old Bitcoin signatures.".
 ///
-/// See also OpenZeppilin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
+/// See also OpenZeppelin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
 /// which adds further restrictions to avoid potential siganture maleability.
 /// Please note that restricting signatures to low-S does not make signatures unique
 /// in the sense that for each (pubkey, message) there is only one signature. The
