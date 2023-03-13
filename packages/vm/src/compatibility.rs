@@ -191,14 +191,14 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
 fn check_wasm_imports(module: &Module, supported_imports: &[&str]) -> VmResult<()> {
-    let required_imports: Vec<ImportEntry> = module
+    let required_imports: &[ImportEntry] = module
         .import_section()
-        .map_or(vec![], |import_section| import_section.entries().to_vec());
+        .map_or(&[], |import_section| import_section.entries());
     let required_import_names: BTreeSet<_> =
         required_imports.iter().map(full_import_name).collect();
 
     for required_import in required_imports {
-        let full_name = full_import_name(&required_import);
+        let full_name = full_import_name(required_import);
         if !supported_imports.contains(&full_name.as_str()) {
             return Err(VmError::static_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Required imports: {}. Available imports: {:?}.",
