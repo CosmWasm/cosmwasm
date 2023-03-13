@@ -6,6 +6,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+- cosmwasm-vm: Use saturating increments for `Stats` fields to ensure we don't
+  run into overflow issues.
+
 ## [1.2.2] - 2023-03-08
 
 ### Added

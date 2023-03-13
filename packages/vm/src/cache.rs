@@ -25,6 +25,13 @@ const CACHE_DIR: &str = "cache";
 // Cacheable things.
 const MODULES_DIR: &str = "modules";
 
+/// Statistics about the usage of a cache instance. Those values are node
+/// specific and must not be used in a consensus critical context.
+/// When a node is hit by a client for simulations or other queries, hits and misses
+/// increase. Also a node restart will reset the values.
+///
+/// All values should be increment using saturated addition to ensure the node does not
+/// crash in case the stats exceed the integer limit.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Stats {
     pub hits_pinned_memory_cache: u32,
@@ -228,7 +235,7 @@ where
 
         // Try to get module from the memory cache
         if let Some(module) = cache.memory_cache.load(checksum)? {
-            cache.stats.hits_memory_cache += 1;
+            cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
             return cache
                 .pinned_memory_cache
                 .store(checksum, module.module, module.size);
@@ -237,7 +244,7 @@ where
         // Try to get module from file system cache
         let store = make_runtime_store(Some(cache.instance_memory_limit));
         if let Some(module) = cache.fs_cache.load(checksum, &store)? {
-            cache.stats.hits_fs_cache += 1;
+            cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             let module_size = loupe::size_of_val(&module);
             return cache
                 .pinned_memory_cache
@@ -295,20 +302,21 @@ where
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(module) = cache.pinned_memory_cache.load(checksum)? {
-            cache.stats.hits_pinned_memory_cache += 1;
+            cache.stats.hits_pinned_memory_cache =
+                cache.stats.hits_pinned_memory_cache.saturating_add(1);
             return Ok(module);
         }
 
         // Get module from memory cache
         if let Some(module) = cache.memory_cache.load(checksum)? {
-            cache.stats.hits_memory_cache += 1;
+            cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
             return Ok(module.module);
         }
 
         // Get module from file system cache
         let store = make_runtime_store(Some(cache.instance_memory_limit));
         if let Some(module) = cache.fs_cache.load(checksum, &store)? {
-            cache.stats.hits_fs_cache += 1;
+            cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             let module_size = loupe::size_of_val(&module);
             cache
                 .memory_cache
@@ -322,7 +330,7 @@ where
         // serialization format. If you do not replay all transactions, previous calls of `save_wasm`
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
-        cache.stats.misses += 1;
+        cache.stats.misses = cache.stats.misses.saturating_add(1);
         let module = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
         cache.fs_cache.store(checksum, &module)?;
         let module_size = loupe::size_of_val(&module);
