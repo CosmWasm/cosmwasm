@@ -194,12 +194,12 @@ fn check_wasm_imports(module: &Module, supported_imports: &[&str]) -> VmResult<(
     let required_imports: &[ImportEntry] = module
         .import_section()
         .map_or(&[], |import_section| import_section.entries());
-    let required_import_names: BTreeSet<_> =
-        required_imports.iter().map(full_import_name).collect();
 
     for required_import in required_imports {
         let full_name = full_import_name(required_import);
         if !supported_imports.contains(&full_name.as_str()) {
+            let required_import_names: BTreeSet<_> =
+                required_imports.iter().map(full_import_name).collect();
             return Err(VmError::static_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Required imports: {}. Available imports: {:?}.",
                 full_name, required_import_names.to_string_limited(200), supported_imports
