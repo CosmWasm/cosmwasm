@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["stargate", "staking", "ibc3"]
+features = ["stargate", "staking", "ibc3", "random"]
 
 [features]
 default = []
