@@ -7,6 +7,7 @@ mod addresses;
 mod assertions;
 mod binary;
 mod coin;
+mod coins;
 mod conversion;
 mod deps;
 mod errors;
@@ -30,6 +31,7 @@ mod types;
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
 pub use crate::coin::{coin, coins, has_coins, Coin};
+pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
