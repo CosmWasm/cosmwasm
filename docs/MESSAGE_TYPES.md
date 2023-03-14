@@ -14,7 +14,7 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
 | bool                | `true` or `false`                | `true`                                                                                |                                                                                                                                                                                        |
 | u32/i32             | number                           | `123`                                                                                 |                                                                                                                                                                                        |
 | u64/i64             | number                           | `123456`                                                                              | Supported in Rust and Go. Other implementations (`jq`, `JavaScript`) do not support the full uint64/int64 range.                                                                       |
-| u128/i128           | string                           | `"340282366920938463463374607431768211455", "-2766523308300312711084346401884294402"` |                                                                                                                                                                                        |
+| u128/i128           | string                           | `"340282366920938463463374607431768211455", "-2766523308300312711084346401884294402"` | 🚫 Strongly discouraged because the JSON type in serde-json-wasm is wrong and will change. See [Dev Note #4: u128/i128 serialization][dev-note-4].                                     |
 | usize/isize         | number                           | `123456`                                                                              | 🚫 Don't use this type because it has a different size in unit tests (64 bit) and Wasm (32 bit). Also it tends to issue float instructions such that the contracts cannot be uploaded. |
 | String              | string                           | `"foo"`                                                                               |
 | &str                | string                           | `"foo"`                                                                               | 🚫 Unsuppored since message types must be owned (DeserializeOwned)                                                                                                                     |
@@ -41,5 +41,7 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
 [binary]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Binary.html
 [hexbinary]:
   https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.HexBinary.html
+[dev-note-4]:
+  https://medium.com/cosmwasm/dev-note-4-u128-i128-serialization-in-cosmwasm-90cb76784d44
 
 [^1]: https://www.json.org/
