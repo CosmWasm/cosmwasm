@@ -53,25 +53,25 @@ To rebuild the test contracts, go to the repo root and do
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_cyberpunk",target=/code/contracts/cyberpunk/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.10 ./contracts/cyberpunk \
+  cosmwasm/rust-optimizer:0.12.11 ./contracts/cyberpunk \
   && cp artifacts/cyberpunk.wasm packages/vm/testdata/cyberpunk.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.9 ./contracts/hackatom \
+  cosmwasm/rust-optimizer:0.12.11 ./contracts/hackatom \
   && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_1.0.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_reflect",target=/code/contracts/ibc-reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.9 ./contracts/ibc-reflect \
+  cosmwasm/rust-optimizer:0.12.11 ./contracts/ibc-reflect \
   && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_1.0.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.9 ./contracts/floaty \
+  cosmwasm/rust-optimizer:0.12.11 ./contracts/floaty \
   && cp artifacts/floaty.wasm packages/vm/testdata/floaty_1.0.wasm
 ```
 
