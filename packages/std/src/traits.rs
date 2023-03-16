@@ -212,6 +212,13 @@ pub trait Api {
     /// - message: Arbitrary message.
     /// - private key: Raw ED25519 private key (32 bytes)
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
+
+    /// CosmWasm gas evaporation.
+    /// 
+    /// This function will burn a evaporate a precise and reproducible amount of cosmwasm gas.
+    /// 
+    ///  - evaporate: Amount of CosmWasm gas to evaporate.
+    fn gas_evaporate(&self, evaporate: &u64) -> Result<Vec<u8>, SigningError>;
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)

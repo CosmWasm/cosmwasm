@@ -81,6 +81,8 @@ extern "C" {
     fn secp256k1_sign(messages_ptr: u32, private_key_ptr: u32) -> u64;
 
     fn ed25519_sign(messages_ptr: u32, private_key_ptr: u32) -> u64;
+
+    fn gas_evaporate(evaporate_ptr: u32) -> u64;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -405,6 +407,20 @@ impl Api for ExternalApi {
             }
             1000 => Err(SigningError::InvalidPrivateKeyFormat),
             error_code => Err(SigningError::unknown_err(error_code)),
+        }
+    }
+
+    fn gas_evaporate(&self, evaporate: &u64) -> Result<Vec<u8>, SigningError> {
+        let evaporate_send = build_region(&evaporate.to_be_bytes());
+        let evaporate_send_ptr = &*evaporate_send as *const Region as u32;
+
+        let result = unsafe { gas_evaporate(evaporate_send_ptr) };
+        match result {
+            0 => Ok(true),
+            1 => Ok(false),
+            2 => panic!("Error code 2 unused since CosmWasm 0.15. This is a bug in the VM."),
+            3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
+            error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }
 }
