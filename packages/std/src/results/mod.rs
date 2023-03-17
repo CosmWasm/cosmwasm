@@ -1,5 +1,6 @@
 //! This module contains the messages that are sent from the contract to the VM as an execution result
 
+mod adv_result;
 mod contract_result;
 mod cosmos_msg;
 mod empty;
@@ -9,6 +10,7 @@ mod response;
 mod submessages;
 mod system_result;
 
+pub use adv_result::{AdvContractResult, AdvResult};
 pub use contract_result::ContractResult;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use cosmos_msg::WeightedVoteOption;

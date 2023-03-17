@@ -71,9 +71,9 @@ pub use crate::results::SubMsgExecutionResponse;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;
 pub use crate::results::{
-    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, CustomMsg,
-    Empty, Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubMsgResponse, SubMsgResult,
-    SystemResult, WasmMsg,
+    attr, wasm_execute, wasm_instantiate, AdvContractResult, AdvResult, Attribute, BankMsg,
+    ContractResult, CosmosMsg, CustomMsg, Empty, Event, QueryResponse, Reply, ReplyOn, Response,
+    SubMsg, SubMsgResponse, SubMsgResult, SystemResult, WasmMsg,
 };
 #[cfg(feature = "staking")]
 pub use crate::results::{DistributionMsg, StakingMsg};

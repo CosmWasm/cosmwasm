@@ -338,6 +338,35 @@ where
     release_buffer(v) as u32
 }
 
+/// do_ibc_packet_receive is designed for use with #[entry_point_adv] to make a "C" extern
+///
+/// This allows us to return a new Abort type not just Ok or Err
+///
+/// contract_fn is called when this chain receives an IBC Packet on a channel belonging
+/// to this contract
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+#[cfg(feature = "stargate")]
+pub fn do_ibc_packet_receive_adv<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    #[cfg(feature = "abort")]
+    install_panic_handler();
+    let res =
+        _do_ibc_packet_receive_adv(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let v = to_vec(&res).unwrap();
+    release_buffer(v) as u32
+}
+
 /// do_ibc_packet_ack is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is called when this chain receives an IBC Acknowledgement for a packet
@@ -589,6 +618,31 @@ fn _do_ibc_packet_receive<Q, C, E>(
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcReceiveResponse<C>>
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_slice(&msg));
+
+    let mut deps = make_dependencies();
+    contract_fn(deps.as_mut(), env, msg).into()
+}
+
+#[cfg(feature = "stargate")]
+fn _do_ibc_packet_receive_adv<Q, C, E>(
+    contract_fn: &dyn Fn(
+        DepsMut<Q>,
+        Env,
+        IbcPacketReceiveMsg,
+    ) -> AdvResult<IbcReceiveResponse<C>, E>,
+    env_ptr: *mut Region,
+    msg_ptr: *mut Region,
+) -> AdvResult<IbcReceiveResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
