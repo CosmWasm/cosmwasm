@@ -112,3 +112,5 @@ pub mod testing;
 // Re-exports
 
 pub use cosmwasm_derive::entry_point;
+#[cfg(feature = "stargate")]
+pub use cosmwasm_derive::entry_point_adv;
