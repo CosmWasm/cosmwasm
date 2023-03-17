@@ -228,8 +228,8 @@ impl Api for MockApi {
         Ok(cosmwasm_crypto::ed25519_sign(message, private_key)?)
     }
 
-    fn gas_evaporate(&self, evaporate: &u64) -> Result<Vec<u8>, SigningError> {
-        Ok(evaporate.to_be_bytes().to_vec())
+    fn gas_evaporate(&self, evaporate: &u64) -> StdResult<bool> {
+        Ok(true)
     }
 }
 
