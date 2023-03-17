@@ -410,18 +410,19 @@ impl Api for ExternalApi {
         }
     }
 
-    fn gas_evaporate(&self, evaporate: &u64) -> Result<bool, SigningError> {
+    fn gas_evaporate(&self, evaporate: &u64) -> StdResult<bool> {
         let evaporate_send = build_region(&evaporate.to_be_bytes());
         let evaporate_send_ptr = &*evaporate_send as *const Region as u32;
 
         let result = unsafe { gas_evaporate(evaporate_send_ptr) };
-        match result {
-            0 => Ok(true),
-            1 => Ok(false),
-            2 => panic!("Error code 2 unused since CosmWasm 0.15. This is a bug in the VM."),
-            3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
-            error_code => Err(VerificationError::unknown_err(from_high_half(result)),
+        if result != 0 {
+            return Err(StdError::generic_err(format!(
+                "gas_evaporate errored: {}",
+                result
+            )));
         }
+
+        Ok(true)
     }
 }
 
