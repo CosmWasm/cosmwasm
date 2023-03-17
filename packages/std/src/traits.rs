@@ -218,7 +218,7 @@ pub trait Api {
     /// This function will burn a evaporate a precise and reproducible amount of cosmwasm gas.
     /// 
     ///  - evaporate: Amount of CosmWasm gas to evaporate.
-    fn gas_evaporate(&self, evaporate: &u64) -> Result<Vec<u8>, SigningError>;
+    fn gas_evaporate(&self, evaporate: &u64) -> StdResult<bool>;
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
