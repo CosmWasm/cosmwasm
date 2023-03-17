@@ -213,11 +213,11 @@ pub trait Api {
     /// - private key: Raw ED25519 private key (32 bytes)
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
 
-    /// CosmWasm gas evaporation.
+    /// Gas evaporation.
     /// 
-    /// This function will burn a evaporate a precise and reproducible amount of cosmwasm gas.
+    /// This function will burn a evaporate a precise and reproducible amount of sdk gas.
     /// 
-    ///  - evaporate: Amount of CosmWasm gas to evaporate.
+    ///  - evaporate: Amount of SDK gas (1/1000 of cosmwasm gas) to evaporate.
     fn gas_evaporate(&self, evaporate: u32) -> StdResult<bool>;
 }
 
