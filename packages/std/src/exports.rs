@@ -24,7 +24,9 @@ use crate::memory::{alloc, consume_region, release_buffer, Region};
 #[cfg(feature = "abort")]
 use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
-use crate::results::{ContractResult, QueryResponse, Reply, Response};
+use crate::results::{
+    AdvContractResult, AdvResult, ContractResult, QueryResponse, Reply, Response,
+};
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
@@ -83,6 +85,21 @@ macro_rules! r#try_into_contract_result {
     };
     ($expr:expr,) => {
         $crate::try_into_contract_result!($expr)
+    };
+}
+
+// TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
+macro_rules! r#try_into_adv_contract_result {
+    ($expr:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                return AdvContractResult::Err(err.to_string());
+            }
+        }
+    };
+    ($expr:expr,) => {
+        $crate::try_into_adv_contract_result!($expr)
     };
 }
 
@@ -350,7 +367,11 @@ where
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
 pub fn do_ibc_packet_receive_adv<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+    contract_fn: &dyn Fn(
+        DepsMut<Q>,
+        Env,
+        IbcPacketReceiveMsg,
+    ) -> AdvResult<IbcReceiveResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -642,7 +663,7 @@ fn _do_ibc_packet_receive_adv<Q, C, E>(
     ) -> AdvResult<IbcReceiveResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> AdvResult<IbcReceiveResponse<C>>
+) -> AdvContractResult<IbcReceiveResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
@@ -651,8 +672,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_slice(&env));
-    let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_slice(&msg));
+    let env: Env = try_into_adv_contract_result!(from_slice(&env));
+    let msg: IbcPacketReceiveMsg = try_into_adv_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

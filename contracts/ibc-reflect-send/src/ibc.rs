@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
+    entry_point, entry_point_adv, from_slice, to_binary, AdvResult, DepsMut, Env, IbcBasicResponse,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
     IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, Never, StdError, StdResult,
 };
 
@@ -89,16 +89,14 @@ pub fn ibc_channel_close(
         .add_attribute("channel_id", channel_id))
 }
 
-#[entry_point]
+#[entry_point_adv]
 /// never should be called as the other side never sends packets
 pub fn ibc_packet_receive(
     _deps: DepsMut,
     _env: Env,
     _packet: IbcPacketReceiveMsg,
-) -> Result<IbcReceiveResponse, Never> {
-    Ok(IbcReceiveResponse::new()
-        .set_ack(b"{}")
-        .add_attribute("action", "ibc_packet_ack"))
+) -> AdvResult<IbcReceiveResponse, Never> {
+    AdvResult::Abort
 }
 
 #[entry_point]
