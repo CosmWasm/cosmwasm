@@ -1,6 +1,22 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+/// This is like Result but we add an Abort case
+pub enum AdvResult<S, E> {
+    Ok(S),
+    Err(E),
+    Abort,
+}
+
+impl<S, E> From<Result<S, E>> for AdvResult<S, E> {
+    fn from(original: Result<S, E>) -> AdvResult<S, E> {
+        match original {
+            Ok(value) => AdvResult::Ok(value),
+            Err(err) => AdvResult::Err(err),
+        }
+    }
+}
+
 /// This is like ContractResult, but we add one more case.
 /// This is only used for ibc-receive-packet-adv
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -15,17 +31,12 @@ pub enum AdvContractResult<S> {
     Abort {},
 }
 
-pub enum AdvResult<S, E> {
-    Ok(S),
-    Err(E),
-    Abort,
-}
-
-impl<S, E> From<Result<S, E>> for AdvResult<S, E> {
-    fn from(original: Result<S, E>) -> AdvResult<S, E> {
-        match original {
-            Ok(value) => AdvResult::Ok(value),
-            Err(err) => AdvResult::Err(err),
+impl<S> AdvContractResult<S> {
+    pub fn unwrap(self) -> S {
+        match self {
+            AdvContractResult::Ok(s) => s,
+            AdvContractResult::Err(s) => panic!("{}", s),
+            AdvContractResult::Abort {} => panic!("{}", "abort"),
         }
     }
 }

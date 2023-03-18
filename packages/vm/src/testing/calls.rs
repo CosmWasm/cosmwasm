@@ -4,13 +4,13 @@
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+    AdvContractResult, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
+use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 
 use crate::calls::{
     call_execute, call_instantiate, call_migrate, call_query, call_reply, call_sudo,
@@ -198,7 +198,7 @@ pub fn ibc_packet_receive<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcPacketReceiveMsg,
-) -> ContractResult<IbcReceiveResponse<U>>
+) -> AdvContractResult<IbcReceiveResponse<U>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,

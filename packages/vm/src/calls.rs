@@ -1,13 +1,13 @@
 use serde::de::DeserializeOwned;
 use wasmer::Val;
 
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+    AdvContractResult, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
+use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -276,7 +276,7 @@ pub fn call_ibc_packet_receive<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IbcPacketReceiveMsg,
-) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
+) -> VmResult<AdvContractResult<IbcReceiveResponse<U>>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,

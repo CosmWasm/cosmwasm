@@ -24,9 +24,9 @@ use crate::memory::{alloc, consume_region, release_buffer, Region};
 #[cfg(feature = "abort")]
 use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
-use crate::results::{
-    AdvContractResult, AdvResult, ContractResult, QueryResponse, Reply, Response,
-};
+#[cfg(feature = "stargate")]
+use crate::results::{AdvContractResult, AdvResult};
+use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
@@ -89,6 +89,7 @@ macro_rules! r#try_into_contract_result {
 }
 
 // TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
+#[cfg(feature = "stargate")]
 macro_rules! r#try_into_adv_contract_result {
     ($expr:expr) => {
         match $expr {
