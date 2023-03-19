@@ -218,7 +218,7 @@ pub trait Api {
     /// This function will burn a evaporate a precise and reproducible amount of sdk gas.
     /// 
     ///  - evaporate: Amount of SDK gas (1/1000 of cosmwasm gas) to evaporate.
-    fn gas_evaporate(&self, evaporate: u32) -> StdResult<bool>;
+    fn gas_evaporate(&self, evaporate: u32) -> StdResult<()>;
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)

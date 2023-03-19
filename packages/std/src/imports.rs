@@ -410,7 +410,7 @@ impl Api for ExternalApi {
         }
     }
 
-    fn gas_evaporate(&self, evaporate: u32) -> StdResult<bool> {
+    fn gas_evaporate(&self, evaporate: u32) -> StdResult<()> {
         let result = unsafe { gas_evaporate(evaporate) };
         if result != 0 {
             return Err(StdError::generic_err(format!(
@@ -419,7 +419,7 @@ impl Api for ExternalApi {
             )));
         }
 
-        Ok(true)
+        Ok()
     }
 }
 
