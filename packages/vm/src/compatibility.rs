@@ -22,6 +22,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.ed25519_verify",
     "env.ed25519_batch_verify",
     "env.debug",
+    "env.trace",
     "env.query_chain",
     #[cfg(feature = "iterator")]
     "env.db_scan",
@@ -798,6 +799,7 @@ mod tests {
             "env.addr_canonicalize",
             "env.addr_humanize",
             "env.debug",
+            "env.trace",
             "env.query_chain",
         ];
         let result = check_wasm_imports(&deserialize_wasm(&wasm).unwrap(), supported_imports);
@@ -806,7 +808,7 @@ mod tests {
                 println!("{}", msg);
                 assert_eq!(
                     msg,
-                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.addr_canonicalize", "env.addr_humanize", "env.debug", "env.query_chain"]."#
+                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.addr_canonicalize", "env.addr_humanize", "env.debug", "env.trace", "env.query_chain"]."#
                 );
             }
             err => panic!("Unexpected error: {:?}", err),

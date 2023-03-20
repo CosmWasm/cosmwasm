@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- Add `Api::trace` for emitting trace messages during development.
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
   been checked before. This is useful for state-sync where we know the Wasm code
   was checked when it was first uploaded. ([#1635])

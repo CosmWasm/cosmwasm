@@ -12,7 +12,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::imports::{
     do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
     do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
-    do_secp256k1_recover_pubkey, do_secp256k1_verify,
+    do_secp256k1_recover_pubkey, do_secp256k1_verify, do_trace,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_scan};
@@ -179,6 +179,15 @@ where
         env_imports.insert(
             "debug",
             Function::new_native_with_env(store, env.clone(), do_debug),
+        );
+
+        // Allows the contract to emit trace logs that the host can either process or ignore.
+        // This is never written to chain.
+        // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "trace",
+            Function::new_native_with_env(store, env.clone(), do_trace),
         );
 
         // Aborts the contract execution with an error message provided by the contract.

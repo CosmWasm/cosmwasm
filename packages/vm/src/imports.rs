@@ -1,6 +1,7 @@
 //! Import implementations
 
 use std::cmp::max;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
@@ -395,6 +396,25 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
+/// Prints a trace message to console.
+/// This does not charge gas, so trace printing should be disabled when used in a blockchain module.
+pub fn do_trace<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+) -> VmResult<()> {
+    if env.print_debug {
+        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+        let msg = String::from_utf8_lossy(&message_data);
+        // Print message with timestamp [µs]
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_micros();
+        println!("{}, ts: {}µs", msg, ts);
+    }
+    Ok(())
+}
+
 /// Aborts the contract and shows the given error message
 pub fn do_abort<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
@@ -562,6 +582,7 @@ mod tests {
                 "ed25519_batch_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_native(store, |_a: u32| {}),
                 "abort" => Function::new_native(store, |_a: u32| {}),
+                "trace" => Function::new_native(store, |_a: u32| {}),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());

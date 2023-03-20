@@ -228,6 +228,10 @@ impl Api for MockApi {
     fn debug(&self, message: &str) {
         println!("{}", message);
     }
+
+    fn trace(&self, message: &str) {
+        println!("{}, ts: NAµs", message);
+    }
 }
 
 /// Returns a default enviroment with height, time, chain_id, and contract address
