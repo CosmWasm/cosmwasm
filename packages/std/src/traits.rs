@@ -141,6 +141,11 @@ pub trait Api {
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);
+
+    /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
+    /// Include gas left information.
+    /// Those messages are not persisted to chain.
+    fn debug_with_gas(&self, message: &str);
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)

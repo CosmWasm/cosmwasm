@@ -245,6 +245,12 @@ extern "C" {
     /// In production environments it is expected that those messages are discarded.
     fn debug(source_ptr: u32);
 
+    /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
+    /// Include remaining gas information.
+    /// The host is free to log or process this in any way it considers appropriate.
+    /// In production environments it is expected that those messages are discarded.
+    fn debug_with_gas(source_ptr: u32);
+
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
     fn query_chain(request: u32) -> u32;

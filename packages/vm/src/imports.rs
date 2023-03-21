@@ -395,6 +395,21 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
+/// Prints a debug message to console, including remaining gas information.
+/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
+pub fn do_debug_with_gas<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+) -> VmResult<()> {
+    if env.print_debug {
+        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+        let msg = String::from_utf8_lossy(&message_data);
+        let gas_remaining = env.get_gas_left();
+        println!("{}, gas_left: {}", msg, gas_remaining);
+    }
+    Ok(())
+}
+
 /// Aborts the contract and shows the given error message
 pub fn do_abort<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
@@ -562,6 +577,7 @@ mod tests {
                 "ed25519_batch_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_native(store, |_a: u32| {}),
                 "abort" => Function::new_native(store, |_a: u32| {}),
+                "debug_with_gas" => Function::new_native(store, |_a: u32| {}),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());

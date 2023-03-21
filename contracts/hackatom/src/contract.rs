@@ -21,6 +21,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, HackError> {
     deps.api.debug("here we go 🚀");
+    deps.api.debug_with_gas("here we go with gas 🚀");
 
     deps.storage.set(
         CONFIG_KEY,

@@ -71,6 +71,12 @@ extern "C" {
     /// In production environments it is expected that those messages are discarded.
     fn debug(source_ptr: u32);
 
+    /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
+    /// Include remaining gas information.
+    /// The host is free to log or process this in any way it considers appropriate.
+    /// In production environments it is expected that those messages are discarded.
+    fn debug_with_gas(source_ptr: u32);
+
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
     fn query_chain(request: u32) -> u32;
@@ -361,6 +367,13 @@ impl Api for ExternalApi {
         let region = build_region(message.as_bytes());
         let region_ptr = region.as_ref() as *const Region as u32;
         unsafe { debug(region_ptr) };
+    }
+
+    fn debug_with_gas(&self, message: &str) {
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let region = build_region(message.as_bytes());
+        let region_ptr = region.as_ref() as *const Region as u32;
+        unsafe { debug_with_gas(region_ptr) };
     }
 }
 
