@@ -24,7 +24,9 @@ use crate::memory::{alloc, consume_region, release_buffer, Region};
 #[cfg(feature = "abort")]
 use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
-use crate::results::{ContractResult, QueryResponse, Reply, Response};
+use crate::results::{
+    ContractResult, IbcContractResult, IbcResult, QueryResponse, Reply, Response,
+};
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
@@ -83,6 +85,21 @@ macro_rules! r#try_into_contract_result {
     };
     ($expr:expr,) => {
         $crate::try_into_contract_result!($expr)
+    };
+}
+
+// TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
+macro_rules! r#try_into_ibc_contract_result {
+    ($expr:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                return IbcContractResult::Err(err.to_string());
+            }
+        }
+    };
+    ($expr:expr,) => {
+        $crate::try_into_ibc_contract_result!($expr)
     };
 }
 
@@ -312,6 +329,22 @@ where
     release_buffer(v) as u32
 }
 
+/// An internal result type that allows using Result and IbcResult as the return type of
+/// `ibc_packet_receive`.
+///
+/// The parameter `S` is the success value type.
+pub trait ResultPlusPlus<S>: Into<IbcContractResult<S>> {}
+
+impl<C: CustomMsg, E: ToString> ResultPlusPlus<IbcReceiveResponse<C>>
+    for Result<IbcReceiveResponse<C>, E>
+{
+}
+
+impl<C: CustomMsg, E: ToString> ResultPlusPlus<IbcReceiveResponse<C>>
+    for IbcResult<IbcReceiveResponse<C>, E>
+{
+}
+
 /// do_ibc_packet_receive is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is called when this chain receives an IBC Packet on a channel belonging
@@ -319,17 +352,18 @@ where
 ///
 /// - `Q`: custom query type (see QueryRequest)
 /// - `C`: custom response message type (see CosmosMsg)
+/// - `R`: Result type (typically `std::result::Result`)
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_receive<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+pub fn do_ibc_packet_receive<Q, C, R>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> R,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
     C: CustomMsg,
-    E: ToString,
+    R: ResultPlusPlus<IbcReceiveResponse<C>>,
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
@@ -584,21 +618,21 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_receive<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+fn _do_ibc_packet_receive<Q, C, R>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> R,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<IbcReceiveResponse<C>>
+) -> IbcContractResult<IbcReceiveResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
-    E: ToString,
+    R: ResultPlusPlus<IbcReceiveResponse<C>>,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_slice(&env));
-    let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_slice(&msg));
+    let env: Env = try_into_ibc_contract_result!(from_slice(&env));
+    let msg: IbcPacketReceiveMsg = try_into_ibc_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

@@ -4,6 +4,8 @@ mod contract_result;
 mod cosmos_msg;
 mod empty;
 mod events;
+mod ibc_contract_result;
+mod ibc_result;
 mod query;
 mod response;
 mod submessages;
@@ -19,6 +21,8 @@ pub use cosmos_msg::{DistributionMsg, StakingMsg};
 pub use cosmos_msg::{GovMsg, VoteOption};
 pub use empty::Empty;
 pub use events::{attr, Attribute, Event};
+pub use ibc_contract_result::IbcContractResult;
+pub use ibc_result::IbcResult;
 pub use query::QueryResponse;
 pub use response::Response;
 #[allow(deprecated)]

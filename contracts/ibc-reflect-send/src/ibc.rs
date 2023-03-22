@@ -1,7 +1,8 @@
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, Never, StdError, StdResult,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcResult, Never, StdError,
+    StdResult,
 };
 
 use crate::ibc_msg::{
@@ -95,10 +96,8 @@ pub fn ibc_packet_receive(
     _deps: DepsMut,
     _env: Env,
     _packet: IbcPacketReceiveMsg,
-) -> Result<IbcReceiveResponse, Never> {
-    Ok(IbcReceiveResponse::new()
-        .set_ack(b"{}")
-        .add_attribute("action", "ibc_packet_ack"))
+) -> IbcResult<IbcReceiveResponse, Never> {
+    IbcResult::Abort
 }
 
 #[entry_point]
