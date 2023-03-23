@@ -71,16 +71,16 @@ case would. This has two major implications:
 
 The following table shows the new handling logic.
 
-| Entry point           | Contract error                                | VM error                                      |
-| --------------------- | --------------------------------------------- | --------------------------------------------- |
-| `instantiate`         | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `execute`             | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `migrate`             | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `sudo`                | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `reply`               | ⏮️ state reverted<br>❔ depends on `reply_on` | ⏮️ state reverted<br>❔ depends on `reply_on` |
-| `ibc_channel_open`    | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `ibc_channel_connect` | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `ibc_channel_close`   | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `ibc_packet_receive`  | ⏮️ state reverted<br>✅ tx succeeds           | ⏮️ state reverted<br>❌ tx fails              |
-| `ibc_packet_ack`      | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
-| `ibc_packet_timeout`  | ⏮️ state reverted<br>❌ tx fails              | ⏮️ state reverted<br>❌ tx fails              |
+| Entry point           | Contract error                                     | VM error                                      |
+| --------------------- | -------------------------------------------------- | --------------------------------------------- |
+| `instantiate`         | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `execute`             | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `migrate`             | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `sudo`                | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `reply`               | ⏮️ state reverted<br>❔ depends on `reply_on`      | ⏮️ state reverted<br>❔ depends on `reply_on` |
+| `ibc_channel_open`    | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `ibc_channel_connect` | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `ibc_channel_close`   | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `ibc_packet_receive`  | ⏮️ state reverted<br>✅ tx succeeds with error ack | ⏮️ state reverted<br>❌ tx fails              |
+| `ibc_packet_ack`      | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+| `ibc_packet_timeout`  | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
