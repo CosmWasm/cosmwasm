@@ -84,3 +84,48 @@ The following table shows the new handling logic.
 | `ibc_packet_receive`  | ⏮️ state reverted<br>✅ tx succeeds with error ack | ⏮️ state reverted<br>❌ tx fails              |
 | `ibc_packet_ack`      | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
 | `ibc_packet_timeout`  | ⏮️ state reverted<br>❌ tx fails                   | ⏮️ state reverted<br>❌ tx fails              |
+
+## Error acknowledgement formatting
+
+In case of a contract error in `ibc_packet_receive`, wasmd creates an error
+acknowledgement. The format used is a JSON object with a single top level
+`error` string such as `{"error":"some error text"}`. This format is the JSON
+serialization of the ibc-go
+[Acknowledgement](https://github.com/cosmos/ibc-go/blob/v7.0.0/proto/ibc/core/channel/v1/channel.proto#L156-L162)
+type and compatible with ICS-20.
+
+If you are using the acknowledgement types shipped with cosmwasm-std
+([#1512](https://github.com/CosmWasm/cosmwasm/issues/1512)), your protocol's
+acknowledgement is compatible with that.
+
+If you are using a customized acknowledgement type, you need to convert contract
+errors to error acks yourself in `ibc_packet_receive`. The `Never` type provides
+type-safety for that. See:
+
+```rust
+// The error type Never ensures you handle all contract errors inside the function body
+pub fn ibc_packet_receive(
+    deps: DepsMut,
+    _env: Env,
+    msg: IbcPacketReceiveMsg,
+) -> Result<IbcReceiveResponse, Never> {
+    // put this in a closure so we can convert all error responses into acknowledgements
+    (|| {
+        let packet = msg.packet;
+        let caller = packet.dest.channel_id;
+        let msg: PacketMsg = from_slice(&packet.data)?;
+        match msg {
+            // Some packet receive implementations which return results
+            PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
+            PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
+            PacketMsg::Balances {} => receive_balances(deps, caller),
+        }
+    })()
+    .or_else(|e| {
+        // Here we encode the error to our own fancy ack type
+        let acknowledgement: Binary = make_my_ack(e);
+        Ok(IbcReceiveResponse::new()
+            .set_ack(acknowledgement))
+    })
+}
+```
