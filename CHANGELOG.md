@@ -8,11 +8,17 @@ and this project adheres to
 
 ### Added
 
+- cosmwasm-std: Implement `BankQuery::AllDenomMetadata` to allow querying all
+  the denom metadata. In order to use this query in a contract, the
+  `cosmwasm_1_3` feature needs to be enabled for the `cosmwasm_std` dependency.
+  This makes the contract incompatible with chains running anything lower than
+  CosmWasm `1.3.0`. ([#1647])
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
   been checked before. This is useful for state-sync where we know the Wasm code
   was checked when it was first uploaded. ([#1635])
 
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
+[#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 
 ### Changed
 

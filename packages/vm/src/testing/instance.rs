@@ -98,7 +98,8 @@ pub struct MockInstanceOptions<'a> {
 impl MockInstanceOptions<'_> {
     fn default_capabilities() -> HashSet<String> {
         #[allow(unused_mut)]
-        let mut out = capabilities_from_csv("iterator,staking,cosmwasm_1_1,cosmwasm_1_2");
+        let mut out =
+            capabilities_from_csv("iterator,staking,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3");
         #[cfg(feature = "stargate")]
         out.insert("stargate".to_string());
         out
