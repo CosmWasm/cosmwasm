@@ -8,6 +8,8 @@ use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::query::AllDenomMetadataResponse;
 #[cfg(feature = "cosmwasm_1_2")]
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
@@ -23,6 +25,8 @@ use crate::query::{
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::ContractInfoResponse;
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::DenomMetadata;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -237,6 +241,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         .into();
         let res: AllBalanceResponse = self.query(&request)?;
         Ok(res.amount)
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn query_all_denom_metadata(&self) -> StdResult<Vec<DenomMetadata>> {
+        let request = BankQuery::AllDenomMetadata {}.into();
+        let res: AllDenomMetadataResponse = self.query(&request)?;
+        Ok(res.metadata)
     }
 
     // this queries another wasm contract. You should know a priori the proper types for T and U

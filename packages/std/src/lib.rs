@@ -18,6 +18,7 @@ mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
 mod math;
+mod metadata;
 mod never;
 mod panic;
 mod query;
@@ -53,6 +54,7 @@ pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,
     Uint256, Uint512, Uint64,
 };
+pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
 #[cfg(feature = "cosmwasm_1_2")]
 pub use crate::query::CodeInfoResponse;
