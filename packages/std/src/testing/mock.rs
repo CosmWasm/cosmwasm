@@ -16,6 +16,8 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 use crate::math::Uint128;
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::query::AllDenomMetadataResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -32,7 +34,7 @@ use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
-use crate::Attribute;
+use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 
@@ -599,6 +601,8 @@ pub struct BankQuerier {
     supplies: HashMap<String, Uint128>,
     /// HashMap<address, coins>
     balances: HashMap<String, Vec<Coin>>,
+    /// Vec<Metadata>
+    denom_metadata: Vec<DenomMetadata>,
 }
 
 impl BankQuerier {
@@ -611,6 +615,7 @@ impl BankQuerier {
         BankQuerier {
             supplies: Self::calculate_supplies(&balances),
             balances,
+            denom_metadata: Vec::new(),
         }
     }
 
@@ -623,6 +628,10 @@ impl BankQuerier {
         self.supplies = Self::calculate_supplies(&self.balances);
 
         result
+    }
+
+    pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
+        self.denom_metadata = denom_metadata.to_vec();
     }
 
     fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
@@ -677,6 +686,13 @@ impl BankQuerier {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 to_binary(&bank_res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_3")]
+            BankQuery::AllDenomMetadata {} => {
+                let metadata_res = AllDenomMetadataResponse {
+                    metadata: self.denom_metadata.clone(),
+                };
+                to_binary(&metadata_res).into()
             }
         };
         // system result is always ok in the mock implementation

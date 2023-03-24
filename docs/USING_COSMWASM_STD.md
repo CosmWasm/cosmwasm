@@ -34,6 +34,7 @@ in the dependency tree. Otherwise conflicting C exports are created.
 
 The libarary comes with the following features:
 
+<<<<<<< HEAD
 | Feature      | Enabled by default | Description                                                                |
 | ------------ | ------------------ | -------------------------------------------------------------------------- |
 | iterator     | x                  | Storage iterators                                                          |
@@ -44,6 +45,19 @@ The libarary comes with the following features:
 | baktraces    |                    | Add backtraces to errors (for unit testing)                                |
 | cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                           |
 | cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                           |
+=======
+| Feature      | Enabled by default | Description                                                               |
+| ------------ | ------------------ | ------------------------------------------------------------------------- |
+| iterator     | x                  | Storage iterators                                                         |
+| abort        | x                  | A panic handler that aborts the contract execution with a helpful message |
+| stargate     |                    | Cosmos SDK 0.40+ features and IBC                                         |
+| ibc3         |                    | New fields added in IBC v3                                                |
+| staking      |                    | Access to the staking module                                              |
+| backtraces   |                    | Add backtraces to errors (for unit testing)                               |
+| cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                          |
+| cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                          |
+| cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                          |
+>>>>>>> 4bac1e3c (std: Add BankQuery::AllDenomMetadata gated by cosmwasm_1_3 feature flag)
 
 ## The cosmwasm-std dependency for contract developers
 

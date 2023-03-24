@@ -10,6 +10,7 @@ and this project adheres to
 
 ### Added
 
+<<<<<<< HEAD
 - cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
   types. ([#1723])
 - cosmwasm-std: Add `Timestamp::{plus,minus}_{minutes, hours, days}`. ([#1729])
@@ -19,6 +20,21 @@ and this project adheres to
 [#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
 [#1729]: https://github.com/CosmWasm/cosmwasm/pull/1729
 [#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
+=======
+- cosmwasm-std: Implement `BankQuery::AllDenomMetadata` to allow querying all
+  the denom metadata. In order to use this query in a contract, the
+  `cosmwasm_1_3` feature needs to be enabled for the `cosmwasm_std` dependency.
+  This makes the contract incompatible with chains running anything lower than
+  CosmWasm `1.3.0`. ([#1647])
+- cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
+  been checked before. This is useful for state-sync where we know the Wasm code
+  was checked when it was first uploaded. ([#1635])
+- cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
+
+[#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
+[#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
+[#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
+>>>>>>> 4bac1e3c (std: Add BankQuery::AllDenomMetadata gated by cosmwasm_1_3 feature flag)
 
 ### Changed
 

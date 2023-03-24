@@ -28,8 +28,8 @@ major releases of `cosmwasm`. Note that you can also view the
   +cosmwasm-std = { version = "1.1.0", features = ["stargate", "cosmwasm_1_2"] }
   ```
 
-  Please note that `cosmwasm_1_2` implies `cosmwasm_1_1`, so there is no need to
-  set both.
+  Please note that `cosmwasm_1_2` implies `cosmwasm_1_1`, and `cosmwasm_1_3`
+  implies `cosmwasm_1_2`, and so on, so there is no need to set multiple.
 
 - If you use mixed type multiplication between `Uint{64,128,256}` and
   `Decimal{,256}`, check out
