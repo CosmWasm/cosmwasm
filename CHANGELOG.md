@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Add checks for table section of Wasm blob ([#1631]).
+
+[#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
+
 ## [1.2.3] - 2023-03-22
 
 - cosmwasm-vm: Use saturating increments for `Stats` fields to ensure we don't

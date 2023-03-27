@@ -1,4 +1,4 @@
-use parity_wasm::elements::{External, ImportEntry, Module};
+use parity_wasm::elements::{External, ImportEntry, Module, TableType};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
@@ -49,16 +49,63 @@ const SUPPORTED_INTERFACE_VERSIONS: &[&str] = &[
 ];
 
 const MEMORY_LIMIT: u32 = 512; // in pages
+/// The upper limit for the `max` value of each table. CosmWasm contracts have
+/// initial=max for 1 table. See
+///
+/// ```plain
+/// $ wasm-objdump --section=table -x packages/vm/testdata/hackatom.wasm
+/// Section Details:
+///
+/// Table[1]:
+/// - table[0] type=funcref initial=161 max=161
+/// ```
+///
+/// As of March 2023, on Juno mainnet the largest value for production contracts
+/// is 485. Most are between 100 and 300.
+const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
     let module = deserialize_wasm(wasm_code)?;
+    check_wasm_tables(&module)?;
     check_wasm_memories(&module)?;
     check_interface_version(&module)?;
     check_wasm_exports(&module)?;
     check_wasm_imports(&module, SUPPORTED_IMPORTS)?;
     check_wasm_capabilities(&module, available_capabilities)?;
     Ok(())
+}
+
+fn check_wasm_tables(module: &Module) -> VmResult<()> {
+    let sections: &[TableType] = module
+        .table_section()
+        .map_or(&[], |section| section.entries());
+    match sections.len() {
+        0 => Ok(()),
+        1 => {
+            let limits = sections[0].limits();
+            if let Some(maximum) = limits.maximum() {
+                if limits.initial() > maximum {
+                    return Err(VmError::static_validation_err(
+                        "Wasm contract's first table section has a initial limit > max limit",
+                    ));
+                }
+                if maximum > TABLE_SIZE_LIMIT {
+                    return Err(VmError::static_validation_err(
+                        "Wasm contract's first table section has a too large max limit",
+                    ));
+                }
+                Ok(())
+            } else {
+                Err(VmError::static_validation_err(
+                    "Wasm contract must not have unbound table section",
+                ))
+            }
+        }
+        _ => Err(VmError::static_validation_err(
+            "Wasm contract must not have more than 1 table section",
+        )),
+    }
 }
 
 fn check_wasm_memories(module: &Module) -> VmResult<()> {
@@ -250,6 +297,38 @@ mod tests {
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
         };
+    }
+
+    #[test]
+    fn check_wasm_tables_works() {
+        // No tables is fine
+        let wasm = wat::parse_str("(module)").unwrap();
+        check_wasm_tables(&deserialize_wasm(&wasm).unwrap()).unwrap();
+
+        // One table (bound)
+        let wasm = wat::parse_str("(module (table $name 123 123 funcref))").unwrap();
+        check_wasm_tables(&deserialize_wasm(&wasm).unwrap()).unwrap();
+
+        // One table (bound, initial > max)
+        let wasm = wat::parse_str("(module (table $name 124 123 funcref))").unwrap();
+        let err = check_wasm_tables(&deserialize_wasm(&wasm).unwrap()).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("Wasm contract's first table section has a initial limit > max limit"));
+
+        // One table (bound, max too large)
+        let wasm = wat::parse_str("(module (table $name 100 9999 funcref))").unwrap();
+        let err = check_wasm_tables(&deserialize_wasm(&wasm).unwrap()).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("Wasm contract's first table section has a too large max limit"));
+
+        // One table (unbound)
+        let wasm = wat::parse_str("(module (table $name 100 funcref))").unwrap();
+        let err = check_wasm_tables(&deserialize_wasm(&wasm).unwrap()).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("Wasm contract must not have unbound table section"));
     }
 
     #[test]
