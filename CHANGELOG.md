@@ -18,7 +18,10 @@ and this project adheres to
 
 - cosmwasm-vm: Add checks for table section of Wasm blob ([#1631]).
 - cosmwasm-vm: Limit number of imports during static validation ([#1629]).
+- cosmwasm-vm: The `check_contract` example was removed. Please use the crate
+  [cosmwasm-check](https://crates.io/crates/cosmwasm-check) instead ([#1511]).
 
+[#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 
