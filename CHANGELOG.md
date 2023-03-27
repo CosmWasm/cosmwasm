@@ -12,6 +12,12 @@ and this project adheres to
 
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 
+### Changed
+
+- cosmwasm-vm: Add checks for table section of Wasm blob ([#1631]).
+
+[#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
+
 ## [1.2.7] - 2023-06-19
 
 ### Added
