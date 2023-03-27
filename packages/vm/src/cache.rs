@@ -159,8 +159,27 @@ where
         }
     }
 
+    /// Takes a Wasm bytecode and stores it to the cache.
+    ///
+    /// This performs static checks, compiles the bytescode to a module and
+    /// stores the Wasm file on disk.
+    ///
+    /// This does the same as [`save_wasm_unchecked`] plus the static checks.
+    /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.available_capabilities)?;
+        self.save_wasm_unchecked(wasm)
+    }
+
+    /// Takes a Wasm bytecode and stores it to the cache.
+    ///
+    /// This compiles the bytescode to a module and
+    /// stores the Wasm file on disk.
+    ///
+    /// This does the same as [`save_wasm`] but without the static checks.
+    /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
+    /// use this function.
+    pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
         let module = compile(wasm, None, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
@@ -431,6 +450,14 @@ mod tests {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+    // Invalid because it doesn't contain required memory and exports
+    static INVALID_CONTRACT_WAT: &str = r#"(module
+        (type $t0 (func (param i32) (result i32)))
+        (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+            get_local $p0
+            i32.const 1
+            i32.add))
+    "#;
 
     fn default_capabilities() -> HashSet<String> {
         capabilities_from_csv("iterator,staking")
@@ -489,17 +516,7 @@ mod tests {
 
     #[test]
     fn save_wasm_rejects_invalid_contract() {
-        // Invalid because it doesn't contain required memory and exports
-        let wasm = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-              get_local $p0
-              i32.const 1
-              i32.add))
-            "#,
-        )
-        .unwrap();
+        let wasm = wat::parse_str(INVALID_CONTRACT_WAT).unwrap();
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
@@ -528,6 +545,22 @@ mod tests {
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
+    }
+
+    #[test]
+    fn save_wasm_unchecked_works() {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+        cache.save_wasm_unchecked(CONTRACT).unwrap();
+    }
+
+    #[test]
+    fn save_wasm_unchecked_accepts_invalid_contract() {
+        let wasm = wat::parse_str(INVALID_CONTRACT_WAT).unwrap();
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+        cache.save_wasm_unchecked(&wasm).unwrap();
     }
 
     #[test]
