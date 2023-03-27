@@ -64,6 +64,12 @@ const MEMORY_LIMIT: u32 = 512; // in pages
 /// is 485. Most are between 100 and 300.
 const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 
+/// If the contract has more than this amount of imports, it will be rejected
+/// during static validation before even looking into the imports. We keep this
+/// number high since failing early gives less detailed error messages. Especially
+/// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
+const MAX_IMPORTS: usize = 100;
+
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
     let module = deserialize_wasm(wasm_code)?;
@@ -191,15 +197,23 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
 fn check_wasm_imports(module: &Module, supported_imports: &[&str]) -> VmResult<()> {
-    let required_imports: Vec<ImportEntry> = module
+    let required_imports: &[ImportEntry] = module
         .import_section()
-        .map_or(vec![], |import_section| import_section.entries().to_vec());
-    let required_import_names: BTreeSet<_> =
-        required_imports.iter().map(full_import_name).collect();
+        .map_or(&[], |import_section| import_section.entries());
+
+    if required_imports.len() > MAX_IMPORTS {
+        return Err(VmError::static_validation_err(format!(
+            "Import count exceeds limit. Imports: {}. Limit: {}.",
+            required_imports.len(),
+            MAX_IMPORTS
+        )));
+    }
 
     for required_import in required_imports {
-        let full_name = full_import_name(&required_import);
+        let full_name = full_import_name(required_import);
         if !supported_imports.contains(&full_name.as_str()) {
+            let required_import_names: BTreeSet<_> =
+                required_imports.iter().map(full_import_name).collect();
             return Err(VmError::static_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Required imports: {}. Available imports: {:?}.",
                 full_name, required_import_names.to_string_limited(200), supported_imports
@@ -638,6 +652,124 @@ mod tests {
         )
         .unwrap();
         check_wasm_imports(&deserialize_wasm(&wasm).unwrap(), SUPPORTED_IMPORTS).unwrap();
+    }
+
+    #[test]
+    fn check_wasm_imports_exceeds_limit() {
+        let wasm = wat::parse_str(
+            r#"(module
+            (import "env" "db_write" (func (param i32 i32) (result i32)))
+            (import "env" "db_remove" (func (param i32) (result i32)))
+            (import "env" "addr_validate" (func (param i32) (result i32)))
+            (import "env" "addr_canonicalize" (func (param i32 i32) (result i32)))
+            (import "env" "addr_humanize" (func (param i32 i32) (result i32)))
+            (import "env" "secp256k1_verify" (func (param i32 i32 i32) (result i32)))
+            (import "env" "secp256k1_recover_pubkey" (func (param i32 i32 i32) (result i64)))
+            (import "env" "ed25519_verify" (func (param i32 i32 i32) (result i32)))
+            (import "env" "ed25519_batch_verify" (func (param i32 i32 i32) (result i32)))
+            (import "env" "spam01" (func (param i32 i32) (result i32)))
+            (import "env" "spam02" (func (param i32 i32) (result i32)))
+            (import "env" "spam03" (func (param i32 i32) (result i32)))
+            (import "env" "spam04" (func (param i32 i32) (result i32)))
+            (import "env" "spam05" (func (param i32 i32) (result i32)))
+            (import "env" "spam06" (func (param i32 i32) (result i32)))
+            (import "env" "spam07" (func (param i32 i32) (result i32)))
+            (import "env" "spam08" (func (param i32 i32) (result i32)))
+            (import "env" "spam09" (func (param i32 i32) (result i32)))
+            (import "env" "spam10" (func (param i32 i32) (result i32)))
+            (import "env" "spam11" (func (param i32 i32) (result i32)))
+            (import "env" "spam12" (func (param i32 i32) (result i32)))
+            (import "env" "spam13" (func (param i32 i32) (result i32)))
+            (import "env" "spam14" (func (param i32 i32) (result i32)))
+            (import "env" "spam15" (func (param i32 i32) (result i32)))
+            (import "env" "spam16" (func (param i32 i32) (result i32)))
+            (import "env" "spam17" (func (param i32 i32) (result i32)))
+            (import "env" "spam18" (func (param i32 i32) (result i32)))
+            (import "env" "spam19" (func (param i32 i32) (result i32)))
+            (import "env" "spam20" (func (param i32 i32) (result i32)))
+            (import "env" "spam21" (func (param i32 i32) (result i32)))
+            (import "env" "spam22" (func (param i32 i32) (result i32)))
+            (import "env" "spam23" (func (param i32 i32) (result i32)))
+            (import "env" "spam24" (func (param i32 i32) (result i32)))
+            (import "env" "spam25" (func (param i32 i32) (result i32)))
+            (import "env" "spam26" (func (param i32 i32) (result i32)))
+            (import "env" "spam27" (func (param i32 i32) (result i32)))
+            (import "env" "spam28" (func (param i32 i32) (result i32)))
+            (import "env" "spam29" (func (param i32 i32) (result i32)))
+            (import "env" "spam30" (func (param i32 i32) (result i32)))
+            (import "env" "spam31" (func (param i32 i32) (result i32)))
+            (import "env" "spam32" (func (param i32 i32) (result i32)))
+            (import "env" "spam33" (func (param i32 i32) (result i32)))
+            (import "env" "spam34" (func (param i32 i32) (result i32)))
+            (import "env" "spam35" (func (param i32 i32) (result i32)))
+            (import "env" "spam36" (func (param i32 i32) (result i32)))
+            (import "env" "spam37" (func (param i32 i32) (result i32)))
+            (import "env" "spam38" (func (param i32 i32) (result i32)))
+            (import "env" "spam39" (func (param i32 i32) (result i32)))
+            (import "env" "spam40" (func (param i32 i32) (result i32)))
+            (import "env" "spam41" (func (param i32 i32) (result i32)))
+            (import "env" "spam42" (func (param i32 i32) (result i32)))
+            (import "env" "spam43" (func (param i32 i32) (result i32)))
+            (import "env" "spam44" (func (param i32 i32) (result i32)))
+            (import "env" "spam45" (func (param i32 i32) (result i32)))
+            (import "env" "spam46" (func (param i32 i32) (result i32)))
+            (import "env" "spam47" (func (param i32 i32) (result i32)))
+            (import "env" "spam48" (func (param i32 i32) (result i32)))
+            (import "env" "spam49" (func (param i32 i32) (result i32)))
+            (import "env" "spam50" (func (param i32 i32) (result i32)))
+            (import "env" "spam51" (func (param i32 i32) (result i32)))
+            (import "env" "spam52" (func (param i32 i32) (result i32)))
+            (import "env" "spam53" (func (param i32 i32) (result i32)))
+            (import "env" "spam54" (func (param i32 i32) (result i32)))
+            (import "env" "spam55" (func (param i32 i32) (result i32)))
+            (import "env" "spam56" (func (param i32 i32) (result i32)))
+            (import "env" "spam57" (func (param i32 i32) (result i32)))
+            (import "env" "spam58" (func (param i32 i32) (result i32)))
+            (import "env" "spam59" (func (param i32 i32) (result i32)))
+            (import "env" "spam60" (func (param i32 i32) (result i32)))
+            (import "env" "spam61" (func (param i32 i32) (result i32)))
+            (import "env" "spam62" (func (param i32 i32) (result i32)))
+            (import "env" "spam63" (func (param i32 i32) (result i32)))
+            (import "env" "spam64" (func (param i32 i32) (result i32)))
+            (import "env" "spam65" (func (param i32 i32) (result i32)))
+            (import "env" "spam66" (func (param i32 i32) (result i32)))
+            (import "env" "spam67" (func (param i32 i32) (result i32)))
+            (import "env" "spam68" (func (param i32 i32) (result i32)))
+            (import "env" "spam69" (func (param i32 i32) (result i32)))
+            (import "env" "spam70" (func (param i32 i32) (result i32)))
+            (import "env" "spam71" (func (param i32 i32) (result i32)))
+            (import "env" "spam72" (func (param i32 i32) (result i32)))
+            (import "env" "spam73" (func (param i32 i32) (result i32)))
+            (import "env" "spam74" (func (param i32 i32) (result i32)))
+            (import "env" "spam75" (func (param i32 i32) (result i32)))
+            (import "env" "spam76" (func (param i32 i32) (result i32)))
+            (import "env" "spam77" (func (param i32 i32) (result i32)))
+            (import "env" "spam78" (func (param i32 i32) (result i32)))
+            (import "env" "spam79" (func (param i32 i32) (result i32)))
+            (import "env" "spam80" (func (param i32 i32) (result i32)))
+            (import "env" "spam81" (func (param i32 i32) (result i32)))
+            (import "env" "spam82" (func (param i32 i32) (result i32)))
+            (import "env" "spam83" (func (param i32 i32) (result i32)))
+            (import "env" "spam84" (func (param i32 i32) (result i32)))
+            (import "env" "spam85" (func (param i32 i32) (result i32)))
+            (import "env" "spam86" (func (param i32 i32) (result i32)))
+            (import "env" "spam87" (func (param i32 i32) (result i32)))
+            (import "env" "spam88" (func (param i32 i32) (result i32)))
+            (import "env" "spam89" (func (param i32 i32) (result i32)))
+            (import "env" "spam90" (func (param i32 i32) (result i32)))
+            (import "env" "spam91" (func (param i32 i32) (result i32)))
+            (import "env" "spam92" (func (param i32 i32) (result i32)))
+        )"#,
+        )
+        .unwrap();
+        let err =
+            check_wasm_imports(&deserialize_wasm(&wasm).unwrap(), SUPPORTED_IMPORTS).unwrap_err();
+        match err {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert_eq!(msg, "Import count exceeds limit. Imports: 101. Limit: 100.");
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]

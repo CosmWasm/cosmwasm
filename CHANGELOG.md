@@ -17,7 +17,9 @@ and this project adheres to
 ### Changed
 
 - cosmwasm-vm: Add checks for table section of Wasm blob ([#1631]).
+- cosmwasm-vm: Limit number of imports during static validation ([#1629]).
 
+[#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 
 ## [1.2.3] - 2023-03-22
