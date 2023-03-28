@@ -212,6 +212,8 @@ pub trait Api {
     /// - message: Arbitrary message.
     /// - private key: Raw ED25519 private key (32 bytes)
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
+
+    fn check_gas(&self) -> StdResult<u64>;
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
