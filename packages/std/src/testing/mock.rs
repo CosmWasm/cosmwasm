@@ -227,6 +227,10 @@ impl Api for MockApi {
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError> {
         Ok(cosmwasm_crypto::ed25519_sign(message, private_key)?)
     }
+
+    fn gas_evaporate(&self, _evaporate: u32) -> StdResult<()> {
+        Ok(())
+    }
 }
 
 /// Returns a default enviroment with height, time, chain_id, and contract address
