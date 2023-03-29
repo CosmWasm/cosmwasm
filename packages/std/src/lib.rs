@@ -18,6 +18,7 @@ mod iterator;
 mod math;
 mod metadata;
 mod never;
+mod pagination;
 mod panic;
 mod query;
 mod results;
@@ -53,6 +54,7 @@ pub use crate::math::{
 };
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
+pub use crate::pagination::PageRequest;
 #[cfg(feature = "cosmwasm_1_2")]
 pub use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]

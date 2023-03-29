@@ -1,8 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::math::Uint128;
-
+/// Replicates the cosmos-sdk bank module Metadata type
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct DenomMetadata {
     pub description: String,
@@ -15,9 +14,10 @@ pub struct DenomMetadata {
     pub uri_hash: String,
 }
 
+/// Replicates the cosmos-sdk bank module DenomUnit type
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct DenomUnit {
     pub denom: String,
-    pub exponent: Uint128,
+    pub exponent: u32,
     pub aliases: Vec<String>,
 }
