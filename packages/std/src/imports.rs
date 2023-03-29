@@ -414,7 +414,7 @@ impl Api for ExternalApi {
 
     fn check_gas(&self) -> StdResult<u64> {
         let result = unsafe { check_gas() };
-        if result != 0 {
+        if result == 0 {
             return Err(StdError::generic_err("check_gas error"));
         }
 

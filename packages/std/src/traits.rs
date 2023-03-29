@@ -213,6 +213,9 @@ pub trait Api {
     /// - private key: Raw ED25519 private key (32 bytes)
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
 
+    /// Check Gas.
+    ///
+    /// This function will return the amount of gas currently used by the contract.
     fn check_gas(&self) -> StdResult<u64>;
 
     /// Gas evaporation.
