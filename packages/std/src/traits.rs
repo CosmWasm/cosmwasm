@@ -214,6 +214,13 @@ pub trait Api {
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
 
     fn check_gas(&self) -> StdResult<u64>;
+
+    /// Gas evaporation.
+    ///
+    /// This function will burn a evaporate a precise and reproducible amount of sdk gas.
+    ///
+    ///  - evaporate: Amount of SDK gas to evaporate.
+    fn gas_evaporate(&self, evaporate: u32) -> StdResult<()>;
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
