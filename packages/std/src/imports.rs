@@ -419,7 +419,7 @@ impl Api for ExternalApi {
             )));
         }
 
-        Ok()
+        Ok(())
     }
 }
 
