@@ -16,8 +16,6 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 use crate::math::Uint128;
-#[cfg(feature = "cosmwasm_1_3")]
-use crate::query::AllDenomMetadataResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -28,6 +26,8 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -688,7 +688,20 @@ impl BankQuerier {
                 to_binary(&bank_res).into()
             }
             #[cfg(feature = "cosmwasm_1_3")]
-            BankQuery::AllDenomMetadata {} => {
+            BankQuery::DenomMetadata { denom } => {
+                let denom_metadata = self.denom_metadata.iter().find(|m| &m.base == denom);
+                match denom_metadata {
+                    Some(m) => {
+                        let metadata_res = DenomMetadataResponse {
+                            metadata: m.clone(),
+                        };
+                        to_binary(&metadata_res).into()
+                    }
+                    None => return SystemResult::Err(SystemError::Unknown {}),
+                }
+            }
+            #[cfg(feature = "cosmwasm_1_3")]
+            BankQuery::AllDenomMetadata { pagination: _ } => {
                 let metadata_res = AllDenomMetadataResponse {
                     metadata: self.denom_metadata.clone(),
                 };

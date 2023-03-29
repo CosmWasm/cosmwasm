@@ -11,11 +11,11 @@ mod query_response;
 mod staking;
 mod wasm;
 
-#[cfg(feature = "cosmwasm_1_3")]
-pub use bank::AllDenomMetadataResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 pub use bank::SupplyResponse;
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
+#[cfg(feature = "cosmwasm_1_3")]
+pub use bank::{AllDenomMetadataResponse, DenomMetadataResponse};
 #[cfg(feature = "stargate")]
 pub use ibc::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "staking")]

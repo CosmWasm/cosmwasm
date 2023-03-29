@@ -8,8 +8,6 @@ use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
-#[cfg(feature = "cosmwasm_1_3")]
-use crate::query::AllDenomMetadataResponse;
 #[cfg(feature = "cosmwasm_1_2")]
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
@@ -22,11 +20,15 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
     DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::ContractInfoResponse;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::DenomMetadata;
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::PageRequest;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -244,8 +246,21 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     }
 
     #[cfg(feature = "cosmwasm_1_3")]
-    pub fn query_all_denom_metadata(&self) -> StdResult<Vec<DenomMetadata>> {
-        let request = BankQuery::AllDenomMetadata {}.into();
+    pub fn query_denom_metadata(&self, denom: impl Into<String>) -> StdResult<DenomMetadata> {
+        let request = BankQuery::DenomMetadata {
+            denom: denom.into(),
+        }
+        .into();
+        let res: DenomMetadataResponse = self.query(&request)?;
+        Ok(res.metadata)
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn query_all_denom_metadata(
+        &self,
+        pagination: Option<PageRequest>,
+    ) -> StdResult<Vec<DenomMetadata>> {
+        let request = BankQuery::AllDenomMetadata { pagination }.into();
         let res: AllDenomMetadataResponse = self.query(&request)?;
         Ok(res.metadata)
     }
