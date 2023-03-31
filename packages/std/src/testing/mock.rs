@@ -228,6 +228,10 @@ impl Api for MockApi {
         Ok(cosmwasm_crypto::ed25519_sign(message, private_key)?)
     }
 
+    fn check_gas(&self) -> StdResult<u64> {
+        Ok(0)
+    }
+
     fn gas_evaporate(&self, _evaporate: u32) -> StdResult<()> {
         Ok(())
     }

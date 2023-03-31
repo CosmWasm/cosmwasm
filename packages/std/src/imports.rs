@@ -82,6 +82,8 @@ extern "C" {
 
     fn ed25519_sign(messages_ptr: u32, private_key_ptr: u32) -> u64;
 
+    fn check_gas() -> u64;
+
     fn gas_evaporate(evaporate: u32) -> u32;
 }
 
@@ -408,6 +410,15 @@ impl Api for ExternalApi {
             1000 => Err(SigningError::InvalidPrivateKeyFormat),
             error_code => Err(SigningError::unknown_err(error_code)),
         }
+    }
+
+    fn check_gas(&self) -> StdResult<u64> {
+        let result = unsafe { check_gas() };
+        if result == 0 {
+            return Err(StdError::generic_err("check_gas error"));
+        }
+
+        Ok(result)
     }
 
     fn gas_evaporate(&self, evaporate: u32) -> StdResult<()> {
