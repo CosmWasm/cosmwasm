@@ -83,6 +83,8 @@ extern "C" {
     fn ed25519_sign(messages_ptr: u32, private_key_ptr: u32) -> u64;
 
     fn check_gas() -> u64;
+
+    fn gas_evaporate(evaporate: u32) -> u32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -412,11 +414,23 @@ impl Api for ExternalApi {
 
     fn check_gas(&self) -> StdResult<u64> {
         let result = unsafe { check_gas() };
-        if result != 0 {
+        if result == 0 {
             return Err(StdError::generic_err("check_gas error"));
         }
 
         Ok(result)
+    }
+
+    fn gas_evaporate(&self, evaporate: u32) -> StdResult<()> {
+        let result = unsafe { gas_evaporate(evaporate) };
+        if result != 0 {
+            return Err(StdError::generic_err(format!(
+                "gas_evaporate errored: {}",
+                result
+            )));
+        }
+
+        Ok(())
     }
 }
 

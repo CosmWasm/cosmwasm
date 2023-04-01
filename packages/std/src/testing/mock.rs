@@ -231,6 +231,10 @@ impl Api for MockApi {
     fn check_gas(&self) -> StdResult<u64> {
         Ok(0)
     }
+
+    fn gas_evaporate(&self, _evaporate: u32) -> StdResult<()> {
+        Ok(())
+    }
 }
 
 /// Returns a default enviroment with height, time, chain_id, and contract address
