@@ -236,7 +236,7 @@ pub enum LegacyQueryResult {
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
-pub type QuerierResult = SystemResult<ContractResult<Binary, LegacyQueryResult>>;
+pub type QuerierResult = SystemResult<ContractResult<Binary>>;
 
 pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
