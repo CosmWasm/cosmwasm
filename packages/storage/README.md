@@ -1,7 +1,5 @@
 # cosmwasm-storage
 
-[![secret-cosmwasm-storage on crates.io](https://img.shields.io/crates/v/secret-cosmwasm-storage.svg)](https://crates.io/crates/secret-cosmwasm-storage)
-
 NOTE: This is a fork of the original cosmwasm-storage repository adapted for use in [SecretNetwork](https://scrt.network)'s Secret Contracts.
 
 CosmWasm library with useful helpers for Storage patterns. You can use `Storage`

@@ -1,7 +1,10 @@
 [package]
-name = "secret-cosmwasm-std"
-version = "1.0.0"
-authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>", "SCRT Labs <info@scrtlabs.com>"]
+name = "cosmwasm-std"
+version = "1.1.9"
+authors = [
+    "Ethan Frey <ethanfrey@users.noreply.github.com>",
+    "SCRT Labs <info@scrtlabs.com>",
+]
 edition = "2021"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
 repository = "https://github.com/scrtlabs/cosmwasm/tree/secret/packages/std"
@@ -33,32 +36,38 @@ stargate = []
 # ibc3 extends ibc messages with ibc-v3 only features. This should only be enabled on contracts
 # that require these types. Without this, they get the smaller ibc-v1 API.
 ibc3 = ["stargate"]
+# This feature makes `BankQuery::Supply` available for the contract to call, but requires
+# the host blockchain to run CosmWasm `1.1.0` or higher.
+cosmwasm_1_1 = []
 
 # Add random seed to env in inits and executes
 random = []
 
 [dependencies]
 base64 = "0.13.0"
-cosmwasm-derive = { path = "../derive", version = "1.0.0" }
-uint = "0.9.3"
+cosmwasm-derive = { path = "../derive", version = "1.1.9" }
+
 serde-json-wasm = { version = "0.4.1" }
-schemars = "0.8.1"
+schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = [
     "derive",
-    "alloc"
+    "alloc",
 ] }
-thiserror = "1.0"
+thiserror = "1.0.13"
 forward_ref = "1"
+derivative = "2"
+hex = "0.4"
+uint = "0.9.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cosmwasm-crypto = { path = "../crypto", package = "secret-cosmwasm-crypto", version = "1.0.0" }
+cosmwasm-crypto = { path = "../crypto", version = "1.1.9" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
 chrono = { version = "0.4", default-features = false, features = [
     "alloc",
-    "std"
+    "std",
 ] }
 hex = "0.4"
 hex-literal = "0.3.1"

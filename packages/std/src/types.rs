@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::Addr;
-use crate::coins::Coin;
+use crate::coin::Coin;
 use crate::timestamp::Timestamp;
 use crate::Binary;
 
@@ -97,7 +97,7 @@ pub struct BlockInfo {
 ///
 /// [MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61
 /// [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct MessageInfo {
     /// The `sender` field from `MsgInstantiateContract` and `MsgExecuteContract`.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
