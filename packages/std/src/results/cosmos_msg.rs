@@ -46,6 +46,7 @@ pub enum CosmosMsg<T = Empty> {
     Wasm(WasmMsg),
     #[cfg(feature = "stargate")]
     Gov(GovMsg),
+    Marker(T),
 }
 
 /// The message types of the bank module.
