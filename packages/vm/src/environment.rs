@@ -9,6 +9,13 @@ use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, M
 use crate::backend::{BackendApi, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
 
+/// Keep this as low as necessary to avoid deepy nested errors like this:
+///
+/// ```plain
+/// RuntimeErr { msg: "Wasmer runtime error: RuntimeError: Error executing Wasm: Wasmer runtime error: RuntimeError: Error executing Wasm: Wasmer runtime error: RuntimeError: Error executing Wasm: Wasmer runtime error: RuntimeError: Error executing Wasm: Wasmer runtime error: RuntimeError: Maximum call depth exceeded." }
+/// ```
+const MAX_CALL_DEPTH: usize = 2;
+
 /// Never can never be instantiated.
 /// Replace this with the [never primitive type](https://doc.rust-lang.org/std/primitive.never.html) when stable.
 #[derive(Debug)]
@@ -165,7 +172,8 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
         })?;
-        func.call(args).map_err(|runtime_err| -> VmError {
+        self.increment_call_depth()?;
+        let res = func.call(args).map_err(|runtime_err| -> VmError {
             self.with_wasmer_instance::<_, Never>(|instance| {
                 let err: VmError = match get_remaining_points(instance) {
                     MeteringPoints::Remaining(_) => VmError::from(runtime_err),
@@ -174,7 +182,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
                 Err(err)
             })
             .unwrap_err() // with_wasmer_instance can only succeed if the callback succeeds
-        })
+        });
+        self.decrement_call_depth();
+        res
     }
 
     pub fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
@@ -232,6 +242,31 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     pub fn set_storage_readonly(&self, new_value: bool) {
         self.with_context_data_mut(|context_data| {
             context_data.storage_readonly = new_value;
+        })
+    }
+
+    /// Increments the call depth by 1 and returns the new value
+    pub fn increment_call_depth(&self) -> VmResult<usize> {
+        let new = self.with_context_data_mut(|context_data| {
+            let new = context_data.call_depth + 1;
+            context_data.call_depth = new;
+            new
+        });
+        if new > MAX_CALL_DEPTH {
+            return Err(VmError::max_call_depth_exceeded());
+        }
+        Ok(new)
+    }
+
+    /// Decrements the call depth by 1 and returns the new value
+    pub fn decrement_call_depth(&self) -> usize {
+        self.with_context_data_mut(|context_data| {
+            let new = context_data
+                .call_depth
+                .checked_sub(1)
+                .expect("Call depth < 0. This is a bug.");
+            context_data.call_depth = new;
+            new
         })
     }
 
@@ -314,6 +349,7 @@ pub struct ContextData<S: Storage, Q: Querier> {
     gas_state: GasState,
     storage: Option<S>,
     storage_readonly: bool,
+    call_depth: usize,
     querier: Option<Q>,
     /// A non-owning link to the wasmer instance
     wasmer_instance: Option<NonNull<WasmerInstance>>,
@@ -325,6 +361,7 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
             gas_state: GasState::with_limit(gas_limit),
             storage: None,
             storage_readonly: true,
+            call_depth: 0,
             querier: None,
             wasmer_instance: None,
         }

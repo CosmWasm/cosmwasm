@@ -145,6 +145,11 @@ pub enum VmError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Maximum call depth exceeded.")]
+    MaxCallDepthExceeded {
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
 }
 
 impl VmError {
@@ -310,6 +315,13 @@ impl VmError {
 
     pub(crate) fn write_access_denied() -> Self {
         VmError::WriteAccessDenied {
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub(crate) fn max_call_depth_exceeded() -> Self {
+        VmError::MaxCallDepthExceeded {
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
