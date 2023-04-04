@@ -337,7 +337,10 @@ pub fn instantiate2_address(
     creator: &CanonicalAddr,
     salt: &[u8],
 ) -> Result<CanonicalAddr, Instantiate2AddressError> {
-    instantiate2_address_impl(checksum, creator, salt, b"")
+    // Non-empty msg values are discouraged.
+    // See https://medium.com/cosmwasm/dev-note-3-limitations-of-instantiate2-and-how-to-deal-with-them-a3f946874230.
+    let msg = b"";
+    instantiate2_address_impl(checksum, creator, salt, msg)
 }
 
 /// The instantiate2 address derivation implementation. This API is used for
