@@ -172,10 +172,24 @@ will be ignored, and any messages they return will also be processed. If they
 return an error, the parent call will return an error, thus rolling back state
 of the whole transaction.
 
-Note that the messages are executed _depth-first_. This means if contract A
-returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`), and contract B (from
-the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and
+Note that the messages are executed
+[_depth-first_](https://en.wikipedia.org/wiki/Depth-first_search). This means if
+contract A returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`), and
+contract B (from the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and
 `DistributionMsg`), the order of execution would be **M1, N1, N2, M2**.
+
+```mermaid
+graph TD;
+    A[contract A]
+    M1[M1 / contract B]
+    M2[M2 / bank send]
+    N1[N1 / staking]
+    N2[N2 / distribution]
+    A --> M1;
+    A --> M2;
+    M1 --> N1;
+    M1 --> N2;
+```
 
 This may be hard to understand at first. "Why can't I just call another
 contract?", you may ask. However, we do this to prevent one of most widespread
