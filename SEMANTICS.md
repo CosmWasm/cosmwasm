@@ -172,6 +172,36 @@ will be ignored, and any messages they return will also be processed. If they
 return an error, the parent call will return an error, thus rolling back state
 of the whole transaction.
 
+An important consequence of this `data` handling is:
+
+- If you are dispatching a single submessage, and that message calls
+  `set_data` on its response, the set data will override the data of
+  the caller.
+- If you are dispatching multiple submessages, and those submessages
+  set data, that data will not override the data of the caller.
+
+In the multiple submessage case, you'll need to handle the submessage
+result in the caller's `reply` handler, and call `set_data` there with
+the data you would like set. For example, a reply method that forwards
+the data from a successful submessage might look like:
+
+```rust
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    match msg.id {
+        REPLY_FORWARD_DATA => {
+            let MsgExecuteContractResponse { data } = parse_reply_execute_data(msg)?;
+            let response = Response::default().add_attribute("method", "reply_forward_data");
+            Ok(match data {
+                Some(data) => response.set_data(data),
+                None => response,
+            })
+        }
+        _ => unreachable!("unknown reply ID"),
+    }
+}
+```
+
 Note that the messages are executed _depth-first_. This means if contract A
 returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`), and contract B (from
 the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and
