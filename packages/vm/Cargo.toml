@@ -67,7 +67,7 @@ bitflags = "1.1.0" # https://github.com/CensoredUsername/dynasm-rs/pull/74
 # wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
 
 [dev-dependencies]
-criterion = { version = "0.3", features = [ "html_reports" ] }
+criterion = { version = "0.4", features = [ "html_reports" ] }
 hex-literal = "0.3.1"
 tempfile = "3.1.0"
 wat = "1.0"
