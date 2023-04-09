@@ -25,19 +25,14 @@ overflow-checks = true
 [features]
 # Add feature "cranelift" to default if you need 32 bit or ARM support
 default = []
-# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
-cranelift = ["cosmwasm-vm/cranelift"]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
+backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["staking"] }
-cosmwasm-storage = { path = "../../packages/storage", default-features = false }
+cosmwasm-std = { path = "../../packages/std-alias", default-features = false, features = ["staking"] }
+cosmwasm-storage = { path = "../../packages/storage-alias", default-features = false }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = "0.6.6"
-
-[dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["staking"] }
