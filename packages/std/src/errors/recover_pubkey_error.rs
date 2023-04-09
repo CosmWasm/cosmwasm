@@ -72,7 +72,11 @@ impl From<CryptoError> for RecoverPubkeyError {
             CryptoError::BatchErr { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidPrivateKeyFormat { .. } => {
                 // should never get here
-                RecoverPubkeyError::UnknownErr { error_code: 0 }
+                RecoverPubkeyError::UnknownErr {
+                    error_code: 0,
+                    #[cfg(feature = "backtraces")]
+                    backtrace: Backtrace::capture(),
+                }
             }
         }
     }

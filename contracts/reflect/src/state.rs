@@ -10,7 +10,7 @@ use cosmwasm_storage::{
 const CONFIG_KEY: &[u8] = b"config";
 const RESULT_PREFIX: &[u8] = b"result";
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct State {
     pub owner: Addr,
 }

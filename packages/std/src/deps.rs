@@ -74,7 +74,7 @@ impl<'a, C: CustomQuery> DepsMut<'a, C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{mock_dependencies, MockApi, MockQuerier, MockStorage};
+    use crate::testing::{mock_dependencies, MockApi, MockQuerier, MockStorage};
     use serde::{Deserialize, Serialize};
 
     // ensure we can call these many times, eg. as sub-calls

@@ -253,6 +253,30 @@ impl Uint512 {
         Ok(Self(self.0.shr(other)))
     }
 
+    #[inline]
+    pub fn wrapping_add(self, other: Self) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_add(other.0);
+        Self(value)
+    }
+
+    #[inline]
+    pub fn wrapping_sub(self, other: Self) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_sub(other.0);
+        Self(value)
+    }
+
+    #[inline]
+    pub fn wrapping_mul(self, other: Self) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_mul(other.0);
+        Self(value)
+    }
+
+    #[inline]
+    pub fn wrapping_pow(self, other: u32) -> Self {
+        let (value, _did_overflow) = self.0.overflowing_pow(other.into());
+        Self(value)
+    }
+
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
@@ -869,6 +893,43 @@ mod tests {
     }
 
     #[test]
+    fn uint512_wrapping_methods() {
+        // wrapping_add
+        assert_eq!(
+            Uint512::from(2u32).wrapping_add(Uint512::from(2u32)),
+            Uint512::from(4u32)
+        ); // non-wrapping
+        assert_eq!(
+            Uint512::MAX.wrapping_add(Uint512::from(1u32)),
+            Uint512::from(0u32)
+        ); // wrapping
+
+        // wrapping_sub
+        assert_eq!(
+            Uint512::from(7u32).wrapping_sub(Uint512::from(5u32)),
+            Uint512::from(2u32)
+        ); // non-wrapping
+        assert_eq!(
+            Uint512::from(0u32).wrapping_sub(Uint512::from(1u32)),
+            Uint512::MAX
+        ); // wrapping
+
+        // wrapping_mul
+        assert_eq!(
+            Uint512::from(3u32).wrapping_mul(Uint512::from(2u32)),
+            Uint512::from(6u32)
+        ); // non-wrapping
+        assert_eq!(
+            Uint512::MAX.wrapping_mul(Uint512::from(2u32)),
+            Uint512::MAX - Uint512::one()
+        ); // wrapping
+
+        // wrapping_pow
+        assert_eq!(Uint512::from(2u32).wrapping_pow(3), Uint512::from(8u32)); // non-wrapping
+        assert_eq!(Uint512::MAX.wrapping_pow(2), Uint512::from(1u32)); // wrapping
+    }
+
+    #[test]
     fn uint512_json() {
         let orig = Uint512::from(1234567890987654321u128);
         let serialized = to_vec(&orig).unwrap();
@@ -1137,6 +1198,10 @@ mod tests {
             Uint512::MAX.saturating_mul(Uint512::from(2u32)),
             Uint512::MAX
         );
+        assert_eq!(
+            Uint512::from(4u32).saturating_pow(2u32),
+            Uint512::from(16u32)
+        );
         assert_eq!(Uint512::MAX.saturating_pow(2u32), Uint512::MAX);
     }
 
@@ -1211,12 +1276,8 @@ mod tests {
     fn uint512_partial_eq() {
         let test_cases = [(1, 1, true), (42, 42, true), (42, 24, false), (0, 0, true)]
             .into_iter()
-            .map(|(lhs, rhs, expected)| {
-                (
-                    Uint512::from(lhs as u64),
-                    Uint512::from(rhs as u64),
-                    expected,
-                )
+            .map(|(lhs, rhs, expected): (u64, u64, bool)| {
+                (Uint512::from(lhs), Uint512::from(rhs), expected)
             });
 
         #[allow(clippy::op_ref)]

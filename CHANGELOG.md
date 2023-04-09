@@ -6,9 +6,187 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.9] - 2022-12-06
+
+### Fixed
+
+- cosmwasm-schema: Fix type fully qualified path to symbol `QueryResponses` in
+  macro `cosmwasm_schema::generate_api!` ([#1527]).
+
+[#1527]: https://github.com/CosmWasm/cosmwasm/issues/1527
+
+## [1.1.8] - 2022-11-22
+
+### Fixed
+
+- cosmwasm-schema: Fix type params on `QueryMsg` causing a compiler error when
+  used with the `QueryResponses` derive macro.
+
+## [1.1.6] - 2022-11-16
+
 ### Added
 
+- cosmwasm-std: Add `From` implementations to convert between
+  `CanonicalAddr`/`Binary` as well as `CanonicalAddr`/`HexBinary` ([#1463]).
+- cosmwasm-std: Add `From` implementations to convert `u8` arrays to
+  `CanonicalAddr` ([#1463]).
+- cosmwasm-std: Implement `PartialEq` between `CanonicalAddr` and
+  `HexBinary`/`Binary` ([#1463]).
+
+[#1463]: https://github.com/CosmWasm/cosmwasm/pull/1463
+
+### Changed
+
+- all: Bump a few dependency versions to make the codebase compile with
+  `-Zminimal-versions` ([#1465]).
+- cosmwasm-profiler: Package was removed 🪦. It served its job showing us that
+  we cannot properly measure different runtimes for differet Wasm opcodes.
+- cosmwasm-schema: schema generation is now locked to produce strictly
+  `draft-07` schemas
+- cosmwasm-schema: `QueryResponses` derive now sets the `JsonSchema` trait bound
+  on the generated `impl` block. This allows the contract dev to not add a
+  `JsonSchema` trait bound on the type itself.
+
+[#1465]: https://github.com/CosmWasm/cosmwasm/pull/1465
+
+## [1.1.5] - 2022-10-17
+
+### Added
+
+- cosmwasm-std: Add `wrapping_add`, `wrapping_sub`, `wrapping_mul` and
+  `wrapping_pow` to `Uint256`/`Uint512`.
+- cosmwasm-schema: Better error messaging when attempting to compile schema
+  generator for `wasm32`
+- cosmwasm-vm: In the `secp256k1_verify`, `secp256k1_recover_pubkey`,
+  `ed25519_verify` and `ed25519_batch_verify` import implementations we now exit
+  early if the gas left is not sufficient to perform the operation.
+
+### Changed
+
+- cosmwasm-std: Remove `non_exhaustive` from IBC types `IbcChannelOpenMsg`,
+  `IbcChannelConnectMsg` and `IbcChannelCloseMsg` in order to allow exhaustive
+  matching over the possible scenarios without an unused fallback case
+  ([#1449]).
+
+[#1449]: https://github.com/CosmWasm/cosmwasm/pull/1449
+
+## [1.1.4] - 2022-10-03
+
+### Fixed
+
+- cosmwasm-schema: Properly analyze schemas generated for `untagged` enums
+
+## [1.1.3] - 2022-09-29
+
+### Fixed
+
+- cosmwasm-schema: `IntegrityError` is now public
+
+## [1.1.2] - 2022-09-19
+
+### Added
+
+- cosmwasm-std: Add testing macro `assert_approx_eq!` for comparing two integers
+  to be relatively close to each other ([#1417]).
+- cosmwasm-std: Add `HexBinary` which is like `Binary` but encodes to hex
+  strings in JSON. Add `StdError::InvalidHex` error case. ([#1425])
+
+[#1417]: https://github.com/CosmWasm/cosmwasm/issues/1417
+[#1425]: https://github.com/CosmWasm/cosmwasm/pull/1425
+
+### Fixed
+
+- cosmwasm-vm: Bump `MODULE_SERIALIZATION_VERSION` to "v4" because the module
+  serialization format changed between Wasmer 2.2 and 2.3 ([#1426]).
+- cosmwasm-schema: The `QueryResponses` derive macro now supports `QueryMsg`s
+  with generics. ([#1429])
+
+[#1426]: https://github.com/CosmWasm/cosmwasm/issues/1426
+[#1429]: https://github.com/CosmWasm/cosmwasm/pull/1429
+
+## [1.1.1] - 2022-09-15
+
+### Fixed
+
+- cosmwasm-schema: Using `QueryResponses` with a `QueryMsg` containing a
+  unit-like variant will no longer crash. The different variant types in Rust
+  are:
+  ```rust
+  enum QueryMsg {
+      UnitLike,
+      Tuple(),
+      Struct {},
+  }
+  ```
+  It's still recommended to only use struct variants, even if there are no
+  fields.
+
+### Changed
+
+- cosmwasm-schema: It is no longer necessary to specify `serde` or `schemars` as
+  a dependency in order to make `cosmwasm-schema` macros work.
+
+## [1.1.0] - 2022-09-05
+
+### Added
+
+- cosmwasm-std: Implement PartialEq for `Binary` and `u8` arrays.
 - cosmwasm-std: Add `Uint{64,128,256,512}::one`.
+- cosmwasm-std: Add `Uint{64,128,256,512}::abs_diff` and
+  `Decimal{,256}::abs_diff` ([#1334]).
+- cosmwasm-std: Implement `From<Decimal> for Decimal256`.
+- cosmwasm-std: Implement `Rem`/`RemAssign` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `checked_add`/`_sub`/`_div`/`_rem` for
+  `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `pow`/`saturating_pow` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `ceil`/`floor` for `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `PartialEq` for reference on one side and owned value
+  on the other for all `Uint` and `Decimal` types
+- cosmwasm-std: Implement `saturating_add`/`sub`/`mul` for
+  `Decimal`/`Decimal256`.
+- cosmwasm-std: Implement `BankQuery::Supply` to allow querying the total supply
+  of a native token. In order to use this query in a contract, the
+  `cosmwasm_1_1` feature needs to be enabled for the `cosmwasm_std` dependency.
+  This makes the contract incompatible with chains running CosmWasm `1.0`.
+  ([#1356])
+- cosmwasm-std: Implement `MIN` const value for all `Uint` and `Decimal` types
+- cosmwasm-std: Implement `checked_div_euclid` for `Uint256`/`Uint512`
+- cosmwasm-std: Add `QuerierWrapper::query_wasm_contract_info` - this is just a
+  convenience helper for querying `WasmQuery::ContractInfo`.
+- cosmwasm-check: This is a new binary package that allows running various
+  CosmWasm compatibility checks on compiled .wasm files. See
+  https://crates.io/crates/cosmwasm-check for usage info.
+
+[#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
+[#1356]: https://github.com/CosmWasm/cosmwasm/pull/1356
+
+### Changed
+
+- cosmwasm-vm/cosmwasm-profiler: Upgrade Wasmer to 2.3.0.
+- cosmwasm-std: Enable the `abort` feature by default. This provides more
+  helpful panic messages via a custom panic handler.
+- cosmwasm-std: Make `Decimal{,256}::DECIMAL_PLACES` a public `u32` value.
+- cosmwasm-crypto: Bumped `k256` `0.10.4 -> 0.11` and `digest` `0.9 -> 0.10`
+  ([#1374]).
+- cosmwasm-vm: Rename features to capabilities, including
+  1. `features_from_csv` to `capabilities_from_csv`;
+  2. `CacheOptions::supported_features` to
+     `CacheOptions::available_capabilities`;
+  3. `MockInstanceOptions::supported_features` to
+     `MockInstanceOptions::available_capabilities`
+  4. `Instance::required_features` to `Instance::required_capabilities`
+  5. `AnalysisReport::required_features` to
+     `AnalysisReport::required_capabilities`.
+
+[#1374]: https://github.com/CosmWasm/cosmwasm/pull/1374
+
+### Deprecated
+
+- cosmwasm-vm: The `check_contract` example was deprecated. Please use the new
+  crate [cosmwasm-check](https://crates.io/crates/cosmwasm-check) instead
+  ([#1371]).
+
+[#1371]: https://github.com/CosmWasm/cosmwasm/issues/1371
 
 ## [1.0.0] - 2022-05-14
 
@@ -1361,7 +1539,16 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...HEAD
+[1.1.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.8...v1.1.9
+[1.1.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...v1.1.8
+[1.1.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.5...v1.1.6
+[1.1.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.4...v1.1.5
+[1.1.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.3...v1.1.4
+[1.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.2...v1.1.3
+[1.1.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-rc.0...v1.0.0
 [1.0.0-rc.0]:
   https://github.com/CosmWasm/cosmwasm/compare/v1.0.0-beta8...v1.0.0-rc.0

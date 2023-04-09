@@ -1,0 +1,249 @@
+{
+  "contract_name": "queue",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "additionalProperties": false
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "enqueue"
+        ],
+        "properties": {
+          "enqueue": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "dequeue"
+        ],
+        "properties": {
+          "dequeue": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sum"
+        ],
+        "properties": {
+          "sum": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "reducer"
+        ],
+        "properties": {
+          "reducer": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "list"
+        ],
+        "properties": {
+          "list": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Opens the given number of iterators for no reason other than testing. Returns and `Empty` response.",
+        "type": "object",
+        "required": [
+          "open_iterators"
+        ],
+        "properties": {
+          "open_iterators": {
+            "type": "object",
+            "required": [
+              "count"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MigrateMsg",
+    "type": "object",
+    "additionalProperties": false
+  },
+  "sudo": null,
+  "responses": {
+    "count": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CountResponse",
+      "type": "object",
+      "required": [
+        "count"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "list": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ListResponse",
+      "type": "object",
+      "required": [
+        "early",
+        "empty",
+        "late"
+      ],
+      "properties": {
+        "early": {
+          "description": "List all IDs lower than 0x20",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        },
+        "empty": {
+          "description": "List an empty range, both bounded",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        },
+        "late": {
+          "description": "List all IDs starting from 0x20",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "open_iterators": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Empty",
+      "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+      "type": "object"
+    },
+    "reducer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ReducerResponse",
+      "type": "object",
+      "required": [
+        "counters"
+      ],
+      "properties": {
+        "counters": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "int32"
+              },
+              {
+                "type": "integer",
+                "format": "int32"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "sum": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SumResponse",
+      "type": "object",
+      "required": [
+        "sum"
+      ],
+      "properties": {
+        "sum": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

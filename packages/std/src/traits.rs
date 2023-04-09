@@ -4,10 +4,12 @@ use std::ops::Deref;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
-use crate::coins::Coin;
+use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, SigningError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+#[cfg(feature = "cosmwasm_1_1")]
+use crate::query::SupplyResponse;
 use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
 };
@@ -92,7 +94,11 @@ pub trait Api {
     fn addr_validate(&self, human: &str) -> StdResult<Addr>;
 
     /// Takes a human readable address and returns a canonical binary representation of it.
-    /// This can be used when a compact fixed length representation is needed.
+    /// This can be used when a compact representation is needed.
+    ///
+    /// Please note that the length of the resulting address is defined by the chain and
+    /// can vary from address to address. On Cosmos chains 20 and 32 bytes are typically used.
+    /// But that might change. So your contract should not make assumptions on the size.
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
 
     /// Takes a canonical address and returns a human readble address.
@@ -206,6 +212,18 @@ pub trait Api {
     /// - message: Arbitrary message.
     /// - private key: Raw ED25519 private key (32 bytes)
     fn ed25519_sign(&self, message: &[u8], private_key: &[u8]) -> Result<Vec<u8>, SigningError>;
+
+    /// Check Gas.
+    ///
+    /// This function will return the amount of gas currently used by the contract.
+    fn check_gas(&self) -> StdResult<u64>;
+
+    /// Gas evaporation.
+    ///
+    /// This function will burn a evaporate a precise and reproducible amount of sdk gas.
+    ///
+    ///  - evaporate: Amount of SDK gas to evaporate.
+    fn gas_evaporate(&self, evaporate: u32) -> StdResult<()>;
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
@@ -269,6 +287,16 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }
+    }
+
+    #[cfg(feature = "cosmwasm_1_1")]
+    pub fn query_supply(&self, denom: impl Into<String>) -> StdResult<Coin> {
+        let request = BankQuery::Supply {
+            denom: denom.into(),
+        }
+        .into();
+        let res: SupplyResponse = self.query(&request)?;
+        Ok(res.amount)
     }
 
     pub fn query_balance(
@@ -367,7 +395,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::MockQuerier;
+    use crate::testing::MockQuerier;
     use crate::{coins, from_slice, Uint128};
 
     // this is a simple demo helper to prove we can use it
@@ -406,5 +434,26 @@ mod tests {
             .unwrap();
         let balance: BalanceResponse = from_slice(&raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
+    }
+
+    #[cfg(feature = "cosmwasm_1_1")]
+    #[test]
+    fn bank_query_helpers_work() {
+        use crate::coin;
+
+        let querier: MockQuerier<Empty> = MockQuerier::new(&[
+            ("foo", &[coin(123, "ELF"), coin(777, "FLY")]),
+            ("bar", &[coin(321, "ELF")]),
+        ]);
+        let wrapper = QuerierWrapper::<Empty>::new(&querier);
+
+        let supply = wrapper.query_supply("ELF").unwrap();
+        assert_eq!(supply, coin(444, "ELF"));
+
+        let balance = wrapper.query_balance("foo", "ELF").unwrap();
+        assert_eq!(balance, coin(123, "ELF"));
+
+        let all_balances = wrapper.query_all_balances("foo").unwrap();
+        assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
 }

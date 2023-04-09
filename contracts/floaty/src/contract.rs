@@ -60,7 +60,7 @@ pub fn execute(
                 to_address: to_addr.into(),
                 amount: balance,
             })
-            .set_data(&[0xF0, 0x0B, 0xAA]);
+            .set_data([0xF0, 0x0B, 0xAA]);
         Ok(resp)
     } else {
         Err(HackError::Unauthorized {})
@@ -134,7 +134,7 @@ mod tests {
     };
     use cosmwasm_std::Api as _;
     // import trait Storage to get access to read
-    use cosmwasm_std::{attr, coins, Binary, Storage, SubMsg};
+    use cosmwasm_std::{attr, coins, Addr, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
