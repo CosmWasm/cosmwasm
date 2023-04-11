@@ -15,6 +15,7 @@ mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
+mod json_ack;
 mod math;
 mod never;
 mod panic;
@@ -46,6 +47,7 @@ pub use crate::ibc::{
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
+pub use crate::json_ack::JsonAck;
 pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,
     Uint256, Uint512, Uint64,
