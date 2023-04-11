@@ -23,13 +23,13 @@ impl<T: Serialize> JsonAck<T> {
 
     #[must_use = "if you intended to assert that this is a success, consider `.unwrap()` instead"]
     #[inline]
-    pub const fn is_success(&self) -> bool {
+    pub fn is_success(&self) -> bool {
         matches!(*self, JsonAck::Result(_))
     }
 
     #[must_use = "if you intended to assert that this is an error, consider `.unwrap_err()` instead"]
     #[inline]
-    pub const fn is_error(&self) -> bool {
+    pub fn is_error(&self) -> bool {
         !self.is_success()
     }
 
