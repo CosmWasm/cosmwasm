@@ -54,9 +54,9 @@ Result and let wasmd handle it.
 
 ## Handing ibc_packet_receive errors
 
-For wasmd before 0.32, contract errors and VM errors were handled the same. They
-got the special treatment of reverting state changes, writing an error
-acknowledgement but don't let the transaction fail.
+From wasmd 0.22 to 0.31 (inclusive), contract errors and VM errors were handled
+the same. They got the special treatment of reverting state changes, writing an
+error acknowledgement but don't let the transaction fail.
 
 For wasmd >= 0.32, the special treatment only applies to contract errors. VM
 errors in `IBCPacketReceive` let the transaction fail just like the `Execute`
