@@ -248,7 +248,10 @@ pub fn mock_env() -> Env {
             height: 12_345,
             time: Timestamp::from_nanos(1_571_797_419_879_305_533),
             chain_id: "cosmos-testnet-14002".to_string(),
-            random: Some(Binary::from_base64("wLsKdf/sYqvSMI0G0aWRjob25mrIB0VQVjTjDXnDafk=").unwrap())
+            #[cfg(feature = "random")]
+            random: Some(
+                Binary::from_base64("wLsKdf/sYqvSMI0G0aWRjob25mrIB0VQVjTjDXnDafk=").unwrap(),
+            ),
         },
         transaction: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {

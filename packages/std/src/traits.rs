@@ -1,4 +1,8 @@
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
+
+#[cfg(feature = "random")]
+use serde::Deserialize;
+
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -226,15 +230,6 @@ pub trait Api {
     fn gas_evaporate(&self, evaporate: u32) -> StdResult<()>;
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-#[non_exhaustive]
-
-pub enum LegacyQueryResult {
-    /// Whenever there is no specific error type available
-    GenericErr { msg: String },
-}
-
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
 pub type QuerierResult = SystemResult<ContractResult<Binary>>;
 
@@ -292,7 +287,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
                 system_err
             ))),
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {:?}", contract_err),
+                format!("Querier contract error: {}", contract_err),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }

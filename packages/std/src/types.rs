@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::addresses::Addr;
 use crate::coin::Coin;
 use crate::timestamp::Timestamp;
+
+#[cfg(feature = "random")]
 use crate::Binary;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
