@@ -47,7 +47,7 @@ impl Measurements {
             .from_writer(sink);
 
         // Header row
-        wtr.write_record(&["block", "executions", "avg in ns", "min in ns", "max in ns"])
+        wtr.write_record(["block", "executions", "avg in ns", "min in ns", "max in ns"])
             .unwrap();
 
         for (block_id, timings) in &self.taken {

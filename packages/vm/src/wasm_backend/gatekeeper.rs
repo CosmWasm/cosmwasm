@@ -695,7 +695,7 @@ mod tests {
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
-        let result = Module::new(&store, &wasm);
+        let result = Module::new(&store, wasm);
         assert!(result.is_ok());
     }
 
@@ -716,7 +716,7 @@ mod tests {
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
-        let result = Module::new(&store, &wasm);
+        let result = Module::new(&store, wasm);
         assert!(result
             .unwrap_err()
             .to_string()
@@ -743,7 +743,7 @@ mod tests {
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
         let store = Store::new(&Universal::new(compiler_config).engine());
-        let result = Module::new(&store, &wasm);
+        let result = Module::new(&store, wasm);
         assert!(result
             .unwrap_err()
             .to_string()

@@ -361,7 +361,7 @@ impl From<wasmer::RuntimeError> for VmError {
             original.to_string().starts_with(&message),
             "The error message we created is not a prefix of the error message from Wasmer. Our message: '{}'. Wasmer messsage: '{}'",
             &message,
-            original.to_string()
+            original
         );
         VmError::runtime_err(format!("Wasmer runtime error: {}", &message))
     }
