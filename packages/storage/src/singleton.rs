@@ -251,7 +251,7 @@ mod tests {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| {
+        let output = writer.update(|_c| {
             Err(StdError::from(OverflowError::new(
                 OverflowOperation::Sub,
                 4,
