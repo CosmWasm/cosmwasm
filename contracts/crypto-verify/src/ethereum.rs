@@ -19,7 +19,7 @@ pub fn verify_transaction(
 ) -> StdResult<bool> {
     let sign_bytes =
         serialize_unsigned_transaction(to, nonce, gas, gas_price, value, data, chain_id);
-    let hash = Keccak256::digest(&sign_bytes);
+    let hash = Keccak256::digest(sign_bytes);
     let mut rs: Vec<u8> = Vec::with_capacity(64);
     rs.resize(32 - r.len(), 0); // Left pad r to 32 bytes
     rs.extend_from_slice(r);
