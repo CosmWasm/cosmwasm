@@ -588,7 +588,7 @@ mod tests {
         let result = do_db_read(&env, key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
-        assert_eq!(force_read(&env, value_ptr as u32), VALUE1);
+        assert_eq!(force_read(&env, value_ptr), VALUE1);
     }
 
     #[test]

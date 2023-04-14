@@ -171,7 +171,7 @@ mod tests {
         let serialized = {
             let wasm = wat::parse_str(EXPORTED_MEMORY_WAT).unwrap();
             let store = make_compile_time_store(None, &[]);
-            let module = Module::new(&store, &wasm).unwrap();
+            let module = Module::new(&store, wasm).unwrap();
             module.serialize().unwrap()
         };
 

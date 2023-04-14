@@ -78,7 +78,7 @@ fn bench_crypto(c: &mut Criterion) {
 
     group.bench_function("secp256k1_verify", |b| {
         let message = hex::decode(COSMOS_SECP256K1_MSG_HEX).unwrap();
-        let message_hash = Sha256::digest(&message);
+        let message_hash = Sha256::digest(message);
         let signature = hex::decode(COSMOS_SECP256K1_SIGNATURE_HEX).unwrap();
         let public_key = base64::decode(COSMOS_SECP256K1_PUBKEY_BASE64).unwrap();
         b.iter(|| {
