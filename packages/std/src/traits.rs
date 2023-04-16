@@ -1,4 +1,8 @@
 use serde::{de::DeserializeOwned, Serialize};
+
+#[cfg(feature = "random")]
+use serde::Deserialize;
+
 use std::marker::PhantomData;
 use std::ops::Deref;
 

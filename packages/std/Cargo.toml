@@ -12,7 +12,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["stargate", "staking", "ibc3"]
+features = ["stargate", "staking", "ibc3", "random"]
 
 [features]
 default = []
@@ -39,6 +39,9 @@ ibc3 = ["stargate"]
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []
+
+# Add random seed to env in inits and executes
+random = []
 
 [dependencies]
 base64 = "0.13.0"

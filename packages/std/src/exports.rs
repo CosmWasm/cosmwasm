@@ -29,6 +29,10 @@ use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
 
+#[cfg(feature = "random")]
+#[no_mangle]
+extern "C" fn requires_random() -> () {}
+
 #[cfg(feature = "iterator")]
 #[no_mangle]
 extern "C" fn requires_iterator() -> () {}
