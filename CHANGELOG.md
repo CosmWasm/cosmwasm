@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.10] - 2023-04-17
+
+### Fixed
+
+- cosmwasm-vm: Add call depths limit
+
 ## [1.1.9] - 2022-12-06
 
 ### Fixed
@@ -1539,7 +1545,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.10...HEAD
+[1.1.10]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...v1.1.10
 [1.1.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...v1.1.8
 [1.1.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.5...v1.1.6
