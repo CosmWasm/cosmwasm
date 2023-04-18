@@ -558,7 +558,7 @@ impl<T> IbcBasicResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{attr, IbcBasicResponse};
+    /// use secret_cosmwasm_std::{attr, IbcBasicResponse};
     ///
     /// let attrs = vec![
     ///     ("action", "reaction"),
@@ -581,7 +581,7 @@ impl<T> IbcBasicResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{CosmosMsg, IbcBasicResponse};
+    /// use secret_cosmwasm_std::{CosmosMsg, IbcBasicResponse};
     ///
     /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcBasicResponse {
     ///     IbcBasicResponse::new().add_messages(msgs)
@@ -596,7 +596,7 @@ impl<T> IbcBasicResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{SubMsg, IbcBasicResponse};
+    /// use secret_cosmwasm_std::{SubMsg, IbcBasicResponse};
     ///
     /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcBasicResponse {
     ///     IbcBasicResponse::new().add_submessages(msgs)
@@ -710,7 +710,7 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{attr, IbcReceiveResponse};
+    /// use secret_cosmwasm_std::{attr, IbcReceiveResponse};
     ///
     /// let attrs = vec![
     ///     ("action", "reaction"),
@@ -733,7 +733,7 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{CosmosMsg, IbcReceiveResponse};
+    /// use secret_cosmwasm_std::{CosmosMsg, IbcReceiveResponse};
     ///
     /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcReceiveResponse {
     ///     IbcReceiveResponse::new().add_messages(msgs)
@@ -748,7 +748,7 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{SubMsg, IbcReceiveResponse};
+    /// use secret_cosmwasm_std::{SubMsg, IbcReceiveResponse};
     ///
     /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcReceiveResponse {
     ///     IbcReceiveResponse::new().add_submessages(msgs)

@@ -55,7 +55,7 @@ pub enum QueryRequest<C> {
 /// # Examples
 ///
 /// ```
-/// # use cosmwasm_std::CustomQuery;
+/// # use secret_cosmwasm_std::CustomQuery;
 /// # use schemars::JsonSchema;
 /// # use serde::{Deserialize, Serialize};
 /// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

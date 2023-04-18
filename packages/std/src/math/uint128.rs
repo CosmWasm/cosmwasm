@@ -21,7 +21,7 @@ use crate::{ConversionOverflowError, Uint256, Uint64};
 /// Use `from` to create instances of this and `u128` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_std::Uint128;
+/// # use secret_cosmwasm_std::Uint128;
 /// let a = Uint128::from(123u128);
 /// assert_eq!(a.u128(), 123);
 ///
@@ -124,7 +124,7 @@ impl Uint128 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Uint128;
+    /// use secret_cosmwasm_std::Uint128;
     ///
     /// let a = Uint128::MAX;
     /// let result = a.full_mul(2u32);

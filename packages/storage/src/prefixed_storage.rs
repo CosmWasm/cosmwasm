@@ -120,7 +120,7 @@ impl<'a> Storage for ReadonlyPrefixedStorage<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::MockStorage;
+    use crate::cosmwasm_std::testing::MockStorage;
 
     #[test]
     fn prefixed_storage_set_and_get() {

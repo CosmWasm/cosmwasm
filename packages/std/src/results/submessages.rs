@@ -73,7 +73,7 @@ impl<T> SubMsg<T> {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{coins, BankMsg, ReplyOn, SubMsg};
+    /// # use secret_cosmwasm_std::{coins, BankMsg, ReplyOn, SubMsg};
     /// # let msg = BankMsg::Send { to_address: String::from("you"), amount: coins(1015, "earth") };
     /// let sub_msg: SubMsg = SubMsg::reply_always(msg, 1234).with_gas_limit(60_000);
     /// assert_eq!(sub_msg.id, 1234);
@@ -120,7 +120,7 @@ pub struct Reply {
 /// Success:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult};
+/// # use secret_cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult};
 /// let response = SubMsgResponse {
 ///     data: Some(Binary::from_base64("MTIzCg==").unwrap()),
 ///     events: vec![Event::new("wasm").add_attribute("fo", "ba")],
@@ -132,7 +132,7 @@ pub struct Reply {
 /// Failure:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, SubMsgResult, Response};
+/// # use secret_cosmwasm_std::{to_vec, SubMsgResult, Response};
 /// let error_msg = String::from("Something went wrong");
 /// let result = SubMsgResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);

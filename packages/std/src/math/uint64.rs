@@ -20,7 +20,7 @@ use crate::Uint128;
 /// Use `from` to create instances of this and `u64` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_std::Uint64;
+/// # use secret_cosmwasm_std::Uint64;
 /// let a = Uint64::from(42u64);
 /// assert_eq!(a.u64(), 42);
 ///
@@ -120,7 +120,7 @@ impl Uint64 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Uint64;
+    /// use secret_cosmwasm_std::Uint64;
     ///
     /// let a = Uint64::MAX;
     /// let result = a.full_mul(2u32);

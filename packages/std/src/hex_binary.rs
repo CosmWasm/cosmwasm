@@ -35,7 +35,7 @@ impl HexBinary {
     /// Copy to array of explicit length
     ///
     /// ```
-    /// # use cosmwasm_std::HexBinary;
+    /// # use secret_cosmwasm_std::HexBinary;
     /// let data = HexBinary::from(&[0xfb, 0x1f, 0x37]);
     /// let array: [u8; 3] = data.to_array().unwrap();
     /// assert_eq!(array, [0xfb, 0x1f, 0x37]);
@@ -44,7 +44,7 @@ impl HexBinary {
     /// Copy to integer
     ///
     /// ```
-    /// # use cosmwasm_std::HexBinary;
+    /// # use secret_cosmwasm_std::HexBinary;
     /// let data = HexBinary::from(&[0x8b, 0x67, 0x64, 0x84, 0xb5, 0xfb, 0x1f, 0x37]);
     /// let num = u64::from_be_bytes(data.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
