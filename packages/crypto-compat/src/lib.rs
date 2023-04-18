@@ -1,1 +1,1 @@
-pub use secret_cosmwasm_std::*;
+pub use secret_cosmwasm_crypto::*;
