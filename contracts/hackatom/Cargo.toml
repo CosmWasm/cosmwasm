@@ -30,7 +30,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
+cosmwasm-std = { path = "../../packages/std-compat", default-features = false, features = [
     "abort",
 ] }
 rust-argon2 = "0.8"
@@ -40,4 +40,4 @@ sha2 = "0.10"
 thiserror = "1.0"
 
 [dev-dependencies]
-cosmwasm-storage = { path = "../../packages/storage", default-features = false }
+cosmwasm-storage = { path = "../../packages/storage-compat", default-features = false }

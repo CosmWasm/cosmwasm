@@ -1,0 +1,13 @@
+[package]
+name = "cosmwasm-storage"
+version = "1.1.9"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+# This enables iterator functionality, as exposed in cosmwasm-std/iterator
+iterator = ["secret-cosmwasm-storage/iterator"]
+
+[dependencies]
+secret-cosmwasm-storage = { path = "../storage" }
