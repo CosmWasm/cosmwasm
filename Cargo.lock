@@ -130,6 +130,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cec318a675afcb6a1ea1d4340e2d377e56e47c266f28043ceccbf4412ddfdd3b"
 
 [[package]]
+name = "cosmwasm-crypto"
+version = "1.1.9"
+dependencies = [
+ "secret-cosmwasm-crypto",
+]
+
+[[package]]
 name = "cosmwasm-derive"
 version = "1.1.9"
 dependencies = [
@@ -162,14 +169,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.1.0"
+version = "1.1.9"
 dependencies = [
  "secret-cosmwasm-std",
 ]
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.1.0"
+version = "1.1.9"
 dependencies = [
  "secret-cosmwasm-storage",
 ]

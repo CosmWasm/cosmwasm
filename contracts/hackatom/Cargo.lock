@@ -125,14 +125,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.1.0"
+version = "1.1.9"
 dependencies = [
  "secret-cosmwasm-std",
 ]
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.1.0"
+version = "1.1.9"
 dependencies = [
  "secret-cosmwasm-storage",
 ]
