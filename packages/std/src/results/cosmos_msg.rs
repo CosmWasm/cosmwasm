@@ -46,7 +46,13 @@ pub enum CosmosMsg<T = Empty> {
     Wasm(WasmMsg),
     #[cfg(feature = "stargate")]
     Gov(GovMsg),
-    LastMsgMark(T),
+    FinalizeTx(Empty),
+}
+
+impl<T> CosmosMsg<T> {
+    pub fn finalize_tx() -> Self {
+        CosmosMsg::FinalizeTx(Empty {})
+    }
 }
 
 /// The message types of the bank module.
