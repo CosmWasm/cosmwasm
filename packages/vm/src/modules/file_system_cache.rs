@@ -45,10 +45,7 @@ const MODULE_SERIALIZATION_VERSION: &str = "v4";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
-    /// The base path this cache operates in. Within this path, versioned directories are created.
-    /// A sophisticated version of this cache might be able to read multiple input versions in the future.
-    base_path: PathBuf,
-    wasmer_module_version: u32,
+    modules_path: PathBuf,
 }
 
 /// An error type that hides system specific error information
@@ -73,19 +70,20 @@ impl FileSystemCache {
     ///
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
-    pub unsafe fn new(path: impl Into<PathBuf>) -> Result<Self, NewFileSystemCacheError> {
-        let wasmer_module_version = current_wasmer_module_version();
-
-        let path: PathBuf = path.into();
-        if path.exists() {
-            let metadata = path
+    pub unsafe fn new(base_path: impl Into<PathBuf>) -> Result<Self, NewFileSystemCacheError> {
+        let base_path: PathBuf = base_path.into();
+        if base_path.exists() {
+            let metadata = base_path
                 .metadata()
                 .map_err(|_e| NewFileSystemCacheError::CouldntGetMetadata)?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
                     Ok(Self {
-                        base_path: path,
-                        wasmer_module_version,
+                        modules_path: modules_path(
+                            &base_path,
+                            current_wasmer_module_version(),
+                            &Target::default(),
+                        ),
                     })
                 } else {
                     Err(NewFileSystemCacheError::ReadonlyPath)
@@ -95,10 +93,13 @@ impl FileSystemCache {
             }
         } else {
             // Create the directory and any parent directories if they don't yet exist.
-            mkdir_p(&path).map_err(|_e| NewFileSystemCacheError::CouldntCreatePath)?;
+            mkdir_p(&base_path).map_err(|_e| NewFileSystemCacheError::CouldntCreatePath)?;
             Ok(Self {
-                base_path: path,
-                wasmer_module_version,
+                modules_path: modules_path(
+                    &base_path,
+                    current_wasmer_module_version(),
+                    &Target::default(),
+                ),
             })
         }
     }
@@ -107,7 +108,7 @@ impl FileSystemCache {
     /// along with the size of the serialized module.
     pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
-        let file_path = self.latest_modules_path().join(filename);
+        let file_path = self.modules_path.join(filename);
 
         let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
@@ -131,12 +132,11 @@ impl FileSystemCache {
 
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
-        let modules_dir = self.latest_modules_path();
-        mkdir_p(&modules_dir)
+        mkdir_p(&self.modules_path)
             .map_err(|_e| VmError::cache_err("Error creating modules directory"))?;
 
         let filename = checksum.to_hex();
-        let path = modules_dir.join(filename);
+        let path = self.modules_path.join(filename);
         module
             .serialize_to_file(&path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
@@ -149,7 +149,7 @@ impl FileSystemCache {
     /// Returns true if the file existed and false if the file did not exist.
     pub fn remove(&mut self, checksum: &Checksum) -> VmResult<bool> {
         let filename = checksum.to_hex();
-        let file_path = self.latest_modules_path().join(filename);
+        let file_path = self.modules_path.join(filename);
 
         if file_path.exists() {
             fs::remove_file(file_path)
@@ -158,15 +158,6 @@ impl FileSystemCache {
         } else {
             Ok(false)
         }
-    }
-
-    /// The path to the latest version of the modules.
-    fn latest_modules_path(&self) -> PathBuf {
-        let version = format!(
-            "{}-wasmer{}",
-            MODULE_SERIALIZATION_VERSION, self.wasmer_module_version
-        );
-        self.base_path.join(version)
     }
 }
 
@@ -184,13 +175,22 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
 /// Creates an identifier for the Wasmer `Target` that is used for
 /// cache invalidation. The output is reasonable human friendly to be useable
 /// in file path component.
-#[allow(unused)]
 fn target_id(target: &Target) -> String {
     // Use a custom Hasher implementation to avoid randomization.
     let mut deterministic_hasher = crc32fast::Hasher::new();
     target.hash(&mut deterministic_hasher);
     let hash = deterministic_hasher.finalize();
     format!("{}-{:08X}", target.triple(), hash) // print 4 byte hash as 8 hex characters
+}
+
+/// The path to the latest version of the modules.
+fn modules_path(base_path: &Path, wasmer_module_version: u32, target: &Target) -> PathBuf {
+    let version_dir = format!(
+        "{}-wasmer{}",
+        MODULE_SERIALIZATION_VERSION, wasmer_module_version
+    );
+    let target_dir = target_id(target);
+    base_path.join(version_dir).join(target_dir)
 }
 
 #[cfg(test)]
@@ -265,11 +265,13 @@ mod tests {
         let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
-        let file_path = format!(
-            "{}/v4-wasmer1/{}",
+        let mut globber = glob::glob(&format!(
+            "{}/v4-wasmer1/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
-        );
+        ))
+        .expect("Failed to read glob pattern");
+        let file_path = globber.next().unwrap().unwrap();
         let _serialized_module = fs::read(file_path).unwrap();
     }
 
@@ -325,5 +327,23 @@ mod tests {
         let id1 = target_id(&target);
         let id2 = target_id(&target);
         assert_eq!(id1, id2);
+    }
+
+    #[test]
+    fn modules_path_works() {
+        let base = PathBuf::from("./modules/");
+        let triple = wasmer::Triple {
+            architecture: wasmer::Architecture::X86_64,
+            vendor: target_lexicon::Vendor::Nintendo,
+            operating_system: target_lexicon::OperatingSystem::Fuchsia,
+            environment: target_lexicon::Environment::Gnu,
+            binary_format: target_lexicon::BinaryFormat::Coff,
+        };
+        let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
+        let p = modules_path(&base, 17, &target);
+        assert_eq!(
+            p.as_os_str(),
+            "./modules/v4-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+        );
     }
 }
