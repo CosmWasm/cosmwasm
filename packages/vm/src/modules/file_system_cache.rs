@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -103,8 +104,6 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    /// The serialized module size is a good approximation (~100.06 %) of the in-memory module size.
-    /// It should not be considered as the exact in-memory module size.
     pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.latest_modules_path().join(filename);
@@ -112,13 +111,8 @@ impl FileSystemCache {
         let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
             Ok(module) => {
-                let module_size = file_path
-                    .metadata()
-                    .map_err(|e| {
-                        VmError::cache_err(format!("Error getting module file size: {}", e))
-                    })?
-                    .len();
-                Ok(Some((module, module_size as usize)))
+                let module_size = estimate_module_size(&file_path)?;
+                Ok(Some((module, module_size)))
             }
             Err(DeserializeError::Io(err)) => match err.kind() {
                 io::ErrorKind::NotFound => Ok(None),
@@ -145,13 +139,10 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let path = modules_dir.join(filename);
         module
-            .serialize_to_file(path.clone())
+            .serialize_to_file(&path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-        let module_size = path
-            .metadata()
-            .map_err(|e| VmError::cache_err(format!("Error getting module file size: {}", e)))?
-            .len();
-        Ok(module_size as usize)
+        let module_size = estimate_module_size(&path)?;
+        Ok(module_size)
     }
 
     /// Removes a serialized module from the file system.
@@ -178,6 +169,21 @@ impl FileSystemCache {
         );
         self.base_path.join(version)
     }
+}
+
+/// Estimates the in-memory size of a wasmer Module based on the size it takes on disk.
+/// The serialized module size is a good approximation (~100.06 %) of the in-memory module size.
+/// It should not be considered as the exact in-memory module size.
+/// The reason this works well is that Wasmer uses rkyv for module serialization to disk, which
+/// is more or less a 1:1 dump of the memory.
+fn estimate_module_size(module_path: &Path) -> VmResult<usize> {
+    let module_size: usize = module_path
+        .metadata()
+        .map_err(|_e| VmError::cache_err("Error getting file metadata"))? // ensure error message is not system specific
+        .len()
+        .try_into()
+        .expect("Could not convert file size to usize");
+    Ok(module_size)
 }
 
 #[cfg(test)]
