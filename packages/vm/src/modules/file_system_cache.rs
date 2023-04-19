@@ -331,7 +331,7 @@ mod tests {
 
     #[test]
     fn modules_path_works() {
-        let base = PathBuf::from("./modules/");
+        let base = PathBuf::from("modules");
         let triple = wasmer::Triple {
             architecture: wasmer::Architecture::X86_64,
             vendor: target_lexicon::Vendor::Nintendo,
@@ -343,7 +343,11 @@ mod tests {
         let p = modules_path(&base, 17, &target);
         assert_eq!(
             p.as_os_str(),
-            "./modules/v4-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+            if cfg!(windows) {
+                "modules\\v4-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+            } else {
+                "modules/v4-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+            }
         );
     }
 }
