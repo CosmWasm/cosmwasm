@@ -1,10 +1,11 @@
 use std::fs;
+use std::hash::Hash;
 use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use wasmer::{DeserializeError, Module, Store};
+use wasmer::{DeserializeError, Module, Store, Target};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
@@ -180,6 +181,18 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
     Ok(module_size)
 }
 
+/// Creates an identifier for the Wasmer `Target` that is used for
+/// cache invalidation. The output is reasonable human friendly to be useable
+/// in file path component.
+#[allow(unused)]
+fn target_id(target: &Target) -> String {
+    // Use a custom Hasher implementation to avoid randomization.
+    let mut deterministic_hasher = crc32fast::Hasher::new();
+    target.hash(&mut deterministic_hasher);
+    let hash = deterministic_hasher.finalize();
+    format!("{}-{:08X}", target.triple(), hash) // print 4 byte hash as 8 hex characters
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -288,5 +301,29 @@ mod tests {
         // Remove again
         let existed = cache.remove(&checksum).unwrap();
         assert!(!existed);
+    }
+
+    #[test]
+    fn target_id_works() {
+        let triple = wasmer::Triple {
+            architecture: wasmer::Architecture::X86_64,
+            vendor: target_lexicon::Vendor::Nintendo,
+            operating_system: target_lexicon::OperatingSystem::Fuchsia,
+            environment: target_lexicon::Environment::Gnu,
+            binary_format: target_lexicon::BinaryFormat::Coff,
+        };
+        let target = Target::new(triple.clone(), wasmer::CpuFeature::POPCNT.into());
+        let id = target_id(&target);
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-4721E3F4");
+        // Changing CPU features changes the hash part
+        let target = Target::new(triple, wasmer::CpuFeature::AVX512DQ.into());
+        let id = target_id(&target);
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-D5C8034F");
+
+        // Works for durrect target (hashing is deterministic);
+        let target = Target::default();
+        let id1 = target_id(&target);
+        let id2 = target_id(&target);
+        assert_eq!(id1, id2);
     }
 }
