@@ -25,6 +25,12 @@ and this project adheres to
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 
+## [1.2.4] - 2023-04-17
+
+### Fixed
+
+- cosmwasm-vm: Add call depths limit
+
 ## [1.2.3] - 2023-03-22
 
 - cosmwasm-vm: Use saturating increments for `Stats` fields to ensure we don't
@@ -1677,7 +1683,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...HEAD
+[1.2.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.0...v1.2.1

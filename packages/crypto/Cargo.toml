@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-crypto"
-version = "1.2.3"
+version = "1.2.4"
 authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
 edition = "2021"
 description = "Crypto bindings for cosmwasm contracts"
@@ -26,7 +26,7 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 thiserror = "1.0.38"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.4"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0.40"
 sha2 = "0.10"

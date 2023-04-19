@@ -72,7 +72,7 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
-              rust-version: ["1.60.0", "1.67.1"]
+              rust-version: ["1.60.0", "1.68.2"]
       - benchmarking:
           requires:
             - package_vm
@@ -84,14 +84,7 @@ workflows:
                 - main
                 - /^[0-9]+\.[0-9]+$/
                 # Add your branch here if benchmarking matters to your work
-                - benchmarking
-                - update-wasmer
-                - metering-restart
-                - load-wasm-speed
-                - cache-analyze
-                - fix-benches
-                - benchmark_argon2
-                - get_instance-multi-threaded-benchmark-multi-contract
+                - fix-benchmarking
       - coverage
   deploy:
     jobs:
@@ -1036,7 +1029,7 @@ jobs:
           name: Build development contracts
           command: |
             echo "Building all contracts under ./contracts"
-            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.12.11 ./contracts/*/
+            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.12.13 ./contracts/*/
       - run:
           name: Check development contracts
           command: |
