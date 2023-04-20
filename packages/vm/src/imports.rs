@@ -387,10 +387,11 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    if env.print_debug {
+    if let Some(debug_handler) = env.debug_handler.as_ref() {
         let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
-        println!("{}", msg);
+        let gas_remaining = env.get_gas_left();
+        (*debug_handler)(&msg, gas_remaining);
     }
     Ok(())
 }

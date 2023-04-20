@@ -1,6 +1,7 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use wasmer::{HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
@@ -79,12 +80,14 @@ impl GasState {
     }
 }
 
+pub type DebugHandlerFn = dyn for<'a> Fn(/* msg */ &'a str, /* gas remaining */ u64);
+
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
 pub struct Environment<A: BackendApi, S: Storage, Q: Querier> {
     pub api: A,
-    pub print_debug: bool,
     pub gas_config: GasConfig,
+    pub debug_handler: Option<Rc<DebugHandlerFn>>,
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
@@ -96,8 +99,8 @@ impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     fn clone(&self) -> Self {
         Environment {
             api: self.api,
-            print_debug: self.print_debug,
             gas_config: self.gas_config.clone(),
+            debug_handler: self.debug_handler.clone(),
             data: self.data.clone(),
         }
     }
@@ -113,8 +116,14 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     pub fn new(api: A, gas_limit: u64, print_debug: bool) -> Self {
         Environment {
             api,
-            print_debug,
             gas_config: GasConfig::default(),
+            debug_handler: if print_debug {
+                Some(Rc::new(|msg: &str, _gas_remaining| {
+                    println!("{msg}");
+                }))
+            } else {
+                None
+            },
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         }
     }
