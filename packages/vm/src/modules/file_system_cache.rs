@@ -76,32 +76,24 @@ impl FileSystemCache {
             let metadata = base_path
                 .metadata()
                 .map_err(|_e| NewFileSystemCacheError::CouldntGetMetadata)?;
-            if metadata.is_dir() {
-                if !metadata.permissions().readonly() {
-                    Ok(Self {
-                        modules_path: modules_path(
-                            &base_path,
-                            current_wasmer_module_version(),
-                            &Target::default(),
-                        ),
-                    })
-                } else {
-                    Err(NewFileSystemCacheError::ReadonlyPath)
-                }
-            } else {
-                Err(NewFileSystemCacheError::ExistsButNoDirectory)
+            if !metadata.is_dir() {
+                return Err(NewFileSystemCacheError::ExistsButNoDirectory);
+            }
+            if metadata.permissions().readonly() {
+                return Err(NewFileSystemCacheError::ReadonlyPath);
             }
         } else {
             // Create the directory and any parent directories if they don't yet exist.
             mkdir_p(&base_path).map_err(|_e| NewFileSystemCacheError::CouldntCreatePath)?;
-            Ok(Self {
-                modules_path: modules_path(
-                    &base_path,
-                    current_wasmer_module_version(),
-                    &Target::default(),
-                ),
-            })
         }
+
+        Ok(Self {
+            modules_path: modules_path(
+                &base_path,
+                current_wasmer_module_version(),
+                &Target::default(),
+            ),
+        })
     }
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
