@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -103,13 +104,16 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
+    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.latest_modules_path().join(filename);
 
-        let result = unsafe { Module::deserialize_from_file(store, file_path) };
+        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
-            Ok(module) => Ok(Some(module)),
+            Ok(module) => {
+                let module_size = module_size(&file_path)?;
+                Ok(Some((module, module_size)))
+            }
             Err(DeserializeError::Io(err)) => match err.kind() {
                 io::ErrorKind::NotFound => Ok(None),
                 _ => Err(VmError::cache_err(format!(
@@ -125,7 +129,7 @@ impl FileSystemCache {
     }
 
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
-    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
+    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
         let modules_dir = self.latest_modules_path();
         mkdir_p(&modules_dir)
             .map_err(|_e| VmError::cache_err("Error creating modules directory"))?;
@@ -133,9 +137,10 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let path = modules_dir.join(filename);
         module
-            .serialize_to_file(path)
+            .serialize_to_file(&path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-        Ok(())
+        let module_size = module_size(&path)?;
+        Ok(module_size)
     }
 
     /// Removes a serialized module from the file system.
@@ -162,6 +167,17 @@ impl FileSystemCache {
         );
         self.base_path.join(version)
     }
+}
+
+/// Returns the size of the module stored on disk
+fn module_size(module_path: &Path) -> VmResult<usize> {
+    let module_size: usize = module_path
+        .metadata()
+        .map_err(|_e| VmError::cache_err("Error getting file metadata"))? // ensure error message is not system specific
+        .len()
+        .try_into()
+        .expect("Could not convert file size to usize");
+    Ok(module_size)
 }
 
 #[cfg(test)]
@@ -212,7 +228,8 @@ mod tests {
         // Check the returned module is functional.
         // This is not really testing the cache API but better safe than sorry.
         {
-            let cached_module = cached.unwrap();
+            let (cached_module, module_size) = cached.unwrap();
+            assert_eq!(module_size, module.serialize().unwrap().len());
             let import_object = imports! {};
             let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
             set_remaining_points(&instance, TESTING_GAS_LIMIT);
