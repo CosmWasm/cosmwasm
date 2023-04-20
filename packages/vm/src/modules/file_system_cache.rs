@@ -129,8 +129,6 @@ impl FileSystemCache {
     }
 
     /// Stores a serialized module to the file system. Returns the size of the serialized module.
-    /// The serialized module size is a good approximation (~100.06 %) of the in-memory module size.
-    /// It should not be considered as the exact in-memory module size.
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
         let modules_dir = self.latest_modules_path();
         mkdir_p(&modules_dir)
