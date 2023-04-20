@@ -234,6 +234,7 @@ fn send_remote_funds() {
             to_address,
             amount,
             timeout,
+            memo,
         }) => {
             assert_eq!(transfer_channel_id, channel_id.as_str());
             assert_eq!(remote_addr, to_address.as_str());
