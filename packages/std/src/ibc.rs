@@ -40,7 +40,7 @@ pub enum IbcMsg {
         /// can put here `{"ibc_callback":"secret1contractAddr"}` to get a callback on ack/timeout
         /// see this for more info:
         /// https://github.com/scrtlabs/SecretNetwork/blob/78a5f82a4/x/ibc-hooks/README.md?plain=1#L144-L188
-        memo: Option<String>,
+        memo: String,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
@@ -791,10 +791,10 @@ mod tests {
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
             timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
-            memo: None,
+            memo: "",
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"}}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"},"memo":""}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 
