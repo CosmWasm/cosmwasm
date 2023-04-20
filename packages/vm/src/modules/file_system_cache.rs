@@ -111,7 +111,7 @@ impl FileSystemCache {
         let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
             Ok(module) => {
-                let module_size = estimate_module_size(&file_path)?;
+                let module_size = module_size(&file_path)?;
                 Ok(Some((module, module_size)))
             }
             Err(DeserializeError::Io(err)) => match err.kind() {
@@ -139,7 +139,7 @@ impl FileSystemCache {
         module
             .serialize_to_file(&path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-        let module_size = estimate_module_size(&path)?;
+        let module_size = module_size(&path)?;
         Ok(module_size)
     }
 
@@ -169,12 +169,8 @@ impl FileSystemCache {
     }
 }
 
-/// Estimates the in-memory size of a wasmer Module based on the size it takes on disk.
-/// The serialized module size is a good approximation (~100.06 %) of the in-memory module size.
-/// It should not be considered as the exact in-memory module size.
-/// The reason this works well is that Wasmer uses rkyv for module serialization to disk, which
-/// is more or less a 1:1 dump of the memory.
-fn estimate_module_size(module_path: &Path) -> VmResult<usize> {
+/// Returns the size of the module stored on disk
+fn module_size(module_path: &Path) -> VmResult<usize> {
     let module_size: usize = module_path
         .metadata()
         .map_err(|_e| VmError::cache_err("Error getting file metadata"))? // ensure error message is not system specific
