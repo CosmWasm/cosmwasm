@@ -75,6 +75,12 @@ fn debug_works() {
 
     let msg = ExecuteMsg::Debug {};
     let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+
+    eprintln!("Unsetting debug handler. From here nothing is printed anymore.");
+    deps.unset_debug_handler();
+
+    let msg = ExecuteMsg::Debug {};
+    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
 }
 
 #[test]
