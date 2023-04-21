@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
+use std::rc::Rc;
 use std::sync::Mutex;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
@@ -85,7 +86,12 @@ where
     ) -> VmResult<Self> {
         let store = module.store();
 
-        let env = Environment::new(backend.api, gas_limit, print_debug);
+        let env = Environment::new(backend.api, gas_limit);
+        if print_debug {
+            env.set_debug_handler(Some(Rc::new(|msg: &str, _gas_remaining| {
+                println!("{msg}");
+            })))
+        }
 
         let mut import_obj = ImportObject::new();
         let mut env_imports = Exports::new();
@@ -263,6 +269,17 @@ where
         } else {
             None
         }
+    }
+
+    pub fn set_debug_handler<H>(&mut self, debug_handler: H)
+    where
+        H: for<'a> Fn(/* msg */ &'a str, /* gas remaining */ u64) + 'static,
+    {
+        self.env.set_debug_handler(Some(Rc::new(debug_handler)));
+    }
+
+    pub fn unset_debug_handler(&mut self) {
+        self.env.set_debug_handler(None);
     }
 
     /// Returns the features required by this contract.

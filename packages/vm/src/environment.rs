@@ -80,6 +80,12 @@ impl GasState {
     }
 }
 
+// Unfortunately we cannot create an alias for the trait (https://github.com/rust-lang/rust/issues/41517).
+// So we need to copy it in a few places.
+//
+//                            /- BEGIN TRAIT                             END TRAIT \
+//                            |                                                    |
+//                            v                                                    v
 pub type DebugHandlerFn = dyn for<'a> Fn(/* msg */ &'a str, /* gas remaining */ u64);
 
 /// A environment that provides access to the ContextData.
@@ -87,7 +93,6 @@ pub type DebugHandlerFn = dyn for<'a> Fn(/* msg */ &'a str, /* gas remaining */ 
 pub struct Environment<A: BackendApi, S: Storage, Q: Querier> {
     pub api: A,
     pub gas_config: GasConfig,
-    pub debug_handler: Option<Rc<DebugHandlerFn>>,
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
@@ -100,7 +105,6 @@ impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
         Environment {
             api: self.api,
             gas_config: self.gas_config.clone(),
-            debug_handler: self.debug_handler.clone(),
             data: self.data.clone(),
         }
     }
@@ -113,19 +117,25 @@ impl<A: BackendApi, S: Storage, Q: Querier> WasmerEnv for Environment<A, S, Q> {
 }
 
 impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
-    pub fn new(api: A, gas_limit: u64, print_debug: bool) -> Self {
+    pub fn new(api: A, gas_limit: u64) -> Self {
         Environment {
             api,
             gas_config: GasConfig::default(),
-            debug_handler: if print_debug {
-                Some(Rc::new(|msg: &str, _gas_remaining| {
-                    println!("{msg}");
-                }))
-            } else {
-                None
-            },
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         }
+    }
+
+    pub fn set_debug_handler(&self, debug_handler: Option<Rc<DebugHandlerFn>>) {
+        self.with_context_data_mut(|context_data| {
+            context_data.debug_handler = debug_handler;
+        })
+    }
+
+    pub fn debug_handler(&self) -> Option<Rc<DebugHandlerFn>> {
+        self.with_context_data(|context_data| {
+            // This clone here requires us to wrap the function in Rc instead of Box
+            context_data.debug_handler.clone()
+        })
     }
 
     fn with_context_data_mut<C, R>(&self, callback: C) -> R
@@ -362,6 +372,7 @@ pub struct ContextData<S: Storage, Q: Querier> {
     storage_readonly: bool,
     call_depth: usize,
     querier: Option<Q>,
+    debug_handler: Option<Rc<DebugHandlerFn>>,
     /// A non-owning link to the wasmer instance
     wasmer_instance: Option<NonNull<WasmerInstance>>,
 }
@@ -374,6 +385,7 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
             storage_readonly: true,
             call_depth: 0,
             querier: None,
+            debug_handler: None,
             wasmer_instance: None,
         }
     }
@@ -438,7 +450,7 @@ mod tests {
         Environment<MockApi, MockStorage, MockQuerier>,
         Box<WasmerInstance>,
     ) {
-        let env = Environment::new(MockApi::default(), gas_limit, false);
+        let env = Environment::new(MockApi::default(), gas_limit);
 
         let module = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
         let store = module.store();
