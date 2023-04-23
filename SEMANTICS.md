@@ -366,7 +366,7 @@ of reentrancy, as the query cannot modify any state or execute our contract.
 When we "make a query", we serialize a
 [`QueryRequest` struct](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/query/mod.rs#L27-L48)
 that represents all possible calls, and then pass that over FFI to the runtime,
-where it is interpretted in the `x/wasm` SDK module. This is extensible with
+where it is interpreted in the `x/wasm` SDK module. This is extensible with
 blockchain-specific custom queries just like `CosmosMsg` accepts custom results.
 Also note the ability to perform raw protobuf "Stargate" queries:
 

@@ -2,7 +2,7 @@
 
 cosmwasm-std is the standard library for building contracts in CosmWasm. It is
 compiled as part of the contract to Wasm. When creating a dependency to
-cosmwasm-std, the required Wasm imports and exports are created implicitely via
+cosmwasm-std, the required Wasm imports and exports are created implicitly via
 C interfaces, e.g.:
 
 ```rust
@@ -37,11 +37,11 @@ The libarary comes with the following features:
 | Feature      | Enabled by default | Description                                                                |
 | ------------ | ------------------ | -------------------------------------------------------------------------- |
 | iterator     | x                  | Storage iterators                                                          |
-| abort        | x                  | A panic handler that aborts the contract execution with a helpfull message |
+| abort        | x                  | A panic handler that aborts the contract execution with a helpful message  |
 | stargate     |                    | Cosmos SDK 0.40+ features and IBC                                          |
 | ibc3         |                    | New fields added in IBC v3                                                 |
 | staking      |                    | Access to the staking module                                               |
-| baktraces    |                    | Add backtraces to errors (for unit testing)                                |
+| backtraces   |                    | Add backtraces to errors (for unit testing)                                |
 | cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                           |
 | cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                           |
 
