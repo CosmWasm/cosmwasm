@@ -295,7 +295,7 @@ After the `submessage` is finished, the caller will get a chance to handle the
 result. It will get the original `id` of the subcall so it can switch on how to
 process this, and the `Result` of the execution, both success and error. Note
 that it includes all events returned by the submessage, which applies to native
-sdk modules as well (like Bank) as well as the data returned from below. This
+sdk modules (like Bank) as well as the data returned from below. This
 and the original call id provide all context to continue processing it. If you
 need more state, you must save some local context to the store (under the `id`)
 before returning the `submessage` in the original `execute`, and load it in
