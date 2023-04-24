@@ -23,7 +23,8 @@ and this project adheres to
 - cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
   system cache to prepare for the Wasmer 3 upgrade.
 - cosmwasm-vm: Add target (triple + CPU features) into the module cache
-  directory to avoid using modules compiled for a different system ([#1664]).
+  directory to avoid using modules compiled for a different system. Bump
+  `MODULE_SERIALIZATION_VERSION` to "v5". ([#1664])
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629

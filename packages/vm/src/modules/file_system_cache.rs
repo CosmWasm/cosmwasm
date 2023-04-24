@@ -41,7 +41,9 @@ use crate::modules::current_wasmer_module_version;
 ///   the module header version (<https://github.com/wasmerio/wasmer/issues/3193>). In cosmwasm-vm 1.1.0-1.1.1
 ///   the old value "v3" is still used along with Wasmer 2.3.0 (bug). From cosmwasm 1.1.2 onwards, this is
 ///   fixed by bumping to "v4".
-const MODULE_SERIALIZATION_VERSION: &str = "v4";
+/// - **v5**:<br>
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+const MODULE_SERIALIZATION_VERSION: &str = "v5";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -258,7 +260,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v4-wasmer1/**/{}",
+            "{}/v5-wasmer1/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -336,9 +338,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v4-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+                "modules\\v5-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
             } else {
-                "modules/v4-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+                "modules/v5-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
             }
         );
     }
