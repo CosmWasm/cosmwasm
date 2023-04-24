@@ -18,7 +18,7 @@ and this project adheres to
 - cosmwasm-vm: Limit number of imports during static validation ([#1629]).
 - cosmwasm-vm: Add target (triple + CPU features) into the module cache
   directory to avoid using modules compiled for a different system. Bump
-  `MODULE_SERIALIZATION_VERSION` to "v5". ([#1664])
+  `MODULE_SERIALIZATION_VERSION` to "v6". ([#1664])
 
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
