@@ -387,6 +387,7 @@ dependencies = [
  "cosmwasm-std",
  "crc32fast",
  "criterion",
+ "derivative",
  "enumset",
  "glob",
  "hex",

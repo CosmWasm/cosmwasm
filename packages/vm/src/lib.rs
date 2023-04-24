@@ -45,7 +45,7 @@ pub use crate::errors::{
     CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
     VmError, VmResult,
 };
-pub use crate::instance::{GasReport, Instance, InstanceOptions};
+pub use crate::instance::{DebugInfo, GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
 

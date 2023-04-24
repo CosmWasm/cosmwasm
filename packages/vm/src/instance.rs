@@ -21,6 +21,8 @@ use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::compile;
 
+pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
+
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
     /// The original limit the instance was created with
@@ -273,7 +275,7 @@ where
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)
     where
-        H: for<'a> Fn(/* msg */ &'a str, /* gas remaining */ u64) + 'static,
+        H: for<'a> Fn(/* msg */ &'a str, DebugInfo<'a>) + 'static,
     {
         self.env.set_debug_handler(Some(Rc::new(debug_handler)));
     }

@@ -67,9 +67,10 @@ fn debug_works() {
     let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
 
     let start = SystemTime::now();
-    deps.set_debug_handler(move |msg, gas_remaining| {
+    deps.set_debug_handler(move |msg, info| {
+        let gas = info.gas_remaining;
         let runtime = SystemTime::now().duration_since(start).unwrap().as_micros();
-        eprintln!("{msg} (gas: {gas_remaining}, runtime: {runtime}µs)");
+        eprintln!("{msg} (gas: {gas}, runtime: {runtime}µs)");
     });
 
     let msg = ExecuteMsg::Debug {};
