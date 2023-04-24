@@ -89,7 +89,7 @@ where
         let env = Environment::new(backend.api, gas_limit);
         if print_debug {
             env.set_debug_handler(Some(Rc::new(|msg: &str, _gas_remaining| {
-                println!("{msg}");
+                eprintln!("{msg}");
             })))
         }
 
