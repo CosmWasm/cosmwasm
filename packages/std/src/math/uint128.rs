@@ -12,7 +12,9 @@ use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, StdError,
 };
-use crate::{impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint64};
+use crate::{
+    forward_ref_partial_eq, impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint64,
+};
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -35,6 +37,8 @@ use crate::{impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint6
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint128(#[schemars(with = "String")] u128);
+
+forward_ref_partial_eq!(Uint128, Uint128);
 
 impl Uint128 {
     pub const MAX: Self = Self(u128::MAX);
@@ -524,18 +528,6 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
-    }
-}
-
-impl PartialEq<&Uint128> for Uint128 {
-    fn eq(&self, rhs: &&Uint128) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Uint128> for &Uint128 {
-    fn eq(&self, rhs: &Uint128) -> bool {
-        *self == rhs
     }
 }
 

@@ -10,7 +10,7 @@ use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, StdError,
 };
-use crate::{impl_mul_fraction, Fraction, Uint128};
+use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128};
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
 /// such that the full u64 range can be used for clients that convert JSON numbers to floats,
@@ -30,6 +30,8 @@ use crate::{impl_mul_fraction, Fraction, Uint128};
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint64(#[schemars(with = "String")] u64);
+
+forward_ref_partial_eq!(Uint64, Uint64);
 
 impl Uint64 {
     pub const MAX: Self = Self(u64::MAX);
@@ -477,18 +479,6 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
-    }
-}
-
-impl PartialEq<&Uint64> for Uint64 {
-    fn eq(&self, rhs: &&Uint64) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Uint64> for &Uint64 {
-    fn eq(&self, rhs: &Uint64) -> bool {
-        *self == rhs
     }
 }
 
