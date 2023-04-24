@@ -22,10 +22,14 @@ and this project adheres to
   [cosmwasm-check](https://crates.io/crates/cosmwasm-check) instead ([#1511]).
 - cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
   system cache to prepare for the Wasmer 3 upgrade.
+- cosmwasm-vm: Add target (triple + CPU features) into the module cache
+  directory to avoid using modules compiled for a different system. Bump
+  `MODULE_SERIALIZATION_VERSION` to "v5". ([#1664])
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
+[#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 
 ## [1.2.4] - 2023-04-17
 
