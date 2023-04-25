@@ -224,11 +224,11 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (_store, module) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        let mut store = make_runtime_store(TESTING_MEMORY_LIMIT);
         let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_some());
 
@@ -238,10 +238,10 @@ mod tests {
             let (cached_module, module_size) = cached.unwrap();
             assert_eq!(module_size, module.serialize().unwrap().len());
             let import_object = imports! {};
-            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
-            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let instance = WasmerInstance::new(&mut store, &cached_module, &import_object).unwrap();
+            set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
-            let result = add_one.call(&[42.into()]).unwrap();
+            let result = add_one.call(&mut store, &[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
@@ -256,7 +256,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (_store, module) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
@@ -279,7 +279,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (_store, module) = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there

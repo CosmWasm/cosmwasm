@@ -72,15 +72,13 @@ pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
 
 /// Creates a store from an engine and an optional memory limit.
 /// If no limit is set, the no custom tunables will be used.
-fn make_store_with_engine(engine: Engine, memory_limit: Option<Size>) -> Store {
-    match memory_limit {
-        Some(limit) => {
-            let base = BaseTunables::for_target(&Target::default());
-            let tunables = LimitingTunables::new(base, limit_to_pages(limit));
-            Store::new_with_tunables(engine, tunables)
-        }
-        None => Store::new(engine),
+fn make_store_with_engine(mut engine: Engine, memory_limit: Option<Size>) -> Store {
+    if let Some(limit) = memory_limit {
+        let base = BaseTunables::for_target(&Target::default());
+        let tunables = LimitingTunables::new(base, limit_to_pages(limit));
+        engine.set_tunables(tunables);
     }
+    Store::new(engine)
 }
 
 fn limit_to_pages(limit: Size) -> Pages {
@@ -175,7 +173,7 @@ mod tests {
 
         // No limit
         let mut store = make_runtime_store(None);
-        let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
+        let module = unsafe { Module::deserialize(&store, serialized.clone()) }.unwrap();
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
         assert_eq!(module_memory.maximum, None);
@@ -192,7 +190,7 @@ mod tests {
 
         // Instantiate with limit
         let mut store = make_runtime_store(Some(Size::kibi(23 * 64)));
-        let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
+        let module = unsafe { Module::deserialize(&store, serialized) }.unwrap();
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
         assert_eq!(module_memory.maximum, None);

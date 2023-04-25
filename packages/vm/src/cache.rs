@@ -180,7 +180,7 @@ where
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let module = compile(wasm, None, &[])?;
+        let (_store, module) = compile(wasm, None, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
@@ -271,7 +271,7 @@ where
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
-        let module = compile(&code, Some(cache.instance_memory_limit), &[])?;
+        let (_store, module) = compile(&code, Some(cache.instance_memory_limit), &[])?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
@@ -300,8 +300,9 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let module = self.get_module(checksum)?;
+        let (store, module) = self.get_module(checksum)?;
         let instance = Instance::from_module(
+            store,
             &module,
             backend,
             options.gas_limit,
@@ -315,19 +316,21 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<wasmer::Module> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(wasmer::Store, wasmer::Module)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(module) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            return Ok(module);
+            let store = make_runtime_store(Some(cache.instance_memory_limit));
+            return Ok((store, module));
         }
 
         // Get module from memory cache
         if let Some(module) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            return Ok(module.module);
+            let store = make_runtime_store(Some(cache.instance_memory_limit));
+            return Ok((store, module.module));
         }
 
         // Get module from file system cache
@@ -338,7 +341,7 @@ where
             cache
                 .memory_cache
                 .store(checksum, module.clone(), module_size)?;
-            return Ok(module);
+            return Ok((store, module));
         }
 
         // Re-compile module from wasm
@@ -348,13 +351,13 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let module = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
+        let (store, module) = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
         cache
             .memory_cache
             .store(checksum, module.clone(), module_size)?;
-        Ok(module)
+        Ok((store, module))
     }
 }
 

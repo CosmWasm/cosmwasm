@@ -439,8 +439,6 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::V128Load16x4U { .. }
             | Operator::V128Load32x2S { .. }
             | Operator::V128Load32x2U { .. }
-            | Operator::I8x16RoundingAverageU
-            | Operator::I16x8RoundingAverageU
             | Operator::V128Load8Lane { .. }
             | Operator::V128Load16Lane { .. }
             | Operator::V128Load32Lane { .. }
@@ -490,11 +488,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4RelaxedTruncSatF32x4S
             | Operator::I32x4RelaxedTruncSatF32x4U
             | Operator::I32x4RelaxedTruncSatF64x2SZero
-            | Operator::I32x4RelaxedTruncSatF64x2UZero
-            | Operator::I8x16LaneSelect
-            | Operator::I16x8LaneSelect
-            | Operator::I32x4LaneSelect
-            | Operator::I64x2LaneSelect => {
+            | Operator::I32x4RelaxedTruncSatF64x2UZero => {
                 if self.config.allow_feature_simd {
                     state.push_operator(operator);
                     Ok(())
@@ -637,11 +631,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::F32x4RelaxedMin
             | Operator::F32x4RelaxedMax
             | Operator::F64x2RelaxedMin
-            | Operator::F64x2RelaxedMax
-            | Operator::F32x4Fma
-            | Operator::F32x4Fms
-            | Operator::F64x2Fma
-            | Operator::F64x2Fms => {
+            | Operator::F64x2RelaxedMax => {
                 if self.config.allow_floats {
                     state.push_operator(operator);
                     Ok(())
@@ -683,6 +673,21 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
+            // TODO: do
+            Operator::I8x16AvgrU => todo!(),
+            Operator::I16x8AvgrU => todo!(),
+            Operator::F32x4RelaxedFma => todo!(),
+            Operator::F32x4RelaxedFnma => todo!(),
+            Operator::F64x2RelaxedFma => todo!(),
+            Operator::F64x2RelaxedFnma => todo!(),
+            Operator::I8x16RelaxedLaneselect => todo!(),
+            Operator::I16x8RelaxedLaneselect => todo!(),
+            Operator::I32x4RelaxedLaneselect => todo!(),
+            Operator::I64x2RelaxedLaneselect => todo!(),
+            Operator::I16x8RelaxedQ15mulrS => todo!(),
+            Operator::I16x8DotI8x16I7x16S => todo!(),
+            Operator::I32x4DotI8x16I7x16AddS => todo!(),
+            Operator::F32x4RelaxedDotBf16x8AddF32x4 => todo!(),
         }
     }
 }
@@ -691,7 +696,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Cranelift, Module};
+    use wasmer::{CompilerConfig, Cranelift, Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {
@@ -710,7 +715,8 @@ mod tests {
         let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler = Cranelift::default();
         compiler.push_middleware(deterministic);
-        let result = Module::new(&compiler, wasm);
+        let store = Store::new(compiler);
+        let result = Module::new(&store, wasm);
         assert!(result.is_ok());
     }
 
@@ -730,7 +736,8 @@ mod tests {
         let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler = Cranelift::default();
         compiler.push_middleware(deterministic);
-        let result = Module::new(&compiler, wasm);
+        let store = Store::new(compiler);
+        let result = Module::new(&store, wasm);
         assert!(result
             .unwrap_err()
             .to_string()
@@ -756,7 +763,8 @@ mod tests {
         let deterministic = Arc::new(Gatekeeper::default());
         let mut compiler = Cranelift::default();
         compiler.push_middleware(deterministic);
-        let result = Module::new(&compiler, wasm);
+        let store = Store::new(compiler);
+        let result = Module::new(&store, wasm);
         assert!(result
             .unwrap_err()
             .to_string()

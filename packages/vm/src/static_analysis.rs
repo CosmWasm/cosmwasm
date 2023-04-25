@@ -86,7 +86,7 @@ pub fn has_ibc_entry_points(module: &impl ExportInfo) -> bool {
 mod tests {
     use super::*;
     use parity_wasm::elements::Internal;
-    use wasmer::Cranelift;
+    use wasmer::{Cranelift, Store};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
@@ -182,7 +182,8 @@ mod tests {
     fn exported_function_names_works_for_wasmer_with_no_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
         let compiler = Cranelift::default();
-        let module = wasmer::Module::new(&compiler, wasm).unwrap();
+        let store = Store::new(compiler);
+        let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(exports, HashSet::new());
 
@@ -199,7 +200,8 @@ mod tests {
         )
         .unwrap();
         let compiler = Cranelift::default();
-        let module = wasmer::Module::new(&compiler, wasm).unwrap();
+        let store = Store::new(compiler);
+        let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(
             exports,
@@ -211,7 +213,8 @@ mod tests {
     fn exported_function_names_works_for_wasmer_with_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
         let compiler = Cranelift::default();
-        let module = wasmer::Module::new(&compiler, wasm).unwrap();
+        let store = Store::new(compiler);
+        let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(exports, HashSet::new());
 
@@ -229,7 +232,8 @@ mod tests {
         )
         .unwrap();
         let compiler = Cranelift::default();
-        let module = wasmer::Module::new(&compiler, wasm).unwrap();
+        let store = Store::new(compiler);
+        let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(
             exports,
