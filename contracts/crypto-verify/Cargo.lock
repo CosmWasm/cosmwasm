@@ -241,6 +241,7 @@ dependencies = [
  "cosmwasm-crypto",
  "cosmwasm-std",
  "crc32fast",
+ "derivative",
  "enumset",
  "hex",
  "loupe",

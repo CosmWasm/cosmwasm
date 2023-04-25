@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
+use std::rc::Rc;
 use std::sync::Mutex;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
@@ -19,6 +20,8 @@ use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::compile;
+
+pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -85,7 +88,12 @@ where
     ) -> VmResult<Self> {
         let store = module.store();
 
-        let env = Environment::new(backend.api, gas_limit, print_debug);
+        let env = Environment::new(backend.api, gas_limit);
+        if print_debug {
+            env.set_debug_handler(Some(Rc::new(|msg: &str, _gas_remaining| {
+                eprintln!("{msg}");
+            })))
+        }
 
         let mut import_obj = ImportObject::new();
         let mut env_imports = Exports::new();
@@ -265,6 +273,17 @@ where
         }
     }
 
+    pub fn set_debug_handler<H>(&mut self, debug_handler: H)
+    where
+        H: for<'a> Fn(/* msg */ &'a str, DebugInfo<'a>) + 'static,
+    {
+        self.env.set_debug_handler(Some(Rc::new(debug_handler)));
+    }
+
+    pub fn unset_debug_handler(&mut self) {
+        self.env.set_debug_handler(None);
+    }
+
     /// Returns the features required by this contract.
     ///
     /// This is not needed for production because we can do static analysis
@@ -386,6 +405,7 @@ where
 mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+    use std::time::SystemTime;
 
     use super::*;
     use crate::backend::Storage;
@@ -405,6 +425,44 @@ mod tests {
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
+
+    #[test]
+    fn set_debug_handler_and_unset_debug_handler_work() {
+        const LIMIT: u64 = 70_000_000_000_000;
+        let mut instance = mock_instance_with_gas_limit(CYBERPUNK, LIMIT);
+
+        // init contract
+        let info = mock_info("creator", &coins(1000, "earth"));
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            .unwrap()
+            .unwrap();
+
+        let info = mock_info("caller", &[]);
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{"debug":{}}"#)
+            .unwrap()
+            .unwrap();
+
+        let start = SystemTime::now();
+        instance.set_debug_handler(move |msg, info| {
+            let gas = info.gas_remaining;
+            let runtime = SystemTime::now().duration_since(start).unwrap().as_micros();
+            eprintln!("{msg} (gas: {gas}, runtime: {runtime}µs)");
+        });
+
+        let info = mock_info("caller", &[]);
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{"debug":{}}"#)
+            .unwrap()
+            .unwrap();
+
+        eprintln!("Unsetting debug handler. From here nothing is printed anymore.");
+        instance.unset_debug_handler();
+
+        let info = mock_info("caller", &[]);
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{"debug":{}}"#)
+            .unwrap()
+            .unwrap();
+    }
 
     #[test]
     fn required_capabilities_works() {

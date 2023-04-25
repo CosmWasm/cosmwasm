@@ -1,6 +1,7 @@
 //! Import implementations
 
 use std::cmp::max;
+use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
@@ -14,7 +15,7 @@ use cosmwasm_std::Order;
 
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::{process_gas_info, Environment};
+use crate::environment::{process_gas_info, DebugInfo, Environment};
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -387,10 +388,17 @@ pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    if env.print_debug {
+    if let Some(debug_handler) = env.debug_handler() {
         let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
-        println!("{}", msg);
+        let gas_remaining = env.get_gas_left();
+        (*debug_handler)(
+            &msg,
+            DebugInfo {
+                gas_remaining,
+                __lifetime: PhantomData::default(),
+            },
+        );
     }
     Ok(())
 }
@@ -540,7 +548,7 @@ mod tests {
         Box<WasmerInstance>,
     ) {
         let gas_limit = TESTING_GAS_LIMIT;
-        let env = Environment::new(api, gas_limit, false);
+        let env = Environment::new(api, gas_limit);
 
         let module = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
         let store = module.store();

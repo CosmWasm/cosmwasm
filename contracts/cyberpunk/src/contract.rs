@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Deps, DepsMut, Empty, Env, MessageInfo, QueryResponse, Response,
+    entry_point, to_binary, Api, Deps, DepsMut, Empty, Env, MessageInfo, QueryResponse, Response,
     StdError, StdResult, WasmMsg,
 };
 
@@ -38,6 +38,7 @@ pub fn execute(
         Panic {} => execute_panic(),
         Unreachable {} => execute_unreachable(),
         MirrorEnv {} => execute_mirror_env(env),
+        Debug {} => execute_debug(deps.api),
     }
 }
 
@@ -150,6 +151,33 @@ fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {
     Ok(Response::new().set_data(to_binary(&env)?))
 }
 
+fn execute_debug(api: &dyn Api) -> Result<Response, ContractError> {
+    api.debug("Hey, ho – let's go");
+
+    let password = b"password";
+    let salt = b"othersalt";
+
+    for r in 1..10 {
+        api.debug(&format!("Round {r} starting"));
+        let config = argon2::Config {
+            variant: argon2::Variant::Argon2i,
+            version: argon2::Version::Version13,
+            mem_cost: 32,
+            time_cost: r,
+            lanes: 4,
+            thread_mode: argon2::ThreadMode::Sequential,
+            secret: &[],
+            ad: &[],
+            hash_length: 32,
+        };
+        let _hash = argon2::hash_encoded(password, salt, &config).unwrap();
+        api.debug(&format!("Round {r} done"));
+    }
+
+    api.debug("Work completed, bye");
+    Ok(Response::default())
+}
+
 #[entry_point]
 pub fn query(_deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     use QueryMsg::*;
@@ -161,4 +189,35 @@ pub fn query(_deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 
 fn query_mirror_env(env: Env) -> Env {
     env
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+    };
+    use cosmwasm_std::OwnedDeps;
+
+    fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+        let mut deps = mock_dependencies();
+        let msg = Empty {};
+        let info = mock_info("creator", &[]);
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        deps
+    }
+
+    #[test]
+    fn instantiate_works() {
+        setup();
+    }
+
+    #[test]
+    fn debug_works() {
+        let mut deps = setup();
+
+        let msg = ExecuteMsg::Debug {};
+        execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
+    }
 }

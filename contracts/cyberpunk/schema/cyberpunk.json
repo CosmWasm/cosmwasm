@@ -165,6 +165,20 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Does a bit of work and calls debug",
+        "type": "object",
+        "required": [
+          "debug"
+        ],
+        "properties": {
+          "debug": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ]
   },

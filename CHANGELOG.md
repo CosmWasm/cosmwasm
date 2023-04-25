@@ -25,11 +25,16 @@ and this project adheres to
 - cosmwasm-vm: Add target (triple + CPU features) into the module cache
   directory to avoid using modules compiled for a different system. Bump
   `MODULE_SERIALIZATION_VERSION` to "v5". ([#1664])
+- cosmwasm-vm: When enabling `print_debug` the debug logs are now printed to
+  STDERR instead of STDOUT by default ([#1667]).
+- cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
+  customizing the handling of debug messages emitted by the contract ([#1667]).
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
+[#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 
 ## [1.2.4] - 2023-04-17
 
