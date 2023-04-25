@@ -405,6 +405,7 @@ where
 mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+    use std::time::SystemTime;
 
     use super::*;
     use crate::backend::Storage;
@@ -424,6 +425,44 @@ mod tests {
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
+
+    #[test]
+    fn set_debug_handler_and_unset_debug_handler_work() {
+        const LIMIT: u64 = 70_000_000_000_000;
+        let mut instance = mock_instance_with_gas_limit(CYBERPUNK, LIMIT);
+
+        // init contract
+        let info = mock_info("creator", &coins(1000, "earth"));
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            .unwrap()
+            .unwrap();
+
+        let info = mock_info("caller", &[]);
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{"debug":{}}"#)
+            .unwrap()
+            .unwrap();
+
+        let start = SystemTime::now();
+        instance.set_debug_handler(move |msg, info| {
+            let gas = info.gas_remaining;
+            let runtime = SystemTime::now().duration_since(start).unwrap().as_micros();
+            eprintln!("{msg} (gas: {gas}, runtime: {runtime}µs)");
+        });
+
+        let info = mock_info("caller", &[]);
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{"debug":{}}"#)
+            .unwrap()
+            .unwrap();
+
+        eprintln!("Unsetting debug handler. From here nothing is printed anymore.");
+        instance.unset_debug_handler();
+
+        let info = mock_info("caller", &[]);
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{"debug":{}}"#)
+            .unwrap()
+            .unwrap();
+    }
 
     #[test]
     fn required_capabilities_works() {
