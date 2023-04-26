@@ -260,7 +260,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v5-wasmer1/**/{}",
+            "{}/v5-wasmer4/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
