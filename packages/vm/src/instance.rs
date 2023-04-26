@@ -282,9 +282,9 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(self) -> Option<Backend<A, S, Q>> {
+    pub fn recycle(self) -> (Store, Module, Option<Backend<A, S, Q>>) {
         let env = self.fe.as_ref(&self.store);
-        if let (Some(storage), Some(querier)) = env.move_out() {
+        let backend = if let (Some(storage), Some(querier)) = env.move_out() {
             let api = env.api;
             Some(Backend {
                 api,
@@ -293,7 +293,9 @@ where
             })
         } else {
             None
-        }
+        };
+
+        (self.store, self._inner.module().clone(), backend)
     }
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)

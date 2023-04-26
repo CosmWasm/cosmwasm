@@ -1,7 +1,7 @@
 use clru::{CLruCache, CLruCacheConfig, WeightScale};
 use std::collections::hash_map::RandomState;
 use std::num::NonZeroUsize;
-use wasmer::Module;
+use wasmer::{Module, Store};
 
 use super::sized_module::SizedModule;
 use crate::{Checksum, Size, VmError, VmResult};
@@ -49,10 +49,22 @@ impl InMemoryCache {
         }
     }
 
-    pub fn store(&mut self, checksum: &Checksum, module: Module, size: usize) -> VmResult<()> {
+    pub fn store(
+        &mut self,
+        checksum: &Checksum,
+        entry: (Store, Module),
+        size: usize,
+    ) -> VmResult<()> {
         if let Some(modules) = &mut self.modules {
             modules
-                .put_with_weight(*checksum, SizedModule { module, size })
+                .put_with_weight(
+                    *checksum,
+                    SizedModule {
+                        store: entry.0,
+                        module: entry.1,
+                        size,
+                    },
+                )
                 .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
         }
         Ok(())
@@ -61,8 +73,8 @@ impl InMemoryCache {
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<SizedModule>> {
         if let Some(modules) = &mut self.modules {
-            match modules.get(checksum) {
-                Some(module) => Ok(Some(module.clone())),
+            match modules.pop(checksum) {
+                Some(module) => Ok(Some(module)),
                 None => Ok(None),
             }
         } else {
@@ -151,17 +163,18 @@ mod tests {
 
         // Store module
         let size = wasm.len() * TESTING_WASM_SIZE_FACTOR;
-        cache.store(&checksum, original, size).unwrap();
+        cache.store(&checksum, (store, original), size).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum).unwrap().unwrap();
+        let mut cached = cache.load(&checksum).unwrap().unwrap();
 
         // Ensure cached module can be executed
         {
-            let instance = WasmerInstance::new(&mut store, &cached.module, &imports! {}).unwrap();
-            set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
+            let instance =
+                WasmerInstance::new(&mut cached.store, &cached.module, &imports! {}).unwrap();
+            set_remaining_points(&mut cached.store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
-            let result = add_one.call(&mut store, &[42.into()]).unwrap();
+            let result = add_one.call(&mut cached.store, &[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
@@ -209,19 +222,19 @@ mod tests {
 
         // Add 1
         cache
-            .store(&checksum1, compile(&wasm1, None, &[]).unwrap().1, 900_000)
+            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 900_000)
             .unwrap();
         assert_eq!(cache.len(), 1);
 
         // Add 2
         cache
-            .store(&checksum2, compile(&wasm2, None, &[]).unwrap().1, 900_000)
+            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 900_000)
             .unwrap();
         assert_eq!(cache.len(), 2);
 
         // Add 3 (pushes out the previous two)
         cache
-            .store(&checksum3, compile(&wasm3, None, &[]).unwrap().1, 1_500_000)
+            .store(&checksum3, compile(&wasm3, None, &[]).unwrap(), 1_500_000)
             .unwrap();
         assert_eq!(cache.len(), 1);
     }
@@ -269,19 +282,19 @@ mod tests {
 
         // Add 1
         cache
-            .store(&checksum1, compile(&wasm1, None, &[]).unwrap().1, 900_000)
+            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 900_000)
             .unwrap();
         assert_eq!(cache.size(), 900_000);
 
         // Add 2
         cache
-            .store(&checksum2, compile(&wasm2, None, &[]).unwrap().1, 800_000)
+            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 800_000)
             .unwrap();
         assert_eq!(cache.size(), 1_700_000);
 
         // Add 3 (pushes out the previous two)
         cache
-            .store(&checksum3, compile(&wasm3, None, &[]).unwrap().1, 1_500_000)
+            .store(&checksum3, compile(&wasm3, None, &[]).unwrap(), 1_500_000)
             .unwrap();
         assert_eq!(cache.size(), 1_500_000);
     }
