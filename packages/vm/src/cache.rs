@@ -1175,7 +1175,7 @@ mod tests {
 
         // check not pinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
@@ -1183,41 +1183,47 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
-        // first pin hits memory cache
+        // first pin hits file system cache
         cache.pin(&checksum).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // consecutive pins are no-ops
         cache.pin(&checksum).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
+
+        let (store, module, ..) = instance.recycle();
+        cache.return_instance(&checksum, (store, module)).unwrap();
 
         // check pinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // unpin
         cache.unpin(&checksum).unwrap();
 
+        let (store, module, ..) = instance.recycle();
+        cache.return_instance(&checksum, (store, module)).unwrap();
+
         // verify unpinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 2);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // unpin again has no effect
@@ -1226,5 +1232,8 @@ mod tests {
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
         cache.unpin(&non_id).unwrap();
+
+        let (store, module, ..) = instance.recycle();
+        cache.return_instance(&checksum, (store, module)).unwrap();
     }
 }
