@@ -676,7 +676,11 @@ mod tests {
         (fe, store, wasmer_instance)
     }
 
-    fn leave_default_data(env: &Environment<MockApi, MockStorage, MockQuerier>) {
+    fn leave_default_data(
+        fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
+    ) {
+        let (env, mut _store) = fe_mut.data_and_store_mut();
+
         // create some mock data
         let mut storage = MockStorage::new();
         storage.set(KEY1, VALUE1).0.expect("error setting");
@@ -687,40 +691,43 @@ mod tests {
     }
 
     fn write_data(
-        env: &Environment<MockApi, MockStorage, MockQuerier>,
-        store: &mut impl AsStoreMut,
+        fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
         data: &[u8],
     ) -> u32 {
+        let (env, mut store) = fe_mut.data_and_store_mut();
+
         let result = env
-            .call_function1(store, "allocate", &[(data.len() as u32).into()])
+            .call_function1(&mut store, "allocate", &[(data.len() as u32).into()])
             .unwrap();
         let region_ptr = ref_to_u32(&result).unwrap();
-        write_region(&env.memory(store), region_ptr, data).expect("error writing");
+        write_region(&env.memory(&mut store), region_ptr, data).expect("error writing");
         region_ptr
     }
 
     fn create_empty(
         wasmer_instance: &mut WasmerInstance,
-        store: &mut impl AsStoreMut,
+        fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
         capacity: u32,
     ) -> u32 {
+        let (_, mut store) = fe_mut.data_and_store_mut();
         let allocate = wasmer_instance
             .exports
             .get_function("allocate")
             .expect("error getting function");
         let result = allocate
-            .call(store, &[capacity.into()])
+            .call(&mut store, &[capacity.into()])
             .expect("error calling allocate");
         ref_to_u32(&result[0]).expect("error converting result")
     }
 
     /// A Region reader that is just good enough for the tests in this file
     fn force_read(
-        env: &Environment<MockApi, MockStorage, MockQuerier>,
-        store: &mut impl AsStoreMut,
+        fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
         region_ptr: u32,
     ) -> Vec<u8> {
-        read_region(&env.memory(store), region_ptr, 5000).unwrap()
+        let (env, mut store) = fe_mut.data_and_store_mut();
+
+        read_region(&env.memory(&mut store), region_ptr, 5000).unwrap()
     }
 
     #[test]
@@ -728,14 +735,14 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let key_ptr = write_data(env, &mut store, KEY1);
-        let result = do_db_read(fe_mut, key_ptr);
+        let key_ptr = write_data(&mut fe_mut, KEY1);
+        let result = do_db_read(fe_mut.as_mut(), key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
-        assert_eq!(force_read(&fe_mut.data(), &mut store, value_ptr), VALUE1);
+        leave_default_data(&mut fe_mut);
+        assert_eq!(force_read(&mut fe_mut, value_ptr), VALUE1);
     }
 
     #[test]
@@ -743,10 +750,9 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let key_ptr = write_data(&env, &mut store, b"I do not exist in storage");
+        let key_ptr = write_data(&mut fe_mut, b"I do not exist in storage");
         let result = do_db_read(fe_mut, key_ptr);
         assert_eq!(result.unwrap(), 0);
     }
@@ -756,10 +762,9 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let key_ptr = write_data(env, &mut store, &vec![7u8; 300 * 1024]);
+        let key_ptr = write_data(&mut fe_mut, &vec![7u8; 300 * 1024]);
         let result = do_db_read(fe_mut, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
@@ -775,16 +780,16 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, b"new storage key");
-        let value_ptr = write_data(env, &mut store, b"new value");
+        let key_ptr = write_data(&mut fe_mut, b"new storage key");
+        let value_ptr = write_data(&mut fe_mut, b"new value");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        do_db_write(fe_mut, key_ptr, value_ptr).unwrap();
+        do_db_write(fe_mut.as_mut(), key_ptr, value_ptr).unwrap();
 
-        let val = env
+        let val = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| {
                 Ok(store
                     .get(b"new storage key")
@@ -800,14 +805,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, KEY1);
-        let value_ptr = write_data(env, &mut store, VALUE2);
+        let key_ptr = write_data(&mut fe_mut, KEY1);
+        let value_ptr = write_data(&mut fe_mut, VALUE2);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        do_db_write(fe_mut, key_ptr, value_ptr).unwrap();
+        do_db_write(fe_mut.as_mut(), key_ptr, value_ptr).unwrap();
 
         let val = fe_mut
             .data()
@@ -823,14 +827,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, b"new storage key");
-        let value_ptr = write_data(env, &mut store, b"");
+        let key_ptr = write_data(&mut fe_mut, b"new storage key");
+        let value_ptr = write_data(&mut fe_mut, b"");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        do_db_write(fe_mut, key_ptr, value_ptr).unwrap();
+        do_db_write(fe_mut.as_mut(), key_ptr, value_ptr).unwrap();
 
         let val = fe_mut
             .data()
@@ -849,12 +852,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, &vec![4u8; 300 * 1024]);
-        let value_ptr = write_data(env, &mut store, b"new value");
+        let key_ptr = write_data(&mut fe_mut, &vec![4u8; 300 * 1024]);
+        let value_ptr = write_data(&mut fe_mut, b"new value");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
         match result.unwrap_err() {
@@ -877,12 +879,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, b"new storage key");
-        let value_ptr = write_data(env, &mut store, &vec![5u8; 300 * 1024]);
+        let key_ptr = write_data(&mut fe_mut, b"new storage key");
+        let value_ptr = write_data(&mut fe_mut, &vec![5u8; 300 * 1024]);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
         match result.unwrap_err() {
@@ -905,12 +906,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, b"new storage key");
-        let value_ptr = write_data(env, &mut store, b"new value");
+        let key_ptr = write_data(&mut fe_mut, b"new storage key");
+        let value_ptr = write_data(&mut fe_mut, b"new value");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
         fe_mut.data().set_storage_readonly(true);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
@@ -925,12 +925,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let existing_key = KEY1;
-        let key_ptr = write_data(env, &mut store, existing_key);
+        let key_ptr = write_data(&mut fe_mut, existing_key);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         fe_mut
             .data()
@@ -940,7 +939,7 @@ mod tests {
             })
             .unwrap();
 
-        do_db_remove(fe_mut, key_ptr).unwrap();
+        do_db_remove(fe_mut.as_mut(), key_ptr).unwrap();
 
         fe_mut
             .data()
@@ -964,15 +963,14 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let non_existent_key = b"I do not exist";
-        let key_ptr = write_data(env, &mut store, non_existent_key);
+        let key_ptr = write_data(&mut fe_mut, non_existent_key);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        do_db_remove(fe_mut, key_ptr).unwrap();
+        do_db_remove(fe_mut.as_mut(), key_ptr).unwrap();
 
         let value = fe_mut
             .data()
@@ -988,11 +986,10 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(&env, &mut store, &vec![26u8; 300 * 1024]);
+        let key_ptr = write_data(&mut fe_mut, &vec![26u8; 300 * 1024]);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_db_remove(fe_mut, key_ptr);
         match result.unwrap_err() {
@@ -1015,11 +1012,10 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let key_ptr = write_data(env, &mut store, b"a storage key");
+        let key_ptr = write_data(&mut fe_mut, b"a storage key");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
         fe_mut.data().set_storage_readonly(true);
 
         let result = do_db_remove(fe_mut, key_ptr);
@@ -1034,18 +1030,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr1 = write_data(env, &mut store, b"foo");
-        let source_ptr2 = write_data(
-            fe_mut.data(),
-            &mut store,
-            b"eth1n48g2mjh9ezz7zjtya37wtgg5r5emr0drkwlgw",
-        );
+        let source_ptr1 = write_data(&mut fe_mut, b"foo");
+        let source_ptr2 = write_data(&mut fe_mut, b"eth1n48g2mjh9ezz7zjtya37wtgg5r5emr0drkwlgw");
 
-        let res = do_addr_validate(fe_mut, source_ptr1).unwrap();
+        let res = do_addr_validate(fe_mut.as_mut(), source_ptr1).unwrap();
         assert_eq!(res, 0);
-        let res = do_addr_validate(fe_mut, source_ptr2).unwrap();
+        let res = do_addr_validate(fe_mut.as_mut(), source_ptr2).unwrap();
         assert_eq!(res, 0);
     }
 
@@ -1054,34 +1045,33 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr1 = write_data(env, &mut store, b"fo\x80o"); // invalid UTF-8 (fo�o)
-        let source_ptr2 = write_data(env, &mut store, b""); // empty
-        let source_ptr3 = write_data(env, &mut store, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
-        let source_ptr4 = write_data(env, &mut store, b"fooBar"); // Not normalized. The definition of normalized is chain-dependent but the MockApi requires lower case.
+        let source_ptr1 = write_data(&mut fe_mut, b"fo\x80o"); // invalid UTF-8 (fo�o)
+        let source_ptr2 = write_data(&mut fe_mut, b""); // empty
+        let source_ptr3 = write_data(&mut fe_mut, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
+        let source_ptr4 = write_data(&mut fe_mut, b"fooBar"); // Not normalized. The definition of normalized is chain-dependent but the MockApi requires lower case.
 
-        let res = do_addr_validate(fe_mut, source_ptr1).unwrap();
+        let res = do_addr_validate(fe_mut.as_mut(), source_ptr1).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(err, "Input is not valid UTF-8");
 
-        let res = do_addr_validate(fe_mut, source_ptr2).unwrap();
+        let res = do_addr_validate(fe_mut.as_mut(), source_ptr2).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let res = do_addr_validate(fe_mut, source_ptr3).unwrap();
+        let res = do_addr_validate(fe_mut.as_mut(), source_ptr3).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(
             err,
             "Invalid input: human address too long for this mock implementation (must be <= 64)."
         );
 
-        let res = do_addr_validate(fe_mut, source_ptr4).unwrap();
+        let res = do_addr_validate(fe_mut.as_mut(), source_ptr4).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(err, "Address is not normalized");
     }
 
@@ -1090,11 +1080,10 @@ mod tests {
         let api = MockApi::new_failing("Temporarily unavailable");
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, b"foo");
+        let source_ptr = write_data(&mut fe_mut, b"foo");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_addr_validate(fe_mut, source_ptr);
         match result.unwrap_err() {
@@ -1111,11 +1100,10 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, &[61; 333]);
+        let source_ptr = write_data(&mut fe_mut, &[61; 333]);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_addr_validate(fe_mut, source_ptr);
         match result.unwrap_err() {
@@ -1138,18 +1126,17 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
         let api = MockApi::default();
 
-        let source_ptr = write_data(env, &mut store, b"foo");
-        let dest_ptr = create_empty(&mut instance, &mut store, api.canonical_length() as u32);
+        let source_ptr = write_data(&mut fe_mut, b"foo");
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, api.canonical_length() as u32);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let api = MockApi::default();
-        let res = do_addr_canonicalize(fe_mut, source_ptr, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(fe_mut.as_mut(), source_ptr, dest_ptr).unwrap();
         assert_eq!(res, 0);
-        let data = force_read(env, &mut store, dest_ptr);
+        let data = force_read(&mut fe_mut, dest_ptr);
         assert_eq!(data.len(), api.canonical_length());
     }
 
@@ -1158,28 +1145,27 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr1 = write_data(env, &mut store, b"fo\x80o"); // invalid UTF-8 (fo�o)
-        let source_ptr2 = write_data(env, &mut store, b""); // empty
-        let source_ptr3 = write_data(env, &mut store, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
-        let dest_ptr = create_empty(&mut instance, &mut store, 70);
+        let source_ptr1 = write_data(&mut fe_mut, b"fo\x80o"); // invalid UTF-8 (fo�o)
+        let source_ptr2 = write_data(&mut fe_mut, b""); // empty
+        let source_ptr3 = write_data(&mut fe_mut, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let res = do_addr_canonicalize(fe_mut, source_ptr1, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(fe_mut.as_mut(), source_ptr1, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(err, "Input is not valid UTF-8");
 
-        let res = do_addr_canonicalize(fe_mut, source_ptr2, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(fe_mut.as_mut(), source_ptr2, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let res = do_addr_canonicalize(fe_mut, source_ptr3, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(fe_mut.as_mut(), source_ptr3, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(
             err,
             "Invalid input: human address too long for this mock implementation (must be <= 64)."
@@ -1191,14 +1177,13 @@ mod tests {
         let api = MockApi::new_failing("Temporarily unavailable");
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, b"foo");
-        let dest_ptr = create_empty(&mut instance, &mut store, 7);
+        let source_ptr = write_data(&mut fe_mut, b"foo");
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 7);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let result = do_addr_canonicalize(fe_mut, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(fe_mut.as_mut(), source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
@@ -1213,14 +1198,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, &[61; 333]);
-        let dest_ptr = create_empty(&mut instance, &mut store, 8);
+        let source_ptr = write_data(&mut fe_mut, &[61; 333]);
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 8);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let result = do_addr_canonicalize(fe_mut, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(fe_mut.as_mut(), source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -1241,12 +1225,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, b"foo");
-        let dest_ptr = create_empty(&mut instance, &mut store, 7);
+        let source_ptr = write_data(&mut fe_mut, b"foo");
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 7);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_addr_canonicalize(fe_mut, source_ptr, dest_ptr);
         match result.unwrap_err() {
@@ -1266,18 +1249,17 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
-        let source_ptr = write_data(env, &mut store, &source_data);
-        let dest_ptr = create_empty(&mut instance, &mut store, 70);
+        let source_ptr = write_data(&mut fe_mut, &source_data);
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let error_ptr = do_addr_humanize(fe_mut, source_ptr, dest_ptr).unwrap();
+        let error_ptr = do_addr_humanize(fe_mut.as_mut(), source_ptr, dest_ptr).unwrap();
         assert_eq!(error_ptr, 0);
-        assert_eq!(force_read(env, &mut store, dest_ptr), source_data);
+        assert_eq!(force_read(&mut fe_mut, dest_ptr), source_data);
     }
 
     #[test]
@@ -1285,16 +1267,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, b"foo"); // too short
-        let dest_ptr = create_empty(&mut instance, &mut store, 70);
+        let source_ptr = write_data(&mut fe_mut, b"foo"); // too short
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let res = do_addr_humanize(fe_mut, source_ptr, dest_ptr).unwrap();
+        let res = do_addr_humanize(fe_mut.as_mut(), source_ptr, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(env, &mut store, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
         assert_eq!(err, "Invalid input: canonical address length not correct");
     }
 
@@ -1303,12 +1284,11 @@ mod tests {
         let api = MockApi::new_failing("Temporarily unavailable");
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, b"foo\0\0\0\0\0");
-        let dest_ptr = create_empty(&mut instance, &mut store, 70);
+        let source_ptr = write_data(&mut fe_mut, b"foo\0\0\0\0\0");
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_addr_humanize(fe_mut, source_ptr, dest_ptr);
         match result.unwrap_err() {
@@ -1325,12 +1305,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let source_ptr = write_data(env, &mut store, &[61; 65]);
-        let dest_ptr = create_empty(&mut instance, &mut store, 70);
+        let source_ptr = write_data(&mut fe_mut, &[61; 65]);
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_addr_humanize(fe_mut, source_ptr, dest_ptr);
         match result.unwrap_err() {
@@ -1353,14 +1332,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
-        let source_ptr = write_data(env, &mut store, &source_data);
-        let dest_ptr = create_empty(&mut instance, &mut store, 2);
+        let source_ptr = write_data(&mut fe_mut, &source_data);
+        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 2);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let result = do_addr_humanize(fe_mut, source_ptr, dest_ptr);
         match result.unwrap_err() {
@@ -1380,14 +1358,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1400,16 +1377,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // alter hash
         hash[0] ^= 0x01;
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1422,16 +1398,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // extend / break hash
         hash.push(0x00);
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
@@ -1448,16 +1423,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // reduce / break hash
         hash.pop();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1470,16 +1444,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         // alter sig
         sig[0] ^= 0x01;
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1492,16 +1465,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         // extend / break sig
         sig.push(0x00);
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
@@ -1518,16 +1490,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         // reduce / break sig
         sig.pop();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1540,16 +1511,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // alter pubkey format
         pubkey[0] ^= 0x01;
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1562,16 +1532,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // alter pubkey
         pubkey[1] ^= 0x01;
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1584,16 +1553,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // extend / break pubkey
         pubkey.push(0x00);
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
@@ -1610,16 +1578,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // reduce / break pubkey
         pubkey.pop();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1632,14 +1599,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = vec![];
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1652,14 +1618,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
-        let hash_ptr = write_data(env, &mut store, &hash);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
         let sig = vec![0x22; ECDSA_SIGNATURE_LEN];
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = vec![0x04; ECDSA_PUBKEY_MAX_LEN];
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1672,7 +1637,6 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
         let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
@@ -1680,14 +1644,15 @@ mod tests {
         let recovery_param = 1;
         let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
 
-        let hash_ptr = write_data(env, &mut store, &hash);
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let result =
-            do_secp256k1_recover_pubkey(fe_mut, hash_ptr, sig_ptr, recovery_param).unwrap();
+            do_secp256k1_recover_pubkey(fe_mut.as_mut(), hash_ptr, sig_ptr, recovery_param)
+                .unwrap();
         let error = result >> 32;
         let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
         assert_eq!(error, 0);
-        assert_eq!(force_read(env, &mut store, pubkey_ptr), expected);
+        assert_eq!(force_read(&mut fe_mut, pubkey_ptr), expected);
     }
 
     #[test]
@@ -1695,14 +1660,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1715,16 +1679,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // alter msg
         msg.push(0x01);
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1737,16 +1700,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // extend / break msg
         msg.extend_from_slice(&[0x00; MAX_LENGTH_ED25519_MESSAGE + 1]);
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
@@ -1763,16 +1725,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let mut sig = hex::decode(EDDSA_SIG_HEX).unwrap();
         // alter sig
         sig[0] ^= 0x01;
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1785,16 +1746,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let mut sig = hex::decode(EDDSA_SIG_HEX).unwrap();
         // extend / break sig
         sig.push(0x00);
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
@@ -1811,16 +1771,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let mut sig = hex::decode(EDDSA_SIG_HEX).unwrap();
         // reduce / break sig
         sig.pop();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1833,16 +1792,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
         // alter pubkey
         pubkey[1] ^= 0x01;
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1855,16 +1813,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
         // extend / break pubkey
         pubkey.push(0x00);
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
@@ -1881,16 +1838,15 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let mut pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
         // reduce / break pubkey
         pubkey.pop();
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1903,14 +1859,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = vec![];
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1923,14 +1878,13 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
-        let msg_ptr = write_data(env, &mut store, &msg);
+        let msg_ptr = write_data(&mut fe_mut, &msg);
         let sig = vec![0x22; MAX_LENGTH_ED25519_SIGNATURE];
-        let sig_ptr = write_data(env, &mut store, &sig);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = vec![0x04; EDDSA_PUBKEY_LEN];
-        let pubkey_ptr = write_data(env, &mut store, &pubkey);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
@@ -1943,18 +1897,17 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
             address: INIT_ADDR.to_string(),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
-        let request_ptr = write_data(env, &mut store, &request_data);
+        let request_ptr = write_data(&mut fe_mut, &request_data);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let response_ptr = do_query_chain(fe_mut, request_ptr).unwrap();
-        let response = force_read(env, &mut store, response_ptr);
+        let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
+        let response = force_read(&mut fe_mut, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
@@ -1969,15 +1922,14 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let request = b"Not valid JSON for sure";
-        let request_ptr = write_data(env, &mut store, request);
+        let request_ptr = write_data(&mut fe_mut, request);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let response_ptr = do_query_chain(fe_mut, request_ptr).unwrap();
-        let response = force_read(env, &mut store, response_ptr);
+        let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
+        let response = force_read(&mut fe_mut, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
@@ -1995,19 +1947,18 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
         let request: QueryRequest<Empty> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: String::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
-        let request_ptr = write_data(env, &mut store, &request_data);
+        let request_ptr = write_data(&mut fe_mut, &request_data);
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let response_ptr = do_query_chain(fe_mut, request_ptr).unwrap();
-        let response = force_read(env, &mut store, response_ptr);
+        let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
+        let response = force_read(&mut fe_mut, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
@@ -2026,24 +1977,26 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         // set up iterator over all space
-        let id = do_db_scan(fe_mut, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Ascending.into()).unwrap();
         assert_eq!(1, id);
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
@@ -2055,24 +2008,26 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         // set up iterator over all space
-        let id = do_db_scan(fe_mut, 0, 0, Order::Descending.into()).unwrap();
+        let id = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(1, id);
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
@@ -2084,21 +2039,22 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        let start = write_data(env, &mut store, b"anna");
-        let end = write_data(env, &mut store, b"bert");
+        let start = write_data(&mut fe_mut, b"anna");
+        let end = write_data(&mut fe_mut, b"bert");
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let id = do_db_scan(fe_mut, start, end, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(fe_mut.as_mut(), start, end, Order::Ascending.into()).unwrap();
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item = env
+        let item = fe_mut
+            .data()
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
@@ -2110,12 +2066,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         // unbounded, ascending and descending
-        let id1 = do_db_scan(fe_mut, 0, 0, Order::Ascending.into()).unwrap();
-        let id2 = do_db_scan(fe_mut, 0, 0, Order::Descending.into()).unwrap();
+        let id1 = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Ascending.into()).unwrap();
+        let id2 = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
@@ -2161,8 +2116,7 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         // set up iterator over all space
         let result = do_db_scan(fe_mut, 0, 0, 42);
@@ -2181,32 +2135,28 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
-        let id = do_db_scan(fe_mut, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Ascending.into()).unwrap();
 
         // Entry 1
-        let kv_region_ptr = do_db_next(fe_mut, id).unwrap();
+        let kv_region_ptr = do_db_next(fe_mut.as_mut(), id).unwrap();
         assert_eq!(
-            force_read(env, &mut store, kv_region_ptr),
+            force_read(&mut fe_mut, kv_region_ptr),
             [KEY1, b"\0\0\0\x03", VALUE1, b"\0\0\0\x06"].concat()
         );
 
         // Entry 2
-        let kv_region_ptr = do_db_next(fe_mut, id).unwrap();
+        let kv_region_ptr = do_db_next(fe_mut.as_mut(), id).unwrap();
         assert_eq!(
-            force_read(env, &mut store, kv_region_ptr),
+            force_read(&mut fe_mut, kv_region_ptr),
             [KEY2, b"\0\0\0\x04", VALUE2, b"\0\0\0\x05"].concat()
         );
 
         // End
-        let kv_region_ptr = do_db_next(fe_mut, id).unwrap();
-        assert_eq!(
-            force_read(env, &mut store, kv_region_ptr),
-            b"\0\0\0\0\0\0\0\0"
-        );
+        let kv_region_ptr = do_db_next(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, kv_region_ptr), b"\0\0\0\0\0\0\0\0");
         // API makes no guarantees for value_ptr in this case
     }
 
@@ -2216,12 +2166,11 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        leave_default_data(env);
+        leave_default_data(&mut fe_mut);
 
         let non_existent_id = 42u32;
-        let result = do_db_next(fe_mut, non_existent_id);
+        let result = do_db_next(fe_mut.as_mut(), non_existent_id);
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::IteratorDoesNotExist { id, .. },

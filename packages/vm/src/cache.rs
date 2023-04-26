@@ -998,7 +998,7 @@ mod tests {
         assert!(instance1.get_gas_left() < original_gas);
 
         // Init from memory cache
-        let instance2 = cache
+        let mut instance2 = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);

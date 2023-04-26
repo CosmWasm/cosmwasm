@@ -108,7 +108,7 @@ pub type DebugHandlerFn = dyn for<'a> Fn(/* msg */ &'a str, DebugInfo<'a>);
 
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
-pub struct Environment<A: BackendApi, S: Storage, Q: Querier> {
+pub struct Environment<A, S, Q> {
     pub memory: Option<Memory>,
     pub api: A,
     pub gas_config: GasConfig,
@@ -392,7 +392,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     }
 }
 
-pub struct ContextData<S: Storage, Q: Querier> {
+pub struct ContextData<S, Q> {
     gas_state: GasState,
     storage: Option<S>,
     storage_readonly: bool,
@@ -525,7 +525,7 @@ mod tests {
 
     #[test]
     fn move_out_works() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
 
         // empty data on start
         let (inits, initq) = env.move_out();
