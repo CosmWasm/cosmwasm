@@ -102,6 +102,10 @@ pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmRes
                  region,
                  memory.size().bytes().0
              )))?;
+
+    region.length = data.len() as u32;
+    set_region(memory, ptr, region)?;
+
     Ok(())
 
     // match WasmPtr::<u8>::new(region.offset).deref(memory, 0, region.capacity) {
