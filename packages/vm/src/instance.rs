@@ -252,10 +252,10 @@ where
         let memory = wasmer_instance
             .exports
             .get_memory("memory")
-            .unwrap()
-            .clone(); // TODO: handle error
-
-        fe.as_mut(&mut store).memory = Some(memory);
+            .map_err(|original| {
+                VmError::instantiation_err(format!("Could not get memory 'memory': {original}"))
+            })?
+            .clone();
 
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
 
@@ -263,6 +263,7 @@ where
             let mut fe_mut = fe.clone().into_mut(&mut store);
             let (env, mut store) = fe_mut.data_and_store_mut();
 
+            env.memory = Some(memory);
             env.set_wasmer_instance(Some(instance_ptr));
             env.set_gas_left(&mut store, gas_limit);
             env.move_in(backend.storage, backend.querier);
@@ -497,6 +498,14 @@ mod tests {
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
     #[test]
+    fn from_code_works() {
+        let backend = mock_backend(&[]);
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance =
+            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
+    }
+
+    #[test]
     fn set_debug_handler_and_unset_debug_handler_work() {
         const LIMIT: u64 = 70_000_000_000_000;
         let mut instance = mock_instance_with_gas_limit(CYBERPUNK, LIMIT);
@@ -546,6 +555,9 @@ mod tests {
     fn required_capabilities_works_for_many_exports() {
         let wasm = wat::parse_str(
             r#"(module
+            (memory 3)
+            (export "memory" (memory 0))
+
             (type (func))
             (func (type 0) nop)
             (export "requires_water" (func 0))
