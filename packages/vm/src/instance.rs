@@ -55,7 +55,7 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     _inner: Box<WasmerInstance>,
     fe: FunctionEnv<Environment<A, S, Q>>,
     store: Store,
-    pub from_pinned_cache: bool,
+    from_pinned_cache: bool,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
