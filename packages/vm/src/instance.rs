@@ -85,6 +85,7 @@ where
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_module(
         mut store: Store,
         module: &Module,

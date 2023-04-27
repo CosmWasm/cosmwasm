@@ -140,8 +140,8 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
-        assert_eq!(instance_memory.ty(&mut store).maximum, None);
+        assert_eq!(instance_memory.ty(&store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&store).maximum, None);
 
         // Set limit
         let mut store = make_compile_time_store(Some(Size::kibi(23 * 64)), &[]);
@@ -157,8 +157,8 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
-        assert_eq!(instance_memory.ty(&mut store).maximum, Some(Pages(23)));
+        assert_eq!(instance_memory.ty(&store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&store).maximum, Some(Pages(23)));
     }
 
     #[test]
@@ -185,8 +185,8 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
-        assert_eq!(instance_memory.ty(&mut store).maximum, None);
+        assert_eq!(instance_memory.ty(&store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&store).maximum, None);
 
         // Instantiate with limit
         let mut store = make_runtime_store(Some(Size::kibi(23 * 64)));
@@ -202,7 +202,7 @@ mod tests {
             .map(|pair| pair.1.clone())
             .next()
             .unwrap();
-        assert_eq!(instance_memory.ty(&mut store).minimum, Pages(4));
-        assert_eq!(instance_memory.ty(&mut store).maximum, Some(Pages(23)));
+        assert_eq!(instance_memory.ty(&store).minimum, Pages(4));
+        assert_eq!(instance_memory.ty(&store).maximum, Some(Pages(23)));
     }
 }
