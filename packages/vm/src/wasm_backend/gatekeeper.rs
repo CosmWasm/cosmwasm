@@ -1,11 +1,10 @@
-use loupe::MemoryUsage;
 use wasmer::wasmparser::Operator;
 use wasmer::{
     FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
     ModuleMiddleware,
 };
 
-#[derive(Debug, MemoryUsage, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 struct GatekeeperConfig {
     /// True iff float operations are allowed.
     ///
@@ -39,7 +38,7 @@ struct GatekeeperConfig {
 
 /// A middleware that ensures only deterministic operations are used (i.e. no floats).
 /// It also disallows the use of Wasm features that are not explicitly enabled.
-#[derive(Debug, MemoryUsage)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub struct Gatekeeper {
     config: GatekeeperConfig,
