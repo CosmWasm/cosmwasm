@@ -68,6 +68,9 @@ pub fn main() {
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
+
+            let (cached, pinned, ..) = instance.recycle();
+            cache.return_instance(&checksum, cached, pinned).unwrap();
         }));
     }
 
