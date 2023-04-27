@@ -1047,6 +1047,9 @@ mod tests {
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
 
+        let (cached, pinned, ..) = instance1.recycle();
+        cache.return_instance(&checksum, cached, pinned).unwrap();
+
         // Init from memory cache
         let mut instance2 = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
@@ -1085,6 +1088,9 @@ mod tests {
             e => panic!("unexpected error, {:?}", e),
         }
         assert_eq!(instance1.get_gas_left(), 0);
+
+        let (cached, pinned, ..) = instance1.recycle();
+        cache.return_instance(&checksum, cached, pinned).unwrap();
 
         // Init from memory cache
         let options = InstanceOptions {
