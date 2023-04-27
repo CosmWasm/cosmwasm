@@ -27,7 +27,7 @@ struct Region {
 }
 
 unsafe impl ValueType for Region {
-    fn zero_padding_bytes(&self, bytes: &mut [MaybeUninit<u8>]) {
+    fn zero_padding_bytes(&self, _bytes: &mut [MaybeUninit<u8>]) {
         // TODO: do we need to do something here?
     }
 }
@@ -45,7 +45,8 @@ pub fn read_region(memory: &wasmer::MemoryView, ptr: u32, max_length: usize) -> 
     }
 
     let mut result = vec![0u8; region.length as usize];
-    memory.read(region.offset as u64, &mut result).map_err(|err| CommunicationError::deref_err(region.offset, format!(
+    // TODO: double check error handling
+    memory.read(region.offset as u64, &mut result).map_err(|_err| CommunicationError::deref_err(region.offset, format!(
                  "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
                  region,
                  memory.size().bytes().0
@@ -97,7 +98,8 @@ pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmRes
         return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
 
-    memory.write(region.offset as u64, data).map_err(|err| CommunicationError::deref_err(region.offset, format!(
+    // TODO: double check error handling
+    memory.write(region.offset as u64, data).map_err(|_err| CommunicationError::deref_err(region.offset, format!(
                  "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
                  region,
                  memory.size().bytes().0
@@ -130,7 +132,8 @@ pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmRes
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
 fn get_region(memory: &wasmer::MemoryView, ptr: u32) -> CommunicationResult<Region> {
     let wptr = WasmPtr::<Region>::new(ptr);
-    let region = wptr.deref(memory).read().map_err(|err| {
+    // TODO: double check error handling
+    let region = wptr.deref(memory).read().map_err(|_err| {
         CommunicationError::deref_err(ptr, "Could not dereference this pointer to a Region")
     })?;
     validate_region(&region)?;
@@ -162,7 +165,8 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
 fn set_region(memory: &wasmer::MemoryView, ptr: u32, data: Region) -> CommunicationResult<()> {
     let wptr = WasmPtr::<Region>::new(ptr);
 
-    wptr.deref(memory).write(data).map_err(|err| {
+    // TODO: double check error handling
+    wptr.deref(memory).write(data).map_err(|_err| {
         CommunicationError::deref_err(ptr, "Could not dereference this pointer to a Region")
     })?;
     Ok(())

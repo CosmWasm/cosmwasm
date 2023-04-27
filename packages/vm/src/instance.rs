@@ -526,7 +526,7 @@ mod tests {
     fn from_code_works() {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
-        let instance =
+        let _instance =
             Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
     }
 
