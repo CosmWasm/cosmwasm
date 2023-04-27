@@ -83,7 +83,7 @@ pub fn do_db_read<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
         Some(data) => data,
         None => return Ok(0),
     };
-    write_to_contract::<A, S, Q>(data, &mut store, &out_data)
+    write_to_contract(data, &mut store, &out_data)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
@@ -141,14 +141,12 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
         MAX_LENGTH_HUMAN_ADDRESS,
     )?;
     if source_data.is_empty() {
-        return write_to_contract::<A, S, Q>(data, &mut store, b"Input is empty");
+        return write_to_contract(data, &mut store, b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => {
-            return write_to_contract::<A, S, Q>(data, &mut store, b"Input is not valid UTF-8")
-        }
+        Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
     };
 
     let (result, gas_info) = data.api.canonical_address(&source_string);
@@ -156,7 +154,7 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
     let canonical = match result {
         Ok(data) => data,
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract::<A, S, Q>(data, &mut store, msg.as_bytes())
+            return write_to_contract(data, &mut store, msg.as_bytes())
         }
         Err(err) => return Err(VmError::from(err)),
     };
@@ -166,13 +164,13 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
     let normalized = match result {
         Ok(addr) => addr,
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract::<A, S, Q>(data, &mut store, msg.as_bytes())
+            return write_to_contract(data, &mut store, msg.as_bytes())
         }
         Err(err) => return Err(VmError::from(err)),
     };
 
     if normalized != source_string {
-        return write_to_contract::<A, S, Q>(data, &mut store, b"Address is not normalized");
+        return write_to_contract(data, &mut store, b"Address is not normalized");
     }
 
     Ok(0)
@@ -191,14 +189,12 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
         MAX_LENGTH_HUMAN_ADDRESS,
     )?;
     if source_data.is_empty() {
-        return write_to_contract::<A, S, Q>(data, &mut store, b"Input is empty");
+        return write_to_contract(data, &mut store, b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => {
-            return write_to_contract::<A, S, Q>(data, &mut store, b"Input is not valid UTF-8")
-        }
+        Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
     };
 
     let (result, gas_info) = data.api.canonical_address(&source_string);
@@ -212,11 +208,9 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
             )?;
             Ok(0)
         }
-        Err(BackendError::UserErr { msg, .. }) => Ok(write_to_contract::<A, S, Q>(
-            data,
-            &mut store,
-            msg.as_bytes(),
-        )?),
+        Err(BackendError::UserErr { msg, .. }) => {
+            Ok(write_to_contract(data, &mut store, msg.as_bytes())?)
+        }
         Err(err) => Err(VmError::from(err)),
     }
 }
@@ -241,11 +235,9 @@ pub fn do_addr_humanize<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
             write_region(&data.memory(&mut store), destination_ptr, human.as_bytes())?;
             Ok(0)
         }
-        Err(BackendError::UserErr { msg, .. }) => Ok(write_to_contract::<A, S, Q>(
-            data,
-            &mut store,
-            msg.as_bytes(),
-        )?),
+        Err(BackendError::UserErr { msg, .. }) => {
+            Ok(write_to_contract(data, &mut store, msg.as_bytes())?)
+        }
         Err(err) => Err(VmError::from(err)),
     }
 }
@@ -316,7 +308,7 @@ pub fn do_secp256k1_recover_pubkey<
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
     match result {
         Ok(pubkey) => {
-            let pubkey_ptr = write_to_contract::<A, S, Q>(data, &mut store, pubkey.as_ref())?;
+            let pubkey_ptr = write_to_contract(data, &mut store, pubkey.as_ref())?;
             Ok(to_low_half(pubkey_ptr))
         }
         Err(err) => match err {
@@ -496,7 +488,7 @@ pub fn do_query_chain<A: BackendApi + 'static, S: Storage + 'static, Q: Querier 
     })?;
     process_gas_info(data, &mut store, gas_info)?;
     let serialized = to_vec(&result?)?;
-    write_to_contract::<A, S, Q>(data, &mut store, &serialized)
+    write_to_contract(data, &mut store, &serialized)
 }
 
 #[cfg(feature = "iterator")]
@@ -538,7 +530,7 @@ pub fn do_db_next<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
     let (key, value) = result?.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
     let out_data = encode_sections(&[key, value])?;
-    write_to_contract::<A, S, Q>(data, &mut store, &out_data)
+    write_to_contract(data, &mut store, &out_data)
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
