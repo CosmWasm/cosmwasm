@@ -35,6 +35,7 @@ allow_interface_version_7 = []
 bench = false
 
 [dependencies]
+bytes = "1.4.0" # need a higher version than the one required by Wasmer for the Bytes -> Vec<u8> implementation
 clru = "0.4.0"
 crc32fast = "1.3.2"
 # Uses the path when built locally; uses the given version from crates.io when published
