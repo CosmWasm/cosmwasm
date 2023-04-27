@@ -28,7 +28,9 @@ struct Region {
 
 unsafe impl ValueType for Region {
     fn zero_padding_bytes(&self, _bytes: &mut [MaybeUninit<u8>]) {
-        // TODO: do we need to do something here?
+        // The size of Region is exactly 3x4 bytes with no padding
+        // The `size_of::<Region>()` test nelow ensures that.
+        // So we do not need to zero any bytes here.
     }
 }
 
@@ -174,7 +176,15 @@ fn set_region(memory: &wasmer::MemoryView, ptr: u32, data: Region) -> Communicat
 
 #[cfg(test)]
 mod tests {
+    use std::mem;
+
     use super::*;
+
+    #[test]
+    fn region_has_known_size() {
+        // 3x4 bytes with no padding
+        assert_eq!(mem::size_of::<Region>(), 12);
+    }
 
     #[test]
     fn validate_region_passes_for_valid_region() {
