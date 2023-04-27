@@ -5,8 +5,6 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use wasmer::{Module, Store};
-
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::checksum::Checksum;
@@ -298,10 +296,10 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let (store, module, from_pinned) = self.get_module(checksum)?;
+        let (cached, from_pinned) = self.get_module(checksum)?;
         let instance = Instance::from_module(
-            store,
-            &module,
+            cached.store,
+            &cached.module,
             from_pinned,
             backend,
             options.gas_limit,
@@ -334,31 +332,36 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<(wasmer::Store, wasmer::Module, bool)> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, bool)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            return Ok((element.store, element.module, true));
+            return Ok((element, true));
         }
 
         // Get module from memory cache
         if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            return Ok((element.store, element.module, false));
+            return Ok((element, false));
         }
 
         // Get module from file system cache
         let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some((module, _module_size)) = cache.fs_cache.load(checksum, &store)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
             // Can't clone store :(
             // cache
             //     .memory_cache
             //     .store(checksum, (store, module.clone()), module_size)?;
-            return Ok((store, module, false));
+            let cached = CachedModule {
+                store,
+                module,
+                size: module_size,
+            };
+            return Ok((cached, false));
         }
 
         // Re-compile module from wasm
@@ -369,13 +372,18 @@ where
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
         let (store, module) = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
-        let _module_size = cache.fs_cache.store(checksum, &module)?;
+        let module_size = cache.fs_cache.store(checksum, &module)?;
 
         // Can't clone store :(
         // cache
         //     .memory_cache
         //     .store(checksum, (store, module.clone()), module_size)?;
-        Ok((store, module, false))
+        let cached = CachedModule {
+            store,
+            module,
+            size: module_size,
+        };
+        Ok((cached, false))
     }
 }
 
@@ -984,7 +992,7 @@ mod tests {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let (store, module, backend1) = instance.recycle();
+        let (_cached, _pinned, backend1) = instance.recycle();
         let backend1 = backend1.unwrap();
 
         // init instance 2
@@ -997,7 +1005,7 @@ mod tests {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let (store, module, backend2) = instance.recycle();
+        let (_cached, _pinned, backend2) = instance.recycle();
         let backend2 = backend2.unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
