@@ -699,7 +699,7 @@ mod tests {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         assert!(env.is_storage_readonly());
@@ -707,7 +707,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // change
@@ -835,7 +835,7 @@ mod tests {
 
     #[test]
     fn with_storage_from_context_set_get() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let val = env
@@ -868,7 +868,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_storage_from_context::<_, ()>(|_store| {
@@ -879,7 +879,7 @@ mod tests {
 
     #[test]
     fn with_querier_from_context_works() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let res = env
@@ -902,7 +902,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
-        let (env, store, _instance) = make_instance(TESTING_GAS_LIMIT);
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_querier_from_context::<_, ()>(|_querier| {
