@@ -20,6 +20,7 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
+use crate::modules::CachedModule;
 use crate::size::Size;
 use crate::wasm_backend::compile;
 
@@ -54,6 +55,7 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     _inner: Box<WasmerInstance>,
     fe: FunctionEnv<Environment<A, S, Q>>,
     store: Store,
+    pub from_pinned_cache: bool,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -74,6 +76,7 @@ where
         Instance::from_module(
             store,
             &module,
+            false,
             backend,
             options.gas_limit,
             options.print_debug,
@@ -85,6 +88,7 @@ where
     pub(crate) fn from_module(
         mut store: Store,
         module: &Module,
+        from_pinned_cache: bool,
         backend: Backend<A, S, Q>,
         gas_limit: u64,
         print_debug: bool,
@@ -273,6 +277,7 @@ where
             _inner: wasmer_instance,
             fe,
             store,
+            from_pinned_cache,
         })
     }
 
@@ -282,8 +287,16 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(self) -> (Store, Module, Option<Backend<A, S, Q>>) {
-        let env = self.fe.as_ref(&self.store);
+    pub fn recycle(self) -> (CachedModule, bool, Option<Backend<A, S, Q>>) {
+        let Instance {
+            _inner,
+            fe,
+            store,
+            from_pinned_cache,
+            ..
+        } = self;
+
+        let env = fe.as_ref(&store);
         let backend = if let (Some(storage), Some(querier)) = env.move_out() {
             let api = env.api;
             Some(Backend {
@@ -295,7 +308,15 @@ where
             None
         };
 
-        (self.store, self._inner.module().clone(), backend)
+        (
+            CachedModule {
+                store,
+                module: _inner.module().clone(),
+                size: 234,
+            },
+            from_pinned_cache,
+            backend,
+        )
     }
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)
@@ -451,6 +472,7 @@ where
 pub fn instance_from_module<A, S, Q>(
     store: Store,
     module: &Module,
+    from_pinned_cache: bool,
     backend: Backend<A, S, Q>,
     gas_limit: u64,
     print_debug: bool,
@@ -464,6 +486,7 @@ where
     Instance::from_module(
         store,
         module,
+        from_pinned_cache,
         backend,
         gas_limit,
         print_debug,
@@ -586,6 +609,8 @@ mod tests {
         let wasm = wat::parse_str(
             r#"(module
             (import "foo" "bar" (func $bar))
+            (memory 3)
+            (export "memory" (memory 0))
             (func (export "main") (call $bar))
             )"#,
         )
@@ -619,6 +644,7 @@ mod tests {
         let mut instance = Instance::from_module(
             store,
             &module,
+            false,
             backend,
             instance_options.gas_limit,
             false,

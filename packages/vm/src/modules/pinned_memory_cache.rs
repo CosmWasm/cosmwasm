@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use wasmer::{Module, Store};
 
-use super::sized_module::SizedModule;
+use super::sized_module::CachedModule;
 use crate::{Checksum, VmResult};
 
 /// An pinned in memory module cache
 pub struct PinnedMemoryCache {
-    modules: HashMap<Checksum, SizedModule>,
+    modules: HashMap<Checksum, CachedModule>,
 }
 
 impl PinnedMemoryCache {
@@ -25,7 +25,7 @@ impl PinnedMemoryCache {
     ) -> VmResult<()> {
         self.modules.insert(
             *checksum,
-            SizedModule {
+            CachedModule {
                 store: element.0,
                 module: element.1,
                 size,
@@ -42,11 +42,8 @@ impl PinnedMemoryCache {
     }
 
     /// Looks up a module in the cache and creates a new module
-    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<SizedModule>> {
-        match self.modules.remove(checksum) {
-            Some(module) => Ok(Some(module)),
-            None => Ok(None),
-        }
+    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<CachedModule>> {
+        Ok(self.modules.remove(checksum))
     }
 
     /// Returns true if and only if this cache has an entry identified by the given checksum

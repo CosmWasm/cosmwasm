@@ -3,7 +3,7 @@ use std::collections::hash_map::RandomState;
 use std::num::NonZeroUsize;
 use wasmer::{Module, Store};
 
-use super::sized_module::SizedModule;
+use super::sized_module::CachedModule;
 use crate::{Checksum, Size, VmError, VmResult};
 
 // Minimum module size.
@@ -18,16 +18,16 @@ const MINIMUM_MODULE_SIZE: Size = Size::kibi(250);
 #[derive(Debug)]
 struct SizeScale;
 
-impl WeightScale<Checksum, SizedModule> for SizeScale {
+impl WeightScale<Checksum, CachedModule> for SizeScale {
     #[inline]
-    fn weight(&self, _key: &Checksum, value: &SizedModule) -> usize {
+    fn weight(&self, _key: &Checksum, value: &CachedModule) -> usize {
         value.size
     }
 }
 
 /// An in-memory module cache
 pub struct InMemoryCache {
-    modules: Option<CLruCache<Checksum, SizedModule, RandomState, SizeScale>>,
+    modules: Option<CLruCache<Checksum, CachedModule, RandomState, SizeScale>>,
 }
 
 impl InMemoryCache {
@@ -59,7 +59,7 @@ impl InMemoryCache {
             modules
                 .put_with_weight(
                     *checksum,
-                    SizedModule {
+                    CachedModule {
                         store: entry.0,
                         module: entry.1,
                         size,
@@ -71,12 +71,9 @@ impl InMemoryCache {
     }
 
     /// Looks up a module in the cache and creates a new module
-    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<SizedModule>> {
+    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<CachedModule>> {
         if let Some(modules) = &mut self.modules {
-            match modules.pop(checksum) {
-                Some(module) => Ok(Some(module)),
-                None => Ok(None),
-            }
+            Ok(modules.pop(checksum))
         } else {
             Ok(None)
         }
