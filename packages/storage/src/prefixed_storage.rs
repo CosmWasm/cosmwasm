@@ -1,8 +1,10 @@
-use cosmwasm_std::Storage;
+use cosmwasm_std::{
+    storage_keys::{to_length_prefixed, to_length_prefixed_nested},
+    Storage,
+};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, Record};
 
-use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
