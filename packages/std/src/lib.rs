@@ -24,6 +24,7 @@ mod results;
 mod sections;
 mod serde;
 mod storage;
+mod storage_keys;
 mod timestamp;
 mod traits;
 mod types;
