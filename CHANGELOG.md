@@ -1685,7 +1685,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...HEAD
+[1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.1...v1.2.2
