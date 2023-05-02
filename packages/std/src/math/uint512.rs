@@ -10,7 +10,7 @@ use std::str::FromStr;
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{Uint128, Uint256, Uint64};
+use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
 
 /// This module is purely a workaround that lets us ignore lints for all the code
 /// the `construct_uint!` macro generates.
@@ -52,6 +52,8 @@ use uints::U512;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint512(#[schemars(with = "String")] U512);
 
+forward_ref_partial_eq!(Uint512, Uint512);
+
 impl Uint512 {
     pub const MAX: Uint512 = Uint512(U512::MAX);
     pub const MIN: Uint512 = Uint512(U512::zero());
@@ -78,6 +80,7 @@ impl Uint512 {
         ])
     }
 
+    #[must_use]
     pub const fn from_be_bytes(data: [u8; 64]) -> Self {
         let words: [u64; 8] = [
             u64::from_le_bytes([
@@ -108,6 +111,7 @@ impl Uint512 {
         Self(U512(words))
     }
 
+    #[must_use]
     pub const fn from_le_bytes(data: [u8; 64]) -> Self {
         let words: [u64; 8] = [
             u64::from_le_bytes([
@@ -140,6 +144,7 @@ impl Uint512 {
 
     /// A conversion from `Uint256` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
+    #[must_use]
     pub const fn from_uint256(num: Uint256) -> Self {
         let bytes = num.to_le_bytes();
         Self::from_le_bytes([
@@ -153,6 +158,7 @@ impl Uint512 {
     }
 
     /// Returns a copy of the number as big endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 64] {
         let words = [
             (self.0).0[7].to_be_bytes(),
@@ -168,6 +174,7 @@ impl Uint512 {
     }
 
     /// Returns a copy of the number as little endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_le_bytes(self) -> [u8; 64] {
         let words = [
             (self.0).0[0].to_le_bytes(),
@@ -182,6 +189,7 @@ impl Uint512 {
         unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
 
+    #[must_use]
     pub const fn is_zero(&self) -> bool {
         let words = (self.0).0;
         words[0] == 0
@@ -194,6 +202,7 @@ impl Uint512 {
             && words[7] == 0
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         let res = self.0.pow(exp.into());
         Self(res)
@@ -253,42 +262,50 @@ impl Uint512 {
         Ok(Self(self.0.shr(other)))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
         let (value, _did_overflow) = self.0.overflowing_add(other.0);
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
         let (value, _did_overflow) = self.0.overflowing_sub(other.0);
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
         let (value, _did_overflow) = self.0.overflowing_mul(other.0);
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
         let (value, _did_overflow) = self.0.overflowing_pow(other.into());
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
         Self(self.0.saturating_sub(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -296,6 +313,7 @@ impl Uint512 {
         }
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_diff(self, other: Self) -> Self {
         if self < other {
             other - self
@@ -603,18 +621,6 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
-    }
-}
-
-impl PartialEq<&Uint512> for Uint512 {
-    fn eq(&self, rhs: &&Uint512) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Uint512> for &Uint512 {
-    fn eq(&self, rhs: &Uint512) -> bool {
-        *self == rhs
     }
 }
 
@@ -1085,7 +1091,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn uint512_pow_overflow_panics() {
-        Uint512::MAX.pow(2u32);
+        _ = Uint512::MAX.pow(2u32);
     }
 
     #[test]

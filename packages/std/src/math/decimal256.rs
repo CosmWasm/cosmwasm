@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{Decimal, Uint512};
+use crate::{forward_ref_partial_eq, Decimal, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -24,6 +24,8 @@ use super::Uint256;
 /// (which is (2^256 - 1) / 10^18)
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
+
+forward_ref_partial_eq!(Decimal256, Decimal256);
 
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Decimal256 range exceeded")]
@@ -168,6 +170,7 @@ impl Decimal256 {
         }
     }
 
+    #[must_use]
     pub const fn is_zero(&self) -> bool {
         self.0.is_zero()
     }
@@ -190,6 +193,7 @@ impl Decimal256 {
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Uint256::from(1u128));
     /// ```
+    #[must_use]
     #[inline]
     pub const fn atomics(&self) -> Uint256 {
         self.0
@@ -199,17 +203,20 @@ impl Decimal256 {
     /// but this could potentially change as the type evolves.
     ///
     /// See also [`Decimal256::atomics()`].
+    #[must_use]
     #[inline]
     pub const fn decimal_places(&self) -> u32 {
         Self::DECIMAL_PLACES
     }
 
     /// Rounds value down after decimal places.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn floor(&self) -> Self {
         Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
     }
 
     /// Rounds value up after decimal places. Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn ceil(&self) -> Self {
         match self.checked_ceil() {
             Ok(value) => value,
@@ -258,6 +265,7 @@ impl Decimal256 {
     }
 
     /// Raises a value to the power of `exp`, panics if an overflow occurred.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -312,6 +320,7 @@ impl Decimal256 {
     /// Returns the approximate square root as a Decimal256.
     ///
     /// This should not overflow or panic.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn sqrt(&self) -> Self {
         // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
         // We start with the highest precision possible and lower it until
@@ -331,6 +340,7 @@ impl Decimal256 {
     /// Precision *must* be a number between 0 and 9 (inclusive).
     ///
     /// Returns `None` if the internal multiplication overflows.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = Uint256::from(100u128).pow(precision);
         self.0.checked_mul(inner_mul).ok().map(|inner| {
@@ -339,6 +349,7 @@ impl Decimal256 {
         })
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_diff(self, other: Self) -> Self {
         if self < other {
             other - self
@@ -347,6 +358,7 @@ impl Decimal256 {
         }
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
         match self.checked_add(other) {
             Ok(value) => value,
@@ -354,6 +366,7 @@ impl Decimal256 {
         }
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
         match self.checked_sub(other) {
             Ok(value) => value,
@@ -361,6 +374,7 @@ impl Decimal256 {
         }
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
         match self.checked_mul(other) {
             Ok(value) => value,
@@ -368,6 +382,7 @@ impl Decimal256 {
         }
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -393,6 +408,7 @@ impl Decimal256 {
     /// let d = Decimal256::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint256::from(75u64));
     /// ```
+    #[must_use]
     pub fn to_uint_floor(self) -> Uint256 {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
@@ -415,6 +431,7 @@ impl Decimal256 {
     /// let d = Decimal256::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint256::from(75u64));
     /// ```
+    #[must_use]
     pub fn to_uint_ceil(self) -> Uint256 {
         // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
         // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
@@ -727,18 +744,6 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
         }
-    }
-}
-
-impl PartialEq<&Decimal256> for Decimal256 {
-    fn eq(&self, rhs: &&Decimal256) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Decimal256> for &Decimal256 {
-    fn eq(&self, rhs: &Decimal256) -> bool {
-        *self == rhs
     }
 }
 
@@ -2135,7 +2140,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn decimal256_pow_overflow_panics() {
-        Decimal256::MAX.pow(2u32);
+        _ = Decimal256::MAX.pow(2u32);
     }
 
     #[test]

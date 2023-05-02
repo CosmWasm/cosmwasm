@@ -10,7 +10,7 @@ use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, StdError,
 };
-use crate::{impl_mul_fraction, Fraction, Uint128};
+use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128};
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
 /// such that the full u64 range can be used for clients that convert JSON numbers to floats,
@@ -30,6 +30,8 @@ use crate::{impl_mul_fraction, Fraction, Uint128};
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint64(#[schemars(with = "String")] u64);
+
+forward_ref_partial_eq!(Uint64, Uint64);
 
 impl Uint64 {
     pub const MAX: Self = Self(u64::MAX);
@@ -60,19 +62,23 @@ impl Uint64 {
     }
 
     /// Returns a copy of the number as big endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 8] {
         self.0.to_be_bytes()
     }
 
     /// Returns a copy of the number as little endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_le_bytes(self) -> [u8; 8] {
         self.0.to_le_bytes()
     }
 
+    #[must_use]
     pub const fn is_zero(&self) -> bool {
         self.0 == 0
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         self.0.pow(exp).into()
     }
@@ -81,6 +87,7 @@ impl Uint64 {
     ///
     /// Due to the nature of the integer division involved, the result is always floored.
     /// E.g. 5 * 99/100 = 4.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn multiply_ratio<A: Into<u64>, B: Into<u64>>(
         &self,
         numerator: A,
@@ -127,6 +134,7 @@ impl Uint64 {
     /// let result = a.full_mul(2u32);
     /// assert_eq!(result.to_string(), "36893488147419103230");
     /// ```
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn full_mul(self, rhs: impl Into<u64>) -> Uint128 {
         Uint128::from(self.u64())
             .checked_mul(Uint128::from(rhs.into()))
@@ -182,42 +190,51 @@ impl Uint64 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
         Self(self.0.wrapping_add(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
         Self(self.0.wrapping_mul(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
         Self(self.0.wrapping_pow(other))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
         Self(self.0.saturating_sub(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
         Self(self.0.saturating_pow(exp))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(if self.0 < other.0 {
             other.0 - self.0
@@ -480,18 +497,6 @@ where
     }
 }
 
-impl PartialEq<&Uint64> for Uint64 {
-    fn eq(&self, rhs: &&Uint64) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Uint64> for &Uint64 {
-    fn eq(&self, rhs: &Uint64) -> bool {
-        *self == rhs
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -726,7 +731,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn uint64_pow_overflow_panics() {
-        Uint64::MAX.pow(2u32);
+        _ = Uint64::MAX.pow(2u32);
     }
 
     #[test]
@@ -780,7 +785,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Denominator must not be zero")]
     fn uint64_multiply_ratio_panics_for_zero_denominator() {
-        Uint64(500).multiply_ratio(1u64, 0u64);
+        _ = Uint64(500).multiply_ratio(1u64, 0u64);
     }
 
     #[test]
@@ -999,7 +1004,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_floor_panics_on_overflow() {
         let fraction = (21u64, 8u64);
-        Uint64::MAX.mul_floor(fraction);
+        _ = Uint64::MAX.mul_floor(fraction);
     }
 
     #[test]
@@ -1019,7 +1024,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_floor_panics_on_zero_div() {
         let fraction = (21u64, 0u64);
-        Uint64::new(123456).mul_floor(fraction);
+        _ = Uint64::new(123456).mul_floor(fraction);
     }
 
     #[test]
@@ -1072,7 +1077,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_ceil_panics_on_overflow() {
         let fraction = (21u64, 8u64);
-        Uint64::MAX.mul_ceil(fraction);
+        _ = Uint64::MAX.mul_ceil(fraction);
     }
 
     #[test]
@@ -1092,7 +1097,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_ceil_panics_on_zero_div() {
         let fraction = (21u64, 0u64);
-        Uint64::new(123456).mul_ceil(fraction);
+        _ = Uint64::new(123456).mul_ceil(fraction);
     }
 
     #[test]
@@ -1110,7 +1115,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn div_floor_raises_with_zero() {
         let fraction = (Uint64::zero(), Uint64::new(21));
-        Uint64::new(123456).div_floor(fraction);
+        _ = Uint64::new(123456).div_floor(fraction);
     }
 
     #[test]
@@ -1145,7 +1150,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn div_floor_panics_on_overflow() {
         let fraction = (8u64, 21u64);
-        Uint64::MAX.div_floor(fraction);
+        _ = Uint64::MAX.div_floor(fraction);
     }
 
     #[test]
@@ -1165,7 +1170,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn div_ceil_raises_with_zero() {
         let fraction = (Uint64::zero(), Uint64::new(21));
-        Uint64::new(123456).div_ceil(fraction);
+        _ = Uint64::new(123456).div_ceil(fraction);
     }
 
     #[test]
@@ -1200,7 +1205,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn div_ceil_panics_on_overflow() {
         let fraction = (8u64, 21u64);
-        Uint64::MAX.div_ceil(fraction);
+        _ = Uint64::MAX.div_ceil(fraction);
     }
 
     #[test]

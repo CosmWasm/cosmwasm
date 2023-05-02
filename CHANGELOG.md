@@ -36,6 +36,27 @@ and this project adheres to
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 
+## [1.2.5] - 2023-05-02
+
+### Added
+
+- cosmwasm-std: Implement `PartialEq` for `Addr == &Addr` and `&Addr == Addr` as
+  well as `Event == &Event` and `&Event == Event` ([#1672]).
+- cosmwasm-std: Add `#[must_use]` annotations to `Uint64`, `Uint128`, `Uint256`,
+  `Uint512`, `Decimal` and `Decimal256` math operations ([#1678])
+
+[#1672]: https://github.com/CosmWasm/cosmwasm/pull/1672
+[#1678]: https://github.com/CosmWasm/cosmwasm/pull/1678
+
+### Deprecated
+
+- cosmwasm-std: The PartialEq implementations between `Addr` and `&str`/`String`
+  are deprecated because they are not considered to be safe. In almost all cases
+  you want to convert both sides of the equation to `Addr` first. If you really
+  want to do a string comparison, use `Addr::as_str()` explicitly. ([#1671])
+
+[#1671]: https://github.com/CosmWasm/cosmwasm/pull/1671
+
 ## [1.2.4] - 2023-04-17
 
 ### Fixed
@@ -1694,7 +1715,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...HEAD
+[1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.1...v1.2.2
