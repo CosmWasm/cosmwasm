@@ -10,6 +10,7 @@ mod coin;
 mod conversion;
 mod deps;
 mod errors;
+mod forward_ref;
 mod hex_binary;
 mod ibc;
 mod import_helpers;
