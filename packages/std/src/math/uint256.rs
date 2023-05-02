@@ -79,6 +79,7 @@ impl Uint256 {
         ])
     }
 
+    #[must_use]
     pub const fn from_be_bytes(data: [u8; 32]) -> Self {
         let words: [u64; 4] = [
             u64::from_le_bytes([
@@ -97,6 +98,7 @@ impl Uint256 {
         Self(U256(words))
     }
 
+    #[must_use]
     pub const fn from_le_bytes(data: [u8; 32]) -> Self {
         let words: [u64; 4] = [
             u64::from_le_bytes([
@@ -117,6 +119,7 @@ impl Uint256 {
 
     /// A conversion from `u128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
+    #[must_use]
     pub const fn from_u128(num: u128) -> Self {
         let bytes = num.to_le_bytes();
 
@@ -129,11 +132,13 @@ impl Uint256 {
 
     /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
+    #[must_use]
     pub const fn from_uint128(num: Uint128) -> Self {
         Self::from_u128(num.u128())
     }
 
     /// Returns a copy of the number as big endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 32] {
         let words = [
             (self.0).0[3].to_be_bytes(),
@@ -145,6 +150,7 @@ impl Uint256 {
     }
 
     /// Returns a copy of the number as little endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_le_bytes(self) -> [u8; 32] {
         let words = [
             (self.0).0[0].to_le_bytes(),
@@ -155,11 +161,13 @@ impl Uint256 {
         unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
+    #[must_use]
     pub const fn is_zero(&self) -> bool {
         let words = (self.0).0;
         words[0] == 0 && words[1] == 0 && words[2] == 0 && words[3] == 0
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         let res = self.0.pow(exp.into());
         Self(res)
@@ -169,6 +177,7 @@ impl Uint256 {
     ///
     /// Due to the nature of the integer division involved, the result is always floored.
     /// E.g. 5 * 99/100 = 4.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn multiply_ratio<A: Into<Uint256>, B: Into<Uint256>>(
         &self,
         numerator: A,
@@ -218,6 +227,7 @@ impl Uint256 {
     ///     "231584178474632390847141970017375815706539969331281128078915168015826259279870",
     /// );
     /// ```
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn full_mul(self, rhs: impl Into<Uint256>) -> Uint512 {
         Uint512::from(self)
             .checked_mul(Uint512::from(rhs.into()))
@@ -286,42 +296,50 @@ impl Uint256 {
         Ok(Self(self.0.shl(other)))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
         let (value, _did_overflow) = self.0.overflowing_add(other.0);
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
         let (value, _did_overflow) = self.0.overflowing_sub(other.0);
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
         let (value, _did_overflow) = self.0.overflowing_mul(other.0);
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
         let (value, _did_overflow) = self.0.overflowing_pow(other.into());
         Self(value)
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
         Self(self.0.saturating_sub(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
@@ -329,6 +347,7 @@ impl Uint256 {
         }
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_diff(self, other: Self) -> Self {
         if self < other {
             other - self
@@ -1389,7 +1408,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn uint256_pow_overflow_panics() {
-        Uint256::MAX.pow(2u32);
+        _ = Uint256::MAX.pow(2u32);
     }
 
     #[test]
@@ -1441,7 +1460,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Denominator must not be zero")]
     fn uint256_multiply_ratio_panics_for_zero_denominator() {
-        Uint256::from(500u32).multiply_ratio(1u128, 0u128);
+        _ = Uint256::from(500u32).multiply_ratio(1u128, 0u128);
     }
 
     #[test]
@@ -1717,7 +1736,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_floor_panics_on_overflow() {
         let fraction = (21u128, 8u128);
-        Uint256::MAX.mul_floor(fraction);
+        _ = Uint256::MAX.mul_floor(fraction);
     }
 
     #[test]
@@ -1739,7 +1758,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_floor_panics_on_zero_div() {
         let fraction = (21u128, 0u128);
-        Uint256::from(123456u32).mul_floor(fraction);
+        _ = Uint256::from(123456u32).mul_floor(fraction);
     }
 
     #[test]
@@ -1812,7 +1831,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_ceil_panics_on_overflow() {
         let fraction = (21u128, 8u128);
-        Uint256::MAX.mul_ceil(fraction);
+        _ = Uint256::MAX.mul_ceil(fraction);
     }
 
     #[test]
@@ -1834,7 +1853,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_ceil_panics_on_zero_div() {
         let fraction = (21u128, 0u128);
-        Uint256::from(123456u32).mul_ceil(fraction);
+        _ = Uint256::from(123456u32).mul_ceil(fraction);
     }
 
     #[test]
@@ -1852,7 +1871,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn div_floor_raises_with_zero() {
         let fraction = (Uint256::zero(), Uint256::from(21u32));
-        Uint256::from(123456u128).div_floor(fraction);
+        _ = Uint256::from(123456u128).div_floor(fraction);
     }
 
     #[test]
@@ -1906,7 +1925,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn div_floor_panics_on_overflow() {
         let fraction = (8u128, 21u128);
-        Uint256::MAX.div_floor(fraction);
+        _ = Uint256::MAX.div_floor(fraction);
     }
 
     #[test]
@@ -1928,7 +1947,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn div_ceil_raises_with_zero() {
         let fraction = (Uint256::zero(), Uint256::from(21u128));
-        Uint256::from(123456u128).div_ceil(fraction);
+        _ = Uint256::from(123456u128).div_ceil(fraction);
     }
 
     #[test]
@@ -1982,7 +2001,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn div_ceil_panics_on_overflow() {
         let fraction = (8u128, 21u128);
-        Uint256::MAX.div_ceil(fraction);
+        _ = Uint256::MAX.div_ceil(fraction);
     }
 
     #[test]
