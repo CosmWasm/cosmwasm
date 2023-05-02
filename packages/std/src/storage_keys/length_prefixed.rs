@@ -6,44 +6,59 @@
 
 /// Calculates the raw key prefix for a given namespace as documented
 /// in https://github.com/webmaster128/key-namespacing#length-prefixed-keys
-pub fn to_length_prefixed(namespace: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(namespace.len() + 2);
-    out.extend_from_slice(&encode_length(namespace));
-    out.extend_from_slice(namespace);
+pub fn to_length_prefixed(namespace_component: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(namespace_component.len() + 2);
+    out.extend_from_slice(&encode_length(namespace_component));
+    out.extend_from_slice(namespace_component);
     out
 }
 
 /// Calculates the raw key prefix for a given nested namespace
 /// as documented in https://github.com/webmaster128/key-namespacing#nesting
-pub fn to_length_prefixed_nested(namespaces: &[&[u8]]) -> Vec<u8> {
+pub fn to_length_prefixed_nested(namespace: &[&[u8]]) -> Vec<u8> {
     let mut size = 0;
-    for &namespace in namespaces {
-        size += namespace.len() + 2;
+    for component in namespace {
+        size += component.len() + 2;
     }
 
     let mut out = Vec::with_capacity(size);
-    for &namespace in namespaces {
-        out.extend_from_slice(&encode_length(namespace));
-        out.extend_from_slice(namespace);
+    for component in namespace {
+        out.extend_from_slice(&encode_length(component));
+        out.extend_from_slice(component);
     }
     out
 }
 
-/// Encodes the length of a given namespace as a 2 byte big endian encoded integer
-fn encode_length(namespace: &[u8]) -> [u8; 2] {
-    if namespace.len() > 0xFFFF {
-        panic!("only supports namespaces up to length 0xFFFF")
+/// Encodes the length of a given namespace component
+/// as a 2 byte big endian encoded integer
+fn encode_length(namespace_component: &[u8]) -> [u8; 2] {
+    if namespace_component.len() > 0xFFFF {
+        panic!("only supports namespace components up to length 0xFFFF")
     }
-    let length_bytes = (namespace.len() as u32).to_be_bytes();
+    let length_bytes = (namespace_component.len() as u32).to_be_bytes();
     [length_bytes[2], length_bytes[3]]
 }
 
-#[inline]
-#[allow(unused)]
-fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
-    let mut k = namespace.to_vec();
-    k.extend_from_slice(key);
-    k
+/// Encodes a namespace + key to a raw storage key.
+///
+/// This is equivalent concat(to_length_prefixed_nested(namespace), key)
+/// but more efficient when the namespace serialization is not persisted because
+/// here we only need one vector allocation.
+pub fn namespace_with_key(namespace: &[&[u8]], key: &[u8]) -> Vec<u8> {
+    // As documented in docs/STORAGE_KEYS.md, we know the final size of the key,
+    // which allows us to avoid reallocations of vectors.
+    let mut size = key.len();
+    for component in namespace {
+        size += 2 /* encoded component length */ + component.len() /* the actual component data */;
+    }
+
+    let mut out = Vec::with_capacity(size);
+    for component in namespace {
+        out.extend_from_slice(&encode_length(component));
+        out.extend_from_slice(component);
+    }
+    out.extend_from_slice(key);
+    out
 }
 
 #[cfg(test)]
@@ -77,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "only supports namespaces up to length 0xFFFF")]
+    #[should_panic(expected = "only supports namespace components up to length 0xFFFF")]
     fn to_length_prefixed_panics_for_too_long_prefix() {
         let limit = 0xFFFF;
         let long_namespace = vec![0; limit + 1];
@@ -186,8 +201,29 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "only supports namespaces up to length 0xFFFF")]
+    #[should_panic(expected = "only supports namespace components up to length 0xFFFF")]
     fn encode_length_panics_for_large_values() {
         encode_length(&vec![1; 65536]);
+    }
+
+    #[test]
+    fn namespace_with_key_works() {
+        // Empty namespace
+        let enc = namespace_with_key(&[], b"foo");
+        assert_eq!(enc, b"foo");
+        let enc = namespace_with_key(&[], b"");
+        assert_eq!(enc, b"");
+
+        // One component namespace
+        let enc = namespace_with_key(&[b"bar"], b"foo");
+        assert_eq!(enc, b"\x00\x03barfoo");
+        let enc = namespace_with_key(&[b"bar"], b"");
+        assert_eq!(enc, b"\x00\x03bar");
+
+        // Multi component namespace
+        let enc = namespace_with_key(&[b"bar", b"cool"], b"foo");
+        assert_eq!(enc, b"\x00\x03bar\x00\x04coolfoo");
+        let enc = namespace_with_key(&[b"bar", b"cool"], b"");
+        assert_eq!(enc, b"\x00\x03bar\x00\x04cool");
     }
 }
