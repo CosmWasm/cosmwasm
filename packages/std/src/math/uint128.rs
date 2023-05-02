@@ -69,19 +69,23 @@ impl Uint128 {
     }
 
     /// Returns a copy of the number as big endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 16] {
         self.0.to_be_bytes()
     }
 
     /// Returns a copy of the number as little endian bytes.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_le_bytes(self) -> [u8; 16] {
         self.0.to_le_bytes()
     }
 
+    #[must_use]
     pub const fn is_zero(&self) -> bool {
         self.0 == 0
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         self.0.pow(exp).into()
     }
@@ -90,6 +94,7 @@ impl Uint128 {
     ///
     /// Due to the nature of the integer division involved, the result is always floored.
     /// E.g. 5 * 99/100 = 4.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
         &self,
         numerator: A,
@@ -136,6 +141,7 @@ impl Uint128 {
     /// let result = a.full_mul(2u32);
     /// assert_eq!(result.to_string(), "680564733841876926926749214863536422910");
     /// ```
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
         Uint256::from(self.u128())
             .checked_mul(Uint256::from(rhs.into()))
@@ -191,42 +197,51 @@ impl Uint128 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
         Self(self.0.wrapping_add(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
         Self(self.0.wrapping_mul(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
         Self(self.0.wrapping_pow(other))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
         Self(self.0.saturating_add(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
         Self(self.0.saturating_sub(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
         Self(self.0.saturating_mul(other.0))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
         Self(self.0.saturating_pow(exp))
     }
 
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(if self.0 < other.0 {
             other.0 - self.0
@@ -813,7 +828,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn uint128_pow_overflow_panics() {
-        Uint128::MAX.pow(2u32);
+        _ = Uint128::MAX.pow(2u32);
     }
 
     #[test]
@@ -859,7 +874,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Denominator must not be zero")]
     fn uint128_multiply_ratio_panics_for_zero_denominator() {
-        Uint128(500).multiply_ratio(1u128, 0u128);
+        _ = Uint128(500).multiply_ratio(1u128, 0u128);
     }
 
     #[test]
@@ -1087,7 +1102,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_floor_panics_on_overflow() {
         let fraction = (21u128, 8u128);
-        Uint128::MAX.mul_floor(fraction);
+        _ = Uint128::MAX.mul_floor(fraction);
     }
 
     #[test]
@@ -1107,7 +1122,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_floor_panics_on_zero_div() {
         let fraction = (21u128, 0u128);
-        Uint128::new(123456).mul_floor(fraction);
+        _ = Uint128::new(123456).mul_floor(fraction);
     }
 
     #[test]
@@ -1170,7 +1185,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn mul_ceil_panics_on_overflow() {
         let fraction = (21u128, 8u128);
-        Uint128::MAX.mul_ceil(fraction);
+        _ = Uint128::MAX.mul_ceil(fraction);
     }
 
     #[test]
@@ -1190,7 +1205,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn mul_ceil_panics_on_zero_div() {
         let fraction = (21u128, 0u128);
-        Uint128::new(123456).mul_ceil(fraction);
+        _ = Uint128::new(123456).mul_ceil(fraction);
     }
 
     #[test]
@@ -1208,7 +1223,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn div_floor_raises_with_zero() {
         let fraction = (Uint128::zero(), Uint128::new(21));
-        Uint128::new(123456).div_floor(fraction);
+        _ = Uint128::new(123456).div_floor(fraction);
     }
 
     #[test]
@@ -1259,7 +1274,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn div_floor_panics_on_overflow() {
         let fraction = (8u128, 21u128);
-        Uint128::MAX.div_floor(fraction);
+        _ = Uint128::MAX.div_floor(fraction);
     }
 
     #[test]
@@ -1279,7 +1294,7 @@ mod tests {
     #[should_panic(expected = "DivideByZeroError")]
     fn div_ceil_raises_with_zero() {
         let fraction = (Uint128::zero(), Uint128::new(21));
-        Uint128::new(123456).div_ceil(fraction);
+        _ = Uint128::new(123456).div_ceil(fraction);
     }
 
     #[test]
@@ -1330,7 +1345,7 @@ mod tests {
     #[should_panic(expected = "ConversionOverflowError")]
     fn div_ceil_panics_on_overflow() {
         let fraction = (8u128, 21u128);
-        Uint128::MAX.div_ceil(fraction);
+        _ = Uint128::MAX.div_ceil(fraction);
     }
 
     #[test]

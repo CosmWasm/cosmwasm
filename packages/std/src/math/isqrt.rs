@@ -6,6 +6,7 @@ use crate::{Uint128, Uint256, Uint512, Uint64};
 /// [integer square root](https://en.wikipedia.org/wiki/Integer_square_root).
 pub trait Isqrt {
     /// The [integer square root](https://en.wikipedia.org/wiki/Integer_square_root).
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     fn isqrt(self) -> Self;
 }
 

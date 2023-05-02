@@ -10,8 +10,11 @@ and this project adheres to
 
 - cosmwasm-std: Implement `PartialEq` for `Addr == &Addr` and `&Addr == Addr` as
   well as `Event == &Event` and `&Event == Event` ([#1672]).
+- cosmwasm-std: Add `#[must_use]` annotations to `Uint64`, `Uint128`, `Uint256`,
+  `Uint512`, `Decimal` and `Decimal256` math operations ([#1678])
 
 [#1672]: https://github.com/CosmWasm/cosmwasm/pull/1672
+[#1678]: https://github.com/CosmWasm/cosmwasm/pull/1678
 
 ### Deprecated
 
