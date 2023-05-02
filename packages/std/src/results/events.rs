@@ -25,6 +25,8 @@ pub struct Event {
     pub attributes: Vec<Attribute>,
 }
 
+forward_ref_partial_eq!(Event, Event);
+
 impl Event {
     /// Create a new event with the given type and an empty list of attributes.
     pub fn new(ty: impl Into<String>) -> Self {

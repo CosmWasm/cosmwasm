@@ -8,8 +8,8 @@ and this project adheres to
 
 ### Added
 
-- cosmwasm-std: Implement `PartialEq` for `Addr == &Addr` and
-  `&Addr == Addr`([#1672]).
+- cosmwasm-std: Implement `PartialEq` for `Addr == &Addr` and `&Addr == Addr` as
+  well as `Event == &Event` and `&Event == Event` ([#1672]).
 
 [#1672]: https://github.com/CosmWasm/cosmwasm/pull/1672
 
