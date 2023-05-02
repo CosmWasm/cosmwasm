@@ -16,10 +16,10 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// Direct:
 ///
 /// ```
-/// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo};
+/// # use secret_cosmwasm_std::{Binary, DepsMut, Env, MessageInfo};
 /// # type InstantiateMsg = ();
 /// #
-/// use cosmwasm_std::{attr, Response, StdResult};
+/// use secret_cosmwasm_std::{attr, Response, StdResult};
 ///
 /// pub fn instantiate(
 ///     deps: DepsMut,
@@ -36,11 +36,11 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// Mutating:
 ///
 /// ```
-/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg};
+/// # use secret_cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg};
 /// # type InstantiateMsg = ();
 /// # type MyError = ();
 /// #
-/// use cosmwasm_std::Response;
+/// use secret_cosmwasm_std::Response;
 ///
 /// pub fn instantiate(
 ///     deps: DepsMut,
@@ -155,7 +155,7 @@ impl<T> Response<T> {
     /// Adding a list of attributes using the pair notation for key and value:
     ///
     /// ```
-    /// use cosmwasm_std::Response;
+    /// use secret_cosmwasm_std::Response;
     ///
     /// let attrs = vec![
     ///     ("action", "reaction"),
@@ -169,7 +169,7 @@ impl<T> Response<T> {
     /// Adding an optional value as an optional attribute by turning it into a list of 0 or 1 elements:
     ///
     /// ```
-    /// use cosmwasm_std::{Attribute, Response};
+    /// use secret_cosmwasm_std::{Attribute, Response};
     ///
     /// // Some value
     /// let value: Option<String> = Some("sarah".to_string());
@@ -200,7 +200,7 @@ impl<T> Response<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{CosmosMsg, Response};
+    /// use secret_cosmwasm_std::{CosmosMsg, Response};
     ///
     /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> Response {
     ///     Response::new().add_messages(msgs)
@@ -215,7 +215,7 @@ impl<T> Response<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{SubMsg, Response};
+    /// use secret_cosmwasm_std::{SubMsg, Response};
     ///
     /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> Response {
     ///     Response::new().add_submessages(msgs)

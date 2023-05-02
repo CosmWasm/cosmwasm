@@ -1,0 +1,20 @@
+[package]
+name = "cosmwasm-crypto"
+version = "1.1.9"
+authors = [
+    "SCRT Labs <info@scrtlabs.com>",
+]
+edition = "2021"
+description = "Compatability layer for contracts that want to use the git versions of the std fork with a patch"
+repository = "https://github.com/scrtlabs/cosmwasm/tree/secret/packages/crypto"
+license = "Apache-2.0"
+
+[features]
+default = []
+# backtraces provides much better context at runtime errors (in non-wasm code)
+# at the cost of a bit of code size and performance.
+# This feature requires Rust nightly because it depends on the unstable backtrace feature.
+backtraces = []
+
+[dependencies]
+secret-cosmwasm-crypto = { path = "../crypto" }
