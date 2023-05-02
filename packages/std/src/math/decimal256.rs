@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{Decimal, Uint512};
+use crate::{forward_ref_partial_eq, Decimal, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -24,6 +24,8 @@ use super::Uint256;
 /// (which is (2^256 - 1) / 10^18)
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal256(#[schemars(with = "String")] Uint256);
+
+forward_ref_partial_eq!(Decimal256, Decimal256);
 
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Decimal256 range exceeded")]
@@ -727,18 +729,6 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
         }
-    }
-}
-
-impl PartialEq<&Decimal256> for Decimal256 {
-    fn eq(&self, rhs: &&Decimal256) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Decimal256> for &Decimal256 {
-    fn eq(&self, rhs: &Decimal256) -> bool {
-        *self == rhs
     }
 }
 

@@ -12,7 +12,7 @@ use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
     DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{impl_mul_fraction, Fraction, Uint128, Uint512, Uint64};
+use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128, Uint512, Uint64};
 
 /// This module is purely a workaround that lets us ignore lints for all the code
 /// the `construct_uint!` macro generates.
@@ -49,6 +49,8 @@ use uints::U256;
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint256(#[schemars(with = "String")] U256);
+
+forward_ref_partial_eq!(Uint256, Uint256);
 
 impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
@@ -650,18 +652,6 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
-    }
-}
-
-impl PartialEq<&Uint256> for Uint256 {
-    fn eq(&self, rhs: &&Uint256) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Uint256> for &Uint256 {
-    fn eq(&self, rhs: &Uint256) -> bool {
-        *self == rhs
     }
 }
 

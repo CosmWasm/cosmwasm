@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `PartialEq` for `Addr == &Addr` and `&Addr == Addr` as
+  well as `Event == &Event` and `&Event == Event` ([#1672]).
+
+[#1672]: https://github.com/CosmWasm/cosmwasm/pull/1672
+
 ### Deprecated
 
 - cosmwasm-std: The PartialEq implementations between `Addr` and `&str`/`String`

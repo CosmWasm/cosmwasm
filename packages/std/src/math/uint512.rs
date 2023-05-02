@@ -10,7 +10,7 @@ use std::str::FromStr;
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{Uint128, Uint256, Uint64};
+use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
 
 /// This module is purely a workaround that lets us ignore lints for all the code
 /// the `construct_uint!` macro generates.
@@ -51,6 +51,8 @@ use uints::U512;
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint512(#[schemars(with = "String")] U512);
+
+forward_ref_partial_eq!(Uint512, Uint512);
 
 impl Uint512 {
     pub const MAX: Uint512 = Uint512(U512::MAX);
@@ -603,18 +605,6 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
-    }
-}
-
-impl PartialEq<&Uint512> for Uint512 {
-    fn eq(&self, rhs: &&Uint512) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Uint512> for &Uint512 {
-    fn eq(&self, rhs: &Uint512) -> bool {
-        *self == rhs
     }
 }
 

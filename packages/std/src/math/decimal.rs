@@ -11,6 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
+use crate::forward_ref_partial_eq;
 
 use super::Fraction;
 use super::Isqrt;
@@ -21,6 +22,8 @@ use super::{Uint128, Uint256};
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] Uint128);
+
+forward_ref_partial_eq!(Decimal, Decimal);
 
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Decimal range exceeded")]
@@ -702,18 +705,6 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
             Ok(d) => Ok(d),
             Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
         }
-    }
-}
-
-impl PartialEq<&Decimal> for Decimal {
-    fn eq(&self, rhs: &&Decimal) -> bool {
-        self == *rhs
-    }
-}
-
-impl PartialEq<Decimal> for &Decimal {
-    fn eq(&self, rhs: &Decimal) -> bool {
-        *self == rhs
     }
 }
 

@@ -9,7 +9,7 @@ use std::fmt;
 use std::ops::Deref;
 use thiserror::Error;
 
-use crate::{binary::Binary, HexBinary};
+use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
 
 /// A human readable address.
 ///
@@ -31,6 +31,8 @@ use crate::{binary::Binary, HexBinary};
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
 )]
 pub struct Addr(String);
+
+forward_ref_partial_eq!(Addr, Addr);
 
 impl Addr {
     /// Creates a new `Addr` instance from the given input without checking the validity
@@ -452,6 +454,20 @@ mod tests {
         assert_eq!(addr, String::from("cos934gh9034hg04g0h134"));
         // `String == Addr`
         assert_eq!(String::from("cos934gh9034hg04g0h134"), addr);
+    }
+
+    #[test]
+    fn addr_implements_partial_eq_addr_ref() {
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let addr_ref = &addr;
+        let addr_ref2 = &addr;
+
+        // `Addr == &Addr`
+        assert_eq!(addr, addr_ref);
+        // `&Addr == Addr`
+        assert_eq!(addr_ref, addr);
+        // `&Addr == &Addr`
+        assert_eq!(addr_ref, addr_ref2);
     }
 
     #[test]
