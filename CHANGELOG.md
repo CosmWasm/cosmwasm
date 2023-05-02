@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.2.5] - 2023-05-02
+
 ### Added
 
 - cosmwasm-std: Implement `PartialEq` for `Addr == &Addr` and `&Addr == Addr` as
