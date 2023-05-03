@@ -9,7 +9,7 @@ use crate::msg::{
     CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse,
     QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
-use crate::state::{config, config_read, replies, replies_read, State};
+use crate::state::{load_config, load_reply, save_config, save_reply, State};
 
 #[entry_point]
 pub fn instantiate(
@@ -19,7 +19,7 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> StdResult<Response<CustomMsg>> {
     let state = State { owner: info.sender };
-    config(deps.storage).save(&state)?;
+    save_config(deps.storage, &state)?;
     Ok(Response::default())
 }
 
@@ -43,7 +43,7 @@ pub fn try_reflect(
     info: MessageInfo,
     msgs: Vec<CosmosMsg<CustomMsg>>,
 ) -> Result<Response<CustomMsg>, ReflectError> {
-    let state = config(deps.storage).load()?;
+    let state = load_config(deps.storage)?;
 
     if info.sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
@@ -67,7 +67,7 @@ pub fn try_reflect_subcall(
     info: MessageInfo,
     msgs: Vec<SubMsg<CustomMsg>>,
 ) -> Result<Response<CustomMsg>, ReflectError> {
-    let state = config(deps.storage).load()?;
+    let state = load_config(deps.storage)?;
     if info.sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
             expected: state.owner.into(),
@@ -91,16 +91,19 @@ pub fn try_change_owner(
     new_owner: String,
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let api = deps.api;
-    config(deps.storage).update(|mut state| {
-        if info.sender != state.owner {
-            return Err(ReflectError::NotCurrentOwner {
-                expected: state.owner.into(),
-                actual: info.sender.into(),
-            });
-        }
-        state.owner = api.addr_validate(&new_owner)?;
-        Ok(state)
-    })?;
+
+    let mut state = load_config(deps.storage)?;
+
+    if info.sender != state.owner {
+        return Err(ReflectError::NotCurrentOwner {
+            expected: state.owner.into(),
+            actual: info.sender.into(),
+        });
+    }
+    state.owner = api.addr_validate(&new_owner)?;
+
+    save_config(deps.storage, &state)?;
+
     Ok(Response::new()
         .add_attribute("action", "change_owner")
         .add_attribute("owner", new_owner))
@@ -109,8 +112,7 @@ pub fn try_change_owner(
 /// This just stores the result for future query
 #[entry_point]
 pub fn reply(deps: DepsMut<SpecialQuery>, _env: Env, msg: Reply) -> Result<Response, ReflectError> {
-    let key = msg.id.to_be_bytes();
-    replies(deps.storage).save(&key, &msg)?;
+    save_reply(deps.storage, msg.id, &msg)?;
     Ok(Response::default())
 }
 
@@ -126,7 +128,7 @@ pub fn query(deps: Deps<SpecialQuery>, _env: Env, msg: QueryMsg) -> StdResult<Qu
 }
 
 fn query_owner(deps: Deps<SpecialQuery>) -> StdResult<OwnerResponse> {
-    let state = config_read(deps.storage).load()?;
+    let state = load_config(deps.storage)?;
     let resp = OwnerResponse {
         owner: state.owner.into(),
     };
@@ -134,8 +136,7 @@ fn query_owner(deps: Deps<SpecialQuery>) -> StdResult<OwnerResponse> {
 }
 
 fn query_subcall(deps: Deps<SpecialQuery>, id: u64) -> StdResult<Reply> {
-    let key = id.to_be_bytes();
-    replies_read(deps.storage).load(&key)
+    load_reply(deps.storage, id)
 }
 
 fn query_capitalized(deps: Deps<SpecialQuery>, text: String) -> StdResult<CapitalizedResponse> {
