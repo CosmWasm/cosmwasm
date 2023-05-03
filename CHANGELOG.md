@@ -36,6 +36,13 @@ and this project adheres to
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 
+### Deprecated
+
+- cosmwasm-storage: All exports are deprecated because this crate will be
+  removed with CosmWasm 2.0 ([#1596]).
+
+[#1596]: https://github.com/CosmWasm/cosmwasm/issues/1596
+
 ## [1.2.5] - 2023-05-02
 
 ### Added

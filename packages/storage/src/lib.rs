@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 mod bucket;
 mod namespace_helpers;
 mod prefixed_storage;
