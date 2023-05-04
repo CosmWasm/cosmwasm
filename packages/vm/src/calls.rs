@@ -575,8 +575,11 @@ where
     Q: Querier + 'static,
 {
     let mut arg_region_ptrs = Vec::<Value>::with_capacity(args.len());
+    eprintln!("args {}", args.len());
     for arg in args {
+        eprintln!("allocate {}", arg.len());
         let region_ptr = instance.allocate(arg.len())?;
+        eprintln!("write data");
         instance.write_memory(region_ptr, arg)?;
         arg_region_ptrs.push(region_ptr.into());
     }

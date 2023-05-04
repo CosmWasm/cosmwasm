@@ -102,8 +102,8 @@ impl InMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::size::Size;
     use crate::wasm_backend::compile;
+    use crate::{size::Size, wasm_backend::make_runtime_store};
     use std::mem;
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
@@ -147,7 +147,8 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let (mut store, original) = compile(&wasm, None, &[]).unwrap();
+        let original = compile(&wasm, None, &[]).unwrap();
+        let mut store = make_runtime_store(None);
 
         // Ensure original module can be executed
         {
@@ -218,21 +219,21 @@ mod tests {
         assert_eq!(cache.len(), 0);
 
         // Add 1
-        cache
-            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 900_000)
-            .unwrap();
+        let module = compile(&wasm1, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum1, (store, module), 900_000).unwrap();
         assert_eq!(cache.len(), 1);
 
         // Add 2
-        cache
-            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 900_000)
-            .unwrap();
+        let module = compile(&wasm2, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum2, (store, module), 900_000).unwrap();
         assert_eq!(cache.len(), 2);
 
         // Add 3 (pushes out the previous two)
-        cache
-            .store(&checksum3, compile(&wasm3, None, &[]).unwrap(), 1_500_000)
-            .unwrap();
+        let module = compile(&wasm3, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum3, (store, module), 1_500_000).unwrap();
         assert_eq!(cache.len(), 1);
     }
 
@@ -278,21 +279,21 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Add 1
-        cache
-            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 900_000)
-            .unwrap();
+        let module = compile(&wasm1, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum1, (store, module), 900_000).unwrap();
         assert_eq!(cache.size(), 900_000);
 
         // Add 2
-        cache
-            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 800_000)
-            .unwrap();
+        let module = compile(&wasm2, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum2, (store, module), 800_000).unwrap();
         assert_eq!(cache.size(), 1_700_000);
 
         // Add 3 (pushes out the previous two)
-        cache
-            .store(&checksum3, compile(&wasm3, None, &[]).unwrap(), 1_500_000)
-            .unwrap();
+        let module = compile(&wasm3, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum3, (store, module), 1_500_000).unwrap();
         assert_eq!(cache.size(), 1_500_000);
     }
 }

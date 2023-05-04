@@ -72,7 +72,7 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let (_store, module) = compile(code, memory_limit, &[])?;
+        let module = compile(code, memory_limit, &[])?;
         Instance::from_module(
             &module,
             false,
@@ -624,7 +624,8 @@ mod tests {
 
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
-        let (mut store, module) = compile(&wasm, memory_limit, &[]).unwrap();
+        let module = compile(&wasm, memory_limit, &[]).unwrap();
+        let mut store = make_runtime_store(memory_limit);
 
         #[derive(Clone)]
         struct MyEnv {

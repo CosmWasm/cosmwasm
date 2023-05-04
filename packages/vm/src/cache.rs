@@ -180,7 +180,7 @@ where
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let (_store, module) = compile(wasm, None, &[])?;
+        let module = compile(wasm, None, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
@@ -267,7 +267,8 @@ where
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
-        let (store, module) = compile(&code, Some(cache.instance_memory_limit), &[])?;
+        let module = compile(&code, Some(cache.instance_memory_limit), &[])?;
+        let store = make_runtime_store(Some(cache.instance_memory_limit));
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
@@ -376,7 +377,8 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let (store, module) = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
+        let module = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
+        let store = make_runtime_store(Some(cache.instance_memory_limit));
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
         // Can't clone store :(

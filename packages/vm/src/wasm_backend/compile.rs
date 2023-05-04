@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use wasmer::{Module, ModuleMiddleware, Store};
+use wasmer::{Module, ModuleMiddleware};
 
 use crate::errors::VmResult;
 use crate::size::Size;
@@ -15,10 +15,10 @@ pub fn compile(
     code: &[u8],
     memory_limit: Option<Size>,
     middlewares: &[Arc<dyn ModuleMiddleware>],
-) -> VmResult<(Store, Module)> {
+) -> VmResult<Module> {
     let store = make_compile_time_store(memory_limit, middlewares);
     let module = Module::new(&store, code)?;
-    Ok((store, module))
+    Ok(module)
 }
 
 #[cfg(test)]

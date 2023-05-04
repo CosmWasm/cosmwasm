@@ -224,7 +224,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
@@ -256,7 +256,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
@@ -279,7 +279,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let module = compile(&wasm, None, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there

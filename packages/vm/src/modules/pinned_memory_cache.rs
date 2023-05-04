@@ -68,7 +68,7 @@ impl PinnedMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::compile;
+    use crate::wasm_backend::{compile, make_runtime_store};
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
@@ -96,7 +96,9 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let (mut store, original) = compile(&wasm, None, &[]).unwrap();
+        let original = compile(&wasm, None, &[]).unwrap();
+
+        let mut store = make_runtime_store(None);
 
         // Ensure original module can be executed
         {
@@ -144,7 +146,8 @@ mod tests {
         assert!(!cache.has(&checksum));
 
         // Add
-        let (store, original) = compile(&wasm, None, &[]).unwrap();
+        let original = compile(&wasm, None, &[]).unwrap();
+        let store = make_runtime_store(None);
         cache.store(&checksum, (store, original), 0).unwrap();
 
         assert!(cache.has(&checksum));
@@ -175,7 +178,8 @@ mod tests {
         assert_eq!(cache.len(), 0);
 
         // Add
-        let (store, original) = compile(&wasm, None, &[]).unwrap();
+        let original = compile(&wasm, None, &[]).unwrap();
+        let store = make_runtime_store(None);
         cache.store(&checksum, (store, original), 0).unwrap();
 
         assert_eq!(cache.len(), 1);
@@ -217,15 +221,15 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Add 1
-        cache
-            .store(&checksum1, compile(&wasm1, None, &[]).unwrap(), 500)
-            .unwrap();
+        let module = compile(&wasm1, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum1, (store, module), 500).unwrap();
         assert_eq!(cache.size(), 500);
 
         // Add 2
-        cache
-            .store(&checksum2, compile(&wasm2, None, &[]).unwrap(), 300)
-            .unwrap();
+        let module = compile(&wasm1, None, &[]).unwrap();
+        let store = make_runtime_store(None);
+        cache.store(&checksum2, (store, module), 300).unwrap();
         assert_eq!(cache.size(), 800);
 
         // Remove 1

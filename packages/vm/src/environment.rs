@@ -451,7 +451,7 @@ mod tests {
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::compile;
+    use crate::wasm_backend::{compile, make_runtime_store};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
@@ -480,7 +480,8 @@ mod tests {
     ) {
         let env = Environment::new(MockApi::default(), gas_limit);
 
-        let (mut store, module) = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
+        let module = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
+        let mut store = make_runtime_store(TESTING_MEMORY_LIMIT);
 
         // we need stubs for all required imports
         let import_obj = imports! {
