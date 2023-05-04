@@ -297,12 +297,17 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
         let (cached, from_pinned) = self.get_module(checksum)?;
+        let memory_limit = {
+            // TODO: implement without this extra lock. get_module locks already. Or move to the Cache struct.
+            let cache = self.inner.lock().unwrap();
+            cache.instance_memory_limit
+        };
         let instance = Instance::from_module(
-            cached.store,
             &cached.module,
             from_pinned,
             backend,
             options.gas_limit,
+            Some(memory_limit),
             options.print_debug,
             None,
             Some(&self.instantiation_lock),

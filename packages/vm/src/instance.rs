@@ -22,7 +22,7 @@ use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::modules::CachedModule;
 use crate::size::Size;
-use crate::wasm_backend::compile;
+use crate::wasm_backend::{compile, make_runtime_store};
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -72,13 +72,13 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let (store, module) = compile(code, memory_limit, &[])?;
+        let (_store, module) = compile(code, memory_limit, &[])?;
         Instance::from_module(
-            store,
             &module,
             false,
             backend,
             options.gas_limit,
+            memory_limit,
             options.print_debug,
             None,
             None,
@@ -87,15 +87,17 @@ where
 
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_module(
-        mut store: Store,
         module: &Module,
         from_pinned_cache: bool,
         backend: Backend<A, S, Q>,
         gas_limit: u64,
+        memory_limit: Option<Size>,
         print_debug: bool,
         extra_imports: Option<HashMap<&str, Exports>>,
         instantiation_lock: Option<&Mutex<()>>,
     ) -> VmResult<Self> {
+        let mut store = make_runtime_store(memory_limit);
+
         let fe = FunctionEnv::new(&mut store, {
             let e = Environment::new(backend.api, gas_limit);
             if print_debug {
@@ -470,12 +472,14 @@ where
 
 /// This exists only to be exported through `internals` for use by crates that are
 /// part of Cosmwasm.
+#[allow(clippy::too_many_arguments)]
 pub fn instance_from_module<A, S, Q>(
-    store: Store,
+    _store: Store,
     module: &Module,
     from_pinned_cache: bool,
     backend: Backend<A, S, Q>,
     gas_limit: u64,
+    memory_limit: Option<Size>,
     print_debug: bool,
     extra_imports: Option<HashMap<&str, Exports>>,
 ) -> VmResult<Instance<A, S, Q>>
@@ -485,11 +489,11 @@ where
     Q: Querier + 'static,
 {
     Instance::from_module(
-        store,
         module,
         from_pinned_cache,
         backend,
         gas_limit,
+        memory_limit,
         print_debug,
         extra_imports,
         None,
@@ -520,6 +524,7 @@ mod tests {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
+    const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
@@ -643,11 +648,11 @@ mod tests {
         let mut extra_imports = HashMap::new();
         extra_imports.insert("foo", exports);
         let mut instance = Instance::from_module(
-            store,
             &module,
             false,
             backend,
             instance_options.gas_limit,
+            DEFAULT_MEMORY_LIMIT,
             false,
             Some(extra_imports),
             None,
