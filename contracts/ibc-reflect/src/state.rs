@@ -3,6 +3,7 @@ use std::any::type_name;
 use cosmwasm_std::{
     from_slice, storage_keys::namespace_with_key, to_vec, Addr, Order, StdError, StdResult, Storage,
 };
+use cosmwasm_storage::to_length_prefixed;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
@@ -43,15 +44,13 @@ pub fn remove_account(storage: &mut dyn Storage, id: &str) {
 pub fn range_accounts(
     storage: &dyn Storage,
 ) -> impl Iterator<Item = StdResult<(String, Addr)>> + '_ {
+    let prefix = to_length_prefixed(PREFIX_ACCOUNTS);
+    let upper_bound = to_length_prefixed(PREFIX_ACCOUNTS_UPPER_BOUND);
     storage
-        .range(
-            Some(PREFIX_ACCOUNTS),
-            Some(PREFIX_ACCOUNTS_UPPER_BOUND),
-            Order::Ascending,
-        )
+        .range(Some(&prefix), Some(&upper_bound), Order::Ascending)
         .map(|(key, val)| {
             Ok((
-                String::from_utf8(key[PREFIX_ACCOUNTS.len()..].to_vec())?,
+                String::from_utf8(key[PREFIX_ACCOUNTS.len() + 2..].to_vec())?,
                 from_slice(&val)?,
             ))
         })

@@ -529,7 +529,7 @@ mod tests {
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(
             ack.unwrap_err(),
-            "invalid packet: cosmwasm_std::addresses::Addr not found"
+            "invalid packet: account channel-123 not found"
         );
 
         // register the channel

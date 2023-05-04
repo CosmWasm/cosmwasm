@@ -236,7 +236,7 @@ fn handle_dispatch_packet() {
         from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(
         ack.unwrap_err(),
-        "invalid packet: cosmwasm_std::addresses::Addr not found"
+        "invalid packet: account channel-123 not found"
     );
 
     // register the channel
