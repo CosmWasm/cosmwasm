@@ -46,6 +46,8 @@ pub enum PacketMsg {
     Dispatch { msgs: Vec<CosmosMsg> },
     WhoAmI {},
     Balances {},
+    Panic {},
+    ReturnErr {text: String},
 }
 
 /// All acknowledgements are wrapped in `ContractResult`.
