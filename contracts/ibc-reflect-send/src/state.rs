@@ -1,9 +1,9 @@
-use cosmwasm_storage::to_length_prefixed;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, storage_keys::namespace_with_key, to_vec, Addr, Coin, Order, StdError, StdResult,
-    Storage, Timestamp,
+    from_slice,
+    storage_keys::{namespace_with_key, to_length_prefixed},
+    to_vec, Addr, Coin, Order, StdError, StdResult, Storage, Timestamp,
 };
 
 pub const KEY_CONFIG: &[u8] = b"config";

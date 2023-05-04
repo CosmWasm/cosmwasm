@@ -1,9 +1,10 @@
 use std::any::type_name;
 
 use cosmwasm_std::{
-    from_slice, storage_keys::namespace_with_key, to_vec, Addr, Order, StdError, StdResult, Storage,
+    from_slice,
+    storage_keys::{namespace_with_key, to_length_prefixed},
+    to_vec, Addr, Order, StdError, StdResult, Storage,
 };
-use cosmwasm_storage::to_length_prefixed;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
