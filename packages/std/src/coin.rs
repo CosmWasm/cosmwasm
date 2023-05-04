@@ -189,35 +189,35 @@ mod tests {
     #[test]
     fn parse_coin() {
         let expected = Coin::new(123, "ucosm");
-        assert_eq!(expected, "123ucosm".parse().unwrap());
+        assert_eq!("123ucosm".parse::<Coin>().unwrap(), expected);
         // leading zeroes should be ignored
-        assert_eq!(expected, "00123ucosm".parse().unwrap());
+        assert_eq!("00123ucosm".parse::<Coin>().unwrap(), expected);
         // 0 amount parses correctly
-        assert_eq!(Coin::new(0, "ucosm"), "0ucosm".parse().unwrap());
+        assert_eq!("0ucosm".parse::<Coin>().unwrap(), Coin::new(0, "ucosm"));
         // ibc denom should work
         let ibc_str = "11111ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2";
         let ibc_coin = Coin::new(
             11111,
             "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
         );
-        assert_eq!(ibc_coin, ibc_str.parse().unwrap());
+        assert_eq!(ibc_str.parse::<Coin>().unwrap(), ibc_coin);
 
         // error cases
         assert_eq!(
-            StdError::generic_err("Parsing Coin: missing denominator"),
-            Coin::from_str("123").unwrap_err()
+            Coin::from_str("123").unwrap_err(),
+            StdError::generic_err("Parsing Coin: missing denominator")
         );
         assert_eq!(
-            StdError::generic_err("Parsing Coin: cannot parse integer from empty string"),
-            Coin::from_str("ucosm").unwrap_err()
+            Coin::from_str("ucosm").unwrap_err(),
+            StdError::generic_err("Parsing Coin: cannot parse integer from empty string")
         );
         assert_eq!(
-            StdError::generic_err("Parsing Coin: cannot parse integer from empty string"),
-            Coin::from_str("-123ucosm").unwrap_err()
+            Coin::from_str("-123ucosm").unwrap_err(),
+            StdError::generic_err("Parsing Coin: cannot parse integer from empty string")
         );
         assert_eq!(
-            StdError::generic_err("Parsing Coin: number too large to fit in target type"),
-            Coin::from_str("340282366920938463463374607431768211456ucosm").unwrap_err()
+            Coin::from_str("340282366920938463463374607431768211456ucosm").unwrap_err(),
+            StdError::generic_err("Parsing Coin: number too large to fit in target type")
         );
     }
 }
