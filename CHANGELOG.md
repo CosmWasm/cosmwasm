@@ -32,6 +32,7 @@ and this project adheres to
 - cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
   customizing the handling of debug messages emitted by the contract ([#1667]).
 - cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
+- cosmwasm-check: Update clap dependency to version 4
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629

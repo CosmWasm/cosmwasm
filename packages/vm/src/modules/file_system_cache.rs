@@ -310,11 +310,11 @@ mod tests {
         };
         let target = Target::new(triple.clone(), wasmer::CpuFeature::POPCNT.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-4721E3F4");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE");
         // Changing CPU features changes the hash part
         let target = Target::new(triple, wasmer::CpuFeature::AVX512DQ.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-D5C8034F");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-93001945");
 
         // Works for durrect target (hashing is deterministic);
         let target = Target::default();
@@ -338,9 +338,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v5-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+                "modules\\v5-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v5-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+                "modules/v5-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }
