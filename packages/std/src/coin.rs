@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 
-use crate::{math::Uint128, StdError};
+use crate::{errors::CoinFromStrError, math::Uint128, StdError};
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
@@ -26,21 +26,18 @@ impl fmt::Debug for Coin {
 }
 
 impl FromStr for Coin {
-    type Err = StdError;
+    type Err = CoinFromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let pos = s
             .find(|c: char| !c.is_ascii_digit())
-            .ok_or_else(|| StdError::generic_err("Parsing Coin: missing denominator"))?;
+            .ok_or(CoinFromStrError::MissingDenom)?;
         let (amount, denom) = s.split_at(pos);
 
-        match amount.parse::<u128>() {
-            Ok(amount) => Ok(Coin {
-                amount: amount.into(),
-                denom: denom.to_string(),
-            }),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Coin: {}", e))),
-        }
+        Ok(Coin {
+            amount: amount.parse::<u128>()?.into(),
+            denom: denom.to_string(),
+        })
     }
 }
 
@@ -217,19 +214,21 @@ mod tests {
         // error cases
         assert_eq!(
             Coin::from_str("123").unwrap_err(),
-            StdError::generic_err("Parsing Coin: missing denominator")
+            CoinFromStrError::MissingDenom
         );
         assert_eq!(
-            Coin::from_str("ucosm").unwrap_err(),
-            StdError::generic_err("Parsing Coin: cannot parse integer from empty string")
+            Coin::from_str("ucosm").unwrap_err().to_string(),
+            "Invalid amount: cannot parse integer from empty string"
         );
         assert_eq!(
-            Coin::from_str("-123ucosm").unwrap_err(),
-            StdError::generic_err("Parsing Coin: cannot parse integer from empty string")
+            Coin::from_str("-123ucosm").unwrap_err().to_string(),
+            "Invalid amount: cannot parse integer from empty string"
         );
         assert_eq!(
-            Coin::from_str("340282366920938463463374607431768211456ucosm").unwrap_err(),
-            StdError::generic_err("Parsing Coin: number too large to fit in target type")
+            Coin::from_str("340282366920938463463374607431768211456ucosm")
+                .unwrap_err()
+                .to_string(),
+            "Invalid amount: number too large to fit in target type"
         );
     }
 }
