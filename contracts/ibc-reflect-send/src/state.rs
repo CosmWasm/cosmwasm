@@ -70,12 +70,12 @@ pub fn range_accounts(
 
 pub fn load_config(storage: &dyn Storage) -> StdResult<Config> {
     storage
-        .get(KEY_CONFIG)
+        .get(&to_length_prefixed(KEY_CONFIG))
         .ok_or_else(|| StdError::not_found("config"))
         .and_then(|v| from_slice(&v))
 }
 
 pub fn save_config(storage: &mut dyn Storage, item: &Config) -> StdResult<()> {
-    storage.set(KEY_CONFIG, &to_vec(item)?);
+    storage.set(&to_length_prefixed(KEY_CONFIG), &to_vec(item)?);
     Ok(())
 }

@@ -2,7 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, storage_keys::namespace_with_key, to_vec, Addr, Reply, StdError, StdResult, Storage,
+    from_slice,
+    storage_keys::{namespace_with_key, to_length_prefixed},
+    to_vec, Addr, Reply, StdError, StdResult, Storage,
 };
 
 const CONFIG_KEY: &[u8] = b"config";
@@ -34,12 +36,12 @@ pub fn remove_reply(storage: &mut dyn Storage, id: u64) {
 
 pub fn load_config(storage: &dyn Storage) -> StdResult<State> {
     storage
-        .get(CONFIG_KEY)
+        .get(&to_length_prefixed(CONFIG_KEY))
         .ok_or_else(|| StdError::not_found("config"))
         .and_then(|v| from_slice(&v))
 }
 
 pub fn save_config(storage: &mut dyn Storage, item: &State) -> StdResult<()> {
-    storage.set(CONFIG_KEY, &to_vec(item)?);
+    storage.set(&to_length_prefixed(CONFIG_KEY), &to_vec(item)?);
     Ok(())
 }

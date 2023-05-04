@@ -58,12 +58,12 @@ pub fn range_accounts(
 
 pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
     storage
-        .get(key)
+        .get(&to_length_prefixed(key))
         .ok_or_else(|| StdError::not_found(type_name::<T>()))
         .and_then(|v| from_slice(&v))
 }
 
 pub fn save_item<T: Serialize>(storage: &mut dyn Storage, key: &[u8], item: &T) -> StdResult<()> {
-    storage.set(key, &to_vec(item)?);
+    storage.set(&to_length_prefixed(key), &to_vec(item)?);
     Ok(())
 }
