@@ -247,14 +247,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-storage"
-version = "1.2.5"
-dependencies = [
- "cosmwasm-std",
- "serde",
-]
-
-[[package]]
 name = "cosmwasm-vm"
 version = "1.2.5"
 dependencies = [
@@ -455,7 +447,6 @@ version = "0.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cosmwasm-storage",
  "cosmwasm-vm",
  "rust-argon2",
  "thiserror",

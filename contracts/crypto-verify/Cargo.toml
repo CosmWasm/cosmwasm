@@ -34,7 +34,6 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
-cosmwasm-storage = { path = "../../packages/storage", features = ["iterator"] }
 hex = "0.4"
 rlp = "0.5"
 schemars = "0.8.3"

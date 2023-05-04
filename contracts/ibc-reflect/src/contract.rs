@@ -2,7 +2,7 @@ use cosmwasm_std::{
     entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps, DepsMut,
     Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never, Order,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never,
     QueryResponse, Reply, Response, StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult,
     WasmMsg,
 };
@@ -11,7 +11,10 @@ use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
     InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, WhoAmIResponse,
 };
-use crate::state::{accounts, accounts_read, config, pending_channel, Config};
+use crate::state::{
+    load_account, load_item, may_load_account, range_accounts, remove_account, save_account,
+    save_item, Config, KEY_CONFIG, KEY_PENDING_CHANNEL,
+};
 
 pub const IBC_APP_VERSION: &str = "ibc-reflect-v1";
 pub const RECEIVE_DISPATCH_ID: u64 = 1234;
@@ -28,7 +31,7 @@ pub fn instantiate(
     let cfg = Config {
         reflect_code_id: msg.reflect_code_id,
     };
-    config(deps.storage).save(&cfg)?;
+    save_item(deps.storage, KEY_CONFIG, &cfg)?;
 
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
@@ -59,8 +62,8 @@ fn parse_contract_from_event(events: Vec<Event>) -> Option<String> {
 
 pub fn handle_init_callback(deps: DepsMut, response: SubMsgResponse) -> StdResult<Response> {
     // we use storage to pass info from the caller to the reply
-    let id = pending_channel(deps.storage).load()?;
-    pending_channel(deps.storage).remove();
+    let id: String = load_item(deps.storage, KEY_PENDING_CHANNEL)?;
+    deps.storage.remove(KEY_PENDING_CHANNEL);
 
     // parse contract info from events
     let contract_addr = match parse_contract_from_event(response.events) {
@@ -72,14 +75,14 @@ pub fn handle_init_callback(deps: DepsMut, response: SubMsgResponse) -> StdResul
 
     // store id -> contract_addr if it is empty
     // id comes from: `let chan_id = msg.endpoint.channel_id;` in `ibc_channel_connect`
-    accounts(deps.storage).update(id.as_bytes(), |val| -> StdResult<_> {
-        match val {
-            Some(_) => Err(StdError::generic_err(
+    match may_load_account(deps.storage, &id)? {
+        Some(_) => {
+            return Err(StdError::generic_err(
                 "Cannot register over an existing channel",
-            )),
-            None => Ok(contract_addr),
+            ))
         }
-    })?;
+        None => save_account(deps.storage, &id, &contract_addr)?,
+    }
 
     Ok(Response::new().add_attribute("action", "execute_init_callback"))
 }
@@ -93,20 +96,19 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 }
 
 pub fn query_account(deps: Deps, channel_id: String) -> StdResult<AccountResponse> {
-    let account = accounts_read(deps.storage).load(channel_id.as_bytes())?;
+    let account = load_account(deps.storage, &channel_id)?;
     Ok(AccountResponse {
         account: Some(account.into()),
     })
 }
 
 pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
-    let accounts: StdResult<Vec<_>> = accounts_read(deps.storage)
-        .range(None, None, Order::Ascending)
+    let accounts: StdResult<Vec<_>> = range_accounts(deps.storage)
         .map(|item| {
             let (key, account) = item?;
             Ok(AccountInfo {
                 account: account.into(),
-                channel_id: String::from_utf8(key)?,
+                channel_id: key,
             })
         })
         .collect();
@@ -153,7 +155,7 @@ pub fn ibc_channel_connect(
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
-    let cfg = config(deps.storage).load()?;
+    let cfg: Config = load_item(deps.storage, KEY_CONFIG)?;
     let chan_id = &channel.endpoint.channel_id;
 
     let msg = WasmMsg::Instantiate {
@@ -166,7 +168,7 @@ pub fn ibc_channel_connect(
     let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
 
     // store the channel id for the reply handler
-    pending_channel(deps.storage).save(chan_id)?;
+    save_item(deps.storage, KEY_PENDING_CHANNEL, chan_id)?;
 
     Ok(IbcBasicResponse::new()
         .add_submessage(msg)
@@ -186,8 +188,8 @@ pub fn ibc_channel_close(
     let channel = msg.channel();
     // get contract address and remove lookup
     let channel_id = channel.endpoint.channel_id.as_str();
-    let reflect_addr = accounts(deps.storage).load(channel_id.as_bytes())?;
-    accounts(deps.storage).remove(channel_id.as_bytes());
+    let reflect_addr = load_account(deps.storage, channel_id)?;
+    remove_account(deps.storage, channel_id);
 
     // transfer current balance if any (steal the money)
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
@@ -258,7 +260,7 @@ pub fn ibc_packet_receive(
 
 // processes PacketMsg::WhoAmI variant
 fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
-    let account = accounts(deps.storage).load(caller.as_bytes())?;
+    let account = load_account(deps.storage, &caller)?;
     let response = WhoAmIResponse {
         account: account.into(),
     };
@@ -271,7 +273,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
 
 // processes PacketMsg::Balances variant
 fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
-    let account = accounts(deps.storage).load(caller.as_bytes())?;
+    let account = load_account(deps.storage, &caller)?;
     let balances = deps.querier.query_all_balances(&account)?;
     let response = BalancesResponse {
         account: account.into(),
@@ -291,7 +293,7 @@ fn receive_dispatch(
     msgs: Vec<CosmosMsg>,
 ) -> StdResult<IbcReceiveResponse> {
     // what is the reflect contract here
-    let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
+    let reflect_addr = load_account(deps.storage, &caller)?;
 
     // let them know we're fine
     let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
@@ -527,7 +529,7 @@ mod tests {
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(
             ack.unwrap_err(),
-            "invalid packet: cosmwasm_std::addresses::Addr not found"
+            "invalid packet: account channel-123 not found"
         );
 
         // register the channel

@@ -35,5 +35,4 @@ rust-argon2 = "0.8"
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-storage = { path = "../../packages/storage", default-features = false }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }

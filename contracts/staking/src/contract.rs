@@ -10,8 +10,8 @@ use crate::msg::{
     TokenInfoResponse,
 };
 use crate::state::{
-    balances, balances_read, claims, claims_read, invest_info, invest_info_read, token_info,
-    token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply, TokenInfo,
+    load_item, may_load_map, save_item, save_map, update_item, InvestmentInfo, Supply, TokenInfo,
+    KEY_INVESTMENT, KEY_TOKEN_INFO, KEY_TOTAL_SUPPLY, PREFIX_BALANCE, PREFIX_CLAIMS,
 };
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
@@ -37,7 +37,7 @@ pub fn instantiate(
         symbol: msg.symbol,
         decimals: msg.decimals,
     };
-    token_info(deps.storage).save(&token)?;
+    save_item(deps.storage, KEY_TOKEN_INFO, &token)?;
 
     let denom = deps.querier.query_bonded_denom()?;
     let invest = InvestmentInfo {
@@ -47,11 +47,11 @@ pub fn instantiate(
         validator: msg.validator,
         min_withdrawal: msg.min_withdrawal,
     };
-    invest_info(deps.storage).save(&invest)?;
+    save_item(deps.storage, KEY_INVESTMENT, &invest)?;
 
     // set supply to 0
     let supply = Supply::default();
-    total_supply(deps.storage).save(&supply)?;
+    save_item(deps.storage, KEY_TOTAL_SUPPLY, &supply)?;
 
     Ok(Response::default())
 }
@@ -85,13 +85,15 @@ pub fn transfer(
     let rcpt_raw = deps.api.addr_canonicalize(&recipient)?;
     let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
 
-    let mut accounts = balances(deps.storage);
-    accounts.update(&sender_raw, |balance: Option<Uint128>| -> StdResult<_> {
-        Ok(balance.unwrap_or_default().checked_sub(send)?)
-    })?;
-    accounts.update(&rcpt_raw, |balance: Option<Uint128>| -> StdResult<_> {
-        Ok(balance.unwrap_or_default() + send)
-    })?;
+    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
+    save_map(
+        deps.storage,
+        PREFIX_BALANCE,
+        &sender_raw,
+        balance.checked_sub(send)?,
+    )?;
+    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &rcpt_raw)?.unwrap_or_default();
+    save_map(deps.storage, PREFIX_BALANCE, &rcpt_raw, balance + send)?;
 
     let res = Response::new()
         .add_attribute("action", "transfer")
@@ -137,7 +139,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
 
     // ensure we have the proper denom
-    let invest = invest_info_read(deps.storage).load()?;
+    let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
     // payment finds the proper coin (or throws an error)
     let payment = info
         .funds
@@ -149,8 +151,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let bonded = get_bonded(&deps.querier, env.contract.address)?;
 
     // calculate to_mint and update total supply
-    let mut totals = total_supply(deps.storage);
-    let mut supply = totals.load()?;
+    let mut supply: Supply = load_item(deps.storage, KEY_TOTAL_SUPPLY)?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let to_mint = if supply.issued.is_zero() || bonded.is_zero() {
@@ -160,12 +161,11 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     };
     supply.bonded = bonded + payment.amount;
     supply.issued += to_mint;
-    totals.save(&supply)?;
+    save_item(deps.storage, KEY_TOTAL_SUPPLY, &supply)?;
 
     // update the balance of the sender
-    balances(deps.storage).update(&sender_raw, |balance| -> StdResult<_> {
-        Ok(balance.unwrap_or_default() + to_mint)
-    })?;
+    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
+    save_map(deps.storage, PREFIX_BALANCE, &sender_raw, balance + to_mint)?;
 
     // bond them to the validator
     let res = Response::new()
@@ -181,7 +181,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
 }
 
 pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> StdResult<Response> {
-    let invest = invest_info_read(deps.storage).load()?;
+    let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
     // ensure it is big enough to care
     if amount < invest.min_withdrawal {
         return Err(StdError::generic_err(format!(
@@ -197,15 +197,17 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let tax = amount * invest.exit_tax;
 
     // deduct all from the account
-    let mut accounts = balances(deps.storage);
-    accounts.update(&sender_raw, |balance| -> StdResult<_> {
-        Ok(balance.unwrap_or_default().checked_sub(amount)?)
-    })?;
+    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
+    save_map(
+        deps.storage,
+        PREFIX_BALANCE,
+        &sender_raw,
+        balance.checked_sub(amount)?,
+    )?;
     if tax > Uint128::new(0) {
         // add tax to the owner
-        accounts.update(&owner_raw, |balance: Option<Uint128>| -> StdResult<_> {
-            Ok(balance.unwrap_or_default() + tax)
-        })?;
+        let balance = may_load_map(deps.storage, PREFIX_BALANCE, &owner_raw)?.unwrap_or_default();
+        save_map(deps.storage, PREFIX_BALANCE, &owner_raw, balance + tax)?;
     }
 
     // re-calculate bonded to ensure we have real values
@@ -214,20 +216,18 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
 
     // calculate how many native tokens this is worth and update supply
     let remainder = amount.checked_sub(tax)?;
-    let mut totals = total_supply(deps.storage);
-    let mut supply = totals.load()?;
+    let mut supply: Supply = load_item(deps.storage, KEY_TOTAL_SUPPLY)?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let unbond = remainder.multiply_ratio(bonded, supply.issued);
     supply.bonded = bonded.checked_sub(unbond)?;
     supply.issued = supply.issued.checked_sub(remainder)?;
     supply.claims += unbond;
-    totals.save(&supply)?;
+    save_item(deps.storage, KEY_TOTAL_SUPPLY, &supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
-    claims(deps.storage).update(&sender_raw, |claim| -> StdResult<_> {
-        Ok(claim.unwrap_or_default() + unbond)
-    })?;
+    let claim = may_load_map(deps.storage, PREFIX_CLAIMS, &sender_raw)?.unwrap_or_default();
+    save_map(deps.storage, PREFIX_CLAIMS, &sender_raw, claim + unbond)?;
 
     // unbond them
     let res = Response::new()
@@ -244,7 +244,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
 
 pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     // find how many tokens the contract has
-    let invest = invest_info_read(deps.storage).load()?;
+    let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
     let mut balance = deps
         .querier
         .query_balance(env.contract.address, invest.bond_denom)?;
@@ -256,18 +256,20 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
 
     // check how much to send - min(balance, claims[sender]), and reduce the claim
     let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
-    let mut to_send = balance.amount;
-    claims(deps.storage).update(sender_raw.as_slice(), |claim| -> StdResult<_> {
-        let claim = claim.ok_or_else(|| StdError::generic_err("no claim for this address"))?;
-        to_send = to_send.min(claim);
-        Ok(claim.checked_sub(to_send)?)
-    })?;
+    let claim = may_load_map(deps.storage, PREFIX_CLAIMS, &sender_raw)?
+        .ok_or_else(|| StdError::generic_err("no claim for this address"))?;
+    let to_send = balance.amount.min(claim);
+    save_map(
+        deps.storage,
+        PREFIX_CLAIMS,
+        &sender_raw,
+        claim.checked_sub(to_send)?,
+    )?;
 
     // update total supply (lower claim)
-    total_supply(deps.storage).update(|mut supply| -> StdResult<_> {
-        supply.claims = supply.claims.checked_sub(to_send)?;
-        Ok(supply)
-    })?;
+    let mut supply: Supply = load_item(deps.storage, KEY_TOTAL_SUPPLY)?;
+    supply.claims = supply.claims.checked_sub(to_send)?;
+    save_item(deps.storage, KEY_TOTAL_SUPPLY, &supply)?;
 
     // transfer tokens to the sender
     balance.amount = to_send;
@@ -287,7 +289,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
 /// to reinvest the new earnings (and anything else that accumulated)
 pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Response> {
     let contract_addr = env.contract.address;
-    let invest = invest_info_read(deps.storage).load()?;
+    let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
     let msg = to_binary(&ExecuteMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
@@ -314,14 +316,14 @@ pub fn _bond_all_tokens(
     }
 
     // find how many tokens we have to bond
-    let invest = invest_info_read(deps.storage).load()?;
+    let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
     let mut balance = deps
         .querier
         .query_balance(env.contract.address, &invest.bond_denom)?;
 
     // we deduct pending claims from our account balance before reinvesting.
     // if there is not enough funds, we just return a no-op
-    match total_supply(deps.storage).update(|mut supply| {
+    match update_item(deps.storage, KEY_TOTAL_SUPPLY, |mut supply: Supply| {
         balance.amount = balance.amount.checked_sub(supply.claims)?;
         // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
         balance.amount.checked_sub(invest.min_withdrawal)?;
@@ -360,7 +362,7 @@ pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
         name,
         symbol,
         decimals,
-    } = token_info_read(deps.storage).load()?;
+    } = load_item(deps.storage, KEY_TOKEN_INFO)?;
 
     Ok(TokenInfoResponse {
         name,
@@ -371,23 +373,19 @@ pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
 
 pub fn query_balance(deps: Deps, address: &str) -> StdResult<BalanceResponse> {
     let address_raw = deps.api.addr_canonicalize(address)?;
-    let balance = balances_read(deps.storage)
-        .may_load(address_raw.as_slice())?
-        .unwrap_or_default();
+    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &address_raw)?.unwrap_or_default();
     Ok(BalanceResponse { balance })
 }
 
 pub fn query_claims(deps: Deps, address: &str) -> StdResult<ClaimsResponse> {
     let address_raw = deps.api.addr_canonicalize(address)?;
-    let claims = claims_read(deps.storage)
-        .may_load(address_raw.as_slice())?
-        .unwrap_or_default();
+    let claims = may_load_map(deps.storage, PREFIX_CLAIMS, &address_raw)?.unwrap_or_default();
     Ok(ClaimsResponse { claims })
 }
 
 pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
-    let invest = invest_info_read(deps.storage).load()?;
-    let supply = total_supply_read(deps.storage).load()?;
+    let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
+    let supply: Supply = load_item(deps.storage, KEY_TOTAL_SUPPLY)?;
 
     let res = InvestmentResponse {
         owner: invest.owner.into(),
