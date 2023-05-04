@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 
-use crate::{errors::CoinFromStrError, math::Uint128, StdError};
+use crate::{errors::CoinFromStrError, math::Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
