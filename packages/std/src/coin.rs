@@ -1,8 +1,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{fmt, str::FromStr};
 
-use crate::math::Uint128;
+use crate::{math::Uint128, StdError};
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
@@ -22,6 +22,25 @@ impl Coin {
 impl fmt::Debug for Coin {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Coin {{ {} \"{}\" }}", self.amount, self.denom)
+    }
+}
+
+impl FromStr for Coin {
+    type Err = StdError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let pos = s
+            .find(|c: char| !c.is_ascii_digit())
+            .ok_or_else(|| StdError::generic_err("Parsing Coin: missing denominator"))?;
+        let (amount, denom) = s.split_at(pos);
+
+        match amount.parse::<u128>() {
+            Ok(amount) => Ok(Coin {
+                amount: amount.into(),
+                denom: denom.to_string(),
+            }),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Coin: {}", e))),
+        }
     }
 }
 
@@ -177,5 +196,40 @@ mod tests {
     fn debug_coin() {
         let coin = Coin::new(123, "ucosm");
         assert_eq!(format!("{:?}", coin), r#"Coin { 123 "ucosm" }"#);
+    }
+
+    #[test]
+    fn parse_coin() {
+        let expected = Coin::new(123, "ucosm");
+        assert_eq!(expected, "123ucosm".parse().unwrap());
+        // leading zeroes should be ignored
+        assert_eq!(expected, "00123ucosm".parse().unwrap());
+        // 0 amount parses correctly
+        assert_eq!(Coin::new(0, "ucosm"), "0ucosm".parse().unwrap());
+        // ibc denom should work
+        let ibc_str = "11111ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2";
+        let ibc_coin = Coin::new(
+            11111,
+            "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+        );
+        assert_eq!(ibc_coin, ibc_str.parse().unwrap());
+
+        // error cases
+        assert_eq!(
+            StdError::generic_err("Parsing Coin: missing denominator"),
+            Coin::from_str("123").unwrap_err()
+        );
+        assert_eq!(
+            StdError::generic_err("Parsing Coin: cannot parse integer from empty string"),
+            Coin::from_str("ucosm").unwrap_err()
+        );
+        assert_eq!(
+            StdError::generic_err("Parsing Coin: cannot parse integer from empty string"),
+            Coin::from_str("-123ucosm").unwrap_err()
+        );
+        assert_eq!(
+            StdError::generic_err("Parsing Coin: number too large to fit in target type"),
+            Coin::from_str("340282366920938463463374607431768211456ucosm").unwrap_err()
+        );
     }
 }
