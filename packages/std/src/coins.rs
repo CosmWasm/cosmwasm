@@ -93,7 +93,6 @@ impl FromStr for Coins {
         };
 
         s.split(',')
-            .into_iter()
             .map(parse_coin_str)
             .collect::<StdResult<Vec<_>>>()?
             .try_into()
