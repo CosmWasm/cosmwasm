@@ -136,11 +136,19 @@ impl Coins {
         self.0.keys().cloned().collect()
     }
 
-    pub fn add(&mut self, coin: &Coin) -> StdResult<()> {
-        let amount = self
-            .0
-            .entry(coin.denom.clone())
-            .or_insert_with(Uint128::zero);
+    /// Returns the amount of the given denom or zero if the denom is not present.
+    pub fn amount_of(&self, denom: &str) -> Uint128 {
+        self.0.get(denom).copied().unwrap_or_else(Uint128::zero)
+    }
+
+    /// Adds the given coin to the collection.
+    /// This errors in case of overflow.
+    pub fn add(&mut self, coin: Coin) -> StdResult<()> {
+        if coin.amount.is_zero() {
+            return Ok(());
+        }
+
+        let amount = self.0.entry(coin.denom).or_insert_with(Uint128::zero);
         *amount = amount.checked_add(coin.amount)?;
         Ok(())
     }
@@ -169,7 +177,7 @@ mod tests {
     fn mock_coins() -> Coins {
         let mut coins = Coins::default();
         for coin in mock_vec() {
-            coins.add(&coin).unwrap();
+            coins.add(coin).unwrap();
         }
         coins
     }
@@ -231,6 +239,11 @@ mod tests {
 
         let err = Coins::try_from(vec).unwrap_err();
         assert!(err.to_string().contains("zero amount"));
+
+        // adding a coin with zero amount should not be added
+        let mut coins = Coins::default();
+        coins.add(coin(0, "uusd")).unwrap();
+        assert!(coins.is_empty());
     }
 
     #[test]
@@ -242,5 +255,17 @@ mod tests {
         let coins = mock_coins();
         assert_eq!(coins.len(), 3);
         assert!(!coins.is_empty());
+    }
+
+    #[test]
+    fn add_coin() {
+        let mut coins = mock_coins();
+        coins.add(coin(12345, "uatom")).unwrap();
+
+        assert_eq!(coins.len(), 3);
+        assert_eq!(coins.amount_of("uatom").u128(), 24690);
+
+        coins.add(coin(123, "uusd")).unwrap();
+        assert_eq!(coins.len(), 4);
     }
 }
