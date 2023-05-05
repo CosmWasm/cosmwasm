@@ -47,7 +47,7 @@ pub enum PacketMsg {
     WhoAmI {},
     Balances {},
     Panic {},
-    ReturnErr {text: String},
+    ReturnErr { text: String },
 }
 
 /// All acknowledgements are wrapped in `ContractResult`.

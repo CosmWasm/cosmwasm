@@ -245,7 +245,7 @@ pub fn ibc_packet_receive(
             PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
             PacketMsg::Balances {} => receive_balances(deps, caller),
             PacketMsg::Panic {} => execute_panic(),
-            PacketMsg::ReturnErr {text} => execute_error(text),
+            PacketMsg::ReturnErr { text } => execute_error(text),
         }
     })()
     .or_else(|e| {
@@ -317,7 +317,6 @@ fn execute_panic() -> StdResult<IbcReceiveResponse> {
 fn execute_error(text: String) -> StdResult<IbcReceiveResponse> {
     return Err(StdError::generic_err(text).into());
 }
-
 
 #[entry_point]
 /// never should be called as we do not send packets
