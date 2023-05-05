@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
+
+[#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
+
 ## [1.2.7] - 2023-06-19
 
 ### Added
