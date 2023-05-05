@@ -1,7 +1,7 @@
-use std::any::type_name;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
+use std::{any::type_name, collections::btree_map};
 
 use crate::{Coin, StdError, StdResult, Uint128};
 
@@ -49,6 +49,16 @@ impl TryFrom<&[Coin]> for Coins {
 
     fn try_from(slice: &[Coin]) -> StdResult<Self> {
         slice.to_vec().try_into()
+    }
+}
+
+impl TryFrom<Coin> for Coins {
+    type Error = StdError;
+
+    fn try_from(coin: Coin) -> StdResult<Self> {
+        let mut coins = Coins::default();
+        coins.add(coin)?;
+        Ok(coins)
     }
 }
 
@@ -130,7 +140,7 @@ impl Coins {
         self.0.is_empty()
     }
 
-    /// Return the denoms as a vector of strings.
+    /// Returns the denoms as a vector of strings.
     /// The vector is guaranteed to not contain duplicates and sorted alphabetically.
     pub fn denoms(&self) -> Vec<String> {
         self.0.keys().cloned().collect()
@@ -151,6 +161,51 @@ impl Coins {
         let amount = self.0.entry(coin.denom).or_insert_with(Uint128::zero);
         *amount = amount.checked_add(coin.amount)?;
         Ok(())
+    }
+
+    /// Adds the given coins to the collection.
+    /// This takes anything that yields `(denom, amount)` tuples when iterated over.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cosmwasm_std::{Coin, Coins, Uint128, coin};
+    ///
+    /// let mut coins = Coins::default();
+    /// let new_coins: Coins = coin(123u128, "ucosm").try_into()?;
+    /// coins.extend(new_coins.clone())?;
+    /// assert_eq!(coins, new_coins);
+    /// # cosmwasm_std::StdResult::Ok(())
+    /// ```
+    pub fn extend<C>(&mut self, others: C) -> StdResult<()>
+    where
+        C: IntoIterator<Item = (String, Uint128)>,
+    {
+        for (denom, amount) in others {
+            self.add(Coin { denom, amount })?;
+        }
+        Ok(())
+    }
+}
+
+impl IntoIterator for Coins {
+    type Item = (String, Uint128);
+    // TODO: do we want to wrap the iterator type with our own to avoid exposing BTreeMap?
+    // also: for the owned version we could return Coins instead of (String, Uint128),
+    // but not for the borrowed version, so it would feel inconsistent
+    type IntoIter = btree_map::IntoIter<String, Uint128>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Coins {
+    type Item = (&'a String, &'a Uint128);
+    type IntoIter = btree_map::Iter<'a, String, Uint128>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
     }
 }
 
@@ -267,5 +322,20 @@ mod tests {
 
         coins.add(coin(123, "uusd")).unwrap();
         assert_eq!(coins.len(), 4);
+    }
+
+    #[test]
+    fn extend_coins() {
+        let mut coins: Coins = coin(12345, "uatom").try_into().unwrap();
+
+        coins.extend(mock_coins()).unwrap();
+        assert_eq!(coins.len(), 3);
+        assert_eq!(coins.amount_of("uatom").u128(), 24690);
+
+        coins
+            .extend([("uusd".to_string(), Uint128::new(123u128))])
+            .unwrap();
+        assert_eq!(coins.len(), 4);
+        assert_eq!(coins.amount_of("uusd").u128(), 123)
     }
 }
