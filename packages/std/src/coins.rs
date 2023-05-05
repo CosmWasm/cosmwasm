@@ -80,6 +80,8 @@ impl FromStr for Coins {
     type Err = StdError;
 
     fn from_str(s: &str) -> StdResult<Self> {
+        // TODO: use FromStr impl for Coin once it's merged
+
         // Parse a string into a `Coin`.
         //
         // Parsing the string with regex doesn't work, because the resulting
@@ -170,6 +172,33 @@ impl Coins {
         self.0.get(denom).copied().unwrap_or_else(Uint128::zero)
     }
 
+    /// Returns the amount of the given denom if and only if this collection contains only
+    /// the given denom. Otherwise `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use cosmwasm_std::{Coin, Coins, coin};
+    ///
+    /// let coins: Coins = coin(100, "uatom").try_into().unwrap();
+    /// assert_eq!(coins.contains_only("uatom").unwrap().u128(), 100);
+    /// assert_eq!(coins.contains_only("uluna"), None);
+    /// ```
+    ///
+    /// ```rust
+    /// use cosmwasm_std::{Coin, Coins, coin};
+    ///
+    /// let coins: Coins = [coin(100, "uatom"), coin(200, "uusd")].try_into().unwrap();
+    /// assert_eq!(coins.contains_only("uatom"), None);
+    /// ```
+    pub fn contains_only(&self, denom: &str) -> Option<Uint128> {
+        if self.len() == 1 {
+            self.0.get(denom).copied()
+        } else {
+            None
+        }
+    }
+
     /// Adds the given coin to the collection.
     /// This errors in case of overflow.
     pub fn add(&mut self, coin: Coin) -> StdResult<()> {
@@ -188,7 +217,7 @@ impl Coins {
     /// # Examples
     ///
     /// ```rust
-    /// use cosmwasm_std::{Coin, Coins, Uint128, coin};
+    /// use cosmwasm_std::{Coin, Coins, coin};
     ///
     /// let mut coins = Coins::default();
     /// let new_coins: Coins = coin(123u128, "ucosm").try_into()?;
@@ -356,5 +385,13 @@ mod tests {
             .unwrap();
         assert_eq!(coins.len(), 4);
         assert_eq!(coins.amount_of("uusd").u128(), 123)
+    }
+
+    #[test]
+    fn equality() {
+        let coin = coin(54321, "uatom");
+        let coins = Coins::try_from(coin.clone()).unwrap();
+
+        assert_eq!(coins, coin);
     }
 }
