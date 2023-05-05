@@ -381,7 +381,7 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
     // calculate filename
     let checksum = Checksum::generate(wasm);
     let filename = checksum.to_hex();
-    let filepath = dir.into().join(filename);
+    let filepath = dir.into().join(filename).with_extension("wasm");
 
     // write data to file
     // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
@@ -399,9 +399,12 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
 
 fn load_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult<Vec<u8>> {
     // this requires the directory and file to exist
+    // The files previously had no extension, so to allow for a smooth transition,
+    // we also try to load the file without the wasm extension.
     let path = dir.into().join(checksum.to_hex());
-    let mut file =
-        File::open(path).map_err(|_e| VmError::cache_err("Error opening Wasm file for reading"))?;
+    let mut file = File::open(path.with_extension("wasm"))
+        .or_else(|_| File::open(path))
+        .map_err(|_e| VmError::cache_err("Error opening Wasm file for reading"))?;
 
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)
@@ -415,13 +418,25 @@ fn load_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult
 /// code is required. So a non-existent file leads to an error as it
 /// indicates a bug.
 fn remove_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResult<()> {
+    // the files previously had no extension, so to allow for a smooth transition, we delete both
     let path = dir.into().join(checksum.to_hex());
+    let wasm_path = path.with_extension("wasm");
 
-    if !path.exists() {
+    let path_exists = path.exists();
+    let wasm_path_exists = wasm_path.exists();
+    if !path_exists && !wasm_path_exists {
         return Err(VmError::cache_err("Wasm file does not exist"));
     }
 
-    fs::remove_file(path).map_err(|_e| VmError::cache_err("Error removing Wasm file from disk"))?;
+    if path_exists {
+        fs::remove_file(path)
+            .map_err(|_e| VmError::cache_err("Error removing Wasm file from disk"))?;
+    }
+
+    if wasm_path_exists {
+        fs::remove_file(wasm_path)
+            .map_err(|_e| VmError::cache_err("Error removing Wasm file from disk"))?;
+    }
 
     Ok(())
 }
@@ -637,7 +652,8 @@ mod tests {
             .path()
             .join(STATE_DIR)
             .join(WASM_DIR)
-            .join(checksum.to_hex());
+            .join(checksum.to_hex())
+            .with_extension("wasm");
         let mut file = OpenOptions::new().write(true).open(filepath).unwrap();
         file.write_all(b"broken data").unwrap();
 
@@ -1199,5 +1215,32 @@ mod tests {
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
         cache.unpin(&non_id).unwrap();
+    }
+
+    #[test]
+    fn loading_without_extension_works() {
+        let tmp_dir = TempDir::new().unwrap();
+        let options = CacheOptions {
+            base_dir: tmp_dir.path().to_path_buf(),
+            available_capabilities: default_capabilities(),
+            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit: TESTING_MEMORY_LIMIT,
+        };
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        // Move the saved wasm to the old path (without extension)
+        let old_path = tmp_dir
+            .path()
+            .join(STATE_DIR)
+            .join(WASM_DIR)
+            .join(checksum.to_hex());
+        let new_path = old_path.with_extension("wasm");
+        fs::rename(new_path, old_path).unwrap();
+
+        // loading wasm from before the wasm extension was added should still work
+        let restored = cache.load_wasm(&checksum).unwrap();
+        assert_eq!(restored, CONTRACT);
     }
 }
