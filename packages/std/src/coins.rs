@@ -52,6 +52,14 @@ impl TryFrom<&[Coin]> for Coins {
     }
 }
 
+impl<const N: usize> TryFrom<[Coin; N]> for Coins {
+    type Error = StdError;
+
+    fn try_from(slice: [Coin; N]) -> StdResult<Self> {
+        slice.to_vec().try_into()
+    }
+}
+
 impl TryFrom<Coin> for Coins {
     type Error = StdError;
 
@@ -59,6 +67,12 @@ impl TryFrom<Coin> for Coins {
         let mut coins = Coins::default();
         coins.add(coin)?;
         Ok(coins)
+    }
+}
+
+impl From<Coins> for Vec<Coin> {
+    fn from(value: Coins) -> Self {
+        value.into_vec()
     }
 }
 
@@ -108,6 +122,12 @@ impl fmt::Display for Coins {
             .collect::<Vec<_>>()
             .join(",");
         write!(f, "{s}")
+    }
+}
+
+impl PartialEq<Coin> for Coins {
+    fn eq(&self, other: &Coin) -> bool {
+        self.0.len() == 1 && self.amount_of(&other.denom) == other.amount
     }
 }
 
