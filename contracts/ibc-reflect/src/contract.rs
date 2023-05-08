@@ -246,6 +246,8 @@ pub fn ibc_packet_receive(
             PacketMsg::Balances {} => receive_balances(deps, caller),
             PacketMsg::Panic {} => execute_panic(),
             PacketMsg::ReturnErr { text } => execute_error(text),
+            PacketMsg::ReturnMsgs { msgs } => execute_return_msgs(msgs),
+
         }
     })()
     .or_else(|e| {
@@ -317,6 +319,18 @@ fn execute_panic() -> StdResult<IbcReceiveResponse> {
 fn execute_error(text: String) -> StdResult<IbcReceiveResponse> {
     return Err(StdError::generic_err(text).into());
 }
+
+fn execute_return_msgs(
+    msgs: Vec<CosmosMsg>,
+) -> StdResult<IbcReceiveResponse> {
+    let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
+
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_messages(msgs)
+        .add_attribute("action", "receive_dispatch"))
+}
+
 
 #[entry_point]
 /// never should be called as we do not send packets
