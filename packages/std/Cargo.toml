@@ -1,6 +1,6 @@
 [package]
 name = "secret-cosmwasm-std"
-version = "1.1.9"
+version = "1.1.10"
 authors = [
     "Ethan Frey <ethanfrey@users.noreply.github.com>",
     "SCRT Labs <info@scrtlabs.com>",
@@ -45,7 +45,7 @@ random = []
 
 [dependencies]
 base64 = "0.13.0"
-cosmwasm-derive = { path = "../derive", version = "1.1.9" }
+cosmwasm-derive = { path = "../derive", version = "1.1.10" }
 
 serde-json-wasm = { version = "0.4.1" }
 schemars = "0.8.3"
@@ -60,7 +60,7 @@ hex = "0.4"
 uint = "0.9.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-secret-cosmwasm-crypto = { path = "../crypto", version = "1.1.9" }
+secret-cosmwasm-crypto = { path = "../crypto", version = "1.1.10" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
