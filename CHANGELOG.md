@@ -6,6 +6,24 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.10] - 2023-05-08
+
+### Fixed
+
+- Querier error parsing ([#8]).
+- Fix the `backtraces` feature ([#12]).
+
+### Changed
+
+- Change crates names back to support `crates.io`, while creating a compatability crates to support native libraries ([#17], [#20]).
+
+### Added
+
+- Decimal/Uint 256/512 implementations.
+- Support for `gas_evaporate()` ([#13], [#14]).
+- Support for `FinalizeTx` ([#15], ([#18])).
+- Support for SecretVRF ([#16]).
+
 ## [1.1.9] - 2022-12-06
 
 ### Fixed
@@ -15,9 +33,7 @@ and this project adheres to
 
 [#1527]: https://github.com/CosmWasm/cosmwasm/issues/1527
 
-## [1.1.8] - 2022-11-22
-
-### Fixed
+## [1.1.8] - 2022-11-22f
 
 - cosmwasm-schema: Fix type params on `QueryMsg` causing a compiler error when
   used with the `QueryResponses` derive macro.
@@ -111,6 +127,7 @@ and this project adheres to
 - cosmwasm-schema: Using `QueryResponses` with a `QueryMsg` containing a
   unit-like variant will no longer crash. The different variant types in Rust
   are:
+
   ```rust
   enum QueryMsg {
       UnitLike,
@@ -118,6 +135,7 @@ and this project adheres to
       Struct {},
   }
   ```
+
   It's still recommended to only use struct variants, even if there are no
   fields.
 
@@ -155,7 +173,7 @@ and this project adheres to
   convenience helper for querying `WasmQuery::ContractInfo`.
 - cosmwasm-check: This is a new binary package that allows running various
   CosmWasm compatibility checks on compiled .wasm files. See
-  https://crates.io/crates/cosmwasm-check for usage info.
+  <https://crates.io/crates/cosmwasm-check> for usage info.
 
 [#1334]: https://github.com/CosmWasm/cosmwasm/pull/1334
 [#1356]: https://github.com/CosmWasm/cosmwasm/pull/1356
@@ -803,7 +821,7 @@ and this project adheres to
 - cosmwasm-std: The arithmetic methods of `Uint128` got a huge overhaul, making
   them more consistent with the behaviour of the Rust primitive types. Thank you
   [@yihuang] for bringing this up and for the great implementation. ([#853])
-  1.  `Uint128` got the new functions `checked_add`, `checked_sub`,
+  1. `Uint128` got the new functions `checked_add`, `checked_sub`,
       `checked_mul`, `checked_div`, `checked_div_euclid`, `checked_rem`,
       `wrapping_add`, `wrapping_sub`, `wrapping_mul`, `wrapping_pow`,
       `saturating_add`, `saturating_sub`, `saturating_mul` and `saturating_pow`
@@ -811,9 +829,9 @@ and this project adheres to
       checked methods return a `Result` with an `OverflowError` or
       `DivideByZeroError` that carries a few debug information and can directly
       be converted to `StdError`/`StdResult` by using the `?` operator.
-  2.  `StdError::Underflow` and `StdError::underflow` were removed in favour of
+  2. `StdError::Underflow` and `StdError::underflow` were removed in favour of
       `StdError::Overflow`. `StdError::DivideByZeroError` was added.
-  3.  The `-` operator (`impl ops::Sub<Uint128> for Uint128`) was removed
+  3. The `-` operator (`impl ops::Sub<Uint128> for Uint128`) was removed
       because it returned a `StdResult` instead of panicking in the case of an
       overflow. This behaviour was inconsistent with `+` and the Rust standard
       library. Please use the explicit `*_sub` methods introduced above. In a
@@ -856,7 +874,6 @@ and this project adheres to
 [#853]: https://github.com/CosmWasm/cosmwasm/pull/853
 [#858]: https://github.com/CosmWasm/cosmwasm/issues/858
 [u128]: https://doc.rust-lang.org/std/primitive.u128.html
-[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 [#871]: https://github.com/CosmWasm/cosmwasm/issues/871
 [#861]: https://github.com/CosmWasm/cosmwasm/issues/861
 [#848]: https://github.com/CosmWasm/cosmwasm/issues/848
@@ -872,8 +889,6 @@ and this project adheres to
   does not provide significant safety advantages. With CosmWasm 0.14, we now use
   `String` when there was `HumanAddr` before. There is also the new `Addr`,
   which holds a validated immutable human readable address. ([#802])
-
-[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ## [0.13.2] - 2021-01-14
 
@@ -1173,7 +1188,7 @@ and this project adheres to
 ## 0.9.0 (2020-06-25)
 
 Note: this version contains an API bug and should not be used (see
-https://github.com/CosmWasm/cosmwasm/issues/451).
+<https://github.com/CosmWasm/cosmwasm/issues/451>).
 
 **all**
 
@@ -1194,9 +1209,11 @@ https://github.com/CosmWasm/cosmwasm/issues/451).
   `StdResult<Vec<u8>>`.
 - Added contract migration mechanism. Contracts can now optionally export a
   `migrate` function with the following definition:
+
   ```rust
   extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
   ```
+
 - InitResponse no longer has a data field. We always return the contract address
   in the data field in the blockchain and don't allow you to override. `handle`
   can still make use of the field.
@@ -1539,7 +1556,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.10...HEAD
+[1.1.10]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.9...v1.1.10
 [1.1.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.8...v1.1.9
 [1.1.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.6...v1.1.8
 [1.1.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.1.5...v1.1.6

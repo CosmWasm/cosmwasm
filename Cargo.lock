@@ -131,14 +131,14 @@ checksum = "cec318a675afcb6a1ea1d4340e2d377e56e47c266f28043ceccbf4412ddfdd3b"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "secret-cosmwasm-crypto",
 ]
 
 [[package]]
 name = "cosmwasm-derive"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "cosmwasm-std",
  "syn",
@@ -146,7 +146,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
@@ -160,7 +160,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -169,14 +169,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "secret-cosmwasm-std",
 ]
 
 [[package]]
 name = "cosmwasm-storage"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "secret-cosmwasm-storage",
 ]
@@ -874,7 +874,7 @@ dependencies = [
 
 [[package]]
 name = "secret-cosmwasm-crypto"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "base64",
  "criterion",
@@ -893,7 +893,7 @@ dependencies = [
 
 [[package]]
 name = "secret-cosmwasm-std"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "base64",
  "chrono",
@@ -913,7 +913,7 @@ dependencies = [
 
 [[package]]
 name = "secret-cosmwasm-storage"
-version = "1.1.9"
+version = "1.1.10"
 dependencies = [
  "secret-cosmwasm-std",
  "serde",

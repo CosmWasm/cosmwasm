@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-std"
-version = "1.1.9"
+version = "1.1.10"
 edition = "2021"
 description = "Compatability layer for contracts that want to use the git versions of the std fork with a patch"
 
