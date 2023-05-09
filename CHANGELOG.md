@@ -15,7 +15,7 @@ and this project adheres to
 
 ### Changed
 
-- package name stuff ([#17], [#20]).
+- Change crates names back to support `crates.io`, while creating a compatability crates to support native libraries ([#17], [#20]).
 
 ### Added
 
