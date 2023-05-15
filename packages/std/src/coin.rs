@@ -34,6 +34,10 @@ impl FromStr for Coin {
             .ok_or(CoinFromStrError::MissingDenom)?;
         let (amount, denom) = s.split_at(pos);
 
+        if amount.is_empty() {
+            return Err(CoinFromStrError::MissingAmount);
+        }
+
         Ok(Coin {
             amount: amount.parse::<u128>()?.into(),
             denom: denom.to_string(),
@@ -217,12 +221,24 @@ mod tests {
             CoinFromStrError::MissingDenom
         );
         assert_eq!(
-            Coin::from_str("ucosm").unwrap_err().to_string(),
-            "Invalid amount: cannot parse integer from empty string"
+            Coin::from_str("ucosm").unwrap_err(), // no amount
+            CoinFromStrError::MissingAmount
         );
         assert_eq!(
-            Coin::from_str("-123ucosm").unwrap_err().to_string(),
-            "Invalid amount: cannot parse integer from empty string"
+            Coin::from_str("-123ucosm").unwrap_err(), // negative amount
+            CoinFromStrError::MissingAmount
+        );
+        assert_eq!(
+            Coin::from_str("").unwrap_err(), // empty input
+            CoinFromStrError::MissingDenom
+        );
+        assert_eq!(
+            Coin::from_str(" 1ucosm").unwrap_err(), // unsupported whitespace
+            CoinFromStrError::MissingAmount
+        );
+        assert_eq!(
+            Coin::from_str("�1ucosm").unwrap_err(), // other broken data
+            CoinFromStrError::MissingAmount
         );
         assert_eq!(
             Coin::from_str("340282366920938463463374607431768211456ucosm")

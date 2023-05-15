@@ -594,6 +594,8 @@ pub struct RoundUpOverflowError;
 pub enum CoinFromStrError {
     #[error("Missing denominator")]
     MissingDenom,
+    #[error("Missing amount or non-digit characters in amount")]
+    MissingAmount,
     #[error("Invalid amount: {0}")]
     InvalidAmount(std::num::ParseIntError),
 }
