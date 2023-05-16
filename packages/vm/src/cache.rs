@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use wasmer::Engine;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -15,7 +16,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{compile, make_runtime_store};
+use crate::wasm_backend::{compile, make_engine, make_store_with_engine};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -180,7 +181,7 @@ where
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let (_store, module) = compile(wasm, None, &[])?;
+        let (_engine, module) = compile(wasm, &[])?;
 
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
@@ -257,22 +258,22 @@ where
         // for a no-so-relevant use case.
 
         // Try to get module from file system cache
-        let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
+        let engine = Engine::headless();
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             return cache
                 .pinned_memory_cache
-                .store(checksum, (store, module), module_size);
+                .store(checksum, (engine, module), module_size);
         }
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
-        let (store, module) = compile(&code, Some(cache.instance_memory_limit), &[])?;
+        let (engine, module) = compile(&code, &[])?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
             .pinned_memory_cache
-            .store(checksum, (store, module), module_size)
+            .store(checksum, (engine, module), module_size)
     }
 
     /// Unpins a Module, i.e. removes it from the pinned memory cache.
@@ -296,11 +297,13 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let (cached, from_pinned) = self.get_module(checksum)?;
+        let (cached, _from_pinned) = self.get_module(checksum)?;
+        // FIXME: memory limit
+        // let store = make_store_with_engine(Some(memory_limit));
+        let store = make_store_with_engine(cached.engine, None);
         let instance = Instance::from_module(
-            cached.store,
+            store,
             &cached.module,
-            from_pinned,
             backend,
             options.gas_limit,
             options.print_debug,
@@ -308,25 +311,6 @@ where
             Some(&self.instantiation_lock),
         )?;
         Ok(instance)
-    }
-
-    pub fn return_instance(
-        &self,
-        checksum: &Checksum,
-        element: CachedModule,
-        pinned: bool,
-    ) -> VmResult<()> {
-        let mut cache = self.inner.lock().unwrap();
-
-        if pinned {
-            cache
-                .pinned_memory_cache
-                .store(checksum, (element.store, element.module), element.size)
-        } else {
-            cache
-                .memory_cache
-                .store(checksum, (element.store, element.module), element.size)
-        }
     }
 
     /// Returns a module tied to a previously saved Wasm.
@@ -348,17 +332,16 @@ where
         }
 
         // Get module from file system cache
-        let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
+        // let store = make_runtime_store(Some(cache.instance_memory_limit));
+        let engine = make_engine(&[]);
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
-            // Can't clone store
-            let store2 = make_runtime_store(Some(cache.instance_memory_limit));
             cache
                 .memory_cache
-                .store(checksum, (store2, module.clone()), module_size)?;
+                .store(checksum, (engine.clone(), module.clone()), module_size)?;
             let cached = CachedModule {
-                store,
+                engine,
                 module,
                 size: module_size,
             };
@@ -372,16 +355,14 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let (store, module) = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
+        let (engine, module) = compile(&wasm, &[])?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
-        // Can't clone store
-        let store2 = make_runtime_store(Some(cache.instance_memory_limit));
         cache
             .memory_cache
-            .store(checksum, (store2, module.clone()), module_size)?;
+            .store(checksum, (engine.clone(), module.clone()), module_size)?;
         let cached = CachedModule {
-            store,
+            engine,
             module,
             size: module_size,
         };
@@ -736,7 +717,7 @@ mod tests {
         let backend5 = mock_backend(&[]);
 
         // from file system
-        let instance1: Instance<MockApi, MockStorage, MockQuerier> = cache
+        let _instance1: Instance<MockApi, MockStorage, MockQuerier> = cache
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
@@ -744,11 +725,8 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
-        let (cached, pinned, ..) = instance1.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
-
         // from memory
-        let instance2 = cache
+        let _instance2 = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
@@ -756,11 +734,8 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
-        let (cached, pinned, ..) = instance2.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
-
         // from memory again
-        let instance3 = cache
+        let _instance3 = cache
             .get_instance(&checksum, backend3, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
@@ -775,20 +750,14 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
-        let (cached, pinned, ..) = instance3.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
-
         // from pinned memory cache
-        let instance4 = cache
+        let _instance4 = cache
             .get_instance(&checksum, backend4, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 2);
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
-
-        let (cached, pinned, ..) = instance4.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
 
         // from pinned memory cache again
         let _instance5 = cache
@@ -822,9 +791,6 @@ mod tests {
                 call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
-
-            let (cached, pinned, ..) = instance.recycle();
-            cache.return_instance(&checksum, cached, pinned).unwrap();
         }
 
         // from memory
@@ -844,9 +810,6 @@ mod tests {
                 call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
-
-            let (cached, pinned, ..) = instance.recycle();
-            cache.return_instance(&checksum, cached, pinned).unwrap();
         }
 
         // from pinned memory
@@ -868,9 +831,6 @@ mod tests {
                 call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
-
-            let (cached, pinned, ..) = instance.recycle();
-            cache.return_instance(&checksum, cached, pinned).unwrap();
         }
     }
 
@@ -905,9 +865,6 @@ mod tests {
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
-
-            let (cached, pinned, ..) = instance.recycle();
-            cache.return_instance(&checksum, cached, pinned).unwrap();
         }
 
         // from memory
@@ -936,9 +893,6 @@ mod tests {
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
-
-            let (cached, pinned, ..) = instance.recycle();
-            cache.return_instance(&checksum, cached, pinned).unwrap();
         }
 
         // from pinned memory
@@ -969,9 +923,6 @@ mod tests {
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
-
-            let (cached, pinned, ..) = instance.recycle();
-            cache.return_instance(&checksum, cached, pinned).unwrap();
         }
     }
 
@@ -983,6 +934,8 @@ mod tests {
         // these differentiate the two instances of the same contract
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
+        let backend3 = mock_backend(&[]);
+        let backend4 = mock_backend(&[]);
 
         // init instance 1
         let mut instance = cache
@@ -994,8 +947,6 @@ mod tests {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let (_cached, _pinned, backend1) = instance.recycle();
-        let backend1 = backend1.unwrap();
 
         // init instance 2
         let mut instance = cache
@@ -1007,12 +958,10 @@ mod tests {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let (_cached, _pinned, backend2) = instance.recycle();
-        let backend2 = backend2.unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache
-            .get_instance(&checksum, backend2, TESTING_OPTIONS)
+            .get_instance(&checksum, backend3, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
@@ -1022,7 +971,7 @@ mod tests {
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache
-            .get_instance(&checksum, backend1, TESTING_OPTIONS)
+            .get_instance(&checksum, backend4, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
@@ -1056,9 +1005,6 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
-
-        let (cached, pinned, ..) = instance1.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
 
         // Init from memory cache
         let mut instance2 = cache
@@ -1098,9 +1044,6 @@ mod tests {
             e => panic!("unexpected error, {:?}", e),
         }
         assert_eq!(instance1.get_gas_left(), 0);
-
-        let (cached, pinned, ..) = instance1.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
 
         // Init from memory cache
         let options = InstanceOptions {
@@ -1217,7 +1160,7 @@ mod tests {
 
         // check not pinned
         let backend = mock_backend(&[]);
-        let instance = cache
+        let _instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
@@ -1239,12 +1182,9 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
-        let (cached, pinned, ..) = instance.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
-
         // check pinned
         let backend = mock_backend(&[]);
-        let instance = cache
+        let _instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
@@ -1252,15 +1192,12 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
-        let (cached, pinned, ..) = instance.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
-
         // unpin
         cache.unpin(&checksum).unwrap();
 
         // verify unpinned
         let backend = mock_backend(&[]);
-        let instance = cache
+        let _instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
@@ -1274,8 +1211,5 @@ mod tests {
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
         cache.unpin(&non_id).unwrap();
-
-        let (cached, pinned, ..) = instance.recycle();
-        cache.return_instance(&checksum, cached, pinned).unwrap();
     }
 }

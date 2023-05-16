@@ -20,9 +20,8 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
-use crate::modules::CachedModule;
 use crate::size::Size;
-use crate::wasm_backend::compile;
+use crate::wasm_backend::{compile, make_store_with_engine};
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -55,7 +54,6 @@ pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     _inner: Box<WasmerInstance>,
     fe: FunctionEnv<Environment<A, S, Q>>,
     store: Store,
-    from_pinned_cache: bool,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -72,11 +70,11 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let (store, module) = compile(code, memory_limit, &[])?;
+        let (engine, module) = compile(code, &[])?;
+        let store = make_store_with_engine(engine, memory_limit);
         Instance::from_module(
             store,
             &module,
-            false,
             backend,
             options.gas_limit,
             options.print_debug,
@@ -89,7 +87,6 @@ where
     pub(crate) fn from_module(
         mut store: Store,
         module: &Module,
-        from_pinned_cache: bool,
         backend: Backend<A, S, Q>,
         gas_limit: u64,
         print_debug: bool,
@@ -278,46 +275,11 @@ where
             _inner: wasmer_instance,
             fe,
             store,
-            from_pinned_cache,
         })
     }
 
     pub fn api(&self) -> &A {
         &self.fe.as_ref(&self.store).api
-    }
-
-    /// Decomposes this instance into its components.
-    /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(self) -> (CachedModule, bool, Option<Backend<A, S, Q>>) {
-        let Instance {
-            _inner,
-            fe,
-            store,
-            from_pinned_cache,
-            ..
-        } = self;
-
-        let env = fe.as_ref(&store);
-        let backend = if let (Some(storage), Some(querier)) = env.move_out() {
-            let api = env.api;
-            Some(Backend {
-                api,
-                storage,
-                querier,
-            })
-        } else {
-            None
-        };
-
-        (
-            CachedModule {
-                store,
-                module: _inner.module().clone(),
-                size: 234,
-            },
-            from_pinned_cache,
-            backend,
-        )
     }
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)
@@ -473,7 +435,6 @@ where
 pub fn instance_from_module<A, S, Q>(
     store: Store,
     module: &Module,
-    from_pinned_cache: bool,
     backend: Backend<A, S, Q>,
     gas_limit: u64,
     print_debug: bool,
@@ -487,7 +448,6 @@ where
     Instance::from_module(
         store,
         module,
-        from_pinned_cache,
         backend,
         gas_limit,
         print_debug,
@@ -619,7 +579,8 @@ mod tests {
 
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
-        let (mut store, module) = compile(&wasm, memory_limit, &[]).unwrap();
+        let (engine, module) = compile(&wasm, &[]).unwrap();
+        let mut store = make_store_with_engine(engine, memory_limit);
 
         #[derive(Clone)]
         struct MyEnv {
@@ -645,7 +606,6 @@ mod tests {
         let mut instance = Instance::from_module(
             store,
             &module,
-            false,
             backend,
             instance_options.gas_limit,
             false,

@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use wasmer::{DeserializeError, Module, Store, Target};
+use wasmer::{AsEngineRef, DeserializeError, Module, Target};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
@@ -100,11 +100,15 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
+    pub fn load(
+        &self,
+        checksum: &Checksum,
+        engine: &impl AsEngineRef,
+    ) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.modules_path.join(filename);
 
-        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
+        let result = unsafe { Module::deserialize_from_file(engine, &file_path) };
         match result {
             Ok(module) => {
                 let module_size = module_size(&file_path)?;
@@ -224,7 +228,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
@@ -256,7 +260,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
@@ -279,7 +283,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there

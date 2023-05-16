@@ -7,3 +7,4 @@ pub use compile::compile;
 pub use limiting_tunables::LimitingTunables;
 pub use store::make_engine;
 pub use store::make_runtime_store;
+pub use store::make_store_with_engine;

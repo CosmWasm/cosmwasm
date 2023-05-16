@@ -382,14 +382,6 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             context_data.querier = Some(querier);
         });
     }
-
-    /// Returns the original storage and querier as owned instances, and closes any remaining
-    /// iterators. This is meant to be called when recycling the instance.
-    pub fn move_out(&self) -> (Option<S>, Option<Q>) {
-        self.with_context_data_mut(|context_data| {
-            (context_data.storage.take(), context_data.querier.take())
-        })
-    }
 }
 
 pub struct ContextData<S, Q> {
@@ -451,7 +443,7 @@ mod tests {
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::compile;
+    use crate::wasm_backend::{compile, make_store_with_engine};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
@@ -480,7 +472,8 @@ mod tests {
     ) {
         let env = Environment::new(MockApi::default(), gas_limit);
 
-        let (mut store, module) = compile(CONTRACT, TESTING_MEMORY_LIMIT, &[]).unwrap();
+        let (engine, module) = compile(CONTRACT, &[]).unwrap();
+        let mut store = make_store_with_engine(engine, TESTING_MEMORY_LIMIT);
 
         // we need stubs for all required imports
         let import_obj = imports! {
@@ -521,31 +514,6 @@ mod tests {
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(INIT_ADDR, &coins(INIT_AMOUNT, INIT_DENOM))]);
         env.move_in(storage, querier);
-    }
-
-    #[test]
-    fn move_out_works() {
-        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
-
-        // empty data on start
-        let (inits, initq) = env.move_out();
-        assert!(inits.is_none());
-        assert!(initq.is_none());
-
-        // store it on the instance
-        leave_default_data(&env);
-        let (s, q) = env.move_out();
-        assert!(s.is_some());
-        assert!(q.is_some());
-        assert_eq!(
-            s.unwrap().get(INIT_KEY).0.unwrap(),
-            Some(INIT_VALUE.to_vec())
-        );
-
-        // now is empty again
-        let (ends, endq) = env.move_out();
-        assert!(ends.is_none());
-        assert!(endq.is_none());
     }
 
     #[test]
