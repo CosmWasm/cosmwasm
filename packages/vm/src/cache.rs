@@ -352,10 +352,11 @@ where
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
-            // Can't clone store :(
-            // cache
-            //     .memory_cache
-            //     .store(checksum, (store, module.clone()), module_size)?;
+            // Can't clone store
+            let store2 = make_runtime_store(Some(cache.instance_memory_limit));
+            cache
+                .memory_cache
+                .store(checksum, (store2, module.clone()), module_size)?;
             let cached = CachedModule {
                 store,
                 module,
@@ -374,10 +375,11 @@ where
         let (store, module) = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
-        // Can't clone store :(
-        // cache
-        //     .memory_cache
-        //     .store(checksum, (store, module.clone()), module_size)?;
+        // Can't clone store
+        let store2 = make_runtime_store(Some(cache.instance_memory_limit));
+        cache
+            .memory_cache
+            .store(checksum, (store2, module.clone()), module_size)?;
         let cached = CachedModule {
             store,
             module,
