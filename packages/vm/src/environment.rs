@@ -525,6 +525,31 @@ mod tests {
     }
 
     #[test]
+    fn move_out_works() {
+        let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
+
+        // empty data on start
+        let (inits, initq) = env.move_out();
+        assert!(inits.is_none());
+        assert!(initq.is_none());
+
+        // store it on the instance
+        leave_default_data(&env);
+        let (s, q) = env.move_out();
+        assert!(s.is_some());
+        assert!(q.is_some());
+        assert_eq!(
+            s.unwrap().get(INIT_KEY).0.unwrap(),
+            Some(INIT_VALUE.to_vec())
+        );
+
+        // now is empty again
+        let (ends, endq) = env.move_out();
+        assert!(ends.is_none());
+        assert!(endq.is_none());
+    }
+
+    #[test]
     fn process_gas_info_works_for_cost() {
         let (env, mut store, _instance) = make_instance(100);
         assert_eq!(env.get_gas_left(&mut store), 100);
