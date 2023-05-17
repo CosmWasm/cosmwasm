@@ -45,7 +45,10 @@ impl PinnedMemoryCache {
 
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<CachedModule>> {
-        Ok(self.modules.remove(checksum))
+        match self.modules.get(checksum) {
+            Some(cached) => Ok(Some(cached.clone())),
+            None => Ok(None),
+        }
     }
 
     /// Returns true if and only if this cache has an entry identified by the given checksum
