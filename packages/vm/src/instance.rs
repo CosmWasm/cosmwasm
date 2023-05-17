@@ -23,7 +23,7 @@ use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::{compile, make_store_with_engine};
 
-pub use crate::environment::DebugInfo;
+pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
