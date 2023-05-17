@@ -4,8 +4,7 @@ use std::rc::Rc;
 use std::sync::Mutex;
 
 use wasmer::{
-    AsEngineRef, Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module,
-    Store, Value,
+    Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
 };
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
@@ -25,7 +24,6 @@ use crate::size::Size;
 use crate::wasm_backend::{compile, make_store_with_engine};
 
 pub use crate::environment::DebugInfo;
-use crate::modules::CachedModule; // Re-exported as public via to be usable for set_debug_handler
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -286,13 +284,13 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(self) -> (CachedModule, Option<Backend<A, S, Q>>) {
+    pub fn recycle(self) -> Option<Backend<A, S, Q>> {
         let Instance {
             _inner, fe, store, ..
         } = self;
 
         let env = fe.as_ref(&store);
-        let backend = if let (Some(storage), Some(querier)) = env.move_out() {
+        if let (Some(storage), Some(querier)) = env.move_out() {
             let api = env.api;
             Some(Backend {
                 api,
@@ -301,17 +299,7 @@ where
             })
         } else {
             None
-        };
-
-        (
-            CachedModule {
-                engine: store.as_engine_ref().engine().clone(),
-                module: _inner.module().clone(),
-                store_memory_limit: None, // FIXME: Restore memory limit!
-                size: 234,
-            },
-            backend,
-        )
+        }
     }
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)

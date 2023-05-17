@@ -958,8 +958,7 @@ mod tests {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let (_cached, backend1) = instance.recycle();
-        let backend1 = backend1.unwrap();
+        let backend1 = instance.recycle().unwrap();
 
         // init instance 2
         let mut instance = cache
@@ -971,8 +970,7 @@ mod tests {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let (_cached, backend2) = instance.recycle();
-        let backend2 = backend2.unwrap();
+        let backend2 = instance.recycle().unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache
