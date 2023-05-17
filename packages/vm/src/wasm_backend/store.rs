@@ -52,7 +52,6 @@ pub fn make_compile_time_store(
         make_store_with_engine(compiler.into(), memory_limit)
     }
 
-    // TODO
     #[cfg(not(feature = "cranelift"))]
     {
         let mut compiler = Singlepass::default();

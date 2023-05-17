@@ -76,7 +76,7 @@ impl InMemoryCache {
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<CachedModule>> {
         if let Some(modules) = &mut self.modules {
             match modules.get(checksum) {
-                Some(module) => Ok(Some(module.clone())),
+                Some(cached) => Ok(Some(cached.clone())),
                 None => Ok(None),
             }
         } else {
