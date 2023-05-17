@@ -4,7 +4,6 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use wasmer::Engine;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -258,7 +257,7 @@ where
         // for a no-so-relevant use case.
 
         // Try to get module from file system cache
-        let engine = Engine::headless();
+        let engine = make_engine(&[]);
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             let memory_limit = Some(cache.instance_memory_limit);
@@ -335,7 +334,6 @@ where
         }
 
         // Get module from file system cache
-        // let store = make_runtime_store(Some(cache.instance_memory_limit));
         let engine = make_engine(&[]);
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
