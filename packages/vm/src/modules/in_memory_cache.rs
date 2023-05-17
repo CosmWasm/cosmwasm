@@ -167,7 +167,7 @@ mod tests {
         // Store module
         let size = wasm.len() * TESTING_WASM_SIZE_FACTOR;
         cache
-            .store(&checksum, (engine.clone(), original), None, size)
+            .store(&checksum, (engine, original), None, size)
             .unwrap();
 
         // Load module
