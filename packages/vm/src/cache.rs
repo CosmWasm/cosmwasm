@@ -303,9 +303,7 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
         let (cached, _from_pinned) = self.get_module(checksum)?;
-        // FIXME: memory limit
-        // let store = make_store_with_engine(Some(memory_limit));
-        let store = make_store_with_engine(cached.engine, None);
+        let store = make_store_with_engine(cached.engine, cached.store_memory_limit);
         let instance = Instance::from_module(
             store,
             &cached.module,
