@@ -382,6 +382,14 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             context_data.querier = Some(querier);
         });
     }
+
+    /// Returns the original storage and querier as owned instances, and closes any remaining
+    /// iterators. This is meant to be called when recycling the instance.
+    pub fn move_out(&self) -> (Option<S>, Option<Q>) {
+        self.with_context_data_mut(|context_data| {
+            (context_data.storage.take(), context_data.querier.take())
+        })
+    }
 }
 
 pub struct ContextData<S, Q> {

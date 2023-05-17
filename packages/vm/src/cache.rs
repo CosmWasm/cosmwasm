@@ -949,38 +949,48 @@ mod tests {
         let backend2 = mock_backend(&[]);
 
         // init instance 1
-        let mut instance1 = cache
+        let mut instance = cache
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
         let res =
-            call_instantiate::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg).unwrap();
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
+        let (_cached, backend1) = instance.recycle();
+        let backend1 = backend1.unwrap();
 
         // init instance 2
-        let mut instance2 = cache
+        let mut instance = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info("owner2", &coins(500, "earth"));
         let msg = br#"{"verifier": "bob", "beneficiary": "john"}"#;
         let res =
-            call_instantiate::<_, _, _, Empty>(&mut instance2, &mock_env(), &info, msg).unwrap();
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
+        let (_cached, backend2) = instance.recycle();
+        let backend2 = backend2.unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
+        let mut instance = cache
+            .get_instance(&checksum, backend2, TESTING_OPTIONS)
+            .unwrap();
         let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_execute::<_, _, _, Empty>(&mut instance2, &mock_env(), &info, msg).unwrap();
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
         // run contract 1 - just sanity check - results validate in contract unit tests
+        let mut instance = cache
+            .get_instance(&checksum, backend1, TESTING_OPTIONS)
+            .unwrap();
         let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_execute::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg).unwrap();
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
