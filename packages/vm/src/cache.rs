@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use wasmer::Engine;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -15,7 +16,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{compile, make_engine, make_store_with_engine};
+use crate::wasm_backend::{compile, make_store_with_engine};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -257,7 +258,7 @@ where
         // for a no-so-relevant use case.
 
         // Try to get module from file system cache
-        let engine = make_engine(&[]);
+        let engine = Engine::headless();
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             let memory_limit = Some(cache.instance_memory_limit);
@@ -334,7 +335,7 @@ where
         }
 
         // Get module from file system cache
-        let engine = make_engine(&[]);
+        let engine = Engine::headless();
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
