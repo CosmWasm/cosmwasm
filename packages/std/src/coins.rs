@@ -1,7 +1,7 @@
+use std::any::type_name;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
-use std::{any::type_name, collections::btree_map};
 
 use crate::{Coin, StdError, StdResult, Uint128};
 
@@ -199,33 +199,12 @@ impl Coins {
     /// ```
     pub fn extend<C>(&mut self, others: C) -> StdResult<()>
     where
-        C: IntoIterator<Item = (String, Uint128)>,
+        C: IntoIterator<Item = Coin>,
     {
-        for (denom, amount) in others {
-            self.add(Coin { denom, amount })?;
+        for c in others {
+            self.add(c)?;
         }
         Ok(())
-    }
-}
-
-impl IntoIterator for Coins {
-    type Item = (String, Uint128);
-    // TODO: do we want to wrap the iterator type with our own to avoid exposing BTreeMap?
-    // also: for the owned version we could return Coins instead of (String, Uint128),
-    // but not for the borrowed version, so it would feel inconsistent
-    type IntoIter = btree_map::IntoIter<String, Uint128>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
-impl<'a> IntoIterator for &'a Coins {
-    type Item = (&'a String, &'a Uint128);
-    type IntoIter = btree_map::Iter<'a, String, Uint128>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
     }
 }
 
@@ -348,13 +327,11 @@ mod tests {
     fn extend_coins() {
         let mut coins: Coins = coin(12345, "uatom").try_into().unwrap();
 
-        coins.extend(mock_coins()).unwrap();
+        coins.extend(mock_coins().to_vec()).unwrap();
         assert_eq!(coins.len(), 3);
         assert_eq!(coins.amount_of("uatom").u128(), 24690);
 
-        coins
-            .extend([("uusd".to_string(), Uint128::new(123u128))])
-            .unwrap();
+        coins.extend([coin(123, "uusd")]).unwrap();
         assert_eq!(coins.len(), 4);
         assert_eq!(coins.amount_of("uusd").u128(), 123)
     }
