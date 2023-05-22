@@ -317,7 +317,7 @@ fn execute_panic() -> StdResult<IbcReceiveResponse> {
 }
 
 fn execute_error(text: String) -> StdResult<IbcReceiveResponse> {
-    return Err(StdError::generic_err(text).into());
+    Err(StdError::generic_err(text))
 }
 
 fn execute_return_msgs(msgs: Vec<CosmosMsg>) -> StdResult<IbcReceiveResponse> {
