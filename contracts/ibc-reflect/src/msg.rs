@@ -73,3 +73,7 @@ pub struct BalancesResponse {
     pub account: String,
     pub balances: Vec<Coin>,
 }
+
+/// This is the success response we send on ack for PacketMsg::ReturnMsgs.
+/// Just acknowledge success or error
+pub type ReturnMsgsResponse = ();
