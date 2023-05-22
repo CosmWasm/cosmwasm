@@ -80,37 +80,9 @@ impl FromStr for Coins {
     type Err = StdError;
 
     fn from_str(s: &str) -> StdResult<Self> {
-        // TODO: use FromStr impl for Coin once it's merged
-
-        // Parse a string into a `Coin`.
-        //
-        // Parsing the string with regex doesn't work, because the resulting
-        // wasm binary would be too big from including the `regex` library.
-        //
-        // We opt for the following solution: enumerate characters in the string,
-        // and break before the first non-number character. Split the string at
-        // that index.
-        //
-        // This assumes the denom never starts with a number, which is the case:
-        // https://github.com/cosmos/cosmos-sdk/blob/v0.46.0/types/coin.go#L854-L856
-        let parse_coin_str = |s: &str| -> StdResult<Coin> {
-            for (i, c) in s.chars().enumerate() {
-                if !c.is_ascii_digit() {
-                    let amount = Uint128::from_str(&s[..i])?;
-                    let denom = String::from(&s[i..]);
-                    return Ok(Coin { amount, denom });
-                }
-            }
-
-            Err(StdError::parse_err(
-                type_name::<Coin>(),
-                format!("invalid coin string: {s}"),
-            ))
-        };
-
         s.split(',')
-            .map(parse_coin_str)
-            .collect::<StdResult<Vec<_>>>()?
+            .map(Coin::from_str)
+            .collect::<Result<Vec<_>, _>>()?
             .try_into()
     }
 }
