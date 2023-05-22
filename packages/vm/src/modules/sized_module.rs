@@ -1,8 +1,8 @@
-use wasmer::{Module, Store};
+use wasmer::{Engine, Module};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CachedModule {
-    pub store: Store,
+    pub engine: Engine,
     pub module: Module,
     /// The estimated size of this element in memory
     pub size: usize,

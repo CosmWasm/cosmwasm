@@ -32,6 +32,7 @@ fn cost(_operator: &Operator) -> u64 {
 
 /// Created a store with the default compiler and the given memory limit (in bytes).
 /// If memory_limit is None, no limit is applied.
+#[allow(dead_code)]
 pub fn make_compile_time_store(
     memory_limit: Option<Size>,
     middlewares: &[Arc<dyn ModuleMiddleware>],
@@ -63,6 +64,35 @@ pub fn make_compile_time_store(
     }
 }
 
+/// Creates an engine with the default compiler.
+pub fn make_engine(middlewares: &[Arc<dyn ModuleMiddleware>]) -> Engine {
+    let gas_limit = 0;
+    let deterministic = Arc::new(Gatekeeper::default());
+    let metering = Arc::new(Metering::new(gas_limit, cost));
+
+    #[cfg(feature = "cranelift")]
+    {
+        let mut compiler = Cranelift::default();
+        for middleware in middlewares {
+            compiler.push_middleware(middleware.clone());
+        }
+        compiler.push_middleware(deterministic);
+        compiler.push_middleware(metering);
+        compiler.into()
+    }
+
+    #[cfg(not(feature = "cranelift"))]
+    {
+        let mut compiler = Singlepass::default();
+        for middleware in middlewares {
+            compiler.push_middleware(middleware.clone());
+        }
+        compiler.push_middleware(deterministic);
+        compiler.push_middleware(metering);
+        compiler.into()
+    }
+}
+
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
@@ -72,7 +102,7 @@ pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
 
 /// Creates a store from an engine and an optional memory limit.
 /// If no limit is set, the no custom tunables will be used.
-fn make_store_with_engine(mut engine: Engine, memory_limit: Option<Size>) -> Store {
+pub fn make_store_with_engine(mut engine: Engine, memory_limit: Option<Size>) -> Store {
     if let Some(limit) = memory_limit {
         let base = BaseTunables::for_target(&Target::default());
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));

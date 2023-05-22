@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use wasmer::{DeserializeError, Module, Store, Target};
+use wasmer::{AsEngineRef, DeserializeError, Module, Target};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
@@ -100,11 +100,15 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
+    pub fn load(
+        &self,
+        checksum: &Checksum,
+        engine: &impl AsEngineRef,
+    ) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.modules_path.join(filename);
 
-        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
+        let result = unsafe { Module::deserialize_from_file(engine, &file_path) };
         match result {
             Ok(module) => {
                 let module_size = module_size(&file_path)?;
@@ -224,7 +228,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
@@ -256,7 +260,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
@@ -279,7 +283,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_store, module) = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there
@@ -310,11 +314,11 @@ mod tests {
         };
         let target = Target::new(triple.clone(), wasmer::CpuFeature::POPCNT.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-4721E3F4");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE");
         // Changing CPU features changes the hash part
         let target = Target::new(triple, wasmer::CpuFeature::AVX512DQ.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-D5C8034F");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-93001945");
 
         // Works for durrect target (hashing is deterministic);
         let target = Target::default();
@@ -338,9 +342,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v5-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+                "modules\\v5-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v5-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-4721E3F4"
+                "modules/v5-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }

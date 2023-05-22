@@ -93,7 +93,7 @@ fn check_contract(
     check_wasm(&wasm, available_capabilities)?;
 
     // Compile module
-    compile(&wasm, None, &[])?;
+    compile(&wasm, &[])?;
 
     Ok(())
 }
