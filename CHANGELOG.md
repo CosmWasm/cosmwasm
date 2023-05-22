@@ -11,8 +11,10 @@ and this project adheres to
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
   been checked before. This is useful for state-sync where we know the Wasm code
   was checked when it was first uploaded. ([#1635])
+- cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
 
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
+[#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 
 ### Changed
 

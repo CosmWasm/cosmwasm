@@ -6,7 +6,7 @@ mod verification_error;
 pub use recover_pubkey_error::RecoverPubkeyError;
 pub use std_error::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation,
+    CoinFromStrError, ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation,
     RoundUpOverflowError, StdError, StdResult,
 };
 pub use system_error::SystemError;
