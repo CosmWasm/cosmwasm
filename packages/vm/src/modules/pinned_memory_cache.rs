@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use wasmer::{Engine, Module};
 
 use super::sized_module::CachedModule;
-use crate::{Checksum, Size, VmResult};
+use crate::{Checksum, VmResult};
 
 /// An pinned in memory module cache
 pub struct PinnedMemoryCache {
@@ -21,7 +21,6 @@ impl PinnedMemoryCache {
         &mut self,
         checksum: &Checksum,
         element: (Engine, Module),
-        memory_limit: Option<Size>,
         size: usize,
     ) -> VmResult<()> {
         self.modules.insert(
@@ -29,7 +28,6 @@ impl PinnedMemoryCache {
             CachedModule {
                 engine: element.0,
                 module: element.1,
-                store_memory_limit: memory_limit,
                 size,
             },
         );
@@ -114,7 +112,7 @@ mod tests {
         }
 
         // Store module
-        cache.store(&checksum, (engine, original), None, 0).unwrap();
+        cache.store(&checksum, (engine, original), 0).unwrap();
 
         // Load module
         let cached = cache.load(&checksum).unwrap().unwrap();
@@ -151,7 +149,7 @@ mod tests {
 
         // Add
         let (engine, original) = compile(&wasm, &[]).unwrap();
-        cache.store(&checksum, (engine, original), None, 0).unwrap();
+        cache.store(&checksum, (engine, original), 0).unwrap();
 
         assert!(cache.has(&checksum));
 
@@ -182,7 +180,7 @@ mod tests {
 
         // Add
         let (engine, original) = compile(&wasm, &[]).unwrap();
-        cache.store(&checksum, (engine, original), None, 0).unwrap();
+        cache.store(&checksum, (engine, original), 0).unwrap();
 
         assert_eq!(cache.len(), 1);
 
@@ -224,13 +222,13 @@ mod tests {
 
         // Add 1
         cache
-            .store(&checksum1, compile(&wasm1, &[]).unwrap(), None, 500)
+            .store(&checksum1, compile(&wasm1, &[]).unwrap(), 500)
             .unwrap();
         assert_eq!(cache.size(), 500);
 
         // Add 2
         cache
-            .store(&checksum2, compile(&wasm2, &[]).unwrap(), None, 300)
+            .store(&checksum2, compile(&wasm2, &[]).unwrap(), 300)
             .unwrap();
         assert_eq!(cache.size(), 800);
 

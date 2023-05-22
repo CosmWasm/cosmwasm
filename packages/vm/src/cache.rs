@@ -261,13 +261,9 @@ where
         let engine = Engine::headless();
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
-            let memory_limit = Some(cache.instance_memory_limit);
-            return cache.pinned_memory_cache.store(
-                checksum,
-                (engine, module),
-                memory_limit,
-                module_size,
-            );
+            return cache
+                .pinned_memory_cache
+                .store(checksum, (engine, module), module_size);
         }
 
         // Re-compile from original Wasm bytecode
@@ -275,10 +271,9 @@ where
         let (engine, module) = compile(&code, &[])?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
-        let memory_limit = Some(cache.instance_memory_limit);
         cache
             .pinned_memory_cache
-            .store(checksum, (engine, module), memory_limit, module_size)
+            .store(checksum, (engine, module), module_size)
     }
 
     /// Unpins a Module, i.e. removes it from the pinned memory cache.
@@ -302,8 +297,8 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let (cached, _from_pinned) = self.get_module(checksum)?;
-        let store = make_store_with_engine(cached.engine, cached.store_memory_limit);
+        let (cached, memory_limit, _from_pinned) = self.get_module(checksum)?;
+        let store = make_store_with_engine(cached.engine, Some(memory_limit));
         let instance = Instance::from_module(
             store,
             &cached.module,
@@ -319,19 +314,19 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, bool)> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Size, bool)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            return Ok((element, true));
+            return Ok((element, cache.instance_memory_limit, true));
         }
 
         // Get module from memory cache
         if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            return Ok((element, false));
+            return Ok((element, cache.instance_memory_limit, false));
         }
 
         // Get module from file system cache
@@ -339,20 +334,15 @@ where
         if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
-            let memory_limit = Some(cache.instance_memory_limit);
-            cache.memory_cache.store(
-                checksum,
-                (engine.clone(), module.clone()),
-                memory_limit,
-                module_size,
-            )?;
+            cache
+                .memory_cache
+                .store(checksum, (engine.clone(), module.clone()), module_size)?;
             let cached = CachedModule {
                 engine,
                 module,
-                store_memory_limit: memory_limit,
                 size: module_size,
             };
-            return Ok((cached, false));
+            return Ok((cached, cache.instance_memory_limit, false));
         }
 
         // Re-compile module from wasm
@@ -365,20 +355,15 @@ where
         let (engine, module) = compile(&wasm, &[])?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
-        let memory_limit = Some(cache.instance_memory_limit);
-        cache.memory_cache.store(
-            checksum,
-            (engine.clone(), module.clone()),
-            memory_limit,
-            module_size,
-        )?;
+        cache
+            .memory_cache
+            .store(checksum, (engine.clone(), module.clone()), module_size)?;
         let cached = CachedModule {
             engine,
             module,
-            store_memory_limit: memory_limit,
             size: module_size,
         };
-        Ok((cached, false))
+        Ok((cached, cache.instance_memory_limit, false))
     }
 }
 
