@@ -21,7 +21,7 @@ pub fn main() {
             Arg::new("CAPABILITIES")
                 // `long` setting required to turn the position argument into an option 🤷
                 .long("available-capabilities")
-                .aliases(&["FEATURES", "supported-features"]) // Old names
+                .aliases(["FEATURES", "supported-features"]) // Old names
                 .value_name("CAPABILITIES")
                 .help("Sets the available capabilities that the desired target chain has")
                 .num_args(1)
