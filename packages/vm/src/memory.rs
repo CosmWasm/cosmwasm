@@ -28,8 +28,8 @@ struct Region {
 
 unsafe impl ValueType for Region {
     fn zero_padding_bytes(&self, _bytes: &mut [MaybeUninit<u8>]) {
-        // The size of Region is exactly 3x4 bytes with no padding
-        // The `size_of::<Region>()` test nelow ensures that.
+        // The size of Region is exactly 3x4=12 bytes with no padding.
+        // The `size_of::<Region>()` test below ensures that.
         // So we do not need to zero any bytes here.
     }
 }
