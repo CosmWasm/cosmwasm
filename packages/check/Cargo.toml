@@ -9,7 +9,11 @@ license = "Apache-2.0"
 
 [dependencies]
 anyhow = "1.0.57"
-clap = "2"
+clap = "4"
 colored = "2"
 cosmwasm-vm = { path = "../vm", version = "1.2.5" }
 cosmwasm-std = { path = "../std", version = "1.2.5" }
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
