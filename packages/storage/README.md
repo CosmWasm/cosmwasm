@@ -4,7 +4,7 @@
 
 CosmWasm library with useful helpers for Storage patterns. You can use `Storage`
 implementations in `cosmwasm-std`, or rely on these to remove some common
-boilterplate.
+boilerplate.
 
 ## Contents
 

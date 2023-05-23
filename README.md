@@ -137,7 +137,7 @@ See [Minimum Supported Rust Version (MSRV)](./docs/MSRV.md).
 
 ## API entry points
 
-WebAssembly contracts are basically black boxes. The have no default entry
+WebAssembly contracts are basically black boxes. They have no default entry
 points, and no access to the outside world by default. To make them useful, we
 need to add a few elements.
 

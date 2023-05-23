@@ -38,5 +38,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-storage = { path = "../../packages/storage" }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }

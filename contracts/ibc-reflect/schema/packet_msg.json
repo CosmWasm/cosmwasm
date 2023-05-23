@@ -51,6 +51,64 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "panic"
+      ],
+      "properties": {
+        "panic": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "return_err"
+      ],
+      "properties": {
+        "return_err": {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "return_msgs"
+      ],
+      "properties": {
+        "return_msgs": {
+          "type": "object",
+          "required": [
+            "msgs"
+          ],
+          "properties": {
+            "msgs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CosmosMsg_for_Empty"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

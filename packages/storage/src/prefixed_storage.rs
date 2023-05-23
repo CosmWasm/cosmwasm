@@ -10,11 +10,17 @@ use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
 
 /// An alias of PrefixedStorage::new for less verbose usage
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub fn prefixed<'a>(storage: &'a mut dyn Storage, namespace: &[u8]) -> PrefixedStorage<'a> {
     PrefixedStorage::new(storage, namespace)
 }
 
 /// An alias of ReadonlyPrefixedStorage::new for less verbose usage
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub fn prefixed_read<'a>(
     storage: &'a dyn Storage,
     namespace: &[u8],
@@ -22,6 +28,9 @@ pub fn prefixed_read<'a>(
     ReadonlyPrefixedStorage::new(storage, namespace)
 }
 
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub struct PrefixedStorage<'a> {
     storage: &'a mut dyn Storage,
     prefix: Vec<u8>,
@@ -71,6 +80,9 @@ impl<'a> Storage for PrefixedStorage<'a> {
     }
 }
 
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub struct ReadonlyPrefixedStorage<'a> {
     storage: &'a dyn Storage,
     prefix: Vec<u8>,

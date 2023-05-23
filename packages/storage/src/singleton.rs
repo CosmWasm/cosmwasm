@@ -6,6 +6,9 @@ use cosmwasm_std::{storage_keys::to_length_prefixed, to_vec, StdError, StdResult
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 /// An alias of Singleton::new for less verbose usage
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub fn singleton<'a, T>(storage: &'a mut dyn Storage, key: &[u8]) -> Singleton<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -14,6 +17,9 @@ where
 }
 
 /// An alias of ReadonlySingleton::new for less verbose usage
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub fn singleton_read<'a, T>(storage: &'a dyn Storage, key: &[u8]) -> ReadonlySingleton<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -25,6 +31,9 @@ where
 /// work on a single storage key. It performs the to_length_prefixed transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub struct Singleton<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -88,6 +97,9 @@ where
 
 /// ReadonlySingleton only requires a Storage and exposes only the
 /// methods of Singleton that don't modify state.
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub struct ReadonlySingleton<'a, T>
 where
     T: Serialize + DeserializeOwned,

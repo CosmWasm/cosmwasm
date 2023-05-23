@@ -1,10 +1,12 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use std::any::type_name;
 
-use cosmwasm_std::{Addr, Decimal, Storage, Uint128};
-use cosmwasm_storage::{
-    bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
-    Singleton,
+use schemars::JsonSchema;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
+use cosmwasm_std::{
+    from_slice,
+    storage_keys::{namespace_with_key, to_length_prefixed},
+    to_vec, Addr, CanonicalAddr, Decimal, StdError, StdResult, Storage, Uint128,
 };
 
 pub const KEY_INVESTMENT: &[u8] = b"invest";
@@ -14,22 +16,30 @@ pub const KEY_TOTAL_SUPPLY: &[u8] = b"total_supply";
 pub const PREFIX_BALANCE: &[u8] = b"balance";
 pub const PREFIX_CLAIMS: &[u8] = b"claim";
 
-/// balances are state of the erc20 tokens
-pub fn balances(storage: &mut dyn Storage) -> Bucket<Uint128> {
-    bucket(storage, PREFIX_BALANCE)
+pub fn may_load_map(
+    storage: &dyn Storage,
+    prefix: &[u8],
+    key: &CanonicalAddr,
+) -> StdResult<Option<Uint128>> {
+    storage
+        .get(&namespace_with_key(&[prefix], key))
+        .map(|v| from_slice(&v))
+        .transpose()
 }
 
-pub fn balances_read(storage: &dyn Storage) -> ReadonlyBucket<Uint128> {
-    bucket_read(storage, PREFIX_BALANCE)
+pub fn save_map(
+    storage: &mut dyn Storage,
+    prefix: &[u8],
+    key: &CanonicalAddr,
+    value: Uint128,
+) -> StdResult<()> {
+    storage.set(&namespace_with_key(&[prefix], key), &to_vec(&value)?);
+    Ok(())
 }
 
-/// claims are the claims to money being unbonded
-pub fn claims(storage: &mut dyn Storage) -> Bucket<Uint128> {
-    bucket(storage, PREFIX_CLAIMS)
-}
-
-pub fn claims_read(storage: &dyn Storage) -> ReadonlyBucket<Uint128> {
-    bucket_read(storage, PREFIX_CLAIMS)
+pub fn load_map(storage: &dyn Storage, prefix: &[u8], key: &CanonicalAddr) -> StdResult<Uint128> {
+    may_load_map(storage, prefix, key)?
+        .ok_or_else(|| StdError::not_found(format!("map value for {}", key)))
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
@@ -71,26 +81,26 @@ pub struct Supply {
     pub claims: Uint128,
 }
 
-pub fn invest_info(storage: &mut dyn Storage) -> Singleton<InvestmentInfo> {
-    singleton(storage, KEY_INVESTMENT)
+pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
+    storage
+        .get(&to_length_prefixed(key))
+        .ok_or_else(|| StdError::not_found(type_name::<T>()))
+        .and_then(|v| from_slice(&v))
 }
 
-pub fn invest_info_read(storage: &dyn Storage) -> ReadonlySingleton<InvestmentInfo> {
-    singleton_read(storage, KEY_INVESTMENT)
+pub fn save_item<T: Serialize>(storage: &mut dyn Storage, key: &[u8], item: &T) -> StdResult<()> {
+    storage.set(&to_length_prefixed(key), &to_vec(item)?);
+    Ok(())
 }
 
-pub fn token_info(storage: &mut dyn Storage) -> Singleton<TokenInfo> {
-    singleton(storage, KEY_TOKEN_INFO)
-}
-
-pub fn token_info_read(storage: &dyn Storage) -> ReadonlySingleton<TokenInfo> {
-    singleton_read(storage, KEY_TOKEN_INFO)
-}
-
-pub fn total_supply(storage: &mut dyn Storage) -> Singleton<Supply> {
-    singleton(storage, KEY_TOTAL_SUPPLY)
-}
-
-pub fn total_supply_read(storage: &dyn Storage) -> ReadonlySingleton<Supply> {
-    singleton_read(storage, KEY_TOTAL_SUPPLY)
+pub fn update_item<T, A, E>(storage: &mut dyn Storage, key: &[u8], action: A) -> Result<T, E>
+where
+    T: Serialize + DeserializeOwned,
+    A: FnOnce(T) -> Result<T, E>,
+    E: From<StdError>,
+{
+    let input = load_item(storage, key)?;
+    let output = action(input)?;
+    save_item(storage, key, &output)?;
+    Ok(output)
 }

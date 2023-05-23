@@ -1,13 +1,16 @@
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Coin, Storage, Timestamp};
-use cosmwasm_storage::{
-    bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
-    Singleton,
+use cosmwasm_std::{
+    from_slice,
+    storage_keys::{namespace_with_key, to_length_prefixed},
+    to_vec, Addr, Coin, Order, StdError, StdResult, Storage, Timestamp,
 };
 
 pub const KEY_CONFIG: &[u8] = b"config";
+/// accounts is lookup of channel_id to reflect contract
 pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
+/// Upper bound for ranging over accounts
+const PREFIX_ACCOUNTS_UPPER_BOUND: &[u8] = b"accountt";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Config {
@@ -27,19 +30,52 @@ pub struct AccountData {
     pub remote_balance: Vec<Coin>,
 }
 
-/// accounts is lookup of channel_id to reflect contract
-pub fn accounts(storage: &mut dyn Storage) -> Bucket<AccountData> {
-    bucket(storage, PREFIX_ACCOUNTS)
+pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<AccountData>> {
+    storage
+        .get(&namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()))
+        .map(|v| from_slice(&v))
+        .transpose()
 }
 
-pub fn accounts_read(storage: &dyn Storage) -> ReadonlyBucket<AccountData> {
-    bucket_read(storage, PREFIX_ACCOUNTS)
+pub fn load_account(storage: &dyn Storage, id: &str) -> StdResult<AccountData> {
+    may_load_account(storage, id)?.ok_or_else(|| StdError::not_found(format!("account {}", id)))
 }
 
-pub fn config(storage: &mut dyn Storage) -> Singleton<Config> {
-    singleton(storage, KEY_CONFIG)
+pub fn save_account(storage: &mut dyn Storage, id: &str, account: &AccountData) -> StdResult<()> {
+    storage.set(
+        &namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()),
+        &to_vec(account)?,
+    );
+    Ok(())
 }
 
-pub fn config_read(storage: &dyn Storage) -> ReadonlySingleton<Config> {
-    singleton_read(storage, KEY_CONFIG)
+pub fn remove_account(storage: &mut dyn Storage, id: &str) {
+    storage.remove(&namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()));
+}
+
+pub fn range_accounts(
+    storage: &dyn Storage,
+) -> impl Iterator<Item = StdResult<(String, AccountData)>> + '_ {
+    let prefix = to_length_prefixed(PREFIX_ACCOUNTS);
+    let upper_bound = to_length_prefixed(PREFIX_ACCOUNTS_UPPER_BOUND);
+    storage
+        .range(Some(&prefix), Some(&upper_bound), Order::Ascending)
+        .map(|(key, val)| {
+            Ok((
+                String::from_utf8(key[PREFIX_ACCOUNTS.len() + 2..].to_vec())?,
+                from_slice(&val)?,
+            ))
+        })
+}
+
+pub fn load_config(storage: &dyn Storage) -> StdResult<Config> {
+    storage
+        .get(&to_length_prefixed(KEY_CONFIG))
+        .ok_or_else(|| StdError::not_found("config"))
+        .and_then(|v| from_slice(&v))
+}
+
+pub fn save_config(storage: &mut dyn Storage, item: &Config) -> StdResult<()> {
+    storage.set(&to_length_prefixed(KEY_CONFIG), &to_vec(item)?);
+    Ok(())
 }

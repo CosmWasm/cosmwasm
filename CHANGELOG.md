@@ -11,8 +11,10 @@ and this project adheres to
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
   been checked before. This is useful for state-sync where we know the Wasm code
   was checked when it was first uploaded. ([#1635])
+- cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
 
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
+[#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 
 ### Changed
 
@@ -29,12 +31,23 @@ and this project adheres to
   STDERR instead of STDOUT by default ([#1667]).
 - cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
   customizing the handling of debug messages emitted by the contract ([#1667]).
+- cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
+- cosmwasm-check: Update clap dependency to version 4 ([#1677])
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
+[#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
+[#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
+
+### Deprecated
+
+- cosmwasm-storage: All exports are deprecated because this crate will be
+  removed with CosmWasm 2.0 ([#1596]).
+
+[#1596]: https://github.com/CosmWasm/cosmwasm/issues/1596
 
 ## [1.2.5] - 2023-05-02
 

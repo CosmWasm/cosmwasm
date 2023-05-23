@@ -295,13 +295,13 @@ After the `submessage` is finished, the caller will get a chance to handle the
 result. It will get the original `id` of the subcall so it can switch on how to
 process this, and the `Result` of the execution, both success and error. Note
 that it includes all events returned by the submessage, which applies to native
-sdk modules as well (like Bank) as well as the data returned from below. This
-and the original call id provide all context to continue processing it. If you
-need more state, you must save some local context to the store (under the `id`)
-before returning the `submessage` in the original `execute`, and load it in
-`reply`. We explicitly prohibit passing information in contract memory, as that
-is the key vector for reentrancy attacks, which are a large security surface
-area in Ethereum.
+sdk modules (like Bank) as well as the data returned from below. This and the
+original call id provide all context to continue processing it. If you need more
+state, you must save some local context to the store (under the `id`) before
+returning the `submessage` in the original `execute`, and load it in `reply`. We
+explicitly prohibit passing information in contract memory, as that is the key
+vector for reentrancy attacks, which are a large security surface area in
+Ethereum.
 
 The `reply` call may return `Err` itself, in which case it is treated like the
 caller errored, and aborting the transaction. However, on successful processing,
@@ -366,7 +366,7 @@ of reentrancy, as the query cannot modify any state or execute our contract.
 When we "make a query", we serialize a
 [`QueryRequest` struct](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/query/mod.rs#L27-L48)
 that represents all possible calls, and then pass that over FFI to the runtime,
-where it is interpretted in the `x/wasm` SDK module. This is extensible with
+where it is interpreted in the `x/wasm` SDK module. This is extensible with
 blockchain-specific custom queries just like `CosmosMsg` accepts custom results.
 Also note the ability to perform raw protobuf "Stargate" queries:
 
