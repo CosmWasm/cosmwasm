@@ -106,7 +106,7 @@ impl PartialEq<Coin> for Coins {
 }
 
 impl Coins {
-    /// Cast to Vec<Coin>, while NOT consuming the original object
+    /// Conversion to Vec<Coin>, while NOT consuming the original object
     pub fn to_vec(&self) -> Vec<Coin> {
         self.0
             .iter()
@@ -117,7 +117,7 @@ impl Coins {
             .collect()
     }
 
-    /// Cast to Vec<Coin>, consuming the original object
+    /// Conversion to Vec<Coin>, consuming the original object
     pub fn into_vec(self) -> Vec<Coin> {
         self.0
             .into_iter()
