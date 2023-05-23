@@ -193,7 +193,7 @@ impl Coins {
     ///
     /// let mut coins = Coins::default();
     /// let new_coins: Coins = coin(123u128, "ucosm").try_into()?;
-    /// coins.extend(new_coins.clone())?;
+    /// coins.extend(new_coins.to_vec())?;
     /// assert_eq!(coins, new_coins);
     /// # cosmwasm_std::StdResult::Ok(())
     /// ```
