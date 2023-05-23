@@ -9,7 +9,8 @@ use cosmwasm_std::{
 
 use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
-    InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, WhoAmIResponse,
+    InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
+    ReturnMsgsResponse, WhoAmIResponse,
 };
 use crate::state::{
     load_account, load_item, may_load_account, range_accounts, remove_account, save_account,
@@ -246,6 +247,9 @@ pub fn ibc_packet_receive(
             PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
             PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
             PacketMsg::Balances {} => receive_balances(deps, caller),
+            PacketMsg::Panic {} => execute_panic(),
+            PacketMsg::ReturnErr { text } => execute_error(text),
+            PacketMsg::ReturnMsgs { msgs } => execute_return_msgs(msgs),
         }
     })()
     .or_else(|e| {
@@ -307,6 +311,23 @@ fn receive_dispatch(
     Ok(IbcReceiveResponse::new()
         .set_ack(acknowledgement)
         .add_submessage(msg)
+        .add_attribute("action", "receive_dispatch"))
+}
+
+fn execute_panic() -> StdResult<IbcReceiveResponse> {
+    panic!("This page intentionally faulted");
+}
+
+fn execute_error(text: String) -> StdResult<IbcReceiveResponse> {
+    Err(StdError::generic_err(text))
+}
+
+fn execute_return_msgs(msgs: Vec<CosmosMsg>) -> StdResult<IbcReceiveResponse> {
+    let acknowledgement = to_binary(&AcknowledgementMsg::<ReturnMsgsResponse>::Ok(()))?;
+
+    Ok(IbcReceiveResponse::new()
+        .set_ack(acknowledgement)
+        .add_messages(msgs)
         .add_attribute("action", "receive_dispatch"))
 }
 
@@ -578,7 +599,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
-        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
+        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`");
     }
 
     #[test]
