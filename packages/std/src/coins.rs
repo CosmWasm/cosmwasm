@@ -72,6 +72,10 @@ impl FromStr for Coins {
     type Err = StdError;
 
     fn from_str(s: &str) -> StdResult<Self> {
+        if s.is_empty() {
+            return Ok(Self::default());
+        }
+
         Ok(s.split(',')
             .map(Coin::from_str)
             .collect::<Result<Vec<_>, _>>()?
@@ -223,7 +227,7 @@ mod tests {
     }
 
     #[test]
-    fn casting_vec() {
+    fn converting_vec() {
         let mut vec = mock_vec();
         let coins = mock_coins();
 
@@ -243,11 +247,13 @@ mod tests {
     }
 
     #[test]
-    fn casting_str() {
+    fn converting_str() {
         // not in order
         let s1 = "88888factory/osmo1234abcd/subdenom,12345uatom,69420ibc/1234ABCD";
         // in order
         let s2 = "88888factory/osmo1234abcd/subdenom,69420ibc/1234ABCD,12345uatom";
+
+        let invalid = "12345uatom,noamount";
 
         let coins = mock_coins();
 
@@ -255,10 +261,16 @@ mod tests {
         // NOTE: should generate the same Coins, regardless of input order
         assert_eq!(Coins::from_str(s1).unwrap(), coins);
         assert_eq!(Coins::from_str(s2).unwrap(), coins);
+        assert_eq!(Coins::from_str("").unwrap(), Coins::default());
 
         // Coins --> String
         // NOTE: the generated string should be sorted
         assert_eq!(coins.to_string(), s2);
+        assert_eq!(Coins::default().to_string(), "");
+        assert_eq!(
+            Coins::from_str(invalid).unwrap_err().to_string(),
+            "Generic error: Parsing Coin: Missing amount or non-digit characters in amount"
+        );
     }
 
     #[test]
