@@ -91,12 +91,6 @@ impl fmt::Display for Coins {
     }
 }
 
-impl PartialEq<Coin> for Coins {
-    fn eq(&self, other: &Coin) -> bool {
-        self.0.len() == 1 && self.amount_of(&other.denom) == other.amount
-    }
-}
-
 impl Coins {
     /// Conversion to Vec<Coin>, while NOT consuming the original object
     pub fn to_vec(&self) -> Vec<Coin> {
@@ -326,13 +320,5 @@ mod tests {
         coins.extend([coin(123, "uusd")]).unwrap();
         assert_eq!(coins.len(), 4);
         assert_eq!(coins.amount_of("uusd").u128(), 123)
-    }
-
-    #[test]
-    fn equality() {
-        let coin = coin(54321, "uatom");
-        let coins = Coins::try_from([coin.clone()]).unwrap();
-
-        assert_eq!(coins, coin);
     }
 }
