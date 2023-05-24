@@ -54,24 +54,6 @@ pub fn read_region(memory: &wasmer::MemoryView, ptr: u32, max_length: usize) -> 
                  memory.size().bytes().0
     )))?;
     Ok(result)
-
-    // match WasmPtr::<u8>::new(region.offset).deref(memory, 0, region.length) {
-    //     Some(cells) => {
-    //         // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
-    //         // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-    //         let len = region.length as usize;
-    //         let mut result = vec![0u8; len];
-    //         for i in 0..len {
-    //             result[i] = cells[i].get();
-    //         }
-    //         Ok(result)
-    //     }
-    //     None => Err(CommunicationError::deref_err(region.offset, format!(
-    //         "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
-    //         region,
-    //         memory.size().bytes().0
-    //     )).into()),
-    // }
 }
 
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
@@ -111,24 +93,6 @@ pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmRes
     set_region(memory, ptr, region)?;
 
     Ok(())
-
-    // match WasmPtr::<u8>::new(region.offset).deref(memory, 0, region.capacity) {
-    //     Some(cells) => {
-    //         // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
-    //         // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-    //         for i in 0..data.len() {
-    //             cells[i].set(data[i])
-    //         }
-    //         region.length = data.len() as u32;
-    //         set_region(memory, ptr, region)?;
-    //         Ok(())
-    //     },
-    //     None => Err(CommunicationError::deref_err(region.offset, format!(
-    //         "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
-    //         region,
-    //         memory.size().bytes().0
-    //     )).into()),
-    // }
 }
 
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
