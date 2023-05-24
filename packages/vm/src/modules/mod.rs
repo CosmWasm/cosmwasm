@@ -7,4 +7,5 @@ mod versioning;
 pub use file_system_cache::{FileSystemCache, NewFileSystemCacheError};
 pub use in_memory_cache::InMemoryCache;
 pub use pinned_memory_cache::PinnedMemoryCache;
+pub use sized_module::CachedModule;
 pub use versioning::current_wasmer_module_version;

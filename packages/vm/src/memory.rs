@@ -1,4 +1,6 @@
-use wasmer::{Array, ValueType, WasmPtr};
+use std::mem::MaybeUninit;
+
+use wasmer::{ValueType, WasmPtr};
 
 use crate::conversion::to_u32;
 use crate::errors::{
@@ -24,12 +26,18 @@ struct Region {
     pub length: u32,
 }
 
-unsafe impl ValueType for Region {}
+unsafe impl ValueType for Region {
+    fn zero_padding_bytes(&self, _bytes: &mut [MaybeUninit<u8>]) {
+        // The size of Region is exactly 3x4=12 bytes with no padding.
+        // The `size_of::<Region>()` test below ensures that.
+        // So we do not need to zero any bytes here.
+    }
+}
 
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
-pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
+pub fn read_region(memory: &wasmer::MemoryView, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
     let region = get_region(memory, ptr)?;
 
     if region.length > to_u32(max_length)? {
@@ -38,30 +46,21 @@ pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmRe
         );
     }
 
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
-        Some(cells) => {
-            // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
-            // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-            let len = region.length as usize;
-            let mut result = vec![0u8; len];
-            for i in 0..len {
-                result[i] = cells[i].get();
-            }
-            Ok(result)
-        }
-        None => Err(CommunicationError::deref_err(region.offset, format!(
-            "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
-            region,
-            memory.size().bytes().0
-        )).into()),
-    }
+    let mut result = vec![0u8; region.length as usize];
+    // TODO: double check error handling
+    memory.read(region.offset as u64, &mut result).map_err(|_err| CommunicationError::deref_err(region.offset, format!(
+                 "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
+                 region,
+                 memory.size().bytes().0
+    )))?;
+    Ok(result)
 }
 
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]
 pub fn maybe_read_region(
-    memory: &wasmer::Memory,
+    memory: &wasmer::MemoryView,
     ptr: u32,
     max_length: usize,
 ) -> VmResult<Option<Vec<u8>>> {
@@ -75,46 +74,36 @@ pub fn maybe_read_region(
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.
-pub fn write_region(memory: &wasmer::Memory, ptr: u32, data: &[u8]) -> VmResult<()> {
+pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmResult<()> {
     let mut region = get_region(memory, ptr)?;
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
         return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
-        Some(cells) => {
-            // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
-            // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-            for i in 0..data.len() {
-                cells[i].set(data[i])
-            }
-            region.length = data.len() as u32;
-            set_region(memory, ptr, region)?;
-            Ok(())
-        },
-        None => Err(CommunicationError::deref_err(region.offset, format!(
-            "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
-            region,
-            memory.size().bytes().0
-        )).into()),
-    }
+
+    // TODO: double check error handling
+    memory.write(region.offset as u64, data).map_err(|_err| CommunicationError::deref_err(region.offset, format!(
+                 "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
+                 region,
+                 memory.size().bytes().0
+             )))?;
+
+    region.length = data.len() as u32;
+    set_region(memory, ptr, region)?;
+
+    Ok(())
 }
 
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
-fn get_region(memory: &wasmer::Memory, ptr: u32) -> CommunicationResult<Region> {
+fn get_region(memory: &wasmer::MemoryView, ptr: u32) -> CommunicationResult<Region> {
     let wptr = WasmPtr::<Region>::new(ptr);
-    match wptr.deref(memory) {
-        Some(cell) => {
-            let region = cell.get();
-            validate_region(&region)?;
-            Ok(region)
-        }
-        None => Err(CommunicationError::deref_err(
-            ptr,
-            "Could not dereference this pointer to a Region",
-        )),
-    }
+    // TODO: double check error handling
+    let region = wptr.deref(memory).read().map_err(|_err| {
+        CommunicationError::deref_err(ptr, "Could not dereference this pointer to a Region")
+    })?;
+    validate_region(&region)?;
+    Ok(region)
 }
 
 /// Performs plausibility checks in the given Region. Regions are always created by the
@@ -139,24 +128,27 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
 }
 
 /// Overrides a Region at ptr in wasm memory with data
-fn set_region(memory: &wasmer::Memory, ptr: u32, data: Region) -> CommunicationResult<()> {
+fn set_region(memory: &wasmer::MemoryView, ptr: u32, data: Region) -> CommunicationResult<()> {
     let wptr = WasmPtr::<Region>::new(ptr);
 
-    match wptr.deref(memory) {
-        Some(cell) => {
-            cell.set(data);
-            Ok(())
-        }
-        None => Err(CommunicationError::deref_err(
-            ptr,
-            "Could not dereference this pointer to a Region",
-        )),
-    }
+    // TODO: double check error handling
+    wptr.deref(memory).write(data).map_err(|_err| {
+        CommunicationError::deref_err(ptr, "Could not dereference this pointer to a Region")
+    })?;
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use std::mem;
+
     use super::*;
+
+    #[test]
+    fn region_has_known_size() {
+        // 3x4 bytes with no padding
+        assert_eq!(mem::size_of::<Region>(), 12);
+    }
 
     #[test]
     fn validate_region_passes_for_valid_region() {

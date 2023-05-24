@@ -85,6 +85,7 @@ workflows:
                 - /^[0-9]+\.[0-9]+$/
                 # Add your branch here if benchmarking matters to your work
                 - fix-benchmarking
+                - w3
       - coverage
   deploy:
     jobs:

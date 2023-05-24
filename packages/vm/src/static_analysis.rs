@@ -86,7 +86,7 @@ pub fn has_ibc_entry_points(module: &impl ExportInfo) -> bool {
 mod tests {
     use super::*;
     use parity_wasm::elements::Internal;
-    use wasmer::{Cranelift, Store, Universal};
+    use wasmer::{Cranelift, Store};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
@@ -181,7 +181,8 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_wasmer_with_no_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let store = Store::new(&Universal::new(Cranelift::default()).engine());
+        let compiler = Cranelift::default();
+        let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(exports, HashSet::new());
@@ -198,7 +199,8 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let store = Store::new(&Universal::new(Cranelift::default()).engine());
+        let compiler = Cranelift::default();
+        let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(
@@ -210,7 +212,8 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_wasmer_with_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let store = Store::new(&Universal::new(Cranelift::default()).engine());
+        let compiler = Cranelift::default();
+        let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(exports, HashSet::new());
@@ -228,7 +231,8 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let store = Store::new(&Universal::new(Cranelift::default()).engine());
+        let compiler = Cranelift::default();
+        let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(

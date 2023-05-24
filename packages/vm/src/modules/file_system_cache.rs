@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use wasmer::{DeserializeError, Module, Store, Target};
+use wasmer::{AsEngineRef, DeserializeError, Module, Target};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
@@ -100,11 +100,15 @@ impl FileSystemCache {
 
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
-    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
+    pub fn load(
+        &self,
+        checksum: &Checksum,
+        engine: &impl AsEngineRef,
+    ) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.modules_path.join(filename);
 
-        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
+        let result = unsafe { Module::deserialize_from_file(engine, &file_path) };
         match result {
             Ok(module) => {
                 let module_size = module_size(&file_path)?;
@@ -224,11 +228,11 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        let mut store = make_runtime_store(TESTING_MEMORY_LIMIT);
         let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_some());
 
@@ -238,10 +242,10 @@ mod tests {
             let (cached_module, module_size) = cached.unwrap();
             assert_eq!(module_size, module.serialize().unwrap().len());
             let import_object = imports! {};
-            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
-            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let instance = WasmerInstance::new(&mut store, &cached_module, &import_object).unwrap();
+            set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
-            let result = add_one.call(&[42.into()]).unwrap();
+            let result = add_one.call(&mut store, &[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
@@ -256,11 +260,11 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v5-wasmer1/**/{}",
+            "{}/v5-wasmer4/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -279,7 +283,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let module = compile(&wasm, None, &[]).unwrap();
+        let (_engine, module) = compile(&wasm, &[]).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there
