@@ -1,9 +1,8 @@
-use std::any::type_name;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
-use crate::{Coin, StdError, StdResult, Uint128};
+use crate::{errors::CoinsError, Coin, StdError, StdResult, Uint128};
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
 ///
@@ -20,9 +19,15 @@ pub struct Coins(BTreeMap<String, Uint128>);
 // Casting a Vec<Coin> to Coins.
 // The Vec can be out of order, but must not contain duplicate denoms or zero amounts.
 impl TryFrom<Vec<Coin>> for Coins {
-    type Error = StdError;
+    type Error = CoinsError;
 
-    fn try_from(vec: Vec<Coin>) -> StdResult<Self> {
+    fn try_from(vec: Vec<Coin>) -> Result<Self, CoinsError> {
+        if let Some(coin) = vec.iter().find(|c| c.amount.is_zero()) {
+            return Err(CoinsError::ZeroAmount {
+                denom: coin.denom.clone(),
+            });
+        }
+
         let vec_len = vec.len();
 
         let map = vec
@@ -31,13 +36,10 @@ impl TryFrom<Vec<Coin>> for Coins {
             .map(|coin| (coin.denom, coin.amount))
             .collect::<BTreeMap<_, _>>();
 
-        // the map having a different length from the vec means the vec must either
-        // 1) contain duplicate denoms, or 2) contain zero amounts
+        // the map having a different length from the vec means the vec must either contain
+        // duplicate denoms
         if map.len() != vec_len {
-            return Err(StdError::parse_err(
-                type_name::<Self>(),
-                "duplicate denoms or zero amount",
-            ));
+            return Err(CoinsError::DuplicateDenom);
         }
 
         Ok(Self(map))
@@ -45,17 +47,17 @@ impl TryFrom<Vec<Coin>> for Coins {
 }
 
 impl TryFrom<&[Coin]> for Coins {
-    type Error = StdError;
+    type Error = CoinsError;
 
-    fn try_from(slice: &[Coin]) -> StdResult<Self> {
+    fn try_from(slice: &[Coin]) -> Result<Self, CoinsError> {
         slice.to_vec().try_into()
     }
 }
 
 impl<const N: usize> TryFrom<[Coin; N]> for Coins {
-    type Error = StdError;
+    type Error = CoinsError;
 
-    fn try_from(slice: [Coin; N]) -> StdResult<Self> {
+    fn try_from(slice: [Coin; N]) -> Result<Self, CoinsError> {
         slice.to_vec().try_into()
     }
 }
@@ -80,10 +82,10 @@ impl FromStr for Coins {
     type Err = StdError;
 
     fn from_str(s: &str) -> StdResult<Self> {
-        s.split(',')
+        Ok(s.split(',')
             .map(Coin::from_str)
             .collect::<Result<Vec<_>, _>>()?
-            .try_into()
+            .try_into()?)
     }
 }
 

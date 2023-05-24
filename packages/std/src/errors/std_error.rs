@@ -591,6 +591,20 @@ pub enum CheckedFromRatioError {
 pub struct RoundUpOverflowError;
 
 #[derive(Error, Debug, PartialEq, Eq)]
+pub enum CoinsError {
+    #[error("Duplicate denom")]
+    DuplicateDenom,
+    #[error("Coin with zero amount: {denom}")]
+    ZeroAmount { denom: String },
+}
+
+impl From<CoinsError> for StdError {
+    fn from(value: CoinsError) -> Self {
+        Self::generic_err(format!("Creating Coins: {}", value))
+    }
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CoinFromStrError {
     #[error("Missing denominator")]
     MissingDenom,
