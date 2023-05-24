@@ -62,16 +62,6 @@ impl<const N: usize> TryFrom<[Coin; N]> for Coins {
     }
 }
 
-impl TryFrom<Coin> for Coins {
-    type Error = StdError;
-
-    fn try_from(coin: Coin) -> StdResult<Self> {
-        let mut coins = Coins::default();
-        coins.add(coin)?;
-        Ok(coins)
-    }
-}
-
 impl From<Coins> for Vec<Coin> {
     fn from(value: Coins) -> Self {
         value.into_vec()
@@ -154,7 +144,7 @@ impl Coins {
     /// ```rust
     /// use cosmwasm_std::{Coin, Coins, coin};
     ///
-    /// let coins: Coins = coin(100, "uatom").try_into().unwrap();
+    /// let coins: Coins = [coin(100, "uatom")].try_into().unwrap();
     /// assert_eq!(coins.contains_only("uatom").unwrap().u128(), 100);
     /// assert_eq!(coins.contains_only("uluna"), None);
     /// ```
@@ -194,7 +184,7 @@ impl Coins {
     /// use cosmwasm_std::{Coin, Coins, coin};
     ///
     /// let mut coins = Coins::default();
-    /// let new_coins: Coins = coin(123u128, "ucosm").try_into()?;
+    /// let new_coins: Coins = [coin(123u128, "ucosm")].try_into()?;
     /// coins.extend(new_coins.to_vec())?;
     /// assert_eq!(coins, new_coins);
     /// # cosmwasm_std::StdResult::Ok(())
@@ -284,7 +274,7 @@ mod tests {
         vec.push(coin(67890, "uatom"));
 
         let err = Coins::try_from(vec).unwrap_err();
-        assert!(err.to_string().contains("duplicate denoms"));
+        assert_eq!(err, CoinsError::DuplicateDenom);
     }
 
     #[test]
@@ -327,7 +317,7 @@ mod tests {
 
     #[test]
     fn extend_coins() {
-        let mut coins: Coins = coin(12345, "uatom").try_into().unwrap();
+        let mut coins: Coins = [coin(12345, "uatom")].try_into().unwrap();
 
         coins.extend(mock_coins().to_vec()).unwrap();
         assert_eq!(coins.len(), 3);
@@ -341,7 +331,7 @@ mod tests {
     #[test]
     fn equality() {
         let coin = coin(54321, "uatom");
-        let coins = Coins::try_from(coin.clone()).unwrap();
+        let coins = Coins::try_from([coin.clone()]).unwrap();
 
         assert_eq!(coins, coin);
     }
