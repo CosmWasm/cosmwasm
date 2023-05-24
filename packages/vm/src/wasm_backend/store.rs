@@ -30,40 +30,6 @@ fn cost(_operator: &Operator) -> u64 {
     150_000
 }
 
-/// Created a store with the default compiler and the given memory limit (in bytes).
-/// If memory_limit is None, no limit is applied.
-#[allow(dead_code)]
-pub fn make_compile_time_store(
-    memory_limit: Option<Size>,
-    middlewares: &[Arc<dyn ModuleMiddleware>],
-) -> Store {
-    let gas_limit = 0;
-    let deterministic = Arc::new(Gatekeeper::default());
-    let metering = Arc::new(Metering::new(gas_limit, cost));
-
-    #[cfg(feature = "cranelift")]
-    {
-        let mut compiler = Cranelift::default();
-        for middleware in middlewares {
-            compiler.push_middleware(middleware.clone());
-        }
-        compiler.push_middleware(deterministic);
-        compiler.push_middleware(metering);
-        make_store_with_engine(compiler.into(), memory_limit)
-    }
-
-    #[cfg(not(feature = "cranelift"))]
-    {
-        let mut compiler = Singlepass::default();
-        for middleware in middlewares {
-            compiler.push_middleware(middleware.clone());
-        }
-        compiler.push_middleware(deterministic);
-        compiler.push_middleware(metering);
-        make_store_with_engine(compiler.into(), memory_limit)
-    }
-}
-
 /// Creates an engine with the default compiler.
 pub fn make_engine(middlewares: &[Arc<dyn ModuleMiddleware>]) -> Engine {
     let gas_limit = 0;
@@ -153,50 +119,11 @@ mod tests {
     }
 
     #[test]
-    fn make_compile_time_store_applies_memory_limit() {
-        let wasm = wat::parse_str(EXPORTED_MEMORY_WAT).unwrap();
-
-        // No limit
-        let mut store = make_compile_time_store(None, &[]);
-        let module = Module::new(&store, &wasm).unwrap();
-        let module_memory = module.info().memories.last().unwrap();
-        assert_eq!(module_memory.minimum, Pages(4));
-        assert_eq!(module_memory.maximum, None);
-        let instance = Instance::new(&mut store, &module, &Imports::new()).unwrap();
-        let instance_memory: Memory = instance
-            .exports
-            .iter()
-            .memories()
-            .map(|pair| pair.1.clone())
-            .next()
-            .unwrap();
-        assert_eq!(instance_memory.ty(&store).minimum, Pages(4));
-        assert_eq!(instance_memory.ty(&store).maximum, None);
-
-        // Set limit
-        let mut store = make_compile_time_store(Some(Size::kibi(23 * 64)), &[]);
-        let module = Module::new(&store, &wasm).unwrap();
-        let module_memory = module.info().memories.last().unwrap();
-        assert_eq!(module_memory.minimum, Pages(4));
-        assert_eq!(module_memory.maximum, None);
-        let instance = Instance::new(&mut store, &module, &Imports::new()).unwrap();
-        let instance_memory: Memory = instance
-            .exports
-            .iter()
-            .memories()
-            .map(|pair| pair.1.clone())
-            .next()
-            .unwrap();
-        assert_eq!(instance_memory.ty(&store).minimum, Pages(4));
-        assert_eq!(instance_memory.ty(&store).maximum, Some(Pages(23)));
-    }
-
-    #[test]
     fn make_runtime_store_applies_memory_limit() {
         // Compile
         let serialized = {
             let wasm = wat::parse_str(EXPORTED_MEMORY_WAT).unwrap();
-            let store = make_compile_time_store(None, &[]);
+            let store = make_engine(&[]);
             let module = Module::new(&store, wasm).unwrap();
             module.serialize().unwrap()
         };
