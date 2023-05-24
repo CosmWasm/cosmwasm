@@ -732,7 +732,7 @@ mod tests {
         let backend5 = mock_backend(&[]);
 
         // from file system
-        let _instance1: Instance<MockApi, MockStorage, MockQuerier> = cache
+        let _instance1 = cache
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
