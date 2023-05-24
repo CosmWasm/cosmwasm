@@ -453,6 +453,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I64x2LeS
             | Operator::I64x2GeS
             | Operator::I8x16Popcnt
+            | Operator::I16x8AvgrU
             | Operator::I16x8ExtAddPairwiseI8x16S
             | Operator::I16x8ExtAddPairwiseI8x16U
             | Operator::I16x8Q15MulrSatS
@@ -483,11 +484,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::F64x2ConvertLowI32x4U
             | Operator::F32x4DemoteF64x2Zero
             | Operator::F64x2PromoteLowF32x4
-            | Operator::I8x16RelaxedSwizzle
-            | Operator::I32x4RelaxedTruncSatF32x4S
-            | Operator::I32x4RelaxedTruncSatF32x4U
-            | Operator::I32x4RelaxedTruncSatF64x2SZero
-            | Operator::I32x4RelaxedTruncSatF64x2UZero => {
+            | Operator::I8x16AvgrU => {
                 if self.config.allow_feature_simd {
                     state.push_operator(operator);
                     Ok(())
@@ -498,6 +495,34 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     );
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
+            }
+            // Relaxed SIMD operators
+            Operator::I8x16RelaxedSwizzle
+            | Operator::I32x4RelaxedTruncSatF32x4S
+            | Operator::I32x4RelaxedTruncSatF32x4U
+            | Operator::I32x4RelaxedTruncSatF64x2SZero
+            | Operator::I32x4RelaxedTruncSatF64x2UZero
+            | Operator::F32x4RelaxedFma
+            | Operator::F32x4RelaxedFnma
+            | Operator::F64x2RelaxedFma
+            | Operator::F64x2RelaxedFnma
+            | Operator::I8x16RelaxedLaneselect
+            | Operator::I16x8RelaxedLaneselect
+            | Operator::I32x4RelaxedLaneselect
+            | Operator::I64x2RelaxedLaneselect
+            | Operator::F32x4RelaxedMin
+            | Operator::F32x4RelaxedMax
+            | Operator::F64x2RelaxedMin
+            | Operator::F64x2RelaxedMax
+            | Operator::I16x8RelaxedQ15mulrS
+            | Operator::I16x8DotI8x16I7x16S
+            | Operator::I32x4DotI8x16I7x16AddS
+            | Operator::F32x4RelaxedDotBf16x8AddF32x4 => {
+                let msg = format!(
+                    "Relaxed SIMD operator detected: {:?}. The Wasm Relaxed SIMD extension is not supported.",
+                    operator
+                );
+                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
             }
             Operator::F32Load { .. }
             | Operator::F64Load { .. }
@@ -626,11 +651,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4TruncSatF32x4S
             | Operator::I32x4TruncSatF32x4U
             | Operator::F32x4ConvertI32x4S
-            | Operator::F32x4ConvertI32x4U
-            | Operator::F32x4RelaxedMin
-            | Operator::F32x4RelaxedMax
-            | Operator::F64x2RelaxedMin
-            | Operator::F64x2RelaxedMax => {
+            | Operator::F32x4ConvertI32x4U => {
                 if self.config.allow_floats {
                     state.push_operator(operator);
                     Ok(())
@@ -672,21 +693,6 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
-            // TODO: do
-            Operator::I8x16AvgrU => todo!(),
-            Operator::I16x8AvgrU => todo!(),
-            Operator::F32x4RelaxedFma => todo!(),
-            Operator::F32x4RelaxedFnma => todo!(),
-            Operator::F64x2RelaxedFma => todo!(),
-            Operator::F64x2RelaxedFnma => todo!(),
-            Operator::I8x16RelaxedLaneselect => todo!(),
-            Operator::I16x8RelaxedLaneselect => todo!(),
-            Operator::I32x4RelaxedLaneselect => todo!(),
-            Operator::I64x2RelaxedLaneselect => todo!(),
-            Operator::I16x8RelaxedQ15mulrS => todo!(),
-            Operator::I16x8DotI8x16I7x16S => todo!(),
-            Operator::I32x4DotI8x16I7x16AddS => todo!(),
-            Operator::F32x4RelaxedDotBf16x8AddF32x4 => todo!(),
         }
     }
 }
