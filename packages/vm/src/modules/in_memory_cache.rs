@@ -3,7 +3,7 @@ use std::collections::hash_map::RandomState;
 use std::num::NonZeroUsize;
 use wasmer::{Engine, Module};
 
-use super::sized_module::CachedModule;
+use super::cached_module::CachedModule;
 use crate::{Checksum, Size, VmError, VmResult};
 
 // Minimum module size.

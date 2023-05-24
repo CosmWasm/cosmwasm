@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use wasmer::{Engine, Module};
 
-use super::sized_module::CachedModule;
+use super::cached_module::CachedModule;
 use crate::{Checksum, VmResult};
 
 /// An pinned in memory module cache
