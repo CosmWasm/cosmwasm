@@ -602,6 +602,8 @@ mod tests {
         let (engine, module) = compile(&wasm, &[]).unwrap();
         let mut store = make_store_with_engine(engine, memory_limit);
 
+        let called = Arc::new(AtomicBool::new(false));
+
         #[derive(Clone)]
         struct MyEnv {
             // This can be mutated across threads safely. We initialize it as `false`
@@ -609,11 +611,12 @@ mod tests {
             called: Arc<AtomicBool>,
         }
 
-        let my_env = MyEnv {
-            called: Arc::new(AtomicBool::new(false)),
-        };
-
-        let fe = FunctionEnv::new(&mut store, my_env);
+        let fe = FunctionEnv::new(
+            &mut store,
+            MyEnv {
+                called: called.clone(),
+            },
+        );
 
         let fun =
             Function::new_typed_with_env(&mut store, &fe, move |fe_mut: FunctionEnvMut<MyEnv>| {
@@ -636,8 +639,7 @@ mod tests {
 
         instance.call_function0("main", &[]).unwrap();
 
-        // TODO: allow inspecting env
-        // assert!(fe.as_ref(&store).called.load(Ordering::Relaxed));
+        assert!(called.load(Ordering::Relaxed));
     }
 
     #[test]
