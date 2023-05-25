@@ -2,18 +2,18 @@ use std::fs::File;
 use std::io::Read;
 use std::mem;
 
-use clap::{App, Arg};
+use clap::{Arg, Command};
 
 use cosmwasm_vm::internals::compile;
 use cosmwasm_vm::internals::make_engine;
 use wasmer::Module;
 
 pub fn main() {
-    let matches = App::new("Module size estimation")
+    let matches = Command::new("Module size estimation")
         .version("0.0.4")
         .author("Mauro Lacy <mauro@confio.gmbh>")
         .arg(
-            Arg::with_name("WASM")
+            Arg::new("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
                 .index(1),
@@ -21,7 +21,7 @@ pub fn main() {
         .get_matches();
 
     // File
-    let path = matches.value_of("WASM").expect("Error parsing file name");
+    let path: &String = matches.get_one("WASM").expect("Error parsing file name");
     let mut file = File::open(path).unwrap();
     mem::drop(matches);
 
