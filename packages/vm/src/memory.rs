@@ -95,12 +95,11 @@ pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmRes
     Ok(())
 }
 
-/// Reads in a Region at ptr in wasm memory and returns a copy of it
-fn get_region(memory: &wasmer::MemoryView, ptr: u32) -> CommunicationResult<Region> {
-    let wptr = WasmPtr::<Region>::new(ptr);
-    // TODO: double check error handling
+/// Reads in a Region at offset in Wasm memory and returns a copy of it
+fn get_region(memory: &wasmer::MemoryView, offset: u32) -> CommunicationResult<Region> {
+    let wptr = WasmPtr::<Region>::new(offset);
     let region = wptr.deref(memory).read().map_err(|_err| {
-        CommunicationError::deref_err(ptr, "Could not dereference this pointer to a Region")
+        CommunicationError::deref_err(offset, "Could not dereference this pointer to a Region")
     })?;
     validate_region(&region)?;
     Ok(region)
@@ -127,13 +126,11 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
     Ok(())
 }
 
-/// Overrides a Region at ptr in wasm memory with data
-fn set_region(memory: &wasmer::MemoryView, ptr: u32, data: Region) -> CommunicationResult<()> {
-    let wptr = WasmPtr::<Region>::new(ptr);
-
-    // TODO: double check error handling
+/// Overrides a Region at offset in Wasm memory
+fn set_region(memory: &wasmer::MemoryView, offset: u32, data: Region) -> CommunicationResult<()> {
+    let wptr = WasmPtr::<Region>::new(offset);
     wptr.deref(memory).write(data).map_err(|_err| {
-        CommunicationError::deref_err(ptr, "Could not dereference this pointer to a Region")
+        CommunicationError::deref_err(offset, "Could not dereference this pointer to a Region")
     })?;
     Ok(())
 }
