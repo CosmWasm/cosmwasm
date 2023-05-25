@@ -37,26 +37,17 @@ pub fn make_engine(middlewares: &[Arc<dyn ModuleMiddleware>]) -> Engine {
     let metering = Arc::new(Metering::new(gas_limit, cost));
 
     #[cfg(feature = "cranelift")]
-    {
-        let mut compiler = Cranelift::default();
-        for middleware in middlewares {
-            compiler.push_middleware(middleware.clone());
-        }
-        compiler.push_middleware(deterministic);
-        compiler.push_middleware(metering);
-        compiler.into()
-    }
+    let mut compiler = Cranelift::default();
 
     #[cfg(not(feature = "cranelift"))]
-    {
-        let mut compiler = Singlepass::default();
-        for middleware in middlewares {
-            compiler.push_middleware(middleware.clone());
-        }
-        compiler.push_middleware(deterministic);
-        compiler.push_middleware(metering);
-        compiler.into()
+    let mut compiler = Singlepass::default();
+
+    for middleware in middlewares {
+        compiler.push_middleware(middleware.clone());
     }
+    compiler.push_middleware(deterministic);
+    compiler.push_middleware(metering);
+    compiler.into()
 }
 
 /// Created a store with no compiler and the given memory limit (in bytes)

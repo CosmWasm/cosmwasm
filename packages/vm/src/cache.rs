@@ -243,10 +243,12 @@ where
 
     /// Pins a Module that was previously stored via save_wasm.
     ///
-    /// The module is lookup first in the memory cache, and then in the file system cache.
-    /// If not found, the code is loaded from the file system, compiled, and stored into the
+    /// The module is lookup first in the file system cache. If not found,
+    /// the code is loaded from the file system, compiled, and stored into the
     /// pinned cache.
-    /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
+    ///
+    /// If the given contract for the given checksum is not found, or the content
+    /// does not match the checksum, an error is returned.
     pub fn pin(&self, checksum: &Checksum) -> VmResult<()> {
         let mut cache = self.inner.lock().unwrap();
         if cache.pinned_memory_cache.has(checksum) {
@@ -255,7 +257,7 @@ where
 
         // We don't load from the memory cache because we had to create new store here and
         // serialize/deserialize the artifact to get a full clone. Could be done but adds some code
-        // for a no-so-relevant use case.
+        // for a not-so-relevant use case.
 
         // Try to get module from file system cache
         let engine = Engine::headless();
@@ -730,7 +732,7 @@ mod tests {
         let backend5 = mock_backend(&[]);
 
         // from file system
-        let _instance1: Instance<MockApi, MockStorage, MockQuerier> = cache
+        let _instance1 = cache
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
