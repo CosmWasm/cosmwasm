@@ -36,3 +36,4 @@ thiserror = "1.0.26"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
+tempfile = "3.1.0"
