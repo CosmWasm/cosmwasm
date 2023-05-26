@@ -1,11 +1,10 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::{Borrow, BorrowMut};
-use std::marker::PhantomData;
+use std::cell::RefCell;
 use std::ptr::NonNull;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
-use derivative::Derivative;
 use wasmer::{AsStoreMut, Instance as WasmerInstance, Memory, MemoryView, Value};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
@@ -83,28 +82,19 @@ impl GasState {
 }
 
 /// Additional environmental information in a debug call.
-///
-/// The currently unused lifetime parameter 'a allows accessing referenced data in the debug implementation
-/// without cloning it.
-#[derive(Derivative)]
-#[derivative(Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
-pub struct DebugInfo<'a> {
+pub struct DebugInfo {
     pub gas_remaining: u64,
-    // This field is just to allow us to add the unused lifetime parameter. It can be removed
-    // at any time.
-    #[doc(hidden)]
-    #[derivative(Debug = "ignore")]
-    pub(crate) __lifetime: PhantomData<&'a ()>,
 }
 
 // Unfortunately we cannot create an alias for the trait (https://github.com/rust-lang/rust/issues/41517).
 // So we need to copy it in a few places.
 //
-//                            /- BEGIN TRAIT                   END TRAIT \
-//                            |                                          |
-//                            v                                          v
-pub type DebugHandlerFn = dyn for<'a> Fn(/* msg */ &'a str, DebugInfo<'a>);
+//                            /- BEGIN TRAIT                  END TRAIT \
+//                            |                                         |
+//                            v                                         v
+pub type DebugHandlerFn = dyn for<'a> FnMut(/* msg */ &'a str, DebugInfo);
 
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
@@ -140,13 +130,13 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         }
     }
 
-    pub fn set_debug_handler(&self, debug_handler: Option<Rc<DebugHandlerFn>>) {
+    pub fn set_debug_handler(&self, debug_handler: Option<Rc<RefCell<DebugHandlerFn>>>) {
         self.with_context_data_mut(|context_data| {
             context_data.debug_handler = debug_handler;
         })
     }
 
-    pub fn debug_handler(&self) -> Option<Rc<DebugHandlerFn>> {
+    pub fn debug_handler(&self) -> Option<Rc<RefCell<DebugHandlerFn>>> {
         self.with_context_data(|context_data| {
             // This clone here requires us to wrap the function in Rc instead of Box
             context_data.debug_handler.clone()
@@ -392,7 +382,7 @@ pub struct ContextData<S, Q> {
     storage_readonly: bool,
     call_depth: usize,
     querier: Option<Q>,
-    debug_handler: Option<Rc<DebugHandlerFn>>,
+    debug_handler: Option<Rc<RefCell<DebugHandlerFn>>>,
     /// A non-owning link to the wasmer instance
     wasmer_instance: Option<NonNull<WasmerInstance>>,
 }
