@@ -1156,6 +1156,29 @@ mod tests {
         assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
     }
 
+    #[test]
+    fn keccak256_ok() {
+        let api = MockApi::default();
+        const KECCAK256_MSG: &str =
+            "1ff5c235b3c317d054b80b4bf0a8038bd727d180872d2491a7edef4f949c4135";
+        const KECCAK256_RESULT: &str =
+            "374c6f18084ec509581669659c7bce243284f85ddaa164c77bde9e9abd65fc0d";
+        let s_bytes: &[u8] = KECCAK256_MSG.as_bytes();
+        let message_digest = api.keccak256(s_bytes);
+        assert!(hex::encode(message_digest.unwrap()).as_str() == KECCAK256_RESULT);
+    }
+
+    #[test]
+    fn keccak256_empty() {
+        let api = MockApi::default();
+        const KECCAK256_MSG: &str = "";
+        const KECCAK256_RESULT: &str =
+            "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+        let s_bytes: &[u8] = KECCAK256_MSG.as_bytes();
+        let message_digest = api.keccak256(s_bytes);
+        assert!(hex::encode(message_digest.unwrap()).as_str() == KECCAK256_RESULT);
+    }
+
     #[cfg(feature = "cosmwasm_1_1")]
     #[test]
     fn bank_querier_supply() {

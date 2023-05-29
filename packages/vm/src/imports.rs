@@ -1926,6 +1926,77 @@ mod tests {
     }
 
     #[test]
+    fn do_keccak256_ok() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        const KECCAK256_MSG: &str =
+            "1ff5c235b3c317d054b80b4bf0a8038bd727d180872d2491a7edef4f949c4135";
+
+        let msg_ptr = write_data(&mut fe_mut, &KECCAK256_MSG.as_bytes());
+        let expected = hex!("374c6f18084ec509581669659c7bce243284f85ddaa164c77bde9e9abd65fc0d");
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
+        let error = result >> 32;
+        let data_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, data_ptr), expected);
+    }
+
+    #[test]
+    fn do_keccak256_empty() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        const KECCAK256_MSG: &str = "";
+
+        let msg_ptr = write_data(&mut fe_mut, &KECCAK256_MSG.as_bytes());
+        let expected = hex!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
+        let error = result >> 32;
+        let data_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, data_ptr), expected);
+    }
+
+    #[test]
+    fn do_keccak256_ok_max_data() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        let msg = vec![0x22; MAX_LENGTH_KECCAK256_MESSAGE];
+        let msg_ptr = write_data(&mut fe_mut, &msg);
+        let expected = hex!("c69ddf80d1cc491c364a5abd9ca71ee0c672428984c5d97ce7ebfa01e510a327");
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
+        let error = result >> 32;
+        let data_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, data_ptr), expected);
+    }
+
+    #[test]
+    fn do_keccak256_err_beyond_max_data() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        let msg = vec![0x22; MAX_LENGTH_KECCAK256_MESSAGE + 1];
+        let msg_ptr = write_data(&mut fe_mut, &msg);
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+                ..
+            } => {
+                assert_eq!(length, MAX_LENGTH_KECCAK256_MESSAGE + 1);
+                assert_eq!(max_length, MAX_LENGTH_KECCAK256_MESSAGE);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        };
+    }
+
+    #[test]
     fn do_query_chain_works() {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);
