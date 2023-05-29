@@ -26,7 +26,7 @@ const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 /// Max length of a serialized public key
 pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
 
-pub const KECCAK256_DIGEST_LEN: usize = 1000000;
+pub const KECCAK256_LEN: usize = 1000000;
 
 /// ECDSA secp256k1 implementation.
 ///
@@ -74,7 +74,7 @@ pub fn secp256k1_verify(
     }
 }
 
-pub fn keccak256_digest(
+pub fn keccak256(
     data: &[u8],
 ) -> Result<Vec<u8>, CryptoError>  {
     // let sign_bytes  = hex::decode("1ff5c235b3c317d054b80b4bf0a8038bd727d180872d2491a7edef4f949c4135").to_owned();

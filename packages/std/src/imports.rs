@@ -48,7 +48,7 @@ extern "C" {
     /// greater than 1 in case of error.
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
-    fn keccak256_digest(data_ptr: u32) -> u64;
+    fn keccak256(data_ptr: u32) -> u64;
 
     fn secp256k1_recover_pubkey(
         message_hash_ptr: u32,
@@ -358,14 +358,14 @@ impl Api for ExternalApi {
         }
     }
 
-    fn keccak256_digest(
+    fn keccak256(
         &self,
         data: &[u8],
     ) -> Result<Vec<u8>, RecoverPubkeyError> {
         let data_send = build_region(data);
         let data_send_ptr = &*data_send as *const Region as u32;
 
-        let result = unsafe { keccak256_digest(data_send_ptr) };
+        let result = unsafe { keccak256(data_send_ptr) };
         let error_code = from_high_half(result);
         let digest_ptr = from_low_half(result);
         match error_code {

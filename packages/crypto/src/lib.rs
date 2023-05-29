@@ -17,6 +17,6 @@ pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
 #[doc(hidden)]
 pub use crate::errors::{CryptoError, CryptoResult};
 #[doc(hidden)]
-pub use crate::secp256k1::{secp256k1_recover_pubkey, secp256k1_verify, keccak256_digest};
+pub use crate::secp256k1::{secp256k1_recover_pubkey, secp256k1_verify, keccak256};
 #[doc(hidden)]
-pub use crate::secp256k1::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, KECCAK256_DIGEST_LEN};
+pub use crate::secp256k1::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, KECCAK256_LEN};

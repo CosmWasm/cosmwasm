@@ -4,10 +4,10 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, keccak256_digest, CryptoError,
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, keccak256, CryptoError,
 };
 use cosmwasm_crypto::{
-    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN, KECCAK256_DIGEST_LEN,
+    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN, KECCAK256_LEN,
 };
 
 #[cfg(feature = "iterator")]
@@ -382,13 +382,13 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(code)
 }
 
-pub fn do_keccak256_digest<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_keccak256<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     data_ptr: u32,
 ) -> VmResult<u64> {
-    let data = read_region(&env.memory(), data_ptr, KECCAK256_DIGEST_LEN)?;
+    let data = read_region(&env.memory(), data_ptr, KECCAK256_LEN)?;
 
-    let result = keccak256_digest(&data);
+    let result = keccak256(&data);
     let gas_info = GasInfo::with_cost(1); // todo gas
     process_gas_info::<A, S, Q>(env, gas_info)?;
 
@@ -595,7 +595,7 @@ mod tests {
                 "secp256k1_recover_pubkey" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
-                "keccak256_digest" => Function::new_native(store, |_a: u32| -> u64 { 0 }),
+                "keccak256" => Function::new_native(store, |_a: u32| -> u64 { 0 }),
                 "debug" => Function::new_native(store, |_a: u32| {}),
                 "abort" => Function::new_native(store, |_a: u32| {}),
             },

@@ -138,7 +138,7 @@ pub trait Api {
         public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError>;
 
-    fn keccak256_digest(
+    fn keccak256(
         &self,
         data: &[u8],
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
