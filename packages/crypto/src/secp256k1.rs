@@ -8,7 +8,6 @@ use k256::{
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
-use sha3::{Keccak256};
 
 /// Max length of a message hash for secp256k1 verification in bytes.
 /// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
@@ -72,18 +71,6 @@ pub fn secp256k1_verify(
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
-}
-
-pub fn keccak256(
-    data: &[u8],
-) -> Result<Vec<u8>, CryptoError>  {
-    // let sign_bytes  = hex::decode("1ff5c235b3c317d054b80b4bf0a8038bd727d180872d2491a7edef4f949c4135").to_owned();
-    // let hash = Keccak256::digest(&sign_bytes.to_owned().unwrap());
-
-    let hash = Keccak256::digest(data);
-    Ok((&hash).to_vec())
-    // let mut vec = vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    // Ok(vec)
 }
 
 /// Recovers a public key from a message hash and a signature.
