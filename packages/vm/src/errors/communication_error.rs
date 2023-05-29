@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use thiserror::Error;
 
 use super::region_validation_error::RegionValidationError;
+use crate::memory::Region;
 
 /// An error in the communcation between contract and host. Those happen around imports and exports.
 #[derive(Error, Debug)]
@@ -32,6 +33,12 @@ pub enum CommunicationError {
     RegionLengthTooBig { length: usize, max_length: usize },
     #[error("Region too small. Got {}, required {}", size, required)]
     RegionTooSmall { size: usize, required: usize },
+    #[error("Tried to access memory of region {:?} in Wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.", region, memory_size)]
+    RegionAccessErr {
+        region: Region,
+        /// Current size of the linear memory in bytes
+        memory_size: usize,
+    },
     #[error("Got a zero Wasm address")]
     ZeroAddress {},
 }
@@ -62,6 +69,13 @@ impl CommunicationError {
 
     pub(crate) fn region_too_small(size: usize, required: usize) -> Self {
         CommunicationError::RegionTooSmall { size, required }
+    }
+
+    pub(crate) fn region_access_err(region: Region, memory_size: usize) -> Self {
+        CommunicationError::RegionAccessErr {
+            region,
+            memory_size,
+        }
     }
 
     pub(crate) fn zero_address() -> Self {
