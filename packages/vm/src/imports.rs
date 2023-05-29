@@ -1933,7 +1933,7 @@ mod tests {
         const KECCAK256_MSG: &str =
             "1ff5c235b3c317d054b80b4bf0a8038bd727d180872d2491a7edef4f949c4135";
 
-        let msg_ptr = write_data(&mut fe_mut, &KECCAK256_MSG.as_bytes());
+        let msg_ptr = write_data(&mut fe_mut, KECCAK256_MSG.as_bytes());
         let expected = hex!("374c6f18084ec509581669659c7bce243284f85ddaa164c77bde9e9abd65fc0d");
         let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
         let error = result >> 32;
@@ -1949,7 +1949,7 @@ mod tests {
         let mut fe_mut = fe.into_mut(&mut store);
         const KECCAK256_MSG: &str = "";
 
-        let msg_ptr = write_data(&mut fe_mut, &KECCAK256_MSG.as_bytes());
+        let msg_ptr = write_data(&mut fe_mut, KECCAK256_MSG.as_bytes());
         let expected = hex!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
         let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
         let error = result >> 32;
