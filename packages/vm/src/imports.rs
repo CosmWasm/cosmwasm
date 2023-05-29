@@ -4,10 +4,10 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, keccak256_digest, CryptoError,
 };
 use cosmwasm_crypto::{
-    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
+    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN, KECCAK256_DIGEST_LEN,
 };
 
 #[cfg(feature = "iterator")]
@@ -382,6 +382,33 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(code)
 }
 
+pub fn do_keccak256_digest<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    data_ptr: u32,
+) -> VmResult<u64> {
+    let data = read_region(&env.memory(), data_ptr, KECCAK256_DIGEST_LEN)?;
+
+    let result = keccak256_digest(&data);
+    let gas_info = GasInfo::with_cost(1); // todo gas
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+
+    match result {
+        Ok(digest) => {
+            let digest_ptr = write_to_contract::<A, S, Q>(env, digest.as_ref())?;
+            Ok(to_low_half(digest_ptr))
+        }
+        Err(err) => match err {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    }
+}
+
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
@@ -568,6 +595,7 @@ mod tests {
                 "secp256k1_recover_pubkey" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_native(store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "keccak256_digest" => Function::new_native(store, |_a: u32| -> u64 { 0 }),
                 "debug" => Function::new_native(store, |_a: u32| {}),
                 "abort" => Function::new_native(store, |_a: u32| {}),
             },

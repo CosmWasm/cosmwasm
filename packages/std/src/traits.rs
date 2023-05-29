@@ -138,6 +138,11 @@ pub trait Api {
         public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError>;
 
+    fn keccak256_digest(
+        &self,
+        data: &[u8],
+    ) -> Result<Vec<u8>, RecoverPubkeyError>;
+
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);

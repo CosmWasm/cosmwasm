@@ -48,6 +48,8 @@ extern "C" {
     /// greater than 1 in case of error.
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
+    fn keccak256_digest(data_ptr: u32) -> u64;
+
     fn secp256k1_recover_pubkey(
         message_hash_ptr: u32,
         signature_ptr: u32,
@@ -353,6 +355,29 @@ impl Api for ExternalApi {
             5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    fn keccak256_digest(
+        &self,
+        data: &[u8],
+    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+        let data_send = build_region(data);
+        let data_send_ptr = &*data_send as *const Region as u32;
+
+        let result = unsafe { keccak256_digest(data_send_ptr) };
+        let error_code = from_high_half(result);
+        let digest_ptr = from_low_half(result);
+        match error_code {
+            0 => {
+                let digest = unsafe { consume_region(digest_ptr as *mut Region) };
+                Ok(digest)
+            }
+            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
+            3 => Err(RecoverPubkeyError::InvalidHashFormat),
+            4 => Err(RecoverPubkeyError::InvalidSignatureFormat),
+            6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
+            error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
         }
     }
 
