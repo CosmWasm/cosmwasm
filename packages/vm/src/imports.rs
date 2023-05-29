@@ -667,7 +667,6 @@ mod tests {
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-
                 "db_read" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "db_write" => Function::new_typed(&mut store, |_a: u32, _b: u32| {}),
                 "db_remove" => Function::new_typed(&mut store, |_a: u32| {}),

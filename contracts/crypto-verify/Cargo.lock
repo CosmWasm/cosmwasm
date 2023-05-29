@@ -180,8 +180,10 @@ version = "1.2.5"
 dependencies = [
  "digest 0.10.3",
  "ed25519-zebra",
+ "hex",
  "k256",
  "rand_core 0.6.3",
+ "sha3",
  "thiserror",
 ]
 
