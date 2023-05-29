@@ -4,11 +4,15 @@
   "oneOf": [
     {
       "type": "object",
-      "required": ["test_keccak256"],
+      "required": [
+        "test_keccak256"
+      ],
       "properties": {
         "test_keccak256": {
           "type": "object",
-          "required": ["data"],
+          "required": [
+            "data"
+          ],
           "properties": {
             "data": {
               "type": "string"

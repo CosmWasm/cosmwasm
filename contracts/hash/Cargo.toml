@@ -40,8 +40,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
-cosmwasm-std = { path = "./depend/std", version = "1.0.0" }
-cosmwasm-storage = { path = "./depend/storage", version = "1.0.0" }
+cosmwasm-std = { path = "../../packages/std", version = "1.0.0" }
+cosmwasm-storage = { path = "../../packages/storage", version = "1.0.0" }
 
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
@@ -50,4 +50,4 @@ hex = "0.4"
 sha3 = "0.9"
 
 [dev-dependencies]
-cosmwasm-schema = { path = "./depend/schema", version = "1.0.0" }
+cosmwasm-schema = { path = "../../packages/schema", version = "1.0.0" }
