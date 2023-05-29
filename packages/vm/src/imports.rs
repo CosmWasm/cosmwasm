@@ -7,7 +7,7 @@ use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, keccak256, CryptoError,
 };
 use cosmwasm_crypto::{
-    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN, KECCAK256_LEN,
+    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
 
 #[cfg(feature = "iterator")]
@@ -58,6 +58,11 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
 /// Max length for an abort message
 const MAX_LENGTH_ABORT: usize = 2 * MI;
+
+/// Max length of a keccak256 message in bytes.
+/// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
+/// messages, let us know.
+const MAX_LENGTH_KECCAK256_MESSAGE: usize = 128 * 1024;
 
 // Import implementations
 //
@@ -441,15 +446,15 @@ pub fn do_keccak256<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 
     data_ptr: u32,
 ) -> VmResult<u64> {
     let (data, mut store) = env.data_and_store_mut();
-
+    
     let message = read_region(
         &data.memory(&mut store),
         data_ptr,
-        MAX_LENGTH_ED25519_MESSAGE, // todo length
+        MAX_LENGTH_KECCAK256_MESSAGE,
     )?;
 
     let result = keccak256(&message);
-    let gas_info = GasInfo::with_cost(1); // todo gas
+    let gas_info = GasInfo::with_cost(data.gas_config.keccak256_cost);
     process_gas_info(data, &mut store, gas_info)?;
 
     match result {

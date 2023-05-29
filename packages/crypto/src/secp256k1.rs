@@ -25,8 +25,6 @@ const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 /// Max length of a serialized public key
 pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
 
-pub const KECCAK256_LEN: usize = 1000000;
-
 /// ECDSA secp256k1 implementation.
 ///
 /// This function verifies message hashes (typically, hashed unsing SHA-256) against a signature,

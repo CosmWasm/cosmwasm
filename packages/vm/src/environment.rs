@@ -39,6 +39,8 @@ pub struct GasConfig {
     pub ed25519_batch_verify_cost: u64,
     /// ed25519 batch signature verification cost (single public key)
     pub ed25519_batch_verify_one_pubkey_cost: u64,
+    /// keccak256 hash cost
+    pub keccak256_cost: u64,
 }
 
 impl Default for GasConfig {
@@ -56,6 +58,7 @@ impl Default for GasConfig {
             // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
             ed25519_batch_verify_cost: 63 * GAS_PER_US / 2,
             ed25519_batch_verify_one_pubkey_cost: 63 * GAS_PER_US / 4,
+            keccak256_cost: 64 * GAS_PER_US,
         }
     }
 }
