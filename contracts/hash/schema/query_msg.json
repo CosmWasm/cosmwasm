@@ -4,9 +4,7 @@
   "oneOf": [
     {
       "type": "object",
-      "required": [
-        "get_counter"
-      ],
+      "required": ["get_counter"],
       "properties": {
         "get_counter": {
           "type": "object"

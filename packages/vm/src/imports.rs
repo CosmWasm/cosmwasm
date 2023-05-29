@@ -4,7 +4,8 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, keccak256, CryptoError,
+    ed25519_batch_verify, ed25519_verify, keccak256, secp256k1_recover_pubkey, secp256k1_verify,
+    CryptoError,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -440,13 +441,12 @@ pub fn do_ed25519_batch_verify<
     Ok(code)
 }
 
-
 pub fn do_keccak256<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     data_ptr: u32,
 ) -> VmResult<u64> {
     let (data, mut store) = env.data_and_store_mut();
-    
+
     let message = read_region(
         &data.memory(&mut store),
         data_ptr,

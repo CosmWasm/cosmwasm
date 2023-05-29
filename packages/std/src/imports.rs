@@ -358,10 +358,7 @@ impl Api for ExternalApi {
         }
     }
 
-    fn keccak256(
-        &self,
-        data: &[u8],
-    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+    fn keccak256(&self, data: &[u8]) -> Result<Vec<u8>, RecoverPubkeyError> {
         let data_send = build_region(data);
         let data_send_ptr = &*data_send as *const Region as u32;
 
