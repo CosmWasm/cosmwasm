@@ -435,19 +435,26 @@ pub fn do_ed25519_batch_verify<
     Ok(code)
 }
 
-pub fn do_keccak256<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
+
+pub fn do_keccak256<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
     data_ptr: u32,
 ) -> VmResult<u64> {
-    let data = read_region(&env.memory(), data_ptr, KECCAK256_LEN)?;
+    let (data, mut store) = env.data_and_store_mut();
 
-    let result = keccak256(&data);
+    let message = read_region(
+        &data.memory(&mut store),
+        data_ptr,
+        MAX_LENGTH_ED25519_MESSAGE, // todo length
+    )?;
+
+    let result = keccak256(&message);
     let gas_info = GasInfo::with_cost(1); // todo gas
-    process_gas_info::<A, S, Q>(env, gas_info)?;
+    process_gas_info(data, &mut store, gas_info)?;
 
     match result {
         Ok(digest) => {
-            let digest_ptr = write_to_contract::<A, S, Q>(env, digest.as_ref())?;
+            let digest_ptr = write_to_contract(data, &mut store, digest.as_ref())?;
             Ok(to_low_half(digest_ptr))
         }
         Err(err) => match err {

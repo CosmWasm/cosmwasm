@@ -190,7 +190,7 @@ where
 
         env_imports.insert(
             "keccak256",
-            Function::new_native_with_env(store, env.clone(), do_keccak256),
+            Function::new_typed_with_env(&mut store, &fe, do_keccak256),
         );
 
         // Allows the contract to emit debug logs that the host can either process or ignore.
