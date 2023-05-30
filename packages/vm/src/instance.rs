@@ -97,9 +97,11 @@ where
         let fe = FunctionEnv::new(&mut store, {
             let e = Environment::new(backend.api, gas_limit);
             if print_debug {
-                e.set_debug_handler(Some(Rc::new(RefCell::new(|msg: &str, _gas_remaining| {
-                    eprintln!("{msg}");
-                }))))
+                e.set_debug_handler(Some(Rc::new(RefCell::new(
+                    |msg: &str, _gas_remaining: DebugInfo<'_>| {
+                        eprintln!("{msg}");
+                    },
+                ))))
             }
             e
         });
@@ -305,7 +307,7 @@ where
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)
     where
-        H: for<'a> FnMut(/* msg */ &'a str, DebugInfo) + 'static,
+        H: for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>) + 'static,
     {
         self.fe
             .as_ref(&self.store)
