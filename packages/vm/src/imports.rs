@@ -447,7 +447,7 @@ pub fn do_debug<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'sta
         let message_data = read_region(&data.memory(&mut store), message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
         let gas_remaining = data.get_gas_left(&mut store);
-        (*debug_handler)(
+        debug_handler.borrow_mut()(
             &msg,
             DebugInfo {
                 gas_remaining,

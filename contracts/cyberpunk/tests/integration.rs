@@ -21,7 +21,9 @@ use cosmwasm_std::{from_binary, Empty, Env, Response};
 use cosmwasm_vm::testing::{
     execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_with_gas_limit, query,
 };
+use std::io::Write;
 use std::time::SystemTime;
+use tempfile::NamedTempFile;
 
 use cyberpunk::msg::{ExecuteMsg, QueryMsg};
 
@@ -81,6 +83,56 @@ fn debug_works() {
 
     let msg = ExecuteMsg::Debug {};
     let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+}
+
+// Test with
+// cargo integration-test debug_timing -- --nocapture
+#[test]
+fn debug_timing() {
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
+
+    let _res: Response =
+        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+
+    let mut last_time = None;
+    deps.set_debug_handler(move |msg, _info| {
+        if let Some(last_time) = last_time {
+            let diff = SystemTime::now()
+                .duration_since(last_time)
+                .unwrap_or_default()
+                .as_micros();
+            eprintln!("{msg} (time since last debug: {diff}µs)");
+        } else {
+            eprintln!("{msg}");
+        }
+
+        last_time = Some(SystemTime::now());
+    });
+
+    let msg = ExecuteMsg::Debug {};
+    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+}
+
+#[test]
+fn debug_file() {
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
+
+    let _res: Response =
+        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let (mut temp_file, temp_path) = temp_file.into_parts();
+
+    deps.set_debug_handler(move |msg, _info| {
+        writeln!(temp_file, "{msg}").unwrap();
+    });
+
+    let msg = ExecuteMsg::Debug {};
+    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+
+    // check if file contains the expected output
+    let file_content = std::fs::read_to_string(temp_path).unwrap();
+    assert!(file_content.contains("Round 9 done"));
 }
 
 #[test]
