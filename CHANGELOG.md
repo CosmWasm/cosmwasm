@@ -13,9 +13,16 @@ and this project adheres to
 
 [#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
 
+### Changed
+
+- cosmwasm-std: Coin uses `123ucosm` format for Debug as well as Display
+  ([#1704])
+
+[#1704]: https://github.com/CosmWasm/cosmwasm/pull/1704
+
 ## [1.2.6] - 2023-06-05
 
-## Changed
+### Changed
 
 - cosmwasm-vm: Bumped module serialization version from v4 to v5 to invalidate
   potentially corrupted caches caused by Rust update. See
