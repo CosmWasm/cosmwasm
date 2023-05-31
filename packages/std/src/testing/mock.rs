@@ -26,14 +26,17 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
-#[cfg(feature = "cosmwasm_1_3")]
-use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::{
+    query::{AllDenomMetadataResponse, DenomMetadataResponse},
+    PageRequest, Uint64,
+};
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
@@ -701,11 +704,38 @@ impl BankQuerier {
                 }
             }
             #[cfg(feature = "cosmwasm_1_3")]
-            BankQuery::AllDenomMetadata { pagination: _ } => {
-                let metadata_res = AllDenomMetadataResponse {
-                    next_key: None,
-                    metadata: self.denom_metadata.clone(),
+            BankQuery::AllDenomMetadata { pagination } => {
+                let default_pagination = PageRequest {
+                    key: None,
+                    limit: Uint64::new(100),
+                    reverse: false,
                 };
+                let pagination = pagination.as_ref().unwrap_or(&default_pagination);
+                // using dynamic dispatch here to reduce code duplication and since this is only testing code
+                let iter: Box<dyn Iterator<Item = DenomMetadata>> = if pagination.reverse {
+                    Box::new(self.denom_metadata.iter().rev().cloned())
+                } else {
+                    Box::new(self.denom_metadata.iter().cloned())
+                };
+                let mut metadata: Vec<_> = iter
+                    // skip until we find the key
+                    .skip_while(|m| match &pagination.key {
+                        Some(key) => m.symbol.as_bytes() < key,
+                        None => false,
+                    })
+                    // take the requested amount + 1 to get the next key
+                    .take((pagination.limit.u64().saturating_add(1)) as usize)
+                    .collect();
+
+                // if we took more than requested, remove the last element (the next key),
+                // otherwise this is the last batch
+                let next_key = if metadata.len() > pagination.limit.u64() as usize {
+                    metadata.pop().map(|m| Binary::from(m.name.as_bytes()))
+                } else {
+                    None
+                };
+
+                let metadata_res = AllDenomMetadataResponse { metadata, next_key };
                 to_binary(&metadata_res).into()
             }
         };
@@ -865,6 +895,8 @@ pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attr
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "cosmwasm_1_3")]
+    use crate::DenomUnit;
     use crate::{coin, coins, from_binary, to_binary, ContractInfoResponse, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
@@ -1290,6 +1322,77 @@ mod tests {
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    #[test]
+    fn bank_querier_metadata_works() {
+        let mut bank = BankQuerier::new(&[]);
+        bank.set_denom_metadata(
+            &(0..100)
+                .map(|i| DenomMetadata {
+                    symbol: format!("FOO{i}"),
+                    name: "Foo".to_string(),
+                    description: "Foo coin".to_string(),
+                    denom_units: vec![DenomUnit {
+                        denom: "ufoo".to_string(),
+                        exponent: 8,
+                        aliases: vec!["microfoo".to_string(), "foobar".to_string()],
+                    }],
+                    display: "FOO".to_string(),
+                    base: "ufoo".to_string(),
+                    uri: "https://foo.bar".to_string(),
+                    uri_hash: "foo".to_string(),
+                })
+                .collect::<Vec<_>>(),
+        );
+
+        // querying first 10 should work
+        let res = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: None,
+                    limit: Uint64::new(10),
+                    reverse: false,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let res: AllDenomMetadataResponse = from_binary(&res).unwrap();
+        assert_eq!(res.metadata.len(), 10);
+        assert!(res.next_key.is_some());
+
+        // querying all 100 should work
+        let res = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: None,
+                    limit: Uint64::new(100),
+                    reverse: true,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let res: AllDenomMetadataResponse = from_binary(&res).unwrap();
+        assert_eq!(res.metadata.len(), 100);
+        assert!(res.next_key.is_none(), "no more data should be available");
+        assert_eq!(res.metadata[0].symbol, "FOO99", "should have been reversed");
+
+        let more_res = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: res.next_key,
+                    limit: Uint64::MAX,
+                    reverse: true,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let more_res: AllDenomMetadataResponse = from_binary(&more_res).unwrap();
+        assert_eq!(
+            more_res.metadata, res.metadata,
+            "should be same as previous query"
+        );
     }
 
     #[cfg(feature = "stargate")]
