@@ -50,6 +50,8 @@ const MODULE_SERIALIZATION_VERSION: &str = "v5";
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
     modules_path: PathBuf,
+    /// If true, the cache uses the `*_unchecked` wasmer functions for loading modules from disk.
+    unchecked_modules: bool,
 }
 
 /// An error type that hides system specific error information
@@ -69,12 +71,17 @@ pub enum NewFileSystemCacheError {
 impl FileSystemCache {
     /// Construct a new `FileSystemCache` around the specified directory.
     /// The contents of the cache are stored in sub-versioned directories.
+    /// If `unchecked_modules` is set to true, it uses the `*_unchecked`
+    /// wasmer functions for loading modules from disk (no validity checks).
     ///
     /// # Safety
     ///
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
-    pub unsafe fn new(base_path: impl Into<PathBuf>) -> Result<Self, NewFileSystemCacheError> {
+    pub unsafe fn new(
+        base_path: impl Into<PathBuf>,
+        unchecked_modules: bool,
+    ) -> Result<Self, NewFileSystemCacheError> {
         let base_path: PathBuf = base_path.into();
         if base_path.exists() {
             let metadata = base_path
@@ -97,6 +104,7 @@ impl FileSystemCache {
                 current_wasmer_module_version(),
                 &Target::default(),
             ),
+            unchecked_modules,
         })
     }
 
@@ -110,7 +118,11 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let file_path = self.modules_path.join(filename);
 
-        let result = unsafe { Module::deserialize_from_file_unchecked(engine, &file_path) };
+        let result = if self.unchecked_modules {
+            unsafe { Module::deserialize_from_file_unchecked(engine, &file_path) }
+        } else {
+            unsafe { Module::deserialize_from_file(engine, &file_path) }
+        };
         match result {
             Ok(module) => {
                 let module_size = module_size(&file_path)?;
@@ -218,7 +230,7 @@ mod tests {
     #[test]
     fn file_system_cache_run() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path(), false).unwrap() };
 
         // Create module
         let wasm = wat::parse_str(SOME_WAT).unwrap();
@@ -255,7 +267,7 @@ mod tests {
     #[test]
     fn file_system_cache_store_uses_expected_path() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path(), false).unwrap() };
 
         // Create module
         let wasm = wat::parse_str(SOME_WAT).unwrap();
@@ -278,7 +290,7 @@ mod tests {
     #[test]
     fn file_system_cache_remove_works() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path(), false).unwrap() };
 
         // Create module
         let wasm = wat::parse_str(SOME_WAT).unwrap();

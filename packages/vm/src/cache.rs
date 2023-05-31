@@ -59,6 +59,9 @@ pub struct CacheOptions {
     pub base_dir: PathBuf,
     pub available_capabilities: HashSet<String>,
     pub memory_cache_size: Size,
+    /// If true, the filesystem cache will use the `*_unchecked` wasmer functions for loading
+    /// modules from disk.
+    pub unchecked_modules: bool,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
     pub instance_memory_limit: Size,
@@ -114,6 +117,7 @@ where
             available_capabilities,
             memory_cache_size,
             instance_memory_limit,
+            unchecked_modules,
         } = options;
 
         let state_path = base_dir.join(STATE_DIR);
@@ -126,7 +130,7 @@ where
         mkdir_p(&cache_path).map_err(|_e| VmError::cache_err("Error creating cache directory"))?;
         mkdir_p(&wasm_path).map_err(|_e| VmError::cache_err("Error creating wasm directory"))?;
 
-        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
+        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR), unchecked_modules)
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(Cache {
             available_capabilities,
@@ -493,6 +497,7 @@ mod tests {
             available_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
+            unchecked_modules: false,
         }
     }
 
@@ -504,6 +509,7 @@ mod tests {
             available_capabilities: capabilities,
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
+            unchecked_modules: false,
         }
     }
 
@@ -608,6 +614,7 @@ mod tests {
                 available_capabilities: default_capabilities(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
+                unchecked_modules: false,
             };
             let cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
@@ -620,6 +627,7 @@ mod tests {
                 available_capabilities: default_capabilities(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
+                unchecked_modules: false,
             };
             let cache2: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options2).unwrap() };
@@ -653,6 +661,7 @@ mod tests {
             available_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
+            unchecked_modules: false,
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
@@ -1236,6 +1245,7 @@ mod tests {
             available_capabilities: default_capabilities(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
+            unchecked_modules: false,
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
