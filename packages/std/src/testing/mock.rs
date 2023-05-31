@@ -730,7 +730,7 @@ impl BankQuerier {
                 // if we took more than requested, remove the last element (the next key),
                 // otherwise this is the last batch
                 let next_key = if metadata.len() > pagination.limit.u64() as usize {
-                    metadata.pop().map(|m| Binary::from(m.name.as_bytes()))
+                    metadata.pop().map(|m| Binary::from(m.symbol.as_bytes()))
                 } else {
                     None
                 };
@@ -1361,6 +1361,21 @@ mod tests {
         let res: AllDenomMetadataResponse = from_binary(&res).unwrap();
         assert_eq!(res.metadata.len(), 10);
         assert!(res.next_key.is_some());
+
+        // querying next 10 should also work
+        let res2 = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: res.next_key,
+                    limit: Uint64::new(10),
+                    reverse: false,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let res2: AllDenomMetadataResponse = from_binary(&res2).unwrap();
+        assert_eq!(res2.metadata.len(), 10);
+        assert_ne!(res.metadata.last(), res2.metadata.first());
 
         // querying all 100 should work
         let res = bank
