@@ -703,6 +703,7 @@ impl BankQuerier {
             #[cfg(feature = "cosmwasm_1_3")]
             BankQuery::AllDenomMetadata { pagination: _ } => {
                 let metadata_res = AllDenomMetadataResponse {
+                    next_key: None,
                     metadata: self.denom_metadata.clone(),
                 };
                 to_binary(&metadata_res).into()

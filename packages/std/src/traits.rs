@@ -26,9 +26,7 @@ use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::ContractInfoResponse;
 #[cfg(feature = "cosmwasm_1_3")]
-use crate::DenomMetadata;
-#[cfg(feature = "cosmwasm_1_3")]
-use crate::PageRequest;
+use crate::{DenomMetadata, PageRequest};
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -258,11 +256,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     #[cfg(feature = "cosmwasm_1_3")]
     pub fn query_all_denom_metadata(
         &self,
-        pagination: Option<PageRequest>,
-    ) -> StdResult<Vec<DenomMetadata>> {
-        let request = BankQuery::AllDenomMetadata { pagination }.into();
-        let res: AllDenomMetadataResponse = self.query(&request)?;
-        Ok(res.metadata)
+        pagination: PageRequest,
+    ) -> StdResult<AllDenomMetadataResponse> {
+        let request = BankQuery::AllDenomMetadata {
+            pagination: Some(pagination),
+        }
+        .into();
+        self.query(&request)
     }
 
     // this queries another wasm contract. You should know a priori the proper types for T and U

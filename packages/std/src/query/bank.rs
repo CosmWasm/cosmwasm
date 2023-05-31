@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::Coin;
 
 #[cfg(feature = "cosmwasm_1_3")]
-use crate::DenomMetadata;
-
-#[cfg(feature = "cosmwasm_1_3")]
-use crate::PageRequest;
+use crate::{Binary, DenomMetadata, PageRequest};
 
 use super::query_response::QueryResponseType;
 
@@ -88,6 +85,7 @@ impl QueryResponseType for DenomMetadataResponse {}
 pub struct AllDenomMetadataResponse {
     /// Always returns metadata for all token denoms on the base chain.
     pub metadata: Vec<DenomMetadata>,
+    pub next_key: Option<Binary>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
