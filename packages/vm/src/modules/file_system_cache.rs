@@ -110,7 +110,7 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let file_path = self.modules_path.join(filename);
 
-        let result = unsafe { Module::deserialize_from_file(engine, &file_path) };
+        let result = unsafe { Module::deserialize_from_file_unchecked(engine, &file_path) };
         match result {
             Ok(module) => {
                 let module_size = module_size(&file_path)?;
