@@ -145,6 +145,16 @@ where
         })
     }
 
+    /// If `unchecked` is true, the filesystem cache will use the `*_unchecked` wasmer functions for
+    /// loading modules from disk.
+    pub fn set_module_unchecked(&mut self, unchecked: bool) {
+        self.inner
+            .lock()
+            .unwrap()
+            .fs_cache
+            .set_module_unchecked(unchecked);
+    }
+
     pub fn stats(&self) -> Stats {
         self.inner.lock().unwrap().stats
     }

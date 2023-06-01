@@ -108,6 +108,12 @@ impl FileSystemCache {
         })
     }
 
+    /// If `unchecked` is true, the cache will use the `*_unchecked` wasmer functions for
+    /// loading modules from disk.
+    pub fn set_module_unchecked(&mut self, unchecked: bool) {
+        self.unchecked_modules = unchecked;
+    }
+
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
     pub fn load(
