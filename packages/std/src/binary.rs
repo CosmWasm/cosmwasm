@@ -1,5 +1,5 @@
-use std::fmt;
-use std::ops::Deref;
+use crate::cw_std::fmt;
+use crate::cw_std::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};

@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use crate::cw_std::fmt;
 
 use crate::math::Uint64;
 

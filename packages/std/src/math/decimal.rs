@@ -1,10 +1,10 @@
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
+use crate::cw_std::cmp::Ordering;
+use crate::cw_std::fmt::{self, Write};
+use crate::cw_std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use crate::cw_std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::{

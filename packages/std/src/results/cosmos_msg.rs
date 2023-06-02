@@ -1,7 +1,7 @@
 use derivative::Derivative;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use crate::cw_std::fmt;
 
 use crate::binary::Binary;
 use crate::coin::Coin;

@@ -4,7 +4,7 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::cmp::{Ord, Ordering, PartialOrd};
+use crate::cw_std::cmp::{Ord, Ordering, PartialOrd};
 
 #[cfg(feature = "ibc3")]
 use crate::addresses::Addr;

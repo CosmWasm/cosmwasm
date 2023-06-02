@@ -1,5 +1,7 @@
+//! if somebody will need alternative implementation, for example for collection or fmt, one may patch for himself this one
+
 #[cfg(not(feature = "no-std"))]
-pub use std::vec::Vec;
+pub use std::vec;
 
 #[cfg(feature = "no-std")]
 pub use alloc::vec;
@@ -7,14 +9,24 @@ pub use alloc::vec;
 #[cfg(feature = "no-std")]
 pub use core::mem;
 #[cfg(not(feature = "no-std"))]
-use std::mem;
+pub use std::mem;
 
-pub mod ops {
-    #[cfg(feature = "no-std")]
-    pub use core::ops::Deref;
-    #[cfg(not(feature = "no-std"))]
-    use std::ops::Deref;
-}
+
+#[cfg(feature = "no-std")]
+pub use core::cmp;
+pub use std::cmp;
+
+#[cfg(not(feature = "no-std"))]
+pub use std::iter;
+
+#[cfg(feature = "no-std")]
+pub use core::iter;
+
+#[cfg(not(feature = "no-std"))]
+pub use std::ops;
+
+#[cfg(feature = "no-std")]
+pub use core::ops;
 
 pub mod string {
     #[cfg(not(feature = "no-std"))]
@@ -47,6 +59,16 @@ pub mod convert {
     pub use core::convert::TryInto;
 }
 
+
+
+
+#[cfg(not(feature = "no-std"))]
+pub use std::collections;
+
+#[cfg(feature = "no-std")]
+pub use alloc::collections;
+
+
 #[cfg(not(feature = "no-std"))]
 pub use std::fmt;
 
@@ -61,6 +83,14 @@ pub mod borrow {
     pub use alloc::borrow::Cow;
 }
 
+
+pub mod str {
+    #[cfg(not(feature = "no-std"))]
+    pub use std::str::FromStr;
+
+    #[cfg(feature = "no-std")]
+    pub use alloc::str::FromStr;
+}
 
 pub mod any {
     #[cfg(not(feature = "no-std"))]
