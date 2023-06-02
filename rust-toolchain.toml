@@ -1,5 +1,5 @@
 [toolchain]
-channel = "nightly-2023-06-01"
+channel = "1.68.2"
 components = [
   "clippy",
   "rust-analysis",
@@ -7,4 +7,8 @@ components = [
   "rust-src",
   "cargo",
 ]
-targets = ["wasm32-unknown-unknown", "thumbv7em-none-eabi"]
+targets = [
+  "wasm32-unknown-unknown",
+  # that is the way to test that it checks and builds againt no_std target
+  "thumbv7em-none-eabi"
+  ]

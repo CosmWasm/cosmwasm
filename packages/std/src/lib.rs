@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "backtraces", feature(error_generic_member_access))]
 #![cfg_attr(feature = "backtraces", feature(provide_any))]
+#![cfg_attr(feature = "no-std", no_std)]
 
 // Exposed on all platforms
 
@@ -8,6 +9,7 @@ mod assertions;
 mod binary;
 mod coin;
 mod conversion;
+mod cw_std;
 mod deps;
 mod errors;
 mod forward_ref;

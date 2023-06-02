@@ -40,6 +40,13 @@ cosmwasm_1_1 = []
 # the host blockchain to run CosmWasm `1.2.0` or higher.
 cosmwasm_1_2 = ["cosmwasm_1_1"]
 
+# define allow to compile with no_std crates.
+# this is compromize which 100% will not break anything in any existing consumer
+# good enough for no_std to work (they will have to define this feature)
+# risk is that is not starndar `if not std then no_std` flag and may conflict at some point (until rust done with mutually exclusive features)
+# risk is low
+no-std = []
+
 [dependencies]
 base64 = "0.13.0"
 cosmwasm-derive = { path = "../derive", version = "1.2.5" }

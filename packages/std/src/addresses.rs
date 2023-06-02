@@ -4,9 +4,9 @@ use sha2::{
     digest::{Digest, Update},
     Sha256,
 };
-use std::borrow::Cow;
-use std::fmt;
-use std::ops::Deref;
+use super::cw_std::borrow::Cow;
+use super::cw_std::fmt;
+use super::cw_std::ops::Deref;
 use thiserror::Error;
 
 use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
