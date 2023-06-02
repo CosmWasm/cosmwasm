@@ -32,18 +32,18 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
 | [HexBinary]         | string containing hex data                | `"b5d7d24e428c"`                                                                      |                                                                                                                                                                                        |
 | [Timestamp]         | string containing nanoseconds since epoch | `"1677687687000000000"`                                                               |                                                                                                                                                                                        |
 
-[uint64]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Uint64.html
-[uint128]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Uint128.html
-[uint256]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Uint256.html
-[uint512]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Uint512.html
-[decimal]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Decimal.html
+[uint64]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint64.html
+[uint128]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint128.html
+[uint256]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint256.html
+[uint512]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint512.html
+[decimal]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Decimal.html
 [decimal256]:
-  https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Decimal256.html
-[binary]: https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Binary.html
+  https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Decimal256.html
+[binary]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Binary.html
 [hexbinary]:
-  https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.HexBinary.html
+  https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.HexBinary.html
 [timestamp]:
-  https://docs.rs/cosmwasm-std/1.1.1/cosmwasm_std/struct.Timestamp.html
+  https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Timestamp.html
 [dev-note-4]:
   https://medium.com/cosmwasm/dev-note-4-u128-i128-serialization-in-cosmwasm-90cb76784d44
 
