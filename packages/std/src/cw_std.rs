@@ -13,6 +13,12 @@ pub use std::mem;
 
 
 #[cfg(feature = "no-std")]
+pub use core::result;
+#[cfg(not(feature = "no-std"))]
+pub use std::result;
+
+
+#[cfg(feature = "no-std")]
 pub use core::cmp;
 pub use std::cmp;
 
@@ -102,5 +108,5 @@ pub mod any {
 
 // just because it is default prelude
 pub mod prelude {
-    pub use crate::cw_std::{string::String, vec::Vec};
+    pub use crate::cw_std::{string::String, vec::Vec, result::Result::{Err, Ok}};
 }

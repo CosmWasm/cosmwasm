@@ -1,6 +1,6 @@
 #[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
-use std::fmt::Debug;
+use crate::cw_std::backtrace::Backtrace;
+use crate::cw_std::fmt::Debug;
 use thiserror::Error;
 
 #[cfg(not(target_arch = "wasm32"))]

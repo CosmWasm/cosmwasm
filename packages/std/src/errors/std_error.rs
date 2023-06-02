@@ -1,6 +1,6 @@
 #[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
-use std::fmt;
+use crate::cw_std::backtrace::Backtrace;
+use crate::cw_std::fmt;
 use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
