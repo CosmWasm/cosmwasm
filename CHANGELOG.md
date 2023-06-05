@@ -6,8 +6,9 @@ and this project adheres to
 
 ## [Unreleased]
 
-- cosmwasm-vm: Bumped serialization version number to invalidate corrupt caches
-  caused by Rust update ([#1708])
+- cosmwasm-vm: Bumped module serialization version from v4 to v5 to invalidate
+  potentially corrupted caches caused by Rust update. See
+  https://github.com/CosmWasm/wasmvm/issues/426 for more information. ([#1708])
 
 [#1708]: https://github.com/CosmWasm/cosmwasm/pull/1708
 
