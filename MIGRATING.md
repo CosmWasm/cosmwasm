@@ -20,12 +20,12 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
-- If you want to use a fewture that os only available on CosmWasm 1.3+ chains,
+- If you want to use a feature that is only available on CosmWasm 1.3+ chains,
   use this feature:
 
   ```diff
-  -cosmwasm-std = { version = "1.1.0", features = ["stargate"] }
-  +cosmwasm-std = { version = "1.1.0", features = ["stargate", "cosmwasm_1_3"] }
+  -cosmwasm-std = { version = "1.3.0", features = ["stargate"] }
+  +cosmwasm-std = { version = "1.3.0", features = ["stargate", "cosmwasm_1_3"] }
   ```
 
   Please note that `cosmwasm_1_2` implies `cosmwasm_1_1`, and `cosmwasm_1_3`

@@ -71,7 +71,7 @@ impl QueryResponseType for AllBalanceResponse {}
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct DenomMetadataResponse {
-    /// Always returns metadata for all token denoms on the base chain.
+    /// The metadata for the queried denom.
     pub metadata: DenomMetadata,
 }
 
