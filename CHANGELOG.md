@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.2.6] - 2023-06-05
+
+## Changed
+
 - cosmwasm-vm: Bumped module serialization version from v4 to v5 to invalidate
   potentially corrupted caches caused by Rust update. See
   https://github.com/CosmWasm/wasmvm/issues/426 for more information. ([#1708])
@@ -1691,7 +1695,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...HEAD
+[1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.2...v1.2.3
