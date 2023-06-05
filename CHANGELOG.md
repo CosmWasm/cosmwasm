@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+- cosmwasm-vm: Bumped serialization version number to invalidate corrupt caches
+  caused by Rust update ([#1708])
+
+[#1708]: https://github.com/CosmWasm/cosmwasm/pull/1708
+
 ## [1.2.5] - 2023-05-02
 
 ### Added
