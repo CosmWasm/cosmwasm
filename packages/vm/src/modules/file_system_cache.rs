@@ -240,7 +240,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let file_path = format!(
-            "{}/v4-wasmer1/{}",
+            "{}/v5-wasmer1/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         );
