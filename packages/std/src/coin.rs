@@ -21,7 +21,7 @@ impl Coin {
 
 impl fmt::Debug for Coin {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.amount, self.denom)
+        write!(f, "Coin {{ {} \"{}\" }}", self.amount, self.denom)
     }
 }
 
@@ -245,6 +245,6 @@ mod tests {
     #[test]
     fn debug_coin() {
         let coin = Coin::new(123, "ucosm");
-        assert_eq!(format!("{:?}", coin), "123ucosm");
+        assert_eq!(format!("{:?}", coin), r#"Coin { 123 "ucosm" }"#);
     }
 }

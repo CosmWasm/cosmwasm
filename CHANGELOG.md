@@ -34,7 +34,7 @@ and this project adheres to
 - cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
 - cosmwasm-vm: Upgrade Wasmer to version 3.3.0.
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
-- cosmwasm-std: Coin uses `123ucosm` format for Debug as well as Display
+- cosmwasm-std: Coin uses `Coin { 123 "ucosm" }` format for Debug as well as Display
   ([#1704])
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
