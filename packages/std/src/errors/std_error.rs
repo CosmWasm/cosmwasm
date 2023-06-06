@@ -594,8 +594,6 @@ pub struct RoundUpOverflowError;
 pub enum CoinsError {
     #[error("Duplicate denom")]
     DuplicateDenom,
-    #[error("Coin with zero amount: {denom}")]
-    ZeroAmount { denom: String },
 }
 
 impl From<CoinsError> for StdError {

@@ -16,30 +16,23 @@ use crate::{errors::CoinsError, Coin, StdError, StdResult, Uint128};
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Coins(BTreeMap<String, Uint128>);
 
-// Casting a Vec<Coin> to Coins.
-// The Vec can be out of order, but must not contain duplicate denoms or zero amounts.
+/// Casting a Vec<Coin> to Coins.
+/// The Vec can be out of order, but must not contain duplicate denoms.
+/// If you want to sum up duplicates, create an empty instance using [Coins::default] and use `Coins::extend`.
 impl TryFrom<Vec<Coin>> for Coins {
     type Error = CoinsError;
 
     fn try_from(vec: Vec<Coin>) -> Result<Self, CoinsError> {
-        if let Some(coin) = vec.iter().find(|c| c.amount.is_zero()) {
-            return Err(CoinsError::ZeroAmount {
-                denom: coin.denom.clone(),
-            });
-        }
+        let mut map = BTreeMap::new();
+        for Coin { amount, denom } in vec {
+            if amount.is_zero() {
+                continue;
+            }
 
-        let vec_len = vec.len();
-
-        let map = vec
-            .into_iter()
-            .filter(|coin| !coin.amount.is_zero())
-            .map(|coin| (coin.denom, coin.amount))
-            .collect::<BTreeMap<_, _>>();
-
-        // the map having a different length from the vec means the vec must either contain
-        // duplicate denoms
-        if map.len() != vec_len {
-            return Err(CoinsError::DuplicateDenom);
+            // if the insertion returns a previous value, we have a duplicate denom
+            if map.insert(denom, amount).is_some() {
+                return Err(CoinsError::DuplicateDenom);
+            }
         }
 
         Ok(Self(map))
@@ -51,6 +44,15 @@ impl TryFrom<&[Coin]> for Coins {
 
     fn try_from(slice: &[Coin]) -> Result<Self, CoinsError> {
         slice.to_vec().try_into()
+    }
+}
+
+impl From<Coin> for Coins {
+    fn from(value: Coin) -> Self {
+        let mut coins = Coins::default();
+        // this can never overflow (because there are no coins in there yet), so we can unwrap
+        coins.add(value).unwrap();
+        coins
     }
 }
 
@@ -173,7 +175,8 @@ impl Coins {
         Ok(())
     }
 
-    /// Adds the given coins to the collection.
+    /// Adds the given coins to the collection, ignoring any zero coins and summing up
+    /// duplicate denoms.
     /// This takes anything that yields `(denom, amount)` tuples when iterated over.
     ///
     /// # Examples
@@ -224,6 +227,10 @@ mod tests {
             coins.add(coin).unwrap();
         }
         coins
+    }
+
+    fn mock_duplicate() -> Vec<Coin> {
+        vec![coin(12345, "uatom"), coin(6789, "uatom")]
     }
 
     #[test]
@@ -289,8 +296,13 @@ mod tests {
         let mut vec = mock_vec();
         vec[0].amount = Uint128::zero();
 
-        let err = Coins::try_from(vec).unwrap_err();
-        assert!(err.to_string().contains("zero amount"));
+        let coins = Coins::try_from(vec).unwrap();
+        assert_eq!(coins.len(), 2);
+        assert_ne!(coins.amount_of("ibc/1234ABCD"), Uint128::zero());
+        assert_ne!(
+            coins.amount_of("factory/osmo1234abcd/subdenom"),
+            Uint128::zero()
+        );
 
         // adding a coin with zero amount should not be added
         let mut coins = Coins::default();
@@ -331,6 +343,10 @@ mod tests {
 
         coins.extend([coin(123, "uusd")]).unwrap();
         assert_eq!(coins.len(), 4);
-        assert_eq!(coins.amount_of("uusd").u128(), 123)
+        assert_eq!(coins.amount_of("uusd").u128(), 123);
+
+        // duplicate handling
+        coins.extend(mock_duplicate()).unwrap();
+        assert_eq!(coins.amount_of("uatom").u128(), 24690 + 12345 + 6789);
     }
 }
