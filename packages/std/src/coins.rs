@@ -119,10 +119,12 @@ impl Coins {
             .collect()
     }
 
+    /// Returns the number of different denoms in this collection.
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
+    /// Returns `true` if this collection contains no coins.
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -165,8 +167,8 @@ impl Coins {
         }
     }
 
-    /// Adds the given coin to the collection.
-    /// This errors in case of overflow.
+    /// Adds the given coin to this `Coins` instance.
+    /// Errors in case of overflow.
     pub fn add(&mut self, coin: Coin) -> StdResult<()> {
         if coin.amount.is_zero() {
             return Ok(());
@@ -177,24 +179,28 @@ impl Coins {
         Ok(())
     }
 
-    /// Subtracts the given coin or collection of coins from this `Coins` instance.
-    /// Errors in case of overflow or if one of the coins is not present.
+    /// Subtracts the given coin from this `Coins` instance.
+    /// Errors in case of overflow or if the denom is not present.
     pub fn sub(&mut self, coin: Coin) -> StdResult<()> {
         match self.0.get_mut(&coin.denom) {
             Some(v) => {
                 *v = v.checked_sub(coin.amount)?;
-                // make sure to remove zero coins
+                // make sure to remove zero coin
                 if v.is_zero() {
                     self.0.remove(&coin.denom);
                 }
             }
             None => {
+                // ignore zero subtraction
+                if coin.amount.is_zero() {
+                    return Ok(());
+                }
                 return Err(OverflowError::new(
                     OverflowOperation::Sub,
                     Uint128::zero(),
                     coin.amount,
                 )
-                .into())
+                .into());
             }
         }
 
@@ -321,12 +327,22 @@ mod tests {
     #[test]
     fn add_coin() {
         let mut coins = mock_coins();
-        coins.add(coin(12345, "uatom")).unwrap();
 
+        // existing denom
+        coins.add(coin(12345, "uatom")).unwrap();
         assert_eq!(coins.len(), 3);
         assert_eq!(coins.amount_of("uatom").u128(), 24690);
 
+        // new denom
         coins.add(coin(123, "uusd")).unwrap();
+        assert_eq!(coins.len(), 4);
+
+        // zero amount
+        coins.add(coin(0, "uusd")).unwrap();
+        assert_eq!(coins.amount_of("uusd").u128(), 123);
+
+        // zero amount, new denom
+        coins.add(coin(0, "utest")).unwrap();
         assert_eq!(coins.len(), 4);
     }
 
@@ -350,5 +366,15 @@ mod tests {
         // full sub
         coins.sub(coin(12344, "uatom")).unwrap();
         assert!(coins.is_empty());
+
+        // sub zero, existing denom
+        coins.sub(coin(0, "uusd")).unwrap();
+        assert!(coins.is_empty());
+        let mut coins: Coins = coin(12345, "uatom").into();
+
+        // sub zero, non-existent denom
+        coins.sub(coin(0, "uatom")).unwrap();
+        assert_eq!(coins.len(), 1);
+        assert_eq!(coins.amount_of("uatom").u128(), 12345);
     }
 }
