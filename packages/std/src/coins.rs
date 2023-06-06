@@ -3,6 +3,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use crate::{errors::CoinsError, Coin, StdError, StdResult, Uint128};
+use crate::{OverflowError, OverflowOperation};
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
 ///
@@ -18,7 +19,8 @@ pub struct Coins(BTreeMap<String, Uint128>);
 
 /// Casting a Vec<Coin> to Coins.
 /// The Vec can be out of order, but must not contain duplicate denoms.
-/// If you want to sum up duplicates, create an empty instance using [Coins::default] and use `Coins::extend`.
+/// If you want to sum up duplicates, create an empty instance using `Coins::default` and
+/// use `Coins::add` to add your coins.
 impl TryFrom<Vec<Coin>> for Coins {
     type Error = CoinsError;
 
@@ -175,28 +177,27 @@ impl Coins {
         Ok(())
     }
 
-    /// Adds the given coins to the collection, ignoring any zero coins and summing up
-    /// duplicate denoms.
-    /// This takes anything that yields `(denom, amount)` tuples when iterated over.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use cosmwasm_std::{Coin, Coins, coin};
-    ///
-    /// let mut coins = Coins::default();
-    /// let new_coins: Coins = [coin(123u128, "ucosm")].try_into()?;
-    /// coins.extend(new_coins.to_vec())?;
-    /// assert_eq!(coins, new_coins);
-    /// # cosmwasm_std::StdResult::Ok(())
-    /// ```
-    pub fn extend<C>(&mut self, others: C) -> StdResult<()>
-    where
-        C: IntoIterator<Item = Coin>,
-    {
-        for c in others {
-            self.add(c)?;
+    /// Subtracts the given coin or collection of coins from this `Coins` instance.
+    /// Errors in case of overflow or if one of the coins is not present.
+    pub fn sub(&mut self, coin: Coin) -> StdResult<()> {
+        match self.0.get_mut(&coin.denom) {
+            Some(v) => {
+                *v = v.checked_sub(coin.amount)?;
+                // make sure to remove zero coins
+                if v.is_zero() {
+                    self.0.remove(&coin.denom);
+                }
+            }
+            None => {
+                return Err(OverflowError::new(
+                    OverflowOperation::Sub,
+                    Uint128::zero(),
+                    coin.amount,
+                )
+                .into())
+            }
         }
+
         Ok(())
     }
 }
@@ -227,10 +228,6 @@ mod tests {
             coins.add(coin).unwrap();
         }
         coins
-    }
-
-    fn mock_duplicate() -> Vec<Coin> {
-        vec![coin(12345, "uatom"), coin(6789, "uatom")]
     }
 
     #[test]
@@ -334,19 +331,24 @@ mod tests {
     }
 
     #[test]
-    fn extend_coins() {
-        let mut coins: Coins = [coin(12345, "uatom")].try_into().unwrap();
+    fn sub_coins() {
+        let mut coins: Coins = coin(12345, "uatom").into();
 
-        coins.extend(mock_coins().to_vec()).unwrap();
-        assert_eq!(coins.len(), 3);
-        assert_eq!(coins.amount_of("uatom").u128(), 24690);
+        // sub more than available
+        let err = coins.sub(coin(12346, "uatom")).unwrap_err();
+        assert!(matches!(err, StdError::Overflow { .. }));
 
-        coins.extend([coin(123, "uusd")]).unwrap();
-        assert_eq!(coins.len(), 4);
-        assert_eq!(coins.amount_of("uusd").u128(), 123);
+        // sub non-existent denom
+        let err = coins.sub(coin(12345, "uusd")).unwrap_err();
+        assert!(matches!(err, StdError::Overflow { .. }));
 
-        // duplicate handling
-        coins.extend(mock_duplicate()).unwrap();
-        assert_eq!(coins.amount_of("uatom").u128(), 24690 + 12345 + 6789);
+        // partial sub
+        coins.sub(coin(1, "uatom")).unwrap();
+        assert_eq!(coins.len(), 1);
+        assert_eq!(coins.amount_of("uatom").u128(), 12344);
+
+        // full sub
+        coins.sub(coin(12344, "uatom")).unwrap();
+        assert!(coins.is_empty());
     }
 }
