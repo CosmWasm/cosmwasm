@@ -15,7 +15,7 @@ and this project adheres to
 
 ### Changed
 
-- cosmwasm-std: Coin uses `Coin { 123 "ucosm" }` format for Debug as well as Display
+- cosmwasm-std: Coin uses shorter `Coin { 123 "ucosm" }` format for Debug
   ([#1704])
 
 [#1704]: https://github.com/CosmWasm/cosmwasm/pull/1704
