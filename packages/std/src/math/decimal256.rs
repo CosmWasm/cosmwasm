@@ -85,7 +85,7 @@ impl Decimal256 {
         Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000u128))
     }
 
-    /// Convert bps (basis points) into Decimal256
+    /// Convert basis points (x/10000) into Decimal256
     pub fn bps(x: u64) -> Self {
         Self(Uint256::from(x) * Uint256::from(100_000_000_000_000u128))
     }
