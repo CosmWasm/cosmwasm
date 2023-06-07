@@ -39,7 +39,7 @@ use bnum::types::U256;
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint256(#[schemars(with = "String")] U256);
+pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
 
 forward_ref_partial_eq!(Uint256, Uint256);
 
@@ -58,16 +58,13 @@ impl Uint256 {
     /// Creates a Uint256(0)
     #[inline]
     pub const fn zero() -> Self {
-        Uint256(U256::ZERO)
+        Self(U256::ZERO)
     }
 
     /// Creates a Uint256(1)
     #[inline]
     pub const fn one() -> Self {
-        Self::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 1,
-        ])
+        Self(U256::ONE)
     }
 
     #[must_use]
@@ -161,8 +158,7 @@ impl Uint256 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
-        let res = self.0.pow(exp);
-        Self(res)
+        Self(self.0.pow(exp))
     }
 
     /// Returns `self * numerator / denominator`.
@@ -291,29 +287,25 @@ impl Uint256 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_add(other.0);
-        Self(value)
+        Self(self.0.wrapping_add(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_sub(other.0);
-        Self(value)
+        Self(self.0.wrapping_sub(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_mul(other.0);
-        Self(value)
+        Self(self.0.wrapping_mul(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_pow(other);
-        Self(value)
+        Self(self.0.wrapping_pow(other))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -333,19 +325,12 @@ impl Uint256 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        Self(self.0.saturating_pow(exp))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_diff(self, other: Self) -> Self {
-        if self < other {
-            other - self
-        } else {
-            self - other
-        }
+        Self(self.0.abs_diff(other.0))
     }
 }
 

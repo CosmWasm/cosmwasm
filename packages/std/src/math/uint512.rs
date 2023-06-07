@@ -42,7 +42,7 @@ use bnum::types::U512;
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint512(#[schemars(with = "String")] U512);
+pub struct Uint512(#[schemars(with = "String")] pub(crate) U512);
 
 forward_ref_partial_eq!(Uint512, Uint512);
 
@@ -65,11 +65,7 @@ impl Uint512 {
     /// Creates a Uint512(1)
     #[inline]
     pub const fn one() -> Self {
-        Self::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 1,
-        ])
+        Self(U512::ONE)
     }
 
     #[must_use]
@@ -190,8 +186,7 @@ impl Uint512 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
-        let res = self.0.pow(exp);
-        Self(res)
+        Self(self.0.pow(exp))
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -241,11 +236,10 @@ impl Uint512 {
     }
 
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
-        if other >= 512 {
-            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
-        }
-
-        Ok(Self(self.0.shr(other)))
+        self.0
+            .checked_shr(other)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Shr, self, other))
     }
 
     pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
@@ -259,29 +253,25 @@ impl Uint512 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_add(other.0);
-        Self(value)
+        Self(self.0.wrapping_add(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_sub(other.0);
-        Self(value)
+        Self(self.0.wrapping_sub(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_mul(other.0);
-        Self(value)
+        Self(self.0.wrapping_mul(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_pow(other);
-        Self(value)
+        Self(self.0.wrapping_pow(other))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -301,19 +291,12 @@ impl Uint512 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        Self(self.0.saturating_pow(exp))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_diff(self, other: Self) -> Self {
-        if self < other {
-            other - self
-        } else {
-            self - other
-        }
+        Self(self.0.abs_diff(other.0))
     }
 }
 
