@@ -1,6 +1,8 @@
-use crate::cw_std::fmt;
-use crate::cw_std::ops::Deref;
+use crate::no_std::fmt;
+use crate::no_std::ops::Deref;
+use crate::no_std::prelude::*;
 
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -11,8 +13,9 @@ use crate::errors::{StdError, StdResult};
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
-pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct Binary(#[cfg_attr(feature = "std", schemars(with = "String"))] pub Vec<u8>);
 
 impl Binary {
     /// take an (untrusted) string and decode it into bytes.

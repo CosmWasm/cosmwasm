@@ -1,10 +1,15 @@
+use crate::no_std::cmp::Ordering;
+use crate::no_std::fmt::{self, Write};
+use crate::no_std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign,
+};
+use crate::no_std::prelude::*;
+use crate::no_std::str::FromStr;
+#[cfg(feature = "std")]
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use crate::cw_std::cmp::Ordering;
-use crate::cw_std::fmt::{self, Write};
-use crate::cw_std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use crate::cw_std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::{
@@ -20,8 +25,9 @@ use super::{Uint128, Uint256};
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal(#[schemars(with = "String")] Uint128);
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct Decimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint128);
 
 forward_ref_partial_eq!(Decimal, Decimal);
 
@@ -540,6 +546,8 @@ impl Add for Decimal {
         Decimal(self.0 + other.0)
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Add, add for Decimal, Decimal);
 
 impl AddAssign for Decimal {
@@ -547,6 +555,8 @@ impl AddAssign for Decimal {
         *self = *self + rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl AddAssign, add_assign for Decimal, Decimal);
 
 impl Sub for Decimal {
@@ -556,6 +566,8 @@ impl Sub for Decimal {
         Decimal(self.0 - other.0)
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Decimal, Decimal);
 
 impl SubAssign for Decimal {
@@ -563,6 +575,8 @@ impl SubAssign for Decimal {
         *self = *self - rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Decimal, Decimal);
 
 impl Mul for Decimal {
@@ -583,6 +597,8 @@ impl Mul for Decimal {
         }
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Decimal, Decimal);
 
 impl MulAssign for Decimal {
@@ -590,6 +606,8 @@ impl MulAssign for Decimal {
         *self = *self * rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal, Decimal);
 
 /// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
@@ -631,6 +649,8 @@ impl Div for Decimal {
         }
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Div, div for Decimal, Decimal);
 
 impl DivAssign for Decimal {
@@ -638,6 +658,8 @@ impl DivAssign for Decimal {
         *self = *self / rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl DivAssign, div_assign for Decimal, Decimal);
 
 impl Div<Uint128> for Decimal {
@@ -665,6 +687,8 @@ impl Rem for Decimal {
         Self(self.0.rem(rhs.0))
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Decimal, Decimal);
 
 impl RemAssign<Decimal> for Decimal {
@@ -672,9 +696,11 @@ impl RemAssign<Decimal> for Decimal {
         *self = *self % rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal, Decimal);
 
-impl<A> std::iter::Sum<A> for Decimal
+impl<A> crate::no_std::iter::Sum<A> for Decimal
 where
     Self: Add<A, Output = Self>,
 {

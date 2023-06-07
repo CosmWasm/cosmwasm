@@ -3,6 +3,7 @@
 //!
 //! Everything in this file is only responsible for building such keys
 //! and is in no way specific to any kind of storage.
+use crate::no_std::prelude::*;
 
 /// Calculates the raw key prefix for a given namespace as documented
 /// in https://github.com/webmaster128/key-namespacing#length-prefixed-keys

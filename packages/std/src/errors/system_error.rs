@@ -1,7 +1,8 @@
+use crate::no_std::prelude::*;
+use crate::Binary;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use crate::Binary;
 
 /// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
 ///
@@ -12,7 +13,8 @@ use crate::Binary;
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
@@ -39,10 +41,10 @@ pub enum SystemError {
     },
 }
 
-impl std::error::Error for SystemError {}
+impl crate::no_std::error::Error for SystemError {}
 
-impl std::fmt::Display for SystemError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl crate::no_std::fmt::Display for SystemError {
+    fn fmt(&self, f: &mut crate::no_std::fmt::Formatter<'_>) -> crate::no_std::fmt::Result {
         match self {
             SystemError::InvalidRequest { error, request } => write!(
                 f,

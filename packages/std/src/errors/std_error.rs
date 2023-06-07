@@ -1,6 +1,7 @@
 #[cfg(feature = "backtraces")]
-use crate::cw_std::backtrace::Backtrace;
-use crate::cw_std::fmt;
+use crate::no_std::backtrace::Backtrace;
+use crate::no_std::fmt;
+use crate::no_std::prelude::*;
 use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
@@ -433,14 +434,14 @@ impl PartialEq<StdError> for StdError {
     }
 }
 
-impl From<std::str::Utf8Error> for StdError {
-    fn from(source: std::str::Utf8Error) -> Self {
+impl From<crate::no_std::str::Utf8Error> for StdError {
+    fn from(source: crate::no_std::str::Utf8Error) -> Self {
         Self::invalid_utf8(source)
     }
 }
 
-impl From<std::string::FromUtf8Error> for StdError {
-    fn from(source: std::string::FromUtf8Error) -> Self {
+impl From<crate::no_std::string::FromUtf8Error> for StdError {
+    fn from(source: crate::no_std::string::FromUtf8Error) -> Self {
         Self::invalid_utf8(source)
     }
 }
@@ -597,11 +598,11 @@ pub enum CoinFromStrError {
     #[error("Missing amount or non-digit characters in amount")]
     MissingAmount,
     #[error("Invalid amount: {0}")]
-    InvalidAmount(std::num::ParseIntError),
+    InvalidAmount(crate::no_std::num::ParseIntError),
 }
 
-impl From<std::num::ParseIntError> for CoinFromStrError {
-    fn from(value: std::num::ParseIntError) -> Self {
+impl From<crate::no_std::num::ParseIntError> for CoinFromStrError {
+    fn from(value: crate::no_std::num::ParseIntError) -> Self {
         Self::InvalidAmount(value)
     }
 }
@@ -615,7 +616,7 @@ impl From<CoinFromStrError> for StdError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str;
+    use crate::no_std::str;
 
     // constructors
 

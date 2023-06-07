@@ -1,4 +1,4 @@
-use crate::cw_std::vec::Vec;
+use crate::no_std::vec::Vec;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};

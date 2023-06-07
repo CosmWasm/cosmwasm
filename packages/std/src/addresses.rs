@@ -1,12 +1,14 @@
+use super::no_std::borrow::Cow;
+use super::no_std::fmt;
+use super::no_std::ops::Deref;
+use crate::no_std::prelude::*;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{
     digest::{Digest, Update},
     Sha256,
 };
-use super::cw_std::borrow::Cow;
-use super::cw_std::fmt;
-use super::cw_std::ops::Deref;
 use thiserror::Error;
 
 use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
@@ -27,9 +29,8 @@ use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
-)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct Addr(String);
 
 forward_ref_partial_eq!(Addr, Addr);
@@ -169,7 +170,8 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 /// addition to that there are many unsafe ways to convert any binary data into an instance.
 /// So the type shoud be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct CanonicalAddr(pub Binary);
 
 /// Implement `CanonicalAddr == Binary`

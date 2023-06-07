@@ -1,3 +1,5 @@
+use crate::no_std::prelude::*;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +8,8 @@ use crate::Coin;
 use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum BankQuery {
     /// This calls into the native bank module for querying the total supply of one denomination.
@@ -24,7 +27,8 @@ pub enum BankQuery {
 }
 
 #[cfg(feature = "cosmwasm_1_1")]
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct SupplyResponse {
@@ -36,7 +40,8 @@ pub struct SupplyResponse {
 #[cfg(feature = "cosmwasm_1_1")]
 impl QueryResponseType for SupplyResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub struct BalanceResponse {
     /// Always returns a Coin with the requested denom.
@@ -46,7 +51,8 @@ pub struct BalanceResponse {
 
 impl QueryResponseType for BalanceResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub struct AllBalanceResponse {
     /// Returns all non-zero coins held by this account.

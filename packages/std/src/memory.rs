@@ -1,5 +1,5 @@
-use crate::cw_std::mem;
-use crate::cw_std::vec::Vec;
+use crate::no_std::mem;
+use crate::no_std::vec::Vec;
 
 /// Describes some data allocated in Wasm's linear memory.
 /// A pointer to an instance of this can be returned over FFI boundaries.

@@ -1,10 +1,13 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use crate::cw_std::fmt::{self};
-use crate::cw_std::ops::{
+use crate::no_std::fmt::{self};
+use crate::no_std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
 };
+use crate::no_std::prelude::*;
+#[cfg(feature = "std")]
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+#[cfg(feature = "std")]
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -28,8 +31,9 @@ use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128};
 /// let b = Uint64::from(70u32);
 /// assert_eq!(b.u64(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint64(#[schemars(with = "String")] u64);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct Uint64(#[cfg_attr(feature = "std", schemars(with = "String"))] u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);
 
@@ -331,6 +335,8 @@ impl Sub<Uint64> for Uint64 {
         )
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Uint64, Uint64);
 
 impl SubAssign<Uint64> for Uint64 {
@@ -338,6 +344,8 @@ impl SubAssign<Uint64> for Uint64 {
         *self = *self - rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint64, Uint64);
 
 impl Mul<Uint64> for Uint64 {
@@ -351,6 +359,8 @@ impl Mul<Uint64> for Uint64 {
         )
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Uint64, Uint64);
 
 impl MulAssign<Uint64> for Uint64 {
@@ -358,6 +368,8 @@ impl MulAssign<Uint64> for Uint64 {
         *self = *self * rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint64, Uint64);
 
 impl Div<Uint64> for Uint64 {
@@ -387,6 +399,8 @@ impl Rem for Uint64 {
         Self(self.0.rem(rhs.0))
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Uint64, Uint64);
 
 impl RemAssign<Uint64> for Uint64 {
@@ -394,6 +408,8 @@ impl RemAssign<Uint64> for Uint64 {
         *self = *self % rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint64, Uint64);
 
 impl Shr<u32> for Uint64 {
@@ -488,7 +504,7 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint64
+impl<A> crate::no_std::iter::Sum<A> for Uint64
 where
     Self: Add<A, Output = Self>,
 {

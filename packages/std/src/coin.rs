@@ -1,10 +1,13 @@
+use crate::no_std::prelude::*;
+use crate::no_std::{fmt, str::FromStr};
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use crate::cw_std::{fmt, str::FromStr};
 
 use crate::{errors::CoinFromStrError, math::Uint128};
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct Coin {
     pub denom: String,
     pub amount: Uint128,

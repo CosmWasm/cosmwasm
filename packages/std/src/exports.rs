@@ -7,8 +7,8 @@
 //! and `do_sudo` should be wrapped with a extern "C" entry point including
 //! the contract-specific function pointer. This is done via the `#[entry_point]`
 //! macro attribute from cosmwasm-derive.
-use crate::cw_std::marker::PhantomData;
-use crate::cw_std::vec::Vec;
+use crate::no_std::marker::PhantomData;
+use crate::no_std::vec::Vec;
 
 use serde::de::DeserializeOwned;
 

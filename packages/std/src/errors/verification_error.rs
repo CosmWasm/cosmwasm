@@ -1,9 +1,9 @@
 #[cfg(feature = "backtraces")]
-use crate::cw_std::backtrace::Backtrace;
-use crate::cw_std::fmt::Debug;
+use crate::no_std::backtrace::Backtrace;
+use crate::no_std::fmt::Debug;
 use thiserror::Error;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 use cosmwasm_crypto::CryptoError;
 
 #[derive(Error, Debug)]
@@ -70,7 +70,7 @@ impl PartialEq<VerificationError> for VerificationError {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {

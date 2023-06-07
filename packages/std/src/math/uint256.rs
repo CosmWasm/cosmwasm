@@ -1,12 +1,15 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use crate::cw_std::fmt;
-use crate::cw_std::ops::{
+use crate::no_std::fmt;
+use crate::no_std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, Shr, ShrAssign, Sub,
     SubAssign,
 };
-use crate::cw_std::str::FromStr;
+use crate::no_std::prelude::*;
+use crate::no_std::str::FromStr;
+#[cfg(feature = "std")]
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+#[cfg(feature = "std")]
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
@@ -47,8 +50,9 @@ use uints::U256;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint256(#[schemars(with = "String")] U256);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
+pub struct Uint256(#[cfg_attr(feature = "std", schemars(with = "String"))] U256);
 
 forward_ref_partial_eq!(Uint256, Uint256);
 
@@ -146,7 +150,7 @@ impl Uint256 {
             (self.0).0[1].to_be_bytes(),
             (self.0).0[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { crate::no_std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -158,7 +162,7 @@ impl Uint256 {
             (self.0).0[2].to_le_bytes(),
             (self.0).0[3].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { crate::no_std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     #[must_use]
@@ -481,6 +485,8 @@ impl Sub<Uint256> for Uint256 {
         )
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Sub, sub for Uint256, Uint256);
 
 impl SubAssign<Uint256> for Uint256 {
@@ -488,6 +494,8 @@ impl SubAssign<Uint256> for Uint256 {
         *self = *self - rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl SubAssign, sub_assign for Uint256, Uint256);
 
 impl Div<Uint256> for Uint256 {
@@ -521,6 +529,8 @@ impl Rem for Uint256 {
         Self(self.0.rem(rhs.0))
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Rem, rem for Uint256, Uint256);
 
 impl RemAssign<Uint256> for Uint256 {
@@ -528,6 +538,8 @@ impl RemAssign<Uint256> for Uint256 {
         *self = *self % rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl RemAssign, rem_assign for Uint256, Uint256);
 
 impl Mul<Uint256> for Uint256 {
@@ -541,6 +553,8 @@ impl Mul<Uint256> for Uint256 {
         )
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_binop!(impl Mul, mul for Uint256, Uint256);
 
 impl MulAssign<Uint256> for Uint256 {
@@ -548,6 +562,8 @@ impl MulAssign<Uint256> for Uint256 {
         *self = *self * rhs;
     }
 }
+
+#[cfg(feature = "std")]
 forward_ref_op_assign!(impl MulAssign, mul_assign for Uint256, Uint256);
 
 impl Shr<u32> for Uint256 {
@@ -665,7 +681,7 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint256
+impl<A> crate::no_std::iter::Sum<A> for Uint256
 where
     Self: Add<A, Output = Self>,
 {

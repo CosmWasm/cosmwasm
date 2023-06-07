@@ -1,4 +1,4 @@
-use crate::cw_std::{cmp, ops};
+use crate::no_std::{cmp, ops};
 
 use crate::{Uint128, Uint256, Uint512, Uint64};
 

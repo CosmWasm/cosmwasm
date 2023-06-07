@@ -1,4 +1,4 @@
-use crate::cw_std::marker::PhantomData;
+use crate::no_std::marker::PhantomData;
 
 use crate::query::CustomQuery;
 use crate::results::Empty;

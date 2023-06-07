@@ -1,3 +1,4 @@
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +8,8 @@ use serde::{Deserialize, Serialize};
 /// It is designed to be expressable in correct JSON and JSON Schema but
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct Empty {}
 
 #[cfg(test)]

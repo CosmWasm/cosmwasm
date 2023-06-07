@@ -1,9 +1,6 @@
 [toolchain]
-channel = "1.68.2"
+channel = "nightly-2022-11-17"
 components = [
-  "clippy",
-  "rust-analysis",
-  "rustfmt",
   "rust-src",
   "cargo",
 ]

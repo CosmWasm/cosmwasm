@@ -1,5 +1,5 @@
+use crate::no_std::str::FromStr as _;
 use crate::{Decimal, Uint128};
-use std::str::FromStr as _;
 
 /// Asserts that two expressions are approximately equal to each other.
 ///

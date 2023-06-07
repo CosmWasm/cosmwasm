@@ -1,11 +1,13 @@
+use crate::addresses::Addr;
+use crate::coin::Coin;
+use crate::no_std::prelude::*;
+use crate::timestamp::Timestamp;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::Addr;
-use crate::coin::Coin;
-use crate::timestamp::Timestamp;
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
@@ -15,7 +17,8 @@ pub struct Env {
     pub contract: ContractInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
@@ -26,7 +29,8 @@ pub struct TransactionInfo {
     pub index: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
     pub height: u64,
@@ -105,7 +109,8 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct ContractInfo {
     pub address: Addr,
 }

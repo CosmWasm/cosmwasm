@@ -1,3 +1,5 @@
+use crate::no_std::prelude::*;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -59,7 +61,8 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     Ok(response)
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[non_exhaustive]
 pub struct Response<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.

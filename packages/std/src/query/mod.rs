@@ -1,3 +1,5 @@
+use crate::no_std::prelude::*;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -26,7 +28,8 @@ pub use wasm::CodeInfoResponse;
 pub use wasm::{ContractInfoResponse, WasmQuery};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest<C> {
     Bank(BankQuery),

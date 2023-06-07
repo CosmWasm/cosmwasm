@@ -1,6 +1,8 @@
 #![cfg_attr(feature = "backtraces", feature(error_generic_member_access))]
 #![cfg_attr(feature = "backtraces", feature(provide_any))]
-#![cfg_attr(feature = "no-std", no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
+#![feature(error_in_core)]
+extern crate alloc;
 
 // Exposed on all platforms
 
@@ -9,7 +11,6 @@ mod assertions;
 mod binary;
 mod coin;
 mod conversion;
-mod cw_std;
 mod deps;
 mod errors;
 mod forward_ref;
@@ -20,6 +21,7 @@ mod import_helpers;
 mod iterator;
 mod math;
 mod never;
+mod no_std;
 mod panic;
 mod query;
 mod results;
@@ -114,7 +116,7 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), not(no_std)))]
 pub mod testing;
 
 // Re-exports

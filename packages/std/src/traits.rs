@@ -1,6 +1,7 @@
+use crate::no_std::marker::PhantomData;
+use crate::no_std::ops::Deref;
+use crate::no_std::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
-use crate::cw_std::marker::PhantomData;
-use crate::cw_std::ops::Deref;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;

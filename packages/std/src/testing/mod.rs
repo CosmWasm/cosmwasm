@@ -1,4 +1,4 @@
-#![cfg(not(target_arch = "wasm32"))]
+#![cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.

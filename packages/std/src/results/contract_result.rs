@@ -1,6 +1,8 @@
+use crate::no_std::fmt;
+use crate::no_std::prelude::*;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use crate::cw_std::fmt;
 
 /// This is the final result type that is created and serialized in a contract for
 /// every init/execute/migrate call. The VM then deserializes this type to distinguish
@@ -29,7 +31,8 @@ use crate::cw_std::fmt;
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {
     Ok(S),

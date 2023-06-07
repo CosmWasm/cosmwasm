@@ -1,6 +1,7 @@
+use crate::no_std::fmt;
+#[cfg(feature = "std")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use crate::cw_std::fmt;
 
 use crate::math::Uint64;
 
@@ -22,9 +23,8 @@ use crate::math::Uint64;
 /// assert_eq!(ts.seconds(), 3);
 /// assert_eq!(ts.subsec_nanos(), 202);
 /// ```
-#[derive(
-    Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
-)]
+#[derive(Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(JsonSchema))]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {
