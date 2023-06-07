@@ -377,4 +377,16 @@ mod tests {
         assert_eq!(coins.len(), 1);
         assert_eq!(coins.amount_of("uatom").u128(), 12345);
     }
+
+    #[test]
+    fn coin_to_coins() {
+        // zero coin results in empty collection
+        let coins: Coins = coin(0, "uusd").into();
+        assert!(coins.is_empty());
+
+        // happy path
+        let coins = Coins::from(coin(12345, "uatom"));
+        assert_eq!(coins.len(), 1);
+        assert_eq!(coins.amount_of("uatom").u128(), 12345);
+    }
 }
