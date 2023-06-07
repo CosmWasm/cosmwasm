@@ -34,6 +34,8 @@ and this project adheres to
 - cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
 - cosmwasm-vm: Upgrade Wasmer to version 3.3.0.
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
+- cosmwasm-std: Coin uses shorter `Coin { 123 "ucosm" }` format for Debug
+  ([#1704])
 
 [#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
 [#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
@@ -42,6 +44,7 @@ and this project adheres to
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 [#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
 [#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
+[#1704]: https://github.com/CosmWasm/cosmwasm/pull/1704
 
 ### Deprecated
 
