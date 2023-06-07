@@ -14,18 +14,9 @@ use crate::errors::{
 };
 use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128, Uint512, Uint64};
 
-/// This module is purely a workaround that lets us ignore lints for all the code
-/// the `construct_uint!` macro generates.
-#[allow(clippy::all)]
-mod uints {
-    uint::construct_uint! {
-        pub struct U256(4);
-    }
-}
-
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
-use uints::U256;
+use bnum::types::U256;
 
 /// An implementation of u256 that is using strings for JSON encoding/decoding,
 /// such that the full u256 range can be used for clients that convert JSON numbers to floats,
@@ -54,7 +45,7 @@ forward_ref_partial_eq!(Uint256, Uint256);
 
 impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
-    pub const MIN: Uint256 = Uint256(U256::zero());
+    pub const MIN: Uint256 = Uint256(U256::ZERO);
 
     /// Creates a Uint256(value) from a big endian representation. It's just an alias for
     /// [`Uint256::from_be_bytes`].
@@ -67,7 +58,7 @@ impl Uint256 {
     /// Creates a Uint256(0)
     #[inline]
     pub const fn zero() -> Self {
-        Uint256(U256::zero())
+        Uint256(U256::ZERO)
     }
 
     /// Creates a Uint256(1)
@@ -95,7 +86,7 @@ impl Uint256 {
                 data[7], data[6], data[5], data[4], data[3], data[2], data[1], data[0],
             ]),
         ];
-        Self(U256(words))
+        Self(U256::from_digits(words))
     }
 
     #[must_use]
@@ -114,7 +105,7 @@ impl Uint256 {
                 data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
             ]),
         ];
-        Uint256(U256(words))
+        Self(U256::from_digits(words))
     }
 
     /// A conversion from `u128` that, unlike the one provided by the `From` trait,
@@ -140,11 +131,12 @@ impl Uint256 {
     /// Returns a copy of the number as big endian bytes.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 32] {
+        let words = self.0.digits();
         let words = [
-            (self.0).0[3].to_be_bytes(),
-            (self.0).0[2].to_be_bytes(),
-            (self.0).0[1].to_be_bytes(),
-            (self.0).0[0].to_be_bytes(),
+            words[3].to_be_bytes(),
+            words[2].to_be_bytes(),
+            words[1].to_be_bytes(),
+            words[0].to_be_bytes(),
         ];
         unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
@@ -152,24 +144,24 @@ impl Uint256 {
     /// Returns a copy of the number as little endian bytes.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_le_bytes(self) -> [u8; 32] {
+        let words = self.0.digits();
         let words = [
-            (self.0).0[0].to_le_bytes(),
-            (self.0).0[1].to_le_bytes(),
-            (self.0).0[2].to_le_bytes(),
-            (self.0).0[3].to_le_bytes(),
+            words[0].to_le_bytes(),
+            words[1].to_le_bytes(),
+            words[2].to_le_bytes(),
+            words[3].to_le_bytes(),
         ];
         unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
-        let words = (self.0).0;
-        words[0] == 0 && words[1] == 0 && words[2] == 0 && words[3] == 0
+        self.0.is_zero()
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
-        let res = self.0.pow(exp.into());
+        let res = self.0.pow(exp);
         Self(res)
     }
 
@@ -257,7 +249,7 @@ impl Uint256 {
 
     pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
         self.0
-            .checked_pow(exp.into())
+            .checked_pow(exp)
             .map(Self)
             .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
@@ -320,7 +312,7 @@ impl Uint256 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_pow(other.into());
+        let (value, _did_overflow) = self.0.overflowing_pow(other);
         Self(value)
     }
 
@@ -427,7 +419,7 @@ impl FromStr for Uint256 {
             return Err(StdError::generic_err("Parsing u256: received empty string"));
         }
 
-        match U256::from_dec_str(s) {
+        match U256::from_str_radix(s, 10) {
             Ok(u) => Ok(Uint256(u)),
             Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
         }
@@ -1047,22 +1039,25 @@ mod tests {
     #[test]
     fn uint256_convert_from() {
         let a = Uint256::from(5u128);
-        assert_eq!(a.0, U256::from(5));
+        assert_eq!(a.0, U256::from(5u32));
 
         let a = Uint256::from(5u64);
-        assert_eq!(a.0, U256::from(5));
+        assert_eq!(a.0, U256::from(5u32));
 
         let a = Uint256::from(5u32);
-        assert_eq!(a.0, U256::from(5));
+        assert_eq!(a.0, U256::from(5u32));
 
         let a = Uint256::from(5u16);
-        assert_eq!(a.0, U256::from(5));
+        assert_eq!(a.0, U256::from(5u32));
 
         let a = Uint256::from(5u8);
-        assert_eq!(a.0, U256::from(5));
+        assert_eq!(a.0, U256::from(5u32));
 
         let result = Uint256::try_from("34567");
-        assert_eq!(result.unwrap().0, U256::from_dec_str("34567").unwrap());
+        assert_eq!(
+            result.unwrap().0,
+            U256::from_str_radix("34567", 10).unwrap()
+        );
 
         let result = Uint256::try_from("1.23");
         assert!(result.is_err());
@@ -1222,7 +1217,7 @@ mod tests {
     #[test]
     fn uint256_is_zero_works() {
         assert!(Uint256::zero().is_zero());
-        assert!(Uint256(U256::from(0)).is_zero());
+        assert!(Uint256(U256::from(0u32)).is_zero());
 
         assert!(!Uint256::from(1u32).is_zero());
         assert!(!Uint256::from(123u32).is_zero());
@@ -1643,7 +1638,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "division by zero")]
+    #[should_panic(expected = "divisor of zero")]
     fn uint256_rem_panics_for_zero() {
         let _ = Uint256::from(10u32) % Uint256::zero();
     }
