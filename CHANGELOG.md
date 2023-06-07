@@ -6,12 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
-## Added
+### Added
 
 - cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
   types. ([#1723])
+- cosmwasm-std: Add `Decimal::bps` and `Decimal256::bps` to create a decimal
+  from a basis point value ([#1715]).
 
 [#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
+[#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
 
 ### Changed
 
