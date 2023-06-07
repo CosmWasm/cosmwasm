@@ -76,7 +76,7 @@ impl Decimal {
         Self(((x as u128) * 1_000_000_000_000_000).into())
     }
 
-    /// Convert bps (basis points) into Decimal
+    /// Convert basis points (x/10000) into Decimal
     pub fn bps(x: u64) -> Self {
         Self(((x as u128) * 100_000_000_000_000).into())
     }
