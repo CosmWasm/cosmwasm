@@ -4,7 +4,7 @@ use std::{fmt, str::FromStr};
 
 use crate::{errors::CoinFromStrError, math::Uint128};
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
     pub denom: String,
     pub amount: Uint128,
@@ -16,6 +16,12 @@ impl Coin {
             amount: Uint128::new(amount),
             denom: denom.into(),
         }
+    }
+}
+
+impl fmt::Debug for Coin {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Coin {{ {} \"{}\" }}", self.amount, self.denom)
     }
 }
 
@@ -234,5 +240,11 @@ mod tests {
                 .to_string(),
             "Invalid amount: number too large to fit in target type"
         );
+    }
+
+    #[test]
+    fn debug_coin() {
+        let coin = Coin::new(123, "ucosm");
+        assert_eq!(format!("{:?}", coin), r#"Coin { 123 "ucosm" }"#);
     }
 }
