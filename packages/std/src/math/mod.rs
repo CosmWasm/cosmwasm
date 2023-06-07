@@ -1,6 +1,7 @@
 mod decimal;
 mod decimal256;
 mod fraction;
+mod int512;
 mod isqrt;
 mod uint128;
 mod uint256;
@@ -10,6 +11,7 @@ mod uint64;
 pub use decimal::{Decimal, DecimalRangeExceeded};
 pub use decimal256::{Decimal256, Decimal256RangeExceeded};
 pub use fraction::Fraction;
+pub use int512::Int512;
 pub use isqrt::Isqrt;
 pub use uint128::Uint128;
 pub use uint256::Uint256;
@@ -68,6 +70,7 @@ mod tests {
     impl AllImpl<'_> for Uint128 {}
     impl AllImpl<'_> for Uint256 {}
     impl AllImpl<'_> for Uint512 {}
+    impl AllImpl<'_> for Int512 {}
     impl IntImpl<'_> for Uint64 {}
     impl IntImpl<'_> for Uint128 {}
     impl IntImpl<'_> for Uint256 {}
