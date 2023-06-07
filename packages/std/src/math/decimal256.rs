@@ -802,7 +802,10 @@ mod tests {
     #[test]
     fn decimal256_bps() {
         let value = Decimal256::bps(125);
-        assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(80u8));
+        assert_eq!(
+            value.0,
+            Decimal256::DECIMAL_FRACTIONAL / Uint256::from(80u8)
+        );
     }
 
     #[test]
