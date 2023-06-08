@@ -8,7 +8,7 @@
 //! the contract-specific function pointer. This is done via the `#[entry_point]`
 //! macro attribute from cosmwasm-derive.
 use crate::no_std::marker::PhantomData;
-use crate::no_std::vec::Vec;
+use crate::no_std::prelude::*;
 
 use serde::de::DeserializeOwned;
 
