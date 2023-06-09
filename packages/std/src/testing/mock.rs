@@ -35,7 +35,7 @@ use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
     query::{AllDenomMetadataResponse, DenomMetadataResponse},
-    PageRequest, Uint64,
+    PageRequest,
 };
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
@@ -707,7 +707,7 @@ impl BankQuerier {
             BankQuery::AllDenomMetadata { pagination } => {
                 let default_pagination = PageRequest {
                     key: None,
-                    limit: Uint64::new(100),
+                    limit: 100,
                     reverse: false,
                 };
                 let pagination = pagination.as_ref().unwrap_or(&default_pagination);
@@ -724,12 +724,12 @@ impl BankQuerier {
                         None => false,
                     })
                     // take the requested amount + 1 to get the next key
-                    .take((pagination.limit.u64().saturating_add(1)) as usize)
+                    .take((pagination.limit.saturating_add(1)) as usize)
                     .collect();
 
                 // if we took more than requested, remove the last element (the next key),
                 // otherwise this is the last batch
-                let next_key = if metadata.len() > pagination.limit.u64() as usize {
+                let next_key = if metadata.len() > pagination.limit as usize {
                     metadata.pop().map(|m| Binary::from(m.symbol.as_bytes()))
                 } else {
                     None
@@ -1352,7 +1352,7 @@ mod tests {
             .query(&BankQuery::AllDenomMetadata {
                 pagination: Some(PageRequest {
                     key: None,
-                    limit: Uint64::new(10),
+                    limit: 10,
                     reverse: false,
                 }),
             })
@@ -1367,7 +1367,7 @@ mod tests {
             .query(&BankQuery::AllDenomMetadata {
                 pagination: Some(PageRequest {
                     key: res.next_key,
-                    limit: Uint64::new(10),
+                    limit: 10,
                     reverse: false,
                 }),
             })
@@ -1382,7 +1382,7 @@ mod tests {
             .query(&BankQuery::AllDenomMetadata {
                 pagination: Some(PageRequest {
                     key: None,
-                    limit: Uint64::new(100),
+                    limit: 100,
                     reverse: true,
                 }),
             })
@@ -1397,7 +1397,7 @@ mod tests {
             .query(&BankQuery::AllDenomMetadata {
                 pagination: Some(PageRequest {
                     key: res.next_key,
-                    limit: Uint64::MAX,
+                    limit: u32::MAX,
                     reverse: true,
                 }),
             })
