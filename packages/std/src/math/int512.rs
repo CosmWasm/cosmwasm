@@ -8,17 +8,15 @@ use std::ops::{
 };
 use std::str::FromStr;
 
-use crate::errors::{
-    ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
-};
-use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
+use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint512, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::{I512, U512};
 
-/// An implementation of u512 that is using strings for JSON encoding/decoding,
-/// such that the full u512 range can be used for clients that convert JSON numbers to floats,
+/// An implementation of i512 that is using strings for JSON encoding/decoding,
+/// such that the full i512 range can be used for clients that convert JSON numbers to floats,
 /// like JavaScript and jq.
 ///
 /// # Examples
@@ -65,11 +63,7 @@ impl Int512 {
     /// Creates a Int512(1)
     #[inline]
     pub const fn one() -> Self {
-        Self::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 1,
-        ])
+        Self(I512::ONE)
     }
 
     #[must_use]
@@ -134,21 +128,6 @@ impl Int512 {
         Self(I512::from_bits(U512::from_digits(words)))
     }
 
-    /// A conversion from `Uint256` that, unlike the one provided by the `From` trait,
-    /// can be used in a `const` context.
-    #[must_use]
-    pub const fn from_uint256(num: Uint256) -> Self {
-        let bytes = num.to_le_bytes();
-        Self::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
-            bytes[16], bytes[17], bytes[18], bytes[19], bytes[20], bytes[21], bytes[22], bytes[23],
-            bytes[24], bytes[25], bytes[26], bytes[27], bytes[28], bytes[29], bytes[30], bytes[31],
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0,
-        ])
-    }
-
     /// Returns a copy of the number as big endian bytes.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 64] {
@@ -192,8 +171,7 @@ impl Int512 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
-        let res = self.0.pow(exp);
-        Self(res)
+        Self(self.0.pow(exp))
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -253,22 +231,19 @@ impl Int512 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_add(other.0);
-        Self(value)
+        Self(self.0.wrapping_add(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_sub(other.0);
-        Self(value)
+        Self(self.0.wrapping_sub(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_mul(other.0);
-        Self(value)
+        Self(self.0.wrapping_mul(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -295,19 +270,12 @@ impl Int512 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        Self(self.0.saturating_pow(exp))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn abs_diff(self, other: Self) -> Self {
-        if self < other {
-            other - self
-        } else {
-            self - other
-        }
+    pub fn abs_diff(self, other: Self) -> Uint512 {
+        Uint512(self.0.abs_diff(other.0))
     }
 }
 
@@ -391,35 +359,6 @@ impl From<i8> for Int512 {
     }
 }
 
-// impl TryFrom<Int512> for Int256 {
-//     type Error = ConversionOverflowError;
-
-//     fn try_from(value: Int512) -> Result<Self, Self::Error> {
-//         let bytes = value.to_be_bytes();
-//         let (first_bytes, last_bytes) = bytes.split_at(32);
-
-//         if first_bytes != [0u8; 32] {
-//             return Err(ConversionOverflowError::new(
-//                 "Int512",
-//                 "Uint256",
-//                 value.to_string(),
-//             ));
-//         }
-
-//         Ok(Self::from_be_bytes(last_bytes.try_into().unwrap()))
-//     }
-// }
-
-// impl TryFrom<Int512> for Int128 {
-//     type Error = ConversionOverflowError;
-
-//     fn try_from(value: Int512) -> Result<Self, Self::Error> {
-//         Ok(Uint128::new(value.0.try_into().map_err(|_| {
-//             ConversionOverflowError::new("Int512", "Uint128", value.to_string())
-//         })?))
-//     }
-// }
-
 impl TryFrom<&str> for Int512 {
     type Error = StdError;
 
@@ -434,7 +373,7 @@ impl FromStr for Int512 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match I512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing i512: {}", e))),
         }
     }
 }
@@ -752,50 +691,6 @@ mod tests {
 
         let result = Int512::try_from("1.23");
         assert!(result.is_err());
-    }
-
-    // #[test]
-    // fn int512_convert_to_uint128() {
-    //     let source = Int512::from(42u128);
-    //     let target = Uint128::try_from(source);
-    //     assert_eq!(target, Ok(Uint128::new(42u128)));
-
-    //     let source = Int512::MAX;
-    //     let target = Uint128::try_from(source);
-    //     assert_eq!(
-    //         target,
-    //         Err(ConversionOverflowError::new(
-    //             "Int512",
-    //             "Uint128",
-    //             Int512::MAX.to_string()
-    //         ))
-    //     );
-    // }
-
-    #[test]
-    fn int512_from_uint256() {
-        assert_eq!(
-            Int512::from_uint256(Uint256::from_str("123").unwrap()),
-            Int512::from_str("123").unwrap()
-        );
-
-        assert_eq!(
-            Int512::from_uint256(Uint256::from_str("9785746283745").unwrap()),
-            Int512::from_str("9785746283745").unwrap()
-        );
-
-        assert_eq!(
-            Int512::from_uint256(
-                Uint256::from_str(
-                    "97857462837575757832978493758398593853985452378423874623874628736482736487236"
-                )
-                .unwrap()
-            ),
-            Int512::from_str(
-                "97857462837575757832978493758398593853985452378423874623874628736482736487236"
-            )
-            .unwrap()
-        );
     }
 
     #[test]
@@ -1269,7 +1164,7 @@ mod tests {
     fn int512_abs_diff_works() {
         let a = Int512::from(42u32);
         let b = Int512::from(5u32);
-        let expected = Int512::from(37u32);
+        let expected = Uint512::from(37u32);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
     }
