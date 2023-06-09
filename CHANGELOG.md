@@ -12,9 +12,12 @@ and this project adheres to
   been checked before. This is useful for state-sync where we know the Wasm code
   was checked when it was first uploaded. ([#1635])
 - cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
+- cosmwasm-std: Add `Decimal::bps` and `Decimal256::bps` to create a decimal
+  from a basis point value ([#1715]).
 
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
+[#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
 
 ### Changed
 

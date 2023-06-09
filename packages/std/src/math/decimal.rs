@@ -76,6 +76,11 @@ impl Decimal {
         Self(((x as u128) * 1_000_000_000_000_000).into())
     }
 
+    /// Convert basis points (x/10000) into Decimal
+    pub fn bps(x: u64) -> Self {
+        Self(((x as u128) * 100_000_000_000_000).into())
+    }
+
     /// Creates a decimal from a number of atomic units and the number
     /// of decimal places. The inputs will be converted internally to form
     /// a decimal with 18 decimal places. So the input 123 and 2 will create
@@ -766,6 +771,12 @@ mod tests {
     fn decimal_permille() {
         let value = Decimal::permille(125);
         assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(8u8));
+    }
+
+    #[test]
+    fn decimal_bps() {
+        let value = Decimal::bps(125);
+        assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(80u8));
     }
 
     #[test]
