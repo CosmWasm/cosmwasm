@@ -3,8 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shr, ShrAssign, Sub,
-    SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
+    ShrAssign, Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -228,6 +228,14 @@ impl Int512 {
         Ok(Self(self.0.shr(other)))
     }
 
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 512 {
+            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
@@ -249,8 +257,7 @@ impl Int512 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_pow(other);
-        Self(value)
+        Self(self.0.wrapping_pow(other))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -387,10 +394,11 @@ impl From<Int512> for String {
 impl fmt::Display for Int512 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // The inner type doesn't work as expected with padding, so we
-        // work around that.
+        // work around that. Remove this code when the upstream padding is fixed.
         let unpadded = self.0.to_string();
+        let numeric = unpadded.strip_prefix('-').unwrap_or(&unpadded);
 
-        f.pad_integral(true, "", &unpadded)
+        f.pad_integral(self >= &Self::zero(), "", numeric)
     }
 }
 
@@ -463,6 +471,14 @@ impl Not for Int512 {
     }
 }
 
+impl Neg for Int512 {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self(-self.0)
+    }
+}
+
 impl RemAssign<Int512> for Int512 {
     fn rem_assign(&mut self, rhs: Int512) {
         *self = *self % rhs;
@@ -507,6 +523,27 @@ impl<'a> Shr<&'a u32> for Int512 {
     }
 }
 
+impl Shl<u32> for Int512 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        self.checked_shl(rhs).unwrap_or_else(|_| {
+            panic!(
+                "left shift error: {} is larger or equal than the number of bits in Int512",
+                rhs,
+            )
+        })
+    }
+}
+
+impl<'a> Shl<&'a u32> for Int512 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        Shl::<u32>::shl(self, *rhs)
+    }
+}
+
 impl AddAssign<Int512> for Int512 {
     fn add_assign(&mut self, rhs: Int512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
@@ -540,6 +577,18 @@ impl ShrAssign<u32> for Int512 {
 impl<'a> ShrAssign<&'a u32> for Int512 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
+    }
+}
+
+impl ShlAssign<u32> for Int512 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = Shl::<u32>::shl(*self, rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Int512 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = Shl::<u32>::shl(*self, *rhs);
     }
 }
 
@@ -1193,6 +1242,44 @@ mod tests {
         let b = Int512::from(6u32);
         a %= &b;
         assert_eq!(a, Int512::from(1u32));
+    }
+
+    #[test]
+    fn int512_shr() {
+        let x: Int512 = 0x8000_0000_0000_0000_0000_0000_0000_0000u128.into();
+        assert_eq!(x >> 0, x); // right shift by 0 should be no-op
+        assert_eq!(
+            x >> 1,
+            Int512::from(0x4000_0000_0000_0000_0000_0000_0000_0000u128)
+        );
+        assert_eq!(
+            x >> 4,
+            Int512::from(0x0800_0000_0000_0000_0000_0000_0000_0000u128)
+        );
+        // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
+        assert_eq!(
+            Int512::MIN >> (std::mem::size_of::<Int512>() as u32 * 8 - 1),
+            -Int512::one()
+        );
+    }
+
+    #[test]
+    fn int512_shl() {
+        let x: Int512 = 0x0800_0000_0000_0000_0000_0000_0000_0000u128.into();
+        assert_eq!(x << 0, x); // left shift by 0 should be no-op
+        assert_eq!(
+            x << 1,
+            Int512::from(0x1000_0000_0000_0000_0000_0000_0000_0000u128)
+        );
+        assert_eq!(
+            x << 4,
+            Int512::from(0x8000_0000_0000_0000_0000_0000_0000_0000u128)
+        );
+        // left shift by by the maximum shift value should result in MIN
+        assert_eq!(
+            Int512::one() << (std::mem::size_of::<Int512>() as u32 * 8 - 1),
+            Int512::MIN
+        );
     }
 
     #[test]
