@@ -683,6 +683,21 @@ mod tests {
         let a = Int512::from(5u8);
         assert_eq!(a.0, I512::from(5u32));
 
+        let a = Int512::from(-5i128);
+        assert_eq!(a.0, I512::from(-5i32));
+
+        let a = Int512::from(-5i64);
+        assert_eq!(a.0, I512::from(-5i32));
+
+        let a = Int512::from(-5i32);
+        assert_eq!(a.0, I512::from(-5i32));
+
+        let a = Int512::from(-5i16);
+        assert_eq!(a.0, I512::from(-5i32));
+
+        let a = Int512::from(-5i8);
+        assert_eq!(a.0, I512::from(-5i32));
+
         let result = Int512::try_from("34567");
         assert_eq!(
             result.unwrap().0,
@@ -699,6 +714,10 @@ mod tests {
         assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
+        let a = Int512::from(-12345i32);
+        assert_eq!(format!("Embedded: {}", a), "Embedded: -12345");
+        assert_eq!(a.to_string(), "-12345");
+
         let a = Int512::zero();
         assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
@@ -708,6 +727,9 @@ mod tests {
     fn int512_display_padding_works() {
         let a = Int512::from(123u64);
         assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+
+        let a = Int512::from(-123i64);
+        assert_eq!(format!("Embedded: {:05}", a), "Embedded: -0123");
     }
 
     #[test]
@@ -825,6 +847,7 @@ mod tests {
 
         assert!(!Int512::from(1u32).is_zero());
         assert!(!Int512::from(123u32).is_zero());
+        assert!(!Int512::from(-123i32).is_zero());
     }
 
     #[test]
@@ -880,16 +903,16 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn int512_math() {
-        let a = Int512::from(12345u32);
+        let a = Int512::from(-12345i32);
         let b = Int512::from(23456u32);
 
         // test + with owned and reference right hand side
-        assert_eq!(a + b, Int512::from(35801u32));
-        assert_eq!(a + &b, Int512::from(35801u32));
+        assert_eq!(a + b, Int512::from(11111u32));
+        assert_eq!(a + &b, Int512::from(11111u32));
 
         // test - with owned and reference right hand side
-        assert_eq!(b - a, Int512::from(11111u32));
-        assert_eq!(b - &a, Int512::from(11111u32));
+        assert_eq!(b - a, Int512::from(35801u32));
+        assert_eq!(b - &a, Int512::from(35801u32));
 
         // test += with owned and reference right hand side
         let mut c = Int512::from(300000u32);
@@ -908,7 +931,7 @@ mod tests {
         assert_eq!(d, Int512::from(276544u32));
 
         // test - with negative result
-        assert_eq!(a - b, Int512::from(-11111i32));
+        assert_eq!(a - b, Int512::from(-35801i32));
     }
 
     #[test]
@@ -923,6 +946,7 @@ mod tests {
         assert_eq!(Int512::from(2u32) - Int512::from(1u32), Int512::from(1u32));
         assert_eq!(Int512::from(2u32) - Int512::from(0u32), Int512::from(2u32));
         assert_eq!(Int512::from(2u32) - Int512::from(2u32), Int512::from(0u32));
+        assert_eq!(Int512::from(2u32) - Int512::from(3u32), Int512::from(-1i32));
 
         // works for refs
         let a = Int512::from(10u32);
@@ -1093,6 +1117,23 @@ mod tests {
             Int512::MAX.checked_rem(Int512::from(0u32)),
             Err(DivideByZeroError { .. })
         ));
+        // checked_* with negative numbers
+        assert_eq!(
+            Int512::from(-12i32).checked_div(Int512::from(10i32)),
+            Ok(Int512::from(-1i32)),
+        );
+        assert_eq!(
+            Int512::from(-2i32).checked_pow(3u32),
+            Ok(Int512::from(-8i32)),
+        );
+        assert_eq!(
+            Int512::from(-6i32).checked_mul(Int512::from(-7i32)),
+            Ok(Int512::from(42i32)),
+        );
+        assert_eq!(
+            Int512::from(-2i32).checked_add(Int512::from(3i32)),
+            Ok(Int512::from(1i32)),
+        );
 
         // saturating_*
         assert_eq!(Int512::MAX.saturating_add(Int512::from(1u32)), Int512::MAX);
@@ -1112,6 +1153,19 @@ mod tests {
         assert_eq!(a % Int512::from(3u32), Int512::from(1u32));
         assert_eq!(a % Int512::from(4u32), Int512::from(2u32));
 
+        assert_eq!(
+            Int512::from(-12i32) % Int512::from(10i32),
+            Int512::from(-2i32)
+        );
+        assert_eq!(
+            Int512::from(12i32) % Int512::from(-10i32),
+            Int512::from(2i32)
+        );
+        assert_eq!(
+            Int512::from(-12i32) % Int512::from(-10i32),
+            Int512::from(-2i32)
+        );
+
         // works for refs
         let a = Int512::from(10u32);
         let b = Int512::from(3u32);
@@ -1126,25 +1180,6 @@ mod tests {
     #[should_panic(expected = "divisor of zero")]
     fn int512_rem_panics_for_zero() {
         let _ = Int512::from(10u32) % Int512::zero();
-    }
-
-    #[test]
-    #[allow(clippy::op_ref)]
-    fn int512_rem_works() {
-        assert_eq!(
-            Int512::from(12u32) % Int512::from(10u32),
-            Int512::from(2u32)
-        );
-        assert_eq!(Int512::from(50u32) % Int512::from(5u32), Int512::zero());
-
-        // works for refs
-        let a = Int512::from(42u32);
-        let b = Int512::from(5u32);
-        let expected = Int512::from(2u32);
-        assert_eq!(a % b, expected);
-        assert_eq!(a % &b, expected);
-        assert_eq!(&a % b, expected);
-        assert_eq!(&a % &b, expected);
     }
 
     #[test]
@@ -1167,6 +1202,10 @@ mod tests {
         let expected = Uint512::from(37u32);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
+
+        let c = Int512::from(-5i32);
+        assert_eq!(b.abs_diff(c), Uint512::from(10u32));
+        assert_eq!(c.abs_diff(b), Uint512::from(10u32));
     }
 
     #[test]
