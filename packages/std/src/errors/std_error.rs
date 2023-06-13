@@ -483,6 +483,7 @@ pub enum OverflowOperation {
     Mul,
     // TODO: Adding these is technically breaking
     Div,
+    Neg,
     Pow,
     Shr,
     Shl,
