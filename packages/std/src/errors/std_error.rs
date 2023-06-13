@@ -481,6 +481,8 @@ pub enum OverflowOperation {
     Add,
     Sub,
     Mul,
+    // TODO: Adding these is technically breaking
+    Div,
     Pow,
     Shr,
     Shl,
@@ -554,6 +556,15 @@ impl DivideByZeroError {
             operand: operand.to_string(),
         }
     }
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum DivisionError {
+    #[error("Divide by zero error: {0}")]
+    DivideByZero(#[from] DivideByZeroError),
+
+    #[error("Overflow error: {0}")]
+    Overflow(#[from] OverflowError),
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]

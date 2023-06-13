@@ -8,7 +8,7 @@ use std::ops::{
 };
 use std::str::FromStr;
 
-use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
+use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint512, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
@@ -202,15 +202,24 @@ impl Int512 {
             .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
 
-    pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
+    pub fn checked_div(self, other: Self) -> Result<Self, DivisionError> {
+        if other.is_zero() {
+            return Err(DivideByZeroError::new(self).into());
+        }
         self.0
             .checked_div(other.0)
             .map(Self)
-            .ok_or_else(|| DivideByZeroError::new(self))
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Div, self, other).into())
     }
 
-    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
-        self.checked_div(other)
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivisionError> {
+        if other.is_zero() {
+            return Err(DivideByZeroError::new(self).into());
+        }
+        self.0
+            .checked_div_euclid(other.0)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Div, self, other).into())
     }
 
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
@@ -1144,7 +1153,7 @@ mod tests {
         assert_eq!(Int512::from(2u32).checked_pow(3u32), Ok(Int512::from(8u32)),);
         assert!(matches!(
             Int512::MAX.checked_div(Int512::from(0u32)),
-            Err(DivideByZeroError { .. })
+            Err(DivisionError::DivideByZero(_))
         ));
         assert_eq!(
             Int512::from(6u32).checked_div(Int512::from(2u32)),
@@ -1152,7 +1161,7 @@ mod tests {
         );
         assert!(matches!(
             Int512::MAX.checked_div_euclid(Int512::from(0u32)),
-            Err(DivideByZeroError { .. })
+            Err(DivisionError::DivideByZero(_))
         ));
         assert_eq!(
             Int512::from(6u32).checked_div_euclid(Int512::from(2u32)),
@@ -1182,6 +1191,10 @@ mod tests {
         assert_eq!(
             Int512::from(-2i32).checked_add(Int512::from(3i32)),
             Ok(Int512::from(1i32)),
+        );
+        assert_eq!(
+            Int512::from(-1i32).checked_div_euclid(Int512::from(-2i32)),
+            Ok(Int512::from(1u32)),
         );
 
         // saturating_*
@@ -1293,6 +1306,12 @@ mod tests {
         let c = Int512::from(-5i32);
         assert_eq!(b.abs_diff(c), Uint512::from(10u32));
         assert_eq!(c.abs_diff(b), Uint512::from(10u32));
+    }
+
+    #[test]
+    #[should_panic = "attempt to negate with overflow"]
+    fn int512_neg_min_panics() {
+        _ = -Int512::MIN;
     }
 
     #[test]
