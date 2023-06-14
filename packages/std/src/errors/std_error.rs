@@ -477,6 +477,7 @@ impl From<DivideByZeroError> for StdError {
 pub type StdResult<T> = core::result::Result<T, StdError>;
 
 #[derive(Error, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum OverflowOperation {
     Add,
     Sub,
