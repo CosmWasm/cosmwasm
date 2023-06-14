@@ -396,7 +396,7 @@ impl FromStr for Int512 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match I512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing i512: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int512: {}", e))),
         }
     }
 }
