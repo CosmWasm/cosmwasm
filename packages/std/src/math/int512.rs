@@ -204,22 +204,22 @@ impl Int512 {
 
     pub fn checked_div(self, other: Self) -> Result<Self, DivisionError> {
         if other.is_zero() {
-            return Err(DivideByZeroError::new(self).into());
+            return Err(DivisionError::DivideByZero);
         }
         self.0
             .checked_div(other.0)
             .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Div, self, other).into())
+            .ok_or(DivisionError::Overflow)
     }
 
     pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivisionError> {
         if other.is_zero() {
-            return Err(DivideByZeroError::new(self).into());
+            return Err(DivisionError::DivideByZero);
         }
         self.0
             .checked_div_euclid(other.0)
             .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Div, self, other).into())
+            .ok_or(DivisionError::Overflow)
     }
 
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
@@ -1120,18 +1120,18 @@ mod tests {
             Err(OverflowError { .. })
         ));
         assert_eq!(Int512::from(2u32).checked_pow(3u32), Ok(Int512::from(8u32)),);
-        assert!(matches!(
+        assert_eq!(
             Int512::MAX.checked_div(Int512::from(0u32)),
-            Err(DivisionError::DivideByZero(_))
-        ));
+            Err(DivisionError::DivideByZero)
+        );
         assert_eq!(
             Int512::from(6u32).checked_div(Int512::from(2u32)),
             Ok(Int512::from(3u32)),
         );
-        assert!(matches!(
+        assert_eq!(
             Int512::MAX.checked_div_euclid(Int512::from(0u32)),
-            Err(DivisionError::DivideByZero(_))
-        ));
+            Err(DivisionError::DivideByZero)
+        );
         assert_eq!(
             Int512::from(6u32).checked_div_euclid(Int512::from(2u32)),
             Ok(Int512::from(3u32)),

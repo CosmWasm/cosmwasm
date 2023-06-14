@@ -481,8 +481,6 @@ pub enum OverflowOperation {
     Add,
     Sub,
     Mul,
-    // TODO: Adding these is technically breaking
-    Div,
     Neg,
     Pow,
     Shr,
@@ -561,11 +559,11 @@ impl DivideByZeroError {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum DivisionError {
-    #[error("Divide by zero error: {0}")]
-    DivideByZero(#[from] DivideByZeroError),
+    #[error("Divide by zero")]
+    DivideByZero,
 
-    #[error("Overflow error: {0}")]
-    Overflow(#[from] OverflowError),
+    #[error("Overflow in division")]
+    Overflow,
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
