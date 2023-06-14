@@ -3,8 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, Shr, ShrAssign, Sub,
-    SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -575,12 +575,8 @@ impl Shl<u32> for Uint256 {
     type Output = Self;
 
     fn shl(self, rhs: u32) -> Self::Output {
-        self.checked_shl(rhs).unwrap_or_else(|_| {
-            panic!(
-                "left shift error: {} is larger or equal than the number of bits in Uint256",
-                rhs,
-            )
-        })
+        self.checked_shl(rhs)
+            .expect("attempt to shift left with overflow")
     }
 }
 
@@ -625,6 +621,18 @@ impl ShrAssign<u32> for Uint256 {
 impl<'a> ShrAssign<&'a u32> for Uint256 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
+    }
+}
+
+impl ShlAssign<u32> for Uint256 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = self.shl(rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint256 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = self.shl(*rhs);
     }
 }
 

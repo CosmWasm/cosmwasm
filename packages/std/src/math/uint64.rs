@@ -3,7 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt::{self};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 
 use crate::errors::{
@@ -412,6 +413,26 @@ impl<'a> Shr<&'a u32> for Uint64 {
     }
 }
 
+impl Shl<u32> for Uint64 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        Self(
+            self.u64()
+                .checked_shl(rhs)
+                .expect("attempt to shift left with overflow"),
+        )
+    }
+}
+
+impl<'a> Shl<&'a u32> for Uint64 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
+    }
+}
+
 impl AddAssign<Uint64> for Uint64 {
     fn add_assign(&mut self, rhs: Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
@@ -445,6 +466,18 @@ impl ShrAssign<u32> for Uint64 {
 impl<'a> ShrAssign<&'a u32> for Uint64 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         self.0 = self.0.checked_shr(*rhs).unwrap();
+    }
+}
+
+impl ShlAssign<u32> for Uint64 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = self.shl(rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint64 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = self.shl(*rhs);
     }
 }
 

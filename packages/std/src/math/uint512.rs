@@ -3,7 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -260,6 +261,14 @@ impl Uint512 {
         }
 
         Ok(Self(self.0.shr(other)))
+    }
+
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 512 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -542,6 +551,23 @@ impl<'a> Shr<&'a u32> for Uint512 {
     }
 }
 
+impl Shl<u32> for Uint512 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        self.checked_shl(rhs)
+            .expect("attempt to shift left with overflow")
+    }
+}
+
+impl<'a> Shl<&'a u32> for Uint512 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
+    }
+}
+
 impl AddAssign<Uint512> for Uint512 {
     fn add_assign(&mut self, rhs: Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
@@ -575,6 +601,18 @@ impl ShrAssign<u32> for Uint512 {
 impl<'a> ShrAssign<&'a u32> for Uint512 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
+    }
+}
+
+impl ShlAssign<u32> for Uint512 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = self.shl(rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint512 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = self.shl(*rhs);
     }
 }
 

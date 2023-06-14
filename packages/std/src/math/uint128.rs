@@ -1,6 +1,7 @@
 use std::fmt::{self};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -195,6 +196,22 @@ impl Uint128 {
             .checked_rem(other.0)
             .map(Self)
             .ok_or_else(|| DivideByZeroError::new(self))
+    }
+
+    pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 512 {
+            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+        }
+
+        Ok(Self(self.0.shr(other)))
+    }
+
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 512 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -441,6 +458,26 @@ impl<'a> Shr<&'a u32> for Uint128 {
     }
 }
 
+impl Shl<u32> for Uint128 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        Self(
+            self.u128()
+                .checked_shl(rhs)
+                .expect("attempt to shift left with overflow"),
+        )
+    }
+}
+
+impl<'a> Shl<&'a u32> for Uint128 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
+    }
+}
+
 impl AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         *self = *self + rhs;
@@ -494,6 +531,18 @@ impl ShrAssign<u32> for Uint128 {
 impl<'a> ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
+    }
+}
+
+impl ShlAssign<u32> for Uint128 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = Shl::<u32>::shl(*self, rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint128 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = Shl::<u32>::shl(*self, *rhs);
     }
 }
 
