@@ -50,6 +50,7 @@ impl Int512 {
 
     /// Creates a Int512(value) from a big endian representation. It's just an alias for
     /// `from_be_bytes`.
+    #[inline]
     pub const fn new(value: [u8; 64]) -> Self {
         Self::from_be_bytes(value)
     }
