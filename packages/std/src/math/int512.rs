@@ -425,14 +425,7 @@ impl Add<Int512> for Int512 {
         Int512(self.0.checked_add(rhs.0).unwrap())
     }
 }
-
-impl<'a> Add<&'a Int512> for Int512 {
-    type Output = Self;
-
-    fn add(self, rhs: &'a Int512) -> Self {
-        Int512(self.0.checked_add(rhs.0).unwrap())
-    }
-}
+forward_ref_binop!(impl Add, add for Int512, Int512);
 
 impl Sub<Int512> for Int512 {
     type Output = Self;
@@ -457,14 +450,7 @@ impl Div<Int512> for Int512 {
         Self(self.0.checked_div(rhs.0).unwrap())
     }
 }
-
-impl<'a> Div<&'a Int512> for Int512 {
-    type Output = Self;
-
-    fn div(self, rhs: &'a Int512) -> Self::Output {
-        Self(self.0.checked_div(rhs.0).unwrap())
-    }
-}
+forward_ref_binop!(impl Div, div for Int512, Int512);
 
 impl Rem for Int512 {
     type Output = Self;
@@ -530,14 +516,7 @@ impl Shr<u32> for Int512 {
         })
     }
 }
-
-impl<'a> Shr<&'a u32> for Int512 {
-    type Output = Self;
-
-    fn shr(self, rhs: &'a u32) -> Self::Output {
-        Shr::<u32>::shr(self, *rhs)
-    }
-}
+forward_ref_binop!(impl Shr, shr for Int512, u32);
 
 impl Shl<u32> for Int512 {
     type Output = Self;
@@ -551,62 +530,35 @@ impl Shl<u32> for Int512 {
         })
     }
 }
-
-impl<'a> Shl<&'a u32> for Int512 {
-    type Output = Self;
-
-    fn shl(self, rhs: &'a u32) -> Self::Output {
-        Shl::<u32>::shl(self, *rhs)
-    }
-}
+forward_ref_binop!(impl Shl, shl for Int512, u32);
 
 impl AddAssign<Int512> for Int512 {
     fn add_assign(&mut self, rhs: Int512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
     }
 }
-
-impl<'a> AddAssign<&'a Int512> for Int512 {
-    fn add_assign(&mut self, rhs: &'a Int512) {
-        self.0 = self.0.checked_add(rhs.0).unwrap();
-    }
-}
+forward_ref_op_assign!(impl AddAssign, add_assign for Int512, Int512);
 
 impl DivAssign<Int512> for Int512 {
     fn div_assign(&mut self, rhs: Self) {
         self.0 = self.0.checked_div(rhs.0).unwrap();
     }
 }
-
-impl<'a> DivAssign<&'a Int512> for Int512 {
-    fn div_assign(&mut self, rhs: &'a Int512) {
-        self.0 = self.0.checked_div(rhs.0).unwrap();
-    }
-}
+forward_ref_op_assign!(impl DivAssign, div_assign for Int512, Int512);
 
 impl ShrAssign<u32> for Int512 {
     fn shr_assign(&mut self, rhs: u32) {
         *self = Shr::<u32>::shr(*self, rhs);
     }
 }
-
-impl<'a> ShrAssign<&'a u32> for Int512 {
-    fn shr_assign(&mut self, rhs: &'a u32) {
-        *self = Shr::<u32>::shr(*self, *rhs);
-    }
-}
+forward_ref_op_assign!(impl ShrAssign, shr_assign for Int512, u32);
 
 impl ShlAssign<u32> for Int512 {
     fn shl_assign(&mut self, rhs: u32) {
         *self = Shl::<u32>::shl(*self, rhs);
     }
 }
-
-impl<'a> ShlAssign<&'a u32> for Int512 {
-    fn shl_assign(&mut self, rhs: &'a u32) {
-        *self = Shl::<u32>::shl(*self, *rhs);
-    }
-}
+forward_ref_op_assign!(impl ShlAssign, shl_assign for Int512, u32);
 
 impl Serialize for Int512 {
     /// Serializes as an integer string using base 10
