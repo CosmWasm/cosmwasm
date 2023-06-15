@@ -191,6 +191,22 @@ impl Uint64 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 64 {
+            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+        }
+
+        Ok(Self(self.0.shr(other)))
+    }
+
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 64 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
