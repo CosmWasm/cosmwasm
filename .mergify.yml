@@ -6,7 +6,7 @@ pull_request_rules:
       - "#approved-reviews-by>=1"
       - base=main
       - label=automerge
-      - draft=false
+      - -draft
       - label!=WIP
       # We need to list them all individually. Here is why: https://docs.mergify.com/conditions/#validating-all-status-checks
       # Also make sure to update this when the CI names change
@@ -41,7 +41,7 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-- name: backport PRs to minor version branch
+  - name: backport PRs to minor version branch
     conditions:
       - base=main
       - label=backport
