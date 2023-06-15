@@ -199,7 +199,7 @@ impl Uint128 {
     }
 
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
-        if other >= 512 {
+        if other >= 128 {
             return Err(OverflowError::new(OverflowOperation::Shr, self, other));
         }
 
@@ -207,7 +207,7 @@ impl Uint128 {
     }
 
     pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
-        if other >= 512 {
+        if other >= 128 {
             return Err(OverflowError::new(OverflowOperation::Shl, self, other));
         }
 
