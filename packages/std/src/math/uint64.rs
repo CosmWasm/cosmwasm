@@ -3,7 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt::{self};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 
 use crate::errors::{
@@ -188,6 +189,22 @@ impl Uint64 {
             .checked_rem(other.0)
             .map(Self)
             .ok_or_else(|| DivideByZeroError::new(self))
+    }
+
+    pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 64 {
+            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+        }
+
+        Ok(Self(self.0.shr(other)))
+    }
+
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 64 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -412,6 +429,26 @@ impl<'a> Shr<&'a u32> for Uint64 {
     }
 }
 
+impl Shl<u32> for Uint64 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        Self(
+            self.u64()
+                .checked_shl(rhs)
+                .expect("attempt to shift left with overflow"),
+        )
+    }
+}
+
+impl<'a> Shl<&'a u32> for Uint64 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
+    }
+}
+
 impl AddAssign<Uint64> for Uint64 {
     fn add_assign(&mut self, rhs: Uint64) {
         self.0 = self.0.checked_add(rhs.u64()).unwrap();
@@ -445,6 +482,18 @@ impl ShrAssign<u32> for Uint64 {
 impl<'a> ShrAssign<&'a u32> for Uint64 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         self.0 = self.0.checked_shr(*rhs).unwrap();
+    }
+}
+
+impl ShlAssign<u32> for Uint64 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = self.shl(rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint64 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = self.shl(*rhs);
     }
 }
 
@@ -798,6 +847,40 @@ mod tests {
             Uint64(500u64).checked_multiply_ratio(u64::MAX, 1u64),
             Err(CheckedMultiplyRatioError::Overflow),
         );
+    }
+
+    #[test]
+    fn uint64_shr_works() {
+        let original = Uint64::new(u64::from_be_bytes([0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8]));
+
+        let shifted = Uint64::new(u64::from_be_bytes([
+            0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
+        ]));
+
+        assert_eq!(original >> 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_shr_overflow_panics() {
+        let _ = Uint64::from(1u32) >> 64u32;
+    }
+
+    #[test]
+    fn uint64_shl_works() {
+        let original = Uint64::new(u64::from_be_bytes([
+            64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]));
+
+        let shifted = Uint64::new(u64::from_be_bytes([2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8]));
+
+        assert_eq!(original << 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_shl_overflow_panics() {
+        let _ = Uint64::from(1u32) << 64u32;
     }
 
     #[test]

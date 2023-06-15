@@ -1,6 +1,7 @@
 use std::fmt::{self};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -195,6 +196,22 @@ impl Uint128 {
             .checked_rem(other.0)
             .map(Self)
             .ok_or_else(|| DivideByZeroError::new(self))
+    }
+
+    pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 128 {
+            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+        }
+
+        Ok(Self(self.0.shr(other)))
+    }
+
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 128 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -441,6 +458,26 @@ impl<'a> Shr<&'a u32> for Uint128 {
     }
 }
 
+impl Shl<u32> for Uint128 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        Self(
+            self.u128()
+                .checked_shl(rhs)
+                .expect("attempt to shift left with overflow"),
+        )
+    }
+}
+
+impl<'a> Shl<&'a u32> for Uint128 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
+    }
+}
+
 impl AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         *self = *self + rhs;
@@ -494,6 +531,18 @@ impl ShrAssign<u32> for Uint128 {
 impl<'a> ShrAssign<&'a u32> for Uint128 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = *self >> rhs;
+    }
+}
+
+impl ShlAssign<u32> for Uint128 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = Shl::<u32>::shl(*self, rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint128 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = Shl::<u32>::shl(*self, *rhs);
     }
 }
 
@@ -887,6 +936,44 @@ mod tests {
             Uint128(500u128).checked_multiply_ratio(u128::MAX, 1u128),
             Err(CheckedMultiplyRatioError::Overflow),
         );
+    }
+
+    #[test]
+    fn uint128_shr_works() {
+        let original = Uint128::new(u128::from_be_bytes([
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
+        ]));
+
+        let shifted = Uint128::new(u128::from_be_bytes([
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
+        ]));
+
+        assert_eq!(original >> 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_shr_overflow_panics() {
+        let _ = Uint128::from(1u32) >> 128u32;
+    }
+
+    #[test]
+    fn uint128_shl_works() {
+        let original = Uint128::new(u128::from_be_bytes([
+            64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]));
+
+        let shifted = Uint128::new(u128::from_be_bytes([
+            2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]));
+
+        assert_eq!(original << 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_shl_overflow_panics() {
+        let _ = Uint128::from(1u32) << 128u32;
     }
 
     #[test]

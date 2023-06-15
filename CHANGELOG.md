@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
+  types. ([#1723])
+
+[#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
+
 ## [1.2.6] - 2023-06-05
 
 ## Changed
