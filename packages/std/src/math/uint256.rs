@@ -1505,6 +1505,27 @@ mod tests {
     }
 
     #[test]
+    fn uint256_shl_works() {
+        let original = Uint256::new([
+            64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+
+        let shifted = Uint256::new([
+            2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+
+        assert_eq!(original << 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint256_shl_overflow_panics() {
+        let _ = Uint256::from(1u32) << 256u32;
+    }
+
+    #[test]
     fn sum_works() {
         let nums = vec![
             Uint256::from(17u32),

@@ -834,6 +834,40 @@ mod tests {
     }
 
     #[test]
+    fn uint64_shr_works() {
+        let original = Uint64::new(u64::from_be_bytes([0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8]));
+
+        let shifted = Uint64::new(u64::from_be_bytes([
+            0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
+        ]));
+
+        assert_eq!(original >> 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_shr_overflow_panics() {
+        let _ = Uint64::from(1u32) >> 64u32;
+    }
+
+    #[test]
+    fn uint64_shl_works() {
+        let original = Uint64::new(u64::from_be_bytes([
+            64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]));
+
+        let shifted = Uint64::new(u64::from_be_bytes([2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8]));
+
+        assert_eq!(original << 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint64_shl_overflow_panics() {
+        let _ = Uint64::from(1u32) << 64u32;
+    }
+
+    #[test]
     fn sum_works() {
         let nums = vec![Uint64(17), Uint64(123), Uint64(540), Uint64(82)];
         let expected = Uint64(762);

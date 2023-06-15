@@ -939,6 +939,44 @@ mod tests {
     }
 
     #[test]
+    fn uint128_shr_works() {
+        let original = Uint128::new(u128::from_be_bytes([
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
+        ]));
+
+        let shifted = Uint128::new(u128::from_be_bytes([
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
+        ]));
+
+        assert_eq!(original >> 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_shr_overflow_panics() {
+        let _ = Uint128::from(1u32) >> 128u32;
+    }
+
+    #[test]
+    fn uint128_shl_works() {
+        let original = Uint128::new(u128::from_be_bytes([
+            64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]));
+
+        let shifted = Uint128::new(u128::from_be_bytes([
+            2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]));
+
+        assert_eq!(original << 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_shl_overflow_panics() {
+        let _ = Uint128::from(1u32) << 128u32;
+    }
+
+    #[test]
     fn sum_works() {
         let nums = vec![Uint128(17), Uint128(123), Uint128(540), Uint128(82)];
         let expected = Uint128(762);
