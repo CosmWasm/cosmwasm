@@ -10,10 +10,12 @@ and this project adheres to
 
 - cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
   types. ([#1723])
+- cosmwasm-std: Add `Timestamp::{plus,minus}_{minutes, hours, days}`. ([#1729])
 - cosmwasm-std: Add `Decimal::bps` and `Decimal256::bps` to create a decimal
   from a basis point value ([#1715]).
 
 [#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
+[#1729]: https://github.com/CosmWasm/cosmwasm/pull/1729
 [#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
 
 ### Changed
