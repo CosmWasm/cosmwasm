@@ -6,16 +6,26 @@ and this project adheres to
 
 ## [Unreleased]
 
-## Added
+### Added
 
 - cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
   types. ([#1723])
+- cosmwasm-std: Add `Decimal::bps` and `Decimal256::bps` to create a decimal
+  from a basis point value ([#1715]).
 
 [#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
+[#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
+
+### Changed
+
+- cosmwasm-std: Coin uses shorter `Coin { 123 "ucosm" }` format for Debug
+  ([#1704])
+
+[#1704]: https://github.com/CosmWasm/cosmwasm/pull/1704
 
 ## [1.2.6] - 2023-06-05
 
-## Changed
+### Changed
 
 - cosmwasm-vm: Bumped module serialization version from v4 to v5 to invalidate
   potentially corrupted caches caused by Rust update. See

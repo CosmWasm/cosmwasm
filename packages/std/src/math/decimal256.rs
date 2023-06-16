@@ -85,6 +85,11 @@ impl Decimal256 {
         Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000u128))
     }
 
+    /// Convert basis points (x/10000) into Decimal256
+    pub fn bps(x: u64) -> Self {
+        Self(Uint256::from(x) * Uint256::from(100_000_000_000_000u128))
+    }
+
     /// Creates a decimal from a number of atomic units and the number
     /// of decimal places. The inputs will be converted internally to form
     /// a decimal with 18 decimal places. So the input 123 and 2 will create
@@ -792,6 +797,15 @@ mod tests {
     fn decimal256_permille() {
         let value = Decimal256::permille(125);
         assert_eq!(value.0, Decimal256::DECIMAL_FRACTIONAL / Uint256::from(8u8));
+    }
+
+    #[test]
+    fn decimal256_bps() {
+        let value = Decimal256::bps(125);
+        assert_eq!(
+            value.0,
+            Decimal256::DECIMAL_FRACTIONAL / Uint256::from(80u8)
+        );
     }
 
     #[test]
