@@ -9,8 +9,10 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
+- cosmwasm-std: Add `Coins` helper to handle multiple coins. ([#1687])
 
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
+[#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
 
 ### Changed
 
