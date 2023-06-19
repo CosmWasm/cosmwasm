@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.2.7] - 2023-06-19
+
 ### Added
 
 - cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
@@ -1714,7 +1716,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...HEAD
+[1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...v1.2.4
