@@ -39,6 +39,24 @@ impl Timestamp {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[inline]
+    pub const fn plus_days(&self, addition: u64) -> Timestamp {
+        self.plus_hours(addition * 24)
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[inline]
+    pub const fn plus_hours(&self, addition: u64) -> Timestamp {
+        self.plus_minutes(addition * 60)
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[inline]
+    pub const fn plus_minutes(&self, addition: u64) -> Timestamp {
+        self.plus_seconds(addition * 60)
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn plus_seconds(&self, addition: u64) -> Timestamp {
         self.plus_nanos(addition * 1_000_000_000)
     }
@@ -47,6 +65,24 @@ impl Timestamp {
     pub const fn plus_nanos(&self, addition: u64) -> Timestamp {
         let nanos = Uint64::new(self.0.u64() + addition);
         Timestamp(nanos)
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[inline]
+    pub const fn minus_days(&self, subtrahend: u64) -> Timestamp {
+        self.minus_hours(subtrahend * 24)
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[inline]
+    pub const fn minus_hours(&self, subtrahend: u64) -> Timestamp {
+        self.minus_minutes(subtrahend * 60)
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[inline]
+    pub const fn minus_minutes(&self, subtrahend: u64) -> Timestamp {
+        self.minus_seconds(subtrahend * 60)
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -154,6 +190,56 @@ mod tests {
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn timestamp_minus_nanos_panics_on_overflow() {
         let _earlier = Timestamp::from_nanos(100).minus_nanos(101);
+    }
+
+    #[test]
+    fn timestamp_plus_days() {
+        let ts = Timestamp::from_seconds(123).plus_days(0);
+        assert_eq!(ts.0.u64(), 123_000_000_000);
+        let ts = Timestamp::from_seconds(123).plus_days(10);
+        assert_eq!(ts.0.u64(), 864_123_000_000_000);
+    }
+
+    #[test]
+    fn timestamp_minus_days() {
+        let ts = Timestamp::from_seconds(123).minus_days(0);
+        assert_eq!(ts.0.u64(), 123_000_000_000);
+        let ts = Timestamp::from_seconds(2 * 86400 + 123).minus_days(1);
+        assert_eq!(ts.0.u64(), 86_523_000_000_000);
+        let ts = Timestamp::from_seconds(86400).minus_days(1);
+        assert_eq!(ts.0.u64(), 0);
+    }
+
+    #[test]
+    fn timestamp_plus_hours() {
+        let ts = Timestamp::from_seconds(123).plus_hours(0);
+        assert_eq!(ts.0.u64(), 123_000_000_000);
+        let ts = Timestamp::from_seconds(123).plus_hours(2);
+        assert_eq!(ts.0.u64(), 123_000_000_000 + 60 * 60 * 2 * 1_000_000_000);
+    }
+
+    #[test]
+    fn timestamp_minus_hours() {
+        let ts = Timestamp::from_seconds(2 * 60 * 60).minus_hours(0);
+        assert_eq!(ts.0.u64(), 2 * 60 * 60 * 1_000_000_000);
+        let ts = Timestamp::from_seconds(2 * 60 * 60 + 123).minus_hours(1);
+        assert_eq!(ts.0.u64(), 60 * 60 * 1_000_000_000 + 123_000_000_000);
+    }
+
+    #[test]
+    fn timestamp_plus_minutes() {
+        let ts = Timestamp::from_seconds(123).plus_minutes(0);
+        assert_eq!(ts.0.u64(), 123_000_000_000);
+        let ts = Timestamp::from_seconds(123).plus_minutes(2);
+        assert_eq!(ts.0.u64(), 123_000_000_000 + 60 * 2 * 1_000_000_000);
+    }
+
+    #[test]
+    fn timestamp_minus_minutes() {
+        let ts = Timestamp::from_seconds(5 * 60).minus_minutes(0);
+        assert_eq!(ts.0.u64(), 5 * 60 * 1_000_000_000);
+        let ts = Timestamp::from_seconds(5 * 60 + 123).minus_minutes(1);
+        assert_eq!(ts.0.u64(), 4 * 60 * 1_000_000_000 + 123_000_000_000);
     }
 
     #[test]

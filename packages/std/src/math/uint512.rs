@@ -3,7 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shr, ShrAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
+    Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -262,6 +263,14 @@ impl Uint512 {
         Ok(Self(self.0.shr(other)))
     }
 
+    pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
+        if other >= 512 {
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+        }
+
+        Ok(Self(self.0.shl(other)))
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
@@ -325,9 +334,10 @@ impl Uint512 {
 
 impl From<Uint256> for Uint512 {
     fn from(val: Uint256) -> Self {
-        let bytes = [[0u8; 32], val.to_be_bytes()].concat();
+        let mut bytes = [0u8; 64];
+        bytes[32..].copy_from_slice(&val.to_be_bytes());
 
-        Self::from_be_bytes(bytes.try_into().unwrap())
+        Self::from_be_bytes(bytes)
     }
 }
 
@@ -542,6 +552,23 @@ impl<'a> Shr<&'a u32> for Uint512 {
     }
 }
 
+impl Shl<u32> for Uint512 {
+    type Output = Self;
+
+    fn shl(self, rhs: u32) -> Self::Output {
+        self.checked_shl(rhs)
+            .expect("attempt to shift left with overflow")
+    }
+}
+
+impl<'a> Shl<&'a u32> for Uint512 {
+    type Output = Self;
+
+    fn shl(self, rhs: &'a u32) -> Self::Output {
+        self.shl(*rhs)
+    }
+}
+
 impl AddAssign<Uint512> for Uint512 {
     fn add_assign(&mut self, rhs: Uint512) {
         self.0 = self.0.checked_add(rhs.0).unwrap();
@@ -575,6 +602,18 @@ impl ShrAssign<u32> for Uint512 {
 impl<'a> ShrAssign<&'a u32> for Uint512 {
     fn shr_assign(&mut self, rhs: &'a u32) {
         *self = Shr::<u32>::shr(*self, *rhs);
+    }
+}
+
+impl ShlAssign<u32> for Uint512 {
+    fn shl_assign(&mut self, rhs: u32) {
+        *self = self.shl(rhs);
+    }
+}
+
+impl<'a> ShlAssign<&'a u32> for Uint512 {
+    fn shl_assign(&mut self, rhs: &'a u32) {
+        *self = self.shl(*rhs);
     }
 }
 
@@ -1117,6 +1156,31 @@ mod tests {
     #[should_panic]
     fn uint512_shr_overflow_panics() {
         let _ = Uint512::from(1u32) >> 512u32;
+    }
+
+    #[test]
+    fn uint512_shl_works() {
+        let original = Uint512::new([
+            64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+
+        let shifted = Uint512::new([
+            2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+            0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ]);
+
+        assert_eq!(original << 2u32, shifted);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint512_shl_overflow_panics() {
+        let _ = Uint512::from(1u32) << 512u32;
     }
 
     #[test]

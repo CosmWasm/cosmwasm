@@ -21,7 +21,7 @@ mod tests {
     use super::*;
     use std::ops::*;
 
-    /// An trait that ensures other traits are implemented for our number types
+    /// A trait that ensures other traits are implemented for our number types
     trait AllImpl<'a>:
         Add
         + Add<&'a Self>
@@ -50,10 +50,28 @@ mod tests {
     {
     }
 
+    /// A trait that ensures other traits are implemented for our integer types
+    trait IntImpl<'a>:
+        AllImpl<'a>
+        + Shl<u32>
+        + Shl<&'a u32>
+        + ShlAssign<u32>
+        + ShlAssign<&'a u32>
+        + Shr<u32>
+        + Shr<&'a u32>
+        + ShrAssign<u32>
+        + ShrAssign<&'a u32>
+    {
+    }
+
     impl AllImpl<'_> for Uint64 {}
     impl AllImpl<'_> for Uint128 {}
     impl AllImpl<'_> for Uint256 {}
     impl AllImpl<'_> for Uint512 {}
+    impl IntImpl<'_> for Uint64 {}
+    impl IntImpl<'_> for Uint128 {}
+    impl IntImpl<'_> for Uint256 {}
+    impl IntImpl<'_> for Uint512 {}
     impl AllImpl<'_> for Decimal {}
     impl AllImpl<'_> for Decimal256 {}
 }

@@ -56,6 +56,37 @@ and this project adheres to
 
 [#1596]: https://github.com/CosmWasm/cosmwasm/issues/1596
 
+## [1.2.7] - 2023-06-19
+
+### Added
+
+- cosmwasm-std: Add `<<` and `<<=` implementation for `Uint{64,128,256,512}`
+  types. ([#1723])
+- cosmwasm-std: Add `Timestamp::{plus,minus}_{minutes, hours, days}`. ([#1729])
+- cosmwasm-std: Add `Decimal::bps` and `Decimal256::bps` to create a decimal
+  from a basis point value ([#1715]).
+
+[#1723]: https://github.com/CosmWasm/cosmwasm/pull/1723
+[#1729]: https://github.com/CosmWasm/cosmwasm/pull/1729
+[#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
+
+### Changed
+
+- cosmwasm-std: Coin uses shorter `Coin { 123 "ucosm" }` format for Debug
+  ([#1704])
+
+[#1704]: https://github.com/CosmWasm/cosmwasm/pull/1704
+
+## [1.2.6] - 2023-06-05
+
+### Changed
+
+- cosmwasm-vm: Bumped module serialization version from v4 to v5 to invalidate
+  potentially corrupted caches caused by Rust update. See
+  https://github.com/CosmWasm/wasmvm/issues/426 for more information. ([#1708])
+
+[#1708]: https://github.com/CosmWasm/cosmwasm/pull/1708
+
 ## [1.2.5] - 2023-05-02
 
 ### Added
@@ -1735,7 +1766,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...HEAD
+[1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
+[1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.2...v1.2.3

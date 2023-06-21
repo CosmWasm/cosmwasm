@@ -42,7 +42,9 @@ use crate::modules::current_wasmer_module_version;
 ///   the old value "v3" is still used along with Wasmer 2.3.0 (bug). From cosmwasm 1.1.2 onwards, this is
 ///   fixed by bumping to "v4".
 /// - **v5**:<br>
-///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+///   A change in memory layout of some types in Rust [std] caused
+///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
+///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
 const MODULE_SERIALIZATION_VERSION: &str = "v5";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
