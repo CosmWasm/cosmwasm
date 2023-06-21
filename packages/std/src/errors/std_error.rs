@@ -590,6 +590,28 @@ pub enum CheckedFromRatioError {
 #[error("Round up operation failed because of overflow")]
 pub struct RoundUpOverflowError;
 
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum CoinFromStrError {
+    #[error("Missing denominator")]
+    MissingDenom,
+    #[error("Missing amount or non-digit characters in amount")]
+    MissingAmount,
+    #[error("Invalid amount: {0}")]
+    InvalidAmount(std::num::ParseIntError),
+}
+
+impl From<std::num::ParseIntError> for CoinFromStrError {
+    fn from(value: std::num::ParseIntError) -> Self {
+        Self::InvalidAmount(value)
+    }
+}
+
+impl From<CoinFromStrError> for StdError {
+    fn from(value: CoinFromStrError) -> Self {
+        Self::generic_err(format!("Parsing Coin: {}", value))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

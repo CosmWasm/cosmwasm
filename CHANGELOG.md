@@ -6,6 +6,26 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
+
+[#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
+
+### Changed
+
+- cosmwasm-vm: Add checks for table section of Wasm blob ([#1631]).
+- cosmwasm-vm: Limit number of imports during static validation ([#1629]).
+- cosmwasm-vm: Add target (triple + CPU features) into the module cache
+  directory to avoid using modules compiled for a different system. Bump
+  `MODULE_SERIALIZATION_VERSION` to "v6". ([#1664])
+- cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
+
+[#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
+[#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
+[#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
+[#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
+
 ## [1.2.7] - 2023-06-19
 
 ### Added
