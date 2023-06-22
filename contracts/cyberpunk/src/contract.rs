@@ -242,7 +242,7 @@ mod tests {
                         aliases: vec!["microfoo".to_string(), "foobar".to_string()],
                     }],
                     display: "FOO".to_string(),
-                    base: "ufoo".to_string(),
+                    base: format!("ufoo{i}"),
                     uri: "https://foo.bar".to_string(),
                     uri_hash: "foo".to_string(),
                 })
