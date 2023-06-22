@@ -20,9 +20,13 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
     DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::ContractInfoResponse;
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::{DenomMetadata, PageRequest};
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -237,6 +241,28 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         .into();
         let res: AllBalanceResponse = self.query(&request)?;
         Ok(res.amount)
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn query_denom_metadata(&self, denom: impl Into<String>) -> StdResult<DenomMetadata> {
+        let request = BankQuery::DenomMetadata {
+            denom: denom.into(),
+        }
+        .into();
+        let res: DenomMetadataResponse = self.query(&request)?;
+        Ok(res.metadata)
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn query_all_denom_metadata(
+        &self,
+        pagination: PageRequest,
+    ) -> StdResult<AllDenomMetadataResponse> {
+        let request = BankQuery::AllDenomMetadata {
+            pagination: Some(pagination),
+        }
+        .into();
+        self.query(&request)
     }
 
     // this queries another wasm contract. You should know a priori the proper types for T and U

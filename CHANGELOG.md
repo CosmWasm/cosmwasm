@@ -8,9 +8,16 @@ and this project adheres to
 
 ### Added
 
+- cosmwasm-std: Implement `BankQuery::AllDenomMetadata` to allow querying all
+  the denom metadata and `BankQuery::DenomMetadata` to query a specific one. In
+  order to use this query in a contract, the `cosmwasm_1_3` feature needs to be
+  enabled for the `cosmwasm_std` dependency. This makes the contract
+  incompatible with chains running anything lower than CosmWasm `1.3.0`.
+  ([#1647])
 - cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
 - cosmwasm-std: Add `Coins` helper to handle multiple coins. ([#1687])
 
+[#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 [#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
 

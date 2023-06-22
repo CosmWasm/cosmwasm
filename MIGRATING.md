@@ -4,6 +4,33 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 1.2.x -> 1.3.0
+
+- Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "1.3.0"
+  cosmwasm-storage = "1.3.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "1.3.0"
+  cosmwasm-vm = "1.3.0"
+  # ...
+  ```
+
+- If you want to use a feature that is only available on CosmWasm 1.3+ chains,
+  use this feature:
+
+  ```diff
+  -cosmwasm-std = { version = "1.3.0", features = ["stargate"] }
+  +cosmwasm-std = { version = "1.3.0", features = ["stargate", "cosmwasm_1_3"] }
+  ```
+
+  Please note that `cosmwasm_1_2` implies `cosmwasm_1_1`, and `cosmwasm_1_3`
+  implies `cosmwasm_1_2`, and so on, so there is no need to set multiple.
+
 ## 1.1.x -> 1.2.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
