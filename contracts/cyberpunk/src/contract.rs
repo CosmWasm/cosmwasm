@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Api, Deps, DepsMut, Empty, Env, MessageInfo, PageRequest,
-    QueryResponse, Response, StdError, StdResult, WasmMsg,
+    entry_point, to_binary, Api, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo,
+    PageRequest, QueryResponse, Response, StdError, StdResult, WasmMsg,
 };
 
 use crate::errors::ContractError;
@@ -185,6 +185,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         MirrorEnv {} => to_binary(&query_mirror_env(env)),
         Denoms {} => to_binary(&query_denoms(deps)?),
+        Denom { denom } => to_binary(&query_denom(deps, denom)?),
     }
 }
 
@@ -192,9 +193,7 @@ fn query_mirror_env(env: Env) -> Env {
     env
 }
 
-fn query_denoms(deps: Deps) -> StdResult<(String, Vec<String>)> {
-    let metadata = deps.querier.query_denom_metadata("uatom")?;
-
+fn query_denoms(deps: Deps) -> StdResult<Vec<DenomMetadata>> {
     const PAGE_SIZE: u32 = 10;
     let mut next_key = None;
     let mut all_metadata = Vec::new();
@@ -206,7 +205,7 @@ fn query_denoms(deps: Deps) -> StdResult<(String, Vec<String>)> {
         })?;
 
         let len = page.metadata.len() as u32;
-        all_metadata.extend(page.metadata.into_iter().map(|m| m.symbol));
+        all_metadata.extend(page.metadata.into_iter());
         next_key = page.next_key;
 
         if next_key.is_none() || len < PAGE_SIZE {
@@ -214,7 +213,11 @@ fn query_denoms(deps: Deps) -> StdResult<(String, Vec<String>)> {
         }
     }
 
-    Ok((metadata.symbol, all_metadata))
+    Ok(all_metadata)
+}
+
+fn query_denom(deps: Deps, denom: String) -> StdResult<DenomMetadata> {
+    deps.querier.query_denom_metadata(denom)
 }
 
 #[cfg(test)]
@@ -267,27 +270,26 @@ mod tests {
                     uri: "https://foo.bar".to_string(),
                     uri_hash: "foo".to_string(),
                 })
-                .chain(std::iter::once(DenomMetadata {
-                    description: "Atom".to_string(),
-                    denom_units: vec![DenomUnit {
-                        denom: "uatom".to_string(),
-                        exponent: 8,
-                        aliases: vec!["microatom".to_string()],
-                    }],
-                    base: "uatom".to_string(),
-                    display: "ATOM".to_string(),
-                    name: "Cosmos Atom".to_string(),
-                    symbol: "ATOM".to_string(),
-                    uri: "https://cosmos.network".to_string(),
-                    uri_hash: "hash".to_string(),
-                }))
                 .collect::<Vec<_>>(),
         );
 
-        let (atom, symbols): (String, Vec<String>) =
+        let symbols: Vec<DenomMetadata> =
             from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
 
-        assert_eq!(atom, "ATOM");
-        assert_eq!(symbols.len(), 99);
+        assert_eq!(symbols.len(), 98);
+
+        let denom: DenomMetadata = from_binary(
+            &query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::Denom {
+                    denom: "ufoo0".to_string(),
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(denom.symbol, "FOO0");
     }
 }
