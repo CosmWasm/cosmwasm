@@ -1,8 +1,10 @@
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::marker::PhantomData;
+#[cfg(feature = "cosmwasm_1_3")]
+use std::ops::Bound;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
@@ -609,7 +611,7 @@ pub struct BankQuerier {
     /// HashMap<address, coins>
     balances: HashMap<String, Vec<Coin>>,
     /// Vec<Metadata>
-    denom_metadata: Vec<DenomMetadata>,
+    denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
 }
 
 impl BankQuerier {
@@ -622,7 +624,7 @@ impl BankQuerier {
         BankQuerier {
             supplies: Self::calculate_supplies(&balances),
             balances,
-            denom_metadata: Vec::new(),
+            denom_metadata: BTreeMap::new(),
         }
     }
 
@@ -638,9 +640,10 @@ impl BankQuerier {
     }
 
     pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
-        self.denom_metadata = denom_metadata.to_vec();
-        self.denom_metadata
-            .sort_unstable_by(|a, b| a.symbol.cmp(&b.symbol));
+        self.denom_metadata = denom_metadata
+            .iter()
+            .map(|d| (d.base.as_bytes().to_vec(), d.clone()))
+            .collect();
     }
 
     fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
@@ -698,7 +701,7 @@ impl BankQuerier {
             }
             #[cfg(feature = "cosmwasm_1_3")]
             BankQuery::DenomMetadata { denom } => {
-                let denom_metadata = self.denom_metadata.iter().find(|m| &m.base == denom);
+                let denom_metadata = self.denom_metadata.get(denom.as_bytes());
                 match denom_metadata {
                     Some(m) => {
                         let metadata_res = DenomMetadataResponse {
@@ -717,26 +720,31 @@ impl BankQuerier {
                     reverse: false,
                 };
                 let pagination = pagination.as_ref().unwrap_or(&default_pagination);
-                // using dynamic dispatch here to reduce code duplication and since this is only testing code
-                let iter: Box<dyn Iterator<Item = DenomMetadata>> = if pagination.reverse {
-                    Box::new(self.denom_metadata.iter().rev().cloned())
-                } else {
-                    Box::new(self.denom_metadata.iter().cloned())
+
+                // range of all denoms after the given key (or until the key for reverse)
+                let range = match (pagination.reverse, &pagination.key) {
+                    (_, None) => (Bound::Unbounded, Bound::Unbounded),
+                    (true, Some(key)) => (Bound::Unbounded, Bound::Included(key.as_slice())),
+                    (false, Some(key)) => (Bound::Included(key.as_slice()), Bound::Unbounded),
                 };
+                let iter = self.denom_metadata.range::<[u8], _>(range);
+                // using dynamic dispatch here to reduce code duplication and since this is only testing code
+                let iter: Box<dyn Iterator<Item = _>> = if pagination.reverse {
+                    Box::new(iter.rev())
+                } else {
+                    Box::new(iter)
+                };
+
                 let mut metadata: Vec<_> = iter
-                    // skip until we find the key
-                    .skip_while(|m| match &pagination.key {
-                        Some(key) => m.symbol.as_bytes() < key,
-                        None => false,
-                    })
                     // take the requested amount + 1 to get the next key
                     .take((pagination.limit.saturating_add(1)) as usize)
+                    .map(|(_, m)| m.clone())
                     .collect();
 
                 // if we took more than requested, remove the last element (the next key),
                 // otherwise this is the last batch
                 let next_key = if metadata.len() > pagination.limit as usize {
-                    metadata.pop().map(|m| Binary::from(m.symbol.as_bytes()))
+                    metadata.pop().map(|m| Binary::from(m.base.as_bytes()))
                 } else {
                     None
                 };
@@ -1346,7 +1354,7 @@ mod tests {
                         aliases: vec!["microfoo".to_string(), "foobar".to_string()],
                     }],
                     display: "FOO".to_string(),
-                    base: "ufoo".to_string(),
+                    base: format!("ufoo{i}"),
                     uri: "https://foo.bar".to_string(),
                     uri_hash: "foo".to_string(),
                 })
