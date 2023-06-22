@@ -478,6 +478,10 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         self.bank.update_balance(addr, balance)
     }
 
+    pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
+        self.bank.set_denom_metadata(denom_metadata);
+    }
+
     #[cfg(feature = "staking")]
     pub fn update_staking(
         &mut self,
@@ -635,6 +639,8 @@ impl BankQuerier {
 
     pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
         self.denom_metadata = denom_metadata.to_vec();
+        self.denom_metadata
+            .sort_unstable_by(|a, b| a.symbol.cmp(&b.symbol));
     }
 
     fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
@@ -1376,6 +1382,10 @@ mod tests {
         let res2: AllDenomMetadataResponse = from_binary(&res2).unwrap();
         assert_eq!(res2.metadata.len(), 10);
         assert_ne!(res.metadata.last(), res2.metadata.first());
+        // should have no overlap
+        for m in res.metadata {
+            assert!(!res2.metadata.contains(&m));
+        }
 
         // querying all 100 should work
         let res = bank
