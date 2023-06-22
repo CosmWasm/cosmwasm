@@ -15,6 +15,42 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "Queries `AllDenomMetadata` from the bank module repeatedly and returns all entries",
+      "type": "object",
+      "required": [
+        "denoms"
+      ],
+      "properties": {
+        "denoms": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Queries `DenomMetadata` from the bank module and returns the result",
+      "type": "object",
+      "required": [
+        "denom"
+      ],
+      "properties": {
+        "denom": {
+          "type": "object",
+          "required": [
+            "denom"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }
