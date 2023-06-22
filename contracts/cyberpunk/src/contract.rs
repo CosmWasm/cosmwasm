@@ -1,16 +1,6 @@
 use cosmwasm_std::{
-<<<<<<< HEAD
-<<<<<<< HEAD
-    entry_point, to_binary, Deps, DepsMut, Empty, Env, MessageInfo, QueryResponse, Response,
-    StdError, StdResult, WasmMsg,
-=======
-    entry_point, to_binary, Api, Deps, DepsMut, Empty, Env, MessageInfo, PageRequest,
+    entry_point, to_binary, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo, PageRequest,
     QueryResponse, Response, StdError, StdResult, WasmMsg,
->>>>>>> 7e96644e (Add Denoms query to cyberpunk contract)
-=======
-    entry_point, to_binary, Api, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo,
-    PageRequest, QueryResponse, Response, StdError, StdResult, WasmMsg,
->>>>>>> feab42e4 (Split Denoms query up)
 };
 
 use crate::errors::ContractError;
@@ -174,8 +164,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 fn query_mirror_env(env: Env) -> Env {
     env
 }
-<<<<<<< HEAD
-=======
 
 fn query_denoms(deps: Deps) -> StdResult<Vec<DenomMetadata>> {
     const PAGE_SIZE: u32 = 10;
@@ -227,14 +215,6 @@ mod tests {
     }
 
     #[test]
-    fn debug_works() {
-        let mut deps = setup();
-
-        let msg = ExecuteMsg::Debug {};
-        execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
-    }
-
-    #[test]
     fn query_denoms_works() {
         let mut deps = setup();
 
@@ -277,4 +257,3 @@ mod tests {
         assert_eq!(denom.symbol, "FOO0");
     }
 }
->>>>>>> 7e96644e (Add Denoms query to cyberpunk contract)
