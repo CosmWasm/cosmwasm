@@ -16,7 +16,11 @@ and this project adheres to
   ([#1647])
 - cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
 - cosmwasm-std: Add `Coins` helper to handle multiple coins. ([#1687])
+- cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
+  been checked before. This is useful for state-sync where we know the Wasm code
+  was checked when it was first uploaded. ([#1635])
 
+[#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
 [#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 [#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
