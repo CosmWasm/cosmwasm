@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::Coin;
 
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::{Binary, DenomMetadata, PageRequest};
+
 use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
@@ -21,6 +24,14 @@ pub enum BankQuery {
     /// Note that this may be much more expensive than Balance and should be avoided if possible.
     /// Return value is AllBalanceResponse.
     AllBalances { address: String },
+    /// This calls into the native bank module for querying metadata for a specific bank token.
+    /// Return value is DenomMetadataResponse
+    #[cfg(feature = "cosmwasm_1_3")]
+    DenomMetadata { denom: String },
+    /// This calls into the native bank module for querying metadata for all bank tokens that have a metadata entry.
+    /// Return value is AllDenomMetadataResponse
+    #[cfg(feature = "cosmwasm_1_3")]
+    AllDenomMetadata { pagination: Option<PageRequest> },
 }
 
 #[cfg(feature = "cosmwasm_1_1")]
@@ -54,3 +65,28 @@ pub struct AllBalanceResponse {
 }
 
 impl QueryResponseType for AllBalanceResponse {}
+
+#[cfg(feature = "cosmwasm_1_3")]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub struct DenomMetadataResponse {
+    /// The metadata for the queried denom.
+    pub metadata: DenomMetadata,
+}
+
+#[cfg(feature = "cosmwasm_1_3")]
+impl QueryResponseType for DenomMetadataResponse {}
+
+#[cfg(feature = "cosmwasm_1_3")]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub struct AllDenomMetadataResponse {
+    /// Always returns metadata for all token denoms on the base chain.
+    pub metadata: Vec<DenomMetadata>,
+    pub next_key: Option<Binary>,
+}
+
+#[cfg(feature = "cosmwasm_1_3")]
+impl QueryResponseType for AllDenomMetadataResponse {}

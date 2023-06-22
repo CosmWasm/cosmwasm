@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DenomMetadata",
+  "description": "Replicates the cosmos-sdk bank module Metadata type",
+  "type": "object",
+  "required": [
+    "base",
+    "denom_units",
+    "description",
+    "display",
+    "name",
+    "symbol",
+    "uri",
+    "uri_hash"
+  ],
+  "properties": {
+    "base": {
+      "type": "string"
+    },
+    "denom_units": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DenomUnit"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "display": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "symbol": {
+      "type": "string"
+    },
+    "uri": {
+      "type": "string"
+    },
+    "uri_hash": {
+      "type": "string"
+    }
+  },
+  "definitions": {
+    "DenomUnit": {
+      "description": "Replicates the cosmos-sdk bank module DenomUnit type",
+      "type": "object",
+      "required": [
+        "aliases",
+        "denom",
+        "exponent"
+      ],
+      "properties": {
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "denom": {
+          "type": "string"
+        },
+        "exponent": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}

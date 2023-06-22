@@ -199,12 +199,198 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Queries `AllDenomMetadata` from the bank module repeatedly and returns all entries",
+        "type": "object",
+        "required": [
+          "denoms"
+        ],
+        "properties": {
+          "denoms": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Queries `DenomMetadata` from the bank module and returns the result",
+        "type": "object",
+        "required": [
+          "denom"
+        ],
+        "properties": {
+          "denom": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ]
   },
   "migrate": null,
   "sudo": null,
   "responses": {
+    "denom": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DenomMetadata",
+      "description": "Replicates the cosmos-sdk bank module Metadata type",
+      "type": "object",
+      "required": [
+        "base",
+        "denom_units",
+        "description",
+        "display",
+        "name",
+        "symbol",
+        "uri",
+        "uri_hash"
+      ],
+      "properties": {
+        "base": {
+          "type": "string"
+        },
+        "denom_units": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DenomUnit"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "display": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string"
+        },
+        "uri_hash": {
+          "type": "string"
+        }
+      },
+      "definitions": {
+        "DenomUnit": {
+          "description": "Replicates the cosmos-sdk bank module DenomUnit type",
+          "type": "object",
+          "required": [
+            "aliases",
+            "denom",
+            "exponent"
+          ],
+          "properties": {
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "denom": {
+              "type": "string"
+            },
+            "exponent": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "denoms": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_DenomMetadata",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DenomMetadata"
+      },
+      "definitions": {
+        "DenomMetadata": {
+          "description": "Replicates the cosmos-sdk bank module Metadata type",
+          "type": "object",
+          "required": [
+            "base",
+            "denom_units",
+            "description",
+            "display",
+            "name",
+            "symbol",
+            "uri",
+            "uri_hash"
+          ],
+          "properties": {
+            "base": {
+              "type": "string"
+            },
+            "denom_units": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DenomUnit"
+              }
+            },
+            "description": {
+              "type": "string"
+            },
+            "display": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "uri": {
+              "type": "string"
+            },
+            "uri_hash": {
+              "type": "string"
+            }
+          }
+        },
+        "DenomUnit": {
+          "description": "Replicates the cosmos-sdk bank module DenomUnit type",
+          "type": "object",
+          "required": [
+            "aliases",
+            "denom",
+            "exponent"
+          ],
+          "properties": {
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "denom": {
+              "type": "string"
+            },
+            "exponent": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
     "mirror_env": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Env",

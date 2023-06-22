@@ -44,6 +44,7 @@ The libarary comes with the following features:
 | backtraces   |                    | Add backtraces to errors (for unit testing)                               |
 | cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                          |
 | cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                          |
+| cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                          |
 
 ## The cosmwasm-std dependency for contract developers
 

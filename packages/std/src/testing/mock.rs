@@ -1,8 +1,10 @@
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::marker::PhantomData;
+#[cfg(feature = "cosmwasm_1_3")]
+use std::ops::Bound;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
@@ -32,7 +34,12 @@ use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
-use crate::Attribute;
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::{
+    query::{AllDenomMetadataResponse, DenomMetadataResponse},
+    PageRequest,
+};
+use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 
@@ -473,6 +480,10 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         self.bank.update_balance(addr, balance)
     }
 
+    pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
+        self.bank.set_denom_metadata(denom_metadata);
+    }
+
     #[cfg(feature = "staking")]
     pub fn update_staking(
         &mut self,
@@ -599,6 +610,8 @@ pub struct BankQuerier {
     supplies: HashMap<String, Uint128>,
     /// HashMap<address, coins>
     balances: HashMap<String, Vec<Coin>>,
+    /// Vec<Metadata>
+    denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
 }
 
 impl BankQuerier {
@@ -611,6 +624,7 @@ impl BankQuerier {
         BankQuerier {
             supplies: Self::calculate_supplies(&balances),
             balances,
+            denom_metadata: BTreeMap::new(),
         }
     }
 
@@ -623,6 +637,13 @@ impl BankQuerier {
         self.supplies = Self::calculate_supplies(&self.balances);
 
         result
+    }
+
+    pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
+        self.denom_metadata = denom_metadata
+            .iter()
+            .map(|d| (d.base.as_bytes().to_vec(), d.clone()))
+            .collect();
     }
 
     fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
@@ -677,6 +698,59 @@ impl BankQuerier {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 to_binary(&bank_res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_3")]
+            BankQuery::DenomMetadata { denom } => {
+                let denom_metadata = self.denom_metadata.get(denom.as_bytes());
+                match denom_metadata {
+                    Some(m) => {
+                        let metadata_res = DenomMetadataResponse {
+                            metadata: m.clone(),
+                        };
+                        to_binary(&metadata_res).into()
+                    }
+                    None => return SystemResult::Err(SystemError::Unknown {}),
+                }
+            }
+            #[cfg(feature = "cosmwasm_1_3")]
+            BankQuery::AllDenomMetadata { pagination } => {
+                let default_pagination = PageRequest {
+                    key: None,
+                    limit: 100,
+                    reverse: false,
+                };
+                let pagination = pagination.as_ref().unwrap_or(&default_pagination);
+
+                // range of all denoms after the given key (or until the key for reverse)
+                let range = match (pagination.reverse, &pagination.key) {
+                    (_, None) => (Bound::Unbounded, Bound::Unbounded),
+                    (true, Some(key)) => (Bound::Unbounded, Bound::Included(key.as_slice())),
+                    (false, Some(key)) => (Bound::Included(key.as_slice()), Bound::Unbounded),
+                };
+                let iter = self.denom_metadata.range::<[u8], _>(range);
+                // using dynamic dispatch here to reduce code duplication and since this is only testing code
+                let iter: Box<dyn Iterator<Item = _>> = if pagination.reverse {
+                    Box::new(iter.rev())
+                } else {
+                    Box::new(iter)
+                };
+
+                let mut metadata: Vec<_> = iter
+                    // take the requested amount + 1 to get the next key
+                    .take((pagination.limit.saturating_add(1)) as usize)
+                    .map(|(_, m)| m.clone())
+                    .collect();
+
+                // if we took more than requested, remove the last element (the next key),
+                // otherwise this is the last batch
+                let next_key = if metadata.len() > pagination.limit as usize {
+                    metadata.pop().map(|m| Binary::from(m.base.as_bytes()))
+                } else {
+                    None
+                };
+
+                let metadata_res = AllDenomMetadataResponse { metadata, next_key };
+                to_binary(&metadata_res).into()
             }
         };
         // system result is always ok in the mock implementation
@@ -835,6 +909,8 @@ pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attr
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "cosmwasm_1_3")]
+    use crate::DenomUnit;
     use crate::{coin, coins, from_binary, to_binary, ContractInfoResponse, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
@@ -1260,6 +1336,96 @@ mod tests {
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    #[test]
+    fn bank_querier_metadata_works() {
+        let mut bank = BankQuerier::new(&[]);
+        bank.set_denom_metadata(
+            &(0..100)
+                .map(|i| DenomMetadata {
+                    symbol: format!("FOO{i}"),
+                    name: "Foo".to_string(),
+                    description: "Foo coin".to_string(),
+                    denom_units: vec![DenomUnit {
+                        denom: "ufoo".to_string(),
+                        exponent: 8,
+                        aliases: vec!["microfoo".to_string(), "foobar".to_string()],
+                    }],
+                    display: "FOO".to_string(),
+                    base: format!("ufoo{i}"),
+                    uri: "https://foo.bar".to_string(),
+                    uri_hash: "foo".to_string(),
+                })
+                .collect::<Vec<_>>(),
+        );
+
+        // querying first 10 should work
+        let res = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: None,
+                    limit: 10,
+                    reverse: false,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let res: AllDenomMetadataResponse = from_binary(&res).unwrap();
+        assert_eq!(res.metadata.len(), 10);
+        assert!(res.next_key.is_some());
+
+        // querying next 10 should also work
+        let res2 = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: res.next_key,
+                    limit: 10,
+                    reverse: false,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let res2: AllDenomMetadataResponse = from_binary(&res2).unwrap();
+        assert_eq!(res2.metadata.len(), 10);
+        assert_ne!(res.metadata.last(), res2.metadata.first());
+        // should have no overlap
+        for m in res.metadata {
+            assert!(!res2.metadata.contains(&m));
+        }
+
+        // querying all 100 should work
+        let res = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: None,
+                    limit: 100,
+                    reverse: true,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let res: AllDenomMetadataResponse = from_binary(&res).unwrap();
+        assert_eq!(res.metadata.len(), 100);
+        assert!(res.next_key.is_none(), "no more data should be available");
+        assert_eq!(res.metadata[0].symbol, "FOO99", "should have been reversed");
+
+        let more_res = bank
+            .query(&BankQuery::AllDenomMetadata {
+                pagination: Some(PageRequest {
+                    key: res.next_key,
+                    limit: u32::MAX,
+                    reverse: true,
+                }),
+            })
+            .unwrap()
+            .unwrap();
+        let more_res: AllDenomMetadataResponse = from_binary(&more_res).unwrap();
+        assert_eq!(
+            more_res.metadata, res.metadata,
+            "should be same as previous query"
+        );
     }
 
     #[cfg(feature = "stargate")]
