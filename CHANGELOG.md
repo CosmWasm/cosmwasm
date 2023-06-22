@@ -19,11 +19,14 @@ and this project adheres to
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
   been checked before. This is useful for state-sync where we know the Wasm code
   was checked when it was first uploaded. ([#1635])
+- cosmwasm-vm: Allow sign extension Wasm opcodes in static validation. This
+  allows contracts to be compiled with Rust 1.70.0 and above. ([#1727])
 
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
 [#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 [#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
+[#1727]: https://github.com/CosmWasm/cosmwasm/issues/1727
 
 ### Changed
 
