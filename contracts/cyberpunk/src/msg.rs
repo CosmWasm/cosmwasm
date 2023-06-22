@@ -36,4 +36,8 @@ pub enum QueryMsg {
     /// Returns the env for testing
     #[returns(cosmwasm_std::Env)]
     MirrorEnv {},
+
+    /// Queries `DenomMetadata` and `AllDenomMetadata` from the bank module and returns the symbols
+    #[returns((String, Vec<String>))]
+    Denoms {},
 }
