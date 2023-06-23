@@ -28,6 +28,8 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -443,6 +445,8 @@ pub struct MockQuerier<C: DeserializeOwned = Empty> {
     bank: BankQuerier,
     #[cfg(feature = "staking")]
     staking: StakingQuerier,
+    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    distribution: DistributionQuerier,
     wasm: WasmQuerier,
     #[cfg(feature = "stargate")]
     ibc: IbcQuerier,
@@ -457,6 +461,8 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
+            #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+            distribution: DistributionQuerier::default(),
             #[cfg(feature = "staking")]
             staking: StakingQuerier::default(),
             wasm: WasmQuerier::default(),
@@ -543,6 +549,10 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
+            #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+            QueryRequest::Distribution(distribution_query) => {
+                self.distribution.query(distribution_query)
+            }
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
             #[cfg(feature = "stargate")]
             QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
@@ -884,6 +894,30 @@ impl StakingQuerier {
                     .find(|d| d.delegator.as_str() == delegator && d.validator == *validator);
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
+                };
+                to_binary(&res).into()
+            }
+        };
+        // system result is always ok in the mock implementation
+        SystemResult::Ok(contract_result)
+    }
+}
+
+#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[derive(Clone, Default)]
+pub struct DistributionQuerier {}
+
+#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+impl DistributionQuerier {
+    pub fn new() -> Self {
+        DistributionQuerier {}
+    }
+
+    pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
+        let contract_result: ContractResult<Binary> = match request {
+            DistributionQuery::DelegatorWithdrawAddress { delegator_address } => {
+                let res = DelegatorWithdrawAddressResponse {
+                    withdraw_address: delegator_address.clone(),
                 };
                 to_binary(&res).into()
             }

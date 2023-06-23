@@ -13,5 +13,5 @@ pub enum DistributionQuery {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct DelegatorWithdrawAddressResponse {
-    withdraw_address: String,
+    pub withdraw_address: String,
 }

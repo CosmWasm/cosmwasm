@@ -22,6 +22,8 @@ use crate::query::{
 };
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
+#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::ContractInfoResponse;
@@ -241,6 +243,19 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         .into();
         let res: AllBalanceResponse = self.query(&request)?;
         Ok(res.amount)
+    }
+
+    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    pub fn query_delegator_withdraw_address(
+        &self,
+        delegator: impl Into<String>,
+    ) -> StdResult<String> {
+        let request = DistributionQuery::DelegatorWithdrawAddress {
+            delegator_address: delegator.into(),
+        }
+        .into();
+        let res: DelegatorWithdrawAddressResponse = self.query(&request)?;
+        Ok(res.withdraw_address)
     }
 
     #[cfg(feature = "cosmwasm_1_3")]
