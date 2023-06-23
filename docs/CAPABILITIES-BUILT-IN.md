@@ -18,3 +18,7 @@ might define others.
 - `cosmwasm_1_3` enables the `BankQuery::AllDenomMetadata` and
   `BankQuery::DenomMetadata` queries. Only chains running CosmWasm `1.3.0` or
   higher support this.
+
+## Capablities interaction
+
+- `BankQuery::AllBalances` and `BankQuery::AllDenomMetadata` require `iterator` to be enabled
