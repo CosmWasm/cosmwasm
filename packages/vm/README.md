@@ -75,6 +75,17 @@ docker run --rm -v "$(pwd)":/code \
   && cp artifacts/floaty.wasm packages/vm/testdata/floaty_1.2.wasm
 ```
 
+The `cyberpunk_rust170.wasm` for
+https://github.com/CosmWasm/cosmwasm/issues/1727 is built as follows
+(non-reproducible):
+
+```sh
+cd contracts/cyberpunk
+rm -r target
+RUSTFLAGS='-C link-arg=-s' cargo build --release --lib --target wasm32-unknown-unknown --locked
+cp target/wasm32-unknown-unknown/release/cyberpunk.wasm ../../packages/vm/testdata/cyberpunk_rust170.wasm
+```
+
 ## Testing
 
 By default, this repository is built and tested with the singlepass backend. You
