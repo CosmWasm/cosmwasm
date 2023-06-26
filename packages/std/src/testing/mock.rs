@@ -905,19 +905,29 @@ impl StakingQuerier {
 
 #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
 #[derive(Clone, Default)]
-pub struct DistributionQuerier {}
+pub struct DistributionQuerier {
+    withdraw_addresses: HashMap<String, String>,
+}
 
 #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
 impl DistributionQuerier {
-    pub fn new() -> Self {
-        DistributionQuerier {}
+    pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
+        DistributionQuerier { withdraw_addresses }
+    }
+
+    pub fn set_withdraw_addresses(&mut self, withdraw_addresses: HashMap<String, String>) {
+        self.withdraw_addresses = withdraw_addresses;
     }
 
     pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
             DistributionQuery::DelegatorWithdrawAddress { delegator_address } => {
                 let res = DelegatorWithdrawAddressResponse {
-                    withdraw_address: delegator_address.clone(),
+                    withdraw_address: self
+                        .withdraw_addresses
+                        .get(delegator_address)
+                        .unwrap_or(delegator_address)
+                        .clone(),
                 };
                 to_binary(&res).into()
             }
@@ -1460,6 +1470,33 @@ mod tests {
             more_res.metadata, res.metadata,
             "should be same as previous query"
         );
+    }
+
+    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    #[test]
+    fn distribution_querier_delegator_withdraw_address() {
+        let mut distribution = DistributionQuerier::new(HashMap::new());
+        distribution.set_withdraw_addresses(
+            [("addr0".to_string(), "withdraw0".to_string())]
+                .into_iter()
+                .collect(),
+        );
+
+        let query = DistributionQuery::DelegatorWithdrawAddress {
+            delegator_address: "addr0".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
+        assert_eq!(res.withdraw_address, "withdraw0");
+
+        let query = DistributionQuery::DelegatorWithdrawAddress {
+            delegator_address: "addr1".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
+        assert_eq!(res.withdraw_address, "addr1");
     }
 
     #[cfg(feature = "stargate")]
