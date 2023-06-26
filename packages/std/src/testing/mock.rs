@@ -490,6 +490,11 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         self.bank.set_denom_metadata(denom_metadata);
     }
 
+    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    pub fn set_withdraw_addresses(&mut self, withdraw_addresses: HashMap<String, String>) {
+        self.distribution.set_withdraw_addresses(withdraw_addresses);
+    }
+
     #[cfg(feature = "staking")]
     pub fn update_staking(
         &mut self,
