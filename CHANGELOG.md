@@ -21,12 +21,16 @@ and this project adheres to
   was checked when it was first uploaded. ([#1635])
 - cosmwasm-vm: Allow sign extension Wasm opcodes in static validation. This
   allows contracts to be compiled with Rust 1.70.0 and above. ([#1727])
+- cosmwasm-std: Add trait functions `Storage::range_keys` and
+  `Storage::range_values`. The default implementations just use
+  `Storage::range`. Later this can be implemented more efficiently. ([#1748])
 
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
 [#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 [#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
 [#1727]: https://github.com/CosmWasm/cosmwasm/issues/1727
+[#1748]: https://github.com/CosmWasm/cosmwasm/pull/1748
 
 ### Changed
 
