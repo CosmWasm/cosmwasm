@@ -112,7 +112,7 @@ fn bench_instance(c: &mut Criterion) {
             assert!(contract_result.into_result().is_ok());
             gas_used = gas_before - instance.get_gas_left();
         });
-        println!("Gas used: {}", gas_used);
+        println!("Gas used: {gas_used}");
     });
 
     group.finish();

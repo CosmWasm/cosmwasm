@@ -233,7 +233,7 @@ impl Api for MockApi {
     }
 
     fn debug(&self, message: &str) {
-        println!("{}", message);
+        println!("{message}");
     }
 }
 
@@ -527,7 +527,7 @@ impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
-                    error: format!("Parsing query request: {}", e),
+                    error: format!("Parsing query request: {e}"),
                     request: bin_request.into(),
                 })
             }
@@ -1100,7 +1100,7 @@ mod tests {
         let result = api.secp256k1_recover_pubkey(&hash, &signature, 42);
         match result.unwrap_err() {
             RecoverPubkeyError::InvalidRecoveryParam => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -1129,7 +1129,7 @@ mod tests {
         let result = api.secp256k1_recover_pubkey(&malformed_hash, &signature, recovery_param);
         match result.unwrap_err() {
             RecoverPubkeyError::InvalidHashFormat => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -1750,7 +1750,7 @@ mod tests {
             .unwrap_err();
         match system_err {
             SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // By default, querier errors for WasmQuery::Smart
@@ -1762,7 +1762,7 @@ mod tests {
             .unwrap_err();
         match system_err {
             SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // By default, querier errors for WasmQuery::ContractInfo
@@ -1773,7 +1773,7 @@ mod tests {
             .unwrap_err();
         match system_err {
             SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         #[cfg(feature = "cosmwasm_1_2")]
@@ -1784,7 +1784,7 @@ mod tests {
                 .unwrap_err();
             match system_err {
                 SystemError::NoSuchCode { code_id } => assert_eq!(code_id, 4),
-                err => panic!("Unexpected error: {:?}", err),
+                err => panic!("Unexpected error: {err:?}"),
             }
         }
 
@@ -1869,7 +1869,7 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(value, b"the value" as &[u8]),
-            res => panic!("Unexpected result: {:?}", res),
+            res => panic!("Unexpected result: {res:?}"),
         }
         let result = querier.query(&WasmQuery::Raw {
             contract_addr: "contract1".into(),
@@ -1877,7 +1877,7 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(value, b"" as &[u8]),
-            res => panic!("Unexpected result: {:?}", res),
+            res => panic!("Unexpected result: {res:?}"),
         }
 
         // WasmQuery::Smart
@@ -1890,7 +1890,7 @@ mod tests {
                 value,
                 br#"{"messages":[],"attributes":[],"events":[],"data":"Z29vZA=="}"# as &[u8]
             ),
-            res => panic!("Unexpected result: {:?}", res),
+            res => panic!("Unexpected result: {res:?}"),
         }
         let result = querier.query(&WasmQuery::Smart {
             contract_addr: "contract1".into(),
@@ -1900,7 +1900,7 @@ mod tests {
             SystemResult::Ok(ContractResult::Err(err)) => {
                 assert_eq!(err, "Error parsing into type cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg: Invalid type")
             }
-            res => panic!("Unexpected result: {:?}", res),
+            res => panic!("Unexpected result: {res:?}"),
         }
 
         // WasmQuery::ContractInfo
@@ -1913,7 +1913,7 @@ mod tests {
                 br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null}"#
                     as &[u8]
             ),
-            res => panic!("Unexpected result: {:?}", res),
+            res => panic!("Unexpected result: {res:?}"),
         }
 
         // WasmQuery::ContractInfo
@@ -1925,7 +1925,7 @@ mod tests {
                     value,
                     br#"{"code_id":4,"creator":"lalala","checksum":"84cf20810fd429caf58898c3210fcb71759a27becddae08dbde8668ea2f4725d"}"#
                 ),
-                res => panic!("Unexpected result: {:?}", res),
+                res => panic!("Unexpected result: {res:?}"),
             }
         }
     }

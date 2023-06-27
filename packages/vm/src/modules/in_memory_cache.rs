@@ -65,7 +65,7 @@ impl InMemoryCache {
                         size,
                     },
                 )
-                .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
+                .map_err(|e| VmError::cache_err(format!("{e:?}")))?;
         }
         Ok(())
     }

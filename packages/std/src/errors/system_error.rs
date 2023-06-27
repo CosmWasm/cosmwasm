@@ -56,11 +56,11 @@ impl std::fmt::Display for SystemError {
                 error,
                 String::from_utf8_lossy(response)
             ),
-            SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
-            SystemError::NoSuchCode { code_id } => write!(f, "No such code: {}", code_id),
+            SystemError::NoSuchContract { addr } => write!(f, "No such contract: {addr}"),
+            SystemError::NoSuchCode { code_id } => write!(f, "No such code: {code_id}"),
             SystemError::Unknown {} => write!(f, "Unknown system error"),
             SystemError::UnsupportedRequest { kind } => {
-                write!(f, "Unsupported query type: {}", kind)
+                write!(f, "Unsupported query type: {kind}")
             }
         }
     }

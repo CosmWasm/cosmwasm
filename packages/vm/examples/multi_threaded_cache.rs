@@ -44,7 +44,7 @@ pub fn main() {
 
         threads.push(thread::spawn(move || {
             let checksum = cache.save_wasm(CONTRACT).unwrap();
-            println!("Done saving Wasm {}", checksum);
+            println!("Done saving Wasm {checksum}");
         }));
     }
     for i in 0..INSTANTIATION_THREADS {

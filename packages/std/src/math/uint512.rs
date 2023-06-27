@@ -426,7 +426,7 @@ impl FromStr for Uint512 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match U512::from_dec_str(s) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {e}"))),
         }
     }
 }
@@ -537,8 +537,7 @@ impl Shr<u32> for Uint512 {
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
             panic!(
-                "right shift error: {} is larger or equal than the number of bits in Uint512",
-                rhs,
+                "right shift error: {rhs} is larger or equal than the number of bits in Uint512",
             )
         })
     }
@@ -650,7 +649,7 @@ impl<'de> de::Visitor<'de> for Uint512Visitor {
     where
         E: de::Error,
     {
-        Uint512::try_from(v).map_err(|e| E::custom(format!("invalid Uint512 '{}' - {}", v, e)))
+        Uint512::try_from(v).map_err(|e| E::custom(format!("invalid Uint512 '{v}' - {e}")))
     }
 }
 
@@ -811,18 +810,18 @@ mod tests {
     #[test]
     fn uint512_implements_display() {
         let a = Uint512::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Uint512::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn uint512_display_padding_works() {
         let a = Uint512::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
     }
 
     #[test]

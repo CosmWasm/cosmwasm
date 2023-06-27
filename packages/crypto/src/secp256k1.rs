@@ -348,7 +348,7 @@ mod tests {
         {
             let expected_x = "F3F8BB913AA68589A2C8C607A877AB05252ADBD963E1BE846DDEB8456942AEDC";
             let expected_y = "A2ED51F08CA3EF3DAC0A7504613D54CD539FC1B3CBC92453CD704B6A2D012B2C";
-            let expected = hex::decode(format!("04{}{}", expected_x, expected_y)).unwrap();
+            let expected = hex::decode(format!("04{expected_x}{expected_y}")).unwrap();
             let r_s = hex!("E30F2E6A0F705F4FB5F8501BA79C7C0D3FAC847F1AD70B873E9797B17B89B39081F1A4457589F30D76AB9F89E748A68C8A94C30FE0BAC8FB5C0B54EA70BF6D2F");
             let recovery_param: u8 = 0;
             let message_hash =
@@ -404,24 +404,24 @@ mod tests {
         let recovery_param: u8 = 2;
         match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
             CryptoError::InvalidRecoveryParam { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            err => panic!("Unexpected error: {err}"),
         }
         let recovery_param: u8 = 3;
         match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
             CryptoError::InvalidRecoveryParam { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            err => panic!("Unexpected error: {err}"),
         }
 
         // Other values are garbage
         let recovery_param: u8 = 4;
         match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
             CryptoError::InvalidRecoveryParam { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            err => panic!("Unexpected error: {err}"),
         }
         let recovery_param: u8 = 255;
         match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
             CryptoError::InvalidRecoveryParam { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            err => panic!("Unexpected error: {err}"),
         }
     }
 }

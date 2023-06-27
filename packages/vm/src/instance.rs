@@ -748,7 +748,7 @@ mod tests {
 
         match init_result.unwrap_err() {
             VmError::RuntimeErr { msg, .. } => assert!(msg.contains(error_message)),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -777,7 +777,7 @@ mod tests {
                 assert_eq!(length, 6);
                 assert_eq!(max_length, 5);
             }
-            err => panic!("unexpected error: {:?}", err),
+            err => panic!("unexpected error: {err:?}"),
         };
 
         instance.deallocate(region_ptr).expect("error deallocating");

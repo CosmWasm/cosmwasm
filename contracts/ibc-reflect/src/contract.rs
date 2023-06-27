@@ -136,8 +136,7 @@ pub fn ibc_channel_open(
     if let Some(counter_version) = msg.counterparty_version() {
         if counter_version != IBC_APP_VERSION {
             return Err(StdError::generic_err(format!(
-                "Counterparty version must be `{}`",
-                IBC_APP_VERSION
+                "Counterparty version must be `{IBC_APP_VERSION}`"
             )));
         }
     }
@@ -164,7 +163,7 @@ pub fn ibc_channel_connect(
         code_id: cfg.reflect_code_id,
         msg: b"{}".into(),
         funds: vec![],
-        label: format!("ibc-reflect-{}", chan_id),
+        label: format!("ibc-reflect-{chan_id}"),
     };
     let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
 
@@ -255,7 +254,7 @@ pub fn ibc_packet_receive(
     .or_else(|e| {
         // we try to capture all app-level errors and convert them into
         // acknowledgement packets that contain an error code.
-        let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
+        let acknowledgement = encode_ibc_error(format!("invalid packet: {e}"));
         Ok(IbcReceiveResponse::new()
             .set_ack(acknowledgement)
             .add_event(Event::new("ibc").add_attribute("packet", "receive")))

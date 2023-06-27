@@ -150,16 +150,14 @@ fn query_chain(
     request: &QueryRequest<SpecialQuery>,
 ) -> StdResult<ChainResponse> {
     let raw = to_vec(request).map_err(|serialize_err| {
-        StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+        StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
     })?;
     match deps.querier.raw_query(&raw) {
         SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
-            "Querier system error: {}",
-            system_err
+            "Querier system error: {system_err}"
         ))),
         SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
-            "Querier contract error: {}",
-            contract_err
+            "Querier contract error: {contract_err}"
         ))),
         SystemResult::Ok(ContractResult::Ok(value)) => Ok(ChainResponse { data: value }),
     }
@@ -241,7 +239,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -355,7 +353,7 @@ mod tests {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
                 assert!(msg.contains("human address too short"))
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 

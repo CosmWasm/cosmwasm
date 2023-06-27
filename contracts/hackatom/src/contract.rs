@@ -189,8 +189,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
+                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
         }
@@ -202,8 +201,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
+                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
         }
@@ -216,8 +214,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
+                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
         }
@@ -228,8 +225,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
+                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
         }
@@ -240,8 +236,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
+                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
         }

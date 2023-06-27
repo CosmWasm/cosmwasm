@@ -186,7 +186,7 @@ mod tests {
             MemoryError::Generic(msg) => {
                 assert_eq!(msg, "Maximum exceeds the allowed memory limit")
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // Maximum not set
@@ -194,7 +194,7 @@ mod tests {
         let result = limiting.validate_memory(&memory);
         match result.unwrap_err() {
             MemoryError::Generic(msg) => assert_eq!(msg, "Maximum unset"),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // Minimum greater than maximum (not our problem)
@@ -208,7 +208,7 @@ mod tests {
             MemoryError::Generic(msg) => {
                 assert_eq!(msg, "Minimum exceeds the allowed memory limit")
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 }

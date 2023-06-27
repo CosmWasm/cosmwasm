@@ -72,7 +72,7 @@ impl fmt::Debug for HexBinary {
         // but with a custom implementation to avoid the need for an intemediate hex string.
         write!(f, "HexBinary(")?;
         for byte in self.0.iter() {
-            write!(f, "{:02x}", byte)?;
+            write!(f, "{byte:02x}")?;
         }
         write!(f, ")")?;
         Ok(())
@@ -238,7 +238,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
     {
         match HexBinary::from_hex(v) {
             Ok(data) => Ok(data),
-            Err(_) => Err(E::custom(format!("invalid hex: {}", v))),
+            Err(_) => Err(E::custom(format!("invalid hex: {v}"))),
         }
     }
 }
@@ -345,7 +345,7 @@ mod tests {
                 assert_eq!(expected, 8);
                 assert_eq!(actual, 3);
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // long array (32 bytes)
@@ -547,11 +547,11 @@ mod tests {
     fn hex_binary_implements_debug() {
         // Some data
         let data = HexBinary(vec![0x07, 0x35, 0xAA, 0xcb, 0x00, 0xff]);
-        assert_eq!(format!("{:?}", data), "HexBinary(0735aacb00ff)",);
+        assert_eq!(format!("{data:?}"), "HexBinary(0735aacb00ff)",);
 
         // Empty
         let data = HexBinary(vec![]);
-        assert_eq!(format!("{:?}", data), "HexBinary()",);
+        assert_eq!(format!("{data:?}"), "HexBinary()",);
     }
 
     #[test]

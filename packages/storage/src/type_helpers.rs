@@ -83,7 +83,7 @@ mod tests {
             StdError::NotFound { kind, .. } => {
                 assert_eq!(kind, "cosmwasm_storage::type_helpers::tests::Person")
             }
-            e => panic!("Unexpected error {}", e),
+            e => panic!("Unexpected error {e}"),
         }
     }
 }

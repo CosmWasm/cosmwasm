@@ -137,13 +137,11 @@ impl FileSystemCache {
             Err(DeserializeError::Io(err)) => match err.kind() {
                 io::ErrorKind::NotFound => Ok(None),
                 _ => Err(VmError::cache_err(format!(
-                    "Error opening module file: {}",
-                    err
+                    "Error opening module file: {err}"
                 ))),
             },
             Err(err) => Err(VmError::cache_err(format!(
-                "Error deserializing module: {}",
-                err
+                "Error deserializing module: {err}"
             ))),
         }
     }
@@ -157,7 +155,7 @@ impl FileSystemCache {
         let path = self.modules_path.join(filename);
         module
             .serialize_to_file(&path)
-            .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {e}")))?;
         let module_size = module_size(&path)?;
         Ok(module_size)
     }
@@ -204,8 +202,7 @@ fn target_id(target: &Target) -> String {
 /// The path to the latest version of the modules.
 fn modules_path(base_path: &Path, wasmer_module_version: u32, target: &Target) -> PathBuf {
     let version_dir = format!(
-        "{}-wasmer{}",
-        MODULE_SERIALIZATION_VERSION, wasmer_module_version
+        "{MODULE_SERIALIZATION_VERSION}-wasmer{wasmer_module_version}"
     );
     let target_dir = target_id(target);
     base_path.join(version_dir).join(target_dir)

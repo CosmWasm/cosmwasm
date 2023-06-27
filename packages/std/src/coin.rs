@@ -120,7 +120,7 @@ mod tests {
             denom: "ucosm".to_string(),
         };
 
-        let embedded = format!("Amount: {}", a);
+        let embedded = format!("Amount: {a}");
         assert_eq!(embedded, "Amount: 123ucosm");
         assert_eq!(a.to_string(), "123ucosm");
     }
@@ -245,6 +245,6 @@ mod tests {
     #[test]
     fn debug_coin() {
         let coin = Coin::new(123, "ucosm");
-        assert_eq!(format!("{:?}", coin), r#"Coin { 123 "ucosm" }"#);
+        assert_eq!(format!("{coin:?}"), r#"Coin { 123 "ucosm" }"#);
     }
 }

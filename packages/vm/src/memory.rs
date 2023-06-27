@@ -194,7 +194,7 @@ mod tests {
         let result = validate_region(&region);
         match result.unwrap_err() {
             RegionValidationError::ZeroOffset { .. } => {}
-            e => panic!("Got unexpected error: {:?}", e),
+            e => panic!("Got unexpected error: {e:?}"),
         }
     }
 
@@ -213,7 +213,7 @@ mod tests {
                 assert_eq!(length, 501);
                 assert_eq!(capacity, 500);
             }
-            e => panic!("Got unexpected error: {:?}", e),
+            e => panic!("Got unexpected error: {e:?}"),
         }
     }
 
@@ -232,7 +232,7 @@ mod tests {
                 assert_eq!(offset, 23);
                 assert_eq!(capacity, u32::MAX);
             }
-            e => panic!("Got unexpected error: {:?}", e),
+            e => panic!("Got unexpected error: {e:?}"),
         }
 
         let region = Region {
@@ -248,7 +248,7 @@ mod tests {
                 assert_eq!(offset, u32::MAX);
                 assert_eq!(capacity, 1);
             }
-            e => panic!("Got unexpected error: {:?}", e),
+            e => panic!("Got unexpected error: {e:?}"),
         }
     }
 }
