@@ -13,7 +13,7 @@ pull_request_rules:
       - "status-success=macOS"
       - "status-success=Windows"
       - "status-success=ci/circleci: arm64"
-      - "status-success=ci/circleci: clippy-1.60.0"
+      - "status-success=ci/circleci: clippy-1.67.0"
       - "status-success=ci/circleci: clippy-1.68.2"
       - "status-success=ci/circleci: contract_burner"
       - "status-success=ci/circleci: contract_crypto_verify"
