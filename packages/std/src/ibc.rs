@@ -36,6 +36,13 @@ pub enum IbcMsg {
         amount: Coin,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
+        /// When set, a [MsgPayPacketFee] with the provided fee is created and
+        /// emitted before the packet is sent.
+        /// `signer` gets filled automatically with the contract address.
+        /// No relayer restrictions will be in place.
+        ///
+        /// [MsgPayPacketFee]: https://github.com/cosmos/ibc-go/blob/v7.2.0/proto/ibc/applications/fee/v1/tx.proto#L76-L93
+        packet_fee: Option<IbcFee>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
@@ -45,10 +52,33 @@ pub enum IbcMsg {
         data: Binary,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
+        /// When set, a [MsgPayPacketFee] with the provided fee is created and
+        /// emitted before the packet is sent.
+        /// `signer` gets filled automatically with the contract address.
+        /// No relayer restrictions will be in place.
+        ///
+        /// [MsgPayPacketFee]: https://github.com/cosmos/ibc-go/blob/v7.2.0/proto/ibc/applications/fee/v1/tx.proto#L76-L93
+        packet_fee: Option<IbcFee>,
     },
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
+}
+
+/// An [ICS-29] IBC fee.
+///
+/// This is mapped to an [ibc.applications.fee.v1.Fee].
+///
+/// [ICS-29]: https://github.com/cosmos/ibc-go/blob/v7.2.0/docs/middleware/ics29-fee/overview.md
+/// [ibc.applications.fee.v1.Fee]: https://github.com/cosmos/ibc-go/blob/v7.2.0/proto/ibc/applications/fee/v1/fee.proto#L11-L31
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+pub struct IbcFee {
+    /// The packet receive fee
+    pub recv: Vec<Coin>,
+    /// The packet acknowledgement fee
+    pub ack: Vec<Coin>,
+    /// The packet timeout fee
+    pub timeout: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -772,21 +802,43 @@ impl<T> IbcReceiveResponse<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
+    use crate::{coin, coins};
+
     use super::*;
     use serde_json_wasm::to_string;
 
     #[test]
-    // added this to check json format for go compat, as I was unsure how some messages are snake encoded
-    fn serialize_msg() {
+    // added this to check JSON format for Go compat, as I was unsure how some messages are snake encoded
+    fn ibc_msg_transfer_serialize() {
+        // without fee
         let msg = IbcMsg::Transfer {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
             timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
+            packet_fee: None,
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"}}}"#;
-        assert_eq!(encoded.as_str(), expected);
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"},"packet_fee":null}}"#;
+        assert_eq!(encoded, expected);
+
+        // with fee
+        let msg = IbcMsg::Transfer {
+            channel_id: "channel-123".to_string(),
+            to_address: "my-special-addr".into(),
+            amount: Coin::new(12345678, "uatom"),
+            timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
+            packet_fee: Some(IbcFee {
+                recv: coins(123, "ucosm"),
+                ack: coins(42, "ucosm"),
+                timeout: vec![coin(12, "ucosm"), coin(17, "uwasm")],
+            }),
+        };
+        let encoded = to_string(&msg).unwrap();
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"},"packet_fee":{"recv":[{"denom":"ucosm","amount":"123"}],"ack":[{"denom":"ucosm","amount":"42"}],"timeout":[{"denom":"ucosm","amount":"12"},{"denom":"uwasm","amount":"17"}]}}}"#;
+        assert_eq!(encoded, expected);
     }
 
     #[test]
