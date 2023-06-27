@@ -88,8 +88,7 @@ pub fn get_recovery_param_with_chain_id(v: u64, chain_id: u64) -> StdResult<u8> 
     match recovery {
         0 | 1 => Ok(recovery as u8),
         _ => Err(StdError::generic_err(format!(
-            "Calculated recovery parameter must be 0 or 1 but is {}.",
-            recovery
+            "Calculated recovery parameter must be 0 or 1 but is {recovery}."
         ))),
     }
 }

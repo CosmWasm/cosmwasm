@@ -41,12 +41,10 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
     if rel_diff > max_rel_diff {
         match panic_msg {
             Some(panic_msg) => panic!(
-                "assertion failed: `(left ≈ right)`\nleft: {}\nright: {}\nrelative difference: {}\nmax allowed relative difference: {}\n: {}",
-                left, right, rel_diff, max_rel_diff, panic_msg
+                "assertion failed: `(left ≈ right)`\nleft: {left}\nright: {right}\nrelative difference: {rel_diff}\nmax allowed relative difference: {max_rel_diff}\n: {panic_msg}"
             ),
             None => panic!(
-                "assertion failed: `(left ≈ right)`\nleft: {}\nright: {}\nrelative difference: {}\nmax allowed relative difference: {}\n",
-                left, right, rel_diff, max_rel_diff
+                "assertion failed: `(left ≈ right)`\nleft: {left}\nright: {right}\nrelative difference: {rel_diff}\nmax allowed relative difference: {max_rel_diff}\n"
             ),
         }
     }

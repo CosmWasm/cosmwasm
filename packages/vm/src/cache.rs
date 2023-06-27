@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use wasmer::Engine;
+use wasmer::{Engine, NativeEngineExt};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -126,8 +126,8 @@ where
         mkdir_p(&cache_path).map_err(|_e| VmError::cache_err("Error creating cache directory"))?;
         mkdir_p(&wasm_path).map_err(|_e| VmError::cache_err("Error creating wasm directory"))?;
 
-        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
-            .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
+        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR), false)
+            .map_err(|e| VmError::cache_err(format!("Error file system cache: {e}")))?;
         Ok(Cache {
             available_capabilities,
             inner: Mutex::new(CacheInner {
@@ -143,6 +143,16 @@ where
             type_querier: PhantomData::<Q>,
             instantiation_lock: Mutex::new(()),
         })
+    }
+
+    /// If `unchecked` is true, the filesystem cache will use the `*_unchecked` wasmer functions for
+    /// loading modules from disk.
+    pub fn set_module_unchecked(&mut self, unchecked: bool) {
+        self.inner
+            .lock()
+            .unwrap()
+            .fs_cache
+            .set_module_unchecked(unchecked);
     }
 
     pub fn stats(&self) -> Stats {
@@ -401,9 +411,9 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
         .write(true)
         .create(true)
         .open(filepath)
-        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for writing: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for writing: {e}")))?;
     file.write_all(wasm)
-        .map_err(|e| VmError::cache_err(format!("Error writing Wasm file: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error writing Wasm file: {e}")))?;
 
     Ok(checksum)
 }
@@ -549,7 +559,7 @@ mod tests {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract doesn\'t have a memory section")
             }
-            e => panic!("Unexpected error {:?}", e),
+            e => panic!("Unexpected error {e:?}"),
         }
     }
 
@@ -641,7 +651,7 @@ mod tests {
             VmError::CacheErr { msg, .. } => {
                 assert_eq!(msg, "Error opening Wasm file for reading")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -671,7 +681,7 @@ mod tests {
         let res = cache.load_wasm(&checksum);
         match res {
             Err(VmError::IntegrityErr { .. }) => {}
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => panic!("Unexpected error: {e:?}"),
             Ok(_) => panic!("This must not succeed"),
         }
     }
@@ -695,7 +705,7 @@ mod tests {
             VmError::CacheErr { msg, .. } => {
                 assert_eq!(msg, "Error opening Wasm file for reading")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         // Removing again fails
@@ -703,7 +713,7 @@ mod tests {
             VmError::CacheErr { msg, .. } => {
                 assert_eq!(msg, "Wasm file does not exist")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1056,7 +1066,7 @@ mod tests {
             .unwrap_err()
         {
             VmError::GasDepletion { .. } => (), // all good, continue
-            e => panic!("unexpected error, {:?}", e),
+            e => panic!("unexpected error, {e:?}"),
         }
         assert_eq!(instance1.get_gas_left(), 0);
 
@@ -1135,7 +1145,7 @@ mod tests {
 
         match remove_wasm_from_disk(path, &checksum).unwrap_err() {
             VmError::CacheErr { msg } => assert_eq!(msg, "Wasm file does not exist"),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

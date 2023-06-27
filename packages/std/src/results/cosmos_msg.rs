@@ -116,7 +116,7 @@ pub enum DistributionMsg {
 fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
     match std::str::from_utf8(data.as_slice()) {
         Ok(s) => fmt.write_str(s),
-        Err(_) => write!(fmt, "{:?}", data),
+        Err(_) => write!(fmt, "{data:?}"),
     }
 }
 
@@ -480,7 +480,7 @@ mod tests {
         };
 
         assert_eq!(
-            format!("{:?}", msg),
+            format!("{msg:?}"),
             "Execute { contract_addr: \"joe\", msg: {\"mint\":{\"coin\":{\"denom\":\"BTC\",\"amount\":\"10\"}}}, funds: [] }"
         );
     }
@@ -494,7 +494,7 @@ mod tests {
         };
 
         assert_eq!(
-            format!("{:?}", msg),
+            format!("{msg:?}"),
             "Execute { contract_addr: \"joe\", msg: Binary(009f9296), funds: [] }"
         );
     }

@@ -409,7 +409,7 @@ mod tests {
         });
         match res.unwrap_err() {
             MyError::NotFound { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

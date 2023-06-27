@@ -1,6 +1,7 @@
 use std::sync::Arc;
 #[cfg(feature = "cranelift")]
 use wasmer::Cranelift;
+use wasmer::NativeEngineExt;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
 use wasmer::{

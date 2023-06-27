@@ -52,8 +52,8 @@ fn execute_argon2() {
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
     let expected = 8635688250000; // +/- 20%
-    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
-    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+    assert!(gas_used > expected * 80 / 100, "Gas used: {gas_used}");
+    assert!(gas_used < expected * 120 / 100, "Gas used: {gas_used}");
 }
 
 // Test with

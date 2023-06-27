@@ -570,7 +570,7 @@ mod tests {
                 assert_eq!(validator.as_str(), DEFAULT_VALIDATOR);
                 assert_eq!(amount, &coin(1000, "ustake"));
             }
-            _ => panic!("Unexpected message: {:?}", delegate),
+            _ => panic!("Unexpected message: {delegate:?}"),
         }
 
         // bob got 1000 DRV for 1000 stake at a 1.0 ratio
@@ -666,7 +666,7 @@ mod tests {
             StakingError::Std {
                 original: StdError::GenericErr { msg, .. },
             } => assert_eq!(msg, "No ustake tokens sent"),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         };
     }
 
@@ -715,7 +715,7 @@ mod tests {
             StakingError::Std {
                 original: StdError::Overflow { .. },
             } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // bob unbonds 600 tokens at 10% tax...
@@ -736,7 +736,7 @@ mod tests {
                 assert_eq!(validator.as_str(), DEFAULT_VALIDATOR);
                 assert_eq!(amount, &coin(bobs_claim.u128(), "ustake"));
             }
-            _ => panic!("Unexpected message: {:?}", delegate),
+            _ => panic!("Unexpected message: {delegate:?}"),
         }
 
         // update the querier with new bond, lower balance

@@ -25,16 +25,14 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
     }
     if channel.version.as_str() != IBC_APP_VERSION {
         return Err(StdError::generic_err(format!(
-            "Must set version to `{}`",
-            IBC_APP_VERSION
+            "Must set version to `{IBC_APP_VERSION}`"
         )));
     }
 
     if let Some(counter_version) = msg.counterparty_version() {
         if counter_version != IBC_APP_VERSION {
             return Err(StdError::generic_err(format!(
-                "Counterparty version must be `{}`",
-                IBC_APP_VERSION
+                "Counterparty version must be `{IBC_APP_VERSION}`"
             )));
         }
     }
@@ -190,8 +188,7 @@ fn acknowledge_balances(
             if let Some(old_addr) = acct.remote_addr {
                 if old_addr != account {
                     return Err(StdError::generic_err(format!(
-                        "remote account changed from {} to {}",
-                        old_addr, account
+                        "remote account changed from {old_addr} to {account}"
                     )));
                 }
             }
@@ -265,7 +262,7 @@ mod tests {
                 channel_id: packet_channel,
                 ..
             }) => assert_eq!(packet_channel.as_str(), channel_id),
-            o => panic!("Unexpected message: {:?}", o),
+            o => panic!("Unexpected message: {o:?}"),
         };
     }
 
@@ -362,7 +359,7 @@ mod tests {
                 msg.original_packet.data = data;
                 msg
             }
-            o => panic!("Unexpected message: {:?}", o),
+            o => panic!("Unexpected message: {o:?}"),
         };
         let res = ibc_packet_ack(deps.as_mut(), mock_env(), msg).unwrap();
         // no actions expected, but let's check the events to see it was dispatched properly
@@ -420,7 +417,7 @@ mod tests {
                 assert!(timeout.block().is_none());
                 assert!(timeout.timestamp().is_some());
             }
-            o => panic!("unexpected message: {:?}", o),
+            o => panic!("unexpected message: {o:?}"),
         }
     }
 }

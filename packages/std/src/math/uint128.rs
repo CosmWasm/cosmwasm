@@ -335,7 +335,7 @@ impl FromStr for Uint128 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {e}"))),
         }
     }
 }
@@ -581,7 +581,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     {
         match v.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(E::custom(format!("invalid Uint128 '{}' - {}", v, e))),
+            Err(e) => Err(E::custom(format!("invalid Uint128 '{v}' - {e}"))),
         }
     }
 }
@@ -663,18 +663,18 @@ mod tests {
     #[test]
     fn uint128_implements_display() {
         let a = Uint128(12345);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Uint128(0);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn uint128_display_padding_works() {
         let a = Uint128::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
     }
 
     #[test]

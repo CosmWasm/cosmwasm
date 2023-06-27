@@ -76,7 +76,7 @@ impl fmt::Debug for Binary {
         // but with a custom implementation to avoid the need for an intemediate hex string.
         write!(f, "Binary(")?;
         for byte in self.0.iter() {
-            write!(f, "{:02x}", byte)?;
+            write!(f, "{byte:02x}")?;
         }
         write!(f, ")")?;
         Ok(())
@@ -230,7 +230,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     {
         match Binary::from_base64(v) {
             Ok(binary) => Ok(binary),
-            Err(_) => Err(E::custom(format!("invalid base64: {}", v))),
+            Err(_) => Err(E::custom(format!("invalid base64: {v}"))),
         }
     }
 }
@@ -284,7 +284,7 @@ mod tests {
                 assert_eq!(expected, 8);
                 assert_eq!(actual, 3);
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
 
         // long array (32 bytes)
@@ -483,11 +483,11 @@ mod tests {
     fn binary_implements_debug() {
         // Some data
         let binary = Binary(vec![0x07, 0x35, 0xAA, 0xcb, 0x00, 0xff]);
-        assert_eq!(format!("{:?}", binary), "Binary(0735aacb00ff)",);
+        assert_eq!(format!("{binary:?}"), "Binary(0735aacb00ff)",);
 
         // Empty
         let binary = Binary(vec![]);
-        assert_eq!(format!("{:?}", binary), "Binary()",);
+        assert_eq!(format!("{binary:?}"), "Binary()",);
     }
 
     #[test]

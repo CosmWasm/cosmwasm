@@ -42,7 +42,7 @@ and this project adheres to
 - cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
   customizing the handling of debug messages emitted by the contract ([#1667]).
 - cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
-- cosmwasm-vm: Upgrade Wasmer to version 3.3.0.
+- cosmwasm-vm: Upgrade Wasmer to version 4.0.0.
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
 - cosmwasm-std: Coin uses shorter `Coin { 123 "ucosm" }` format for Debug
   ([#1704])

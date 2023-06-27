@@ -97,7 +97,7 @@ mod tests {
                 assert_eq!(offset, 345);
                 assert_eq!(msg, "broken stuff");
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -106,7 +106,7 @@ mod tests {
         let error = CommunicationError::invalid_order(-745);
         match error {
             CommunicationError::InvalidOrder { value, .. } => assert_eq!(value, -745),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -115,7 +115,7 @@ mod tests {
         let error = CommunicationError::invalid_utf8("broken");
         match error {
             CommunicationError::InvalidUtf8 { msg, .. } => assert_eq!(msg, "broken"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -129,7 +129,7 @@ mod tests {
                 assert_eq!(length, 50);
                 assert_eq!(max_length, 20);
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -141,7 +141,7 @@ mod tests {
                 assert_eq!(size, 12);
                 assert_eq!(required, 33);
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -150,7 +150,7 @@ mod tests {
         let error = CommunicationError::zero_address();
         match error {
             CommunicationError::ZeroAddress { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 }

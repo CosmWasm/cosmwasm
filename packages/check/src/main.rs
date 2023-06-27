@@ -44,7 +44,7 @@ pub fn main() {
         .map(|s| s.as_str())
         .unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES);
     let available_capabilities = capabilities_from_csv(available_capabilities_csv);
-    println!("Available capabilities: {:?}", available_capabilities);
+    println!("Available capabilities: {available_capabilities:?}");
     println!();
 
     // File
@@ -59,7 +59,7 @@ pub fn main() {
                 Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
                     println!("{}: {}", p, "failure".red());
-                    println!("{}", e);
+                    println!("{e}");
                 }
             };
             result

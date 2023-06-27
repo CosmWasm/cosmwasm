@@ -271,7 +271,7 @@ mod tests {
         });
         match output.unwrap_err() {
             StdError::Overflow { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
         assert_eq!(writer.load().unwrap(), cfg);
     }
@@ -314,7 +314,7 @@ mod tests {
         });
         match res.unwrap_err() {
             MyError::Std(StdError::GenericErr { .. }) => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
         assert_eq!(writer.load().unwrap(), cfg);
     }

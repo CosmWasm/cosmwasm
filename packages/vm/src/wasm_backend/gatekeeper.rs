@@ -222,7 +222,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     state.push_operator(operator);
                     Ok(())
                 } else {
-                    let msg = format!("Reference type operation detected: {:?}. Reference types are not supported.", operator);
+                    let msg = format!("Reference type operation detected: {operator:?}. Reference types are not supported.");
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
@@ -297,7 +297,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     state.push_operator(operator);
                     Ok(())
                 } else {
-                    let msg = format!("Threads operator detected: {:?}. The Wasm Threads extension is not supported.", operator);
+                    let msg = format!("Threads operator detected: {operator:?}. The Wasm Threads extension is not supported.");
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
@@ -490,8 +490,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     Ok(())
                 } else {
                     let msg = format!(
-                        "SIMD operator detected: {:?}. The Wasm SIMD extension is not supported.",
-                        operator
+                        "SIMD operator detected: {operator:?}. The Wasm SIMD extension is not supported."
                     );
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
@@ -519,8 +518,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4DotI8x16I7x16AddS
             | Operator::F32x4RelaxedDotBf16x8AddF32x4 => {
                 let msg = format!(
-                    "Relaxed SIMD operator detected: {:?}. The Wasm Relaxed SIMD extension is not supported.",
-                    operator
+                    "Relaxed SIMD operator detected: {operator:?}. The Wasm Relaxed SIMD extension is not supported."
                 );
                 Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
             }
@@ -657,8 +655,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     Ok(())
                 } else {
                     let msg = format!(
-                        "Float operator detected: {:?}. The use of floats is not supported.",
-                        operator
+                        "Float operator detected: {operator:?}. The use of floats is not supported."
                     );
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
@@ -675,7 +672,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     state.push_operator(operator);
                     Ok(())
                 } else {
-                    let msg = format!("Bulk memory operation detected: {:?}. Bulk memory operations are not supported.", operator);
+                    let msg = format!("Bulk memory operation detected: {operator:?}. Bulk memory operations are not supported.");
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }
@@ -689,7 +686,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     state.push_operator(operator);
                     Ok(())
                 } else {
-                    let msg = format!("Exception handling operation detected: {:?}. Exception handling is not supported.", operator);
+                    let msg = format!("Exception handling operation detected: {operator:?}. Exception handling is not supported.");
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
             }

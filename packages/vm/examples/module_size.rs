@@ -32,7 +32,7 @@ pub fn main() {
 
     // Report wasm size
     let wasm_size = wasm.len();
-    println!("wasm size: {} bytes", wasm_size);
+    println!("wasm size: {wasm_size} bytes");
 
     // Compile module
     let module = module_compile(&wasm);
@@ -49,7 +49,7 @@ pub fn main() {
     let serialized = module.serialize().unwrap();
     mem::drop(module);
     let ser_size = serialized.len();
-    println!("module size (serialized): {} bytes", ser_size);
+    println!("module size (serialized): {ser_size} bytes");
     println!(
         "(serialized) module size ratio: {:.2}",
         ser_size as f32 / wasm_size as f32

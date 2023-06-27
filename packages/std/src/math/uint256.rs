@@ -429,7 +429,7 @@ impl FromStr for Uint256 {
 
         match U256::from_dec_str(s) {
             Ok(u) => Ok(Uint256(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {e}"))),
         }
     }
 }
@@ -556,8 +556,7 @@ impl Shr<u32> for Uint256 {
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
             panic!(
-                "right shift error: {} is larger or equal than the number of bits in Uint256",
-                rhs,
+                "right shift error: {rhs} is larger or equal than the number of bits in Uint256",
             )
         })
     }
@@ -669,7 +668,7 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     where
         E: de::Error,
     {
-        Uint256::try_from(v).map_err(|e| E::custom(format!("invalid Uint256 '{}' - {}", v, e)))
+        Uint256::try_from(v).map_err(|e| E::custom(format!("invalid Uint256 '{v}' - {e}")))
     }
 }
 
@@ -1115,18 +1114,18 @@ mod tests {
     #[test]
     fn uint256_implements_display() {
         let a = Uint256::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Uint256::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn uint256_display_padding_works() {
         let a = Uint256::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
     }
 
     #[test]

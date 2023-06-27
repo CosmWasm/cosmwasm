@@ -72,7 +72,7 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
-              rust-version: ["1.64.0", "1.68.2"]
+              rust-version: ["1.67.0", "1.68.2"]
       - benchmarking:
           requires:
             - package_vm
@@ -118,7 +118,7 @@ jobs:
           command: |
             wget https://static.rust-lang.org/rustup/dist/aarch64-unknown-linux-gnu/rustup-init
             chmod +x rustup-init
-            ./rustup-init -y --default-toolchain 1.64.0 --profile minimal
+            ./rustup-init -y --default-toolchain 1.67.0 --profile minimal
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
@@ -127,12 +127,12 @@ jobs:
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - restore_cache:
           keys:
-            - v4-arm64-workspace-rust:1.64.0-{{ checksum "Cargo.lock" }}
-            - v4-arm64-workspace-rust:1.64.0-
+            - v4-arm64-workspace-rust:1.67.0-{{ checksum "Cargo.lock" }}
+            - v4-arm64-workspace-rust:1.67.0-
       - restore_cache:
           keys:
-            - v4-arm64-contracts-rust:1.64.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
-            - v4-arm64-contracts-rust:1.64.0-
+            - v4-arm64-contracts-rust:1.67.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - v4-arm64-contracts-rust:1.67.0-
       # Test a few contracts that do something potentially interesting in the VM
       # to test contract execution on ARM64.
       # No need to add all contracts here.
@@ -170,14 +170,14 @@ jobs:
           # use all features
           command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
-          key: v4-arm64-workspace-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: v4-arm64-workspace-rust:1.67.0-{{ checksum "Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
       - save_cache:
-          key: v4-arm64-contracts-rust:1.64.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: v4-arm64-contracts-rust:1.67.0-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             # crypto-verify
@@ -218,7 +218,7 @@ jobs:
 
   package_crypto:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -226,7 +226,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_crypto-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_crypto-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/crypto
@@ -241,11 +241,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_crypto-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_crypto-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_check:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -253,7 +253,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_check-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_check-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/check
@@ -268,11 +268,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_check-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_check-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_schema:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -280,7 +280,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_schema-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_schema-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/schema
@@ -295,11 +295,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_schema-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_schema-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_schema_derive:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -307,7 +307,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_schema_derive-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_schema_derive-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/schema-derive
@@ -322,11 +322,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_schema_derive-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_schema_derive-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       # Limit the number of parallel jobs to avoid OOM crashes during doc testing
       RUST_TEST_THREADS: 8
@@ -337,7 +337,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_std-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_std-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -371,11 +371,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_std-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_std-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_storage:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -383,7 +383,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_storage-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_storage-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build library for native target
           working_directory: ~/project/packages/storage
@@ -402,11 +402,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_storage-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_storage-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_vm:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -414,7 +414,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_vm-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -443,7 +443,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_vm-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   package_vm_windows:
     executor:
@@ -462,7 +462,7 @@ jobs:
           command: |
             set -o errexit
             curl -sS --output rustup-init.exe https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe
-            ./rustup-init.exe --default-toolchain 1.65.0 -y
+            ./rustup-init.exe --default-toolchain 1.67.0 -y
             echo 'export PATH="$PATH;$USERPROFILE/.cargo/bin"' >> "$BASH_ENV"
       - run:
           name: Version information
@@ -471,7 +471,7 @@ jobs:
             rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cachev3-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
+            - cachev3-package_vm_windows-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Test
           working_directory: ~/project/packages/vm
@@ -487,11 +487,11 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cachev3-package_vm_windows-rust:1.65.0-{{ checksum "Cargo.lock" }}
+          key: cachev3-package_vm_windows-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_burner:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/burner
@@ -503,7 +503,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_burner-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_burner-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -514,11 +514,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_burner-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_burner-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_crypto_verify:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/crypto-verify
@@ -530,7 +530,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_crypto_verify-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_crypto_verify-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -541,11 +541,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_crypto_verify-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_crypto_verify-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_cyberpunk:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/cyberpunk
@@ -557,7 +557,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_cyberpunk-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_cyberpunk-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -568,11 +568,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_cyberpunk-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_cyberpunk-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_hackatom:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/hackatom
@@ -584,7 +584,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_hackatom-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_hackatom-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -595,11 +595,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_hackatom-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_hackatom-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_ibc_reflect:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/ibc-reflect
@@ -611,7 +611,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibc_reflect-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_ibc_reflect-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -622,11 +622,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibc_reflect-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc_reflect-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_ibc_reflect_send:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/ibc-reflect-send
@@ -638,7 +638,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibc_reflect_send-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_ibc_reflect_send-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -649,11 +649,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibc_reflect_send-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc_reflect_send-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_floaty:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/floaty
@@ -665,7 +665,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_floaty-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_floaty-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -676,11 +676,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_floaty-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_floaty-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/queue
@@ -692,7 +692,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_queue-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_queue-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -703,11 +703,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_queue-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_queue-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_reflect:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/reflect
@@ -719,7 +719,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_reflect-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_reflect-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -730,11 +730,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_reflect-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_reflect-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_staking:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/staking
@@ -746,7 +746,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_staking-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_staking-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -757,11 +757,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_staking-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_staking-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   contract_virus:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/virus
@@ -773,7 +773,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_virus-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_virus-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - check_contract
       - save_cache:
           paths:
@@ -784,11 +784,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_virus-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_virus-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -796,7 +796,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-fmt-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-fmt-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add rustfmt component
           command: rustup component add rustfmt
@@ -809,7 +809,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-fmt-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-fmt-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   fmt_extra:
     docker:
@@ -831,7 +831,7 @@ jobs:
 
   deadlinks:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     steps:
       - checkout
       - run:
@@ -839,7 +839,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-deadlinks-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-deadlinks-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Generate docs
           command: cargo doc
@@ -859,7 +859,7 @@ jobs:
             - target/debug/build
             - target/debug/deps
             - /root/.cache/pip
-          key: cargocache-v2-deadlinks-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-deadlinks-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   clippy:
     parameters:
@@ -935,7 +935,7 @@ jobs:
 
   benchmarking:
     docker:
-      - image: rust:1.64.0
+      - image: rust:1.67.0
     environment:
       RUST_BACKTRACE: 1
     steps:
@@ -945,7 +945,7 @@ jobs:
           command: rustc --version && cargo --version
       - restore_cache:
           keys:
-            - cargocache-v2-benchmarking-rust:1.64.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-benchmarking-rust:1.67.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Run vm benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
@@ -963,7 +963,7 @@ jobs:
             - target/release/.fingerprint
             - target/release/build
             - target/release/deps
-          key: cargocache-v2-benchmarking-rust:1.64.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-benchmarking-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   coverage:
     # https://circleci.com/developer/images?imageType=machine
@@ -1035,7 +1035,7 @@ jobs:
           name: Check development contracts
           command: |
             echo "Checking all contracts under ./artifacts"
-            docker run --volumes-from with_code rust:1.64.0 \
+            docker run --volumes-from with_code rust:1.67.0 \
               /bin/bash -e -c 'export GLOBIGNORE="artifacts/floaty.wasm"; cd ./code; cargo run --bin cosmwasm-check artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
       - run:

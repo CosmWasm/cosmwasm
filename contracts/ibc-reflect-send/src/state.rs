@@ -38,7 +38,7 @@ pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<Acc
 }
 
 pub fn load_account(storage: &dyn Storage, id: &str) -> StdResult<AccountData> {
-    may_load_account(storage, id)?.ok_or_else(|| StdError::not_found(format!("account {}", id)))
+    may_load_account(storage, id)?.ok_or_else(|| StdError::not_found(format!("account {id}")))
 }
 
 pub fn save_account(storage: &mut dyn Storage, id: &str, account: &AccountData) -> StdResult<()> {

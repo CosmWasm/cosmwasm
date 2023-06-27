@@ -18,7 +18,7 @@ pub struct State {
 pub fn load_reply(storage: &dyn Storage, id: u64) -> StdResult<Reply> {
     storage
         .get(&namespace_with_key(&[RESULT_PREFIX], &id.to_be_bytes()))
-        .ok_or_else(|| StdError::not_found(format!("reply {}", id)))
+        .ok_or_else(|| StdError::not_found(format!("reply {id}")))
         .and_then(|v| from_slice(&v))
 }
 

@@ -39,7 +39,7 @@ pub fn save_map(
 
 pub fn load_map(storage: &dyn Storage, prefix: &[u8], key: &CanonicalAddr) -> StdResult<Uint128> {
     may_load_map(storage, prefix, key)?
-        .ok_or_else(|| StdError::not_found(format!("map value for {}", key)))
+        .ok_or_else(|| StdError::not_found(format!("map value for {key}")))
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
