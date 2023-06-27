@@ -113,6 +113,7 @@ pub enum DistributionMsg {
     },
     /// This is translated to a [[MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
     /// `depositor` is automatically filled with the current contract's address.
+    #[cfg(feature = "cosmwasm_1_3")]
     FundCommunityPool {
 		/// The amount to spend
 		amount: Vec<Coin>,
