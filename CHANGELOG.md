@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+- cosmwasm-std: Add `DistributionMsg::FundCommunityPool` ([#1747])
+
 ### Added
 
 - cosmwasm-std: Implement `BankQuery::AllDenomMetadata` to allow querying all
