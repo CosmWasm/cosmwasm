@@ -38,18 +38,51 @@ pub trait Storage {
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 
-    #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
-    ///
     /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    #[cfg(feature = "iterator")]
     fn range<'a>(
         &'a self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = Record> + 'a>;
+
+    /// Allows iteration over a set of keys, either forwards or backwards.
+    ///
+    /// The bound `start` is inclusive and `end` is exclusive.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    ///
+    /// The default implementation uses [`Storage::range`] and discards the values. More efficient
+    /// implementations might be possible depending on the storage.
+    #[cfg(feature = "iterator")]
+    fn range_keys<'a>(
+        &'a self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'a> {
+        Box::new(self.range(start, end, order).map(|(k, _v)| k))
+    }
+
+    /// Allows iteration over a set of values, either forwards or backwards.
+    ///
+    /// The bound `start` is inclusive and `end` is exclusive.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    ///
+    /// The default implementation uses [`Storage::range`] and discards the keys. More efficient implementations
+    /// might be possible depending on the storage.
+    #[cfg(feature = "iterator")]
+    fn range_values<'a>(
+        &'a self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'a> {
+        Box::new(self.range(start, end, order).map(|(_k, v)| v))
+    }
 
     fn set(&mut self, key: &[u8], value: &[u8]);
 
