@@ -58,7 +58,5 @@ pub mod internals {
 
     pub use crate::compatibility::check_wasm;
     pub use crate::instance::instance_from_module;
-    #[cfg(test)]
-    pub use crate::wasm_backend::make_runtime_store;
     pub use crate::wasm_backend::{compile, make_engine};
 }
