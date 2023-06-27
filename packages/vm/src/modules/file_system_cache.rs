@@ -201,9 +201,7 @@ fn target_id(target: &Target) -> String {
 
 /// The path to the latest version of the modules.
 fn modules_path(base_path: &Path, wasmer_module_version: u32, target: &Target) -> PathBuf {
-    let version_dir = format!(
-        "{MODULE_SERIALIZATION_VERSION}-wasmer{wasmer_module_version}"
-    );
+    let version_dir = format!("{MODULE_SERIALIZATION_VERSION}-wasmer{wasmer_module_version}");
     let target_dir = target_id(target);
     base_path.join(version_dir).join(target_dir)
 }
