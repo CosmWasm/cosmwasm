@@ -63,6 +63,7 @@ pub fn ibc_channel_connect(
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        packet_fee: None,
     };
 
     Ok(IbcBasicResponse::new()
@@ -413,12 +414,14 @@ mod tests {
                 to_address,
                 amount,
                 timeout,
+                packet_fee,
             }) => {
                 assert_eq!(transfer_channel_id, channel_id.as_str());
                 assert_eq!(remote_addr, to_address.as_str());
                 assert_eq!(&coin(12344, "utrgd"), amount);
                 assert!(timeout.block().is_none());
                 assert!(timeout.timestamp().is_some());
+                assert!(packet_fee.is_none());
             }
             o => panic!("unexpected message: {:?}", o),
         }

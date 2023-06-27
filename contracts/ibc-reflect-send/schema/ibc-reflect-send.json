@@ -393,6 +393,38 @@
           }
         ]
       },
+      "IbcFee": {
+        "description": "An [ICS-29] IBC fee.\n\nThis is mapped to an [ibc.applications.fee.v1.Fee].\n\n[ICS-29]: https://github.com/cosmos/ibc-go/blob/v7.2.0/docs/middleware/ics29-fee/overview.md [ibc.applications.fee.v1.Fee]: https://github.com/cosmos/ibc-go/blob/v7.2.0/proto/ibc/applications/fee/v1/fee.proto#L11-L31",
+        "type": "object",
+        "required": [
+          "ack",
+          "recv",
+          "timeout"
+        ],
+        "properties": {
+          "ack": {
+            "description": "The packet acknowledgement fee",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Coin"
+            }
+          },
+          "recv": {
+            "description": "The packet receive fee",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Coin"
+            }
+          },
+          "timeout": {
+            "description": "The packet timeout fee",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Coin"
+            }
+          }
+        }
+      },
       "IbcMsg": {
         "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
         "oneOf": [
@@ -423,6 +455,17 @@
                   "channel_id": {
                     "description": "exisiting channel to send the tokens over",
                     "type": "string"
+                  },
+                  "packet_fee": {
+                    "description": "When set, a [MsgPayPacketFee] with the provided fee is created and emitted before the packet is sent. `signer` gets filled automatically with the contract address. No relayer restrictions will be in place.\n\n[MsgPayPacketFee]: https://github.com/cosmos/ibc-go/blob/v7.2.0/proto/ibc/applications/fee/v1/tx.proto#L76-L93",
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/IbcFee"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "timeout": {
                     "description": "when packet times out, measured on remote chain",
@@ -461,6 +504,17 @@
                   },
                   "data": {
                     "$ref": "#/definitions/Binary"
+                  },
+                  "packet_fee": {
+                    "description": "When set, a [MsgPayPacketFee] with the provided fee is created and emitted before the packet is sent. `signer` gets filled automatically with the contract address. No relayer restrictions will be in place.\n\n[MsgPayPacketFee]: https://github.com/cosmos/ibc-go/blob/v7.2.0/proto/ibc/applications/fee/v1/tx.proto#L76-L93",
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/IbcFee"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "timeout": {
                     "description": "when packet times out, measured on remote chain",

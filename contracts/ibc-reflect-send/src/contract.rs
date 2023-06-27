@@ -81,6 +81,7 @@ pub fn handle_send_msgs(
         channel_id,
         data: to_binary(&packet)?,
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        packet_fee: None,
     };
 
     let res = Response::new()
@@ -109,6 +110,7 @@ pub fn handle_check_remote_balance(
         channel_id,
         data: to_binary(&packet)?,
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        packet_fee: None,
     };
 
     let res = Response::new()
@@ -157,6 +159,7 @@ pub fn handle_send_funds(
         to_address: remote_addr,
         amount,
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        packet_fee: None,
     };
 
     let res = Response::new()
