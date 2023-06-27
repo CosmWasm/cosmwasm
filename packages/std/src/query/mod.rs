@@ -17,7 +17,7 @@ pub use bank::SupplyResponse;
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
 #[cfg(feature = "cosmwasm_1_3")]
 pub use bank::{AllDenomMetadataResponse, DenomMetadataResponse};
-#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[cfg(feature = "cosmwasm_1_3")]
 pub use distribution::{DelegatorWithdrawAddressResponse, DistributionQuery};
 #[cfg(feature = "stargate")]
 pub use ibc::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
@@ -38,7 +38,7 @@ pub enum QueryRequest<C> {
     Custom(C),
     #[cfg(feature = "staking")]
     Staking(StakingQuery),
-    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     Distribution(DistributionQuery),
     /// A Stargate query is encoded the same way as abci_query, with path and protobuf encoded request data.
     /// The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md).
@@ -114,7 +114,7 @@ impl<C: CustomQuery> From<IbcQuery> for QueryRequest<C> {
     }
 }
 
-#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[cfg(feature = "cosmwasm_1_3")]
 impl<C: CustomQuery> From<DistributionQuery> for QueryRequest<C> {
     fn from(msg: DistributionQuery) -> Self {
         QueryRequest::Distribution(msg)

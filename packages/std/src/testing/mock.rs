@@ -28,7 +28,7 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
-#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
@@ -445,7 +445,7 @@ pub struct MockQuerier<C: DeserializeOwned = Empty> {
     bank: BankQuerier,
     #[cfg(feature = "staking")]
     staking: StakingQuerier,
-    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     distribution: DistributionQuerier,
     wasm: WasmQuerier,
     #[cfg(feature = "stargate")]
@@ -461,7 +461,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
-            #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+            #[cfg(feature = "cosmwasm_1_3")]
             distribution: DistributionQuerier::default(),
             #[cfg(feature = "staking")]
             staking: StakingQuerier::default(),
@@ -490,7 +490,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         self.bank.set_denom_metadata(denom_metadata);
     }
 
-    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     pub fn set_withdraw_addresses(&mut self, withdraw_addresses: HashMap<String, String>) {
         self.distribution.set_withdraw_addresses(withdraw_addresses);
     }
@@ -554,7 +554,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
-            #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+            #[cfg(feature = "cosmwasm_1_3")]
             QueryRequest::Distribution(distribution_query) => {
                 self.distribution.query(distribution_query)
             }
@@ -908,13 +908,13 @@ impl StakingQuerier {
     }
 }
 
-#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[cfg(feature = "cosmwasm_1_3")]
 #[derive(Clone, Default)]
 pub struct DistributionQuerier {
     withdraw_addresses: HashMap<String, String>,
 }
 
-#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
     pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
         DistributionQuerier { withdraw_addresses }
@@ -1477,7 +1477,7 @@ mod tests {
         );
     }
 
-    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     #[test]
     fn distribution_querier_delegator_withdraw_address() {
         let mut distribution = DistributionQuerier::new(HashMap::new());

@@ -22,7 +22,7 @@ use crate::query::{
 };
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
-#[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+#[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
@@ -245,7 +245,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         Ok(res.amount)
     }
 
-    #[cfg(all(feature = "staking", feature = "cosmwasm_1_3"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     pub fn query_delegator_withdraw_address(
         &self,
         delegator: impl Into<String>,
