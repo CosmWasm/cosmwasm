@@ -28,6 +28,8 @@ use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(feature = "cosmwasm_1_3")]
+use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -443,6 +445,8 @@ pub struct MockQuerier<C: DeserializeOwned = Empty> {
     bank: BankQuerier,
     #[cfg(feature = "staking")]
     staking: StakingQuerier,
+    #[cfg(feature = "cosmwasm_1_3")]
+    distribution: DistributionQuerier,
     wasm: WasmQuerier,
     #[cfg(feature = "stargate")]
     ibc: IbcQuerier,
@@ -457,6 +461,8 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
+            #[cfg(feature = "cosmwasm_1_3")]
+            distribution: DistributionQuerier::default(),
             #[cfg(feature = "staking")]
             staking: StakingQuerier::default(),
             wasm: WasmQuerier::default(),
@@ -482,6 +488,33 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 
     pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
         self.bank.set_denom_metadata(denom_metadata);
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn set_withdraw_address(
+        &mut self,
+        delegator_address: impl Into<String>,
+        withdraw_address: impl Into<String>,
+    ) {
+        self.distribution
+            .set_withdraw_address(delegator_address, withdraw_address);
+    }
+
+    /// Sets multiple withdraw addresses.
+    ///
+    /// This allows passing multiple tuples of `(delegator_address, withdraw_address)`.
+    /// It does not overwrite existing entries.
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn set_withdraw_addresses(
+        &mut self,
+        withdraw_addresses: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) {
+        self.distribution.set_withdraw_addresses(withdraw_addresses);
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn clear_withdraw_addresses(&mut self) {
+        self.distribution.clear_withdraw_addresses();
     }
 
     #[cfg(feature = "staking")]
@@ -543,6 +576,10 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
+            #[cfg(feature = "cosmwasm_1_3")]
+            QueryRequest::Distribution(distribution_query) => {
+                self.distribution.query(distribution_query)
+            }
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
             #[cfg(feature = "stargate")]
             QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
@@ -884,6 +921,62 @@ impl StakingQuerier {
                     .find(|d| d.delegator.as_str() == delegator && d.validator == *validator);
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
+                };
+                to_binary(&res).into()
+            }
+        };
+        // system result is always ok in the mock implementation
+        SystemResult::Ok(contract_result)
+    }
+}
+
+#[cfg(feature = "cosmwasm_1_3")]
+#[derive(Clone, Default)]
+pub struct DistributionQuerier {
+    withdraw_addresses: HashMap<String, String>,
+}
+
+#[cfg(feature = "cosmwasm_1_3")]
+impl DistributionQuerier {
+    pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
+        DistributionQuerier { withdraw_addresses }
+    }
+
+    pub fn set_withdraw_address(
+        &mut self,
+        delegator_address: impl Into<String>,
+        withdraw_address: impl Into<String>,
+    ) {
+        self.withdraw_addresses
+            .insert(delegator_address.into(), withdraw_address.into());
+    }
+
+    /// Sets multiple withdraw addresses.
+    ///
+    /// This allows passing multiple tuples of `(delegator_address, withdraw_address)`.
+    /// It does not overwrite existing entries.
+    pub fn set_withdraw_addresses(
+        &mut self,
+        withdraw_addresses: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) {
+        for (d, w) in withdraw_addresses {
+            self.set_withdraw_address(d, w);
+        }
+    }
+
+    pub fn clear_withdraw_addresses(&mut self) {
+        self.withdraw_addresses.clear();
+    }
+
+    pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
+        let contract_result: ContractResult<Binary> = match request {
+            DistributionQuery::DelegatorWithdrawAddress { delegator_address } => {
+                let res = DelegatorWithdrawAddressResponse {
+                    withdraw_address: self
+                        .withdraw_addresses
+                        .get(delegator_address)
+                        .unwrap_or(delegator_address)
+                        .clone(),
                 };
                 to_binary(&res).into()
             }
@@ -1426,6 +1519,29 @@ mod tests {
             more_res.metadata, res.metadata,
             "should be same as previous query"
         );
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    #[test]
+    fn distribution_querier_delegator_withdraw_address() {
+        let mut distribution = DistributionQuerier::default();
+        distribution.set_withdraw_address("addr0", "withdraw0");
+
+        let query = DistributionQuery::DelegatorWithdrawAddress {
+            delegator_address: "addr0".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
+        assert_eq!(res.withdraw_address, "withdraw0");
+
+        let query = DistributionQuery::DelegatorWithdrawAddress {
+            delegator_address: "addr1".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
+        assert_eq!(res.withdraw_address, "addr1");
     }
 
     #[cfg(feature = "stargate")]

@@ -14,6 +14,8 @@ and this project adheres to
   enabled for the `cosmwasm_std` dependency. This makes the contract
   incompatible with chains running anything lower than CosmWasm `1.3.0`.
   ([#1647])
+- cosmwasm-std: Add `DistributionQuery::DelegatorWithdrawAddress`. Also needs
+  the `cosmwasm_1_3` feature (see above). ([#1593])
 - cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
 - cosmwasm-std: Add `Coins` helper to handle multiple coins. ([#1687])
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
@@ -25,6 +27,7 @@ and this project adheres to
   `Storage::range_values`. The default implementations just use
   `Storage::range`. Later this can be implemented more efficiently. ([#1748])
 
+[#1593]: https://github.com/CosmWasm/cosmwasm/pull/1593
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
 [#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684

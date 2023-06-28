@@ -16,5 +16,6 @@ might define others.
 - `cosmwasm_1_2` enables the `GovMsg::VoteWeighted` and `WasmMsg::Instantiate2`
   messages. Only chains running CosmWasm `1.2.0` or higher support this.
 - `cosmwasm_1_3` enables the `BankQuery::AllDenomMetadata` and
-  `BankQuery::DenomMetadata` queries. Only chains running CosmWasm `1.3.0` or
-  higher support this.
+  `BankQuery::DenomMetadata` queries, as well as
+  `DistributionQuery::DelegatorWithdrawAddress`. Only chains running CosmWasm
+  `1.3.0` or higher support this.
