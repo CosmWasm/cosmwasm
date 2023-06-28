@@ -1,6 +1,7 @@
 mod decimal;
 mod decimal256;
 mod fraction;
+mod int256;
 mod int512;
 mod isqrt;
 mod uint128;
@@ -11,6 +12,7 @@ mod uint64;
 pub use decimal::{Decimal, DecimalRangeExceeded};
 pub use decimal256::{Decimal256, Decimal256RangeExceeded};
 pub use fraction::Fraction;
+pub use int256::Int256;
 pub use int512::Int512;
 pub use isqrt::Isqrt;
 pub use uint128::Uint128;
