@@ -637,27 +637,16 @@ mod tests {
     #[test]
     fn int512_zero_works() {
         let zero = Int512::zero();
-        assert_eq!(
-            zero.to_be_bytes(),
-            [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0
-            ]
-        );
+        assert_eq!(zero.to_be_bytes(), [0; 64]);
     }
 
     #[test]
     fn uin512_one_works() {
         let one = Int512::one();
-        assert_eq!(
-            one.to_be_bytes(),
-            [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 1
-            ]
-        );
+        let mut one_be = [0; 64];
+        one_be[63] = 1;
+
+        assert_eq!(one.to_be_bytes(), one_be);
     }
 
     #[test]
@@ -752,32 +741,15 @@ mod tests {
 
     #[test]
     fn int512_to_be_bytes_works() {
-        assert_eq!(
-            Int512::zero().to_be_bytes(),
-            [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0,
-            ]
-        );
-        assert_eq!(
-            Int512::MAX.to_be_bytes(),
-            [
-                0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-            ]
-        );
-        assert_eq!(
-            Int512::from(1u128).to_be_bytes(),
-            [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 1
-            ]
-        );
+        assert_eq!(Int512::zero().to_be_bytes(), [0; 64]);
+
+        let mut max = [0xff; 64];
+        max[0] = 0x7f;
+        assert_eq!(Int512::MAX.to_be_bytes(), max);
+
+        let mut one = [0; 64];
+        one[63] = 1;
+        assert_eq!(Int512::from(1u128).to_be_bytes(), one);
         // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(64, "big")]`
         assert_eq!(
             Int512::from(240282366920938463463374607431768124608u128).to_be_bytes(),
@@ -806,32 +778,15 @@ mod tests {
 
     #[test]
     fn int512_to_le_bytes_works() {
-        assert_eq!(
-            Int512::zero().to_le_bytes(),
-            [
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0
-            ]
-        );
-        assert_eq!(
-            Int512::MAX.to_le_bytes(),
-            [
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f
-            ]
-        );
-        assert_eq!(
-            Int512::from(1u128).to_le_bytes(),
-            [
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0
-            ]
-        );
+        assert_eq!(Int512::zero().to_le_bytes(), [0; 64]);
+
+        let mut max = [0xff; 64];
+        max[63] = 0x7f;
+        assert_eq!(Int512::MAX.to_le_bytes(), max);
+
+        let mut one = [0; 64];
+        one[0] = 1;
+        assert_eq!(Int512::from(1u128).to_le_bytes(), one);
         // Python: `[b for b in (240282366920938463463374607431768124608).to_bytes(64, "little")]`
         assert_eq!(
             Int512::from(240282366920938463463374607431768124608u128).to_le_bytes(),
