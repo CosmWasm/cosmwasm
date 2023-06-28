@@ -20,7 +20,7 @@ use crate::Uint128;
 /// Use `from` to create instances of this and `u64` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_std::Uint64;
+/// # use secret_cosmwasm_std::Uint64;
 /// let a = Uint64::from(42u64);
 /// assert_eq!(a.u64(), 42);
 ///
@@ -32,6 +32,7 @@ pub struct Uint64(#[schemars(with = "String")] u64);
 
 impl Uint64 {
     pub const MAX: Self = Self(u64::MAX);
+    pub const MIN: Self = Self(u64::MIN);
 
     /// Creates a Uint64(value).
     ///
@@ -41,6 +42,7 @@ impl Uint64 {
     }
 
     /// Creates a Uint64(0)
+    #[inline]
     pub const fn zero() -> Self {
         Uint64(0)
     }
@@ -74,7 +76,10 @@ impl Uint64 {
         self.0.pow(exp).into()
     }
 
-    /// Returns `self * numerator / denominator`
+    /// Returns `self * numerator / denominator`.
+    ///
+    /// Due to the nature of the integer division involved, the result is always floored.
+    /// E.g. 5 * 99/100 = 4.
     pub fn multiply_ratio<A: Into<u64>, B: Into<u64>>(
         &self,
         numerator: A,
@@ -89,7 +94,10 @@ impl Uint64 {
         }
     }
 
-    /// Returns `self * numerator / denominator`
+    /// Returns `self * numerator / denominator`.
+    ///
+    /// Due to the nature of the integer division involved, the result is always floored.
+    /// E.g. 5 * 99/100 = 4.
     pub fn checked_multiply_ratio<A: Into<u64>, B: Into<u64>>(
         &self,
         numerator: A,
@@ -112,7 +120,7 @@ impl Uint64 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Uint64;
+    /// use secret_cosmwasm_std::Uint64;
     ///
     /// let a = Uint64::MAX;
     /// let result = a.full_mul(2u32);
@@ -173,18 +181,22 @@ impl Uint64 {
             .ok_or_else(|| DivideByZeroError::new(self))
     }
 
+    #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
         Self(self.0.wrapping_add(other.0))
     }
 
+    #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
         Self(self.0.wrapping_sub(other.0))
     }
 
+    #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
         Self(self.0.wrapping_mul(other.0))
     }
 
+    #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
         Self(self.0.wrapping_pow(other))
     }
@@ -201,8 +213,16 @@ impl Uint64 {
         Self(self.0.saturating_mul(other.0))
     }
 
-    pub fn saturating_pow(self, other: u32) -> Self {
-        Self(self.0.saturating_pow(other))
+    pub fn saturating_pow(self, exp: u32) -> Self {
+        Self(self.0.saturating_pow(exp))
+    }
+
+    pub const fn abs_diff(self, other: Self) -> Self {
+        Self(if self.0 < other.0 {
+            other.0 - self.0
+        } else {
+            self.0 - other.0
+        })
     }
 }
 
@@ -454,6 +474,18 @@ where
 {
     fn sum<I: Iterator<Item = A>>(iter: I) -> Self {
         iter.fold(Self::zero(), Add::add)
+    }
+}
+
+impl PartialEq<&Uint64> for Uint64 {
+    fn eq(&self, rhs: &&Uint64) -> bool {
+        self == *rhs
+    }
+}
+
+impl PartialEq<Uint64> for &Uint64 {
+    fn eq(&self, rhs: &Uint64) -> bool {
+        *self == rhs
     }
 }
 
@@ -759,10 +791,10 @@ mod tests {
         let nums = vec![Uint64(17), Uint64(123), Uint64(540), Uint64(82)];
         let expected = Uint64(762);
 
-        let sum_as_ref = nums.iter().sum();
+        let sum_as_ref: Uint64 = nums.iter().sum();
         assert_eq!(expected, sum_as_ref);
 
-        let sum_as_owned = nums.into_iter().sum();
+        let sum_as_owned: Uint64 = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
     }
 
@@ -813,12 +845,28 @@ mod tests {
         assert_eq!(Uint64(0).saturating_sub(Uint64(1)), Uint64(0));
         assert_eq!(Uint64::MAX.saturating_mul(Uint64(2)), Uint64::MAX);
         assert_eq!(Uint64::MAX.saturating_pow(2), Uint64::MAX);
+    }
 
-        // wrapping_*
-        assert_eq!(Uint64::MAX.wrapping_add(Uint64(1)), Uint64(0));
-        assert_eq!(Uint64(0).wrapping_sub(Uint64(1)), Uint64::MAX);
-        assert_eq!(Uint64::MAX.wrapping_mul(Uint64(2)), Uint64(u64::MAX - 1));
-        assert_eq!(Uint64::MAX.wrapping_pow(2), Uint64(1));
+    #[test]
+    fn uint64_wrapping_methods() {
+        // wrapping_add
+        assert_eq!(Uint64(2).wrapping_add(Uint64(2)), Uint64(4)); // non-wrapping
+        assert_eq!(Uint64::MAX.wrapping_add(Uint64(1)), Uint64(0)); // wrapping
+
+        // wrapping_sub
+        assert_eq!(Uint64(7).wrapping_sub(Uint64(5)), Uint64(2)); // non-wrapping
+        assert_eq!(Uint64(0).wrapping_sub(Uint64(1)), Uint64::MAX); // wrapping
+
+        // wrapping_mul
+        assert_eq!(Uint64(3).wrapping_mul(Uint64(2)), Uint64(6)); // non-wrapping
+        assert_eq!(
+            Uint64::MAX.wrapping_mul(Uint64(2)),
+            Uint64::MAX - Uint64::one()
+        ); // wrapping
+
+        // wrapping_pow
+        assert_eq!(Uint64(2).wrapping_pow(3), Uint64(8)); // non-wrapping
+        assert_eq!(Uint64::MAX.wrapping_pow(2), Uint64(1)); // wrapping
     }
 
     #[test]
@@ -877,5 +925,29 @@ mod tests {
         let b = Uint64::from(6u32);
         a %= &b;
         assert_eq!(a, Uint64::from(1u32));
+    }
+
+    #[test]
+    fn uint64_abs_diff_works() {
+        let a = Uint64::from(42u32);
+        let b = Uint64::from(5u32);
+        let expected = Uint64::from(37u32);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
+    }
+
+    #[test]
+    fn uint64_partial_eq() {
+        let test_cases = [(1, 1, true), (42, 42, true), (42, 24, false), (0, 0, true)]
+            .into_iter()
+            .map(|(lhs, rhs, expected)| (Uint64::new(lhs), Uint64::new(rhs), expected));
+
+        #[allow(clippy::op_ref)]
+        for (lhs, rhs, expected) in test_cases {
+            assert_eq!(lhs == rhs, expected);
+            assert_eq!(&lhs == rhs, expected);
+            assert_eq!(lhs == &rhs, expected);
+            assert_eq!(&lhs == &rhs, expected);
+        }
     }
 }

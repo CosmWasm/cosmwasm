@@ -1,0 +1,38 @@
+on: [push, pull_request]
+
+name: Linting
+
+jobs:
+  lints:
+    name: ${{ matrix.make.name }} ${{ matrix.rust }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [1.60.0, stable]
+        make:
+          - name: Clippy
+            task: "cargo clippy"
+
+    env:
+      RUST_BACKTRACE: full
+      RUSTV: ${{ matrix.rust }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Add wasm toolchain
+        run: |
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install Clippy
+        if: matrix.make.name == 'Clippy'
+        run: |
+          rustup component add clippy
+
+      - name: ${{ matrix.make.name }}
+        run: ${{ matrix.make.task }}

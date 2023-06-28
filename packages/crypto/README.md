@@ -1,12 +1,10 @@
 # CosmWasm Crypto
 
-[![secret-cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/secret-cosmwasm-crypto.svg)](https://crates.io/crates/secret-cosmwasm-crypto)
-
 NOTE: This is a fork of the original cosmwasm-storage repository adapted for use in [SecretNetwork](https://scrt.network)'s Secret Contracts.
 
 This crate implements cryptography-related functions, so that they can be
-available for both, the [cosmwasm-vm](`https://crates.io/crates/cosmwasm-vm`)
-and [cosmwasm-std](`https://crates.io/crates/cosmwasm-std`) crates.
+available for both, the [cosmwasm-vm](`<https://crates.io/crates/cosmwasm-vm>`)
+and [cosmwasm-std](`<https://crates.io/crates/cosmwasm-std>`) crates.
 
 ## Implementations
 
