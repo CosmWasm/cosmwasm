@@ -60,6 +60,35 @@ pub fn make_engine(
     engine
 }
 
+/// Creates an Engine with a compiler attached. Use this when compiling Wasm to a module.
+pub fn make_compiling_engine(
+    memory_limit: Option<Size>,
+    middlewares: &[Arc<dyn ModuleMiddleware>],
+) -> Engine {
+    let gas_limit = 0;
+    let deterministic = Arc::new(Gatekeeper::default());
+    let metering = Arc::new(Metering::new(gas_limit, cost));
+
+    #[cfg(feature = "cranelift")]
+    let mut compiler = Cranelift::default();
+
+    #[cfg(not(feature = "cranelift"))]
+    let mut compiler = Singlepass::default();
+
+    for middleware in middlewares {
+        compiler.push_middleware(middleware.clone());
+    }
+    compiler.push_middleware(deterministic);
+    compiler.push_middleware(metering);
+    let mut engine = Engine::from(compiler);
+    if let Some(limit) = memory_limit {
+        let base = BaseTunables::for_target(&Target::default());
+        let tunables = LimitingTunables::new(base, limit_to_pages(limit));
+        engine.set_tunables(tunables);
+    }
+    engine
+}
+
 fn limit_to_pages(limit: Size) -> Pages {
     // round down to ensure the limit is less than or equal to the config
     let limit_in_pages: usize = limit.0 / WASM_PAGE_SIZE;
