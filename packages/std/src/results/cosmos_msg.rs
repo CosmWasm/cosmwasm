@@ -115,9 +115,9 @@ pub enum DistributionMsg {
     /// `depositor` is automatically filled with the current contract's address.
     #[cfg(feature = "cosmwasm_1_3")]
     FundCommunityPool {
-		/// The amount to spend
-		amount: Vec<Coin>,
-	},
+        /// The amount to spend
+        amount: Vec<Coin>,
+    },
 }
 
 fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
@@ -469,26 +469,20 @@ mod tests {
             );
         }
     }
-    
+
     #[test]
     fn msg_distribution_serializes_to_correct_json() {
-        
         // FundCommunityPool
-        let fund_coins = vec![
-            coin(200, "feathers"),
-            coin(200, "stones"),
-        ];
-        let fund_msg = DistributionMsg::FundCommunityPool{
-            amount: fund_coins,
-        };
+        let fund_coins = vec![coin(200, "feathers"), coin(200, "stones")];
+        let fund_msg = DistributionMsg::FundCommunityPool { amount: fund_coins };
         let fund_json = to_binary(&fund_msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&fund_json),
             r#"{"fund_community_pool":{"amount":[{"denom":"feathers","amount":"200"},{"denom":"stones","amount":"200"}]}}"#,
         );
-        
+
         // SetWithdrawAddress
-        let set_msg = DistributionMsg::SetWithdrawAddress{
+        let set_msg = DistributionMsg::SetWithdrawAddress {
             address: String::from("withdrawer"),
         };
         let set_json = to_binary(&set_msg).unwrap();
@@ -496,9 +490,9 @@ mod tests {
             String::from_utf8_lossy(&set_json),
             r#"{"set_withdraw_address":{"address":"withdrawer"}}"#,
         );
-        
+
         // WithdrawDelegatorRewards
-        let withdraw_msg = DistributionMsg::WithdrawDelegatorReward{
+        let withdraw_msg = DistributionMsg::WithdrawDelegatorReward {
             validator: String::from("fancyoperator"),
         };
         let withdraw_json = to_binary(&withdraw_msg).unwrap();
