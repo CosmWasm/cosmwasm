@@ -491,8 +491,30 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 
     #[cfg(feature = "cosmwasm_1_3")]
-    pub fn set_withdraw_addresses(&mut self, withdraw_addresses: HashMap<String, String>) {
+    pub fn set_withdraw_address(
+        &mut self,
+        delegator_address: impl Into<String>,
+        withdraw_address: impl Into<String>,
+    ) {
+        self.distribution
+            .set_withdraw_address(delegator_address, withdraw_address);
+    }
+
+    /// Sets multiple withdraw addresses.
+    ///
+    /// This allows passing multiple tuples of `(delegator_address, withdraw_address)`.
+    /// It does not overwrite existing entries.
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn set_withdraw_addresses(
+        &mut self,
+        withdraw_addresses: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) {
         self.distribution.set_withdraw_addresses(withdraw_addresses);
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn clear_withdraw_addresses(&mut self) {
+        self.distribution.clear_withdraw_addresses();
     }
 
     #[cfg(feature = "staking")]
@@ -920,8 +942,30 @@ impl DistributionQuerier {
         DistributionQuerier { withdraw_addresses }
     }
 
-    pub fn set_withdraw_addresses(&mut self, withdraw_addresses: HashMap<String, String>) {
-        self.withdraw_addresses = withdraw_addresses;
+    pub fn set_withdraw_address(
+        &mut self,
+        delegator_address: impl Into<String>,
+        withdraw_address: impl Into<String>,
+    ) {
+        self.withdraw_addresses
+            .insert(delegator_address.into(), withdraw_address.into());
+    }
+
+    /// Sets multiple withdraw addresses.
+    ///
+    /// This allows passing multiple tuples of `(delegator_address, withdraw_address)`.
+    /// It does not overwrite existing entries.
+    pub fn set_withdraw_addresses(
+        &mut self,
+        withdraw_addresses: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) {
+        for (d, w) in withdraw_addresses {
+            self.set_withdraw_address(d, w);
+        }
+    }
+
+    pub fn clear_withdraw_addresses(&mut self) {
+        self.withdraw_addresses.clear();
     }
 
     pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
@@ -1480,12 +1524,8 @@ mod tests {
     #[cfg(feature = "cosmwasm_1_3")]
     #[test]
     fn distribution_querier_delegator_withdraw_address() {
-        let mut distribution = DistributionQuerier::new(HashMap::new());
-        distribution.set_withdraw_addresses(
-            [("addr0".to_string(), "withdraw0".to_string())]
-                .into_iter()
-                .collect(),
-        );
+        let mut distribution = DistributionQuerier::default();
+        distribution.set_withdraw_address("addr0", "withdraw0");
 
         let query = DistributionQuery::DelegatorWithdrawAddress {
             delegator_address: "addr0".to_string(),
