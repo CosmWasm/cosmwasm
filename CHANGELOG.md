@@ -16,6 +16,8 @@ and this project adheres to
   ([#1647])
 - cosmwasm-std: Add `DistributionQuery::DelegatorWithdrawAddress`. Also needs
   the `cosmwasm_1_3` feature (see above). ([#1593])
+- cosmwasm-std: Add `DistributionMsg::FundCommunityPool`. Also needs the
+  `cosmwasm_1_3` feature (see above). ([#1747])
 - cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
 - cosmwasm-std: Add `Coins` helper to handle multiple coins. ([#1687])
 - cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
@@ -33,6 +35,7 @@ and this project adheres to
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 [#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
 [#1727]: https://github.com/CosmWasm/cosmwasm/issues/1727
+[#1747]: https://github.com/CosmWasm/cosmwasm/pull/1747
 [#1748]: https://github.com/CosmWasm/cosmwasm/pull/1748
 
 ### Changed
