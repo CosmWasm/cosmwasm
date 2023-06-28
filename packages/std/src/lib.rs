@@ -52,8 +52,8 @@ pub use crate::ibc::{
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
-    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int256, Int512, Int128,
-    Isqrt, Uint128, Uint256, Uint512, Uint64,
+    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
+    Int512, Int64, Isqrt, Uint128, Uint256, Uint512, Uint64,
 };
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
