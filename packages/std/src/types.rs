@@ -2,10 +2,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::Addr;
-use crate::coins::Coin;
+use crate::coin::Coin;
 use crate::timestamp::Timestamp;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[cfg(feature = "random")]
+use crate::Binary;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
@@ -15,7 +18,7 @@ pub struct Env {
     pub contract: ContractInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
@@ -26,7 +29,7 @@ pub struct TransactionInfo {
     pub index: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
     pub height: u64,
@@ -40,20 +43,22 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
+    /// # use secret_cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
-    /// #     },
+    /// #      },
     /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
+    /// #         code_hash: "".to_string()
     /// #     },
     /// # };
     /// # extern crate chrono;
     /// use chrono::NaiveDateTime;
+    /// use secret_cosmwasm_std::Binary;
     /// let seconds = env.block.time.seconds();
     /// let nsecs = env.block.time.subsec_nanos();
     /// let dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32);
@@ -62,7 +67,8 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
+    /// # use secret_cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
+    /// # use secret_cosmwasm_std::Binary;
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -72,12 +78,16 @@ pub struct BlockInfo {
     /// #     transaction: Some(TransactionInfo { index: 3 }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
-    /// #     },
+    /// #         code_hash: "".to_string()
+    ///       },
     /// # };
     /// let millis = env.block.time.nanos() / 1_000_000;
     /// ```
     pub time: Timestamp,
     pub chain_id: String,
+    #[cfg(feature = "random")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub random: Option<Binary>,
 }
 
 /// Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed
@@ -87,7 +97,7 @@ pub struct BlockInfo {
 ///
 /// [MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61
 /// [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct MessageInfo {
     /// The `sender` field from `MsgInstantiateContract` and `MsgExecuteContract`.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
@@ -105,7 +115,7 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfo {
     pub address: Addr,
     #[serde(default)]

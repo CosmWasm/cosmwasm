@@ -38,7 +38,10 @@ FILES_MODIFIED=()
 
 for package_dir in packages/*/; do
   CARGO_TOML="$package_dir/Cargo.toml"
+  # The `version = "1.0.0"` cases
   "$gnused" -i -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
+  # The `version = "=1.0.0"` cases
+  "$gnused" -i -e "s/version[[:space:]]*=[[:space:]]*\"=$OLD\"/version = \"=$NEW\"/" "$CARGO_TOML"
   FILES_MODIFIED+=("$CARGO_TOML")
 done
 

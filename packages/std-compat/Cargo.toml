@@ -1,0 +1,37 @@
+[package]
+name = "cosmwasm-std"
+version = "1.1.10"
+edition = "2021"
+description = "Compatability layer for contracts that want to use the git versions of the std fork with a patch"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = []
+abort = []
+# iterator allows us to iterate over all DB items in a given range
+# optional as some merkle stores (like tries) don't support this
+# given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
+# we keep this optional, to allow possible future integration (or different Cosmos Backends)
+iterator = ["secret-cosmwasm-std/iterator"]
+# staking exposes bindings to a required staking moudle in the runtime, via new
+# CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
+# that require these types, so other contracts can be used on systems with eg. PoA consensus
+staking = ["secret-cosmwasm-std/staking"]
+# backtraces provides much better context at runtime errors (in non-wasm code)
+# at the cost of a bit of code size and performance.
+# This feature requires Rust nightly because it depends on the unstable backtrace feature.
+backtraces = ["secret-cosmwasm-std/backtraces"]
+# stargate enables stargate-dependent messages and queries, like raw protobuf messages
+# as well as ibc-related functionality
+stargate = ["secret-cosmwasm-std/stargate"]
+# ibc3 extends ibc messages with ibc-v3 only features. This should only be enabled on contracts
+# that require these types. Without this, they get the smaller ibc-v1 API.
+ibc3 = ["secret-cosmwasm-std/ibc3", "stargate"]
+# This feature makes `BankQuery::Supply` available for the contract to call, but requires
+# the host blockchain to run CosmWasm `1.1.0` or higher.
+cosmwasm_1_1 = ["secret-cosmwasm-std/cosmwasm_1_1"]
+
+random = ["secret-cosmwasm-std/random"]
+
+[dependencies]
+secret-cosmwasm-std = { path = "../std" }

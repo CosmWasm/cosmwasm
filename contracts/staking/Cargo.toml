@@ -23,21 +23,16 @@ incremental = false
 overflow-checks = true
 
 [features]
-# Change this to [] if you don't need Windows support and want faster integration tests.
-default = ["cranelift"]
-# Use cranelift backend instead of singlepass. This is required for development on Windows.
-cranelift = ["cosmwasm-vm/cranelift"]
+# Add feature "cranelift" to default if you need 32 bit or ARM support
+default = []
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
+backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["staking"] }
-cosmwasm-storage = { path = "../../packages/storage", default-features = false }
-schemars = "0.8.1"
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-snafu = "0.6"
-
-[dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["staking"] }
 cosmwasm-schema = { path = "../../packages/schema" }
+cosmwasm-std = { path = "../../packages/std-alias", default-features = false, features = ["staking"] }
+cosmwasm-storage = { path = "../../packages/storage-alias", default-features = false }
+schemars = "0.8.3"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+snafu = "0.6.6"

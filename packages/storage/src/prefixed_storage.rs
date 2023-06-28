@@ -1,6 +1,6 @@
-use cosmwasm_std::Storage;
+use crate::cosmwasm_std::Storage;
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, Record};
+use crate::cosmwasm_std::{Order, Record};
 
 use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
@@ -120,7 +120,7 @@ impl<'a> Storage for ReadonlyPrefixedStorage<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::MockStorage;
+    use crate::cosmwasm_std::testing::MockStorage;
 
     #[test]
     fn prefixed_storage_set_and_get() {

@@ -2,8 +2,8 @@ use serde::de::DeserializeOwned;
 use std::any::type_name;
 
 #[cfg(feature = "iterator")]
-use cosmwasm_std::Record;
-use cosmwasm_std::{from_slice, StdError, StdResult};
+use crate::cosmwasm_std::Record;
+use crate::cosmwasm_std::{from_slice, StdError, StdResult};
 
 /// may_deserialize parses json bytes from storage (Option), returning Ok(None) if no data present
 ///
@@ -36,7 +36,7 @@ pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: Record<Vec<u8>>) -> StdRes
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{to_vec, StdError};
+    use crate::cosmwasm_std::{to_vec, StdError};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -81,7 +81,7 @@ mod tests {
         let parsed = must_deserialize::<Person>(&None);
         match parsed.unwrap_err() {
             StdError::NotFound { kind, .. } => {
-                assert_eq!(kind, "cosmwasm_storage::type_helpers::tests::Person")
+                assert_eq!(kind, "secret_cosmwasm_storage::type_helpers::tests::Person")
             }
             e => panic!("Unexpected error {}", e),
         }

@@ -1,16 +1,13 @@
+use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, CosmosMsg, Empty, Timestamp};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::state::AccountData;
 
 /// This needs no info. Owner of the contract is whoever signed the InstantiateMsg.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub struct InstantiateMsg {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum ExecuteMsg {
     /// Changes the admin
     UpdateAdmin {
@@ -37,28 +34,31 @@ pub enum ExecuteMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(QueryResponses)]
 pub enum QueryMsg {
     // Returns current admin
+    #[returns(AdminResponse)]
     Admin {},
     // Shows all open accounts (incl. remote info)
+    #[returns(ListAccountsResponse)]
     ListAccounts {},
     // Get account for one channel
+    #[returns(AccountInfo)]
     Account { channel_id: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct AdminResponse {
     pub admin: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct ListAccountsResponse {
     pub accounts: Vec<AccountInfo>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct AccountInfo {
     pub channel_id: String,
     /// last block balance was updated (0 is never)
@@ -80,7 +80,7 @@ impl AccountInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub struct AccountResponse {
     /// last block balance was updated (0 is never)
     pub last_update_time: Timestamp,

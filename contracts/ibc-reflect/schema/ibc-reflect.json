@@ -1,0 +1,123 @@
+{
+  "contract_name": "ibc-reflect",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "description": "Just needs to know the code_id of a reflect contract to spawn sub-accounts",
+    "type": "object",
+    "required": [
+      "reflect_code_id"
+    ],
+    "properties": {
+      "reflect_code_id": {
+        "type": "integer",
+        "format": "uint64",
+        "minimum": 0.0
+      }
+    },
+    "additionalProperties": false
+  },
+  "execute": null,
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "description": "Returns (reflect) account that is attached to this channel, or none.",
+        "type": "object",
+        "required": [
+          "account"
+        ],
+        "properties": {
+          "account": {
+            "type": "object",
+            "required": [
+              "channel_id"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Returns all (channel, reflect_account) pairs. No pagination - this is a test contract",
+        "type": "object",
+        "required": [
+          "list_accounts"
+        ],
+        "properties": {
+          "list_accounts": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MigrateMsg",
+    "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+    "type": "object"
+  },
+  "sudo": null,
+  "responses": {
+    "account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AccountResponse",
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "list_accounts": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ListAccountsResponse",
+      "type": "object",
+      "required": [
+        "accounts"
+      ],
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AccountInfo"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "AccountInfo": {
+          "type": "object",
+          "required": [
+            "account",
+            "channel_id"
+          ],
+          "properties": {
+            "account": {
+              "type": "string"
+            },
+            "channel_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

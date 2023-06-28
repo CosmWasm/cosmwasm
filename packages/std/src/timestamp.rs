@@ -11,7 +11,7 @@ use crate::math::Uint64;
 /// ## Examples
 ///
 /// ```
-/// # use cosmwasm_std::Timestamp;
+/// # use secret_cosmwasm_std::Timestamp;
 /// let ts = Timestamp::from_nanos(1_000_000_202);
 /// assert_eq!(ts.nanos(), 1_000_000_202);
 /// assert_eq!(ts.seconds(), 1);
