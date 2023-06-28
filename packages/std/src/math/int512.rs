@@ -641,7 +641,7 @@ mod tests {
     }
 
     #[test]
-    fn uin512_one_works() {
+    fn uint512_one_works() {
         let one = Int512::one();
         let mut one_be = [0; 64];
         one_be[63] = 1;

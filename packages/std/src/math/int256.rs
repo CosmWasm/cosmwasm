@@ -603,7 +603,7 @@ mod tests {
     }
 
     #[test]
-    fn uin256_one_works() {
+    fn uint256_one_works() {
         let one = Int256::one();
         let mut one_be = [0; 32];
         one_be[31] = 1;
