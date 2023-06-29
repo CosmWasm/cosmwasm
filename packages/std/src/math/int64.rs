@@ -161,13 +161,6 @@ impl Int64 {
         Ok(Self(self.0.shl(other)))
     }
 
-    pub fn checked_neg(self) -> Result<Self, OverflowError> {
-        self.0
-            .checked_neg()
-            .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Neg, self, self))
-    }
-
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
@@ -827,16 +820,6 @@ mod tests {
     #[should_panic]
     fn int64_shr_overflow_panics() {
         let _ = Int64::from(1u32) >> 64u32;
-    }
-
-    #[test]
-    fn int64_checked_neg() {
-        assert_eq!(Int64::one().checked_neg(), Ok(Int64::from(-1i32)));
-        assert!(matches!(
-            Int64::MIN.checked_neg(),
-            Err(OverflowError { .. })
-        ));
-        assert_eq!(Int64::MAX.checked_neg(), Ok(Int64::MIN + Int64::one()));
     }
 
     #[test]

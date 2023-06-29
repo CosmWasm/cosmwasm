@@ -161,13 +161,6 @@ impl Int128 {
         Ok(Self(self.0.shl(other)))
     }
 
-    pub fn checked_neg(self) -> Result<Self, OverflowError> {
-        self.0
-            .checked_neg()
-            .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Neg, self, self))
-    }
-
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
@@ -863,16 +856,6 @@ mod tests {
     #[should_panic]
     fn int128_shr_overflow_panics() {
         let _ = Int128::from(1u32) >> 128u32;
-    }
-
-    #[test]
-    fn int128_checked_neg() {
-        assert_eq!(Int128::one().checked_neg(), Ok(Int128::from(-1i32)));
-        assert!(matches!(
-            Int128::MIN.checked_neg(),
-            Err(OverflowError { .. })
-        ));
-        assert_eq!(Int128::MAX.checked_neg(), Ok(Int128::MIN + Int128::one()));
     }
 
     #[test]

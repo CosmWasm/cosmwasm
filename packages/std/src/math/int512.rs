@@ -246,13 +246,6 @@ impl Int512 {
         Ok(Self(self.0.shl(other)))
     }
 
-    pub fn checked_neg(self) -> Result<Self, OverflowError> {
-        self.0
-            .checked_neg()
-            .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Neg, self, self))
-    }
-
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
@@ -1016,16 +1009,6 @@ mod tests {
     #[should_panic]
     fn int512_shr_overflow_panics() {
         let _ = Int512::from(1u32) >> 512u32;
-    }
-
-    #[test]
-    fn int512_checked_neg() {
-        assert_eq!(Int512::one().checked_neg(), Ok(Int512::from(-1i32)));
-        assert!(matches!(
-            Int512::MIN.checked_neg(),
-            Err(OverflowError { .. })
-        ));
-        assert_eq!(Int512::MAX.checked_neg(), Ok(Int512::MIN + Int512::one()));
     }
 
     #[test]
