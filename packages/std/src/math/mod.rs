@@ -72,6 +72,8 @@ mod tests {
     {
     }
 
+    trait SignedImpl<'a>: IntImpl<'a> + Neg<Output = Self> {}
+
     impl AllImpl<'_> for Uint64 {}
     impl AllImpl<'_> for Uint128 {}
     impl AllImpl<'_> for Uint256 {}
@@ -92,4 +94,9 @@ mod tests {
 
     impl AllImpl<'_> for Decimal {}
     impl AllImpl<'_> for Decimal256 {}
+
+    impl SignedImpl<'_> for Int64 {}
+    impl SignedImpl<'_> for Int128 {}
+    impl SignedImpl<'_> for Int256 {}
+    impl SignedImpl<'_> for Int512 {}
 }
