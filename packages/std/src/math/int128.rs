@@ -507,7 +507,7 @@ mod tests {
     }
 
     #[test]
-    fn int128_new_works() {
+    fn int128_from_be_bytes_works() {
         let num = Int128::from_be_bytes([1; 16]);
         let a: [u8; 16] = num.to_be_bytes();
         assert_eq!(a, [1; 16]);
@@ -518,6 +518,21 @@ mod tests {
         let num = Int128::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 16] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn int128_new_works() {
+        let num = Int128::new(222);
+        assert_eq!(num.i128(), 222);
+
+        let num = Int128::new(-222);
+        assert_eq!(num.i128(), -222);
+
+        let num = Int128::new(i128::MAX);
+        assert_eq!(num.i128(), i128::MAX);
+
+        let num = Int128::new(i128::MIN);
+        assert_eq!(num.i128(), i128::MIN);
     }
 
     #[test]

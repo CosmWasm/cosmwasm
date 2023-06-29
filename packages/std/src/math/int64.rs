@@ -483,7 +483,7 @@ mod tests {
     }
 
     #[test]
-    fn int64_new_works() {
+    fn int64_from_be_bytes_works() {
         let num = Int64::from_be_bytes([1; 8]);
         let a: [u8; 8] = num.to_be_bytes();
         assert_eq!(a, [1; 8]);
@@ -492,6 +492,21 @@ mod tests {
         let num = Int64::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 8] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn int64_new_works() {
+        let num = Int64::new(222);
+        assert_eq!(num.i64(), 222);
+
+        let num = Int64::new(-222);
+        assert_eq!(num.i64(), -222);
+
+        let num = Int64::new(i64::MAX);
+        assert_eq!(num.i64(), i64::MAX);
+
+        let num = Int64::new(i64::MIN);
+        assert_eq!(num.i64(), i64::MIN);
     }
 
     #[test]
