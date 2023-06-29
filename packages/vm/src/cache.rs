@@ -272,6 +272,7 @@ where
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
+        cache.stats.misses = cache.stats.misses.saturating_add(1);
         let module = compile(&code, Some(cache.instance_memory_limit), &[])?;
         // Store into the fs cache too
         cache.fs_cache.store(checksum, &module)?;

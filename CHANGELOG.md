@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Add missing cache stats increment when calling `pin`.
+
 ### Added
 
 - cosmwasm-std: Implement `BankQuery::AllDenomMetadata` to allow querying all
