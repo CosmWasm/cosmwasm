@@ -153,7 +153,7 @@ impl Int64 {
 
     pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
         if other >= 64 {
-            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
         }
 
         Ok(Self(self.0.shl(other)))
