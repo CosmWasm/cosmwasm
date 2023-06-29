@@ -305,9 +305,10 @@ impl Int512 {
 
 impl From<Uint256> for Int512 {
     fn from(val: Uint256) -> Self {
-        let bytes = [[0u8; 32], val.to_be_bytes()].concat();
+        let mut bytes = [0u8; 64];
+        bytes[32..].copy_from_slice(&val.to_be_bytes());
 
-        Self::from_be_bytes(bytes.try_into().unwrap())
+        Self::from_be_bytes(bytes)
     }
 }
 
