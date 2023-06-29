@@ -17,16 +17,12 @@ use crate::{forward_ref_partial_eq, Uint64};
 ///
 /// # Examples
 ///
-/// Use `from` to create instances out of primitive uint types or `new` to provide big
-/// endian bytes:
+/// Use `from` to create instances of this and `i64` to get the value out:
 ///
 /// ```
 /// # use cosmwasm_std::Int64;
 /// let a = Int64::from(258i64);
-/// let b = Int64::new([
-///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,
-/// ]);
-/// assert_eq!(a, b);
+/// assert_eq!(a.i64(), 258);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Int64(#[schemars(with = "String")] i64);
@@ -37,11 +33,12 @@ impl Int64 {
     pub const MAX: Int64 = Int64(i64::MAX);
     pub const MIN: Int64 = Int64(i64::MIN);
 
-    /// Creates a Int64(value) from a big endian representation. It's just an alias for
-    /// `from_be_bytes`.
+    /// Creates a Int64(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
     #[inline]
-    pub const fn new(value: [u8; 8]) -> Self {
-        Self::from_be_bytes(value)
+    pub const fn new(value: i64) -> Self {
+        Self(value)
     }
 
     /// Creates a Int64(0)
@@ -494,12 +491,12 @@ mod tests {
 
     #[test]
     fn int64_new_works() {
-        let num = Int64::new([1; 8]);
+        let num = Int64::from_be_bytes([1; 8]);
         let a: [u8; 8] = num.to_be_bytes();
         assert_eq!(a, [1; 8]);
 
         let be_bytes = [0u8, 222u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8];
-        let num = Int64::new(be_bytes);
+        let num = Int64::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 8] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
     }
@@ -525,12 +522,10 @@ mod tests {
         let le_bytes = [3u8, 2u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8];
 
         // These should all be the same.
-        let num1 = Int64::new(be_bytes);
-        let num2 = Int64::from_be_bytes(be_bytes);
-        let num3 = Int64::from_le_bytes(le_bytes);
+        let num1 = Int64::from_be_bytes(be_bytes);
+        let num2 = Int64::from_le_bytes(le_bytes);
         assert_eq!(num1, Int64::from(65536u32 + 512 + 3));
         assert_eq!(num1, num2);
-        assert_eq!(num1, num3);
     }
 
     #[test]
@@ -821,9 +816,9 @@ mod tests {
 
     #[test]
     fn int64_shr_works() {
-        let original = Int64::new([0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8]);
+        let original = Int64::from_be_bytes([0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8]);
 
-        let shifted = Int64::new([0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8]);
+        let shifted = Int64::from_be_bytes([0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8]);
 
         assert_eq!(original >> 2u32, shifted);
     }

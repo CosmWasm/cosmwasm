@@ -17,17 +17,12 @@ use crate::{forward_ref_partial_eq, Int64, Uint128, Uint64};
 ///
 /// # Examples
 ///
-/// Use `from` to create instances out of primitive uint types or `new` to provide big
-/// endian bytes:
+/// Use `from` to create instances of this and `i128` to get the value out:
 ///
 /// ```
 /// # use cosmwasm_std::Int128;
 /// let a = Int128::from(258i128);
-/// let b = Int128::new([
-///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
-///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,
-/// ]);
-/// assert_eq!(a, b);
+/// assert_eq!(a.i128(), 258);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Int128(#[schemars(with = "String")] i128);
@@ -38,11 +33,12 @@ impl Int128 {
     pub const MAX: Int128 = Int128(i128::MAX);
     pub const MIN: Int128 = Int128(i128::MIN);
 
-    /// Creates a Int128(value) from a big endian representation. It's just an alias for
-    /// `from_be_bytes`.
+    /// Creates a Int128(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
     #[inline]
-    pub const fn new(value: [u8; 16]) -> Self {
-        Self::from_be_bytes(value)
+    pub const fn new(value: i128) -> Self {
+        Self(value)
     }
 
     /// Creates a Int128(0)
@@ -519,14 +515,14 @@ mod tests {
 
     #[test]
     fn int128_new_works() {
-        let num = Int128::new([1; 16]);
+        let num = Int128::from_be_bytes([1; 16]);
         let a: [u8; 16] = num.to_be_bytes();
         assert_eq!(a, [1; 16]);
 
         let be_bytes = [
             0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Int128::new(be_bytes);
+        let num = Int128::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 16] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
     }
@@ -556,12 +552,10 @@ mod tests {
         ];
 
         // These should all be the same.
-        let num1 = Int128::new(be_bytes);
-        let num2 = Int128::from_be_bytes(be_bytes);
-        let num3 = Int128::from_le_bytes(le_bytes);
+        let num1 = Int128::from_be_bytes(be_bytes);
+        let num2 = Int128::from_le_bytes(le_bytes);
         assert_eq!(num1, Int128::from(65536u32 + 512 + 3));
         assert_eq!(num1, num2);
-        assert_eq!(num1, num3);
     }
 
     #[test]
@@ -854,11 +848,11 @@ mod tests {
 
     #[test]
     fn int128_shr_works() {
-        let original = Int128::new([
+        let original = Int128::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
         ]);
 
-        let shifted = Int128::new([
+        let shifted = Int128::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
         ]);
 
