@@ -9,7 +9,7 @@ use std::ops::{
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
+use crate::{forward_ref_partial_eq, Int128, Int64, Uint128, Uint256, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
@@ -267,14 +267,6 @@ impl Int256 {
     }
 }
 
-impl From<Uint256> for Int256 {
-    fn from(val: Uint256) -> Self {
-        let bytes = [[0u8; 32], val.to_be_bytes()].concat();
-
-        Self::from_be_bytes(bytes.try_into().unwrap())
-    }
-}
-
 impl From<Uint128> for Int256 {
     fn from(val: Uint128) -> Self {
         val.u128().into()
@@ -314,6 +306,18 @@ impl From<u16> for Int256 {
 impl From<u8> for Int256 {
     fn from(val: u8) -> Self {
         Int256(val.into())
+    }
+}
+
+impl From<Int128> for Int256 {
+    fn from(val: Int128) -> Self {
+        val.i128().into()
+    }
+}
+
+impl From<Int64> for Int256 {
+    fn from(val: Int64) -> Self {
+        val.i64().into()
     }
 }
 

@@ -9,7 +9,7 @@ use std::ops::{
 use std::str::FromStr;
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, Uint128, Uint64};
+use crate::{forward_ref_partial_eq, Int64, Uint128, Uint64};
 
 /// An implementation of i128 that is using strings for JSON encoding/decoding,
 /// such that the full i128 range can be used for clients that convert JSON numbers to floats,
@@ -55,6 +55,11 @@ impl Int128 {
     #[inline]
     pub const fn one() -> Self {
         Self(1)
+    }
+
+    /// Returns a copy of the internal data
+    pub const fn i128(&self) -> i128 {
+        self.0
     }
 
     #[must_use]
@@ -244,6 +249,12 @@ impl From<u16> for Int128 {
 impl From<u8> for Int128 {
     fn from(val: u8) -> Self {
         Int128(val.into())
+    }
+}
+
+impl From<Int64> for Int128 {
+    fn from(val: Int64) -> Self {
+        val.i64().into()
     }
 }
 

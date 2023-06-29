@@ -56,6 +56,11 @@ impl Int64 {
         Self(1)
     }
 
+    /// Returns a copy of the internal data
+    pub const fn i64(&self) -> i64 {
+        self.0
+    }
+
     #[must_use]
     pub const fn from_be_bytes(data: [u8; 8]) -> Self {
         Self(i64::from_be_bytes(data))
