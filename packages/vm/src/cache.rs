@@ -272,6 +272,7 @@ where
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
+        cache.stats.misses = cache.stats.misses.saturating_add(1);
         let module = compile(&code, Some(cache.instance_memory_limit), &[])?;
         // Store into the fs cache too
         cache.fs_cache.store(checksum, &module)?;
@@ -451,7 +452,7 @@ mod tests {
     use crate::errors::VmError;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
-    use std::fs::{create_dir_all, OpenOptions};
+    use std::fs::{create_dir_all, remove_dir_all, OpenOptions};
     use std::io::Write;
     use tempfile::TempDir;
 
@@ -773,6 +774,36 @@ mod tests {
         assert_eq!(cache.stats().hits_memory_cache, 3);
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
+    }
+
+    #[test]
+    fn get_instance_recompiles_module() {
+        let options = make_testing_options();
+        let cache = unsafe { Cache::new(options.clone()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        // Remove compiled module from disk
+        remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
+
+        // The first get_instance recompiles the Wasm (miss)
+        let backend = mock_backend(&[]);
+        let _instance = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 0);
+        assert_eq!(cache.stats().misses, 1);
+
+        // The second get_instance finds the module in cache (hit)
+        let backend = mock_backend(&[]);
+        let _instance = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 0);
+        assert_eq!(cache.stats().misses, 1);
     }
 
     #[test]
@@ -1217,6 +1248,34 @@ mod tests {
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
         cache.unpin(&non_id).unwrap();
+    }
+
+    #[test]
+    fn pin_recompiles_module() {
+        let options = make_testing_options();
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        // Remove compiled module from disk
+        remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
+
+        // Pin misses, forcing a re-compile of the module
+        cache.pin(&checksum).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 0);
+        assert_eq!(cache.stats().misses, 1);
+
+        // After the compilation in pin, the module can be used from pinned memory cache
+        let backend = mock_backend(&[]);
+        let _ = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 0);
+        assert_eq!(cache.stats().misses, 1);
     }
 
     #[test]
