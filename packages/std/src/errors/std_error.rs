@@ -557,6 +557,15 @@ impl DivideByZeroError {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
+pub enum DivisionError {
+    #[error("Divide by zero")]
+    DivideByZero,
+
+    #[error("Overflow in division")]
+    Overflow,
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyFractionError {
     #[error("{0}")]
     DivideByZero(#[from] DivideByZeroError),

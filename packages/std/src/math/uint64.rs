@@ -30,7 +30,7 @@ use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128};
 /// assert_eq!(b.u64(), 70);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint64(#[schemars(with = "String")] u64);
+pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);
 

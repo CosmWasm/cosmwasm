@@ -32,12 +32,15 @@ and this project adheres to
 - cosmwasm-std: Add trait functions `Storage::range_keys` and
   `Storage::range_values`. The default implementations just use
   `Storage::range`. Later this can be implemented more efficiently. ([#1748])
+- cosmwasm-std: Add `Int64`, `Int128`, `Int256` and `Int512` signed integer
+  types. ([#1718])
 
 [#1593]: https://github.com/CosmWasm/cosmwasm/pull/1593
 [#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
 [#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
 [#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
 [#1687]: https://github.com/CosmWasm/cosmwasm/pull/1687
+[#1718]: https://github.com/CosmWasm/cosmwasm/pull/1718
 [#1727]: https://github.com/CosmWasm/cosmwasm/issues/1727
 [#1747]: https://github.com/CosmWasm/cosmwasm/pull/1747
 [#1748]: https://github.com/CosmWasm/cosmwasm/pull/1748
