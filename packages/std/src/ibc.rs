@@ -37,6 +37,7 @@ pub enum IbcMsg {
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
         /// optional, usually JSON
+        #[serde(skip_serializing_if = "Option::is_none")]
         memo: Option<Binary>,
     },
     /// Sends an IBC packet with given data over the existing channel.
