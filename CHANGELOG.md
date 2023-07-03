@@ -4,6 +4,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
+  system cache to prepare for the Wasmer 3 upgrade.
+- cosmwasm-vm: When enabling `print_debug` the debug logs are now printed to
+  STDERR instead of STDOUT by default ([#1667]).
+- cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
+  customizing the handling of debug messages emitted by the contract ([#1667]).
+- cosmwasm-vm: Upgrade Wasmer to version 4.0.0.
+- cosmwasm-check: Update clap dependency to version 4 ([#1677])
+
+[#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
+[#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
+
 ## [1.3.0-rc.0] - 2023-07-03
 
 ### Fixed
@@ -58,56 +74,6 @@ and this project adheres to
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 [#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
-
-### Added
-
-- cosmwasm-std: Implement `BankQuery::AllDenomMetadata` to allow querying all
-  the denom metadata and `BankQuery::DenomMetadata` to query a specific one. In
-  order to use this query in a contract, the `cosmwasm_1_3` feature needs to be
-  enabled for the `cosmwasm_std` dependency. This makes the contract
-  incompatible with chains running anything lower than CosmWasm `1.3.0`.
-  ([#1647])
-- cosmwasm-vm: Add `Cache::save_wasm_unchecked` to save Wasm blobs that have
-  been checked before. This is useful for state-sync where we know the Wasm code
-  was checked when it was first uploaded. ([#1635])
-- cosmwasm-std: Add `FromStr` impl for `Coin`. ([#1684])
-- cosmwasm-std: Add `Decimal::bps` and `Decimal256::bps` to create a decimal
-  from a basis point value ([#1715]).
-
-[#1635]: https://github.com/CosmWasm/cosmwasm/pull/1635
-[#1647]: https://github.com/CosmWasm/cosmwasm/pull/1647
-[#1684]: https://github.com/CosmWasm/cosmwasm/pull/1684
-[#1715]: https://github.com/CosmWasm/cosmwasm/pull/1715
-
-### Changed
-
-- cosmwasm-vm: Add checks for table section of Wasm blob ([#1631]).
-- cosmwasm-vm: Limit number of imports during static validation ([#1629]).
-- cosmwasm-vm: The `check_contract` example was removed. Please use the crate
-  [cosmwasm-check](https://crates.io/crates/cosmwasm-check) instead ([#1511]).
-- cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
-  system cache to prepare for the Wasmer 3 upgrade.
-- cosmwasm-vm: Add target (triple + CPU features) into the module cache
-  directory to avoid using modules compiled for a different system. Bump
-  `MODULE_SERIALIZATION_VERSION` to "v5". ([#1664])
-- cosmwasm-vm: When enabling `print_debug` the debug logs are now printed to
-  STDERR instead of STDOUT by default ([#1667]).
-- cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
-  customizing the handling of debug messages emitted by the contract ([#1667]).
-- cosmwasm-vm: Add `.wasm` extension to stored wasm files ([#1686]).
-- cosmwasm-vm: Upgrade Wasmer to version 4.0.0.
-- cosmwasm-check: Update clap dependency to version 4 ([#1677])
-- cosmwasm-std: Coin uses shorter `Coin { 123 "ucosm" }` format for Debug
-  ([#1704])
-
-[#1511]: https://github.com/CosmWasm/cosmwasm/issues/1511
-[#1629]: https://github.com/CosmWasm/cosmwasm/pull/1629
-[#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
-[#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
-[#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
-[#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
-[#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
-[#1704]: https://github.com/CosmWasm/cosmwasm/pull/1704
 
 ### Deprecated
 
@@ -1826,6 +1792,7 @@ Some main points:
 
 All future Changelog entries will reference this base
 
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0-rc.0...HEAD
 [1.3.0-rc.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0-rc.0
 [1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
