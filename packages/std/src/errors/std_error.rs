@@ -607,7 +607,7 @@ pub enum CoinsError {
 
 impl From<CoinsError> for StdError {
     fn from(value: CoinsError) -> Self {
-        Self::generic_err(format!("Creating Coins: {}", value))
+        Self::generic_err(format!("Creating Coins: {value}"))
     }
 }
 
@@ -629,7 +629,7 @@ impl From<std::num::ParseIntError> for CoinFromStrError {
 
 impl From<CoinFromStrError> for StdError {
     fn from(value: CoinFromStrError) -> Self {
-        Self::generic_err(format!("Parsing Coin: {}", value))
+        Self::generic_err(format!("Parsing Coin: {value}"))
     }
 }
 

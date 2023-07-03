@@ -391,7 +391,7 @@ impl FromStr for Int512 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match I512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int512: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int512: {e}"))),
         }
     }
 }
@@ -504,10 +504,7 @@ impl Shr<u32> for Int512 {
 
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!(
-                "right shift error: {} is larger or equal than the number of bits in Int512",
-                rhs,
-            )
+            panic!("right shift error: {rhs} is larger or equal than the number of bits in Int512",)
         })
     }
 }
@@ -518,10 +515,7 @@ impl Shl<u32> for Int512 {
 
     fn shl(self, rhs: u32) -> Self::Output {
         self.checked_shl(rhs).unwrap_or_else(|_| {
-            panic!(
-                "left shift error: {} is larger or equal than the number of bits in Int512",
-                rhs,
-            )
+            panic!("left shift error: {rhs} is larger or equal than the number of bits in Int512",)
         })
     }
 }
@@ -588,7 +582,7 @@ impl<'de> de::Visitor<'de> for Int512Visitor {
     where
         E: de::Error,
     {
-        Int512::try_from(v).map_err(|e| E::custom(format!("invalid Int512 '{}' - {}", v, e)))
+        Int512::try_from(v).map_err(|e| E::custom(format!("invalid Int512 '{v}' - {e}")))
     }
 }
 
@@ -712,25 +706,25 @@ mod tests {
     #[test]
     fn int512_implements_display() {
         let a = Int512::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Int512::from(-12345i32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: -12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: -12345");
         assert_eq!(a.to_string(), "-12345");
 
         let a = Int512::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn int512_display_padding_works() {
         let a = Int512::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
 
         let a = Int512::from(-123i64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: -0123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: -0123");
     }
 
     #[test]
