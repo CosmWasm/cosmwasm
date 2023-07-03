@@ -3,8 +3,8 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
-    Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
+    ShrAssign, Sub, SubAssign,
 };
 use std::str::FromStr;
 
@@ -13,18 +13,9 @@ use crate::errors::{
 };
 use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
 
-/// This module is purely a workaround that lets us ignore lints for all the code
-/// the `construct_uint!` macro generates.
-#[allow(clippy::all)]
-mod uints {
-    uint::construct_uint! {
-        pub struct U512(8);
-    }
-}
-
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
-use uints::U512;
+use bnum::types::U512;
 
 /// An implementation of u512 that is using strings for JSON encoding/decoding,
 /// such that the full u512 range can be used for clients that convert JSON numbers to floats,
@@ -51,16 +42,16 @@ use uints::U512;
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint512(#[schemars(with = "String")] U512);
+pub struct Uint512(#[schemars(with = "String")] pub(crate) U512);
 
 forward_ref_partial_eq!(Uint512, Uint512);
 
 impl Uint512 {
     pub const MAX: Uint512 = Uint512(U512::MAX);
-    pub const MIN: Uint512 = Uint512(U512::zero());
+    pub const MIN: Uint512 = Uint512(U512::ZERO);
 
     /// Creates a Uint512(value) from a big endian representation. It's just an alias for
-    /// `from_big_endian`.
+    /// `from_be_bytes`.
     pub const fn new(value: [u8; 64]) -> Self {
         Self::from_be_bytes(value)
     }
@@ -68,17 +59,13 @@ impl Uint512 {
     /// Creates a Uint512(0)
     #[inline]
     pub const fn zero() -> Self {
-        Uint512(U512::zero())
+        Uint512(U512::ZERO)
     }
 
     /// Creates a Uint512(1)
     #[inline]
     pub const fn one() -> Self {
-        Self::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 1,
-        ])
+        Self(U512::ONE)
     }
 
     #[must_use]
@@ -109,7 +96,7 @@ impl Uint512 {
                 data[7], data[6], data[5], data[4], data[3], data[2], data[1], data[0],
             ]),
         ];
-        Self(U512(words))
+        Self(U512::from_digits(words))
     }
 
     #[must_use]
@@ -140,7 +127,7 @@ impl Uint512 {
                 data[56], data[57], data[58], data[59], data[60], data[61], data[62], data[63],
             ]),
         ];
-        Self(U512(words))
+        Self(U512::from_digits(words))
     }
 
     /// A conversion from `Uint256` that, unlike the one provided by the `From` trait,
@@ -161,15 +148,16 @@ impl Uint512 {
     /// Returns a copy of the number as big endian bytes.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_be_bytes(self) -> [u8; 64] {
+        let words = self.0.digits();
         let words = [
-            (self.0).0[7].to_be_bytes(),
-            (self.0).0[6].to_be_bytes(),
-            (self.0).0[5].to_be_bytes(),
-            (self.0).0[4].to_be_bytes(),
-            (self.0).0[3].to_be_bytes(),
-            (self.0).0[2].to_be_bytes(),
-            (self.0).0[1].to_be_bytes(),
-            (self.0).0[0].to_be_bytes(),
+            words[7].to_be_bytes(),
+            words[6].to_be_bytes(),
+            words[5].to_be_bytes(),
+            words[4].to_be_bytes(),
+            words[3].to_be_bytes(),
+            words[2].to_be_bytes(),
+            words[1].to_be_bytes(),
+            words[0].to_be_bytes(),
         ];
         unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
@@ -177,36 +165,28 @@ impl Uint512 {
     /// Returns a copy of the number as little endian bytes.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn to_le_bytes(self) -> [u8; 64] {
+        let words = self.0.digits();
         let words = [
-            (self.0).0[0].to_le_bytes(),
-            (self.0).0[1].to_le_bytes(),
-            (self.0).0[2].to_le_bytes(),
-            (self.0).0[3].to_le_bytes(),
-            (self.0).0[4].to_le_bytes(),
-            (self.0).0[5].to_le_bytes(),
-            (self.0).0[6].to_le_bytes(),
-            (self.0).0[7].to_le_bytes(),
+            words[0].to_le_bytes(),
+            words[1].to_le_bytes(),
+            words[2].to_le_bytes(),
+            words[3].to_le_bytes(),
+            words[4].to_le_bytes(),
+            words[5].to_le_bytes(),
+            words[6].to_le_bytes(),
+            words[7].to_le_bytes(),
         ];
         unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
-        let words = (self.0).0;
-        words[0] == 0
-            && words[1] == 0
-            && words[2] == 0
-            && words[3] == 0
-            && words[4] == 0
-            && words[5] == 0
-            && words[6] == 0
-            && words[7] == 0
+        self.0.is_zero()
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
-        let res = self.0.pow(exp.into());
-        Self(res)
+        Self(self.0.pow(exp))
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -232,7 +212,7 @@ impl Uint512 {
 
     pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
         self.0
-            .checked_pow(exp.into())
+            .checked_pow(exp)
             .map(Self)
             .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
     }
@@ -256,11 +236,10 @@ impl Uint512 {
     }
 
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
-        if other >= 512 {
-            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
-        }
-
-        Ok(Self(self.0.shr(other)))
+        self.0
+            .checked_shr(other)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Shr, self, other))
     }
 
     pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
@@ -274,29 +253,25 @@ impl Uint512 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_add(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_add(other.0);
-        Self(value)
+        Self(self.0.wrapping_add(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_sub(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_sub(other.0);
-        Self(value)
+        Self(self.0.wrapping_sub(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_mul(self, other: Self) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_mul(other.0);
-        Self(value)
+        Self(self.0.wrapping_mul(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub fn wrapping_pow(self, other: u32) -> Self {
-        let (value, _did_overflow) = self.0.overflowing_pow(other.into());
-        Self(value)
+        Self(self.0.wrapping_pow(other))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -316,19 +291,12 @@ impl Uint512 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_pow(self, exp: u32) -> Self {
-        match self.checked_pow(exp) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        Self(self.0.saturating_pow(exp))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn abs_diff(self, other: Self) -> Self {
-        if self < other {
-            other - self
-        } else {
-            self - other
-        }
+        Self(self.0.abs_diff(other.0))
     }
 }
 
@@ -424,7 +392,7 @@ impl FromStr for Uint512 {
     type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match U512::from_dec_str(s) {
+        match U512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
             Err(e) => Err(StdError::generic_err(format!("Parsing u512: {e}"))),
         }
@@ -507,6 +475,14 @@ impl Rem for Uint512 {
     }
 }
 forward_ref_binop!(impl Rem, rem for Uint512, Uint512);
+
+impl Not for Uint512 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
 
 impl RemAssign<Uint512> for Uint512 {
     fn rem_assign(&mut self, rhs: Uint512) {
@@ -742,22 +718,25 @@ mod tests {
     #[test]
     fn uint512_convert_from() {
         let a = Uint512::from(5u128);
-        assert_eq!(a.0, U512::from(5));
+        assert_eq!(a.0, U512::from(5u32));
 
         let a = Uint512::from(5u64);
-        assert_eq!(a.0, U512::from(5));
+        assert_eq!(a.0, U512::from(5u32));
 
         let a = Uint512::from(5u32);
-        assert_eq!(a.0, U512::from(5));
+        assert_eq!(a.0, U512::from(5u32));
 
         let a = Uint512::from(5u16);
-        assert_eq!(a.0, U512::from(5));
+        assert_eq!(a.0, U512::from(5u32));
 
         let a = Uint512::from(5u8);
-        assert_eq!(a.0, U512::from(5));
+        assert_eq!(a.0, U512::from(5u32));
 
         let result = Uint512::try_from("34567");
-        assert_eq!(result.unwrap().0, U512::from_dec_str("34567").unwrap());
+        assert_eq!(
+            result.unwrap().0,
+            U512::from_str_radix("34567", 10).unwrap()
+        );
 
         let result = Uint512::try_from("1.23");
         assert!(result.is_err());
@@ -935,7 +914,7 @@ mod tests {
     #[test]
     fn uint512_is_zero_works() {
         assert!(Uint512::zero().is_zero());
-        assert!(Uint512(U512::from(0)).is_zero());
+        assert!(Uint512(U512::from(0u32)).is_zero());
 
         assert!(!Uint512::from(1u32).is_zero());
         assert!(!Uint512::from(123u32).is_zero());
@@ -1300,7 +1279,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "division by zero")]
+    #[should_panic(expected = "divisor of zero")]
     fn uint512_rem_panics_for_zero() {
         let _ = Uint512::from(10u32) % Uint512::zero();
     }

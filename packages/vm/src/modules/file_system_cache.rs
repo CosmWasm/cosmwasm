@@ -1,8 +1,7 @@
 use std::fs;
 use std::hash::Hash;
 use std::io;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 use wasmer::{AsEngineRef, DeserializeError, Module, Target};
@@ -45,7 +44,9 @@ use crate::modules::current_wasmer_module_version;
 ///   A change in memory layout of some types in Rust [std] caused
 ///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
 ///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
-const MODULE_SERIALIZATION_VERSION: &str = "v5";
+/// - **v6**:<br>
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+const MODULE_SERIALIZATION_VERSION: &str = "v6";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -279,7 +280,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v5-wasmer4/**/{}",
+            "{}/v6-wasmer4/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -357,9 +358,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v5-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules\\v6-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v5-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules/v6-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }

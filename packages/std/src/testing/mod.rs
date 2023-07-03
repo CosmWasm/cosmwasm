@@ -9,6 +9,8 @@ mod shuffle;
 
 pub use assertions::assert_approx_eq_impl;
 
+#[cfg(feature = "cosmwasm_1_3")]
+pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
 pub use mock::StakingQuerier;
 pub use mock::{

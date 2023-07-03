@@ -260,6 +260,7 @@ mod tests {
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static CONTRACT_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
         ["staking".to_string()].into_iter().collect()
@@ -269,6 +270,12 @@ mod tests {
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(CONTRACT, &default_capabilities()).unwrap();
+    }
+
+    #[test]
+    fn check_wasm_allows_sign_ext() {
+        // See https://github.com/CosmWasm/cosmwasm/issues/1727
+        check_wasm(CONTRACT_RUST_170, &default_capabilities()).unwrap();
     }
 
     #[test]

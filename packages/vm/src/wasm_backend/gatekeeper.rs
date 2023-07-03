@@ -198,13 +198,17 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I64Rotl
             | Operator::I64Rotr
             | Operator::I32WrapI64
+            // Those are part of the MVP
+            // https://github.com/bytecodealliance/wasm-tools/blob/wasmparser-0.107.0/crates/wasmparser/src/lib.rs#L287-L288
+            | Operator::I64ExtendI32S
+            | Operator::I64ExtendI32U
+            // Sign-extension
+            // https://github.com/bytecodealliance/wasm-tools/blob/wasmparser-0.107.0/crates/wasmparser/src/lib.rs#L307-L311
             | Operator::I32Extend8S
             | Operator::I32Extend16S
             | Operator::I64Extend8S
             | Operator::I64Extend16S
-            | Operator::I64ExtendI32S
-            | Operator::I64Extend32S
-            | Operator::I64ExtendI32U => {
+            | Operator::I64Extend32S => {
                 state.push_operator(operator);
                 Ok(())
             }

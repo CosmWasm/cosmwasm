@@ -111,6 +111,13 @@ pub enum DistributionMsg {
         /// The `validator_address`
         validator: String,
     },
+    /// This is translated to a [[MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
+    /// `depositor` is automatically filled with the current contract's address.
+    #[cfg(feature = "cosmwasm_1_3")]
+    FundCommunityPool {
+        /// The amount to spend
+        amount: Vec<Coin>,
+    },
 }
 
 fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
@@ -461,6 +468,39 @@ mod tests {
                 r#"{"instantiate2":{"admin":null,"code_id":7897,"label":"my instance","msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"salt":"UkOVazhiwoo="}}"#,
             );
         }
+    }
+
+    #[test]
+    #[cfg(feature = "cosmwasm_1_3")]
+    fn msg_distribution_serializes_to_correct_json() {
+        // FundCommunityPool
+        let fund_coins = vec![coin(200, "feathers"), coin(200, "stones")];
+        let fund_msg = DistributionMsg::FundCommunityPool { amount: fund_coins };
+        let fund_json = to_binary(&fund_msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&fund_json),
+            r#"{"fund_community_pool":{"amount":[{"denom":"feathers","amount":"200"},{"denom":"stones","amount":"200"}]}}"#,
+        );
+
+        // SetWithdrawAddress
+        let set_msg = DistributionMsg::SetWithdrawAddress {
+            address: String::from("withdrawer"),
+        };
+        let set_json = to_binary(&set_msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&set_json),
+            r#"{"set_withdraw_address":{"address":"withdrawer"}}"#,
+        );
+
+        // WithdrawDelegatorRewards
+        let withdraw_msg = DistributionMsg::WithdrawDelegatorReward {
+            validator: String::from("fancyoperator"),
+        };
+        let withdraw_json = to_binary(&withdraw_msg).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&withdraw_json),
+            r#"{"withdraw_delegator_reward":{"validator":"fancyoperator"}}"#
+        );
     }
 
     #[test]

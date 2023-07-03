@@ -7,6 +7,7 @@ mod addresses;
 mod assertions;
 mod binary;
 mod coin;
+mod coins;
 mod conversion;
 mod deps;
 mod errors;
@@ -38,6 +39,7 @@ pub mod storage_keys;
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
 pub use crate::coin::{coin, coins, has_coins, Coin};
+pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
@@ -55,8 +57,8 @@ pub use crate::ibc::{
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
-    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Isqrt, Uint128,
-    Uint256, Uint512, Uint64,
+    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
+    Int512, Int64, Isqrt, Uint128, Uint256, Uint512, Uint64,
 };
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
