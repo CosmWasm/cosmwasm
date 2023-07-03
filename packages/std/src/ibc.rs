@@ -26,16 +26,18 @@ pub enum IbcMsg {
     /// and a matching module on the remote chain.
     /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
     /// module to.
+    /// For each parameter see [reference declaration of packet](https://github.com/cosmos/ibc-go/blob/main/proto/ibc/applications/transfer/v2/packet.proto)
     Transfer {
         /// exisiting channel to send the tokens over
         channel_id: String,
         /// address on the remote chain to receive these tokens
         to_address: String,
         /// packet data only supports one coin
-        /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
         amount: Coin,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
+        /// optional, usually JSON
+        memo: Option<Binary>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
@@ -783,6 +785,7 @@ mod tests {
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
             timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
+            memo: None,
         };
         let encoded = to_string(&msg).unwrap();
         let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"}}}"#;
