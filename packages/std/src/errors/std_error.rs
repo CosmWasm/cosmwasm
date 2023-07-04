@@ -557,6 +557,15 @@ impl DivideByZeroError {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
+pub enum DivisionError {
+    #[error("Divide by zero")]
+    DivideByZero,
+
+    #[error("Overflow in division")]
+    Overflow,
+}
+
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyFractionError {
     #[error("{0}")]
     DivideByZero(#[from] DivideByZeroError),
@@ -589,6 +598,18 @@ pub enum CheckedFromRatioError {
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Round up operation failed because of overflow")]
 pub struct RoundUpOverflowError;
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub enum CoinsError {
+    #[error("Duplicate denom")]
+    DuplicateDenom,
+}
+
+impl From<CoinsError> for StdError {
+    fn from(value: CoinsError) -> Self {
+        Self::generic_err(format!("Creating Coins: {value}"))
+    }
+}
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CoinFromStrError {

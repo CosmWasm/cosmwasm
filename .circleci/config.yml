@@ -86,7 +86,7 @@ workflows:
                 # Add your branch here if benchmarking matters to your work
                 - fix-benchmarking
                 - w3
-      - coverage
+      # - coverage # disabled temporarily because Rust version is too low
   deploy:
     jobs:
       - build_and_upload_devcontracts:

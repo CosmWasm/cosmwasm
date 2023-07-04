@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-check"
-version = "1.2.7"
+version = "1.3.0-rc.0"
 authors = ["Mauro Lacy <mauro@lacy.com.es>"]
 edition = "2021"
 description = "A CLI tool for verifying CosmWasm smart contracts"
@@ -11,8 +11,8 @@ license = "Apache-2.0"
 anyhow = "1.0.57"
 clap = "4"
 colored = "2"
-cosmwasm-vm = { path = "../vm", version = "1.2.7" }
-cosmwasm-std = { path = "../std", version = "1.2.7" }
+cosmwasm-vm = { path = "../vm", version = "1.3.0-rc.0" }
+cosmwasm-std = { path = "../std", version = "1.3.0-rc.0" }
 
 [dev-dependencies]
 assert_cmd = "=2.0.10" # 2.0.11+ requires Rust 1.65.0 which we currently don't want to make the minimum if possible

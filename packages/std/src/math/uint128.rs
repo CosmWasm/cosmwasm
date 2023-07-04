@@ -37,7 +37,7 @@ use crate::{
 /// assert_eq!(c.u128(), 70);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint128(#[schemars(with = "String")] u128);
+pub struct Uint128(#[schemars(with = "String")] pub(crate) u128);
 
 forward_ref_partial_eq!(Uint128, Uint128);
 
