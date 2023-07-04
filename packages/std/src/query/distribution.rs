@@ -19,16 +19,4 @@ pub struct DelegatorWithdrawAddressResponse {
     pub withdraw_address: Addr,
 }
 
-impl DelegatorWithdrawAddressResponse {
-    /// Constructor for testing frameworks such as cw-multi-test.
-    /// This is required because query response types should be #[non_exhaustive].
-    /// As a contract developer you should not need this constructor since
-    /// query responses are constructed for you via deserialization.
-    ///
-    /// Warning: This is for cw-multi-test use only and can change at any time.
-    #[doc(hidden)]
-    #[allow(dead_code)]
-    pub fn from_parts(withdraw_address: Addr) -> Self {
-        Self { withdraw_address }
-    }
-}
+impl_response_constructor!(DelegatorWithdrawAddressResponse, withdraw_address: Addr);

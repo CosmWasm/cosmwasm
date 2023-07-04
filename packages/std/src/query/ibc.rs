@@ -37,12 +37,18 @@ pub struct PortIdResponse {
     pub port_id: String,
 }
 
+impl_response_constructor!(PortIdResponse, port_id: String);
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ListChannelsResponse {
     pub channels: Vec<IbcChannel>,
 }
 
+impl_response_constructor!(ListChannelsResponse, channels: Vec<IbcChannel>);
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,
 }
+
+impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);

@@ -86,6 +86,14 @@ pub struct CodeInfoResponse {
 }
 
 #[cfg(feature = "cosmwasm_1_2")]
+impl_response_constructor!(
+    CodeInfoResponse,
+    code_id: u64,
+    creator: String,
+    checksum: HexBinary
+);
+
+#[cfg(feature = "cosmwasm_1_2")]
 impl QueryResponseType for CodeInfoResponse {}
 
 #[cfg(test)]

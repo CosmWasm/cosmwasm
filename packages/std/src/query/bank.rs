@@ -45,6 +45,9 @@ pub struct SupplyResponse {
 }
 
 #[cfg(feature = "cosmwasm_1_1")]
+impl_response_constructor!(SupplyResponse, amount: Coin);
+
+#[cfg(feature = "cosmwasm_1_1")]
 impl QueryResponseType for SupplyResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
@@ -55,6 +58,8 @@ pub struct BalanceResponse {
     pub amount: Coin,
 }
 
+impl_response_constructor!(BalanceResponse, amount: Coin);
+
 impl QueryResponseType for BalanceResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
@@ -63,6 +68,8 @@ pub struct AllBalanceResponse {
     /// Returns all non-zero coins held by this account.
     pub amount: Vec<Coin>,
 }
+
+impl_response_constructor!(AllBalanceResponse, amount: Vec<Coin>);
 
 impl QueryResponseType for AllBalanceResponse {}
 
@@ -74,6 +81,9 @@ pub struct DenomMetadataResponse {
     /// The metadata for the queried denom.
     pub metadata: DenomMetadata,
 }
+
+#[cfg(feature = "cosmwasm_1_3")]
+impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
 
 #[cfg(feature = "cosmwasm_1_3")]
 impl QueryResponseType for DenomMetadataResponse {}
@@ -89,4 +99,27 @@ pub struct AllDenomMetadataResponse {
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
+impl_response_constructor!(
+    AllDenomMetadataResponse,
+    metadata: Vec<DenomMetadata>,
+    next_key: Option<Binary>
+);
+
+#[cfg(feature = "cosmwasm_1_3")]
 impl QueryResponseType for AllDenomMetadataResponse {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn private_constructor_works() {
+        let response = AllBalanceResponse::new(vec![Coin::new(1234, "uatom")]);
+        assert_eq!(
+            response,
+            AllBalanceResponse {
+                amount: vec![Coin::new(1234, "uatom")]
+            }
+        );
+    }
+}
