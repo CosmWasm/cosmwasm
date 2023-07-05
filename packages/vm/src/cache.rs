@@ -16,7 +16,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{compile, make_engine};
+use crate::wasm_backend::make_engine;
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -193,9 +193,8 @@ where
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let (_engine, module) = compile(wasm, &[])?;
-
         let mut cache = self.inner.lock().unwrap();
+        let module = Module::new(&cache.engine, wasm)?;
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
         cache.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
@@ -280,9 +279,9 @@ where
         }
 
         // Re-compile from original Wasm bytecode
-        let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
+        let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let (_engine, module) = compile(&code, &[])?;
+        let module = Module::new(&cache.engine, wasm)?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache

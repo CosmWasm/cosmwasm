@@ -495,7 +495,7 @@ mod tests {
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         mock_instance_with_options, MockInstanceOptions,
     };
-    use crate::wasm_backend::{compile, make_store_with_engine};
+    use crate::wasm_backend::make_store_with_engine;
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
         QueryRequest,
@@ -592,6 +592,8 @@ mod tests {
 
     #[test]
     fn extra_imports_get_added() {
+        let engine = make_engine(mock_instance_options().1, &[]);
+
         let wasm = wat::parse_str(
             r#"(module
             (import "foo" "bar" (func $bar))
@@ -604,7 +606,7 @@ mod tests {
 
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
-        let (engine, module) = compile(&wasm, &[]).unwrap();
+        let module = Module::new(&engine, wasm).unwrap();
         let mut store = make_store_with_engine(engine, memory_limit);
 
         let called = Arc::new(AtomicBool::new(false));

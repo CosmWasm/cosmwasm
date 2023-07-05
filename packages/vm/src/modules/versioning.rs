@@ -1,4 +1,6 @@
-use crate::wasm_backend::compile;
+use wasmer::Module;
+
+use crate::wasm_backend::make_engine;
 
 /// This header prefix contains the module type (wasmer-universal) and
 /// the magic value WASMER\0\0.
@@ -12,7 +14,9 @@ const METADATA_HEADER_LEN: usize = 16; // https://github.com/wasmerio/wasmer/blo
 fn current_wasmer_module_header() -> Vec<u8> {
     // echo "(module)" > my.wat && wat2wasm my.wat && hexdump -C my.wasm
     const WASM: &[u8] = b"\x00\x61\x73\x6d\x01\x00\x00\x00";
-    let (_, module) = compile(WASM, &[]).unwrap();
+    let engine = make_engine(None, &[]);
+    let module = Module::new(&engine, WASM).unwrap();
+
     let mut bytes = module.serialize().unwrap_or_default();
 
     bytes.truncate(ENGINE_TYPE_LEN + METADATA_HEADER_LEN);

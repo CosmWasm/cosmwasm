@@ -578,12 +578,12 @@ mod tests {
     };
     use hex_literal::hex;
     use std::ptr::NonNull;
-    use wasmer::{imports, Function, FunctionEnv, Instance as WasmerInstance, Store};
+    use wasmer::{imports, Function, FunctionEnv, Instance as WasmerInstance, Module, Store};
 
     use crate::backend::{BackendError, Storage};
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::{compile, make_store_with_engine};
+    use crate::wasm_backend::make_engine;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -620,8 +620,9 @@ mod tests {
         let gas_limit = TESTING_GAS_LIMIT;
         let env = Environment::new(api, gas_limit);
 
-        let (engine, module) = compile(CONTRACT, &[]).unwrap();
-        let mut store = make_store_with_engine(engine, TESTING_MEMORY_LIMIT);
+        let engine = make_engine(TESTING_MEMORY_LIMIT, &[]);
+        let module = Module::new(&engine, CONTRACT).unwrap();
+        let mut store = Store::new(engine);
 
         let fe = FunctionEnv::new(&mut store, env);
 
