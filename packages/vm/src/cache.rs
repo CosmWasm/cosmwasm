@@ -71,6 +71,16 @@ pub struct CacheInner {
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
+    /// A single engine to execute all contracts in this cache instance (usually
+    /// this means all contracts in the process).
+    ///
+    /// This engine is headless, i.e. does not contain a Singlepass compiler.
+    /// It only executes modules compiled with other engines.
+    ///
+    /// The engine has one memory limit set which is the same for all contracts
+    /// running with it. If different memory limits would be needed for different
+    /// contracts at some point, we'd need multiple engines. This because the tubables
+    /// that control the limit are attached to the engine.
     runtime_engine: Engine,
 }
 
