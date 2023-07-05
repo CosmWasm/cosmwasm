@@ -16,7 +16,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{make_compiling_engine, make_engine};
+use crate::wasm_backend::{make_compiling_engine, make_runtime_engine};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -74,7 +74,7 @@ pub struct CacheInner {
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
-    engine: Engine,
+    runtime_engine: Engine,
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
@@ -138,7 +138,7 @@ where
                 memory_cache: InMemoryCache::new(memory_cache_size),
                 fs_cache,
                 stats: Stats::default(),
-                engine: make_engine(Some(instance_memory_limit), &[]),
+                runtime_engine: make_runtime_engine(Some(instance_memory_limit)),
             }),
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
@@ -274,7 +274,7 @@ where
         // for a not-so-relevant use case.
 
         // Try to get module from file system cache
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.engine)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             return cache
                 .pinned_memory_cache
@@ -284,7 +284,8 @@ where
         // Re-compile from original Wasm bytecode
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let module = Module::new(&cache.engine, wasm)?;
+        // TODO: this code is not covered by tests. Otherwise it would fail.
+        let module = Module::new(&cache.runtime_engine, wasm)?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
@@ -335,19 +336,19 @@ where
         if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            let store = Store::new(cache.engine.clone());
+            let store = Store::new(cache.runtime_engine.clone());
             return Ok((element, store, cache.instance_memory_limit, true));
         }
 
         // Get module from memory cache
         if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            let store = Store::new(cache.engine.clone());
+            let store = Store::new(cache.runtime_engine.clone());
             return Ok((element, store, cache.instance_memory_limit, false));
         }
 
         // Get module from file system cache
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.engine)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
             cache
@@ -357,7 +358,7 @@ where
                 module,
                 size: module_size,
             };
-            let store = Store::new(cache.engine.clone());
+            let store = Store::new(cache.runtime_engine.clone());
             return Ok((cached, store, cache.instance_memory_limit, false));
         }
 
@@ -368,7 +369,8 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let module = Module::new(&cache.engine, wasm)?;
+        // TODO: this code is not covered by tests. Otherwise it would fail.
+        let module = Module::new(&cache.runtime_engine, wasm)?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
         cache
@@ -378,7 +380,7 @@ where
             module,
             size: module_size,
         };
-        let store = Store::new(cache.engine.clone());
+        let store = Store::new(cache.runtime_engine.clone());
         Ok((cached, store, cache.instance_memory_limit, false))
     }
 }

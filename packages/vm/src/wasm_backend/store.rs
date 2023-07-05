@@ -31,27 +31,10 @@ fn cost(_operator: &Operator) -> u64 {
     150_000
 }
 
-/// Creates an engine with the default compiler.
-pub fn make_engine(
-    memory_limit: Option<Size>,
-    middlewares: &[Arc<dyn ModuleMiddleware>],
-) -> Engine {
-    let gas_limit = 0;
-    let deterministic = Arc::new(Gatekeeper::default());
-    let metering = Arc::new(Metering::new(gas_limit, cost));
-
-    #[cfg(feature = "cranelift")]
-    let mut compiler = Cranelift::default();
-
-    #[cfg(not(feature = "cranelift"))]
-    let mut compiler = Singlepass::default();
-
-    for middleware in middlewares {
-        compiler.push_middleware(middleware.clone());
-    }
-    compiler.push_middleware(deterministic);
-    compiler.push_middleware(metering);
-    let mut engine = Engine::from(compiler);
+/// Creates an engine without a compiler.
+/// This is used to run modules compiled before.
+pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
+    let mut engine = Engine::headless();
     if let Some(limit) = memory_limit {
         let base = BaseTunables::for_target(&Target::default());
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));

@@ -8,7 +8,7 @@ use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
 use cosmwasm_vm::capabilities_from_csv;
-use cosmwasm_vm::internals::{check_wasm, compile, make_engine};
+use cosmwasm_vm::internals::{check_wasm, compile, make_compiling_engine};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3";
@@ -99,7 +99,7 @@ fn check_contract(
     check_wasm(&wasm, available_capabilities)?;
 
     // Compile module
-    let engine = make_engine(None, &[]);
+    let engine = make_compiling_engine(None, &[]);
     let _module = compile(&engine, &wasm)?;
 
     Ok(())

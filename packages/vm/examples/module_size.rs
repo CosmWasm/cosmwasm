@@ -4,7 +4,7 @@ use std::mem;
 
 use clap::{Arg, Command};
 
-use cosmwasm_vm::internals::{compile, make_engine};
+use cosmwasm_vm::internals::{compile, make_compiling_engine};
 use wasmer::{Engine, Module};
 
 pub fn main() {
@@ -18,8 +18,6 @@ pub fn main() {
                 .index(1),
         )
         .get_matches();
-
-    let engine = make_engine(None, &[]);
 
     // File
     let path: &String = matches.get_one("WASM").expect("Error parsing file name");
@@ -36,6 +34,7 @@ pub fn main() {
     println!("wasm size: {wasm_size} bytes");
 
     // Compile module
+    let engine = make_compiling_engine(None, &[]);
     let module = compile(&engine, &wasm).unwrap();
     mem::drop(wasm);
 

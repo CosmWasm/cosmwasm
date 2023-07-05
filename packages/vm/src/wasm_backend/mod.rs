@@ -5,4 +5,4 @@ mod store;
 
 pub use compile::compile;
 pub use limiting_tunables::LimitingTunables;
-pub use store::{make_compiling_engine, make_engine};
+pub use store::{make_compiling_engine, make_runtime_engine};
