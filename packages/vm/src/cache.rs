@@ -284,8 +284,9 @@ where
         // Re-compile from original Wasm bytecode
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        // TODO: this code is not covered by tests. Otherwise it would fail.
-        let module = Module::new(&cache.runtime_engine, wasm)?;
+        // Module will run with a different engine, so we can set memory limit to None
+        let engine = make_compiling_engine(None, &[]);
+        let module = Module::new(&engine, wasm)?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
@@ -369,8 +370,9 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        // TODO: this code is not covered by tests. Otherwise it would fail.
-        let module = Module::new(&cache.runtime_engine, wasm)?;
+        // Module will run with a different engine, so we can set memory limit to None
+        let engine = make_compiling_engine(None, &[]);
+        let module = Module::new(&engine, wasm)?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
         cache
