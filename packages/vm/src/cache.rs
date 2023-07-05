@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use wasmer::{Engine, NativeEngineExt};
+use wasmer::{Engine, Module, Store};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -16,7 +16,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{compile, make_store_with_engine};
+use crate::wasm_backend::{compile, make_engine};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -74,6 +74,7 @@ pub struct CacheInner {
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
+    engine: Engine,
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
@@ -137,6 +138,7 @@ where
                 memory_cache: InMemoryCache::new(memory_cache_size),
                 fs_cache,
                 stats: Stats::default(),
+                engine: make_engine(Some(instance_memory_limit), &[]),
             }),
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
@@ -270,23 +272,22 @@ where
         // for a not-so-relevant use case.
 
         // Try to get module from file system cache
-        let engine = Engine::headless();
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
             return cache
                 .pinned_memory_cache
-                .store(checksum, (engine, module), module_size);
+                .store(checksum, module, module_size);
         }
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let (engine, module) = compile(&code, &[])?;
+        let (_engine, module) = compile(&code, &[])?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
             .pinned_memory_cache
-            .store(checksum, (engine, module), module_size)
+            .store(checksum, module, module_size)
     }
 
     /// Unpins a Module, i.e. removes it from the pinned memory cache.
@@ -310,8 +311,7 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let (cached, memory_limit, _from_pinned) = self.get_module(checksum)?;
-        let store = make_store_with_engine(cached.engine, Some(memory_limit));
+        let (cached, store, _memory_limit, _from_pinned) = self.get_module(checksum)?;
         let instance = Instance::from_module(
             store,
             &cached.module,
@@ -327,35 +327,36 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Size, bool)> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Store, Size, bool)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            return Ok((element, cache.instance_memory_limit, true));
+            let store = Store::new(cache.engine.clone());
+            return Ok((element, store, cache.instance_memory_limit, true));
         }
 
         // Get module from memory cache
         if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            return Ok((element, cache.instance_memory_limit, false));
+            let store = Store::new(cache.engine.clone());
+            return Ok((element, store, cache.instance_memory_limit, false));
         }
 
         // Get module from file system cache
-        let engine = Engine::headless();
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &engine)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
             cache
                 .memory_cache
-                .store(checksum, (engine.clone(), module.clone()), module_size)?;
+                .store(checksum, module.clone(), module_size)?;
             let cached = CachedModule {
-                engine,
                 module,
                 size: module_size,
             };
-            return Ok((cached, cache.instance_memory_limit, false));
+            let store = Store::new(cache.engine.clone());
+            return Ok((cached, store, cache.instance_memory_limit, false));
         }
 
         // Re-compile module from wasm
@@ -365,18 +366,18 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let (engine, module) = compile(&wasm, &[])?;
+        let module = Module::new(&cache.engine, wasm)?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 
         cache
             .memory_cache
-            .store(checksum, (engine.clone(), module.clone()), module_size)?;
+            .store(checksum, module.clone(), module_size)?;
         let cached = CachedModule {
-            engine,
             module,
             size: module_size,
         };
-        Ok((cached, cache.instance_memory_limit, false))
+        let store = Store::new(cache.engine.clone());
+        Ok((cached, store, cache.instance_memory_limit, false))
     }
 }
 

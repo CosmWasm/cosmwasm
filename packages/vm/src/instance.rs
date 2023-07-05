@@ -22,7 +22,7 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile, make_store_with_engine};
+use crate::wasm_backend::make_engine;
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -71,8 +71,9 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let (engine, module) = compile(code, &[])?;
-        let store = make_store_with_engine(engine, memory_limit);
+        let engine = make_engine(memory_limit, &[]);
+        let module = Module::new(&engine, code)?;
+        let store = Store::new(engine);
         Instance::from_module(
             store,
             &module,
@@ -494,6 +495,7 @@ mod tests {
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         mock_instance_with_options, MockInstanceOptions,
     };
+    use crate::wasm_backend::{compile, make_store_with_engine};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
         QueryRequest,

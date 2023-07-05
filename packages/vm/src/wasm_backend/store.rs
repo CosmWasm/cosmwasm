@@ -4,9 +4,11 @@ use wasmer::Cranelift;
 use wasmer::NativeEngineExt;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
+#[cfg(test)]
+use wasmer::Store;
 use wasmer::{
-    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, ModuleMiddleware, Pages, Store,
-    Target, WASM_PAGE_SIZE,
+    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, ModuleMiddleware, Pages, Target,
+    WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::Metering;
 
@@ -32,7 +34,10 @@ fn cost(_operator: &Operator) -> u64 {
 }
 
 /// Creates an engine with the default compiler.
-pub fn make_engine(middlewares: &[Arc<dyn ModuleMiddleware>]) -> Engine {
+pub fn make_engine(
+    memory_limit: Option<Size>,
+    middlewares: &[Arc<dyn ModuleMiddleware>],
+) -> Engine {
     let gas_limit = 0;
     let deterministic = Arc::new(Gatekeeper::default());
     let metering = Arc::new(Metering::new(gas_limit, cost));
@@ -48,11 +53,20 @@ pub fn make_engine(middlewares: &[Arc<dyn ModuleMiddleware>]) -> Engine {
     }
     compiler.push_middleware(deterministic);
     compiler.push_middleware(metering);
-    compiler.into()
+    let mut engine = Engine::from(compiler);
+    if let Some(limit) = memory_limit {
+        let base = BaseTunables::for_target(&Target::default());
+        let tunables = LimitingTunables::new(base, limit_to_pages(limit));
+        engine.set_tunables(tunables);
+    }
+    engine
 }
 
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
+///
+/// Used for testing only.
+#[cfg(test)]
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
     let engine = Engine::headless();
     make_store_with_engine(engine, memory_limit)
@@ -60,6 +74,7 @@ pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
 
 /// Creates a store from an engine and an optional memory limit.
 /// If no limit is set, the no custom tunables will be used.
+#[cfg(test)]
 pub fn make_store_with_engine(mut engine: Engine, memory_limit: Option<Size>) -> Store {
     if let Some(limit) = memory_limit {
         let base = BaseTunables::for_target(&Target::default());
@@ -115,7 +130,7 @@ mod tests {
         // Compile
         let serialized = {
             let wasm = wat::parse_str(EXPORTED_MEMORY_WAT).unwrap();
-            let store = make_engine(&[]);
+            let store = make_engine(None, &[]);
             let module = Module::new(&store, wasm).unwrap();
             module.serialize().unwrap()
         };

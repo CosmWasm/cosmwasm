@@ -65,6 +65,6 @@ fn module_compile(wasm: &[u8]) -> Module {
 #[inline(never)]
 fn module_deserialize(serialized: &[u8]) -> Module {
     // Deserialize using make_engine()
-    let engine = make_engine(&[]);
+    let engine = make_engine(None, &[]);
     unsafe { Module::deserialize(&engine, serialized) }.unwrap()
 }

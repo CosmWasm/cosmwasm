@@ -10,7 +10,7 @@ pub fn compile(
     code: &[u8],
     middlewares: &[Arc<dyn ModuleMiddleware>],
 ) -> VmResult<(Engine, Module)> {
-    let engine = make_engine(middlewares);
+    let engine = make_engine(None, middlewares);
     let module = Module::new(&engine, code)?;
     Ok((engine, module))
 }
