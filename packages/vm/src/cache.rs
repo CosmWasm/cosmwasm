@@ -67,9 +67,6 @@ pub struct CacheOptions {
 pub struct CacheInner {
     /// The directory in which the Wasm blobs are stored in the file system.
     wasm_path: PathBuf,
-    /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
-    /// e.g. full MiBs.
-    instance_memory_limit: Size,
     pinned_memory_cache: PinnedMemoryCache,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
@@ -133,7 +130,6 @@ where
             available_capabilities,
             inner: Mutex::new(CacheInner {
                 wasm_path,
-                instance_memory_limit,
                 pinned_memory_cache: PinnedMemoryCache::new(),
                 memory_cache: InMemoryCache::new(memory_cache_size),
                 fs_cache,
@@ -315,7 +311,7 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let (cached, store, _memory_limit, _from_pinned) = self.get_module(checksum)?;
+        let (cached, store) = self.get_module(checksum)?;
         let instance = Instance::from_module(
             store,
             &cached.module,
@@ -331,21 +327,21 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Store, Size, bool)> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Store)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
             let store = Store::new(cache.runtime_engine.clone());
-            return Ok((element, store, cache.instance_memory_limit, true));
+            return Ok((element, store));
         }
 
         // Get module from memory cache
         if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
             let store = Store::new(cache.runtime_engine.clone());
-            return Ok((element, store, cache.instance_memory_limit, false));
+            return Ok((element, store));
         }
 
         // Get module from file system cache
@@ -360,7 +356,7 @@ where
                 size: module_size,
             };
             let store = Store::new(cache.runtime_engine.clone());
-            return Ok((cached, store, cache.instance_memory_limit, false));
+            return Ok((cached, store));
         }
 
         // Re-compile module from wasm
@@ -383,7 +379,7 @@ where
             size: module_size,
         };
         let store = Store::new(cache.runtime_engine.clone());
-        Ok((cached, store, cache.instance_memory_limit, false))
+        Ok((cached, store))
     }
 }
 
