@@ -177,11 +177,11 @@ pub enum WasmMsg {
     /// `sender` is automatically filled with the current contract's address.
     Migrate {
         contract_addr: String,
-        /// new_code_hash is the hex encoded hash of the new code. This is used by Secret Network to harden against replaying the contract
+        /// code_hash is the hex encoded hash of the **new** code. This is used by Secret Network to harden against replaying the contract
         /// It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked
-        new_code_hash: String,
-        /// the code_id of the new logic to place in the given contract
-        new_code_id: u64,
+        code_hash: String,
+        /// the code_id of the **new** logic to place in the given contract
+        code_id: u64,
         /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
         #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
