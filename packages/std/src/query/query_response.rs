@@ -13,4 +13,4 @@ use serde::de::DeserializeOwned;
 /// - multi-test/cw-sdk: create a default instance and mutate the fields
 ///
 /// This trait is crate-internal and can change any time.
-pub(crate) trait QueryResponseType: Default + DeserializeOwned {}
+pub(crate) trait QueryResponseType: DeserializeOwned {}
