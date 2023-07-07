@@ -1,8 +1,6 @@
 #![cfg(feature = "stargate")]
 
 use cosmwasm_schema::cw_serde;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 use crate::ibc::IbcChannel;
 

@@ -1,4 +1,4 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::cw_serde_prost;
 
 /// An empty struct that serves as a placeholder in different places,
 /// such as contracts that don't set a custom message.
@@ -6,8 +6,8 @@ use cosmwasm_schema::cw_serde;
 /// It is designed to be expressable in correct JSON and JSON Schema but
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
-#[cw_serde]
-#[derive(Eq, Default)]
+#[cw_serde_prost]
+#[derive(Eq)]
 pub struct Empty {}
 
 #[cfg(test)]

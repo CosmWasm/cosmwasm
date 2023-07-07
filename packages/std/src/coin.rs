@@ -1,12 +1,14 @@
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::cw_serde_prost;
 use std::{fmt, str::FromStr};
 
 use crate::{errors::CoinFromStrError, math::Uint128};
 
-#[cw_serde]
-#[derive(Eq, Default)]
+#[cw_serde_prost]
+#[derive(Eq)]
 pub struct Coin {
+    #[prost(string, tag = "1")]
     pub denom: String,
+    #[prost(message, required, tag = "2")]
     pub amount: Uint128,
 }
 
