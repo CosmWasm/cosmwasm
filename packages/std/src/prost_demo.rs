@@ -213,3 +213,145 @@ mod u128_tests {
         assert!(proto_len < json_len);
     }
 }
+
+#[cfg(test)]
+mod i128_tests {
+    use cosmwasm_schema::cw_prost;
+    use prost::Message;
+
+    // cargo expand --tests --lib prost_demo::u128_tests
+
+    // No u128 support in protobuf: https://github.com/protocolbuffers/protobuf/issues/10963
+    // we do it manually
+
+    fn i128_encoded(x: i128) -> (u64, u64) {
+        let val = if x < 0 {
+            let x = (-x) as u128;
+            x + (1 << 127)
+        } else {
+            x as u128
+        };
+        (val as u64, (val >> 64) as u64)
+    }
+
+    fn decode_to_i128(x: u64, y: u64) -> i128 {
+        let val = (x as u128) << 64 | y as u128;
+        if val > 1 << 127 {
+            let x = val - (1 << 127);
+            -(x as i128)
+        } else {
+            val as i128
+        }
+    }
+
+    // fn i128_encoded(x: i128) -> (u64, u64) {
+    //     let bytes = x.to_be_bytes();
+    //     let hi = u64::from_be_bytes(bytes[0..8].try_into().unwrap());
+    //     let lo = u64::from_be_bytes(bytes[8..16].try_into().unwrap());
+    //     (hi, lo)
+    // }
+
+    // fn decode_to_i128(x: u64, y: u64) -> i128 {
+    //     let hi = x.to_be_bytes();
+    //     let lo = y.to_be_bytes();
+    //     let mut bytes = Vec::with_capacity(16);
+    //     bytes.extend_from_slice(&hi);
+    //     bytes.extend_from_slice(&lo);
+    //     i128::from_be_bytes(bytes.try_into().unwrap())
+    // }
+
+    #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, Debug, Default, Copy)]
+    struct Int128(i128);
+
+    impl ::prost::Message for Int128 {
+        fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
+            Int128Impl::from(*self).encode_raw(buf)
+        }
+
+        fn clear(&mut self) {
+            self.0 = 0i128;
+        }
+
+        #[inline]
+        fn encoded_len(&self) -> usize {
+            Int128Impl::from(*self).encoded_len()
+        }
+
+        fn merge_field<B: ::prost::bytes::Buf>(
+            &mut self,
+            tag: u32,
+            wire_type: ::prost::encoding::WireType,
+            buf: &mut B,
+            ctx: ::prost::encoding::DecodeContext,
+        ) -> ::core::result::Result<(), ::prost::DecodeError> {
+            let mut encoder = Int128Impl::from(*self);
+            encoder.merge_field(tag, wire_type, buf, ctx)?;
+            let current = Int128::from(encoder);
+            *self = current;
+            Ok(())
+        }
+    }
+
+    #[cw_prost]
+    struct Int128Impl {
+        #[prost(uint64, tag = "1")]
+        pub low: u64,
+        #[prost(uint64, tag = "2")]
+        pub high: u64,
+    }
+
+    impl From<Int128> for Int128Impl {
+        fn from(u: Int128) -> Self {
+            let (low, high) = i128_encoded(u.0);
+            Int128Impl { low, high }
+        }
+    }
+
+    impl From<Int128Impl> for Int128 {
+        fn from(u: Int128Impl) -> Self {
+            Int128(decode_to_i128(u.high, u.low))
+        }
+    }
+
+    #[test]
+    fn proper_conversion() {
+        let small = Int128(12345678);
+        let proto = Int128Impl::from(small);
+        let back = Int128::from(proto);
+        assert_eq!(small, back);
+
+        let large = Int128(i128::MAX - 7);
+        let proto = Int128Impl::from(large);
+        let back = Int128::from(proto);
+        assert_eq!(large, back);
+
+        let neg = Int128(-48732984723964723648327);
+        let proto = Int128Impl::from(neg);
+        let back = Int128::from(proto);
+        assert_eq!(neg, back);
+    }
+
+    #[test]
+    fn encode_decode_u128() {
+        let mut number = Int128(123456789012345678901234567890);
+        let encoded = number.encode_to_vec();
+        let decoded = Int128::decode(&*encoded).unwrap();
+        assert_eq!(number, decoded);
+
+        number.clear();
+        let encoded = number.encode_to_vec();
+        let decoded = Int128::decode(&*encoded).unwrap();
+        assert_eq!(Int128(0), decoded);
+    }
+
+    #[test]
+    fn encoding_size() {
+        let number = Int128(54_300_000);
+        let proto_len = number.encoded_len();
+        let json = crate::to_vec(&number).unwrap();
+        let json_len = json.len();
+
+        println!("proto: {}, json: {}", proto_len, json_len);
+        assert!(proto_len < json_len);
+    }
+}

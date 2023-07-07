@@ -5,6 +5,7 @@ use std::ops::{
 };
 use std::str::FromStr;
 
+use cosmwasm_schema::cw_prost;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
@@ -40,6 +41,59 @@ use crate::{
 pub struct Uint128(#[schemars(with = "String")] pub(crate) u128);
 
 forward_ref_partial_eq!(Uint128, Uint128);
+
+#[cw_prost]
+#[derive(Copy)]
+struct Uint128Proto {
+    #[prost(uint64, tag = "1")]
+    pub low: u64,
+    #[prost(uint64, tag = "2")]
+    pub high: u64,
+}
+
+impl From<Uint128> for Uint128Proto {
+    fn from(u: Uint128) -> Self {
+        Uint128Proto {
+            low: u.0 as u64,
+            high: (u.0 >> 64) as u64,
+        }
+    }
+}
+
+impl From<Uint128Proto> for Uint128 {
+    fn from(u: Uint128Proto) -> Self {
+        Uint128((u.high as u128) << 64 | u.low as u128)
+    }
+}
+
+impl ::prost::Message for Uint128 {
+    fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
+        Uint128Proto::from(*self).encode_raw(buf)
+    }
+
+    fn clear(&mut self) {
+        self.0 = 0u128;
+    }
+
+    #[inline]
+    fn encoded_len(&self) -> usize {
+        Uint128Proto::from(*self).encoded_len()
+    }
+
+    fn merge_field<B: ::prost::bytes::Buf>(
+        &mut self,
+        tag: u32,
+        wire_type: ::prost::encoding::WireType,
+        buf: &mut B,
+        ctx: ::prost::encoding::DecodeContext,
+    ) -> ::core::result::Result<(), ::prost::DecodeError> {
+        let mut encoder = Uint128Proto::from(*self);
+        encoder.merge_field(tag, wire_type, buf, ctx)?;
+        let current = Uint128::from(encoder);
+        *self = current;
+        Ok(())
+    }
+}
 
 impl Uint128 {
     pub const MAX: Self = Self(u128::MAX);

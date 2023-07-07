@@ -1,3 +1,4 @@
+use cosmwasm_schema::cw_prost;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
@@ -28,6 +29,71 @@ use crate::{forward_ref_partial_eq, Int64, Uint128, Uint64};
 pub struct Int128(#[schemars(with = "String")] i128);
 
 forward_ref_partial_eq!(Int128, Int128);
+
+#[cw_prost]
+struct Int128Proto {
+    #[prost(uint64, tag = "1")]
+    pub low: u64,
+    #[prost(uint64, tag = "2")]
+    pub high: u64,
+}
+
+impl From<Int128> for Int128Proto {
+    fn from(u: Int128) -> Self {
+        let x = u.0;
+        let val = if x < 0 {
+            let x = (-x) as u128;
+            x + (1 << 127)
+        } else {
+            x as u128
+        };
+        let (low, high) = (val as u64, (val >> 64) as u64);
+        Int128Proto { low, high }
+    }
+}
+
+impl From<Int128Proto> for Int128 {
+    fn from(u: Int128Proto) -> Self {
+        let (x, y) = (u.high, u.low);
+        let val = (x as u128) << 64 | y as u128;
+        let val = if val > 1 << 127 {
+            let x = val - (1 << 127);
+            -(x as i128)
+        } else {
+            val as i128
+        };
+        Int128(val)
+    }
+}
+
+impl ::prost::Message for Int128 {
+    fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
+        Int128Proto::from(*self).encode_raw(buf)
+    }
+
+    fn clear(&mut self) {
+        self.0 = 0i128;
+    }
+
+    #[inline]
+    fn encoded_len(&self) -> usize {
+        Int128Proto::from(*self).encoded_len()
+    }
+
+    fn merge_field<B: ::prost::bytes::Buf>(
+        &mut self,
+        tag: u32,
+        wire_type: ::prost::encoding::WireType,
+        buf: &mut B,
+        ctx: ::prost::encoding::DecodeContext,
+    ) -> ::core::result::Result<(), ::prost::DecodeError> {
+        let mut encoder = Int128Proto::from(*self);
+        encoder.merge_field(tag, wire_type, buf, ctx)?;
+        let current = Int128::from(encoder);
+        *self = current;
+        Ok(())
+    }
+}
 
 impl Int128 {
     pub const MAX: Int128 = Int128(i128::MAX);
