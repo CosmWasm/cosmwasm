@@ -3,6 +3,7 @@
 
 // Exposed on all platforms
 
+pub mod prost;
 mod prost_demo;
 
 mod addresses;
