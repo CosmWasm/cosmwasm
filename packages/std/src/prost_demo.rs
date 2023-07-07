@@ -56,10 +56,10 @@ mod basic_tests {
 mod newtype_tests {
     // cargo expand --tests --lib prost_demo::newtype_tests
 
-    use cosmwasm_schema::cw_prost;
+    use cosmwasm_schema::{cw_prost_serde, cw_prost_serde_newtype};
     use prost::Message;
 
-    #[cw_prost]
+    #[cw_prost_serde]
     pub struct Name {
         // No way to flatten this
         #[prost(message, required, tag = "1")]
@@ -68,84 +68,26 @@ mod newtype_tests {
         pub age: u64,
     }
 
-    // This wraps a struct, top level
-    #[derive(Clone, PartialEq, Debug, Default)]
+    // This wraps a struct, top level. As the wrapped object is a message / struct this is truly transparent
+    #[cw_prost_serde_newtype]
     pub struct TransparentWrapper(pub Name);
 
-    // This simple prost struct is the same output as the manual Message implementation
-    // for Addr as a newtype
-    #[cw_prost]
-    pub struct Addr {
-        #[prost(string, tag = "1")]
-        str: String,
-    }
+    // This wraps a primitive and is embedded in a single field in a struct
+    // Output is equivalent to:
+    // #[cw_prost]
+    // pub struct Addr {
+    //     #[prost(string, tag = "1")]
+    //     str: String,
+    // }
+
+    #[cw_prost_serde_newtype]
+    pub struct Addr(String);
 
     impl Addr {
         pub fn new(addr: &str) -> Self {
-            Addr {
-                str: addr.to_string(),
-            }
+            Addr(addr.to_string())
         }
     }
-
-    // TODO: this needs to be another proc macro, like cw_wrap_proto (along with cw_wrap_proto_serde)
-    impl ::prost::Message for TransparentWrapper {
-        fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
-            self.0.encode_raw(buf)
-        }
-
-        fn clear(&mut self) {
-            self.0.clear()
-        }
-
-        #[inline]
-        fn encoded_len(&self) -> usize {
-            self.0.encoded_len()
-        }
-
-        fn merge_field<B: ::prost::bytes::Buf>(
-            &mut self,
-            tag: u32,
-            wire_type: ::prost::encoding::WireType,
-            buf: &mut B,
-            ctx: ::prost::encoding::DecodeContext,
-        ) -> ::core::result::Result<(), ::prost::DecodeError> {
-            self.0.merge_field(tag, wire_type, buf, ctx)
-        }
-    }
-
-    /*
-    // This wraps a primitive and is embedded in a single field in a struct
-    #[derive(Clone, PartialEq, Debug, Default)]
-    pub struct Addr(String);
-
-    // TODO: this needs to be another proc macro, like cw_wrap_proto (along with cw_wrap_proto_serde)
-    impl ::prost::Message for Addr {
-        fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
-            self.0.encode_raw(buf)
-        }
-
-        fn clear(&mut self) {
-            self.0.clear()
-        }
-
-        #[inline]
-        fn encoded_len(&self) -> usize {
-            self.0.encoded_len()
-        }
-
-        fn merge_field<B: ::prost::bytes::Buf>(
-            &mut self,
-            tag: u32,
-            wire_type: ::prost::encoding::WireType,
-            buf: &mut B,
-            ctx: ::prost::encoding::DecodeContext,
-        ) -> ::core::result::Result<(), ::prost::DecodeError> {
-            self.0.merge_field(tag, wire_type, buf, ctx)
-        }
-    }
-
-    */
 
     // check out https://protobuf-decoder.netlify.app with
     // 0a090a0757696c6c69616d10a50a

@@ -1,3 +1,4 @@
+use quote::quote;
 use syn::{parse_quote, DeriveInput};
 
 /// This is only needed for types that do not implement cw_serde.
@@ -61,6 +62,66 @@ pub fn cw_prost_serde_impl(input: DeriveInput) -> DeriveInput {
     }
 }
 
+/// You cannot derive both cw_serde and cw_prost on the same type.
+/// Use this instead if you want both
+pub fn cw_prost_serde_newtype_impl(input: DeriveInput) -> proc_macro2::TokenStream {
+    match &input.data {
+        syn::Data::Struct(_) => {}
+        syn::Data::Enum(_) => panic!("enums are not supported"),
+        syn::Data::Union(_) => panic!("unions are not supported"),
+    };
+
+    let ident = input.ident.clone();
+
+    let body: proc_macro2::TokenStream = parse_quote! {
+        #[derive(
+            ::cosmwasm_schema::serde::Serialize,
+            ::cosmwasm_schema::serde::Deserialize,
+            ::cosmwasm_schema::schemars::JsonSchema,
+            ::std::fmt::Debug,
+            ::std::default::Default,
+            ::std::clone::Clone,
+            ::std::cmp::PartialEq
+        )]
+        #[allow(clippy::derive_partial_eq_without_eq)]
+        #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+        #[schemars(crate = "::cosmwasm_schema::schemars")]
+        #input
+    };
+
+    let imp: proc_macro2::TokenStream = parse_quote! {
+        impl ::prost::Message for #ident {
+            fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
+                self.0.encode_raw(buf)
+            }
+
+            fn clear(&mut self) {
+                self.0.clear()
+            }
+
+            #[inline]
+            fn encoded_len(&self) -> usize {
+                self.0.encoded_len()
+            }
+
+            fn merge_field<B: ::prost::bytes::Buf>(
+                &mut self,
+                tag: u32,
+                wire_type: ::prost::encoding::WireType,
+                buf: &mut B,
+                ctx: ::prost::encoding::DecodeContext,
+            ) -> ::core::result::Result<(), ::prost::DecodeError> {
+                self.0.merge_field(tag, wire_type, buf, ctx)
+            }
+        }
+    };
+
+    quote! {
+        #body
+        #imp
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,6 +153,65 @@ mod tests {
         };
 
         assert_eq!(expanded, expected);
+    }
+
+    #[test]
+    fn newtype() {
+        let expanded = cw_prost_serde_newtype_impl(parse_quote! {
+            pub struct Addr(String);
+        });
+
+        let body: proc_macro2::TokenStream = parse_quote! {
+            #[derive(
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::cosmwasm_schema::schemars::JsonSchema,
+                ::std::fmt::Debug,
+                ::std::default::Default,
+                ::std::clone::Clone,
+                ::std::cmp::PartialEq
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            pub struct Addr(String);
+        };
+
+        let imp: proc_macro2::TokenStream = parse_quote! {
+            impl ::prost::Message for Addr {
+                fn encode_raw<B: ::prost::bytes::BufMut>(&self, buf: &mut B) {
+                    self.0.encode_raw(buf)
+                }
+
+                fn clear(&mut self) {
+                    self.0.clear()
+                }
+
+                #[inline]
+                fn encoded_len(&self) -> usize {
+                    self.0.encoded_len()
+                }
+
+                fn merge_field<B: ::prost::bytes::Buf>(
+                    &mut self,
+                    tag: u32,
+                    wire_type: ::prost::encoding::WireType,
+                    buf: &mut B,
+                    ctx: ::prost::encoding::DecodeContext,
+                ) -> ::core::result::Result<(), ::prost::DecodeError> {
+                    self.0.merge_field(tag, wire_type, buf, ctx)
+                }
+            }
+        };
+
+        let expected = quote! {
+            #body
+            #imp
+        };
+
+        println!("{}", expanded);
+        println!("{}", expected);
+        assert_eq!(expanded.to_string(), expected.to_string());
     }
 
     #[test]
