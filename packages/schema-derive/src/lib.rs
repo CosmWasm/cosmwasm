@@ -56,3 +56,15 @@ pub fn cw_prost(
 
     proc_macro::TokenStream::from(expanded)
 }
+
+#[proc_macro_attribute]
+pub fn cw_prost_serde(
+    _attr: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let expanded = cw_prost::cw_prost_serde_impl(input).into_token_stream();
+
+    proc_macro::TokenStream::from(expanded)
+}

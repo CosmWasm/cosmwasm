@@ -11,31 +11,6 @@ pub use query_response::{combine_subqueries, IntegrityError, QueryResponses};
 pub use remove::remove_schemas;
 
 // Re-exports
-/// An attribute macro that annotates types with things they need to be properly (de)serialized
-/// for use in CosmWasm contract messages and/or responses, and also for schema generation.
-///
-/// This derives things like `serde::Serialize` or `schemars::JsonSchema`, makes sure
-/// variants are `snake_case` in the resulting JSON, and so forth.
-///
-/// # Example
-/// ```
-/// use cosmwasm_schema::{cw_serde, QueryResponses};
-///
-/// #[cw_serde]
-/// pub struct InstantiateMsg {
-///     owner: String,
-/// }
-///
-/// #[cw_serde]
-/// #[derive(QueryResponses)]
-/// pub enum QueryMsg {
-///     #[returns(Vec<String>)]
-///     Denoms {},
-///     #[returns(String)]
-///     AccountName { account: String },
-/// }
-/// ```
-pub use cosmwasm_schema_derive::cw_serde;
 /// Generates an [`Api`](crate::Api) for the contract. The body describes the message
 /// types exported in the schema and allows setting contract name and version overrides.
 ///
@@ -92,6 +67,31 @@ pub use cosmwasm_schema_derive::generate_api;
 /// };
 /// ```
 pub use cosmwasm_schema_derive::write_api;
+/// An attribute macro that annotates types with things they need to be properly (de)serialized
+/// for use in CosmWasm contract messages and/or responses, and also for schema generation.
+///
+/// This derives things like `serde::Serialize` or `schemars::JsonSchema`, makes sure
+/// variants are `snake_case` in the resulting JSON, and so forth.
+///
+/// # Example
+/// ```
+/// use cosmwasm_schema::{cw_serde, QueryResponses};
+///
+/// #[cw_serde]
+/// pub struct InstantiateMsg {
+///     owner: String,
+/// }
+///
+/// #[cw_serde]
+/// #[derive(QueryResponses)]
+/// pub enum QueryMsg {
+///     #[returns(Vec<String>)]
+///     Denoms {},
+///     #[returns(String)]
+///     AccountName { account: String },
+/// }
+/// ```
+pub use cosmwasm_schema_derive::{cw_prost, cw_prost_serde, cw_serde};
 
 // For use in macro expansions
 pub use schemars;

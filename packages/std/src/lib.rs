@@ -3,6 +3,8 @@
 
 // Exposed on all platforms
 
+mod prost_demo;
+
 mod addresses;
 mod assertions;
 mod binary;

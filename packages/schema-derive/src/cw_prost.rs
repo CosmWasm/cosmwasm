@@ -1,27 +1,60 @@
 use syn::{parse_quote, DeriveInput};
 
 /// This is only needed for types that do not implement cw_serde.
-/// If they already have cw_serde, just add #[derive(prost::Message)]
 pub fn cw_prost_impl(input: DeriveInput) -> DeriveInput {
     match input.data {
         syn::Data::Struct(_) => parse_quote! {
             #[derive(
                 ::prost::Message,
                 ::std::clone::Clone,
-                ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
             )]
-            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_proto]` to not implement Eq without clippy complaining
+            #[allow(clippy::derive_partial_eq_without_eq)]
             #input
         },
         syn::Data::Enum(_) => parse_quote! {
             #[derive(
                 ::prost::Oneof,
                 ::std::clone::Clone,
-                ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
             )]
-            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
+            #[allow(clippy::derive_partial_eq_without_eq)]
+            #input
+        },
+        syn::Data::Union(_) => panic!("unions are not supported"),
+    }
+}
+
+/// You cannot derive both cw_serde and cw_prost on the same type.
+/// Use this instead if you want both
+pub fn cw_prost_serde_impl(input: DeriveInput) -> DeriveInput {
+    match input.data {
+        syn::Data::Struct(_) => parse_quote! {
+            #[derive(
+                ::prost::Message,
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::cosmwasm_schema::schemars::JsonSchema,
+                ::std::clone::Clone,
+                ::std::cmp::PartialEq
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #input
+        },
+        syn::Data::Enum(_) => parse_quote! {
+            #[derive(
+                ::prost::Oneof,
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::cosmwasm_schema::schemars::JsonSchema,
+                ::std::clone::Clone,
+                ::std::cmp::PartialEq
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[schemars(crate = "::cosmwasm_schema::schemars")]
             #input
         },
         syn::Data::Union(_) => panic!("unions are not supported"),
@@ -47,7 +80,6 @@ mod tests {
             #[derive(
                 ::prost::Message,
                 ::std::clone::Clone,
-                ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
@@ -72,7 +104,6 @@ mod tests {
             #[derive(
                 ::prost::Message,
                 ::std::clone::Clone,
-                ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
