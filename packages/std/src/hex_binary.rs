@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::Deref;
 
+use cosmwasm_schema::cw_prost_newtype;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -11,7 +12,8 @@ use crate::{Binary, StdError, StdResult};
 ///
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[derive(Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[cw_prost_newtype]
 pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
 
 impl HexBinary {

@@ -1,5 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 
 use crate::Binary;
 
@@ -8,8 +7,8 @@ use super::{CosmosMsg, Empty, Event};
 /// Use this to define when the contract gets a response callback.
 /// If you only need it for errors or success you can select just those in order
 /// to save gas.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub enum ReplyOn {
     /// Always perform a callback after SubMsg is processed
     Always,
@@ -27,7 +26,8 @@ pub enum ReplyOn {
 /// Note: On error the submessage execution will revert any partial state changes due to this message,
 /// but not revert any state changes in the calling contract. If this is required, it must be done
 /// manually in the `reply` entry point.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Eq)]
 pub struct SubMsg<T = Empty> {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
@@ -97,7 +97,8 @@ impl<T> SubMsg<T> {
 
 /// The result object returned to `reply`. We always get the ID from the submessage
 /// back and then must handle success and error cases ourselves.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Eq)]
 pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
@@ -137,8 +138,8 @@ pub struct Reply {
 /// let result = SubMsgResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub enum SubMsgResult {
     Ok(SubMsgResponse),
     /// An error type that every custom error created by contract developers can be converted to.
@@ -193,7 +194,8 @@ impl From<SubMsgResult> for Result<SubMsgResponse, String> {
 
 /// The information we get back from a successful sub message execution,
 /// with full Cosmos SDK events.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
+#[derive(Eq)]
 pub struct SubMsgResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,

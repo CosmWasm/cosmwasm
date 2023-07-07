@@ -1,3 +1,4 @@
+use cosmwasm_schema::cw_prost_newtype;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
@@ -29,7 +30,8 @@ use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128};
 /// let b = Uint64::from(70u32);
 /// assert_eq!(b.u64(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+#[derive(Copy, Debug, Eq, PartialOrd, Ord, JsonSchema)]
+#[cw_prost_newtype]
 pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);

@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::Deref;
 
+use cosmwasm_schema::cw_prost_newtype;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -11,7 +12,8 @@ use crate::errors::{StdError, StdResult};
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[derive(Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[cw_prost_newtype]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
 impl Binary {

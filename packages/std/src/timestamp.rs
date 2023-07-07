@@ -1,5 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_prost_serde_newtype;
 use std::fmt;
 
 use crate::math::Uint64;
@@ -22,9 +21,8 @@ use crate::math::Uint64;
 /// assert_eq!(ts.seconds(), 3);
 /// assert_eq!(ts.subsec_nanos(), 202);
 /// ```
-#[derive(
-    Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
-)]
+#[derive(Copy, Eq, PartialOrd, Ord)]
+#[cw_prost_serde_newtype]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {

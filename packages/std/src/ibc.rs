@@ -2,8 +2,7 @@
 // The CosmosMsg variants are defined in results/cosmos_msg.rs
 // The rest of the IBC related functionality is defined here
 
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::cmp::{Ord, Ordering, PartialOrd};
 
 #[cfg(feature = "ibc3")]
@@ -18,8 +17,8 @@ use crate::timestamp::Timestamp;
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 pub enum IbcMsg {
     /// Sends bank tokens owned by the contract to the given address on another chain.
     /// The channel must already be established between the ibctransfer module on this chain
@@ -51,20 +50,26 @@ pub enum IbcMsg {
     CloseChannel { channel_id: String },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde_prost]
+#[derive(Eq)]
 pub struct IbcEndpoint {
+    #[prost(string, tag = "1")]
     pub port_id: String,
+    #[prost(string, tag = "2")]
     pub channel_id: String,
 }
 
 /// In IBC each package must set at least one type of timeout:
 /// the timestamp or the block height. Using this rather complex enum instead of
 /// two timeout fields we ensure that at least one timeout is set.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cosmwasm_schema::cw_serde_prost]
+#[derive(Eq)]
+
 pub struct IbcTimeout {
     // use private fields to enforce the use of constructors, which ensure that at least one is set
+    #[prost(message, optional, tag = "1")]
     block: Option<IbcTimeoutBlock>,
+    #[prost(message, optional, tag = "2")]
     timestamp: Option<Timestamp>,
 }
 
@@ -115,11 +120,14 @@ impl From<IbcTimeoutBlock> for IbcTimeout {
 
 /// IbcChannel defines all information on a channel.
 /// This is generally used in the hand-shake process, but can be queried directly.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
+    // TODO: can't do anything cuz of enum limit
+    // #[prost(enumeration = "i32", tag = "3")]
     pub order: IbcOrder,
     /// Note: in ibcv3 this may be "", in the IbcOpenChannel handshake messages
     pub version: String,
@@ -150,25 +158,30 @@ impl IbcChannel {
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
 /// Naming comes from the protobuf files and go translations.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq, ::prost::Enumeration)]
+#[repr(i32)]
 pub enum IbcOrder {
     #[serde(rename = "ORDER_UNORDERED")]
-    Unordered,
+    Unordered = 0,
     #[serde(rename = "ORDER_ORDERED")]
-    Ordered,
+    Ordered = 1,
 }
 
 /// IBCTimeoutHeight Height is a monotonically increasing data type
 /// that can be compared against another Height for the purposes of updating and
 /// freezing clients.
 /// Ordering is (revision_number, timeout_height)
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde_prost]
+#[derive(Eq, Copy)]
 pub struct IbcTimeoutBlock {
     /// the version that the client is currently on
     /// (eg. after reseting the chain this could increment 1 as height drops to 0)
+    #[prost(uint64, tag = "1")]
     pub revision: u64,
     /// block height after which the packet times out.
     /// the height within the given revision
+    #[prost(uint64, tag = "2")]
     pub height: u64,
 }
 
@@ -193,7 +206,8 @@ impl Ord for IbcTimeoutBlock {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacket {
     /// The raw data sent from the other side in the packet
@@ -226,7 +240,8 @@ impl IbcPacket {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcAcknowledgement {
     pub data: Binary,
@@ -247,8 +262,8 @@ impl IbcAcknowledgement {
 }
 
 /// The message that is passed into `ibc_channel_open`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 pub enum IbcChannelOpenMsg {
     /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     OpenInit { channel: IbcChannel },
@@ -305,15 +320,16 @@ pub type IbcChannelOpenResponse = ();
 #[cfg(feature = "ibc3")]
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 pub struct Ibc3ChannelOpenResponse {
     /// We can set the channel version to a different one than we were called with
     pub version: String,
 }
 
 /// The message that is passed into `ibc_channel_connect`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 pub enum IbcChannelConnectMsg {
     /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     OpenAck {
@@ -364,8 +380,8 @@ impl From<IbcChannelConnectMsg> for IbcChannel {
 }
 
 /// The message that is passed into `ibc_channel_close`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 pub enum IbcChannelCloseMsg {
     /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     CloseInit { channel: IbcChannel },
@@ -400,7 +416,9 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 }
 
 /// The message that is passed into `ibc_packet_receive`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///  NOTE: We need to allow unknown fields here for ibc compat
+#[cosmwasm_schema::cw_serde_allow]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
@@ -421,7 +439,9 @@ impl IbcPacketReceiveMsg {
 }
 
 /// The message that is passed into `ibc_packet_ack`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///  NOTE: We need to allow unknown fields here for ibc compat
+#[cosmwasm_schema::cw_serde_allow]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
@@ -454,7 +474,9 @@ impl IbcPacketAckMsg {
 }
 
 /// The message that is passed into `ibc_packet_timeout`
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///  NOTE: We need to allow unknown fields here for ibc compat
+#[cosmwasm_schema::cw_serde_allow]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
@@ -481,7 +503,8 @@ impl IbcPacketTimeoutMsg {
 /// Callbacks that have return values (like receive_packet)
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.
@@ -623,7 +646,8 @@ impl<T> IbcBasicResponse<T> {
 // Where the acknowledgement bytes contain an encoded error message to be returned to
 // the calling chain. (Returning ContractResult::Err will abort processing of this packet
 // and not inform the calling chain).
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cosmwasm_schema::cw_serde]
+#[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty> {
     /// The bytes we return to the contract that sent the packet.

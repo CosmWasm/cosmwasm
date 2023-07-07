@@ -1,5 +1,5 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
+use serde::Serialize;
 
 #[cfg(feature = "stargate")]
 use crate::Binary;
@@ -31,8 +31,8 @@ pub use wasm::CodeInfoResponse;
 pub use wasm::{ContractInfoResponse, WasmQuery};
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub enum QueryRequest<C> {
     Bank(BankQuery),
     Custom(C),
@@ -65,10 +65,9 @@ pub enum QueryRequest<C> {
 ///
 /// ```
 /// # use cosmwasm_std::CustomQuery;
-/// # use schemars::JsonSchema;
+/// # use cosmwasm_schema::cw_serde;
 /// # use serde::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-/// #[serde(rename_all = "snake_case")]
+/// #[cw_serde]
 /// pub enum MyCustomQuery {
 ///     Ping {},
 ///     Capitalized { text: String },

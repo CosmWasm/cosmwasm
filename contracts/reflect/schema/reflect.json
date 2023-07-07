@@ -109,7 +109,8 @@
                   "to_address": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -133,7 +134,8 @@
                       "$ref": "#/definitions/Coin"
                     }
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -157,7 +159,8 @@
           "denom": {
             "type": "string"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "CosmosMsg_for_CustomMsg": {
         "oneOf": [
@@ -229,7 +232,8 @@
                   "value": {
                     "$ref": "#/definitions/Binary"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -321,7 +325,8 @@
                     "description": "The `withdraw_address`",
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -343,7 +348,8 @@
                     "description": "The `validator_address`",
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -380,7 +386,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -430,7 +437,8 @@
                     "description": "address on the remote chain to receive these tokens",
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -464,7 +472,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -485,7 +494,8 @@
                   "channel_id": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -516,7 +526,8 @@
               }
             ]
           }
-        }
+        },
+        "additionalProperties": false
       },
       "IbcTimeoutBlock": {
         "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",
@@ -538,7 +549,8 @@
             "format": "uint64",
             "minimum": 0.0
           }
-        }
+        },
+        "additionalProperties": false
       },
       "ReplyOn": {
         "description": "Use this to define when the contract gets a response callback. If you only need it for errors or success you can select just those in order to save gas.",
@@ -596,7 +608,8 @@
                   "validator": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -621,7 +634,8 @@
                   "validator": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -650,7 +664,8 @@
                   "src_validator": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -687,7 +702,8 @@
           "reply_on": {
             "$ref": "#/definitions/ReplyOn"
           }
-        }
+        },
+        "additionalProperties": false
       },
       "Timestamp": {
         "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
@@ -749,7 +765,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -799,7 +816,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -836,7 +854,8 @@
                     "format": "uint64",
                     "minimum": 0.0
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -861,7 +880,8 @@
                   "contract_addr": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -882,7 +902,8 @@
                   "contract_addr": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1022,7 +1043,8 @@
                   "denom": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1047,7 +1069,8 @@
                   "denom": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1068,7 +1091,8 @@
                   "address": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1090,7 +1114,8 @@
             ],
             "properties": {
               "port_id": {
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1111,7 +1136,8 @@
                       "null"
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1138,7 +1164,8 @@
                       "null"
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1209,7 +1236,8 @@
                     "description": "this is the fully qualified service path used for routing, eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance",
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1289,7 +1317,8 @@
             ],
             "properties": {
               "bonded_denom": {
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1310,7 +1339,8 @@
                   "delegator": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1335,7 +1365,8 @@
                   "validator": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1348,7 +1379,8 @@
             ],
             "properties": {
               "all_validators": {
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1370,7 +1402,8 @@
                     "description": "The validator's address (e.g. (e.g. cosmosvaloper1...))",
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1404,7 +1437,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1434,7 +1468,8 @@
                       }
                     ]
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1455,7 +1490,8 @@
                   "contract_addr": {
                     "type": "string"
                   }
-                }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -1560,6 +1596,7 @@
           "$ref": "#/definitions/SubMsgResult"
         }
       },
+      "additionalProperties": false,
       "definitions": {
         "Attribute": {
           "description": "An key value pair that is used in the context of event attributes in logs",
@@ -1575,7 +1612,8 @@
             "value": {
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Binary": {
           "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
@@ -1600,7 +1638,8 @@
               "description": "The event type. This is renamed to \"ty\" because \"type\" is reserved in Rust. This sucks, we know.",
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "SubMsgResponse": {
           "description": "The information we get back from a successful sub message execution, with full Cosmos SDK events.",
@@ -1625,7 +1664,8 @@
                 "$ref": "#/definitions/Event"
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         "SubMsgResult": {
           "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to define the serialization, which is a public interface. Every language that compiles to Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead of this type. Once serialized, the two types are the same. However, in the Rust type system we want different types for clarity and documenation reasons.\n\n# Examples\n\nSuccess:\n\n``` # use cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult}; let response = SubMsgResponse { data: Some(Binary::from_base64(\"MTIzCg==\").unwrap()), events: vec![Event::new(\"wasm\").add_attribute(\"fo\", \"ba\")], }; let result: SubMsgResult = SubMsgResult::Ok(response); assert_eq!(to_vec(&result).unwrap(), br#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"fo\",\"value\":\"ba\"}]}],\"data\":\"MTIzCg==\"}}\"#); ```\n\nFailure:\n\n``` # use cosmwasm_std::{to_vec, SubMsgResult, Response}; let error_msg = String::from(\"Something went wrong\"); let result = SubMsgResult::Err(error_msg); assert_eq!(to_vec(&result).unwrap(), br#\"{\"error\":\"Something went wrong\"}\"#); ```",
