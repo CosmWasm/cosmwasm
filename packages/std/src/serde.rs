@@ -33,10 +33,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Deserialize;
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    #[serde(rename_all = "snake_case")]
+    #[cosmwasm_schema::cw_serde]
     enum SomeMsg {
         Refund {},
         ReleaseAll {

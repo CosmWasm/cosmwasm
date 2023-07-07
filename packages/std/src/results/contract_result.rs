@@ -1,5 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 use std::fmt;
 
 /// This is the final result type that is created and serialized in a contract for
@@ -29,8 +28,8 @@ use std::fmt;
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub enum ContractResult<S> {
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.

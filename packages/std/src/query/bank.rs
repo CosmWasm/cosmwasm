@@ -1,5 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 
 use crate::Coin;
 
@@ -9,8 +8,8 @@ use crate::{Binary, DenomMetadata, PageRequest};
 use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub enum BankQuery {
     /// This calls into the native bank module for querying the total supply of one denomination.
     /// It does the same as the SupplyOf call in Cosmos SDK's RPC API.
@@ -35,8 +34,8 @@ pub enum BankQuery {
 }
 
 #[cfg(feature = "cosmwasm_1_1")]
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq, Default)]
 #[non_exhaustive]
 pub struct SupplyResponse {
     /// Always returns a Coin with the requested denom.
@@ -47,8 +46,8 @@ pub struct SupplyResponse {
 #[cfg(feature = "cosmwasm_1_1")]
 impl QueryResponseType for SupplyResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq, Default)]
 pub struct BalanceResponse {
     /// Always returns a Coin with the requested denom.
     /// This may be of 0 amount if no such funds.
@@ -57,8 +56,8 @@ pub struct BalanceResponse {
 
 impl QueryResponseType for BalanceResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq, Default)]
 pub struct AllBalanceResponse {
     /// Returns all non-zero coins held by this account.
     pub amount: Vec<Coin>,
@@ -67,8 +66,8 @@ pub struct AllBalanceResponse {
 impl QueryResponseType for AllBalanceResponse {}
 
 #[cfg(feature = "cosmwasm_1_3")]
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq, Default)]
 #[non_exhaustive]
 pub struct DenomMetadataResponse {
     /// The metadata for the queried denom.
@@ -79,8 +78,8 @@ pub struct DenomMetadataResponse {
 impl QueryResponseType for DenomMetadataResponse {}
 
 #[cfg(feature = "cosmwasm_1_3")]
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq, Default)]
 #[non_exhaustive]
 pub struct AllDenomMetadataResponse {
     /// Always returns metadata for all token denoms on the base chain.

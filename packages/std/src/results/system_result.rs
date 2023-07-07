@@ -1,5 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_serde;
 use std::fmt;
 
 use super::super::errors::SystemError;
@@ -29,8 +28,8 @@ use super::super::errors::SystemError;
 /// let result: SystemResult<Binary> = SystemResult::Err(error);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
+#[derive(Eq)]
 pub enum SystemResult<S> {
     Ok(S),
     #[serde(rename = "error")]
