@@ -91,7 +91,9 @@ pub use cosmwasm_schema_derive::write_api;
 ///     AccountName { account: String },
 /// }
 /// ```
-pub use cosmwasm_schema_derive::{cw_prost, cw_prost_serde, cw_prost_serde_newtype, cw_serde};
+pub use cosmwasm_schema_derive::{
+    cw_prost, cw_prost_newtype, cw_prost_serde, cw_prost_serde_newtype, cw_serde,
+};
 
 // For use in macro expansions
 pub use schemars;

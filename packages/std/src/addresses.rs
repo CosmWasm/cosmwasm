@@ -1,5 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use cosmwasm_schema::cw_prost_serde_newtype;
 use sha2::{
     digest::{Digest, Update},
     Sha256,
@@ -27,9 +26,8 @@ use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
-)]
+#[cw_prost_serde_newtype]
+#[derive(Eq, PartialOrd, Ord, Hash)]
 pub struct Addr(String);
 
 forward_ref_partial_eq!(Addr, Addr);
@@ -399,6 +397,7 @@ mod tests {
     use super::*;
     use crate::HexBinary;
     use hex_literal::hex;
+    use serde::Deserialize;
     use std::collections::hash_map::DefaultHasher;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};

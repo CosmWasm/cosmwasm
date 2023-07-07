@@ -73,6 +73,18 @@ pub fn cw_prost_serde(
 }
 
 #[proc_macro_attribute]
+pub fn cw_prost_newtype(
+    _attr: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let expanded = cw_prost::cw_prost_newtype_impl(input);
+
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro_attribute]
 pub fn cw_prost_serde_newtype(
     _attr: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
