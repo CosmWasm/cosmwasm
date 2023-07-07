@@ -416,7 +416,8 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 }
 
 /// The message that is passed into `ibc_packet_receive`
-#[cosmwasm_schema::cw_serde]
+///  NOTE: We need to allow unknown fields here for ibc compat
+#[cosmwasm_schema::cw_serde_allow]
 #[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
@@ -438,7 +439,8 @@ impl IbcPacketReceiveMsg {
 }
 
 /// The message that is passed into `ibc_packet_ack`
-#[cosmwasm_schema::cw_serde]
+///  NOTE: We need to allow unknown fields here for ibc compat
+#[cosmwasm_schema::cw_serde_allow]
 #[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacketAckMsg {
@@ -472,7 +474,8 @@ impl IbcPacketAckMsg {
 }
 
 /// The message that is passed into `ibc_packet_timeout`
-#[cosmwasm_schema::cw_serde]
+///  NOTE: We need to allow unknown fields here for ibc compat
+#[cosmwasm_schema::cw_serde_allow]
 #[derive(Eq)]
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {

@@ -93,7 +93,7 @@ pub use cosmwasm_schema_derive::write_api;
 /// }
 /// ```
 pub use cosmwasm_schema_derive::{
-    cw_prost, cw_prost_newtype, cw_prost_serde, cw_prost_serde_newtype, cw_serde,
+    cw_prost, cw_prost_newtype, cw_prost_serde, cw_prost_serde_newtype, cw_serde, cw_serde_allow,
 };
 
 // For use in macro expansions

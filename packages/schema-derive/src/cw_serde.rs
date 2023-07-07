@@ -34,6 +34,40 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
     }
 }
 
+// TODO: remove this and make this an attribute of cw_serde
+pub fn cw_serde_allow_impl(input: DeriveInput) -> DeriveInput {
+    match input.data {
+        syn::Data::Struct(_) => parse_quote! {
+            #[derive(
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
+            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #input
+        },
+        syn::Data::Enum(_) => parse_quote! {
+            #[derive(
+                ::cosmwasm_schema::serde::Serialize,
+                ::cosmwasm_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::cosmwasm_schema::schemars::JsonSchema
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
+            #[serde(rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #input
+        },
+        syn::Data::Union(_) => panic!("unions are not supported"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
