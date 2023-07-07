@@ -131,7 +131,6 @@ mod tests {
             #[derive(
                 ::prost::Oneof,
                 ::std::clone::Clone,
-                ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
