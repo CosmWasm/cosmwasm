@@ -72,7 +72,6 @@ pub fn cw_prost_serde(
     proc_macro::TokenStream::from(expanded)
 }
 
-
 #[proc_macro_attribute]
 pub fn cw_prost_newtype(
     _attr: proc_macro::TokenStream,

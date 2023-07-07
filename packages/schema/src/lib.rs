@@ -11,6 +11,7 @@ pub use query_response::{combine_subqueries, IntegrityError, QueryResponses};
 pub use remove::remove_schemas;
 
 // Re-exports
+pub use cosmwasm_schema_derive::cw_prost_serde as cw_serde_prost;
 /// Generates an [`Api`](crate::Api) for the contract. The body describes the message
 /// types exported in the schema and allows setting contract name and version overrides.
 ///
@@ -94,7 +95,6 @@ pub use cosmwasm_schema_derive::write_api;
 pub use cosmwasm_schema_derive::{
     cw_prost, cw_prost_newtype, cw_prost_serde, cw_prost_serde_newtype, cw_serde,
 };
-pub use cosmwasm_schema_derive::{cw_prost_serde as cw_serde_prost};
 
 // For use in macro expansions
 pub use schemars;
