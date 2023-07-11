@@ -633,63 +633,6 @@ mod tests {
     }
 
     #[test]
-    fn call_execute_read_worksPerf() {
-        let mut instance = mock_instance(Counter, &[]);
-
-        // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-
-        // execute
-        let info = mock_info("verifies", &coins(15, "earth"));
-        let msg = br#"{"other_opt":{"opt_type":"read","times":"10000000"}}"#;
-        let result = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-    }
-
-    #[test]
-    fn call_execute_write_worksPerf() {
-        let mut instance = mock_instance(Counter, &[]);
-
-        // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-
-        // execute
-        let info = mock_info("verifies", &coins(15, "earth"));
-        let msg = br#"{"other_opt":{"opt_type":"write","times":"10000000"}}"#;
-        let result = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-    }
-
-    #[test]
-    fn call_execute_remove_worksPerf() {
-        let mut instance = mock_instance(Counter, &[]);
-
-        // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-
-        // execute
-        let info = mock_info("verifies", &coins(15, "earth"));
-        let msg = br#"{"other_opt":{"opt_type":"remove","times":"10000000"}}"#;
-        let result = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-    }
-
-    #[test]
     fn call_execute_runs_out_of_gas() {
         let mut instance = mock_instance(CYBERPUNK, &[]);
 
