@@ -1,7 +1,3 @@
-use serde::{de::DeserializeOwned, Serialize};
-use std::marker::PhantomData;
-use std::ops::Deref;
-
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
 use crate::coin::Coin;
@@ -27,9 +23,13 @@ use crate::query::{
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
+use crate::serde_basic_type::{deserialize_from_bytes, SerializeForBasicType};
 use crate::ContractInfoResponse;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
+use serde::{de::DeserializeOwned, Serialize};
+use std::marker::PhantomData;
+use std::ops::Deref;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -242,6 +242,22 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
                 format!("Querier contract error: {contract_err}"),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
+        }
+    }
+    pub fn query_ex<U: SerializeForBasicType>(&self, request: &QueryRequest<C>) -> StdResult<U> {
+        let raw = to_vec(request).map_err(|serialize_err| {
+            StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
+        })?;
+        match self.raw_query(&raw) {
+            SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
+                "Querier system error: {system_err}"
+            ))),
+            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
+                format!("Querier contract error: {contract_err}"),
+            )),
+            SystemResult::Ok(ContractResult::Ok(value)) => {
+                Ok(deserialize_from_bytes((value).to_vec()).unwrap())
+            }
         }
     }
 

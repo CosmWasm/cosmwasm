@@ -26,6 +26,7 @@ mod query;
 mod results;
 mod sections;
 mod serde;
+mod serde_basic_type;
 mod storage;
 mod timestamp;
 mod traits;
@@ -92,6 +93,9 @@ pub use crate::results::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use crate::results::{GovMsg, VoteOption};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
+pub use crate::serde_basic_type::{
+    deserialize_from_bytes, serialize_to_bytes, SerializeForBasicType,
+};
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
