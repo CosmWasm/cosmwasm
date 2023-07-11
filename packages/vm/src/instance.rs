@@ -307,13 +307,13 @@ where
             match cache_store.key_type {
                 KeyType::Write => {
                     let (result, _) = data.with_storage_from_context::<_, _>(|store| {
-                        Ok(store.set(&key, &cache_store.value))
+                        Ok(store.set(key, &cache_store.value))
                     })?;
                     result?;
                 }
                 KeyType::Remove => {
                     let (result, _) =
-                        data.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
+                        data.with_storage_from_context::<_, _>(|store| Ok(store.remove(key)))?;
                     result?;
                 }
                 _ => (),

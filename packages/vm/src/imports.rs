@@ -95,7 +95,7 @@ pub fn do_db_read<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
 pub fn do_db_read_ex<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
-    value_ptr: u32,
+    _value_ptr: u32,
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
     let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
