@@ -1,11 +1,11 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
-use std::collections::BTreeMap;
 
 use derivative::Derivative;
 use wasmer::{AsStoreMut, Instance as WasmerInstance, Memory, MemoryView, Value};
@@ -110,11 +110,13 @@ pub type DebugHandlerFn = dyn for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>
 
 #[derive(Clone)]
 pub enum KeyType {
-    Read, Write, Remove,
+    Read,
+    Write,
+    Remove,
 }
 
 #[derive(Clone)]
-pub struct CacheStore{
+pub struct CacheStore {
     pub value: Vec<u8>,
     pub gas_info: GasInfo,
     pub key_type: KeyType,
@@ -127,7 +129,7 @@ pub struct Environment<A, S, Q> {
     pub api: A,
     pub gas_config: GasConfig,
     data: Arc<RwLock<ContextData<S, Q>>>,
-    pub state_cache:BTreeMap<Vec<u8>, CacheStore>,
+    pub state_cache: BTreeMap<Vec<u8>, CacheStore>,
 }
 
 unsafe impl<A: BackendApi, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}

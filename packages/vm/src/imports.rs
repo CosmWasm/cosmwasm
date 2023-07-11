@@ -16,7 +16,7 @@ use wasmer::{AsStoreMut, FunctionEnvMut};
 
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::{process_gas_info, DebugInfo, Environment, CacheStore, KeyType};
+use crate::environment::{process_gas_info, CacheStore, DebugInfo, Environment, KeyType};
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -60,7 +60,7 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 const MAX_LENGTH_ABORT: usize = 2 * MI;
 
 /// default gas cost for write
-const DEFAULT_WRITE_COST_FLAT: u64    = 2000;
+const DEFAULT_WRITE_COST_FLAT: u64 = 2000;
 const DEFAULT_WRITE_COST_PER_BYTE: u64 = 30;
 const DEFAULT_DELETE_COST: u64 = 1000;
 const DEFAULT_GAS_MULTIPLIER: u64 = 38000000;
@@ -95,7 +95,7 @@ pub fn do_db_read<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
 pub fn do_db_read_ex<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     key_ptr: u32,
-    value_ptr:u32,
+    value_ptr: u32,
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
     let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
@@ -106,27 +106,29 @@ pub fn do_db_read_ex<A: BackendApi + 'static, S: Storage + 'static, Q: Querier +
             process_gas_info::<A, S, Q>(data, &mut store, store_cache.gas_info)?;
             write_to_contract::<A, S, Q>(data, &mut store, &store_cache.value)
         }
-        None => {
-            Ok(0)
-        }
-    }.expect("Oh, some thing wrong with hash map");
+        None => Ok(0),
+    }
+    .expect("Oh, some thing wrong with hash map");
     if ret > 0 {
         return Ok(ret);
     }
     let (result, gas_info) = data.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
 
-    process_gas_info::<A, S, Q>(data, &mut store,gas_info)?;
+    process_gas_info::<A, S, Q>(data, &mut store, gas_info)?;
     let value = result?;
 
     let out_data = match value {
         Some(data) => data,
         None => return Ok(0),
     };
-    data.state_cache.insert(key,CacheStore{
-        value: out_data.clone(),
-        gas_info,
-        key_type: KeyType::Read,
-    });
+    data.state_cache.insert(
+        key,
+        CacheStore {
+            value: out_data.clone(),
+            gas_info,
+            key_type: KeyType::Read,
+        },
+    );
     write_to_contract(data, &mut store, &out_data)
 }
 
@@ -182,12 +184,15 @@ pub fn do_db_write_ex<A: BackendApi + 'static, S: Storage + 'static, Q: Querier 
     let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
     let value = read_region(&data.memory(&mut store), value_ptr, MAX_LENGTH_DB_VALUE)?;
 
-    let gas_info = consum_set_gas_cost(value.len() as u32, );
-    data.state_cache.insert(key, CacheStore{
-        value,
-        gas_info,
-        key_type: KeyType::Write,
-    });
+    let gas_info = consum_set_gas_cost(value.len() as u32);
+    data.state_cache.insert(
+        key,
+        CacheStore {
+            value,
+            gas_info,
+            key_type: KeyType::Write,
+        },
+    );
 
     Ok(())
 }
@@ -225,7 +230,7 @@ pub fn do_db_remove_ex<A: BackendApi + 'static, S: Storage + 'static, Q: Querier
     let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let gas_info = consum_remove_gas_cost();
-    data.state_cache.entry(key).or_insert(CacheStore{
+    data.state_cache.entry(key).or_insert(CacheStore {
         value: Vec::default(),
         gas_info,
         key_type: KeyType::Remove,

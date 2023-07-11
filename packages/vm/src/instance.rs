@@ -303,17 +303,20 @@ where
     pub fn commit_store(&mut self) -> VmResult<()> {
         let mut env = self.fe.clone().into_mut(&mut self.store);
         let (data, _) = env.data_and_store_mut();
-        for (key,cache_store) in &data.state_cache {
+        for (key, cache_store) in &data.state_cache {
             match cache_store.key_type {
                 KeyType::Write => {
-                    let (result, _) = data.with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &cache_store.value)))?;
+                    let (result, _) = data.with_storage_from_context::<_, _>(|store| {
+                        Ok(store.set(&key, &cache_store.value))
+                    })?;
                     result?;
                 }
                 KeyType::Remove => {
-                    let (result, _) = data.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
+                    let (result, _) =
+                        data.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
                     result?;
                 }
-                _ => ()
+                _ => (),
             }
         }
         data.state_cache.clear();
