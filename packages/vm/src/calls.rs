@@ -599,7 +599,6 @@ mod tests {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
-    static Counter: &[u8] = include_bytes!("../testdata/counter.wasm");
 
     #[test]
     fn call_instantiate_works() {
