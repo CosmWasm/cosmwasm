@@ -11,12 +11,12 @@ use wasmer::{
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::Environment;
+use crate::environment::{Environment, KeyType};
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::imports::{
-    do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
-    do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
-    do_secp256k1_recover_pubkey, do_secp256k1_verify,
+    do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_read_ex,
+    do_db_remove, do_db_remove_ex, do_db_write, do_db_write_ex, do_debug, do_ed25519_batch_verify,
+    do_ed25519_verify, do_query_chain, do_secp256k1_recover_pubkey, do_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_scan};
@@ -118,11 +118,21 @@ where
             Function::new_typed_with_env(&mut store, &fe, do_db_read),
         );
 
+        env_imports.insert(
+            "db_read_ex",
+            Function::new_typed_with_env(&mut store, &fe, do_db_read_ex),
+        );
+
         // Writes the given value into the database entry at the given key.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "db_write",
             Function::new_typed_with_env(&mut store, &fe, do_db_write),
+        );
+
+        env_imports.insert(
+            "db_write_ex",
+            Function::new_typed_with_env(&mut store, &fe, do_db_write_ex),
         );
 
         // Removes the value at the given key. Different than writing &[] as future
@@ -132,6 +142,11 @@ where
         env_imports.insert(
             "db_remove",
             Function::new_typed_with_env(&mut store, &fe, do_db_remove),
+        );
+
+        env_imports.insert(
+            "db_remove_ex",
+            Function::new_typed_with_env(&mut store, &fe, do_db_remove_ex),
         );
 
         // Reads human address from source_ptr and checks if it is valid.
@@ -283,6 +298,29 @@ where
 
     pub fn api(&self) -> &A {
         &self.fe.as_ref(&self.store).api
+    }
+
+    pub fn commit_store(&mut self) -> VmResult<()> {
+        let mut env = self.fe.clone().into_mut(&mut self.store);
+        let (data, _) = env.data_and_store_mut();
+        for (key, cache_store) in &data.state_cache {
+            match cache_store.key_type {
+                KeyType::Write => {
+                    let (result, _) = data.with_storage_from_context::<_, _>(|store| {
+                        Ok(store.set(key, &cache_store.value))
+                    })?;
+                    result?;
+                }
+                KeyType::Remove => {
+                    let (result, _) =
+                        data.with_storage_from_context::<_, _>(|store| Ok(store.remove(key)))?;
+                    result?;
+                }
+                _ => (),
+            }
+        }
+        data.state_cache.clear();
+        Ok(())
     }
 
     /// Decomposes this instance into its components.

@@ -29,8 +29,11 @@ extern "C" {
     fn abort(source_ptr: u32);
 
     fn db_read(key: u32) -> u32;
+    fn db_read_ex(key: u32, value: u32) -> u32;
     fn db_write(key: u32, value: u32);
+    fn db_write_ex(key: u32, value: u32);
     fn db_remove(key: u32);
+    fn db_remove_ex(key: u32);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
@@ -102,6 +105,35 @@ impl Storage for ExternalStorage {
         Some(data)
     }
 
+    fn get_ex(&self, key: &[u8]) -> Option<Vec<u8>> {
+        let mut vTemp: [u8; 24] = [0; 24];
+        let key = build_region(key);
+        let mut value = build_region(vTemp.as_ref());
+        let key_ptr = &*key as *const Region as u32;
+        let val_ptr = &*value as *const Region as u32;
+
+        let read = unsafe { db_read_ex(key_ptr, val_ptr) };
+        if read == 0 {
+            // key does not exist in external storage
+            return None;
+        }
+
+        let value_ptr = read as *mut Region;
+        if read == val_ptr {
+            unsafe {
+                let ret = Vec::from_raw_parts(
+                    (*value_ptr).offset as *mut u8,
+                    (*value_ptr).length as usize,
+                    (*value_ptr).capacity as usize,
+                );
+                return Some(ret);
+            }
+        }
+
+        let data = unsafe { consume_region(value_ptr) };
+        Some(data)
+    }
+
     fn set(&mut self, key: &[u8], value: &[u8]) {
         if value.is_empty() {
             panic!("TL;DR: Value must not be empty in Storage::set but in most cases you can use Storage::remove instead. Long story: Getting empty values from storage is not well supported at the moment. Some of our internal interfaces cannot differentiate between a non-existent key and an empty value. Right now, you cannot rely on the behaviour of empty values. To protect you from trouble later on, we stop here. Sorry for the inconvenience! We highly welcome you to contribute to CosmWasm, making this more solid one way or the other.");
@@ -115,11 +147,31 @@ impl Storage for ExternalStorage {
         unsafe { db_write(key_ptr, value_ptr) };
     }
 
+    fn set_ex(&mut self, key: &[u8], value: &[u8]) {
+        if value.is_empty() {
+            panic!("TL;DR: Value must not be empty in Storage::set but in most cases you can use Storage::remove instead. Long story: Getting empty values from storage is not well supported at the moment. Some of our internal interfaces cannot differentiate between a non-existent key and an empty value. Right now, you cannot rely on the behaviour of empty values. To protect you from trouble later on, we stop here. Sorry for the inconvenience! We highly welcome you to contribute to CosmWasm, making this more solid one way or the other.");
+        }
+
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as u32;
+        let mut value = build_region(value);
+        let value_ptr = &mut *value as *mut Region as u32;
+        unsafe { db_write_ex(key_ptr, value_ptr) };
+    }
+
     fn remove(&mut self, key: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as u32;
         unsafe { db_remove(key_ptr) };
+    }
+
+    fn remove_ex(&mut self, key: &[u8]) {
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as u32;
+        unsafe { db_remove_ex(key_ptr) };
     }
 
     #[cfg(feature = "iterator")]
