@@ -12,8 +12,11 @@ use crate::static_analysis::{deserialize_wasm, ExportInfo};
 const SUPPORTED_IMPORTS: &[&str] = &[
     "env.abort",
     "env.db_read",
+    "env.db_read_ex",
     "env.db_write",
+    "env.db_write_ex",
     "env.db_remove",
+    "env.db_remove_ex",
     "env.addr_validate",
     "env.addr_canonicalize",
     "env.addr_humanize",
