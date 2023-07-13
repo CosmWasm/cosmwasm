@@ -489,6 +489,7 @@ dependencies = [
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "cosmwasm-schema",
+ "crc32fast",
  "derivative",
  "forward_ref",
  "hex",

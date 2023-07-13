@@ -121,6 +121,10 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing;
 
+// Internal testing utilities
+#[cfg(test)]
+mod test_utils;
+
 // Re-exports
 
 pub use cosmwasm_derive::entry_point;
