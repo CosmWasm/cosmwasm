@@ -39,7 +39,11 @@ pub enum SystemError {
     },
 }
 
-impl std::error::Error for SystemError {}
+// We want to support no_std thus we don’t want to reference Error through
+// std::error module.  At the same time we don’t want to use core::error since
+// that’s unstable.  Fortunately, we can take advantage of serde which
+// re-exports the trait as serde::de::StdError.
+impl serde::de::StdError for SystemError {}
 
 impl core::fmt::Display for SystemError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
