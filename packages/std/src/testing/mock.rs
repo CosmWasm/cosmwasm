@@ -1,7 +1,7 @@
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use std::ops::Bound;
@@ -643,17 +643,17 @@ impl Default for WasmQuerier {
 #[derive(Clone, Default)]
 pub struct BankQuerier {
     #[allow(dead_code)]
-    /// HashMap<denom, amount>
-    supplies: HashMap<String, Uint128>,
-    /// HashMap<address, coins>
-    balances: HashMap<String, Vec<Coin>>,
+    /// BTreeMap<denom, amount>
+    supplies: BTreeMap<String, Uint128>,
+    /// BTreeMap<address, coins>
+    balances: BTreeMap<String, Vec<Coin>>,
     /// Vec<Metadata>
     denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
 }
 
 impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
-        let balances: HashMap<_, _> = balances
+        let balances: BTreeMap<_, _> = balances
             .iter()
             .map(|(s, c)| (s.to_string(), c.to_vec()))
             .collect();
@@ -683,8 +683,8 @@ impl BankQuerier {
             .collect();
     }
 
-    fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
-        let mut supplies = HashMap::new();
+    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
+        let mut supplies = BTreeMap::new();
 
         let all_coins = balances.iter().flat_map(|(_, coins)| coins);
 
@@ -933,12 +933,12 @@ impl StakingQuerier {
 #[cfg(feature = "cosmwasm_1_3")]
 #[derive(Clone, Default)]
 pub struct DistributionQuerier {
-    withdraw_addresses: HashMap<String, String>,
+    withdraw_addresses: BTreeMap<String, String>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
-    pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
+    pub fn new(withdraw_addresses: BTreeMap<String, String>) -> Self {
         DistributionQuerier { withdraw_addresses }
     }
 
@@ -1906,7 +1906,7 @@ mod tests {
 
         querier.update_handler(|request| {
             let constract1 = Addr::unchecked("contract1");
-            let mut storage1 = HashMap::<Binary, Binary>::default();
+            let mut storage1 = BTreeMap::<Binary, Binary>::default();
             storage1.insert(b"the key".into(), b"the value".into());
 
             match request {
