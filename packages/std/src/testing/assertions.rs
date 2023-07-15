@@ -1,7 +1,7 @@
 use crate::{Decimal, Uint128};
 #[cfg(test)]
 use core::hash::{Hash, Hasher};
-use std::str::FromStr as _;
+use core::str::FromStr as _;
 
 /// Asserts that two expressions are approximately equal to each other.
 ///
@@ -56,7 +56,7 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
     let right = right.into();
     let max_rel_diff = Decimal::from_str(max_rel_diff).unwrap();
 
-    let largest = std::cmp::max(left, right);
+    let largest = core::cmp::max(left, right);
     let rel_diff = Decimal::from_ratio(left.abs_diff(right), largest);
 
     if rel_diff > max_rel_diff {

@@ -1,6 +1,6 @@
+use core::fmt;
 #[cfg(feature = "backtraces")]
 use std::backtrace::Backtrace;
-use std::fmt;
 use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
@@ -433,14 +433,14 @@ impl PartialEq<StdError> for StdError {
     }
 }
 
-impl From<std::str::Utf8Error> for StdError {
-    fn from(source: std::str::Utf8Error) -> Self {
+impl From<core::str::Utf8Error> for StdError {
+    fn from(source: core::str::Utf8Error) -> Self {
         Self::invalid_utf8(source)
     }
 }
 
-impl From<std::string::FromUtf8Error> for StdError {
-    fn from(source: std::string::FromUtf8Error) -> Self {
+impl From<alloc::string::FromUtf8Error> for StdError {
+    fn from(source: alloc::string::FromUtf8Error) -> Self {
         Self::invalid_utf8(source)
     }
 }
@@ -517,7 +517,7 @@ impl OverflowError {
 /// The error returned by [`TryFrom`] conversions that overflow, for example
 /// when converting from [`Uint256`] to [`Uint128`].
 ///
-/// [`TryFrom`]: std::convert::TryFrom
+/// [`TryFrom`]: core::convert::TryFrom
 /// [`Uint256`]: crate::Uint256
 /// [`Uint128`]: crate::Uint128
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -618,11 +618,11 @@ pub enum CoinFromStrError {
     #[error("Missing amount or non-digit characters in amount")]
     MissingAmount,
     #[error("Invalid amount: {0}")]
-    InvalidAmount(std::num::ParseIntError),
+    InvalidAmount(core::num::ParseIntError),
 }
 
-impl From<std::num::ParseIntError> for CoinFromStrError {
-    fn from(value: std::num::ParseIntError) -> Self {
+impl From<core::num::ParseIntError> for CoinFromStrError {
+    fn from(value: core::num::ParseIntError) -> Self {
         Self::InvalidAmount(value)
     }
 }
@@ -636,7 +636,7 @@ impl From<CoinFromStrError> for StdError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str;
+    use core::str;
 
     // constructors
 

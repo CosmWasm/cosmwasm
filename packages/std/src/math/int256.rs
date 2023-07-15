@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Int128, Int64, Uint128, Uint256, Uint64};
@@ -112,7 +112,7 @@ impl Int256 {
             words[1].to_be_bytes(),
             words[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -126,7 +126,7 @@ impl Int256 {
             words[2].to_le_bytes(),
             words[3].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     #[must_use]
@@ -553,7 +553,7 @@ impl<'de> de::Visitor<'de> for Int256Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Int256
+impl<A> core::iter::Sum<A> for Int256
 where
     Self: Add<A, Output = Self>,
 {
@@ -569,7 +569,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Int256>(), 32);
+        assert_eq!(core::mem::size_of::<Int256>(), 32);
     }
 
     #[test]
@@ -1121,7 +1121,7 @@ mod tests {
         );
         // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
         assert_eq!(
-            Int256::MIN >> (std::mem::size_of::<Int256>() as u32 * 8 - 1),
+            Int256::MIN >> (core::mem::size_of::<Int256>() as u32 * 8 - 1),
             -Int256::one()
         );
     }
@@ -1140,7 +1140,7 @@ mod tests {
         );
         // left shift by by the maximum shift value should result in MIN
         assert_eq!(
-            Int256::one() << (std::mem::size_of::<Int256>() as u32 * 8 - 1),
+            Int256::one() << (core::mem::size_of::<Int256>() as u32 * 8 - 1),
             Int256::MIN
         );
     }

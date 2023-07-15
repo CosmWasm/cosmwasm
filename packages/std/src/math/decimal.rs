@@ -1,10 +1,10 @@
+use core::cmp::Ordering;
+use core::fmt::{self, Write};
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::{
@@ -175,7 +175,7 @@ impl Decimal {
     ///
     /// ```
     /// # use cosmwasm_std::{Decimal, Uint128};
-    /// # use std::str::FromStr;
+    /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = Decimal::from_str("1.234").unwrap();
     /// assert_eq!(a.decimal_places(), 18);
@@ -385,7 +385,7 @@ impl Decimal {
     /// ## Examples
     ///
     /// ```
-    /// use std::str::FromStr;
+    /// use core::str::FromStr;
     /// use cosmwasm_std::{Decimal, Uint128};
     ///
     /// let d = Decimal::from_str("12.345").unwrap();
@@ -408,7 +408,7 @@ impl Decimal {
     /// ## Examples
     ///
     /// ```
-    /// use std::str::FromStr;
+    /// use core::str::FromStr;
     /// use cosmwasm_std::{Decimal, Uint128};
     ///
     /// let d = Decimal::from_str("12.345").unwrap();
@@ -679,7 +679,7 @@ impl RemAssign<Decimal> for Decimal {
 }
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal, Decimal);
 
-impl<A> std::iter::Sum<A> for Decimal
+impl<A> core::iter::Sum<A> for Decimal
 where
     Self: Add<A, Output = Self>,
 {
@@ -1408,7 +1408,7 @@ mod tests {
             (Decimal::permille(6), Decimal::permille(13)),
         ];
 
-        // The regular std::ops::Mul is our source of truth for these tests.
+        // The regular core::ops::Mul is our source of truth for these tests.
         for (x, y) in test_data.into_iter() {
             assert_eq!(x * y, x.checked_mul(y).unwrap());
         }

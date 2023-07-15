@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
     Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
@@ -135,7 +135,7 @@ impl Uint256 {
             words[1].to_be_bytes(),
             words[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -148,7 +148,7 @@ impl Uint256 {
             words[2].to_le_bytes(),
             words[3].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     #[must_use]
@@ -649,7 +649,7 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint256
+impl<A> core::iter::Sum<A> for Uint256
 where
     Self: Add<A, Output = Self>,
 {
@@ -666,7 +666,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Uint256>(), 32);
+        assert_eq!(core::mem::size_of::<Uint256>(), 32);
     }
 
     #[test]

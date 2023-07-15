@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint512, Uint64};
@@ -144,7 +144,7 @@ impl Int512 {
             words[1].to_be_bytes(),
             words[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -162,7 +162,7 @@ impl Int512 {
             words[6].to_le_bytes(),
             words[7].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
 
     #[must_use]
@@ -586,7 +586,7 @@ impl<'de> de::Visitor<'de> for Int512Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Int512
+impl<A> core::iter::Sum<A> for Int512
 where
     Self: Add<A, Output = Self>,
 {
@@ -602,7 +602,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Int512>(), 64);
+        assert_eq!(core::mem::size_of::<Int512>(), 64);
     }
 
     #[test]
@@ -1174,7 +1174,7 @@ mod tests {
         );
         // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
         assert_eq!(
-            Int512::MIN >> (std::mem::size_of::<Int512>() as u32 * 8 - 1),
+            Int512::MIN >> (core::mem::size_of::<Int512>() as u32 * 8 - 1),
             -Int512::one()
         );
     }
@@ -1193,7 +1193,7 @@ mod tests {
         );
         // left shift by by the maximum shift value should result in MIN
         assert_eq!(
-            Int512::one() << (std::mem::size_of::<Int512>() as u32 * 8 - 1),
+            Int512::one() << (core::mem::size_of::<Int512>() as u32 * 8 - 1),
             Int512::MIN
         );
     }

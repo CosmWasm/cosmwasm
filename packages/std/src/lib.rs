@@ -1,6 +1,8 @@
 #![cfg_attr(feature = "backtraces", feature(error_generic_member_access))]
 #![cfg_attr(feature = "backtraces", feature(provide_any))]
 
+extern crate alloc;
+
 // Exposed on all platforms
 
 mod addresses;

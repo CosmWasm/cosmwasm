@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
-use std::fmt;
-use std::str::FromStr;
+use alloc::collections::BTreeMap;
+use core::fmt;
+use core::str::FromStr;
 
 use crate::{errors::CoinsError, Coin, StdError, StdResult, Uint128};
 use crate::{OverflowError, OverflowOperation};

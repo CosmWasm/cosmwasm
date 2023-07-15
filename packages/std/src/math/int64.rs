@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Uint64};
@@ -457,7 +457,7 @@ impl<'de> de::Visitor<'de> for Int64Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Int64
+impl<A> core::iter::Sum<A> for Int64
 where
     Self: Add<A, Output = Self>,
 {
@@ -473,7 +473,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Int64>(), 8);
+        assert_eq!(core::mem::size_of::<Int64>(), 8);
     }
 
     #[test]
@@ -985,7 +985,7 @@ mod tests {
         assert_eq!(x >> 4, Int64::from(0x0400_0000_0000_0000i64));
         // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
         assert_eq!(
-            Int64::MIN >> (std::mem::size_of::<Int64>() as u32 * 8 - 1),
+            Int64::MIN >> (core::mem::size_of::<Int64>() as u32 * 8 - 1),
             -Int64::one()
         );
     }
@@ -998,7 +998,7 @@ mod tests {
         assert_eq!(x << 4, Int64::from(0x0800_0000_0000_0000i64 << 4));
         // left shift by by the maximum shift value should result in MIN
         assert_eq!(
-            Int64::one() << (std::mem::size_of::<Int64>() as u32 * 8 - 1),
+            Int64::one() << (core::mem::size_of::<Int64>() as u32 * 8 - 1),
             Int64::MIN
         );
     }

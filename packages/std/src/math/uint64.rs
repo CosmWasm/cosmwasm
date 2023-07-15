@@ -1,11 +1,11 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt::{self};
-use std::ops::{
+use core::fmt::{self};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
     Sub, SubAssign,
 };
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -537,7 +537,7 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint64
+impl<A> core::iter::Sum<A> for Uint64
 where
     Self: Add<A, Output = Self>,
 {
@@ -554,7 +554,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Uint64>(), 8);
+        assert_eq!(core::mem::size_of::<Uint64>(), 8);
     }
 
     #[test]

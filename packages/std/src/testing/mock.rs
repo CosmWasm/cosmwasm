@@ -1,10 +1,11 @@
+use alloc::collections::BTreeMap;
+use core::marker::PhantomData;
+#[cfg(feature = "cosmwasm_1_3")]
+use core::ops::Bound;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
-use std::collections::{BTreeMap, HashMap};
-use std::marker::PhantomData;
-#[cfg(feature = "cosmwasm_1_3")]
-use std::ops::Bound;
+use std::collections::HashMap;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
