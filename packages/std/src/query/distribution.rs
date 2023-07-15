@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::Addr;
 
+use super::query_response::QueryResponseType;
+
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -20,3 +22,5 @@ pub struct DelegatorWithdrawAddressResponse {
 }
 
 impl_response_constructor!(DelegatorWithdrawAddressResponse, withdraw_address: Addr);
+
+impl QueryResponseType for DelegatorWithdrawAddressResponse {}
