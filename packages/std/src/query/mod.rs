@@ -18,7 +18,7 @@ macro_rules! impl_response_constructor {
             #[doc(hidden)]
             #[allow(dead_code)]
             pub fn new($( $field: $t),*) -> Self {
-                Self { $( $field: $field.into() ),* }
+                Self { $( $field ),* }
             }
         }
     };
