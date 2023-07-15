@@ -399,11 +399,9 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::HexBinary;
+    use crate::{assert_hash_works, HexBinary};
     use hex_literal::hex;
-    use std::collections::hash_map::DefaultHasher;
     use std::collections::HashSet;
-    use std::hash::{Hash, Hasher};
 
     #[test]
     fn addr_unchecked_works() {
@@ -651,23 +649,9 @@ mod tests {
 
     #[test]
     fn canonical_addr_implements_hash() {
-        let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
-        let mut hasher = DefaultHasher::new();
-        alice1.hash(&mut hasher);
-        let alice1_hash = hasher.finish();
-
-        let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
-        let mut hasher = DefaultHasher::new();
-        alice2.hash(&mut hasher);
-        let alice2_hash = hasher.finish();
-
+        let alice = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
-        let mut hasher = DefaultHasher::new();
-        bob.hash(&mut hasher);
-        let bob_hash = hasher.finish();
-
-        assert_eq!(alice1_hash, alice2_hash);
-        assert_ne!(alice1_hash, bob_hash);
+        assert_hash_works!(alice, bob);
     }
 
     /// This requires Hash and Eq to be implemented

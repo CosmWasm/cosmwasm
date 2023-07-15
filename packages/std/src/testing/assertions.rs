@@ -1,4 +1,6 @@
 use crate::{Decimal, Uint128};
+#[cfg(test)]
+use core::hash::{Hash, Hasher};
 use std::str::FromStr as _;
 
 /// Asserts that two expressions are approximately equal to each other.
@@ -18,6 +20,25 @@ macro_rules! assert_approx_eq {
     }};
     ($left:expr, $right:expr, $max_rel_diff:expr, $($args:tt)+) => {{
         $crate::testing::assert_approx_eq_impl($left, $right, $max_rel_diff, Some(format!($($args)*)));
+    }};
+}
+
+/// Asserts that type `T` implements `Hash` trait correctly.
+///
+/// `left` and `right` must be unequal objects.
+///
+/// Some object pairs may produce the same hash causing test failure.
+/// In those cases try different objects. The test uses stable hasher
+/// so once working pair is identified, the test’s going to continue
+/// passing.
+#[macro_export]
+#[cfg(test)]
+macro_rules! assert_hash_works {
+    ($left:expr, $right:expr $(,)?) => {{
+        $crate::testing::assert_hash_works_impl($left, $right, None);
+    }};
+    ($left:expr, $right:expr, $($args:tt)+) => {{
+        $crate::testing::assert_hash_works_impl($left, $right, Some(format!($($args)*)));
     }};
 }
 
@@ -46,6 +67,45 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
             None => panic!(
                 "assertion failed: `(left ≈ right)`\nleft: {left}\nright: {right}\nrelative difference: {rel_diff}\nmax allowed relative difference: {max_rel_diff}\n"
             ),
+        }
+    }
+}
+
+/// Tests that type `T` implements `Hash` trait correctly.
+///
+/// `left` and `right` must be unequal objects.
+///
+/// Some object pairs may produce the same hash causing test failure.
+/// In those cases try different objects. The test uses stable hasher
+/// so once working pair is identified, the test’s going to continue
+/// passing.
+#[track_caller]
+#[doc(hidden)]
+#[cfg(test)]
+pub fn assert_hash_works_impl<T: Clone + Hash>(left: T, right: T, panic_msg: Option<String>) {
+    fn hash(value: &impl Hash) -> u64 {
+        let mut hasher = crc32fast::Hasher::default();
+        value.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    // Check clone
+    if hash(&left) != hash(&left.clone()) {
+        match panic_msg {
+            Some(panic_msg) => {
+                panic!("assertion failed: `hash(left) == hash(left.clone())`\n: {panic_msg}")
+            }
+            None => panic!("assertion failed: `hash(left) == hash(left.clone())`"),
+        }
+    }
+
+    // Check different object
+    if hash(&left) == hash(&right) {
+        match panic_msg {
+            Some(panic_msg) => {
+                panic!("assertion failed: `hash(left) != hash(right)`\n: {panic_msg}")
+            }
+            None => panic!("assertion failed: `hash(left) != hash(right)`"),
         }
     }
 }

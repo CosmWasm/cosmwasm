@@ -247,10 +247,8 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 mod tests {
     use super::*;
 
-    use crate::{from_slice, to_vec, StdError};
-    use std::collections::hash_map::DefaultHasher;
+    use crate::{assert_hash_works, from_slice, to_vec, StdError};
     use std::collections::HashSet;
-    use std::hash::{Hash, Hasher};
 
     #[test]
     fn from_hex_works() {
@@ -569,51 +567,17 @@ mod tests {
 
     #[test]
     fn hex_binary_implements_as_ref() {
-        // Can use as_ref (this we already get via the Deref implementation)
-        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
-        assert_eq!(data.as_ref(), &[7u8, 35, 49, 101, 0, 255]);
-
-        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
-        let data_ref = &data;
-        assert_eq!(data_ref.as_ref(), &[7u8, 35, 49, 101, 0, 255]);
-
-        // Implements as ref
-
-        // This is a dummy function to mimic the signature of
-        // https://docs.rs/sha2/0.10.6/sha2/trait.Digest.html#tymethod.digest
-        fn hash(data: impl AsRef<[u8]>) -> u64 {
-            let mut hasher = DefaultHasher::new();
-            data.as_ref().hash(&mut hasher);
-            hasher.finish()
-        }
-
-        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
-        hash(data);
-
-        let data = HexBinary(vec![7u8, 35, 49, 101, 0, 255]);
-        let data_ref = &data;
-        hash(data_ref);
+        let want = &[7u8, 35, 49, 101, 0, 255];
+        let data = HexBinary(want.to_vec());
+        assert_eq!(want, AsRef::<[u8]>::as_ref(&data));
+        assert_eq!(want, AsRef::<[u8]>::as_ref(&&data));
     }
 
     #[test]
     fn hex_binary_implements_hash() {
-        let a1 = HexBinary::from([0, 187, 61, 11, 250, 0]);
-        let mut hasher = DefaultHasher::new();
-        a1.hash(&mut hasher);
-        let a1_hash = hasher.finish();
-
-        let a2 = HexBinary::from([0, 187, 61, 11, 250, 0]);
-        let mut hasher = DefaultHasher::new();
-        a2.hash(&mut hasher);
-        let a2_hash = hasher.finish();
-
+        let a = HexBinary::from([0, 187, 61, 11, 250, 0]);
         let b = HexBinary::from([16, 21, 33, 0, 255, 9]);
-        let mut hasher = DefaultHasher::new();
-        b.hash(&mut hasher);
-        let b_hash = hasher.finish();
-
-        assert_eq!(a1_hash, a2_hash);
-        assert_ne!(a1_hash, b_hash);
+        assert_hash_works!(a, b);
     }
 
     /// This requires Hash and Eq to be implemented
