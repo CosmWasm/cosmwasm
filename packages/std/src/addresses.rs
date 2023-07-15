@@ -399,7 +399,7 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::HexBinary;
+    use crate::{assert_hash_works, HexBinary};
     use hex_literal::hex;
     use std::collections::HashSet;
 
@@ -651,7 +651,7 @@ mod tests {
     fn canonical_addr_implements_hash() {
         let alice = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
-        crate::test_utils::check_hash_impl(alice, bob)
+        assert_hash_works!(alice, bob);
     }
 
     /// This requires Hash and Eq to be implemented

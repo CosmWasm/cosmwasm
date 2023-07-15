@@ -238,6 +238,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::assert_hash_works;
     use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};
     use std::collections::HashSet;
@@ -513,7 +514,7 @@ mod tests {
     fn binary_implements_hash() {
         let a = Binary::from([0, 187, 61, 11, 250, 0]);
         let b = Binary::from([16, 21, 33, 0, 255, 9]);
-        crate::test_utils::check_hash_impl(a, b)
+        assert_hash_works!(a, b);
     }
 
     /// This requires Hash and Eq to be implemented

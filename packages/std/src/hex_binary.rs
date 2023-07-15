@@ -247,7 +247,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 mod tests {
     use super::*;
 
-    use crate::{from_slice, to_vec, StdError};
+    use crate::{assert_hash_works, from_slice, to_vec, StdError};
     use std::collections::HashSet;
 
     #[test]
@@ -577,7 +577,7 @@ mod tests {
     fn hex_binary_implements_hash() {
         let a = HexBinary::from([0, 187, 61, 11, 250, 0]);
         let b = HexBinary::from([16, 21, 33, 0, 255, 9]);
-        crate::test_utils::check_hash_impl(a, b)
+        assert_hash_works!(a, b);
     }
 
     /// This requires Hash and Eq to be implemented
