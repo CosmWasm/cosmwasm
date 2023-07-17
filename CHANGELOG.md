@@ -4,7 +4,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0-rc.0] - 2023-07-03
+## [1.3.0] - 2023-07-17
 
 ### Fixed
 
@@ -1769,7 +1769,7 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[1.3.0-rc.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0-rc.0
+[1.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
