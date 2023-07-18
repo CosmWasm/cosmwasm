@@ -28,6 +28,8 @@ pub enum ExecuteMsg {
     Unreachable {},
     /// Returns the env for testing
     MirrorEnv {},
+    /// Does a bit of work and calls debug
+    Debug {},
 }
 
 #[cw_serde]

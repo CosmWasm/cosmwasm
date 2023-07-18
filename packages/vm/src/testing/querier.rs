@@ -99,7 +99,7 @@ impl MockQuerier {
                 let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
                 return (
                     Ok(SystemResult::Err(SystemError::InvalidRequest {
-                        error: format!("Serializing query request: {}", err),
+                        error: format!("Serializing query request: {err}"),
                         request: b"N/A".into(),
                     })),
                     gas_info,
@@ -127,7 +127,7 @@ mod tests {
         let (result, _gas_info) = querier.query_raw(b"broken request", gas_limit);
         match result.unwrap_err() {
             BackendError::OutOfGas {} => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use crate::ibc_msg::{
     AcknowledgementMsg, BalancesResponse, DispatchResponse, PacketMsg, WhoAmIResponse,
 };
-use crate::state::{accounts, AccountData};
+use crate::state::{may_load_account, remove_account, save_account, AccountData};
 
 pub const IBC_APP_VERSION: &str = "ibc-reflect-v1";
 
@@ -25,16 +25,14 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
     }
     if channel.version.as_str() != IBC_APP_VERSION {
         return Err(StdError::generic_err(format!(
-            "Must set version to `{}`",
-            IBC_APP_VERSION
+            "Must set version to `{IBC_APP_VERSION}`"
         )));
     }
 
     if let Some(counter_version) = msg.counterparty_version() {
         if counter_version != IBC_APP_VERSION {
             return Err(StdError::generic_err(format!(
-                "Counterparty version must be `{}`",
-                IBC_APP_VERSION
+                "Counterparty version must be `{IBC_APP_VERSION}`"
             )));
         }
     }
@@ -55,7 +53,7 @@ pub fn ibc_channel_connect(
 
     // create an account holder the channel exists (not found if not registered)
     let data = AccountData::default();
-    accounts(deps.storage).save(channel_id.as_bytes(), &data)?;
+    save_account(deps.storage, channel_id, &data)?;
 
     // construct a packet to send
     let packet = PacketMsg::WhoAmI {};
@@ -82,7 +80,7 @@ pub fn ibc_channel_close(
 
     // remove the channel
     let channel_id = &channel.endpoint.channel_id;
-    accounts(deps.storage).remove(channel_id.as_bytes());
+    remove_account(deps.storage, channel_id);
 
     Ok(IbcBasicResponse::new()
         .add_attribute("action", "ibc_close")
@@ -154,19 +152,16 @@ fn acknowledge_who_am_i(
                 .add_attribute("error", e))
         }
     };
-
-    accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
-        match acct {
-            Some(mut acct) => {
-                // set the account the first time
-                if acct.remote_addr.is_none() {
-                    acct.remote_addr = Some(account);
-                }
-                Ok(acct)
+    match may_load_account(deps.storage, &caller)? {
+        Some(mut acct) => {
+            // set the account the first time
+            if acct.remote_addr.is_none() {
+                acct.remote_addr = Some(account);
             }
-            None => Err(StdError::generic_err("no account to update")),
+            save_account(deps.storage, &caller, &acct)?;
         }
-    })?;
+        None => return Err(StdError::generic_err("no account to update")),
+    }
 
     Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_who_am_i"))
 }
@@ -188,26 +183,27 @@ fn acknowledge_balances(
         }
     };
 
-    accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
-        match acct {
-            Some(acct) => {
-                if let Some(old_addr) = acct.remote_addr {
-                    if old_addr != account {
-                        return Err(StdError::generic_err(format!(
-                            "remote account changed from {} to {}",
-                            old_addr, account
-                        )));
-                    }
+    match may_load_account(deps.storage, &caller)? {
+        Some(acct) => {
+            if let Some(old_addr) = acct.remote_addr {
+                if old_addr != account {
+                    return Err(StdError::generic_err(format!(
+                        "remote account changed from {old_addr} to {account}"
+                    )));
                 }
-                Ok(AccountData {
+            }
+            save_account(
+                deps.storage,
+                &caller,
+                &AccountData {
                     last_update_time: env.block.time,
                     remote_addr: Some(account),
                     remote_balance: balances,
-                })
-            }
-            None => Err(StdError::generic_err("no account to update")),
+                },
+            )?;
         }
-    })?;
+        None => return Err(StdError::generic_err("no account to update")),
+    }
 
     Ok(IbcBasicResponse::new().add_attribute("action", "acknowledge_balances"))
 }
@@ -266,7 +262,7 @@ mod tests {
                 channel_id: packet_channel,
                 ..
             }) => assert_eq!(packet_channel.as_str(), channel_id),
-            o => panic!("Unexpected message: {:?}", o),
+            o => panic!("Unexpected message: {o:?}"),
         };
     }
 
@@ -363,7 +359,7 @@ mod tests {
                 msg.original_packet.data = data;
                 msg
             }
-            o => panic!("Unexpected message: {:?}", o),
+            o => panic!("Unexpected message: {o:?}"),
         };
         let res = ibc_packet_ack(deps.as_mut(), mock_env(), msg).unwrap();
         // no actions expected, but let's check the events to see it was dispatched properly
@@ -421,7 +417,7 @@ mod tests {
                 assert!(timeout.block().is_none());
                 assert!(timeout.timestamp().is_some());
             }
-            o => panic!("unexpected message: {:?}", o),
+            o => panic!("unexpected message: {o:?}"),
         }
     }
 }

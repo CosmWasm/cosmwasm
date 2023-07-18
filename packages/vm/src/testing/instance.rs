@@ -193,8 +193,7 @@ where
             let wasm_data = instance.read_memory(wasm_ptr, size).expect("error reading");
             assert_eq!(
                 original, wasm_data,
-                "failed for size {}; expected: {:?}; actual: {:?}",
-                size, original, wasm_data
+                "failed for size {size}; expected: {original:?}; actual: {wasm_data:?}"
             );
             instance
                 .deallocate(wasm_ptr)

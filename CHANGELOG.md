@@ -4,6 +4,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
+  system cache to prepare for the Wasmer 3 upgrade.
+- cosmwasm-vm: When enabling `print_debug` the debug logs are now printed to
+  STDERR instead of STDOUT by default ([#1667]).
+- cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
+  customizing the handling of debug messages emitted by the contract ([#1667]).
+- cosmwasm-vm: Upgrade Wasmer to version 4.0.0.
+- cosmwasm-check: Update clap dependency to version 4 ([#1677])
+
+[#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
+[#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
+
 ## [1.3.0] - 2023-07-17
 
 ### Fixed
@@ -58,6 +74,13 @@ and this project adheres to
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 [#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
+
+### Deprecated
+
+- cosmwasm-storage: All exports are deprecated because this crate will be
+  removed with CosmWasm 2.0 ([#1596]).
+
+[#1596]: https://github.com/CosmWasm/cosmwasm/issues/1596
 
 ## [1.2.7] - 2023-06-19
 
@@ -1769,6 +1792,7 @@ Some main points:
 
 All future Changelog entries will reference this base
 
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0-rc.0...HEAD
 [1.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6

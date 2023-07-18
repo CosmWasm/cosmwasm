@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, to_binary, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo, PageRequest,
-    QueryResponse, Response, StdError, StdResult, WasmMsg,
+    entry_point, to_binary, Api, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo,
+    PageRequest, QueryResponse, Response, StdError, StdResult, WasmMsg,
 };
 
 use crate::errors::ContractError;
@@ -38,6 +38,7 @@ pub fn execute(
         Panic {} => execute_panic(),
         Unreachable {} => execute_unreachable(),
         MirrorEnv {} => execute_mirror_env(env),
+        Debug {} => execute_debug(deps.api),
     }
 }
 
@@ -56,7 +57,7 @@ fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractErr
         hash_length: 32,
     };
     let hash = argon2::hash_encoded(password, salt, &config)
-        .map_err(|e| StdError::generic_err(format!("hash_encoded errored: {}", e)))?;
+        .map_err(|e| StdError::generic_err(format!("hash_encoded errored: {e}")))?;
     // let matches = argon2::verify_encoded(&hash, password).unwrap();
     // assert!(matches);
     Ok(Response::new().set_data(hash.into_bytes()))
@@ -150,6 +151,33 @@ fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {
     Ok(Response::new().set_data(to_binary(&env)?))
 }
 
+fn execute_debug(api: &dyn Api) -> Result<Response, ContractError> {
+    api.debug("Hey, ho – let's go");
+
+    let password = b"password";
+    let salt = b"othersalt";
+
+    for r in 1..10 {
+        api.debug(&format!("Round {r} starting"));
+        let config = argon2::Config {
+            variant: argon2::Variant::Argon2i,
+            version: argon2::Version::Version13,
+            mem_cost: 32,
+            time_cost: r,
+            lanes: 4,
+            thread_mode: argon2::ThreadMode::Sequential,
+            secret: &[],
+            ad: &[],
+            hash_length: 32,
+        };
+        let _hash = argon2::hash_encoded(password, salt, &config).unwrap();
+        api.debug(&format!("Round {r} done"));
+    }
+
+    api.debug("Work completed, bye");
+    Ok(Response::default())
+}
+
 #[entry_point]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     use QueryMsg::*;
@@ -212,6 +240,14 @@ mod tests {
     #[test]
     fn instantiate_works() {
         setup();
+    }
+
+    #[test]
+    fn debug_works() {
+        let mut deps = setup();
+
+        let msg = ExecuteMsg::Debug {};
+        execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
     }
 
     #[test]

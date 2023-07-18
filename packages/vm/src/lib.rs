@@ -45,7 +45,7 @@ pub use crate::errors::{
     CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
     VmError, VmResult,
 };
-pub use crate::instance::{GasReport, Instance, InstanceOptions};
+pub use crate::instance::{DebugInfo, GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
 
@@ -58,5 +58,5 @@ pub mod internals {
 
     pub use crate::compatibility::check_wasm;
     pub use crate::instance::instance_from_module;
-    pub use crate::wasm_backend::{compile, make_runtime_store};
+    pub use crate::wasm_backend::{compile, make_engine, make_runtime_store};
 }

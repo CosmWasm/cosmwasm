@@ -517,7 +517,7 @@ impl fmt::Display for Decimal {
         let fractional = (self.0).checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
 
         if fractional.is_zero() {
-            write!(f, "{}", whole)
+            write!(f, "{whole}")
         } else {
             let fractional_string = format!(
                 "{:0>padding$}",
@@ -534,7 +534,7 @@ impl fmt::Display for Decimal {
 
 impl fmt::Debug for Decimal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Decimal({})", self)
+        write!(f, "Decimal({self})")
     }
 }
 
@@ -723,7 +723,7 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
     {
         match Decimal::from_str(v) {
             Ok(d) => Ok(d),
-            Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
+            Err(e) => Err(E::custom(format!("Error parsing decimal '{v}': {e}"))),
         }
     }
 }
@@ -988,17 +988,17 @@ mod tests {
     fn decimal_from_str_errors_for_broken_whole_part() {
         match Decimal::from_str("").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str(" ").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("-1").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1006,22 +1006,22 @@ mod tests {
     fn decimal_from_str_errors_for_broken_fractinal_part() {
         match Decimal::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1. ").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1.e").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1.2e3").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1031,7 +1031,7 @@ mod tests {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits",)
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
@@ -1039,7 +1039,7 @@ mod tests {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1047,12 +1047,12 @@ mod tests {
     fn decimal_from_str_errors_for_invalid_number_of_dots() {
         match Decimal::from_str("1.2.3").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1.2.3.4").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1061,17 +1061,17 @@ mod tests {
         // Integer
         match Decimal::from_str("340282366920938463464").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         // Decimal
         match Decimal::from_str("340282366920938463464.0").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
         match Decimal::from_str("340282366920938463463.374607431768211456").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -2145,13 +2145,13 @@ mod tests {
     #[test]
     fn decimal_implements_debug() {
         let decimal = Decimal::from_str("123.45").unwrap();
-        assert_eq!(format!("{:?}", decimal), "Decimal(123.45)");
+        assert_eq!(format!("{decimal:?}"), "Decimal(123.45)");
 
         let test_cases = ["5", "5.01", "42", "0", "2"];
         for s in test_cases {
             let decimal = Decimal::from_str(s).unwrap();
-            let expected = format!("Decimal({})", s);
-            assert_eq!(format!("{:?}", decimal), expected);
+            let expected = format!("Decimal({s})");
+            assert_eq!(format!("{decimal:?}"), expected);
         }
     }
 }

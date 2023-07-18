@@ -284,7 +284,7 @@ impl CanonicalAddr {
 impl fmt::Display for CanonicalAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for byte in self.0.as_slice() {
-            write!(f, "{:02X}", byte)?;
+            write!(f, "{byte:02X}")?;
         }
         Ok(())
     }
@@ -351,7 +351,10 @@ pub fn instantiate2_address(
     creator: &CanonicalAddr,
     salt: &[u8],
 ) -> Result<CanonicalAddr, Instantiate2AddressError> {
-    instantiate2_address_impl(checksum, creator, salt, b"")
+    // Non-empty msg values are discouraged.
+    // See https://medium.com/cosmwasm/dev-note-3-limitations-of-instantiate2-and-how-to-deal-with-them-a3f946874230.
+    let msg = b"";
+    instantiate2_address_impl(checksum, creator, salt, msg)
 }
 
 /// The instantiate2 address derivation implementation. This API is used for
@@ -396,11 +399,9 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::HexBinary;
+    use crate::{assert_hash_works, HexBinary};
     use hex_literal::hex;
-    use std::collections::hash_map::DefaultHasher;
     use std::collections::HashSet;
-    use std::hash::{Hash, Hasher};
 
     #[test]
     fn addr_unchecked_works() {
@@ -429,7 +430,7 @@ mod tests {
     #[test]
     fn addr_implements_display() {
         let addr = Addr::unchecked("cos934gh9034hg04g0h134");
-        let embedded = format!("Address: {}", addr);
+        let embedded = format!("Address: {addr}");
         assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
         assert_eq!(addr.to_string(), "cos934gh9034hg04g0h134");
     }
@@ -626,7 +627,7 @@ mod tests {
             0xff,
         ];
         let address = CanonicalAddr::from(bytes);
-        let embedded = format!("Address: {}", address);
+        let embedded = format!("Address: {address}");
         assert_eq!(embedded, "Address: 1203AB00FF");
         assert_eq!(address.to_string(), "1203AB00FF");
     }
@@ -648,23 +649,9 @@ mod tests {
 
     #[test]
     fn canonical_addr_implements_hash() {
-        let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
-        let mut hasher = DefaultHasher::new();
-        alice1.hash(&mut hasher);
-        let alice1_hash = hasher.finish();
-
-        let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
-        let mut hasher = DefaultHasher::new();
-        alice2.hash(&mut hasher);
-        let alice2_hash = hasher.finish();
-
+        let alice = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
-        let mut hasher = DefaultHasher::new();
-        bob.hash(&mut hasher);
-        let bob_hash = hasher.finish();
-
-        assert_eq!(alice1_hash, alice2_hash);
-        assert_ne!(alice1_hash, bob_hash);
+        assert_hash_works!(alice, bob);
     }
 
     /// This requires Hash and Eq to be implemented

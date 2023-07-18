@@ -236,7 +236,7 @@ fn handle_dispatch_packet() {
         from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(
         ack.unwrap_err(),
-        "invalid packet: cosmwasm_std::addresses::Addr not found"
+        "invalid packet: account channel-123 not found"
     );
 
     // register the channel
@@ -287,5 +287,5 @@ fn handle_dispatch_packet() {
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> =
         from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
-    assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
+    assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`");
 }

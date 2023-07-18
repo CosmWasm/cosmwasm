@@ -28,7 +28,7 @@ pub fn remove_schemas(schemas_dir: &path::Path) -> Result<(), io::Error> {
         ;
 
     for file_path in file_paths {
-        println!("Removing {:?} …", file_path);
+        println!("Removing {file_path:?} …");
         fs::remove_file(file_path)?;
     }
     Ok(())

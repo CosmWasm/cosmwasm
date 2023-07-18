@@ -72,7 +72,7 @@ fn connect(deps: &mut Instance<MockApi, MockStorage, MockQuerier>, channel_id: &
             channel_id: packet_channel,
             ..
         }) => assert_eq!(packet_channel.as_str(), channel_id),
-        o => panic!("Unexpected message: {:?}", o),
+        o => panic!("Unexpected message: {o:?}"),
     };
 }
 
@@ -183,7 +183,7 @@ fn dispatch_message_send_and_ack() {
             msg.original_packet.data = data;
             msg
         }
-        o => panic!("Unexpected message: {:?}", o),
+        o => panic!("Unexpected message: {o:?}"),
     };
     let res: IbcBasicResponse = ibc_packet_ack(&mut deps, mock_env(), msg).unwrap();
     // no actions expected, but let's check the events to see it was dispatched properly
@@ -241,6 +241,6 @@ fn send_remote_funds() {
             assert!(timeout.block().is_none());
             assert!(timeout.timestamp().is_some());
         }
-        o => panic!("unexpected message: {:?}", o),
+        o => panic!("unexpected message: {o:?}"),
     }
 }

@@ -137,8 +137,7 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
 
     if limits.initial() > MEMORY_LIMIT {
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract memory's minimum must not exceed {} pages.",
-            MEMORY_LIMIT
+            "Wasm contract memory's minimum must not exceed {MEMORY_LIMIT} pages."
         )));
     }
 
@@ -185,8 +184,7 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.contains(*required_export) {
             return Err(VmError::static_validation_err(format!(
-                "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}.",
-                required_export, REQUIRED_EXPORTS
+                "Wasm contract doesn't have required export: \"{required_export}\". Exports required by VM: {REQUIRED_EXPORTS:?}."
             )));
         }
     }
@@ -223,8 +221,7 @@ fn check_wasm_imports(module: &Module, supported_imports: &[&str]) -> VmResult<(
         match required_import.external() {
             External::Function(_) => {}, // ok
             _ => return Err(VmError::static_validation_err(format!(
-                "Wasm contract requires non-function import: \"{}\". Right now, all supported imports are functions.",
-                full_name
+                "Wasm contract requires non-function import: \"{full_name}\". Right now, all supported imports are functions."
             ))),
         };
     }
@@ -288,7 +285,7 @@ mod tests {
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
             ),
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("This must not succeeed"),
         };
 
@@ -297,7 +294,7 @@ mod tests {
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
             ),
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("This must not succeeed"),
         };
 
@@ -306,7 +303,7 @@ mod tests {
                 msg,
                 "Wasm contract missing a required marker export: interface_version_*"
             ),
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("This must not succeeed"),
         };
 
@@ -315,7 +312,7 @@ mod tests {
                 msg,
                 "Wasm contract missing a required marker export: interface_version_*"
             ),
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("This must not succeeed"),
         };
     }
@@ -365,7 +362,7 @@ mod tests {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have a memory section"));
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -389,7 +386,7 @@ mod tests {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -410,7 +407,7 @@ mod tests {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -425,7 +422,7 @@ mod tests {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's minimum must not exceed 512 pages"));
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -437,7 +434,7 @@ mod tests {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's maximum must be unset"));
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -499,7 +496,7 @@ mod tests {
                     "Wasm contract missing a required marker export: interface_version_*"
                 );
             }
-            err => panic!("Unexpected error {:?}", err),
+            err => panic!("Unexpected error {err:?}"),
         }
 
         // multiple
@@ -524,7 +521,7 @@ mod tests {
                     "Wasm contract contains more than one marker export: interface_version_*"
                 );
             }
-            err => panic!("Unexpected error {:?}", err),
+            err => panic!("Unexpected error {err:?}"),
         }
 
         // CosmWasm 0.15
@@ -545,7 +542,7 @@ mod tests {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)");
             }
-            err => panic!("Unexpected error {:?}", err),
+            err => panic!("Unexpected error {err:?}"),
         }
 
         // Unknown value
@@ -566,7 +563,7 @@ mod tests {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)");
             }
-            err => panic!("Unexpected error {:?}", err),
+            err => panic!("Unexpected error {err:?}"),
         }
     }
 
@@ -601,7 +598,7 @@ mod tests {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have required export: \"allocate\""));
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
 
@@ -622,7 +619,7 @@ mod tests {
                     msg.starts_with("Wasm contract doesn't have required export: \"deallocate\"")
                 );
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -636,7 +633,7 @@ mod tests {
                     msg.starts_with("Wasm contract doesn't have required export: \"instantiate\"")
                 )
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
+            Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
@@ -775,7 +772,7 @@ mod tests {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Import count exceeds limit. Imports: 101. Limit: 100.");
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -810,13 +807,13 @@ mod tests {
         let result = check_wasm_imports(&deserialize_wasm(&wasm).unwrap(), supported_imports);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
-                println!("{}", msg);
+                println!("{msg}");
                 assert_eq!(
                     msg,
                     r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.addr_canonicalize", "env.addr_humanize", "env.debug", "env.query_chain"]."#
                 );
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -830,7 +827,7 @@ mod tests {
                     msg.starts_with("Wasm contract requires unsupported import: \"env.read_db\"")
                 );
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -844,7 +841,7 @@ mod tests {
                     msg.starts_with("Wasm contract requires non-function import: \"env.db_read\"")
                 );
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

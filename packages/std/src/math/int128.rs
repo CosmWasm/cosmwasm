@@ -291,7 +291,7 @@ impl FromStr for Int128 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<i128>() {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int128: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int128: {e}"))),
         }
     }
 }
@@ -399,10 +399,7 @@ impl Shr<u32> for Int128 {
 
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!(
-                "right shift error: {} is larger or equal than the number of bits in Int128",
-                rhs,
-            )
+            panic!("right shift error: {rhs} is larger or equal than the number of bits in Int128",)
         })
     }
 }
@@ -413,10 +410,7 @@ impl Shl<u32> for Int128 {
 
     fn shl(self, rhs: u32) -> Self::Output {
         self.checked_shl(rhs).unwrap_or_else(|_| {
-            panic!(
-                "left shift error: {} is larger or equal than the number of bits in Int128",
-                rhs,
-            )
+            panic!("left shift error: {rhs} is larger or equal than the number of bits in Int128",)
         })
     }
 }
@@ -483,7 +477,7 @@ impl<'de> de::Visitor<'de> for Int128Visitor {
     where
         E: de::Error,
     {
-        Int128::try_from(v).map_err(|e| E::custom(format!("invalid Int128 '{}' - {}", v, e)))
+        Int128::try_from(v).map_err(|e| E::custom(format!("invalid Int128 '{v}' - {e}")))
     }
 }
 
@@ -608,25 +602,25 @@ mod tests {
     #[test]
     fn int128_implements_display() {
         let a = Int128::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Int128::from(-12345i32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: -12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: -12345");
         assert_eq!(a.to_string(), "-12345");
 
         let a = Int128::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn int128_display_padding_works() {
         let a = Int128::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
 
         let a = Int128::from(-123i64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: -0123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: -0123");
     }
 
     #[test]
