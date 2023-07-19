@@ -14,18 +14,6 @@ pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
 ];
 
 /// A small helper macro to validate the wasm module and extract a reader for a specific section.
-///
-/// # Example
-/// ```
-/// use wasmer::wasmparser::{ExportSectionReader, Export};
-/// use cosmwasm_vm::extract_reader;
-///
-/// let wasm_ok = wat::parse_str("(module (memory 512))").unwrap();
-/// check_wasm_memories(
-///    extract_reader!(&wasm_ok, MemorySection, MemorySectionReader<'_>).unwrap(),
-/// )
-/// .unwrap();
-/// ```
 macro_rules! extract_reader {
     ($wasm_code: expr, $payload: ident, $t: ty) => {{
         fn extract(wasm_code: &[u8]) -> crate::VmResult<Option<$t>> {

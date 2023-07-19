@@ -571,7 +571,10 @@ mod tests {
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
-                assert_eq!(msg, "Wasm contract doesn\'t have a memory section")
+                assert_eq!(
+                    msg,
+                    "Wasm contract missing a required marker export: interface_version_*"
+                )
             }
             e => panic!("Unexpected error {e:?}"),
         }

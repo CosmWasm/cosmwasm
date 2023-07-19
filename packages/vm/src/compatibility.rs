@@ -114,11 +114,6 @@ fn check_wasm_tables(mut tables: TableSectionReader<'_>) -> VmResult<()> {
         1 => {
             let limits = tables.read()?;
             if let Some(maximum) = limits.maximum {
-                if limits.initial > maximum {
-                    return Err(VmError::static_validation_err(
-                        "Wasm contract's first table section has a initial limit > max limit",
-                    ));
-                }
                 if maximum > TABLE_SIZE_LIMIT {
                     return Err(VmError::static_validation_err(
                         "Wasm contract's first table section has a too large max limit",
@@ -323,19 +318,17 @@ mod tests {
         };
 
         match check_wasm(CONTRACT_0_12, &default_capabilities()) {
-            Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
-                msg,
-                "Wasm contract missing a required marker export: interface_version_*"
-            ),
+            Err(VmError::StaticValidationErr { msg, .. }) => {
+                assert!(msg.contains("Wasm contract requires unsupported import"))
+            }
             Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("This must not succeeed"),
         };
 
         match check_wasm(CONTRACT_0_7, &default_capabilities()) {
-            Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
-                msg,
-                "Wasm contract missing a required marker export: interface_version_*"
-            ),
+            Err(VmError::StaticValidationErr { msg, .. }) => {
+                assert!(msg.contains("Wasm contract requires unsupported import"))
+            }
             Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("This must not succeeed"),
         };
@@ -360,21 +353,22 @@ mod tests {
 
         // One table (bound, initial > max)
         let wasm = wat::parse_str("(module (table $name 124 123 funcref))").unwrap();
+        // this should be caught by the validator
+        let err = extract_reader!(&wasm, TableSection, TableSectionReader<'_>)
+            .map(|_| ())
+            .unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("size minimum must not be greater than maximum"));
+
+        // One table (bound, max too large)
+        let wasm = wat::parse_str("(module (table $name 100 9999 funcref))").unwrap();
         let err = check_wasm_tables(
             extract_reader!(&wasm, TableSection, TableSectionReader<'_>)
                 .unwrap()
                 .unwrap(),
         )
         .unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("Wasm contract's first table section has a initial limit > max limit"));
-
-        // One table (bound, max too large)
-        let wasm = wat::parse_str("(module (table $name 100 9999 funcref))").unwrap();
-        let err = extract_reader!(&wasm, TableSection, TableSectionReader<'_>)
-            .map(|_| ()) // map away the `Ok` value, it does not impl Debug
-            .unwrap_err();
         assert!(err
             .to_string()
             .contains("Wasm contract's first table section has a too large max limit"));
@@ -428,11 +422,10 @@ mod tests {
         ))
         .unwrap();
 
-        match check_wasm_memories(
-            extract_reader!(&wasm, MemorySection, MemorySectionReader<'_>).unwrap(),
-        ) {
+        // wrong number of memories should be caught by the validator
+        match extract_reader!(&wasm, MemorySection, MemorySectionReader<'_>) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
-                assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
+                assert!(msg.contains("multiple memories"));
             }
             Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
