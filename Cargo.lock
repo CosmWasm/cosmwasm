@@ -528,7 +528,6 @@ dependencies = [
  "hex",
  "hex-literal",
  "leb128",
- "parity-wasm",
  "rand",
  "schemars",
  "serde",
@@ -1447,12 +1446,6 @@ name = "os_str_bytes"
 version = "6.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ceedf44fb00f2d1984b0bc98102627ce622e083e49a5bacdb3e514fa4238e267"
-
-[[package]]
-name = "parity-wasm"
-version = "0.45.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1ad0aff30c1da14b1254fcb2af73e1fa9a28670e584a626f53a369d0e157304"
 
 [[package]]
 name = "parking_lot_core"

@@ -1,7 +1,8 @@
-use parity_wasm::elements::{deserialize_buffer, Internal, Module};
 use std::collections::HashSet;
 
-use crate::errors::{VmError, VmResult};
+use wasmer::wasmparser::{Export, ExportSectionReader, ExternalKind};
+
+use crate::errors::VmResult;
 
 pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
     "ibc_channel_open",
@@ -12,47 +13,88 @@ pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
     "ibc_packet_timeout",
 ];
 
-pub fn deserialize_wasm(wasm_code: &[u8]) -> VmResult<Module> {
-    deserialize_buffer(wasm_code).map_err(|err| {
-        VmError::static_validation_err(format!(
-            "Wasm bytecode could not be deserialized. Deserialization error: \"{err}\""
-        ))
-    })
+/// A small helper macro to validate the wasm module and extract a reader for a specific section.
+///
+/// # Example
+/// ```
+/// use wasmer::wasmparser::{ExportSectionReader, Export};
+/// use cosmwasm_vm::extract_reader;
+///
+/// let wasm_ok = wat::parse_str("(module (memory 512))").unwrap();
+/// check_wasm_memories(
+///    extract_reader!(&wasm_ok, MemorySection, MemorySectionReader<'_>).unwrap(),
+/// )
+/// .unwrap();
+/// ```
+macro_rules! extract_reader {
+    ($wasm_code: expr, $payload: ident, $t: ty) => {{
+        fn extract(wasm_code: &[u8]) -> crate::VmResult<Option<$t>> {
+            use wasmer::wasmparser::{Parser, Payload, Validator};
+
+            let mut validator = Validator::new();
+            let parser = Parser::new(0);
+
+            let mut value = None;
+            for p in parser.parse_all(wasm_code) {
+                let p = p?;
+                validator.payload(&p)?;
+                if let Payload::$payload(e) = p {
+                    // do not return immediately, as we want to validate the entire module
+                    value = Some(e);
+                }
+            }
+
+            Ok(value)
+        }
+
+        extract($wasm_code)
+    }};
+}
+
+pub(crate) use extract_reader;
+
+pub fn deserialize_exports(wasm_code: &[u8]) -> VmResult<Vec<Export<'_>>> {
+    let exports = extract_reader!(wasm_code, ExportSection, ExportSectionReader<'_>)?;
+    Ok(exports
+        .map(|e| e.into_iter().collect::<Result<Vec<_>, _>>())
+        .transpose()?
+        .unwrap_or_default())
 }
 
 /// A trait that allows accessing shared functionality of `parity_wasm::elements::Module`
 /// and `wasmer::Module` in a shared fashion.
 pub trait ExportInfo {
     /// Returns all exported function names with the given prefix
-    fn exported_function_names(&self, prefix: Option<&str>) -> HashSet<String>;
+    fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String>;
 }
 
-impl ExportInfo for Module {
-    fn exported_function_names(&self, prefix: Option<&str>) -> HashSet<String> {
-        self.export_section()
-            .map_or(HashSet::default(), |export_section| {
-                export_section
-                    .entries()
-                    .iter()
-                    .filter_map(|entry| match entry.internal() {
-                        Internal::Function(_) => Some(entry.field()),
-                        _ => None,
-                    })
-                    .filter(|name| {
-                        if let Some(required_prefix) = prefix {
-                            name.starts_with(required_prefix)
-                        } else {
-                            true
-                        }
-                    })
-                    .map(|name| name.to_string())
-                    .collect()
+impl ExportInfo for &[Export<'_>] {
+    fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String> {
+        self.iter()
+            .filter_map(|export| match export.kind {
+                ExternalKind::Func => Some(export.name),
+                _ => None,
             })
+            .filter(|name| {
+                if let Some(required_prefix) = prefix {
+                    name.starts_with(required_prefix)
+                } else {
+                    true
+                }
+            })
+            .map(|name| name.to_string())
+            .collect()
     }
 }
 
-impl ExportInfo for wasmer::Module {
-    fn exported_function_names(&self, prefix: Option<&str>) -> HashSet<String> {
+impl ExportInfo for &Vec<Export<'_>> {
+    fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String> {
+        self[..].exported_function_names(prefix)
+    }
+}
+
+impl ExportInfo for &wasmer::Module {
+    fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String> {
         self.exports()
             .functions()
             .filter_map(|function_export| {
@@ -74,7 +116,7 @@ impl ExportInfo for wasmer::Module {
 /// Returns true if and only if all IBC entry points ([`REQUIRED_IBC_EXPORTS`])
 /// exist as exported functions. This does not guarantee the entry points
 /// are functional and for simplicity does not even check their signatures.
-pub fn has_ibc_entry_points(module: &impl ExportInfo) -> bool {
+pub fn has_ibc_entry_points(module: impl ExportInfo) -> bool {
     let available_exports = module.exported_function_names(None);
     REQUIRED_IBC_EXPORTS
         .iter()
@@ -83,38 +125,33 @@ pub fn has_ibc_entry_points(module: &impl ExportInfo) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::VmError;
+
     use super::*;
-    use parity_wasm::elements::Internal;
     use wasmer::{Cranelift, Store};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     #[test]
-    fn deserialize_wasm_works() {
-        let module = deserialize_wasm(CONTRACT).unwrap();
-        assert_eq!(module.version(), 1);
+    fn deserialize_exports_works() {
+        let module = deserialize_exports(CONTRACT).unwrap();
+        // assert_eq!(module.version(), 1); // TODO: not implemented anymore
 
         let exported_functions = module
-            .export_section()
-            .unwrap()
-            .entries()
             .iter()
-            .filter(|entry| matches!(entry.internal(), Internal::Function(_)));
+            .filter(|entry| matches!(entry.kind, ExternalKind::Func));
         assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
 
         let exported_memories = module
-            .export_section()
-            .unwrap()
-            .entries()
             .iter()
-            .filter(|entry| matches!(entry.internal(), Internal::Memory(_)));
+            .filter(|entry| matches!(entry.kind, ExternalKind::Memory));
         assert_eq!(exported_memories.count(), 1);
     }
 
     #[test]
     fn deserialize_wasm_corrupted_data() {
-        match deserialize_wasm(CORRUPTED).unwrap_err() {
+        match deserialize_exports(CORRUPTED).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
             }
@@ -125,7 +162,7 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_parity_with_no_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(exports, HashSet::new());
 
@@ -141,7 +178,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(
             exports,
@@ -152,7 +189,7 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_parity_with_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(exports, HashSet::new());
 
@@ -169,7 +206,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(
             exports,
@@ -257,7 +294,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         assert!(!has_ibc_entry_points(&module));
 
         // IBC contract
@@ -282,7 +319,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         assert!(has_ibc_entry_points(&module));
 
         // Missing packet ack
@@ -306,7 +343,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         assert!(!has_ibc_entry_points(&module));
     }
 }

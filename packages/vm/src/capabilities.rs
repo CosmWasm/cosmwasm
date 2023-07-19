@@ -15,7 +15,7 @@ pub fn capabilities_from_csv(csv: &str) -> HashSet<String> {
 
 /// Implementation for check_wasm, based on static analysis of the bytecode.
 /// This is used for code upload, to perform check before compiling the Wasm.
-pub fn required_capabilities_from_module(module: &impl ExportInfo) -> HashSet<String> {
+pub fn required_capabilities_from_module(module: impl ExportInfo) -> HashSet<String> {
     module
         .exported_function_names(Some(REQUIRES_PREFIX))
         .into_iter()
@@ -33,7 +33,7 @@ pub fn required_capabilities_from_module(module: &impl ExportInfo) -> HashSet<St
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::static_analysis::deserialize_wasm;
+    use crate::static_analysis::deserialize_exports;
 
     #[test]
     fn capabilities_from_csv_works() {
@@ -73,7 +73,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
 
         let required_capabilities = required_capabilities_from_module(&module);
         assert_eq!(required_capabilities.len(), 3);
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn required_capabilities_from_module_works_without_exports_section() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_wasm(&wasm).unwrap();
+        let module = deserialize_exports(&wasm).unwrap();
         let required_capabilities = required_capabilities_from_module(&module);
         assert_eq!(required_capabilities.len(), 0);
     }
