@@ -23,22 +23,14 @@ pub fn validate_wasm<'a>(
     mut handle_payload: impl FnMut(Payload<'a>) -> VmResult<()>,
 ) -> VmResult<()> {
     let mut validator = Validator::new_with_features(WasmFeatures {
-        mutable_global: false,
-        saturating_float_to_int: false,
-        sign_extension: true,
-        reference_types: true,
-        multi_value: false,
-        bulk_memory: false,
+        deterministic_only: true,
         component_model: false,
         simd: false,
         relaxed_simd: false,
         threads: false,
-        tail_call: false,
-        deterministic_only: true,
         multi_memory: false,
-        exceptions: false,
         memory64: false,
-        extended_const: false,
+        ..Default::default()
     });
 
     for p in Parser::new(0).parse_all(wasm_code) {
