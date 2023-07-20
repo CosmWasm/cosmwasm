@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use wasmer::wasmparser::{Export, ExportSectionReader, ExternalKind};
+use wasmer::wasmparser::{
+    Export, ExportSectionReader, ExternalKind, Parser, Payload, ValidPayload, Validator,
+    WasmFeatures,
+};
 
 use crate::errors::VmResult;
 
@@ -13,29 +16,56 @@ pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
     "ibc_packet_timeout",
 ];
 
+/// Validates the given wasm code and calls the callback for each payload.
+/// "Validates" in this case refers to general WebAssembly validation, not specific to CosmWasm.
+pub fn validate_wasm<'a>(
+    wasm_code: &'a [u8],
+    mut handle_payload: impl FnMut(Payload<'a>) -> VmResult<()>,
+) -> VmResult<()> {
+    let mut validator = Validator::new_with_features(WasmFeatures {
+        mutable_global: false,
+        saturating_float_to_int: false,
+        sign_extension: true,
+        reference_types: true,
+        multi_value: false,
+        bulk_memory: false,
+        component_model: false,
+        simd: false,
+        relaxed_simd: false,
+        threads: false,
+        tail_call: false,
+        deterministic_only: true,
+        multi_memory: false,
+        exceptions: false,
+        memory64: false,
+        extended_const: false,
+    });
+
+    for p in Parser::new(0).parse_all(wasm_code) {
+        let p = p?;
+        // validate the payload
+        if let ValidPayload::Func(fv, body) = validator.payload(&p)? {
+            // also validate function bodies
+            fv.into_validator(Default::default()).validate(&body)?;
+        }
+        // tell caller about the payload
+        handle_payload(p)?;
+    }
+
+    Ok(())
+}
+
 /// A small helper macro to validate the wasm module and extract a reader for a specific section.
 macro_rules! extract_reader {
     ($wasm_code: expr, $payload: ident, $t: ty) => {{
-        fn extract(wasm_code: &[u8]) -> crate::VmResult<Option<$t>> {
-            use wasmer::wasmparser::{Parser, Payload, ValidPayload, Validator};
-
-            let mut validator = Validator::new();
-            let parser = Parser::new(0);
-
+        fn extract(wasm_code: &[u8]) -> $crate::VmResult<Option<$t>> {
             let mut value = None;
-            for p in parser.parse_all(wasm_code) {
-                let p = p?;
-                // validate the payload
-                if let ValidPayload::Func(mut fv, body) = validator.payload(&p)? {
-                    // also validate function bodies
-                    fv.validate(&body)?;
+            $crate::static_analysis::validate_wasm(wasm_code, |p| {
+                if let Payload::$payload(p) = p {
+                    value = Some(p);
                 }
-                if let Payload::$payload(e) = p {
-                    // do not return immediately, as we want to validate the entire module
-                    value = Some(e);
-                }
-            }
-
+                Ok(())
+            })?;
             Ok(value)
         }
 

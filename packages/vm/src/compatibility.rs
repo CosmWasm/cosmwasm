@@ -5,15 +5,14 @@ use wasmer::wasmparser::Export;
 use wasmer::wasmparser::Import;
 use wasmer::wasmparser::ImportSectionReader;
 use wasmer::wasmparser::MemorySectionReader;
-use wasmer::wasmparser::Parser;
 use wasmer::wasmparser::Payload;
 use wasmer::wasmparser::TableSectionReader;
 use wasmer::wasmparser::TypeRef;
-use wasmer::wasmparser::Validator;
 
 use crate::capabilities::required_capabilities_from_module;
 use crate::errors::{VmError, VmResult};
 use crate::limited::LimitedDisplay;
+use crate::static_analysis::validate_wasm;
 use crate::static_analysis::ExportInfo;
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
@@ -81,15 +80,8 @@ const MAX_IMPORTS: u32 = 100;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
-    let parsed = Parser::new(0).parse_all(wasm_code);
-    let mut validator = Validator::new();
-    // TODO: some of the validator checks are duplicated in our checks below
-
     let mut memory_section: Option<MemorySectionReader<'_>> = None;
-    for payload in parsed {
-        let payload = payload?;
-        validator.payload(&payload)?;
-
+    validate_wasm(wasm_code, |payload| {
         match payload {
             Payload::TableSection(t) => check_wasm_tables(t)?,
             Payload::MemorySection(m) => memory_section = Some(m),
@@ -102,7 +94,9 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
             Payload::ImportSection(i) => check_wasm_imports(i, SUPPORTED_IMPORTS)?,
             _ => {}
         }
-    }
+        Ok(())
+    })?;
+    // we want to fail if there is no memory section, so this check is delayed until the end
     check_wasm_memories(memory_section)?;
 
     Ok(())
