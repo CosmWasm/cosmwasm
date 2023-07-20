@@ -885,7 +885,7 @@ mod tests {
 
     #[test]
     fn check_wasm_imports_of_old_contract() {
-        let module = extract_reader!(&CONTRACT_0_7, ImportSection, ImportSectionReader<'_>)
+        let module = extract_reader!(CONTRACT_0_7, ImportSection, ImportSectionReader<'_>)
             .unwrap()
             .unwrap();
         let result = check_wasm_imports(module, SUPPORTED_IMPORTS);
