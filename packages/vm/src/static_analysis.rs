@@ -17,7 +17,7 @@ pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
 macro_rules! extract_reader {
     ($wasm_code: expr, $payload: ident, $t: ty) => {{
         fn extract(wasm_code: &[u8]) -> crate::VmResult<Option<$t>> {
-            use wasmer::wasmparser::{Parser, Payload, Validator};
+            use wasmer::wasmparser::{Parser, Payload, ValidPayload, Validator};
 
             let mut validator = Validator::new();
             let parser = Parser::new(0);
@@ -25,7 +25,11 @@ macro_rules! extract_reader {
             let mut value = None;
             for p in parser.parse_all(wasm_code) {
                 let p = p?;
-                validator.payload(&p)?;
+                // validate the payload
+                if let ValidPayload::Func(mut fv, body) = validator.payload(&p)? {
+                    // also validate function bodies
+                    fv.validate(&body)?;
+                }
                 if let Payload::$payload(e) = p {
                     // do not return immediately, as we want to validate the entire module
                     value = Some(e);
