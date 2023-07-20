@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Int64, Uint128, Uint64};
@@ -481,7 +481,7 @@ impl<'de> de::Visitor<'de> for Int128Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Int128
+impl<A> core::iter::Sum<A> for Int128
 where
     Self: Add<A, Output = Self>,
 {
@@ -497,7 +497,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Int128>(), 16);
+        assert_eq!(core::mem::size_of::<Int128>(), 16);
     }
 
     #[test]
@@ -1036,7 +1036,7 @@ mod tests {
         );
         // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
         assert_eq!(
-            Int128::MIN >> (std::mem::size_of::<Int128>() as u32 * 8 - 1),
+            Int128::MIN >> (core::mem::size_of::<Int128>() as u32 * 8 - 1),
             -Int128::one()
         );
     }
@@ -1055,7 +1055,7 @@ mod tests {
         );
         // left shift by by the maximum shift value should result in MIN
         assert_eq!(
-            Int128::one() << (std::mem::size_of::<Int128>() as u32 * 8 - 1),
+            Int128::one() << (core::mem::size_of::<Int128>() as u32 * 8 - 1),
             Int128::MIN
         );
     }

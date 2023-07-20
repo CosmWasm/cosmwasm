@@ -1,7 +1,7 @@
+use core::fmt;
 use derivative::Derivative;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::binary::Binary;
 use crate::coin::Coin;
@@ -120,10 +120,10 @@ pub enum DistributionMsg {
     },
 }
 
-fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-    match std::str::from_utf8(data.as_slice()) {
+fn binary_to_string(data: &Binary, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+    match core::str::from_utf8(data.as_slice()) {
         Ok(s) => fmt.write_str(s),
-        Err(_) => write!(fmt, "{data:?}"),
+        Err(_) => fmt::Debug::fmt(data, fmt),
     }
 }
 

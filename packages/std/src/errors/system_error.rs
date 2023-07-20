@@ -41,8 +41,8 @@ pub enum SystemError {
 
 impl std::error::Error for SystemError {}
 
-impl std::fmt::Display for SystemError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SystemError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             SystemError::InvalidRequest { error, request } => write!(
                 f,

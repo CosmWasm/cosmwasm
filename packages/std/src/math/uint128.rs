@@ -1,9 +1,9 @@
-use std::fmt::{self};
-use std::ops::{
+use core::fmt::{self};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
     Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
 
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
@@ -586,7 +586,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint128
+impl<A> core::iter::Sum<A> for Uint128
 where
     Self: Add<A, Output = Self>,
 {
@@ -604,7 +604,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Uint128>(), 16);
+        assert_eq!(core::mem::size_of::<Uint128>(), 16);
     }
 
     #[test]

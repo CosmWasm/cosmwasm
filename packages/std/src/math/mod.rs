@@ -27,7 +27,7 @@ pub use uint64::Uint64;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ops::*;
+    use core::ops::*;
 
     /// A trait that ensures other traits are implemented for our number types
     trait AllImpl<'a>:

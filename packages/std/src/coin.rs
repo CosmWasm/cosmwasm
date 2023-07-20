@@ -1,6 +1,6 @@
+use core::{fmt, str::FromStr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{fmt, str::FromStr};
 
 use crate::{errors::CoinFromStrError, math::Uint128};
 

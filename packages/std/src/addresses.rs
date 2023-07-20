@@ -1,12 +1,12 @@
+use alloc::borrow::Cow;
+use core::fmt;
+use core::ops::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{
     digest::{Digest, Update},
     Sha256,
 };
-use std::borrow::Cow;
-use std::fmt;
-use std::ops::Deref;
 use thiserror::Error;
 
 use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
@@ -401,7 +401,6 @@ mod tests {
     use super::*;
     use crate::{assert_hash_works, HexBinary};
     use hex_literal::hex;
-    use std::collections::HashSet;
 
     #[test]
     fn addr_unchecked_works() {
@@ -657,6 +656,8 @@ mod tests {
     /// This requires Hash and Eq to be implemented
     #[test]
     fn canonical_addr_can_be_used_in_hash_set() {
+        use std::collections::HashSet;
+
         let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);

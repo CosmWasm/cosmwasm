@@ -1,5 +1,5 @@
-use std::fmt;
-use std::ops::Deref;
+use core::fmt;
+use core::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
@@ -143,7 +143,7 @@ impl From<HexBinary> for Binary {
     }
 }
 
-/// Implement `HexBinary == std::vec::Vec<u8>`
+/// Implement `HexBinary == alloc::vec::Vec<u8>`
 impl PartialEq<Vec<u8>> for HexBinary {
     fn eq(&self, rhs: &Vec<u8>) -> bool {
         // Use Vec<u8> == Vec<u8>
@@ -151,7 +151,7 @@ impl PartialEq<Vec<u8>> for HexBinary {
     }
 }
 
-/// Implement `std::vec::Vec<u8> == HexBinary`
+/// Implement `alloc::vec::Vec<u8> == HexBinary`
 impl PartialEq<HexBinary> for Vec<u8> {
     fn eq(&self, rhs: &HexBinary) -> bool {
         // Use Vec<u8> == Vec<u8>
@@ -248,7 +248,6 @@ mod tests {
     use super::*;
 
     use crate::{assert_hash_works, from_slice, to_vec, StdError};
-    use std::collections::HashSet;
 
     #[test]
     fn from_hex_works() {
@@ -583,6 +582,8 @@ mod tests {
     /// This requires Hash and Eq to be implemented
     #[test]
     fn hex_binary_can_be_used_in_hash_set() {
+        use std::collections::HashSet;
+
         let a1 = HexBinary::from([0, 187, 61, 11, 250, 0]);
         let a2 = HexBinary::from([0, 187, 61, 11, 250, 0]);
         let b = HexBinary::from([16, 21, 33, 0, 255, 9]);

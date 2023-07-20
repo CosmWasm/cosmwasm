@@ -1,5 +1,5 @@
-use std::fmt;
-use std::ops::Deref;
+use core::fmt;
+use core::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
@@ -135,7 +135,7 @@ impl From<Binary> for Vec<u8> {
     }
 }
 
-/// Implement `encoding::Binary == std::vec::Vec<u8>`
+/// Implement `encoding::Binary == alloc::vec::Vec<u8>`
 impl PartialEq<Vec<u8>> for Binary {
     fn eq(&self, rhs: &Vec<u8>) -> bool {
         // Use Vec<u8> == Vec<u8>
@@ -143,7 +143,7 @@ impl PartialEq<Vec<u8>> for Binary {
     }
 }
 
-/// Implement `std::vec::Vec<u8> == encoding::Binary`
+/// Implement `alloc::vec::Vec<u8> == encoding::Binary`
 impl PartialEq<Binary> for Vec<u8> {
     fn eq(&self, rhs: &Binary) -> bool {
         // Use Vec<u8> == Vec<u8>
@@ -241,7 +241,6 @@ mod tests {
     use crate::assert_hash_works;
     use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};
-    use std::collections::HashSet;
 
     #[test]
     fn encode_decode() {
@@ -520,6 +519,8 @@ mod tests {
     /// This requires Hash and Eq to be implemented
     #[test]
     fn binary_can_be_used_in_hash_set() {
+        use std::collections::HashSet;
+
         let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
         let a2 = Binary::from([0, 187, 61, 11, 250, 0]);
         let b = Binary::from([16, 21, 33, 0, 255, 9]);
