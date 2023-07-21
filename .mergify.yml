@@ -50,6 +50,6 @@ pull_request_rules:
       backport:
         branches:
           # Update this when going to a new minor version
-          - "1.4"
+          - "release/1.4"
         assignees:
           - "{{ author }}"
