@@ -19,6 +19,11 @@ pub enum DistributionQuery {
         delegator_address: String,
         validator_address: String,
     },
+    // https://github.com/cosmos/cosmos-sdk/blob/e3482f2d4142c55f9dc3f47a321b56610a11492c/x/distribution/types/query.pb.go#L614-L619
+    #[cfg(feature = "cosmwasm_1_4")]
+    DelegationTotalRewards {
+        delegator_address: String,
+    },
 }
 
 // https://github.com/cosmos/cosmos-sdk/blob/4f6f6c00021f4b5ee486bbb71ae2071a8ceb47c9/x/distribution/types/query.pb.go#L832-L835
@@ -50,4 +55,25 @@ impl QueryResponseType for DelegationRewardsResponse {}
 pub struct DecCoin {
     pub denom: String,
     pub amount: crate::Decimal,
+}
+
+// https://github.com/cosmos/cosmos-sdk/blob/e3482f2d4142c55f9dc3f47a321b56610a11492c/x/distribution/types/query.pb.go#L654-L661
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct DelegationTotalRewardsResponse {
+    pub rewards: Vec<DelegatorReward>,
+    pub total: Vec<DecCoin>,
+}
+
+impl_response_constructor!(
+    DelegationTotalRewardsResponse,
+    rewards: Vec<DelegatorReward>,
+    total: Vec<DecCoin>
+);
+impl QueryResponseType for DelegationTotalRewardsResponse {}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct DelegatorReward {
+    pub validator_address: String,
+    pub reward: Vec<DecCoin>,
 }

@@ -46,7 +46,7 @@ use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
-use crate::{DecCoin, DelegationRewardsResponse};
+use crate::{DecCoin, Decimal, DelegationRewardsResponse};
 
 use super::riffle_shuffle;
 
@@ -938,7 +938,8 @@ impl StakingQuerier {
 pub struct DistributionQuerier {
     withdraw_addresses: HashMap<String, String>,
     #[cfg(feature = "cosmwasm_1_4")]
-    rewards: BTreeMap<(String, String), Vec<crate::DecCoin>>,
+    /// Mock of accumulated rewards, indexed first by delegator and then validator address.
+    rewards: BTreeMap<String, BTreeMap<String, Vec<crate::DecCoin>>>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
@@ -984,7 +985,9 @@ impl DistributionQuerier {
         rewards: Vec<DecCoin>,
     ) {
         self.rewards
-            .insert((validator.into(), delegator.into()), rewards);
+            .entry(delegator.into())
+            .or_default()
+            .insert(validator.into(), rewards);
     }
 
     pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
@@ -1007,15 +1010,58 @@ impl DistributionQuerier {
                 let res = DelegationRewardsResponse {
                     rewards: self
                         .rewards
-                        .get(&(validator_address.clone(), delegator_address.clone()))
+                        .get(delegator_address)
+                        .and_then(|v| v.get(validator_address))
                         .cloned()
                         .unwrap_or_default(),
+                };
+                to_binary(&res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_4")]
+            DistributionQuery::DelegationTotalRewards { delegator_address } => {
+                let validator_rewards = self
+                    .validator_rewards(delegator_address)
+                    .unwrap_or_default();
+                let res = crate::DelegationTotalRewardsResponse {
+                    total: validator_rewards
+                        .iter()
+                        .fold(BTreeMap::<&str, DecCoin>::new(), |mut acc, rewards| {
+                            for coin in &rewards.reward {
+                                acc.entry(&coin.denom)
+                                    .or_insert_with(|| DecCoin {
+                                        denom: coin.denom.clone(),
+                                        amount: Decimal::zero(),
+                                    })
+                                    .amount += coin.amount;
+                            }
+
+                            acc
+                        })
+                        .into_values()
+                        .collect(),
+                    rewards: validator_rewards,
                 };
                 to_binary(&res).into()
             }
         };
         // system result is always ok in the mock implementation
         SystemResult::Ok(contract_result)
+    }
+
+    /// Helper method to get all rewards for a given delegator.
+    #[cfg(feature = "cosmwasm_1_4")]
+    fn validator_rewards(&self, delegator_address: &str) -> Option<Vec<crate::DelegatorReward>> {
+        let validator_rewards = self.rewards.get(delegator_address)?;
+
+        Some(
+            validator_rewards
+                .iter()
+                .map(|(validator, rewards)| crate::DelegatorReward {
+                    validator_address: validator.clone(),
+                    reward: rewards.clone(),
+                })
+                .collect(),
+        )
     }
 }
 
