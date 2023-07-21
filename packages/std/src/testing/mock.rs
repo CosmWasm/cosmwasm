@@ -937,9 +937,9 @@ impl StakingQuerier {
 #[derive(Clone, Default)]
 pub struct DistributionQuerier {
     withdraw_addresses: HashMap<String, String>,
-    #[cfg(feature = "cosmwasm_1_4")]
     /// Mock of accumulated rewards, indexed first by delegator and then validator address.
-    rewards: BTreeMap<String, BTreeMap<String, Vec<crate::DecCoin>>>,
+    #[cfg(feature = "cosmwasm_1_4")]
+    rewards: BTreeMap<String, BTreeMap<String, Vec<DecCoin>>>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
@@ -978,6 +978,7 @@ impl DistributionQuerier {
     }
 
     /// Sets accumulated rewards for a given validator and delegator pair.
+    #[cfg(feature = "cosmwasm_1_4")]
     pub fn set_rewards(
         &mut self,
         validator: impl Into<String>,
