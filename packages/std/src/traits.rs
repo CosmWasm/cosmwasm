@@ -322,6 +322,24 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         self.query(&request)
     }
 
+    #[cfg(feature = "cosmwasm_1_4")]
+    pub fn query_delegation_rewards(
+        &self,
+        delegator: impl Into<String>,
+        validator: impl Into<String>,
+    ) -> StdResult<Vec<crate::DecCoin>> {
+        use crate::DelegationRewardsResponse;
+
+        let request = DistributionQuery::DelegationRewards {
+            delegator_address: delegator.into(),
+            validator_address: validator.into(),
+        }
+        .into();
+        let DelegationRewardsResponse { rewards } = self.query(&request)?;
+
+        Ok(rewards)
+    }
+
     /// Queries another wasm contract. You should know a priori the proper types for T and U
     /// (response and request) based on the contract API
     pub fn query_wasm_smart<T: DeserializeOwned>(

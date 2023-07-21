@@ -45,6 +45,8 @@ use crate::{
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
+#[cfg(feature = "cosmwasm_1_4")]
+use crate::{DecCoin, DelegationRewardsResponse};
 
 use super::riffle_shuffle;
 
@@ -935,12 +937,17 @@ impl StakingQuerier {
 #[derive(Clone, Default)]
 pub struct DistributionQuerier {
     withdraw_addresses: HashMap<String, String>,
+    #[cfg(feature = "cosmwasm_1_4")]
+    rewards: BTreeMap<(String, String), Vec<crate::DecCoin>>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
     pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
-        DistributionQuerier { withdraw_addresses }
+        DistributionQuerier {
+            withdraw_addresses,
+            ..Default::default()
+        }
     }
 
     pub fn set_withdraw_address(
@@ -969,6 +976,17 @@ impl DistributionQuerier {
         self.withdraw_addresses.clear();
     }
 
+    /// Sets accumulated rewards for a given validator and delegator pair.
+    pub fn set_rewards(
+        &mut self,
+        validator: impl Into<String>,
+        delegator: impl Into<String>,
+        rewards: Vec<DecCoin>,
+    ) {
+        self.rewards
+            .insert((validator.into(), delegator.into()), rewards);
+    }
+
     pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
             DistributionQuery::DelegatorWithdrawAddress { delegator_address } => {
@@ -978,6 +996,20 @@ impl DistributionQuerier {
                             .get(delegator_address)
                             .unwrap_or(delegator_address),
                     ),
+                };
+                to_binary(&res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_4")]
+            DistributionQuery::DelegationRewards {
+                delegator_address,
+                validator_address,
+            } => {
+                let res = DelegationRewardsResponse {
+                    rewards: self
+                        .rewards
+                        .get(&(validator_address.clone(), delegator_address.clone()))
+                        .cloned()
+                        .unwrap_or_default(),
                 };
                 to_binary(&res).into()
             }
