@@ -46,7 +46,9 @@ use crate::modules::current_wasmer_module_version;
 ///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
 /// - **v6**:<br>
 ///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
-const MODULE_SERIALIZATION_VERSION: &str = "v6";
+/// - **v7**:<br>
+///   New version because of Wasmer 4 upgrade
+const MODULE_SERIALIZATION_VERSION: &str = "v7";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -284,7 +286,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v6-wasmer4/**/{}",
+            "{}/v7-wasmer4/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -362,9 +364,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v6-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules\\v7-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v6-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules/v7-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }
