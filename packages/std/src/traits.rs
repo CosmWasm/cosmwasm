@@ -256,7 +256,10 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
                 format!("Querier contract error: {contract_err}"),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => {
-                Ok(deserialize_from_bytes((value).to_vec()).unwrap())
+                let de_value = deserialize_from_bytes(value.to_vec()).ok_or_else(|| {
+                    StdError::generic_err("unexpected error: Deserialization failed")
+                })?;
+                Ok(de_value)
             }
         }
     }
