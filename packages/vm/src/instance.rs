@@ -316,7 +316,7 @@ where
                         data.with_storage_from_context::<_, _>(|store| Ok(store.remove(key)))?;
                     result?;
                 }
-                _ => (),
+                KeyType::Read => (),
             }
         }
         data.state_cache.clear();
