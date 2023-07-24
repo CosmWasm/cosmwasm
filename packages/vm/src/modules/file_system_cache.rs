@@ -47,7 +47,8 @@ use crate::modules::current_wasmer_module_version;
 /// - **v6**:<br>
 ///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
 /// - **v7**:<br>
-///   New version because of Wasmer 4 upgrade
+///   New version because of Wasmer 2.3.0 -> 4 upgrade.
+///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
 const MODULE_SERIALIZATION_VERSION: &str = "v7";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
