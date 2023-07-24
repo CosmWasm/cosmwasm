@@ -33,12 +33,15 @@ pub fn validate_wasm<'a>(
         ..Default::default()
     });
 
+    let mut fun_allocations = Default::default();
     for p in Parser::new(0).parse_all(wasm_code) {
         let p = p?;
         // validate the payload
         if let ValidPayload::Func(fv, body) = validator.payload(&p)? {
             // also validate function bodies
-            fv.into_validator(Default::default()).validate(&body)?;
+            let mut fun_validator = fv.into_validator(fun_allocations);
+            fun_validator.validate(&body)?;
+            fun_allocations = fun_validator.into_allocations();
         }
         // tell caller about the payload
         handle_payload(p)?;
