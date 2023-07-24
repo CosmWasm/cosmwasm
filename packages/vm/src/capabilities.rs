@@ -32,8 +32,9 @@ pub fn required_capabilities_from_module(module: impl ExportInfo) -> HashSet<Str
 
 #[cfg(test)]
 mod tests {
+    use crate::parsed_wasm::ParsedWasm;
+
     use super::*;
-    use crate::static_analysis::deserialize_exports;
 
     #[test]
     fn capabilities_from_csv_works() {
@@ -73,7 +74,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
 
         let required_capabilities = required_capabilities_from_module(&module);
         assert_eq!(required_capabilities.len(), 3);
@@ -85,7 +86,7 @@ mod tests {
     #[test]
     fn required_capabilities_from_module_works_without_exports_section() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         let required_capabilities = required_capabilities_from_module(&module);
         assert_eq!(required_capabilities.len(), 0);
     }

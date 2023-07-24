@@ -1,11 +1,8 @@
 use std::collections::HashSet;
 
-use wasmer::wasmparser::{
-    Export, ExportSectionReader, ExternalKind, Parser, Payload, ValidPayload, Validator,
-    WasmFeatures,
-};
+use wasmer::wasmparser::ExternalKind;
 
-use crate::errors::VmResult;
+use crate::parsed_wasm::ParsedWasm;
 
 pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
     "ibc_channel_open",
@@ -16,68 +13,6 @@ pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
     "ibc_packet_timeout",
 ];
 
-/// Validates the given wasm code and calls the callback for each payload.
-/// "Validates" in this case refers to general WebAssembly validation, not specific to CosmWasm.
-pub fn validate_wasm<'a>(
-    wasm_code: &'a [u8],
-    mut handle_payload: impl FnMut(Payload<'a>) -> VmResult<()>,
-) -> VmResult<()> {
-    let mut validator = Validator::new_with_features(WasmFeatures {
-        deterministic_only: true,
-        component_model: false,
-        simd: false,
-        relaxed_simd: false,
-        threads: false,
-        multi_memory: false,
-        memory64: false,
-        ..Default::default()
-    });
-
-    let mut fun_allocations = Default::default();
-    for p in Parser::new(0).parse_all(wasm_code) {
-        let p = p?;
-        // validate the payload
-        if let ValidPayload::Func(fv, body) = validator.payload(&p)? {
-            // also validate function bodies
-            let mut fun_validator = fv.into_validator(fun_allocations);
-            fun_validator.validate(&body)?;
-            fun_allocations = fun_validator.into_allocations();
-        }
-        // tell caller about the payload
-        handle_payload(p)?;
-    }
-
-    Ok(())
-}
-
-/// A small helper macro to validate the wasm module and extract a reader for a specific section.
-macro_rules! extract_reader {
-    ($wasm_code: expr, $payload: ident, $t: ty) => {{
-        fn extract(wasm_code: &[u8]) -> $crate::VmResult<Option<$t>> {
-            let mut value = None;
-            $crate::static_analysis::validate_wasm(wasm_code, |p| {
-                if let Payload::$payload(p) = p {
-                    value = Some(p);
-                }
-                Ok(())
-            })?;
-            Ok(value)
-        }
-
-        extract($wasm_code)
-    }};
-}
-
-pub(crate) use extract_reader;
-
-pub fn deserialize_exports(wasm_code: &[u8]) -> VmResult<Vec<Export<'_>>> {
-    let exports = extract_reader!(wasm_code, ExportSection, ExportSectionReader<'_>)?;
-    Ok(exports
-        .map(|e| e.into_iter().collect::<Result<Vec<_>, _>>())
-        .transpose()?
-        .unwrap_or_default())
-}
-
 /// A trait that allows accessing shared functionality of `parity_wasm::elements::Module`
 /// and `wasmer::Module` in a shared fashion.
 pub trait ExportInfo {
@@ -85,9 +20,10 @@ pub trait ExportInfo {
     fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String>;
 }
 
-impl ExportInfo for &[Export<'_>] {
+impl ExportInfo for &ParsedWasm<'_> {
     fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String> {
-        self.iter()
+        self.exports
+            .iter()
             .filter_map(|export| match export.kind {
                 ExternalKind::Func => Some(export.name),
                 _ => None,
@@ -101,12 +37,6 @@ impl ExportInfo for &[Export<'_>] {
             })
             .map(|name| name.to_string())
             .collect()
-    }
-}
-
-impl ExportInfo for &Vec<Export<'_>> {
-    fn exported_function_names(self, prefix: Option<&str>) -> HashSet<String> {
-        self[..].exported_function_names(prefix)
     }
 }
 
@@ -152,15 +82,17 @@ mod tests {
 
     #[test]
     fn deserialize_exports_works() {
-        let module = deserialize_exports(CONTRACT).unwrap();
-        // assert_eq!(module.version(), 1); // TODO: not implemented anymore
+        let module = ParsedWasm::parse(CONTRACT).unwrap();
+        assert_eq!(module.version, 1);
 
         let exported_functions = module
+            .exports
             .iter()
             .filter(|entry| matches!(entry.kind, ExternalKind::Func));
         assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
 
         let exported_memories = module
+            .exports
             .iter()
             .filter(|entry| matches!(entry.kind, ExternalKind::Memory));
         assert_eq!(exported_memories.count(), 1);
@@ -168,7 +100,7 @@ mod tests {
 
     #[test]
     fn deserialize_wasm_corrupted_data() {
-        match deserialize_exports(CORRUPTED).unwrap_err() {
+        match ParsedWasm::parse(CORRUPTED).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
             }
@@ -179,7 +111,7 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_parity_with_no_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(exports, HashSet::new());
 
@@ -195,7 +127,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         let exports = module.exported_function_names(None);
         assert_eq!(
             exports,
@@ -206,7 +138,7 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_parity_with_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(exports, HashSet::new());
 
@@ -223,7 +155,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
         assert_eq!(
             exports,
@@ -311,7 +243,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         assert!(!has_ibc_entry_points(&module));
 
         // IBC contract
@@ -336,7 +268,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         assert!(has_ibc_entry_points(&module));
 
         // Missing packet ack
@@ -360,7 +292,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let module = deserialize_exports(&wasm).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
         assert!(!has_ibc_entry_points(&module));
     }
 }

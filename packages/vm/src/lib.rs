@@ -16,6 +16,7 @@ mod instance;
 mod limited;
 mod memory;
 mod modules;
+mod parsed_wasm;
 mod sections;
 mod serde;
 mod size;
