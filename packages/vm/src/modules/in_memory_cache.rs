@@ -21,7 +21,7 @@ struct SizeScale;
 impl WeightScale<Checksum, CachedModule> for SizeScale {
     #[inline]
     fn weight(&self, key: &Checksum, value: &CachedModule) -> usize {
-        key.len() + value.size
+        key.len() + value.size_estimate
     }
 }
 
@@ -49,14 +49,19 @@ impl InMemoryCache {
         }
     }
 
-    pub fn store(&mut self, checksum: &Checksum, entry: Module, size: usize) -> VmResult<()> {
+    pub fn store(
+        &mut self,
+        checksum: &Checksum,
+        entry: Module,
+        module_size: usize,
+    ) -> VmResult<()> {
         if let Some(modules) = &mut self.modules {
             modules
                 .put_with_weight(
                     *checksum,
                     CachedModule {
                         module: entry,
-                        size,
+                        size_estimate: module_size,
                     },
                 )
                 .map_err(|e| VmError::cache_err(format!("{e:?}")))?;
