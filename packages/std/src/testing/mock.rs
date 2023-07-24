@@ -945,6 +945,7 @@ pub struct DistributionQuerier {
 #[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
     pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
+        #[allow(clippy::needless_update)]
         DistributionQuerier {
             withdraw_addresses,
             ..Default::default()
