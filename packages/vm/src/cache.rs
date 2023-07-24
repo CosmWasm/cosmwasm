@@ -79,7 +79,7 @@ pub struct CacheInner {
     ///
     /// The engine has one memory limit set which is the same for all contracts
     /// running with it. If different memory limits would be needed for different
-    /// contracts at some point, we'd need multiple engines. This because the tunables
+    /// contracts at some point, we'd need multiple engines. This is because the tunables
     /// that control the limit are attached to the engine.
     runtime_engine: Engine,
 }
