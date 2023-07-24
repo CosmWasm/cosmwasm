@@ -20,8 +20,8 @@ struct SizeScale;
 
 impl WeightScale<Checksum, CachedModule> for SizeScale {
     #[inline]
-    fn weight(&self, _key: &Checksum, value: &CachedModule) -> usize {
-        value.size
+    fn weight(&self, key: &Checksum, value: &CachedModule) -> usize {
+        key.len() + value.size
     }
 }
 
@@ -283,18 +283,18 @@ mod tests {
         let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = compile(&engine1, &wasm1).unwrap();
         cache.store(&checksum1, module, 900_000).unwrap();
-        assert_eq!(cache.size(), 900_000);
+        assert_eq!(cache.size(), 900_032);
 
         // Add 2
         let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = compile(&engine2, &wasm2).unwrap();
         cache.store(&checksum2, module, 800_000).unwrap();
-        assert_eq!(cache.size(), 1_700_000);
+        assert_eq!(cache.size(), 900_032 + 800_032);
 
         // Add 3 (pushes out the previous two)
         let engine3 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = compile(&engine3, &wasm3).unwrap();
         cache.store(&checksum3, module, 1_500_000).unwrap();
-        assert_eq!(cache.size(), 1_500_000);
+        assert_eq!(cache.size(), 1_500_032);
     }
 }

@@ -23,6 +23,12 @@ impl Checksum {
     pub fn to_hex(self) -> String {
         self.to_string()
     }
+
+    #[inline]
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        32
+    }
 }
 
 impl fmt::Display for Checksum {
@@ -109,5 +115,11 @@ mod tests {
         let checksum = Checksum::generate(&[12u8; 17]);
         let as_vec: Vec<u8> = checksum.into();
         assert_eq!(as_vec, checksum.0);
+    }
+
+    #[test]
+    fn len_works() {
+        let checksum = Checksum::generate(&[12u8; 17]);
+        assert_eq!(checksum.len(), 32);
     }
 }

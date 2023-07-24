@@ -58,7 +58,10 @@ impl PinnedMemoryCache {
     /// This is based on the values provided with `store`. No actual
     /// memory size is measured here.
     pub fn size(&self) -> usize {
-        self.modules.values().map(|module| module.size).sum()
+        self.modules
+            .iter()
+            .map(|(key, module)| key.len() + module.size)
+            .sum()
     }
 }
 
@@ -225,17 +228,17 @@ mod tests {
         let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = compile(&engine1, &wasm1).unwrap();
         cache.store(&checksum1, module, 500).unwrap();
-        assert_eq!(cache.size(), 500);
+        assert_eq!(cache.size(), 532);
 
         // Add 2
         let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = compile(&engine2, &wasm2).unwrap();
         cache.store(&checksum2, module, 300).unwrap();
-        assert_eq!(cache.size(), 800);
+        assert_eq!(cache.size(), 532 + 332);
 
         // Remove 1
         cache.remove(&checksum1).unwrap();
-        assert_eq!(cache.size(), 300);
+        assert_eq!(cache.size(), 332);
 
         // Remove 2
         cache.remove(&checksum2).unwrap();
