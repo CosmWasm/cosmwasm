@@ -282,7 +282,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     pub fn query_delegator_withdraw_address(
         &self,
         delegator: impl Into<String>,
-    ) -> StdResult<String> {
+    ) -> StdResult<Addr> {
         let request = DistributionQuery::DelegatorWithdrawAddress {
             delegator_address: delegator.into(),
         }

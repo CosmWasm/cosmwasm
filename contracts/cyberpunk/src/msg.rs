@@ -1,5 +1,4 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::DenomMetadata;
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -41,10 +40,10 @@ pub enum QueryMsg {
     MirrorEnv {},
 
     /// Queries `AllDenomMetadata` from the bank module repeatedly and returns all entries
-    #[returns(Vec<DenomMetadata>)]
+    #[returns(Vec<cosmwasm_std::DenomMetadata>)]
     Denoms {},
 
     /// Queries `DenomMetadata` from the bank module and returns the result
-    #[returns(DenomMetadata)]
+    #[returns(cosmwasm_std::DenomMetadata)]
     Denom { denom: String },
 }

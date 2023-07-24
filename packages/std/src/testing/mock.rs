@@ -973,11 +973,11 @@ impl DistributionQuerier {
         let contract_result: ContractResult<Binary> = match request {
             DistributionQuery::DelegatorWithdrawAddress { delegator_address } => {
                 let res = DelegatorWithdrawAddressResponse {
-                    withdraw_address: self
-                        .withdraw_addresses
-                        .get(delegator_address)
-                        .unwrap_or(delegator_address)
-                        .clone(),
+                    withdraw_address: Addr::unchecked(
+                        self.withdraw_addresses
+                            .get(delegator_address)
+                            .unwrap_or(delegator_address),
+                    ),
                 };
                 to_binary(&res).into()
             }
