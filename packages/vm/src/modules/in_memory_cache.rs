@@ -99,7 +99,10 @@ impl InMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{size::Size, wasm_backend::make_compiling_engine};
+    use crate::{
+        size::Size,
+        wasm_backend::{compile, make_compiling_engine},
+    };
     use std::mem;
     use wasmer::{imports, Instance as WasmerInstance, Store};
     use wasmer_middlewares::metering::set_remaining_points;
@@ -145,7 +148,7 @@ mod tests {
 
         // Compile module
         let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let original = Module::new(&engine, &wasm).unwrap();
+        let original = compile(&engine, &wasm).unwrap();
 
         // Ensure original module can be executed
         {
@@ -218,19 +221,19 @@ mod tests {
 
         // Add 1
         let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine1, &wasm1).unwrap();
+        let module = compile(&engine1, &wasm1).unwrap();
         cache.store(&checksum1, module, 900_000).unwrap();
         assert_eq!(cache.len(), 1);
 
         // Add 2
         let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine2, &wasm2).unwrap();
+        let module = compile(&engine2, &wasm2).unwrap();
         cache.store(&checksum2, module, 900_000).unwrap();
         assert_eq!(cache.len(), 2);
 
         // Add 3 (pushes out the previous two)
         let engine3 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine3, &wasm3).unwrap();
+        let module = compile(&engine3, &wasm3).unwrap();
         cache.store(&checksum3, module, 1_500_000).unwrap();
         assert_eq!(cache.len(), 1);
     }
@@ -278,19 +281,19 @@ mod tests {
 
         // Add 1
         let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine1, &wasm1).unwrap();
+        let module = compile(&engine1, &wasm1).unwrap();
         cache.store(&checksum1, module, 900_000).unwrap();
         assert_eq!(cache.size(), 900_000);
 
         // Add 2
         let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine2, &wasm2).unwrap();
+        let module = compile(&engine2, &wasm2).unwrap();
         cache.store(&checksum2, module, 800_000).unwrap();
         assert_eq!(cache.size(), 1_700_000);
 
         // Add 3 (pushes out the previous two)
         let engine3 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine3, &wasm3).unwrap();
+        let module = compile(&engine3, &wasm3).unwrap();
         cache.store(&checksum3, module, 1_500_000).unwrap();
         assert_eq!(cache.size(), 1_500_000);
     }

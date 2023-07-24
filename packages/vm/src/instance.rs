@@ -22,7 +22,7 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::make_compiling_engine;
+use crate::wasm_backend::{compile, make_compiling_engine};
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -72,7 +72,7 @@ where
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
         let engine = make_compiling_engine(memory_limit);
-        let module = Module::new(&engine, code)?;
+        let module = compile(&engine, code)?;
         let store = Store::new(engine);
         Instance::from_module(
             store,
@@ -605,7 +605,7 @@ mod tests {
 
         let backend = mock_backend(&[]);
         let engine = make_compiling_engine(memory_limit);
-        let module = Module::new(&engine, wasm).unwrap();
+        let module = compile(&engine, &wasm).unwrap();
         let mut store = Store::new(engine);
 
         let called = Arc::new(AtomicBool::new(false));

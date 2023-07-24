@@ -214,7 +214,7 @@ mod tests {
     use super::*;
     use crate::{
         size::Size,
-        wasm_backend::{make_compiling_engine, make_runtime_engine},
+        wasm_backend::{compile, make_compiling_engine, make_runtime_engine},
     };
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance, Store};
@@ -247,7 +247,7 @@ mod tests {
 
         // Store module
         let compiling_engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&compiling_engine, wasm).unwrap();
+        let module = compile(&compiling_engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
@@ -280,7 +280,7 @@ mod tests {
 
         // Store module
         let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine, wasm).unwrap();
+        let module = compile(&engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
@@ -304,7 +304,7 @@ mod tests {
 
         // Store module
         let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine1, wasm).unwrap();
+        let module = compile(&engine1, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there

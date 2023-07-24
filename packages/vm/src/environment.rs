@@ -446,11 +446,11 @@ mod tests {
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::make_compiling_engine;
+    use crate::wasm_backend::{compile, make_compiling_engine};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
-    use wasmer::{imports, Function, Instance as WasmerInstance, Module, Store};
+    use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -476,7 +476,7 @@ mod tests {
         let env = Environment::new(MockApi::default(), gas_limit);
 
         let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = Module::new(&engine, CONTRACT).unwrap();
+        let module = compile(&engine, CONTRACT).unwrap();
         let mut store = Store::new(engine);
 
         // we need stubs for all required imports

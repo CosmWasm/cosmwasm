@@ -1,6 +1,4 @@
-use wasmer::Module;
-
-use crate::wasm_backend::make_compiling_engine;
+use crate::wasm_backend::{compile, make_compiling_engine};
 
 /// This header prefix contains the module type (wasmer-universal) and
 /// the magic value WASMER\0\0.
@@ -15,7 +13,7 @@ fn current_wasmer_module_header() -> Vec<u8> {
     // echo "(module)" > my.wat && wat2wasm my.wat && hexdump -C my.wasm
     const WASM: &[u8] = b"\x00\x61\x73\x6d\x01\x00\x00\x00";
     let engine = make_compiling_engine(None);
-    let module = Module::new(&engine, WASM).unwrap();
+    let module = compile(&engine, WASM).unwrap();
 
     let mut bytes = module.serialize().unwrap_or_default();
 
