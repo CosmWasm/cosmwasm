@@ -94,7 +94,7 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let original = Module::new(&engine, &wasm).unwrap();
 
         // Ensure original module can be executed
@@ -144,7 +144,7 @@ mod tests {
         assert!(!cache.has(&checksum));
 
         // Add
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let original = Module::new(&engine, &wasm).unwrap();
         cache.store(&checksum, original, 0).unwrap();
 
@@ -176,7 +176,7 @@ mod tests {
         assert_eq!(cache.len(), 0);
 
         // Add
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let original = Module::new(&engine, &wasm).unwrap();
         cache.store(&checksum, original, 0).unwrap();
 
@@ -219,13 +219,13 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Add 1
-        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = Module::new(&engine1, &wasm1).unwrap();
         cache.store(&checksum1, module, 500).unwrap();
         assert_eq!(cache.size(), 500);
 
         // Add 2
-        let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = Module::new(&engine2, &wasm2).unwrap();
         cache.store(&checksum2, module, 300).unwrap();
         assert_eq!(cache.size(), 800);

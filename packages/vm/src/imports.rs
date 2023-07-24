@@ -620,7 +620,7 @@ mod tests {
         let gas_limit = TESTING_GAS_LIMIT;
         let env = Environment::new(api, gas_limit);
 
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = Module::new(&engine, CONTRACT).unwrap();
         let mut store = Store::new(engine);
 

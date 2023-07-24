@@ -17,7 +17,7 @@ mod tests {
 
     #[test]
     fn contract_with_floats_fails_check() {
-        let engine = make_compiling_engine(None, &[]);
+        let engine = make_compiling_engine(None);
         let err = compile(&engine, CONTRACT).unwrap_err();
         assert!(err.to_string().contains("Float operator detected:"));
     }

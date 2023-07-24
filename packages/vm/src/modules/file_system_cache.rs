@@ -246,7 +246,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let compiling_engine = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let compiling_engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = Module::new(&compiling_engine, wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
@@ -279,7 +279,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = Module::new(&engine, wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
@@ -303,7 +303,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT, &[]);
+        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
         let module = Module::new(&engine1, wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 

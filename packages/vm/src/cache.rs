@@ -200,7 +200,7 @@ where
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
         // We need a new engine for each Wasm -> module compilation due to the metering middleware.
-        let compiling_engine = make_compiling_engine(None, &[]);
+        let compiling_engine = make_compiling_engine(None);
         let module = Module::new(&compiling_engine, wasm)?;
 
         let mut cache = self.inner.lock().unwrap();
@@ -291,7 +291,7 @@ where
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
         // Module will run with a different engine, so we can set memory limit to None
-        let engine = make_compiling_engine(None, &[]);
+        let engine = make_compiling_engine(None);
         let module = Module::new(&engine, wasm)?;
         // Store into the fs cache too
         let module_size = cache.fs_cache.store(checksum, &module)?;
@@ -377,7 +377,7 @@ where
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
         // Module will run with a different engine, so we can set memory limit to None
-        let engine = make_compiling_engine(None, &[]);
+        let engine = make_compiling_engine(None);
         let module = Module::new(&engine, wasm)?;
         let module_size = cache.fs_cache.store(checksum, &module)?;
 

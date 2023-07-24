@@ -5,8 +5,7 @@ use wasmer::NativeEngineExt;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
 use wasmer::{
-    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, ModuleMiddleware, Pages, Target,
-    WASM_PAGE_SIZE,
+    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::Metering;
 
@@ -44,10 +43,7 @@ pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
 }
 
 /// Creates an Engine with a compiler attached. Use this when compiling Wasm to a module.
-pub fn make_compiling_engine(
-    memory_limit: Option<Size>,
-    middlewares: &[Arc<dyn ModuleMiddleware>],
-) -> Engine {
+pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     let gas_limit = 0;
     let deterministic = Arc::new(Gatekeeper::default());
     let metering = Arc::new(Metering::new(gas_limit, cost));
@@ -58,9 +54,6 @@ pub fn make_compiling_engine(
     #[cfg(not(feature = "cranelift"))]
     let mut compiler = Singlepass::default();
 
-    for middleware in middlewares {
-        compiler.push_middleware(middleware.clone());
-    }
     compiler.push_middleware(deterministic);
     compiler.push_middleware(metering);
     let mut engine = Engine::from(compiler);

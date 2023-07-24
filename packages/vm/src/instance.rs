@@ -71,7 +71,7 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let engine = make_compiling_engine(memory_limit, &[]);
+        let engine = make_compiling_engine(memory_limit);
         let module = Module::new(&engine, code)?;
         let store = Store::new(engine);
         Instance::from_module(
@@ -604,7 +604,7 @@ mod tests {
         .unwrap();
 
         let backend = mock_backend(&[]);
-        let engine = make_compiling_engine(memory_limit, &[]);
+        let engine = make_compiling_engine(memory_limit);
         let module = Module::new(&engine, wasm).unwrap();
         let mut store = Store::new(engine);
 

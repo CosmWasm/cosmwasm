@@ -34,7 +34,7 @@ pub fn main() {
     println!("wasm size: {wasm_size} bytes");
 
     // Compile module
-    let engine = make_compiling_engine(None, &[]);
+    let engine = make_compiling_engine(None);
     let module = compile(&engine, &wasm).unwrap();
     mem::drop(wasm);
 
