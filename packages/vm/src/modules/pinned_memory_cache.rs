@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use wasmer::{Engine, Module};
+use wasmer::Module;
 
 use super::cached_module::CachedModule;
 use crate::{Checksum, VmResult};
@@ -17,17 +17,11 @@ impl PinnedMemoryCache {
         }
     }
 
-    pub fn store(
-        &mut self,
-        checksum: &Checksum,
-        element: (Engine, Module),
-        size: usize,
-    ) -> VmResult<()> {
+    pub fn store(&mut self, checksum: &Checksum, element: Module, size: usize) -> VmResult<()> {
         self.modules.insert(
             *checksum,
             CachedModule {
-                engine: element.0,
-                module: element.1,
+                module: element,
                 size,
             },
         );
@@ -71,10 +65,14 @@ impl PinnedMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::{compile, make_store_with_engine};
-    use wasmer::{imports, Instance as WasmerInstance};
+    use crate::{
+        wasm_backend::{compile, make_compiling_engine},
+        Size,
+    };
+    use wasmer::{imports, Instance as WasmerInstance, Store};
     use wasmer_middlewares::metering::set_remaining_points;
 
+    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
     const TESTING_GAS_LIMIT: u64 = 500_000_000;
 
     #[test]
@@ -99,11 +97,12 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let (engine, original) = compile(&wasm, &[]).unwrap();
-        let mut store = make_store_with_engine(engine.clone(), None);
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
 
         // Ensure original module can be executed
         {
+            let mut store = Store::new(engine.clone());
             let instance = WasmerInstance::new(&mut store, &original, &imports! {}).unwrap();
             set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
@@ -112,14 +111,14 @@ mod tests {
         }
 
         // Store module
-        cache.store(&checksum, (engine, original), 0).unwrap();
+        cache.store(&checksum, original, 0).unwrap();
 
         // Load module
         let cached = cache.load(&checksum).unwrap().unwrap();
-        let mut store = make_store_with_engine(cached.engine, None);
 
         // Ensure cached module can be executed
         {
+            let mut store = Store::new(engine);
             let instance = WasmerInstance::new(&mut store, &cached.module, &imports! {}).unwrap();
             set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
@@ -148,8 +147,9 @@ mod tests {
         assert!(!cache.has(&checksum));
 
         // Add
-        let (engine, original) = compile(&wasm, &[]).unwrap();
-        cache.store(&checksum, (engine, original), 0).unwrap();
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
+        cache.store(&checksum, original, 0).unwrap();
 
         assert!(cache.has(&checksum));
 
@@ -179,8 +179,9 @@ mod tests {
         assert_eq!(cache.len(), 0);
 
         // Add
-        let (engine, original) = compile(&wasm, &[]).unwrap();
-        cache.store(&checksum, (engine, original), 0).unwrap();
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
+        cache.store(&checksum, original, 0).unwrap();
 
         assert_eq!(cache.len(), 1);
 
@@ -221,15 +222,15 @@ mod tests {
         assert_eq!(cache.size(), 0);
 
         // Add 1
-        cache
-            .store(&checksum1, compile(&wasm1, &[]).unwrap(), 500)
-            .unwrap();
+        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let module = compile(&engine1, &wasm1).unwrap();
+        cache.store(&checksum1, module, 500).unwrap();
         assert_eq!(cache.size(), 500);
 
         // Add 2
-        cache
-            .store(&checksum2, compile(&wasm2, &[]).unwrap(), 300)
-            .unwrap();
+        let engine2 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let module = compile(&engine2, &wasm2).unwrap();
+        cache.store(&checksum2, module, 300).unwrap();
         assert_eq!(cache.size(), 800);
 
         // Remove 1

@@ -4,9 +4,8 @@ use std::mem;
 
 use clap::{Arg, Command};
 
-use cosmwasm_vm::internals::compile;
-use cosmwasm_vm::internals::make_engine;
-use wasmer::Module;
+use cosmwasm_vm::internals::{compile, make_compiling_engine};
+use wasmer::{Engine, Module};
 
 pub fn main() {
     let matches = Command::new("Module size estimation")
@@ -35,14 +34,15 @@ pub fn main() {
     println!("wasm size: {wasm_size} bytes");
 
     // Compile module
-    let module = module_compile(&wasm);
+    let engine = make_compiling_engine(None);
+    let module = compile(&engine, &wasm).unwrap();
     mem::drop(wasm);
 
     let serialized = module.serialize().unwrap();
     mem::drop(module);
 
     // Deserialize module
-    let module = module_deserialize(&serialized);
+    let module = module_deserialize(&engine, &serialized);
     mem::drop(serialized);
 
     // Report (serialized) module size
@@ -57,14 +57,6 @@ pub fn main() {
 }
 
 #[inline(never)]
-fn module_compile(wasm: &[u8]) -> Module {
-    let (_engine, module) = compile(wasm, &[]).unwrap();
-    module
-}
-
-#[inline(never)]
-fn module_deserialize(serialized: &[u8]) -> Module {
-    // Deserialize using make_engine()
-    let engine = make_engine(&[]);
+fn module_deserialize(engine: &Engine, serialized: &[u8]) -> Module {
     unsafe { Module::deserialize(&engine, serialized) }.unwrap()
 }

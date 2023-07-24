@@ -212,10 +212,12 @@ mod tests {
     use std::fs;
 
     use super::*;
-    use crate::size::Size;
-    use crate::wasm_backend::{compile, make_runtime_store};
+    use crate::{
+        size::Size,
+        wasm_backend::{compile, make_compiling_engine, make_runtime_engine},
+    };
     use tempfile::TempDir;
-    use wasmer::{imports, Instance as WasmerInstance};
+    use wasmer::{imports, Instance as WasmerInstance, Store};
     use wasmer_middlewares::metering::set_remaining_points;
 
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
@@ -239,17 +241,17 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        let cached = cache.load(&checksum, &store).unwrap();
+        let runtime_engine = make_runtime_engine(TESTING_MEMORY_LIMIT);
+        let cached = cache.load(&checksum, &runtime_engine).unwrap();
         assert!(cached.is_none());
 
         // Store module
-        let (_engine, module) = compile(&wasm, &[]).unwrap();
+        let compiling_engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let module = compile(&compiling_engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let mut store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        let cached = cache.load(&checksum, &store).unwrap();
+        let cached = cache.load(&checksum, &runtime_engine).unwrap();
         assert!(cached.is_some());
 
         // Check the returned module is functional.
@@ -258,6 +260,7 @@ mod tests {
             let (cached_module, module_size) = cached.unwrap();
             assert_eq!(module_size, module.serialize().unwrap().len());
             let import_object = imports! {};
+            let mut store = Store::new(runtime_engine);
             let instance = WasmerInstance::new(&mut store, &cached_module, &import_object).unwrap();
             set_remaining_points(&mut store, &instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
@@ -276,7 +279,8 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_engine, module) = compile(&wasm, &[]).unwrap();
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let module = compile(&engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
@@ -299,20 +303,20 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let (_engine, module) = compile(&wasm, &[]).unwrap();
+        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let module = compile(&engine1, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        assert!(cache.load(&checksum, &store).unwrap().is_some());
+        let engine2 = make_runtime_engine(TESTING_MEMORY_LIMIT);
+        assert!(cache.load(&checksum, &engine2).unwrap().is_some());
 
         // Remove module
         let existed = cache.remove(&checksum).unwrap();
         assert!(existed);
 
         // it's gone now
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        assert!(cache.load(&checksum, &store).unwrap().is_none());
+        assert!(cache.load(&checksum, &engine2).unwrap().is_none());
 
         // Remove again
         let existed = cache.remove(&checksum).unwrap();

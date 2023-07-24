@@ -22,7 +22,7 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile, make_store_with_engine};
+use crate::wasm_backend::{compile, make_compiling_engine};
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -71,8 +71,9 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let (engine, module) = compile(code, &[])?;
-        let store = make_store_with_engine(engine, memory_limit);
+        let engine = make_compiling_engine(memory_limit);
+        let module = compile(&engine, code)?;
+        let store = Store::new(engine);
         Instance::from_module(
             store,
             &module,
@@ -590,6 +591,8 @@ mod tests {
 
     #[test]
     fn extra_imports_get_added() {
+        let (instance_options, memory_limit) = mock_instance_options();
+
         let wasm = wat::parse_str(
             r#"(module
             (import "foo" "bar" (func $bar))
@@ -601,9 +604,9 @@ mod tests {
         .unwrap();
 
         let backend = mock_backend(&[]);
-        let (instance_options, memory_limit) = mock_instance_options();
-        let (engine, module) = compile(&wasm, &[]).unwrap();
-        let mut store = make_store_with_engine(engine, memory_limit);
+        let engine = make_compiling_engine(memory_limit);
+        let module = compile(&engine, &wasm).unwrap();
+        let mut store = Store::new(engine);
 
         let called = Arc::new(AtomicBool::new(false));
 
