@@ -21,7 +21,7 @@ struct SizeScale;
 impl WeightScale<Checksum, CachedModule> for SizeScale {
     #[inline]
     fn weight(&self, key: &Checksum, value: &CachedModule) -> usize {
-        key.len() + value.size_estimate
+        std::mem::size_of_val(key) + value.size_estimate
     }
 }
 

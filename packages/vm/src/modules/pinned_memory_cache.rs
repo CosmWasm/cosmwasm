@@ -65,7 +65,7 @@ impl PinnedMemoryCache {
     pub fn size(&self) -> usize {
         self.modules
             .iter()
-            .map(|(key, module)| key.len() + module.size_estimate)
+            .map(|(key, module)| std::mem::size_of_val(key) + module.size_estimate)
             .sum()
     }
 }
