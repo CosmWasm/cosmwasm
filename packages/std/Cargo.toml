@@ -44,7 +44,7 @@ cosmwasm_1_2 = ["cosmwasm_1_1"]
 cosmwasm_1_3 = ["cosmwasm_1_2"]
 
 [dependencies]
-base64 = "0.13.0"
+base64 = "0.21.0"
 cosmwasm-derive = { path = "../derive", version = "1.3.0" }
 derivative = "2"
 forward_ref = "1"
