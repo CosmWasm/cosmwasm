@@ -987,17 +987,10 @@ impl DistributionQuerier {
         delegator: impl Into<String>,
         rewards: Vec<DecCoin>,
     ) {
-        let delegator = delegator.into();
-        let validator = validator.into();
         self.rewards
-            .entry(delegator.clone())
+            .entry(delegator.into())
             .or_default()
-            .insert(validator.clone(), rewards);
-        // also add to validator set
-        self.validators
-            .entry(delegator)
-            .or_default()
-            .insert(validator);
+            .insert(validator.into(), rewards);
     }
 
     /// Sets the validators a given delegator has bonded to.
@@ -1654,6 +1647,104 @@ mod tests {
         let res = distribution.query(&query).unwrap().unwrap();
         let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
         assert_eq!(res.withdraw_address, "addr1");
+    }
+
+    #[cfg(feature = "cosmwasm_1_4")]
+    #[test]
+    fn distribution_querier_delegator_validators() {
+        let mut distribution = DistributionQuerier::default();
+        distribution.set_validators("addr0", ["valoper1", "valoper2"]);
+
+        let query = DistributionQuery::DelegatorValidators {
+            delegator_address: "addr0".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorValidatorsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.validators, ["valoper1", "valoper2"]);
+
+        let query = DistributionQuery::DelegatorValidators {
+            delegator_address: "addr1".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorValidatorsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.validators, ([] as [String; 0]));
+    }
+
+    #[cfg(feature = "cosmwasm_1_4")]
+    #[test]
+    fn distribution_querier_delegation_rewards() {
+        use crate::{DelegationTotalRewardsResponse, DelegatorReward};
+
+        let mut distribution = DistributionQuerier::default();
+        let valoper0_rewards = vec![
+            DecCoin::new(Decimal::from_atomics(1234u128, 0).unwrap(), "uatom"),
+            DecCoin::new(Decimal::from_atomics(56781234u128, 4).unwrap(), "utest"),
+        ];
+        distribution.set_rewards("valoper0", "addr0", valoper0_rewards.clone());
+
+        // both exist / are set
+        let query = DistributionQuery::DelegationRewards {
+            delegator_address: "addr0".to_string(),
+            validator_address: "valoper0".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.rewards, valoper0_rewards);
+
+        // delegator does not exist
+        let query = DistributionQuery::DelegationRewards {
+            delegator_address: "nonexistent".to_string(),
+            validator_address: "valoper0".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.rewards.len(), 0);
+
+        // validator does not exist
+        let query = DistributionQuery::DelegationRewards {
+            delegator_address: "addr0".to_string(),
+            validator_address: "valopernonexistent".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.rewards.len(), 0);
+
+        // add one more validator
+        let valoper1_rewards = vec![DecCoin::new(Decimal::one(), "uatom")];
+        distribution.set_rewards("valoper1", "addr0", valoper1_rewards.clone());
+
+        // total rewards
+        let query = DistributionQuery::DelegationTotalRewards {
+            delegator_address: "addr0".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationTotalRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(
+            res.rewards,
+            vec![
+                DelegatorReward {
+                    validator_address: "valoper0".into(),
+                    reward: valoper0_rewards
+                },
+                DelegatorReward {
+                    validator_address: "valoper1".into(),
+                    reward: valoper1_rewards
+                },
+            ]
+        );
+        assert_eq!(
+            res.total,
+            [
+                DecCoin::new(
+                    Decimal::from_atomics(1234u128, 0).unwrap() + Decimal::one(),
+                    "uatom"
+                ),
+                // total for utest should still be the same
+                DecCoin::new(Decimal::from_atomics(56781234u128, 4).unwrap(), "utest")
+            ]
+        );
     }
 
     #[cfg(feature = "stargate")]

@@ -55,6 +55,15 @@ pub struct DecCoin {
     pub amount: crate::Decimal,
 }
 
+impl DecCoin {
+    pub fn new(amount: crate::Decimal, denom: impl Into<String>) -> Self {
+        Self {
+            denom: denom.into(),
+            amount,
+        }
+    }
+}
+
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L189-L200>
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
