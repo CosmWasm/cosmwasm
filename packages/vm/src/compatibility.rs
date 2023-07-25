@@ -213,10 +213,10 @@ fn full_import_name(ie: &Import) -> String {
 }
 
 fn check_wasm_capabilities(
-    exports: &ParsedWasm,
+    module: &ParsedWasm,
     available_capabilities: &HashSet<String>,
 ) -> VmResult<()> {
-    let required_capabilities = required_capabilities_from_module(exports);
+    let required_capabilities = required_capabilities_from_module(module);
     if !required_capabilities.is_subset(available_capabilities) {
         // We switch to BTreeSet to get a sorted error message
         let unavailable: BTreeSet<_> = required_capabilities
@@ -303,7 +303,7 @@ mod tests {
     fn check_wasm_tables_works() {
         // No tables is fine
         let wasm = wat::parse_str("(module)").unwrap();
-        assert!(ParsedWasm::parse(&wasm).unwrap().memories.is_empty());
+        assert!(ParsedWasm::parse(&wasm).unwrap().tables.is_empty());
 
         // One table (bound)
         let wasm = wat::parse_str("(module (table $name 123 123 funcref))").unwrap();
