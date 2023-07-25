@@ -5,6 +5,8 @@ use core::ops::Bound;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
+#[cfg(feature = "cosmwasm_1_3")]
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 
 use crate::addresses::{Addr, CanonicalAddr};
@@ -39,7 +41,7 @@ use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
-    query::{AllDenomMetadataResponse, DenomMetadataResponse},
+    query::{AllDenomMetadataResponse, DelegatorValidatorsResponse, DenomMetadataResponse},
     PageRequest,
 };
 use crate::{Attribute, DenomMetadata};
@@ -938,14 +940,14 @@ impl StakingQuerier {
 pub struct DistributionQuerier {
     withdraw_addresses: HashMap<String, String>,
     /// Mock of accumulated rewards, indexed first by delegator and then validator address.
-    #[cfg(feature = "cosmwasm_1_4")]
     rewards: BTreeMap<String, BTreeMap<String, Vec<DecCoin>>>,
+    /// Mock of validators that a delegator has bonded to.
+    validators: BTreeMap<String, BTreeSet<String>>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
     pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
-        #[allow(clippy::needless_update)]
         DistributionQuerier {
             withdraw_addresses,
             ..Default::default()
@@ -979,17 +981,35 @@ impl DistributionQuerier {
     }
 
     /// Sets accumulated rewards for a given validator and delegator pair.
-    #[cfg(feature = "cosmwasm_1_4")]
     pub fn set_rewards(
         &mut self,
         validator: impl Into<String>,
         delegator: impl Into<String>,
         rewards: Vec<DecCoin>,
     ) {
+        let delegator = delegator.into();
+        let validator = validator.into();
         self.rewards
-            .entry(delegator.into())
+            .entry(delegator.clone())
             .or_default()
-            .insert(validator.into(), rewards);
+            .insert(validator.clone(), rewards);
+        // also add to validator set
+        self.validators
+            .entry(delegator)
+            .or_default()
+            .insert(validator);
+    }
+
+    /// Sets the validators a given delegator has bonded to.
+    pub fn set_validators(
+        &mut self,
+        delegator: impl Into<String>,
+        validators: impl IntoIterator<Item = impl Into<String>>,
+    ) {
+        self.validators.insert(
+            delegator.into(),
+            validators.into_iter().map(Into::into).collect(),
+        );
     }
 
     pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
@@ -1042,6 +1062,17 @@ impl DistributionQuerier {
                         .into_values()
                         .collect(),
                     rewards: validator_rewards,
+                };
+                to_binary(&res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_4")]
+            DistributionQuery::DelegatorValidators { delegator_address } => {
+                let res = DelegatorValidatorsResponse {
+                    validators: self
+                        .validators
+                        .get(delegator_address)
+                        .map(|set| set.iter().cloned().collect())
+                        .unwrap_or_default(),
                 };
                 to_binary(&res).into()
             }

@@ -71,9 +71,9 @@ pub use crate::query::{
     BalanceResponse, BankQuery, BondedDenomResponse, ChannelResponse, CodeInfoResponse,
     ContractInfoResponse, CustomQuery, DecCoin, Delegation, DelegationResponse,
     DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
-    DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery, FullDelegation,
-    IbcQuery, ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse,
-    Validator, ValidatorResponse, WasmQuery,
+    DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
+    DistributionQuery, FullDelegation, IbcQuery, ListChannelsResponse, PortIdResponse,
+    QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
 #[allow(deprecated)]
 pub use crate::results::SubMsgExecutionResponse;

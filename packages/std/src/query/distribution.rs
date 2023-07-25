@@ -20,6 +20,9 @@ pub enum DistributionQuery {
     /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L180-L187>
     #[cfg(feature = "cosmwasm_1_4")]
     DelegationTotalRewards { delegator_address: String },
+    /// See <https://github.com/cosmos/cosmos-sdk/blob/b0acf60e6c39f7ab023841841fc0b751a12c13ff/proto/cosmos/distribution/v1beta1/query.proto#L202-L210>
+    #[cfg(feature = "cosmwasm_1_4")]
+    DelegatorValidators { delegator_address: String },
 }
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L232-L240>
@@ -31,7 +34,6 @@ pub struct DelegatorWithdrawAddressResponse {
 }
 
 impl_response_constructor!(DelegatorWithdrawAddressResponse, withdraw_address: Addr);
-
 impl QueryResponseType for DelegatorWithdrawAddressResponse {}
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L169-L178>
@@ -73,3 +75,12 @@ pub struct DelegatorReward {
     pub validator_address: String,
     pub reward: Vec<DecCoin>,
 }
+
+/// See <https://github.com/cosmos/cosmos-sdk/blob/b0acf60e6c39f7ab023841841fc0b751a12c13ff/proto/cosmos/distribution/v1beta1/query.proto#L212-L220>
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct DelegatorValidatorsResponse {
+    pub validators: Vec<String>,
+}
+
+impl_response_constructor!(DelegatorValidatorsResponse, validators: Vec<String>);
+impl QueryResponseType for DelegatorValidatorsResponse {}
