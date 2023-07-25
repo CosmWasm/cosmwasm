@@ -363,7 +363,7 @@ where
                 .store(checksum, module.clone(), module_size)?;
             let cached = CachedModule {
                 module,
-                size: module_size,
+                size_estimate: module_size,
             };
             let store = Store::new(cache.runtime_engine.clone());
             return Ok((cached, store));
@@ -386,7 +386,7 @@ where
             .store(checksum, module.clone(), module_size)?;
         let cached = CachedModule {
             module,
-            size: module_size,
+            size_estimate: module_size,
         };
         let store = Store::new(cache.runtime_engine.clone());
         Ok((cached, store))
