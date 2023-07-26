@@ -17,12 +17,15 @@ and this project adheres to
 - cosmwasm-vm: Upgrade Wasmer to version 4.1. ([#1674], [#1693], [#1701],
   [#1793])
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
+- cosmwasm-vm: Use `wasmparser` for initial validation instead of `parity-wasm`
+  ([#1786])
 
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 [#1674]: https://github.com/CosmWasm/cosmwasm/pull/1674
 [#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
 [#1693]: https://github.com/CosmWasm/cosmwasm/pull/1693
 [#1701]: https://github.com/CosmWasm/cosmwasm/pull/1701
+[#1786]: https://github.com/CosmWasm/cosmwasm/pull/1786
 [#1793]: https://github.com/CosmWasm/cosmwasm/pull/1793
 
 ## [1.3.0] - 2023-07-17
