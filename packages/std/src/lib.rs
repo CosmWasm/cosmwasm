@@ -71,6 +71,11 @@ pub use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
     DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(feature = "cosmwasm_1_3")]
+pub use crate::query::{
+    AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
+    DistributionQuery,
+};
 #[cfg(feature = "stargate")]
 pub use crate::query::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[allow(deprecated)]
