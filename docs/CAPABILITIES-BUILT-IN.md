@@ -19,3 +19,7 @@ might define others.
   `BankQuery::DenomMetadata` and `DistributionQuery::DelegatorWithdrawAddress`
   queries, as well as `DistributionMsg::FundCommunityPool`. Only chains running
   CosmWasm `1.3.0` or higher support this.
+- `cosmwasm_1_4` enables the `DistributionQuery::DelegationRewards`,
+  `DistributionQuery::DelegationTotalRewards` and
+  `DistributionQuery::DelegatorValidators` queries. Only chains running CosmWasm
+  `1.4.0` or higher support this.
