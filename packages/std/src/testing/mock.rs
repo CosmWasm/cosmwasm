@@ -41,14 +41,14 @@ use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
-    query::{AllDenomMetadataResponse, DelegatorValidatorsResponse, DenomMetadataResponse},
+    query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},
     PageRequest,
 };
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
-use crate::{DecCoin, Decimal, DelegationRewardsResponse};
+use crate::{Decimal, DelegationRewardsResponse, DelegatorValidatorsResponse};
 
 use super::riffle_shuffle;
 
