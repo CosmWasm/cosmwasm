@@ -242,7 +242,7 @@ pub fn mock_env() -> Env {
             time: Timestamp::from_nanos(1_571_797_419_879_305_533),
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        transaction: Some(TransactionInfo { index: 3 }),
+        transaction_info: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
         },
