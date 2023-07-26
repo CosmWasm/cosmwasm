@@ -42,7 +42,6 @@ pub use crate::errors::{
     RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError,
 };
 pub use crate::hex_binary::HexBinary;
-#[cfg(feature = "stargate")]
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcEndpoint, IbcMsg, IbcOrder,
@@ -58,26 +57,14 @@ pub use crate::math::{
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
-#[cfg(feature = "cosmwasm_1_2")]
-pub use crate::query::CodeInfoResponse;
-#[cfg(feature = "cosmwasm_1_1")]
-pub use crate::query::SupplyResponse;
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, ContractInfoResponse, CustomQuery,
-    QueryRequest, WasmQuery,
+    AllBalanceResponse, AllDelegationsResponse, AllDenomMetadataResponse, AllValidatorsResponse,
+    BalanceResponse, BankQuery, BondedDenomResponse, ChannelResponse, CodeInfoResponse,
+    ContractInfoResponse, CustomQuery, Delegation, DelegationResponse,
+    DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery, FullDelegation,
+    IbcQuery, ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse,
+    Validator, ValidatorResponse, WasmQuery,
 };
-#[cfg(feature = "staking")]
-pub use crate::query::{
-    AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
-    DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
-};
-#[cfg(feature = "cosmwasm_1_3")]
-pub use crate::query::{
-    AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
-    DistributionQuery,
-};
-#[cfg(feature = "stargate")]
-pub use crate::query::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[allow(deprecated)]
 pub use crate::results::SubMsgExecutionResponse;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]

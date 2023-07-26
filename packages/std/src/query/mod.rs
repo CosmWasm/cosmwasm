@@ -33,9 +33,7 @@ mod wasm;
 
 pub use bank::*;
 pub use distribution::*;
-#[cfg(feature = "stargate")]
 pub use ibc::*;
-#[cfg(feature = "staking")]
 pub use staking::*;
 pub use wasm::*;
 
