@@ -53,6 +53,10 @@ extern "C" fn requires_cosmwasm_1_2() -> () {}
 #[no_mangle]
 extern "C" fn requires_cosmwasm_1_3() -> () {}
 
+#[cfg(feature = "cosmwasm_1_4")]
+#[no_mangle]
+extern "C" fn requires_cosmwasm_1_4() -> () {}
+
 /// interface_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
