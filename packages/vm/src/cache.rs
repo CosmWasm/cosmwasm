@@ -14,8 +14,9 @@ use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
+use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
-use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
+use crate::static_analysis::has_ibc_entry_points;
 use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
 
 const STATE_DIR: &str = "state";
@@ -254,7 +255,7 @@ where
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
         // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
         let wasm = self.load_wasm(checksum)?;
-        let module = deserialize_wasm(&wasm)?;
+        let module = ParsedWasm::parse(&wasm)?;
         Ok(AnalysisReport {
             has_ibc_entry_points: has_ibc_entry_points(&module),
             required_capabilities: required_capabilities_from_module(&module),
@@ -571,7 +572,7 @@ mod tests {
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
-                assert_eq!(msg, "Wasm contract doesn\'t have a memory section")
+                assert_eq!(msg, "Wasm contract must contain exactly one memory")
             }
             e => panic!("Unexpected error {e:?}"),
         }
