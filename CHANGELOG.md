@@ -28,6 +28,21 @@ and this project adheres to
 [#1786]: https://github.com/CosmWasm/cosmwasm/pull/1786
 [#1793]: https://github.com/CosmWasm/cosmwasm/pull/1793
 
+## [1.3.1] - 2023-07-26
+
+### Fixed
+
+- cosmwasm-std: Export `DelegatorWithdrawAddressResponse`,
+  `DenomMetadataResponse` and `AllDenomMetadataResponse` which were added in
+  `1.3.0` ([#1795]).
+
+[#1795]: https://github.com/CosmWasm/cosmwasm/pull/1795
+
+### Changed
+
+- cosmwasm-std: Query responses are now exported, even if the corresponding
+  cargo feature is not enabled ([#1795]).
+
 ## [1.3.0] - 2023-07-17
 
 ### Fixed
@@ -1800,7 +1815,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0-rc.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
