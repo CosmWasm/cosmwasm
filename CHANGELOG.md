@@ -14,11 +14,16 @@ and this project adheres to
   STDERR instead of STDOUT by default ([#1667]).
 - cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
   customizing the handling of debug messages emitted by the contract ([#1667]).
-- cosmwasm-vm: Upgrade Wasmer to version 4.0.0.
+- cosmwasm-vm: Upgrade Wasmer to version 4.1. ([#1674], [#1693], [#1701],
+  [#1793])
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
 
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
+[#1674]: https://github.com/CosmWasm/cosmwasm/pull/1674
 [#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
+[#1693]: https://github.com/CosmWasm/cosmwasm/pull/1693
+[#1701]: https://github.com/CosmWasm/cosmwasm/pull/1701
+[#1793]: https://github.com/CosmWasm/cosmwasm/pull/1793
 
 ## [1.3.0] - 2023-07-17
 
