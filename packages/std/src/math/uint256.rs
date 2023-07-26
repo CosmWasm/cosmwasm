@@ -7,6 +7,7 @@ use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use std::ops::Not;
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
@@ -499,6 +500,14 @@ impl Rem for Uint256 {
     }
 }
 forward_ref_binop!(impl Rem, rem for Uint256, Uint256);
+
+impl Not for Uint256 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
 
 impl RemAssign<Uint256> for Uint256 {
     fn rem_assign(&mut self, rhs: Uint256) {

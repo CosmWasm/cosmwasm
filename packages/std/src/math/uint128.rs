@@ -4,6 +4,7 @@ use core::ops::{
     Sub, SubAssign,
 };
 use core::str::FromStr;
+use std::ops::Not;
 
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
@@ -514,6 +515,14 @@ impl Rem for Uint128 {
     }
 }
 forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
+
+impl Not for Uint128 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
 
 impl RemAssign<Uint128> for Uint128 {
     fn rem_assign(&mut self, rhs: Uint128) {

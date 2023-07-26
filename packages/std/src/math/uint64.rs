@@ -6,6 +6,7 @@ use core::ops::{
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use std::ops::Not;
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -405,6 +406,14 @@ impl Rem for Uint64 {
     }
 }
 forward_ref_binop!(impl Rem, rem for Uint64, Uint64);
+
+impl Not for Uint64 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
 
 impl RemAssign<Uint64> for Uint64 {
     fn rem_assign(&mut self, rhs: Uint64) {
