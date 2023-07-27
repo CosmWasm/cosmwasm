@@ -567,6 +567,14 @@ mod tests {
     }
 
     #[test]
+    fn uint64_not_works() {
+        assert_eq!(!Uint64::new(1234806), Uint64::new(!1234806));
+
+        assert_eq!(!Uint64::MAX, Uint64::new(!u64::MAX));
+        assert_eq!(!Uint64::MIN, Uint64::new(!u64::MIN));
+    }
+
+    #[test]
     fn uint64_zero_works() {
         let zero = Uint64::zero();
         assert_eq!(zero.to_be_bytes(), [0, 0, 0, 0, 0, 0, 0, 0]);

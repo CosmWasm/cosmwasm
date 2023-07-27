@@ -617,6 +617,14 @@ mod tests {
     }
 
     #[test]
+    fn uint128_not_works() {
+        assert_eq!(!Uint128::new(1234806), Uint128::new(!1234806));
+
+        assert_eq!(!Uint128::MAX, Uint128::new(!u128::MAX));
+        assert_eq!(!Uint128::MIN, Uint128::new(!u128::MIN));
+    }
+
+    #[test]
     fn uint128_zero_works() {
         let zero = Uint128::zero();
         assert_eq!(

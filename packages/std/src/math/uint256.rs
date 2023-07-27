@@ -694,6 +694,16 @@ mod tests {
     }
 
     #[test]
+    fn uint256_not_works() {
+        let num = Uint256::new([1; 32]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 32]);
+
+        assert_eq!(!Uint256::MAX, Uint256::MIN);
+        assert_eq!(!Uint256::MIN, Uint256::MAX);
+    }
+
+    #[test]
     fn uint256_zero_works() {
         let zero = Uint256::zero();
         assert_eq!(
