@@ -8,7 +8,6 @@ use serde::Deserialize;
 // Crypto stuff
 use digest::Digest;
 use k256::ecdsa::SigningKey; // type alias
-use k256::elliptic_curve::sec1::ToEncodedPoint;
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
@@ -95,7 +94,7 @@ fn bench_crypto(c: &mut Criterion) {
         let r_s = hex!("99e71a99cb2270b8cac5254f9e99b6210c6c10224a1579cf389ef88b20a1abe9129ff05af364204442bdb53ab6f18a99ab48acc9326fa689f228040429e3ca66");
         let recovery_param: u8 = 0;
 
-        let expected = SigningKey::from_bytes(&private_key)
+        let expected = SigningKey::from_bytes(&private_key.into())
             .unwrap()
             .verifying_key()
             .to_encoded_point(false)
