@@ -102,11 +102,11 @@ pub fn assert_hash_works_impl<T: Clone + Eq + Hash>(left: T, right: T, panic_msg
     }
 }
 
-#[track_caller]
 /// Panics concatenating both arguments.
 ///
 /// If second argument is `None` panics with just the first argument as message.
 /// Otherwise, formats the panic message as `{reason}:\n{panic_msg}`.
+#[track_caller]
 fn do_panic(reason: impl core::fmt::Display, panic_msg: Option<String>) -> ! {
     match panic_msg {
         Some(panic_msg) => panic!("{reason}:\n{panic_msg}"),
