@@ -4,7 +4,8 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
+    ed25519_batch_verify, ed25519_verify, keccak256, secp256k1_recover_pubkey, secp256k1_verify,
+    CryptoError,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -58,6 +59,11 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
 /// Max length for an abort message
 const MAX_LENGTH_ABORT: usize = 2 * MI;
+
+/// Max length of a keccak256 message in bytes.
+/// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
+/// messages, let us know.
+const MAX_LENGTH_KECCAK256_MESSAGE: usize = 128 * 1024;
 
 // Import implementations
 //
@@ -435,6 +441,39 @@ pub fn do_ed25519_batch_verify<
     Ok(code)
 }
 
+pub fn do_keccak256<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    data_ptr: u32,
+) -> VmResult<u64> {
+    let (data, mut store) = env.data_and_store_mut();
+
+    let message = read_region(
+        &data.memory(&mut store),
+        data_ptr,
+        MAX_LENGTH_KECCAK256_MESSAGE,
+    )?;
+
+    let result = keccak256(&message);
+    let gas_info = GasInfo::with_cost(data.gas_config.keccak256_cost);
+    process_gas_info(data, &mut store, gas_info)?;
+
+    match result {
+        Ok(digest) => {
+            let digest_ptr = write_to_contract(data, &mut store, digest.as_ref())?;
+            Ok(to_low_half(digest_ptr))
+        }
+        Err(err) => match err {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    }
+}
+
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn do_debug<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
@@ -642,6 +681,7 @@ mod tests {
                 "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "keccak256" => Function::new_typed(&mut store, |_a: u32| -> u64 { 0 }),
                 "debug" => Function::new_typed(&mut store, |_a: u32| {}),
                 "abort" => Function::new_typed(&mut store, |_a: u32| {}),
             },
@@ -1884,6 +1924,77 @@ mod tests {
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
             1 // verification failure
         )
+    }
+
+    #[test]
+    fn do_keccak256_ok() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        const KECCAK256_MSG: &str =
+            "1ff5c235b3c317d054b80b4bf0a8038bd727d180872d2491a7edef4f949c4135";
+
+        let msg_ptr = write_data(&mut fe_mut, KECCAK256_MSG.as_bytes());
+        let expected = hex!("374c6f18084ec509581669659c7bce243284f85ddaa164c77bde9e9abd65fc0d");
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
+        let error = result >> 32;
+        let data_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, data_ptr), expected);
+    }
+
+    #[test]
+    fn do_keccak256_empty() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        const KECCAK256_MSG: &str = "";
+
+        let msg_ptr = write_data(&mut fe_mut, KECCAK256_MSG.as_bytes());
+        let expected = hex!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
+        let error = result >> 32;
+        let data_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, data_ptr), expected);
+    }
+
+    #[test]
+    fn do_keccak256_ok_max_data() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        let msg = vec![0x22; MAX_LENGTH_KECCAK256_MESSAGE];
+        let msg_ptr = write_data(&mut fe_mut, &msg);
+        let expected = hex!("c69ddf80d1cc491c364a5abd9ca71ee0c672428984c5d97ce7ebfa01e510a327");
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr).unwrap();
+        let error = result >> 32;
+        let data_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, data_ptr), expected);
+    }
+
+    #[test]
+    fn do_keccak256_err_beyond_max_data() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+        let msg = vec![0x22; MAX_LENGTH_KECCAK256_MESSAGE + 1];
+        let msg_ptr = write_data(&mut fe_mut, &msg);
+        let result = do_keccak256(fe_mut.as_mut(), msg_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+                ..
+            } => {
+                assert_eq!(length, MAX_LENGTH_KECCAK256_MESSAGE + 1);
+                assert_eq!(max_length, MAX_LENGTH_KECCAK256_MESSAGE);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        };
     }
 
     #[test]

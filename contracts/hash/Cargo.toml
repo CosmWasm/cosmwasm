@@ -1,0 +1,38 @@
+[package]
+name = "hash"
+version = "0.1.0"
+authors = ["OKX <okx@okg.com>"]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+cosmwasm-std = { path = "../../packages/std" }
+cosmwasm-storage = { path = "../../packages/storage" }
+
+schemars = "0.8.8"
+serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.31" }
+hex = "0.4"
+sha3 = "0.9"
+
+[dev-dependencies]
+cosmwasm-schema = { path = "../../packages/schema"}
