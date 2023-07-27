@@ -404,12 +404,7 @@ impl From<Int512> for String {
 
 impl fmt::Display for Int512 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The inner type doesn't work as expected with padding, so we
-        // work around that. Remove this code when the upstream padding is fixed.
-        let unpadded = self.0.to_string();
-        let numeric = unpadded.strip_prefix('-').unwrap_or(&unpadded);
-
-        f.pad_integral(self >= &Self::zero(), "", numeric)
+        self.0.fmt(f)
     }
 }
 

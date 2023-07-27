@@ -407,11 +407,7 @@ impl From<Uint512> for String {
 
 impl fmt::Display for Uint512 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The inner type doesn't work as expected with padding, so we
-        // work around that.
-        let unpadded = self.0.to_string();
-
-        f.pad_integral(true, "", &unpadded)
+        self.0.fmt(f)
     }
 }
 

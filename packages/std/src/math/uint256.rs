@@ -420,11 +420,7 @@ impl From<Uint256> for String {
 
 impl fmt::Display for Uint256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The inner type doesn't work as expected with padding, so we
-        // work around that.
-        let unpadded = self.0.to_string();
-
-        f.pad_integral(true, "", &unpadded)
+        self.0.fmt(f)
     }
 }
 
