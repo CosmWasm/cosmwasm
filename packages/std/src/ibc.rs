@@ -1,4 +1,3 @@
-#![cfg(feature = "stargate")]
 // The CosmosMsg variants are defined in results/cosmos_msg.rs
 // The rest of the IBC related functionality is defined here
 

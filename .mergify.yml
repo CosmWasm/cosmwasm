@@ -27,7 +27,8 @@ pull_request_rules:
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"
       - "status-success=ci/circleci: contract_virus"
-      - "status-success=ci/circleci: coverage"
+      # disabled temporarily because Rust version is too low
+      # - "status-success=ci/circleci: coverage"
       - "status-success=ci/circleci: fmt"
       - "status-success=ci/circleci: fmt_extra"
       - "status-success=ci/circleci: package_check"
@@ -49,6 +50,6 @@ pull_request_rules:
       backport:
         branches:
           # Update this when going to a new minor version
-          - "1.2"
+          - "release/1.4"
         assignees:
           - "{{ author }}"

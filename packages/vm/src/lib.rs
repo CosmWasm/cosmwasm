@@ -16,6 +16,7 @@ mod instance;
 mod limited;
 mod memory;
 mod modules;
+mod parsed_wasm;
 mod sections;
 mod serde;
 mod size;
@@ -58,5 +59,5 @@ pub mod internals {
 
     pub use crate::compatibility::check_wasm;
     pub use crate::instance::instance_from_module;
-    pub use crate::wasm_backend::{compile, make_engine, make_runtime_store};
+    pub use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
 }

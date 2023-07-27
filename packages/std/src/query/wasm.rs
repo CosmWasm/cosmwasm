@@ -1,9 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Binary;
-#[cfg(feature = "cosmwasm_1_2")]
-use crate::HexBinary;
+use crate::{Binary, HexBinary};
 
 use super::query_response::QueryResponseType;
 
@@ -76,7 +74,6 @@ impl ContractInfoResponse {
 /// [CodeInfoResponse]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/query.proto#L184-L199
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
-#[cfg(feature = "cosmwasm_1_2")]
 pub struct CodeInfoResponse {
     pub code_id: u64,
     /// The address that initially stored the code
@@ -85,7 +82,13 @@ pub struct CodeInfoResponse {
     pub checksum: HexBinary,
 }
 
-#[cfg(feature = "cosmwasm_1_2")]
+impl_response_constructor!(
+    CodeInfoResponse,
+    code_id: u64,
+    creator: String,
+    checksum: HexBinary
+);
+
 impl QueryResponseType for CodeInfoResponse {}
 
 #[cfg(test)]

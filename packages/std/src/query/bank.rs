@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::Coin;
 
 #[cfg(feature = "cosmwasm_1_3")]
-use crate::{Binary, DenomMetadata, PageRequest};
+use crate::PageRequest;
+use crate::{Binary, DenomMetadata};
 
 use super::query_response::QueryResponseType;
 
@@ -34,7 +35,6 @@ pub enum BankQuery {
     AllDenomMetadata { pagination: Option<PageRequest> },
 }
 
-#[cfg(feature = "cosmwasm_1_1")]
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
@@ -44,7 +44,8 @@ pub struct SupplyResponse {
     pub amount: Coin,
 }
 
-#[cfg(feature = "cosmwasm_1_1")]
+impl_response_constructor!(SupplyResponse, amount: Coin);
+
 impl QueryResponseType for SupplyResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
@@ -55,6 +56,8 @@ pub struct BalanceResponse {
     pub amount: Coin,
 }
 
+impl_response_constructor!(BalanceResponse, amount: Coin);
+
 impl QueryResponseType for BalanceResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
@@ -64,10 +67,11 @@ pub struct AllBalanceResponse {
     pub amount: Vec<Coin>,
 }
 
+impl_response_constructor!(AllBalanceResponse, amount: Vec<Coin>);
+
 impl QueryResponseType for AllBalanceResponse {}
 
-#[cfg(feature = "cosmwasm_1_3")]
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct DenomMetadataResponse {
@@ -75,11 +79,11 @@ pub struct DenomMetadataResponse {
     pub metadata: DenomMetadata,
 }
 
-#[cfg(feature = "cosmwasm_1_3")]
+impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
+
 impl QueryResponseType for DenomMetadataResponse {}
 
-#[cfg(feature = "cosmwasm_1_3")]
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct AllDenomMetadataResponse {
@@ -88,5 +92,26 @@ pub struct AllDenomMetadataResponse {
     pub next_key: Option<Binary>,
 }
 
-#[cfg(feature = "cosmwasm_1_3")]
+impl_response_constructor!(
+    AllDenomMetadataResponse,
+    metadata: Vec<DenomMetadata>,
+    next_key: Option<Binary>
+);
+
 impl QueryResponseType for AllDenomMetadataResponse {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn private_constructor_works() {
+        let response = AllBalanceResponse::new(vec![Coin::new(1234, "uatom")]);
+        assert_eq!(
+            response,
+            AllBalanceResponse {
+                amount: vec![Coin::new(1234, "uatom")]
+            }
+        );
+    }
+}

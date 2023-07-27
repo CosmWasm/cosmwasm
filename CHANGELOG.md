@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `Not` for `Uint{64,128,256}` ([#1799]).
+
+[#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
+
 ### Changed
 
 - cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
@@ -14,13 +20,36 @@ and this project adheres to
   STDERR instead of STDOUT by default ([#1667]).
 - cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
   customizing the handling of debug messages emitted by the contract ([#1667]).
-- cosmwasm-vm: Upgrade Wasmer to version 4.0.0.
+- cosmwasm-vm: Upgrade Wasmer to version 4.1. ([#1674], [#1693], [#1701],
+  [#1793])
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
+- cosmwasm-vm: Use `wasmparser` for initial validation instead of `parity-wasm`
+  ([#1786])
 
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
+[#1674]: https://github.com/CosmWasm/cosmwasm/pull/1674
 [#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
+[#1693]: https://github.com/CosmWasm/cosmwasm/pull/1693
+[#1701]: https://github.com/CosmWasm/cosmwasm/pull/1701
+[#1786]: https://github.com/CosmWasm/cosmwasm/pull/1786
+[#1793]: https://github.com/CosmWasm/cosmwasm/pull/1793
 
-## [1.3.0-rc.0] - 2023-07-03
+## [1.3.1] - 2023-07-26
+
+### Fixed
+
+- cosmwasm-std: Export `DelegatorWithdrawAddressResponse`,
+  `DenomMetadataResponse` and `AllDenomMetadataResponse` which were added in
+  `1.3.0` ([#1795]).
+
+[#1795]: https://github.com/CosmWasm/cosmwasm/pull/1795
+
+### Changed
+
+- cosmwasm-std: Query responses are now exported, even if the corresponding
+  cargo feature is not enabled ([#1795]).
+
+## [1.3.0] - 2023-07-17
 
 ### Fixed
 
@@ -1792,8 +1821,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0-rc.0...HEAD
-[1.3.0-rc.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0-rc.0
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0
 [1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5

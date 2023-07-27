@@ -343,6 +343,14 @@ impl From<CryptoError> for VmError {
     }
 }
 
+impl From<wasmer::wasmparser::BinaryReaderError> for VmError {
+    fn from(original: wasmer::wasmparser::BinaryReaderError) -> Self {
+        VmError::static_validation_err(format!(
+            "Wasm bytecode could not be deserialized. Deserialization error: \"{original}\""
+        ))
+    }
+}
+
 impl From<wasmer::ExportError> for VmError {
     fn from(original: wasmer::ExportError) -> Self {
         VmError::resolve_err(format!("Could not get export: {original}"))
