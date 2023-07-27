@@ -646,31 +646,13 @@ mod tests {
         assert_eq!(canonical_addr_slice, &[0u8, 187, 61, 11, 250, 0]);
     }
 
+    /// Tests that `CanonicalAddr` implements `EQ` and `Hash` correctly and thus
+    /// can be used with hash maps and sets.
     #[test]
-    fn canonical_addr_implements_hash() {
+    fn canonical_addr_implements_hash_eq() {
         let alice = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
         let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
         assert_hash_works!(alice, bob);
-    }
-
-    /// This requires Hash and Eq to be implemented
-    #[test]
-    fn canonical_addr_can_be_used_in_hash_set() {
-        use std::collections::HashSet;
-
-        let alice1 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
-        let alice2 = CanonicalAddr::from([0, 187, 61, 11, 250, 0]);
-        let bob = CanonicalAddr::from([16, 21, 33, 0, 255, 9]);
-
-        let mut set = HashSet::new();
-        set.insert(alice1.clone());
-        set.insert(alice2.clone());
-        set.insert(bob.clone());
-        assert_eq!(set.len(), 2);
-
-        let set1 = HashSet::<CanonicalAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
-        let set2 = HashSet::from_iter(vec![alice1, alice2, bob]);
-        assert_eq!(set1, set2);
     }
 
     // helper to show we can handle Addr and &Addr equally

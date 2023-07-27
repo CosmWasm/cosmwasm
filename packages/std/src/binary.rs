@@ -507,31 +507,13 @@ mod tests {
         assert_eq!(want, AsRef::<[u8]>::as_ref(&&data));
     }
 
+    /// Tests that `Binary` implements `EQ` and `Hash` correctly and thus can be
+    /// used with hash maps and sets.
     #[test]
-    fn binary_implements_hash() {
+    fn binary_implements_hash_eq() {
         let a = Binary::from([0, 187, 61, 11, 250, 0]);
         let b = Binary::from([16, 21, 33, 0, 255, 9]);
         assert_hash_works!(a, b);
-    }
-
-    /// This requires Hash and Eq to be implemented
-    #[test]
-    fn binary_can_be_used_in_hash_set() {
-        use std::collections::HashSet;
-
-        let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
-        let a2 = Binary::from([0, 187, 61, 11, 250, 0]);
-        let b = Binary::from([16, 21, 33, 0, 255, 9]);
-
-        let mut set = HashSet::new();
-        set.insert(a1.clone());
-        set.insert(a2.clone());
-        set.insert(b.clone());
-        assert_eq!(set.len(), 2);
-
-        let set1 = HashSet::<Binary>::from_iter(vec![b.clone(), a1.clone()]);
-        let set2 = HashSet::from_iter(vec![a1, a2, b]);
-        assert_eq!(set1, set2);
     }
 
     #[test]
