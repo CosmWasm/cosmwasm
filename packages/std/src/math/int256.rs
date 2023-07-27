@@ -588,6 +588,18 @@ mod tests {
     }
 
     #[test]
+    fn int256_not_works() {
+        let num = Int256::new([1; 32]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 32]);
+
+        assert_eq!(!Int256::from(-1234806i128), Int256::from(!-1234806i128));
+
+        assert_eq!(!Int256::MAX, Int256::MIN);
+        assert_eq!(!Int256::MIN, Int256::MAX);
+    }
+
+    #[test]
     fn int256_zero_works() {
         let zero = Int256::zero();
         assert_eq!(zero.to_be_bytes(), [0; 32]);

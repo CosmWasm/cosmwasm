@@ -4,6 +4,7 @@ use core::ops::{
     Sub, SubAssign,
 };
 use core::str::FromStr;
+use std::ops::Not;
 
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
@@ -515,6 +516,14 @@ impl Rem for Uint128 {
 }
 forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
 
+impl Not for Uint128 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
+
 impl RemAssign<Uint128> for Uint128 {
     fn rem_assign(&mut self, rhs: Uint128) {
         *self = *self % rhs;
@@ -605,6 +614,14 @@ mod tests {
     #[test]
     fn size_of_works() {
         assert_eq!(core::mem::size_of::<Uint128>(), 16);
+    }
+
+    #[test]
+    fn uint128_not_works() {
+        assert_eq!(!Uint128::new(1234806), Uint128::new(!1234806));
+
+        assert_eq!(!Uint128::MAX, Uint128::new(!u128::MAX));
+        assert_eq!(!Uint128::MIN, Uint128::new(!u128::MIN));
     }
 
     #[test]

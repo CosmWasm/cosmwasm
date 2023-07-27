@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `Not` for `Uint{64,128,256}` ([#1799]).
+
+[#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
+
 ### Changed
 
 - cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file

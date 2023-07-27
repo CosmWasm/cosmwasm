@@ -666,6 +666,16 @@ mod tests {
     }
 
     #[test]
+    fn uint512_not_works() {
+        let num = Uint512::new([1; 64]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 64]);
+
+        assert_eq!(!Uint512::MAX, Uint512::MIN);
+        assert_eq!(!Uint512::MIN, Uint512::MAX);
+    }
+
+    #[test]
     fn uint512_zero_works() {
         let zero = Uint512::zero();
         assert_eq!(

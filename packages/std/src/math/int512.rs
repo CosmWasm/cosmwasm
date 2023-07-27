@@ -623,6 +623,18 @@ mod tests {
     }
 
     #[test]
+    fn int512_not_works() {
+        let num = Int512::new([1; 64]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 64]);
+
+        assert_eq!(!Int512::from(-1234806i128), Int512::from(!-1234806i128));
+
+        assert_eq!(!Int512::MAX, Int512::MIN);
+        assert_eq!(!Int512::MIN, Int512::MAX);
+    }
+
+    #[test]
     fn int512_zero_works() {
         let zero = Int512::zero();
         assert_eq!(zero.to_be_bytes(), [0; 64]);
