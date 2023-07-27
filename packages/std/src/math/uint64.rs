@@ -614,8 +614,13 @@ mod tests {
 
     #[test]
     fn uint64_display_padding_works() {
+        // width > natural representation
         let a = Uint64::from(123u64);
         assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
+
+        // width < natural representation
+        let a = Uint64::from(123u64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
     }
 
     #[test]

@@ -1104,8 +1104,13 @@ mod tests {
 
     #[test]
     fn uint256_display_padding_works() {
+        // width > natural representation
         let a = Uint256::from(123u64);
         assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
+
+        // width < natural representation
+        let a = Uint256::from(123u64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
     }
 
     #[test]
