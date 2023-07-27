@@ -23,7 +23,7 @@ macro_rules! assert_approx_eq {
     }};
 }
 
-/// Asserts that type `T` implements `Hash` trait correctly.
+/// Tests that type `T` implements `Eq` and `Hash` traits correctly.
 ///
 /// `left` and `right` must be unequal objects.
 ///
