@@ -105,10 +105,11 @@ pub fn secp256k1_recover_pubkey(
     let signature = read_signature(signature)?;
 
     // params other than 0 and 1 are explicitly not supported
-    if recovery_param >= 2 {
-        return Err(CryptoError::invalid_recovery_param());
-    }
-    let id = RecoveryId::from_byte(recovery_param).unwrap();
+    let id = match recovery_param {
+        0 => RecoveryId::new(false, false),
+        1 => RecoveryId::new(true, false),
+        _ => return Err(CryptoError::invalid_recovery_param()),
+    };
 
     // Compose extended signature
     let signature = Signature::from_bytes(&signature.into())
