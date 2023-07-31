@@ -1,9 +1,7 @@
 use digest::{Digest, Update}; // trait
 use k256::{
-    ecdsa::recoverable,
-    ecdsa::signature::{DigestVerifier, Signature as _}, // traits
-    ecdsa::{Signature, VerifyingKey},                   // type aliases
-    elliptic_curve::sec1::ToEncodedPoint,
+    ecdsa::signature::DigestVerifier,             // traits
+    ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
 
 use crate::errors::{CryptoError, CryptoResult};
@@ -52,8 +50,8 @@ pub fn secp256k1_verify(
     // Already hashed, just build Digest container
     let message_digest = Identity256::new().chain(message_hash);
 
-    let mut signature =
-        Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
+    let mut signature = Signature::from_bytes(&signature.into())
+        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     // High-S signatures require normalization since our verification implementation
     // rejects them by default. If we had a verifier that does not restrict to
@@ -106,19 +104,20 @@ pub fn secp256k1_recover_pubkey(
     let message_hash = read_hash(message_hash)?;
     let signature = read_signature(signature)?;
 
-    let id =
-        recoverable::Id::new(recovery_param).map_err(|_| CryptoError::invalid_recovery_param())?;
+    // params other than 0 and 1 are explicitly not supported
+    let id = match recovery_param {
+        0 => RecoveryId::new(false, false),
+        1 => RecoveryId::new(true, false),
+        _ => return Err(CryptoError::invalid_recovery_param()),
+    };
 
     // Compose extended signature
-    let signature =
-        Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
-    let extended_signature = recoverable::Signature::new(&signature, id)
+    let signature = Signature::from_bytes(&signature.into())
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     // Recover
     let message_digest = Identity256::new().chain(message_hash);
-    let pubkey = extended_signature
-        .recover_verifying_key_from_digest(message_digest)
+    let pubkey = VerifyingKey::recover_from_digest(message_digest, &signature, id)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
     Ok(encoded)
@@ -183,7 +182,6 @@ mod tests {
         ecdsa::signature::DigestSigner, // trait
         ecdsa::SigningKey,              // type alias
         elliptic_curve::rand_core::OsRng,
-        elliptic_curve::sec1::ToEncodedPoint,
     };
     use serde::Deserialize;
     use sha2::Sha256;
@@ -237,7 +235,7 @@ mod tests {
         // Verification (uncompressed public key)
         assert!(secp256k1_verify(
             &message_hash,
-            signature.as_bytes(),
+            signature.to_bytes().as_slice(),
             public_key.to_encoded_point(false).as_bytes()
         )
         .unwrap());
@@ -245,7 +243,7 @@ mod tests {
         // Verification (compressed public key)
         assert!(secp256k1_verify(
             &message_hash,
-            signature.as_bytes(),
+            signature.to_bytes().as_slice(),
             public_key.to_encoded_point(true).as_bytes()
         )
         .unwrap());
@@ -254,7 +252,7 @@ mod tests {
         let bad_message_hash = Sha256::new().chain(MSG).chain("\0").finalize();
         assert!(!secp256k1_verify(
             &bad_message_hash,
-            signature.as_bytes(),
+            signature.to_bytes().as_slice(),
             public_key.to_encoded_point(false).as_bytes()
         )
         .unwrap());
@@ -264,7 +262,7 @@ mod tests {
         let other_public_key = VerifyingKey::from(&other_secret_key);
         assert!(!secp256k1_verify(
             &message_hash,
-            signature.as_bytes(),
+            signature.to_bytes().as_slice(),
             other_public_key.to_encoded_point(false).as_bytes()
         )
         .unwrap());
@@ -330,7 +328,7 @@ mod tests {
         {
             let private_key =
                 hex!("3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1");
-            let expected = SigningKey::from_bytes(&private_key)
+            let expected = SigningKey::from_bytes(&private_key.into())
                 .unwrap()
                 .verifying_key()
                 .to_encoded_point(false)
