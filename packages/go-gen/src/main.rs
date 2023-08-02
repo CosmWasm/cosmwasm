@@ -257,13 +257,20 @@ fn replace_custom_type(ty: &str) -> String {
 mod tests {
     use cosmwasm_schema::cw_serde;
     use cosmwasm_std::{Binary, HexBinary, Uint128};
+    use indenter::CodeFormatter;
 
     use super::*;
 
     fn assert_code_eq(actual: String, expected: &str) {
-        let actual: Vec<_> = actual.split_whitespace().collect();
-        let expected: Vec<_> = expected.split_whitespace().collect();
-        assert_eq!(actual, expected, "expected code to be equal");
+        let mut actual_fmt = String::new();
+        let mut fmt = CodeFormatter::new(&mut actual_fmt, "    ");
+        fmt.write_str(&actual).unwrap();
+
+        let mut expected_fmt = String::new();
+        let mut fmt = CodeFormatter::new(&mut expected_fmt, "    ");
+        fmt.write_str(expected).unwrap();
+
+        assert_eq!(actual_fmt, expected_fmt, "expected code to be equal");
     }
 
     #[test]
