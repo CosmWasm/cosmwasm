@@ -1,6 +1,10 @@
 use anyhow::{bail, ensure, Context, Result};
+use go::{GoField, GoType, GoTypeDef, GoTypeDefType};
 use inflector::cases::pascalcase::to_pascal_case;
 use schemars::schema::{InstanceType, RootSchema, SchemaObject, SingleOrVec};
+use std::fmt::Write;
+
+mod go;
 
 fn main() -> Result<()> {
     let root = cosmwasm_schema::schema_for!(cosmwasm_std::AllDelegationsResponse);
@@ -17,92 +21,71 @@ fn main() -> Result<()> {
 
 fn generate_go(root: RootSchema) -> Result<String> {
     let (title, _) = schema_object_type(&root.schema).context("failed to get type name")?;
-    let mut code =
-        generate_type(&title, root.schema).with_context(|| format!("error generating {title}"))?;
-    let additional_types: String = root
+    let main_type = generate_type(&title, root.schema)
+        .with_context(|| format!("failed to generate {title}"))?
+        .with_context(|| format!("failed to generate {title}, because it is a custom type"))?;
+
+    let additional_types = root
         .definitions
         .into_iter()
-        .map(|(name, def)| generate_type(&name, def.into_object()))
+        .filter_map(|(name, def)| generate_type(&name, def.into_object()).transpose())
         .collect::<Result<Vec<_>>>()
-        .context("failed generating additional definitions")?
-        .join("\n");
+        .context("failed to generate additional definitions")?;
 
-    code.push('\n');
-    code.push_str(&additional_types);
-
-    println!("{}", code);
+    let mut code = format!("{main_type}\n");
+    for additional_type in additional_types {
+        writeln!(&mut code, "{additional_type}")?;
+    }
 
     Ok(code)
 }
 
-fn generate_type(name: &str, schema: SchemaObject) -> Result<String> {
+fn generate_type(name: &str, schema: SchemaObject) -> Result<Option<GoTypeDef>> {
     if custom_type_of(name).is_some() {
         // ignore custom types
-        // TODO: ugly
-        return Ok("".to_string());
+        return Ok(None);
     }
     // first detect if we have a struct or enum
     if is_object(&schema) {
-        generate_struct(name, schema)
+        generate_struct(name, schema).map(Some)
     } else if let Some(variants) = enum_variants(schema) {
-        generate_enum(name, variants)
+        generate_enum(name, variants).map(Some)
     } else {
         // ignore other types
-        Ok("".to_string())
+        Ok(None)
     }
 }
 
-fn generate_struct(name: &str, strct: SchemaObject) -> Result<String> {
-    // generate documentation
-    let mut out = String::new();
-    if let Some(doc) = documentation(&strct, false) {
-        out.push_str(&doc);
-    }
-
-    // type {name} struct {
-    out.push_str("type ");
-    out.push_str(name);
-    out.push_str(" struct {\n");
+fn generate_struct(name: &str, strct: SchemaObject) -> Result<GoTypeDef> {
+    let docs = documentation(&strct);
 
     // go through all fields
     let o = strct
         .object
         .with_context(|| format!("failed to generate struct '{name}': expected object"))?;
-    let fields = o
-        .properties
-        .into_iter()
-        .map(|(field, ty)| (field, ty.into_object()));
-
-    for (field, ty) in fields {
-        if let Some(doc) = documentation(&ty, true) {
-            out.push_str(&doc);
-        }
-
-        // {field} {type} `json:"{field}"`
-        let (ty, nullable) = schema_object_type(&ty)
+    let fields = o.properties.into_iter().map(|(field, ty)| {
+        let ty = ty.into_object();
+        let (go_type, is_nullable) = schema_object_type(&ty)
             .with_context(|| format!("failed to get type of field '{field}' of struct '{name}'"))?;
-        out.push_str("    ");
-        out.push_str(&to_pascal_case(&field));
-        out.push(' ');
-        if nullable && !is_basic_go_type(&ty) {
-            // if the type is nullable and not a basic type, use a pointer
-            out.push('*');
-        }
-        out.push_str(&ty);
-        out.push(' ');
-        out.push_str("`json:\"");
-        out.push_str(&field);
-        if nullable {
-            out.push_str(",omitempty");
-        }
-        out.push_str("\"`\n");
-    }
-    out.push('}');
+        Ok(GoField {
+            rust_name: field,
+            docs: documentation(&ty),
+            ty: GoType {
+                name: go_type,
+                is_nullable,
+            },
+        })
+    });
+    let fields = fields.collect::<Result<Vec<_>>>()?;
 
-    Ok(out)
+    Ok(GoTypeDef {
+        name: to_pascal_case(name),
+        docs,
+        ty: GoTypeDefType::Struct { fields },
+    })
 }
 
-fn generate_enum(name: &str, variants: Vec<SchemaObject>) -> Result<String> {
+fn generate_enum(name: &str, variants: Vec<SchemaObject>) -> Result<GoTypeDef> {
     todo!("generate_enum")
 }
 
@@ -243,49 +226,12 @@ fn is_null(schema: &SchemaObject) -> bool {
         .unwrap_or_default()
 }
 
-fn documentation(schema: &SchemaObject, indented: bool) -> Option<String> {
-    if let Some(description) = schema
+fn documentation(schema: &SchemaObject) -> Option<String> {
+    schema
         .metadata
         .as_ref()
         .and_then(|m| m.description.as_ref())
-    {
-        // all new lines must be prefixed with `// `
-        let replacement = if indented { "\n    // " } else { "\n// " };
-        let docs = description.replace('\n', replacement);
-        // and the first line too
-        if indented {
-            Some(format!("    // {}\n", docs))
-        } else {
-            Some(format!("// {}\n", docs))
-        }
-    } else {
-        None
-    }
-}
-
-fn is_basic_go_type(ty: &str) -> bool {
-    const BASIC_GO_TYPES: &[&str] = &[
-        "string",
-        "bool",
-        "int",
-        "int8",
-        "int16",
-        "int32",
-        "int64",
-        "uint",
-        "uint8",
-        "uint16",
-        "uint32",
-        "uint64",
-        "float32",
-        "float64",
-        "byte",
-        "rune",
-        "uintptr",
-        "complex64",
-        "complex128",
-    ];
-    BASIC_GO_TYPES.contains(&ty)
+        .cloned()
 }
 
 /// Maps special types to their Go equivalents.
