@@ -27,6 +27,11 @@ pub struct TransactionInfo {
     /// using the pair (`env.block.height`, `env.transaction.index`).
     ///
     pub index: u32,
+    #[serde(default)]
+    /// The hash of the current transaction bytes.
+    /// aka txhash or transaction_id
+    /// hash = sha256(tx_bytes)
+    pub hash: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
