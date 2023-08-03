@@ -66,6 +66,8 @@ fn build_type(name: &str, schema: &SchemaObject, structs: &mut Vec<GoStruct>) ->
         if let Some(strct) = strct {
             structs.push(strct);
         }
+    } else {
+        anyhow::bail!("failed to generate type for {name}");
     }
 
     Ok(())
@@ -348,7 +350,7 @@ mod tests {
             .unwrap_err()
             .root_cause()
             .to_string()
-            .contains("expected schema object for enum variants of ShouldFail2"));
+            .contains("failed to generate type for ShouldFail2"));
     }
 
     #[test]
