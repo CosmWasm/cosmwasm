@@ -9,6 +9,8 @@ use crate::{
 };
 
 pub trait SchemaExt {
+    /// Returns a reference to the contained schema object,
+    /// or an error if the schema is not an object.
     fn object(&self) -> anyhow::Result<&SchemaObject>;
 }
 
@@ -27,63 +29,13 @@ pub fn enum_variants(schema: &SchemaObject) -> Option<impl Iterator<Item = &Sche
     Some(schema.subschemas.as_ref()?.one_of.as_ref()?.iter())
 }
 
-/// Tries to extract the name and type of the given enum variant.
-pub fn enum_variant(
-    schema: &SchemaObject,
-    enum_name: &str,
-    additional_structs: &mut Vec<GoStruct>,
-) -> Result<GoField> {
-    // for variants without inner data, there is an entry in `enum_variants`
-    // we are not interested in that case, so we error out
-    if let Some(values) = &schema.enum_values {
-        bail!(
-            "enum variants {} without inner data not supported",
-            values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-    }
-
-    let docs = documentation(schema);
-
-    // for variants with inner data, there is an object validation entry with a single property
-    // we extract the type of that property
-    let properties = &schema
-        .object
-        .as_ref()
-        .context("expected object validation for enum variant")?
-        .properties;
-    ensure!(
-        properties.len() == 1,
-        "expected exactly one property in enum variant"
-    );
-    // we can unwrap here, because we checked the length above
-    let (name, schema) = properties.first_key_value().unwrap();
-    let (ty, _) = schema_object_type(
-        schema.object()?,
-        TypeContext::new(enum_name, name),
-        additional_structs,
-    )?;
-
-    Ok(GoField {
-        rust_name: name.to_string(),
-        docs,
-        ty: GoType {
-            name: ty,
-            is_nullable: true, // always nullable
-        },
-    })
-}
-
 /// Returns the Go type for the given schema object and whether it is nullable.
 /// May also add additional structs to the given `Vec` that need to be generated for this type.
 pub fn schema_object_type(
     schema: &SchemaObject,
     type_context: TypeContext,
     additional_structs: &mut Vec<GoStruct>,
-) -> Result<(String, bool)> {
+) -> Result<GoType> {
     let mut is_nullable = is_null(schema);
 
     // if it has a title, use that
@@ -106,9 +58,9 @@ pub fn schema_object_type(
             ensure!(subschemas.len() == 2, "multiple subschemas in anyOf");
             is_nullable = true;
             // extract non-null type
-            let (non_null_type, _) =
+            let GoType { name, .. } =
                 schema_object_type(non_null, type_context, additional_structs)?;
-            replace_custom_type(&non_null_type)
+            replace_custom_type(&name)
         } else {
             subschema_type(subschemas, type_context, additional_structs)
                 .context("failed to get type of anyOf subschemas")?
@@ -124,7 +76,10 @@ pub fn schema_object_type(
         bail!("no type for schema found: {:?}", schema);
     };
 
-    Ok((ty, is_nullable))
+    Ok(GoType {
+        name: ty,
+        is_nullable,
+    })
 }
 
 /// Tries to extract the type of the non-null variant of an anyOf schema.
@@ -210,7 +165,7 @@ pub fn type_from_instance_type(
             .iter()
             .map(|(name, schema)| {
                 let schema = schema.object()?;
-                let (ty, is_nullable) = schema_object_type(
+                let ty = schema_object_type(
                     schema,
                     TypeContext::new(&new_struct_name, name),
                     additional_structs,
@@ -218,10 +173,7 @@ pub fn type_from_instance_type(
                 Ok(GoField {
                     rust_name: name.to_string(),
                     docs: documentation(schema),
-                    ty: GoType {
-                        name: ty,
-                        is_nullable,
-                    },
+                    ty,
                 })
             })
             .collect::<Result<Vec<_>>>()?;
@@ -236,16 +188,17 @@ pub fn type_from_instance_type(
         new_struct_name
     } else if t.contains(&InstanceType::Array) {
         // get type of items
-        let (item_type, item_nullable) = array_item_type(schema, type_context, additional_structs)
+        let item_type = array_item_type(schema, type_context, additional_structs)
             .context("failed to get array item type")?;
-        // map custom types
-        let item_type = custom_type_of(&item_type).unwrap_or(&item_type);
 
-        if item_nullable {
-            replace_custom_type(&format!("[]*{}", item_type))
+        // for nullable array item types, we have to use a pointer type, even for basic types,
+        // so we can pass null as elements
+        // otherwise they would just be omitted from the array
+        replace_custom_type(&if item_type.is_nullable {
+            format!("[]*{}", item_type.name)
         } else {
-            replace_custom_type(&format!("[]{}", item_type))
-        }
+            format!("[]{}", item_type.name)
+        })
     } else {
         unreachable!("instance type should be one of the above")
     })
@@ -260,7 +213,7 @@ pub fn array_item_type(
     schema: &SchemaObject,
     type_context: TypeContext,
     additional_structs: &mut Vec<GoStruct>,
-) -> Result<(String, bool)> {
+) -> Result<GoType> {
     match schema.array.as_ref().and_then(|a| a.items.as_ref()) {
         Some(SingleOrVec::Single(array_validation)) => {
             schema_object_type(array_validation.object()?, type_context, additional_structs)
@@ -283,8 +236,9 @@ pub fn subschema_type(
         "multiple subschemas are not supported"
     );
     let subschema = &subschemas[0];
-    let (ty, _) = schema_object_type(subschema.object()?, type_context, additional_structs)?;
-    Ok(replace_custom_type(&ty))
+    let GoType { name, .. } =
+        schema_object_type(subschema.object()?, type_context, additional_structs)?;
+    Ok(replace_custom_type(&name))
 }
 
 pub fn is_null(schema: &SchemaObject) -> bool {

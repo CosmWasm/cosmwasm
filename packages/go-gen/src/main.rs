@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use go::*;
 use inflector::cases::pascalcase::to_pascal_case;
 use schema::{documentation, schema_object_type, SchemaExt, TypeContext};
@@ -18,6 +18,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// Generates the Go code for the given schema
 fn generate_go(root: RootSchema) -> Result<String> {
     let title = root
         .schema
@@ -45,6 +46,8 @@ fn generate_go(root: RootSchema) -> Result<String> {
     Ok(code)
 }
 
+/// Generates Go structs for the given schema and adds them to `structs`.
+/// This will add more than one struct if the schema contains object types (anonymous structs).
 fn build_type(name: &str, schema: &SchemaObject, structs: &mut Vec<GoStruct>) -> Result<()> {
     if schema::custom_type_of(name).is_some() {
         // ignore custom types
@@ -73,6 +76,8 @@ fn build_type(name: &str, schema: &SchemaObject, structs: &mut Vec<GoStruct>) ->
     Ok(())
 }
 
+/// Creates a Go struct for the given schema object and returns it.
+/// This will also add any additional structs to `additional_structs` (but not the returned one).
 pub fn build_struct(
     name: &str,
     strct: &SchemaObject,
@@ -84,20 +89,16 @@ pub fn build_struct(
     // go through all fields
     let fields = obj.properties.iter().map(|(field, ty)| {
         // get schema object
-        let ty = ty
+        let schema = ty
             .object()
             .with_context(|| format!("expected schema object for field {field}"))?;
         // extract type from schema object
-        let (go_type, is_nullable) =
-            schema_object_type(ty, TypeContext::new(name, field), additional_structs)
-                .with_context(|| format!("failed to get type of field '{field}'"))?;
+        let ty = schema_object_type(schema, TypeContext::new(name, field), additional_structs)
+            .with_context(|| format!("failed to get type of field '{field}'"))?;
         Ok(GoField {
             rust_name: field.clone(),
-            docs: documentation(ty),
-            ty: GoType {
-                name: go_type,
-                is_nullable,
-            },
+            docs: documentation(schema),
+            ty,
         })
     });
     let fields = fields.collect::<Result<Vec<_>>>()?;
@@ -109,6 +110,8 @@ pub fn build_struct(
     })
 }
 
+/// Creates a Go struct for the given schema object and returns it.
+/// This will also add any additional structs to `additional_structs` (but not the returned one).
 pub fn build_enum<'a>(
     name: &str,
     enm: &SchemaObject,
@@ -125,7 +128,7 @@ pub fn build_enum<'a>(
             .with_context(|| format!("expected schema object for enum variants of {name}"))?;
 
         // analyze the variant
-        let variant_field = schema::enum_variant(v, name, additional_structs)
+        let variant_field = build_enum_variant(v, name, additional_structs)
             .context("failed to extract enum variant")?;
 
         anyhow::Ok(variant_field)
@@ -136,6 +139,56 @@ pub fn build_enum<'a>(
         name: name.to_string(),
         docs,
         fields,
+    })
+}
+
+/// Tries to extract the name and type of the given enum variant and returns it as a `GoField`.
+pub fn build_enum_variant(
+    schema: &SchemaObject,
+    enum_name: &str,
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<GoField> {
+    // for variants without inner data, there is an entry in `enum_variants`
+    // we are not interested in that case, so we error out
+    if let Some(values) = &schema.enum_values {
+        bail!(
+            "enum variants {} without inner data not supported",
+            values
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
+
+    let docs = documentation(schema);
+
+    // for variants with inner data, there is an object validation entry with a single property
+    // we extract the type of that property
+    let properties = &schema
+        .object
+        .as_ref()
+        .context("expected object validation for enum variant")?
+        .properties;
+    ensure!(
+        properties.len() == 1,
+        "expected exactly one property in enum variant"
+    );
+    // we can unwrap here, because we checked the length above
+    let (name, schema) = properties.first_key_value().unwrap();
+    let GoType { name: ty, .. } = schema_object_type(
+        schema.object()?,
+        TypeContext::new(enum_name, name),
+        additional_structs,
+    )?;
+
+    Ok(GoField {
+        rust_name: name.to_string(),
+        docs,
+        ty: GoType {
+            name: ty,
+            is_nullable: true, // always nullable
+        },
     })
 }
 
@@ -367,5 +420,41 @@ mod tests {
         .unwrap();
         generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::IbcQuery)).unwrap();
         generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::WasmQuery)).unwrap();
+    }
+
+    #[test]
+    fn array_item_type_works() {
+        #[cw_serde]
+        struct A {
+            a: Vec<Vec<Vec<Option<Option<B>>>>>,
+        }
+        #[cw_serde]
+        struct B {}
+
+        // example json:
+        // A { a: vec![vec![vec![None, Some(Some(B {})), Some(None)]]] }
+        // => {"a":[[[null,{},null]]]}
+        let code = generate_go(cosmwasm_schema::schema_for!(A)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type A struct {
+                A [][][]*B `json:"a"`
+            }
+            type B struct { }"#,
+        );
+
+        #[cw_serde]
+        struct C {
+            c: Vec<Vec<Vec<Option<Option<String>>>>>,
+        }
+        let code = generate_go(cosmwasm_schema::schema_for!(C)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type C struct {
+                C [][][]*string `json:"c"`
+            }"#,
+        );
     }
 }
