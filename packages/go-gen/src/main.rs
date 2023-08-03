@@ -70,7 +70,7 @@ fn build_type(name: &str, schema: &SchemaObject, structs: &mut Vec<GoStruct>) ->
             structs.push(strct);
         }
     } else {
-        anyhow::bail!("failed to generate type for {name}");
+        anyhow::bail!("failed to determine type for '{name}'");
     }
 
     Ok(())
@@ -403,7 +403,7 @@ mod tests {
             .unwrap_err()
             .root_cause()
             .to_string()
-            .contains("failed to generate type for ShouldFail2"));
+            .contains("failed to determine type for 'ShouldFail2'"));
     }
 
     #[test]
