@@ -23,16 +23,8 @@ impl SchemaExt for Schema {
 
 /// Returns the schemas of the variants of this enum, if it is an enum.
 /// Returns `None` if the schema is not an enum.
-pub fn enum_variants(schema: &SchemaObject) -> Option<Vec<&Schema>> {
-    Some(
-        schema
-            .subschemas
-            .as_ref()?
-            .one_of
-            .as_ref()?
-            .iter()
-            .collect(),
-    )
+pub fn enum_variants(schema: &SchemaObject) -> Option<impl Iterator<Item = &Schema>> {
+    Some(schema.subschemas.as_ref()?.one_of.as_ref()?.iter())
 }
 
 /// Tries to extract the name and type of the given enum variant.

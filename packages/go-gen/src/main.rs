@@ -60,7 +60,7 @@ fn build_type(name: &str, schema: &SchemaObject, structs: &mut Vec<GoStruct>) ->
             structs.push(strct);
         }
     } else if let Some(variants) = schema::enum_variants(schema) {
-        let strct = build_enum(name, schema, &variants, structs)
+        let strct = build_enum(name, schema, variants, structs)
             .map(Some)
             .with_context(|| format!("failed to generate enum '{name}'"))?;
         if let Some(strct) = strct {
@@ -107,16 +107,16 @@ pub fn build_struct(
     })
 }
 
-pub fn build_enum(
+pub fn build_enum<'a>(
     name: &str,
     enm: &SchemaObject,
-    variants: &[&Schema],
+    variants: impl Iterator<Item = &'a Schema>,
     additional_structs: &mut Vec<GoStruct>,
 ) -> Result<GoStruct> {
     let docs = documentation(enm);
 
     // go through all fields
-    let fields = variants.iter().map(|v| {
+    let fields = variants.map(|v| {
         // get schema object
         let v = v
             .object()
@@ -344,14 +344,11 @@ mod tests {
             .to_string()
             .contains("array type with non-singular item type is not supported"));
         let schema = schemars::schema_for!(ShouldFail2);
-        let code = generate_go(schema).unwrap();
-        println!("{code}");
-        // println!("{:?}", generate_go(schema).unwrap_err());
-        // assert!(generate_go(schema)
-        //     .unwrap_err()
-        //     .root_cause()
-        //     .to_string()
-        //     .contains("expected schema object for enum variants of ShouldFail2"));
+        assert!(generate_go(schema)
+            .unwrap_err()
+            .root_cause()
+            .to_string()
+            .contains("expected schema object for enum variants of ShouldFail2"));
     }
 
     #[test]
