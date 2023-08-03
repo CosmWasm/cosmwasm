@@ -1,19 +1,16 @@
 use anyhow::{Context, Result};
 use go::*;
 use inflector::cases::pascalcase::to_pascal_case;
-use schema::{documentation, schema_object_type, SchemaExt};
+use schema::{documentation, schema_object_type, SchemaExt, TypeContext};
 use schemars::schema::{ObjectValidation, RootSchema, Schema, SchemaObject};
 use std::fmt::Write;
 
 mod go;
 mod schema;
+mod utils;
 
 fn main() -> Result<()> {
-    let root = cosmwasm_schema::schema_for!(cosmwasm_std::AllDelegationsResponse);
-    // println!(
-    //     "{}",
-    //     String::from_utf8(cosmwasm_std::to_vec(&root)?).unwrap()
-    // );
+    let root = cosmwasm_schema::schema_for!(cosmwasm_std::BankQuery);
 
     let code = generate_go(root)?;
     println!("{}", code);
@@ -22,53 +19,64 @@ fn main() -> Result<()> {
 }
 
 fn generate_go(root: RootSchema) -> Result<String> {
-    let (title, _) = schema::schema_object_type(&root.schema).context("failed to get type name")?;
-    let main_type = build_type(&title, &root.schema)
-        .with_context(|| format!("failed to generate {title}"))?
-        .with_context(|| format!("failed to generate {title}, because it is a custom type"))?;
+    let title = root
+        .schema
+        .metadata
+        .as_ref()
+        .and_then(|m| m.title.as_ref())
+        .context("failed to get type name")?;
+    let mut types = vec![];
+    build_type(title, &root.schema, &mut types)
+        .with_context(|| format!("failed to generate {title}"))?;
 
-    let additional_types = root
-        .definitions
-        .into_iter()
-        .filter_map(|(name, def)| {
-            def.object()
-                .map(|def| build_type(&name, def))
-                .and_then(|r| r)
-                .transpose()
-        })
-        .collect::<Result<Vec<_>>>()
-        .context("failed to generate additional definitions")?;
-
-    let mut code = format!("{main_type}\n");
-    for additional_type in additional_types {
-        writeln!(&mut code, "{additional_type}")?;
+    // go through additional definitions
+    for (name, additional_type) in &root.definitions {
+        additional_type
+            .object()
+            .map(|def| build_type(name, def, &mut types))
+            .and_then(|r| r)
+            .context("failed to generate additional definitions")?;
+    }
+    let mut code = String::new();
+    for ty in types {
+        writeln!(&mut code, "{ty}")?;
     }
 
     Ok(code)
 }
 
-fn build_type(name: &str, schema: &SchemaObject) -> Result<Option<GoStruct>> {
+fn build_type(name: &str, schema: &SchemaObject, structs: &mut Vec<GoStruct>) -> Result<()> {
     if schema::custom_type_of(name).is_some() {
         // ignore custom types
-        return Ok(None);
+        return Ok(());
     }
 
     // first detect if we have a struct or enum
     if let Some(obj) = schema.object.as_ref() {
-        build_struct(name, schema, obj)
+        let strct = build_struct(name, schema, obj, structs)
             .map(Some)
-            .with_context(|| format!("failed to generate struct '{name}'"))
+            .with_context(|| format!("failed to generate struct '{name}'"))?;
+        if let Some(strct) = strct {
+            structs.push(strct);
+        }
     } else if let Some(variants) = schema::enum_variants(schema) {
-        build_enum(name, schema, &variants)
+        let strct = build_enum(name, schema, &variants, structs)
             .map(Some)
-            .with_context(|| format!("failed to generate enum '{name}'"))
-    } else {
-        // ignore other types
-        Ok(None)
+            .with_context(|| format!("failed to generate enum '{name}'"))?;
+        if let Some(strct) = strct {
+            structs.push(strct);
+        }
     }
+
+    Ok(())
 }
 
-pub fn build_struct(name: &str, strct: &SchemaObject, obj: &ObjectValidation) -> Result<GoStruct> {
+pub fn build_struct(
+    name: &str,
+    strct: &SchemaObject,
+    obj: &ObjectValidation,
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<GoStruct> {
     let docs = documentation(strct);
 
     // go through all fields
@@ -78,8 +86,9 @@ pub fn build_struct(name: &str, strct: &SchemaObject, obj: &ObjectValidation) ->
             .object()
             .with_context(|| format!("expected schema object for field {field}"))?;
         // extract type from schema object
-        let (go_type, is_nullable) = schema_object_type(ty)
-            .with_context(|| format!("failed to get type of field '{field}'"))?;
+        let (go_type, is_nullable) =
+            schema_object_type(ty, TypeContext::new(name, field), additional_structs)
+                .with_context(|| format!("failed to get type of field '{field}'"))?;
         Ok(GoField {
             rust_name: field.clone(),
             docs: documentation(ty),
@@ -98,7 +107,12 @@ pub fn build_struct(name: &str, strct: &SchemaObject, obj: &ObjectValidation) ->
     })
 }
 
-pub fn build_enum(name: &str, enm: &SchemaObject, variants: &[&Schema]) -> Result<GoStruct> {
+pub fn build_enum(
+    name: &str,
+    enm: &SchemaObject,
+    variants: &[&Schema],
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<GoStruct> {
     let docs = documentation(enm);
 
     // go through all fields
@@ -109,16 +123,10 @@ pub fn build_enum(name: &str, enm: &SchemaObject, variants: &[&Schema]) -> Resul
             .with_context(|| format!("expected schema object for enum variants of {name}"))?;
 
         // analyze the variant
-        let (field, go_type) = schema::enum_variant(v).context("failed to extract enum variant")?;
+        let variant_field = schema::enum_variant(v, name, additional_structs)
+            .context("failed to extract enum variant")?;
 
-        anyhow::Ok(GoField {
-            rust_name: field,
-            docs: documentation(v),
-            ty: GoType {
-                name: go_type,
-                is_nullable: true, // always nullable
-            },
-        })
+        anyhow::Ok(variant_field)
     });
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
@@ -132,7 +140,7 @@ pub fn build_enum(name: &str, enm: &SchemaObject, variants: &[&Schema]) -> Resul
 #[cfg(test)]
 mod tests {
     use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{Binary, HexBinary, Uint128};
+    use cosmwasm_std::{Binary, Empty, HexBinary, Uint128};
 
     use super::*;
 
@@ -307,18 +315,58 @@ mod tests {
         assert_code_eq(
             code,
             r#"
+            type CEnum struct {
+                A string `json:"a"`
+            }
             type MyEnum struct {
                 A *Inner `json:"a,omitempty"`
                 B string `json:"b,omitempty"`
-                C *CQuery `json:"c,omitempty"`
+                C *CEnum `json:"c,omitempty"`
             }
             type Inner struct {
                 A string `json:"a"`
             }
-            type CQuery struct {
-                A string `json:"a"`
-            }
             "#,
         );
+
+        #[cw_serde]
+        enum ShouldFail1 {
+            A(),
+        }
+        #[cw_serde]
+        enum ShouldFail2 {
+            A,
+        }
+        let schema = schemars::schema_for!(ShouldFail1);
+        assert!(generate_go(schema)
+            .unwrap_err()
+            .root_cause()
+            .to_string()
+            .contains("array type with non-singular item type is not supported"));
+        let schema = schemars::schema_for!(ShouldFail2);
+        let code = generate_go(schema).unwrap();
+        println!("{code}");
+        // println!("{:?}", generate_go(schema).unwrap_err());
+        // assert!(generate_go(schema)
+        //     .unwrap_err()
+        //     .root_cause()
+        //     .to_string()
+        //     .contains("expected schema object for enum variants of ShouldFail2"));
+    }
+
+    #[test]
+    fn queries_work() {
+        generate_go(cosmwasm_schema::schema_for!(
+            cosmwasm_std::QueryRequest<Empty>
+        ))
+        .unwrap();
+        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::BankQuery)).unwrap();
+        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::StakingQuery)).unwrap();
+        generate_go(cosmwasm_schema::schema_for!(
+            cosmwasm_std::DistributionQuery
+        ))
+        .unwrap();
+        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::IbcQuery)).unwrap();
+        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::WasmQuery)).unwrap();
     }
 }

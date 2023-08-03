@@ -1,7 +1,7 @@
 use std::fmt::{self, Display, Write};
 
 use indenter::indented;
-use inflector::cases::pascalcase::to_pascal_case;
+use inflector::Inflector;
 
 pub struct GoStruct {
     pub name: String,

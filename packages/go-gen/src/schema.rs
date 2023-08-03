@@ -1,6 +1,12 @@
 use anyhow::{bail, ensure, Context, Result};
 
+use inflector::Inflector;
 use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
+
+use crate::{
+    go::{GoField, GoStruct, GoType},
+    utils::suffixes,
+};
 
 pub trait SchemaExt {
     fn object(&self) -> anyhow::Result<&SchemaObject>;
@@ -30,7 +36,11 @@ pub fn enum_variants(schema: &SchemaObject) -> Option<Vec<&Schema>> {
 }
 
 /// Tries to extract the name and type of the given enum variant.
-pub fn enum_variant(schema: &SchemaObject) -> Result<(String, String)> {
+pub fn enum_variant(
+    schema: &SchemaObject,
+    enum_name: &str,
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<GoField> {
     // for variants without inner data, there is an entry in `enum_variants`
     // we are not interested in that case, so we error out
     if let Some(values) = &schema.enum_values {
@@ -43,6 +53,8 @@ pub fn enum_variant(schema: &SchemaObject) -> Result<(String, String)> {
                 .join(", ")
         );
     }
+
+    let docs = documentation(schema);
 
     // for variants with inner data, there is an object validation entry with a single property
     // we extract the type of that property
@@ -57,13 +69,29 @@ pub fn enum_variant(schema: &SchemaObject) -> Result<(String, String)> {
     );
     // we can unwrap here, because we checked the length above
     let (name, schema) = properties.first_key_value().unwrap();
-    let (ty, _) = schema_object_type(schema.object()?)?;
+    let (ty, _) = schema_object_type(
+        schema.object()?,
+        TypeContext::new(enum_name, name),
+        additional_structs,
+    )?;
 
-    Ok((name.to_string(), ty))
+    Ok(GoField {
+        rust_name: name.to_string(),
+        docs,
+        ty: GoType {
+            name: ty,
+            is_nullable: true, // always nullable
+        },
+    })
 }
 
 /// Returns the Go type for the given schema object and whether it is nullable.
-pub fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)> {
+/// May also add additional structs to the given `Vec` that need to be generated for this type.
+pub fn schema_object_type(
+    schema: &SchemaObject,
+    type_context: TypeContext,
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<(String, bool)> {
     let mut is_nullable = is_null(schema);
 
     // if it has a title, use that
@@ -78,7 +106,7 @@ pub fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)> {
                 .expect("split should always return at least one item"),
         )
     } else if let Some(t) = &schema.instance_type {
-        type_from_instance_type(schema, t)?
+        type_from_instance_type(schema, type_context, t, additional_structs)?
     } else if let Some(subschemas) = schema.subschemas.as_ref().and_then(|s| s.any_of.as_ref()) {
         // check if one of them is null
         let nullable = nullable_type(subschemas)?;
@@ -86,17 +114,20 @@ pub fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)> {
             ensure!(subschemas.len() == 2, "multiple subschemas in anyOf");
             is_nullable = true;
             // extract non-null type
-            let (non_null_type, _) = schema_object_type(non_null)?;
+            let (non_null_type, _) =
+                schema_object_type(non_null, type_context, additional_structs)?;
             replace_custom_type(&non_null_type)
         } else {
-            subschema_type(subschemas).context("failed to get type of anyOf subschemas")?
+            subschema_type(subschemas, type_context, additional_structs)
+                .context("failed to get type of anyOf subschemas")?
         }
     } else if let Some(subschemas) = schema
         .subschemas
         .as_ref()
         .and_then(|s| s.all_of.as_ref().or(s.one_of.as_ref()))
     {
-        subschema_type(subschemas).context("failed to get type of allOf subschemas")?
+        subschema_type(subschemas, type_context, additional_structs)
+            .context("failed to get type of allOf subschemas")?
     } else {
         bail!("no type for schema found: {:?}", schema);
     };
@@ -125,12 +156,32 @@ pub fn nullable_type(subschemas: &[Schema]) -> Result<Option<&SchemaObject>, any
     Ok(if found_null { nullable_type } else { None })
 }
 
+/// The context for type extraction
+#[derive(Clone, Copy, Debug)]
+pub struct TypeContext<'a> {
+    /// The struct name
+    struct_name: &'a str,
+    /// The name of the field in the parent struct
+    field: &'a str,
+}
+
+impl<'a> TypeContext<'a> {
+    pub fn new(parent: &'a str, field: &'a str) -> Self {
+        Self {
+            struct_name: parent,
+            field,
+        }
+    }
+}
+
 /// Tries to extract a type name from the given instance type.
 ///
 /// Fails for unsupported instance types or integer formats.
 pub fn type_from_instance_type(
     schema: &SchemaObject,
+    type_context: TypeContext,
     t: &SingleOrVec<InstanceType>,
+    additional_structs: &mut Vec<GoStruct>,
 ) -> Result<String> {
     // if it has an instance type, use that
     Ok(if t.contains(&InstanceType::String) {
@@ -150,11 +201,51 @@ pub fn type_from_instance_type(
     } else if t.contains(&InstanceType::Boolean) {
         "bool".to_string()
     } else if t.contains(&InstanceType::Object) {
-        bail!("object type not supported: {:?}", schema);
+        // generate a new struct for this object
+        // struct_name should be in PascalCase, so we detect the last word and use that as
+        // the suffix for the new struct name
+        let suffix = suffixes(type_context.struct_name)
+            .rev()
+            .find(|s| s.starts_with(char::is_uppercase))
+            .unwrap_or(type_context.struct_name);
+        let new_struct_name = format!("{}{suffix}", type_context.field.to_pascal_case());
+
+        let fields = schema
+            .object
+            .as_ref()
+            .context("expected object validation")?
+            .properties
+            .iter()
+            .map(|(name, schema)| {
+                let schema = schema.object()?;
+                let (ty, is_nullable) = schema_object_type(
+                    schema,
+                    TypeContext::new(&new_struct_name, name),
+                    additional_structs,
+                )?;
+                Ok(GoField {
+                    rust_name: name.to_string(),
+                    docs: documentation(schema),
+                    ty: GoType {
+                        name: ty,
+                        is_nullable,
+                    },
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let strct = GoStruct {
+            name: new_struct_name.clone(),
+            docs: None,
+            fields,
+        };
+        additional_structs.push(strct);
+
+        new_struct_name
     } else if t.contains(&InstanceType::Array) {
         // get type of items
-        let (item_type, item_nullable) =
-            array_item_type(schema).context("failed to get array item type")?;
+        let (item_type, item_nullable) = array_item_type(schema, type_context, additional_structs)
+            .context("failed to get array item type")?;
         // map custom types
         let item_type = custom_type_of(&item_type).unwrap_or(&item_type);
 
@@ -173,12 +264,16 @@ pub fn type_from_instance_type(
 /// This fails if the given schema object is not an array,
 /// has multiple item types or other errors occur during type extraction of
 /// the underlying schema.
-pub fn array_item_type(schema: &SchemaObject) -> Result<(String, bool)> {
+pub fn array_item_type(
+    schema: &SchemaObject,
+    type_context: TypeContext,
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<(String, bool)> {
     match schema.array.as_ref().and_then(|a| a.items.as_ref()) {
         Some(SingleOrVec::Single(array_validation)) => {
-            schema_object_type(array_validation.object()?)
+            schema_object_type(array_validation.object()?, type_context, additional_structs)
         }
-        _ => bail!("array type with non-singular item type not supported"),
+        _ => bail!("array type with non-singular item type is not supported"),
     }
 }
 
@@ -186,13 +281,17 @@ pub fn array_item_type(schema: &SchemaObject) -> Result<(String, bool)> {
 ///
 /// This fails if there are multiple subschemas or other errors occur
 /// during subschema type extraction.
-pub fn subschema_type(subschemas: &[Schema]) -> Result<String> {
+pub fn subschema_type(
+    subschemas: &[Schema],
+    type_context: TypeContext,
+    additional_structs: &mut Vec<GoStruct>,
+) -> Result<String> {
     ensure!(
         subschemas.len() == 1,
         "multiple subschemas are not supported"
     );
     let subschema = &subschemas[0];
-    let (ty, _) = schema_object_type(subschema.object()?)?;
+    let (ty, _) = schema_object_type(subschema.object()?, type_context, additional_structs)?;
     Ok(replace_custom_type(&ty))
 }
 
