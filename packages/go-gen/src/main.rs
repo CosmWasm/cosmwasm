@@ -1,10 +1,12 @@
-use anyhow::{bail, ensure, Context, Result};
-use go::{GoField, GoType, GoTypeDef, GoTypeDefType};
+use anyhow::{Context, Result};
+use go::*;
 use inflector::cases::pascalcase::to_pascal_case;
-use schemars::schema::{InstanceType, RootSchema, SchemaObject, SingleOrVec};
+use schema::{documentation, schema_object_type, SchemaExt};
+use schemars::schema::{ObjectValidation, RootSchema, Schema, SchemaObject};
 use std::fmt::Write;
 
 mod go;
+mod schema;
 
 fn main() -> Result<()> {
     let root = cosmwasm_schema::schema_for!(cosmwasm_std::AllDelegationsResponse);
@@ -20,15 +22,20 @@ fn main() -> Result<()> {
 }
 
 fn generate_go(root: RootSchema) -> Result<String> {
-    let (title, _) = schema_object_type(&root.schema).context("failed to get type name")?;
-    let main_type = generate_type(&title, root.schema)
+    let (title, _) = schema::schema_object_type(&root.schema).context("failed to get type name")?;
+    let main_type = build_type(&title, &root.schema)
         .with_context(|| format!("failed to generate {title}"))?
         .with_context(|| format!("failed to generate {title}, because it is a custom type"))?;
 
     let additional_types = root
         .definitions
         .into_iter()
-        .filter_map(|(name, def)| generate_type(&name, def.into_object()).transpose())
+        .filter_map(|(name, def)| {
+            def.object()
+                .map(|def| build_type(&name, def))
+                .and_then(|r| r)
+                .transpose()
+        })
         .collect::<Result<Vec<_>>>()
         .context("failed to generate additional definitions")?;
 
@@ -40,36 +47,46 @@ fn generate_go(root: RootSchema) -> Result<String> {
     Ok(code)
 }
 
-fn generate_type(name: &str, schema: SchemaObject) -> Result<Option<GoTypeDef>> {
-    if custom_type_of(name).is_some() {
+fn build_type(name: &str, schema: &SchemaObject) -> Result<Option<GoTypeDef>> {
+    if schema::custom_type_of(name).is_some() {
         // ignore custom types
         return Ok(None);
     }
+
     // first detect if we have a struct or enum
-    if is_object(&schema) {
-        generate_struct(name, schema).map(Some)
-    } else if let Some(variants) = enum_variants(schema) {
-        generate_enum(name, variants).map(Some)
+    if let Some(obj) = schema.object.as_ref() {
+        build_struct(name, schema, obj)
+            .map(Some)
+            .with_context(|| format!("failed to generate struct '{name}"))
+    } else if let Some(variants) = schema::enum_variants(schema) {
+        build_enum(name, variants)
+            .map(Some)
+            .with_context(|| format!("failed to generate enum '{name}"))
     } else {
         // ignore other types
         Ok(None)
     }
 }
 
-fn generate_struct(name: &str, strct: SchemaObject) -> Result<GoTypeDef> {
-    let docs = documentation(&strct);
+pub(crate) fn build_struct(
+    name: &str,
+    strct: &SchemaObject,
+    obj: &ObjectValidation,
+) -> Result<GoTypeDef> {
+    let docs = documentation(strct);
 
     // go through all fields
-    let o = strct
-        .object
-        .with_context(|| format!("failed to generate struct '{name}': expected object"))?;
-    let fields = o.properties.into_iter().map(|(field, ty)| {
-        let ty = ty.into_object();
-        let (go_type, is_nullable) = schema_object_type(&ty)
-            .with_context(|| format!("failed to get type of field '{field}' of struct '{name}'"))?;
+    let fields = obj.properties.iter().map(|(field, ty)| {
+        // get schema object
+        let ty = ty
+            .object()
+            .with_context(|| format!("expected schema object for field {field}"))?;
+        // extract type from schema object
+        let (go_type, is_nullable) = schema_object_type(ty)
+            .with_context(|| format!("failed to get type of field '{field}'"))?;
         Ok(GoField {
-            rust_name: field,
-            docs: documentation(&ty),
+            rust_name: field.clone(),
+            docs: documentation(ty),
             ty: GoType {
                 name: go_type,
                 is_nullable,
@@ -85,172 +102,8 @@ fn generate_struct(name: &str, strct: SchemaObject) -> Result<GoTypeDef> {
     })
 }
 
-fn generate_enum(name: &str, variants: Vec<SchemaObject>) -> Result<GoTypeDef> {
+pub(crate) fn build_enum(_name: &str, _variants: Vec<&Schema>) -> Result<GoTypeDef> {
     todo!("generate_enum")
-}
-
-/// Returns `true` if the given schema is an object and `false` if it is not.
-fn is_object(schema: &SchemaObject) -> bool {
-    schema.object.is_some()
-    // schema
-    //     .instance_type
-    //     .as_ref()
-    //     .map(|s| {
-    //         if let SingleOrVec::Single(s) = s {
-    //             &InstanceType::Object == s.as_ref()
-    //         } else {
-    //             false
-    //         }
-    //     })
-    //     .unwrap_or_default()
-}
-
-/// Returns the schemas of the variants of this enum, if it is an enum.
-/// Returns `None` if the schema is not an enum.
-fn enum_variants(schema: SchemaObject) -> Option<Vec<SchemaObject>> {
-    Some(
-        schema
-            .subschemas?
-            .one_of?
-            .into_iter()
-            .map(|s| s.into_object())
-            .collect(),
-    )
-}
-
-/// Returns the Go type for the given schema object and whether it is nullable.
-fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)> {
-    let mut is_nullable = is_null(schema);
-    // if it has a title, use that
-    let ty = if let Some(title) = schema.metadata.as_ref().and_then(|m| m.title.as_ref()) {
-        replace_custom_type(title)
-    } else if let Some(reference) = &schema.reference {
-        // if it has a reference, strip the path and use that
-        replace_custom_type(
-            reference
-                .split('/')
-                .last()
-                .expect("split should always return at least one item"),
-        )
-    } else if let Some(t) = &schema.instance_type {
-        // if it has an instance type, use that
-        if t.contains(&InstanceType::String) {
-            "string".to_string()
-        } else if t.contains(&InstanceType::Number) {
-            "float64".to_string()
-        } else if t.contains(&InstanceType::Integer) {
-            const AVAILABLE_INTS: &[&str] = &[
-                "uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64",
-            ];
-            let format = schema.format.as_deref().unwrap_or("int64");
-            if AVAILABLE_INTS.contains(&format) {
-                format.to_string()
-            } else {
-                bail!("unsupported integer format: {}", format);
-            }
-        } else if t.contains(&InstanceType::Boolean) {
-            "bool".to_string()
-        } else if t.contains(&InstanceType::Object) {
-            bail!("object type not supported: {:?}", schema);
-        } else if t.contains(&InstanceType::Array) {
-            // get type of items
-            let (item_type, item_nullable) =
-                match schema.array.as_ref().and_then(|a| a.items.as_ref()) {
-                    Some(SingleOrVec::Single(array_validation)) => {
-                        schema_object_type(&array_validation.clone().into_object())
-                            .context("failed to get type of array item")?
-                    }
-                    _ => bail!("array type with non-singular item type not supported"),
-                };
-            // map custom types
-            let item_type = custom_type_of(&item_type).unwrap_or(&item_type);
-
-            if item_nullable {
-                replace_custom_type(&format!("[]*{}", item_type))
-            } else {
-                replace_custom_type(&format!("[]{}", item_type))
-            }
-        } else {
-            unreachable!("instance type should be one of the above")
-        }
-    } else if let Some(subschemas) = schema.subschemas.as_ref().and_then(|s| s.any_of.as_ref()) {
-        // if one of them is null, use pointer type
-        // TODO: ugly clone
-        if let Some(null_index) = subschemas
-            .iter()
-            .position(|s| is_null(&s.clone().into_object()))
-        {
-            is_nullable = true;
-            ensure!(subschemas.len() == 2, "multiple subschemas in anyOf");
-            // extract non-null type
-            let non_null_index = (null_index + 1) % 2;
-            let (non_null_type, _) = schema_object_type(
-                &subschemas
-                    .get(non_null_index)
-                    .expect("index should be valid")
-                    .clone()
-                    .into_object(),
-            )?;
-            // map custom types
-            let non_null_type = custom_type_of(&non_null_type).unwrap_or(&non_null_type);
-            non_null_type.to_string()
-        } else if subschemas.len() == 1 {
-            todo!("handle like allOf")
-        } else {
-            bail!("multiple anyOf without null type not supported")
-        }
-    } else if let Some(subschemas) = schema
-        .subschemas
-        .as_ref()
-        .and_then(|s| s.all_of.as_ref().or(s.one_of.as_ref()))
-    {
-        ensure!(subschemas.len() == 1, "multiple subschemas in allOf");
-        // just checked that there is exactly one subschema
-        let subschema = subschemas.first().unwrap();
-
-        // TODO: ugly clone
-        let (ty, _) = schema_object_type(&subschema.clone().into_object())?;
-        replace_custom_type(&ty)
-    } else {
-        bail!("no type found for schema: {:?}", schema);
-    };
-
-    Ok((ty, is_nullable))
-}
-
-fn is_null(schema: &SchemaObject) -> bool {
-    schema
-        .instance_type
-        .as_ref()
-        .map(|s| s.contains(&InstanceType::Null))
-        .unwrap_or_default()
-}
-
-fn documentation(schema: &SchemaObject) -> Option<String> {
-    schema
-        .metadata
-        .as_ref()
-        .and_then(|m| m.description.as_ref())
-        .cloned()
-}
-
-/// Maps special types to their Go equivalents.
-/// If the given type is not a special type, returns `None`.
-fn custom_type_of(ty: &str) -> Option<&str> {
-    match ty {
-        "Uint128" => Some("string"),
-        "Binary" => Some("[]byte"),
-        "HexBinary" => Some("Checksum"),
-        "Addr" => Some("string"),
-        "Decimal" => Some("string"),
-        _ => None,
-    }
-}
-
-fn replace_custom_type(ty: &str) -> String {
-    custom_type_of(ty)
-        .map(|ty| ty.to_string())
-        .unwrap_or_else(|| ty.to_string())
 }
 
 #[cfg(test)]
@@ -350,6 +203,16 @@ mod tests {
             .root_cause()
             .to_string()
             .contains("unsupported integer format: int128"));
+    }
+
+    #[test]
+    fn empty() {
+        #[cw_serde]
+        struct Empty {}
+
+        let schema = schemars::schema_for!(Empty);
+        let code = generate_go(schema).unwrap();
+        assert_eq!(code, "type Empty struct {\n}\n");
     }
 
     #[test]
