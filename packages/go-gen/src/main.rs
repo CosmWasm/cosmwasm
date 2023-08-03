@@ -47,7 +47,7 @@ fn generate_go(root: RootSchema) -> Result<String> {
     Ok(code)
 }
 
-fn build_type(name: &str, schema: &SchemaObject) -> Result<Option<GoTypeDef>> {
+fn build_type(name: &str, schema: &SchemaObject) -> Result<Option<GoStruct>> {
     if schema::custom_type_of(name).is_some() {
         // ignore custom types
         return Ok(None);
@@ -57,22 +57,18 @@ fn build_type(name: &str, schema: &SchemaObject) -> Result<Option<GoTypeDef>> {
     if let Some(obj) = schema.object.as_ref() {
         build_struct(name, schema, obj)
             .map(Some)
-            .with_context(|| format!("failed to generate struct '{name}"))
+            .with_context(|| format!("failed to generate struct '{name}'"))
     } else if let Some(variants) = schema::enum_variants(schema) {
-        build_enum(name, variants)
+        build_enum(name, schema, &variants)
             .map(Some)
-            .with_context(|| format!("failed to generate enum '{name}"))
+            .with_context(|| format!("failed to generate enum '{name}'"))
     } else {
         // ignore other types
         Ok(None)
     }
 }
 
-pub(crate) fn build_struct(
-    name: &str,
-    strct: &SchemaObject,
-    obj: &ObjectValidation,
-) -> Result<GoTypeDef> {
+pub fn build_struct(name: &str, strct: &SchemaObject, obj: &ObjectValidation) -> Result<GoStruct> {
     let docs = documentation(strct);
 
     // go through all fields
@@ -95,35 +91,61 @@ pub(crate) fn build_struct(
     });
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
-    Ok(GoTypeDef {
+    Ok(GoStruct {
         name: to_pascal_case(name),
         docs,
-        ty: GoTypeDefType::Struct { fields },
+        fields,
     })
 }
 
-pub(crate) fn build_enum(_name: &str, _variants: Vec<&Schema>) -> Result<GoTypeDef> {
-    todo!("generate_enum")
+pub fn build_enum(name: &str, enm: &SchemaObject, variants: &[&Schema]) -> Result<GoStruct> {
+    let docs = documentation(enm);
+
+    // go through all fields
+    let fields = variants.iter().map(|v| {
+        // get schema object
+        let v = v
+            .object()
+            .with_context(|| format!("expected schema object for enum variants of {name}"))?;
+
+        // analyze the variant
+        let (field, go_type) = schema::enum_variant(v).context("failed to extract enum variant")?;
+
+        anyhow::Ok(GoField {
+            rust_name: field,
+            docs: documentation(v),
+            ty: GoType {
+                name: go_type,
+                is_nullable: true, // always nullable
+            },
+        })
+    });
+    let fields = fields.collect::<Result<Vec<_>>>()?;
+
+    Ok(GoStruct {
+        name: name.to_string(),
+        docs,
+        fields,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use cosmwasm_schema::cw_serde;
     use cosmwasm_std::{Binary, HexBinary, Uint128};
-    use indenter::CodeFormatter;
 
     use super::*;
 
     fn assert_code_eq(actual: String, expected: &str) {
-        let mut actual_fmt = String::new();
-        let mut fmt = CodeFormatter::new(&mut actual_fmt, "    ");
-        fmt.write_str(&actual).unwrap();
+        let actual_no_ws = actual.split_whitespace().collect::<Vec<_>>();
+        let expected_no_ws = expected.split_whitespace().collect::<Vec<_>>();
 
-        let mut expected_fmt = String::new();
-        let mut fmt = CodeFormatter::new(&mut expected_fmt, "    ");
-        fmt.write_str(expected).unwrap();
-
-        assert_eq!(actual_fmt, expected_fmt, "expected code to be equal");
+        assert!(
+            actual_no_ws == expected_no_ws,
+            "assertion failed: `(actual == expected)`\nactual:\n`{}`,\nexpected:\n`\"{}\"`",
+            actual,
+            expected
+        );
     }
 
     #[test]
@@ -212,7 +234,7 @@ mod tests {
 
         let schema = schemars::schema_for!(Empty);
         let code = generate_go(schema).unwrap();
-        assert_eq!(code, "type Empty struct {\n}\n");
+        assert_code_eq(code, "type Empty struct { }");
     }
 
     #[test]
@@ -264,5 +286,39 @@ mod tests {
         ))
         .unwrap();
         generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::CodeInfoResponse)).unwrap();
+    }
+
+    #[test]
+    fn nested_enum_works() {
+        #[cw_serde]
+        struct Inner {
+            a: String,
+        }
+
+        #[cw_serde]
+        enum MyEnum {
+            A(Inner),
+            B(String),
+            C { a: String },
+        }
+
+        let schema = schemars::schema_for!(MyEnum);
+        let code = generate_go(schema).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type MyEnum struct {
+                A *Inner `json:"a,omitempty"`
+                B string `json:"b,omitempty"`
+                C *CQuery `json:"c,omitempty"`
+            }
+            type Inner struct {
+                A string `json:"a"`
+            }
+            type CQuery struct {
+                A string `json:"a"`
+            }
+            "#,
+        );
     }
 }

@@ -3,48 +3,26 @@ use std::fmt::{self, Display, Write};
 use indenter::indented;
 use inflector::cases::pascalcase::to_pascal_case;
 
-pub struct GoTypeDef {
+pub struct GoStruct {
     pub name: String,
     pub docs: Option<String>,
-    pub ty: GoTypeDefType,
+    pub fields: Vec<GoField>,
 }
 
-pub enum GoTypeDefType {
-    Struct { fields: Vec<GoField> },
-    // TODO: implement enums
-    // Enum {
-    //     name: String,
-    //     variants: Vec<GoVariant>,
-    // },
-}
-
-impl Display for GoTypeDef {
+impl Display for GoStruct {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // generate documentation
         format_docs(f, self.docs.as_deref())?;
+        // generate type
         writeln!(f, "type {} struct {{", self.name)?;
-        match &self.ty {
-            GoTypeDefType::Struct { fields } => {
-                let mut f = indented(f);
-                for field in fields {
-                    writeln!(f, "{}", field)?;
-                }
-            }
+        // generate fields
+        let mut f = indented(f);
+        for field in &self.fields {
+            writeln!(f, "{}", field)?;
         }
         f.write_char('}')?;
         Ok(())
     }
-}
-
-fn format_docs(f: &mut fmt::Formatter, docs: Option<&str>) -> fmt::Result {
-    if let Some(docs) = docs {
-        for line in docs.lines() {
-            f.write_str("// ")?;
-            f.write_str(line)?;
-            f.write_char('\n')?;
-        }
-    }
-    Ok(())
 }
 
 pub struct GoField {
@@ -119,6 +97,17 @@ impl Display for GoType {
         }
         f.write_str(&self.name)
     }
+}
+
+fn format_docs(f: &mut fmt::Formatter, docs: Option<&str>) -> fmt::Result {
+    if let Some(docs) = docs {
+        for line in docs.lines() {
+            f.write_str("// ")?;
+            f.write_str(line)?;
+            f.write_char('\n')?;
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -207,38 +196,34 @@ mod tests {
 
     #[test]
     fn go_type_def_display_works() {
-        let ty = GoTypeDef {
+        let ty = GoStruct {
             name: "FooBar".to_string(),
             docs: None,
-            ty: GoTypeDefType::Struct {
-                fields: vec![GoField {
-                    rust_name: "foo_bar".to_string(),
-                    docs: None,
-                    ty: GoType {
-                        name: "string".to_string(),
-                        is_nullable: true,
-                    },
-                }],
-            },
+            fields: vec![GoField {
+                rust_name: "foo_bar".to_string(),
+                docs: None,
+                ty: GoType {
+                    name: "string".to_string(),
+                    is_nullable: true,
+                },
+            }],
         };
         assert_eq!(
             format!("{}", ty),
             "type FooBar struct {\n    FooBar string `json:\"foo_bar,omitempty\"`\n}"
         );
 
-        let ty = GoTypeDef {
+        let ty = GoStruct {
             name: "FooBar".to_string(),
             docs: Some("FooBar is a test struct".to_string()),
-            ty: GoTypeDefType::Struct {
-                fields: vec![GoField {
-                    rust_name: "foo_bar".to_string(),
-                    docs: None,
-                    ty: GoType {
-                        name: "string".to_string(),
-                        is_nullable: true,
-                    },
-                }],
-            },
+            fields: vec![GoField {
+                rust_name: "foo_bar".to_string(),
+                docs: None,
+                ty: GoType {
+                    name: "string".to_string(),
+                    is_nullable: true,
+                },
+            }],
         };
         assert_eq!(
             format!("{}", ty),

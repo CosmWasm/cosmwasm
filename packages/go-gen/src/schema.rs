@@ -17,7 +17,7 @@ impl SchemaExt for Schema {
 
 /// Returns the schemas of the variants of this enum, if it is an enum.
 /// Returns `None` if the schema is not an enum.
-pub(crate) fn enum_variants(schema: &SchemaObject) -> Option<Vec<&Schema>> {
+pub fn enum_variants(schema: &SchemaObject) -> Option<Vec<&Schema>> {
     Some(
         schema
             .subschemas
@@ -29,8 +29,41 @@ pub(crate) fn enum_variants(schema: &SchemaObject) -> Option<Vec<&Schema>> {
     )
 }
 
+/// Tries to extract the name and type of the given enum variant.
+pub fn enum_variant(schema: &SchemaObject) -> Result<(String, String)> {
+    // for variants without inner data, there is an entry in `enum_variants`
+    // we are not interested in that case, so we error out
+    if let Some(values) = &schema.enum_values {
+        bail!(
+            "enum variants {} without inner data not supported",
+            values
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
+
+    // for variants with inner data, there is an object validation entry with a single property
+    // we extract the type of that property
+    let properties = &schema
+        .object
+        .as_ref()
+        .context("expected object validation for enum variant")?
+        .properties;
+    ensure!(
+        properties.len() == 1,
+        "expected exactly one property in enum variant"
+    );
+    // we can unwrap here, because we checked the length above
+    let (name, schema) = properties.first_key_value().unwrap();
+    let (ty, _) = schema_object_type(schema.object()?)?;
+
+    Ok((name.to_string(), ty))
+}
+
 /// Returns the Go type for the given schema object and whether it is nullable.
-pub(crate) fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)> {
+pub fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)> {
     let mut is_nullable = is_null(schema);
 
     // if it has a title, use that
@@ -74,7 +107,7 @@ pub(crate) fn schema_object_type(schema: &SchemaObject) -> Result<(String, bool)
 /// Tries to extract the type of the non-null variant of an anyOf schema.
 ///
 /// Returns `Ok(None)` if the type is not nullable.
-pub(crate) fn nullable_type(subschemas: &[Schema]) -> Result<Option<&SchemaObject>, anyhow::Error> {
+pub fn nullable_type(subschemas: &[Schema]) -> Result<Option<&SchemaObject>, anyhow::Error> {
     let (found_null, nullable_type): (bool, Option<&SchemaObject>) = subschemas
         .iter()
         .fold(Ok((false, None)), |result: Result<_>, subschema| {
@@ -95,7 +128,7 @@ pub(crate) fn nullable_type(subschemas: &[Schema]) -> Result<Option<&SchemaObjec
 /// Tries to extract a type name from the given instance type.
 ///
 /// Fails for unsupported instance types or integer formats.
-pub(crate) fn type_from_instance_type(
+pub fn type_from_instance_type(
     schema: &SchemaObject,
     t: &SingleOrVec<InstanceType>,
 ) -> Result<String> {
@@ -140,7 +173,7 @@ pub(crate) fn type_from_instance_type(
 /// This fails if the given schema object is not an array,
 /// has multiple item types or other errors occur during type extraction of
 /// the underlying schema.
-pub(crate) fn array_item_type(schema: &SchemaObject) -> Result<(String, bool)> {
+pub fn array_item_type(schema: &SchemaObject) -> Result<(String, bool)> {
     match schema.array.as_ref().and_then(|a| a.items.as_ref()) {
         Some(SingleOrVec::Single(array_validation)) => {
             schema_object_type(array_validation.object()?)
@@ -153,7 +186,7 @@ pub(crate) fn array_item_type(schema: &SchemaObject) -> Result<(String, bool)> {
 ///
 /// This fails if there are multiple subschemas or other errors occur
 /// during subschema type extraction.
-pub(crate) fn subschema_type(subschemas: &[Schema]) -> Result<String> {
+pub fn subschema_type(subschemas: &[Schema]) -> Result<String> {
     ensure!(
         subschemas.len() == 1,
         "multiple subschemas are not supported"
@@ -163,20 +196,20 @@ pub(crate) fn subschema_type(subschemas: &[Schema]) -> Result<String> {
     Ok(replace_custom_type(&ty))
 }
 
-pub(crate) fn is_null(schema: &SchemaObject) -> bool {
+pub fn is_null(schema: &SchemaObject) -> bool {
     schema
         .instance_type
         .as_ref()
         .map_or(false, |s| s.contains(&InstanceType::Null))
 }
 
-pub(crate) fn documentation(schema: &SchemaObject) -> Option<String> {
+pub fn documentation(schema: &SchemaObject) -> Option<String> {
     schema.metadata.as_ref()?.description.as_ref().cloned()
 }
 
 /// Maps special types to their Go equivalents.
 /// If the given type is not a special type, returns `None`.
-pub(crate) fn custom_type_of(ty: &str) -> Option<&str> {
+pub fn custom_type_of(ty: &str) -> Option<&str> {
     match ty {
         "Uint128" => Some("string"),
         "Binary" => Some("[]byte"),
@@ -187,7 +220,7 @@ pub(crate) fn custom_type_of(ty: &str) -> Option<&str> {
     }
 }
 
-pub(crate) fn replace_custom_type(ty: &str) -> String {
+pub fn replace_custom_type(ty: &str) -> String {
     custom_type_of(ty)
         .map(|ty| ty.to_string())
         .unwrap_or_else(|| ty.to_string())
