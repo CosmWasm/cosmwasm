@@ -16,9 +16,11 @@ impl Display for GoStruct {
         // generate type
         writeln!(f, "type {} struct {{", self.name)?;
         // generate fields
-        let mut f = indented(f);
-        for field in &self.fields {
-            writeln!(f, "{}", field)?;
+        {
+            let mut f = indented(f);
+            for field in &self.fields {
+                writeln!(f, "{}", field)?;
+            }
         }
         f.write_char('}')?;
         Ok(())
@@ -42,7 +44,7 @@ impl Display for GoField {
         write!(
             f,
             "{} {} `json:\"{}",
-            to_pascal_case(&self.rust_name),
+            self.rust_name.to_pascal_case(),
             self.ty,
             self.rust_name
         )?;
