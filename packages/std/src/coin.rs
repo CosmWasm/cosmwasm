@@ -71,6 +71,15 @@ impl From<CoinRef<'_>> for Coin {
     }
 }
 
+impl<'a> From<&'a Coin> for CoinRef<'a> {
+    fn from(value: &'a Coin) -> Self {
+        CoinRef {
+            denom: &value.denom,
+            amount: value.amount,
+        }
+    }
+}
+
 /// A shortcut constructor for a set of one denomination of coins
 ///
 /// # Examples
