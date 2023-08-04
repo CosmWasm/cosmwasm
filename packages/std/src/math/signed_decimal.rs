@@ -1,6 +1,8 @@
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
-use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+};
 use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
@@ -16,9 +18,10 @@ use crate::{forward_ref_partial_eq, Decimal, Int256};
 use super::Fraction;
 use super::Int128;
 
-/// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
+/// A signed fixed-point decimal value with 18 fractional digits, i.e. SignedDecimal(1_000_000_000_000_000_000) == 1.0
 ///
-/// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
+/// The greatest possible value that can be represented is 170141183460469231731.687303715884105727 (which is (2^127 - 1) / 10^18)
+/// and the smallest is -170141183460469231731.687303715884105728 (which is -2^127 / 10^18).
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct SignedDecimal(#[schemars(with = "String")] Int128);
 
@@ -36,53 +39,59 @@ impl SignedDecimal {
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
     pub const DECIMAL_PLACES: u32 = 18; // This needs to be an even number.
-    /// The largest value that can be represented by this decimal type.
+    /// The largest value that can be represented by this signed decimal type.
     pub const MAX: Self = Self(Int128::MAX);
-    /// The smallest value that can be represented by this decimal type.
+    /// The smallest value that can be represented by this signed decimal type.
     pub const MIN: Self = Self(Int128::MIN);
 
-    /// Creates a Decimal(value)
+    /// Creates a SignedDecimal(value)
     /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
     pub const fn new(value: Int128) -> Self {
         Self(value)
     }
 
-    /// Creates a Decimal(Int128(value))
-    /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    /// Creates a SignedDecimal(Int128(value))
+    /// This is equivalent to `SignedDecimal::from_atomics(value, 18)` but usable in a const context.
     pub const fn raw(value: i128) -> Self {
         Self(Int128::new(value))
     }
 
-    /// Create a 1.0 Decimal
+    /// Create a 1.0 SignedDecimal
     #[inline]
     pub const fn one() -> Self {
         Self(Self::DECIMAL_FRACTIONAL)
     }
 
-    /// Create a 0.0 Decimal
+    /// Create a -1.0 SignedDecimal
+    #[inline]
+    pub const fn negative_one() -> Self {
+        Self(Int128::new(-Self::DECIMAL_FRACTIONAL.i128()))
+    }
+
+    /// Create a 0.0 SignedDecimal
     #[inline]
     pub const fn zero() -> Self {
         Self(Int128::zero())
     }
 
-    /// Convert x% into Decimal
+    /// Convert x% into SignedDecimal
     pub fn percent(x: i64) -> Self {
         Self(((x as i128) * 10_000_000_000_000_000).into())
     }
 
-    /// Convert permille (x/1000) into Decimal
+    /// Convert permille (x/1000) into SignedDecimal
     pub fn permille(x: i64) -> Self {
         Self(((x as i128) * 1_000_000_000_000_000).into())
     }
 
-    /// Convert basis points (x/10000) into Decimal
+    /// Convert basis points (x/10000) into SignedDecimal
     pub fn bps(x: i64) -> Self {
         Self(((x as i128) * 100_000_000_000_000).into())
     }
 
-    /// Creates a decimal from a number of atomic units and the number
+    /// Creates a signed decimal from a number of atomic units and the number
     /// of decimal places. The inputs will be converted internally to form
-    /// a decimal with 18 decimal places. So the input 123 and 2 will create
+    /// a signed decimal with 18 decimal places. So the input 123 and 2 will create
     /// the decimal 1.23.
     ///
     /// Using 18 decimal places is slightly more efficient than other values
@@ -91,15 +100,18 @@ impl SignedDecimal {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Decimal, Int128};
-    /// let a = Decimal::from_atomics(Int128::new(1234), 3).unwrap();
+    /// # use cosmwasm_std::{SignedDecimal, Int128};
+    /// let a = SignedDecimal::from_atomics(Int128::new(1234), 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
-    /// let a = Decimal::from_atomics(1234i128, 0).unwrap();
+    /// let a = SignedDecimal::from_atomics(1234i128, 0).unwrap();
     /// assert_eq!(a.to_string(), "1234");
     ///
-    /// let a = Decimal::from_atomics(1i64, 18).unwrap();
+    /// let a = SignedDecimal::from_atomics(1i64, 18).unwrap();
     /// assert_eq!(a.to_string(), "0.000000000000000001");
+    ///
+    /// let a = SignedDecimal::from_atomics(-1i64, 18).unwrap();
+    /// assert_eq!(a.to_string(), "-0.000000000000000001");
     /// ```
     pub fn from_atomics(
         atomics: impl Into<Int128>,
@@ -132,7 +144,7 @@ impl SignedDecimal {
         })
     }
 
-    /// Returns the ratio (numerator / denominator) as a Decimal
+    /// Returns the ratio (numerator / denominator) as a SignedDecimal
     pub fn from_ratio(numerator: impl Into<Int128>, denominator: impl Into<Int128>) -> Self {
         match SignedDecimal::checked_from_ratio(numerator, denominator) {
             Ok(value) => value,
@@ -143,7 +155,7 @@ impl SignedDecimal {
         }
     }
 
-    /// Returns the ratio (numerator / denominator) as a Decimal
+    /// Returns the ratio (numerator / denominator) as a SignedDecimal
     pub fn checked_from_ratio(
         numerator: impl Into<Int128>,
         denominator: impl Into<Int128>,
@@ -173,15 +185,15 @@ impl SignedDecimal {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Decimal, Int128};
+    /// # use cosmwasm_std::{SignedDecimal, Int128};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
-    /// let a = Decimal::from_str("1.234").unwrap();
+    /// let a = SignedDecimal::from_str("1.234").unwrap();
     /// assert_eq!(a.decimal_places(), 18);
     /// assert_eq!(a.atomics(), Int128::new(1234000000000000000));
     ///
     /// // Smallest possible value
-    /// let b = Decimal::from_str("0.000000000000000001").unwrap();
+    /// let b = SignedDecimal::from_str("0.000000000000000001").unwrap();
     /// assert_eq!(b.decimal_places(), 18);
     /// assert_eq!(b.atomics(), Int128::new(1));
     /// ```
@@ -194,7 +206,7 @@ impl SignedDecimal {
     /// The number of decimal places. This is a constant value for now
     /// but this could potentially change as the type evolves.
     ///
-    /// See also [`Decimal::atomics()`].
+    /// See also [`SignedDecimal::atomics()`].
     #[must_use]
     #[inline]
     pub const fn decimal_places(&self) -> u32 {
@@ -355,13 +367,13 @@ impl SignedDecimal {
     /// use core::str::FromStr;
     /// use cosmwasm_std::{Decimal, Int128};
     ///
-    /// let d = Decimal::from_str("12.345").unwrap();
+    /// let d = SignedDecimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_floor(), Int128::new(12));
     ///
-    /// let d = Decimal::from_str("12.999").unwrap();
+    /// let d = SignedDecimal::from_str("12.999").unwrap();
     /// assert_eq!(d.to_int_floor(), Int128::new(12));
     ///
-    /// let d = Decimal::from_str("75.0").unwrap();
+    /// let d = SignedDecimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_int_floor(), Int128::new(75));
     /// ```
     #[must_use]
@@ -378,13 +390,13 @@ impl SignedDecimal {
     /// use core::str::FromStr;
     /// use cosmwasm_std::{Decimal, Int128};
     ///
-    /// let d = Decimal::from_str("12.345").unwrap();
+    /// let d = SignedDecimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int128::new(13));
     ///
-    /// let d = Decimal::from_str("12.999").unwrap();
+    /// let d = SignedDecimal::from_str("12.999").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int128::new(13));
     ///
-    /// let d = Decimal::from_str("75.0").unwrap();
+    /// let d = SignedDecimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int128::new(75));
     /// ```
     #[must_use]
@@ -427,10 +439,18 @@ impl Fraction<Int128> for SignedDecimal {
     }
 }
 
+impl Neg for SignedDecimal {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self(-self.0)
+    }
+}
+
 impl FromStr for SignedDecimal {
     type Err = StdError;
 
-    /// Converts the decimal string to a Decimal
+    /// Converts the decimal string to a SignedDecimal
     /// Possible inputs: "1.23", "1", "000012", "1.123000000"
     /// Disallowed: "", ".23"
     ///
@@ -542,7 +562,7 @@ impl Mul for SignedDecimal {
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, other: Self) -> Self {
-        // Decimals are fractions. We can multiply two decimals a and b
+        // SignedDecimals are fractions. We can multiply two decimals a and b
         // via
         //       (a.numerator() * b.numerator()) / (a.denominator() * b.denominator())
         //     = (a.numerator() * b.numerator()) / a.denominator() / b.denominator()
@@ -647,13 +667,13 @@ impl<'de> Deserialize<'de> for SignedDecimal {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(DecimalVisitor)
+        deserializer.deserialize_str(SignedDecimalVisitor)
     }
 }
 
-struct DecimalVisitor;
+struct SignedDecimalVisitor;
 
-impl<'de> de::Visitor<'de> for DecimalVisitor {
+impl<'de> de::Visitor<'de> for SignedDecimalVisitor {
     type Value = SignedDecimal;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -681,31 +701,31 @@ mod tests {
     }
 
     #[test]
-    fn decimal_new() {
+    fn signed_decimal_new() {
         let expected = Int128::from(300i128);
         assert_eq!(SignedDecimal::new(expected).0, expected);
     }
 
     #[test]
-    fn decimal_raw() {
+    fn signed_decimal_raw() {
         let value = 300i128;
         assert_eq!(SignedDecimal::raw(value).0.i128(), value);
     }
 
     #[test]
-    fn decimal_one() {
+    fn signed_decimal_one() {
         let value = SignedDecimal::one();
         assert_eq!(value.0, SignedDecimal::DECIMAL_FRACTIONAL);
     }
 
     #[test]
-    fn decimal_zero() {
+    fn signed_decimal_zero() {
         let value = SignedDecimal::zero();
         assert!(value.0.is_zero());
     }
 
     #[test]
-    fn decimal_percent() {
+    fn signed_decimal_percent() {
         let value = SignedDecimal::percent(50);
         assert_eq!(
             value.0,
@@ -714,7 +734,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_permille() {
+    fn signed_decimal_permille() {
         let value = SignedDecimal::permille(125);
         assert_eq!(
             value.0,
@@ -723,7 +743,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_bps() {
+    fn signed_decimal_bps() {
         let value = SignedDecimal::bps(125);
         assert_eq!(
             value.0,
@@ -732,7 +752,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_atomics_works() {
+    fn signed_decimal_from_atomics_works() {
         let one = SignedDecimal::one();
         let two = one + one;
 
@@ -821,7 +841,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_ratio_works() {
+    fn signed_decimal_from_ratio_works() {
         // 1.0
         assert_eq!(
             SignedDecimal::from_ratio(1i128, 1i128),
@@ -881,27 +901,27 @@ mod tests {
             SignedDecimal::from_ratio(i128::MAX, i128::MAX),
             SignedDecimal::one()
         );
-        // 340282366920938463463 is the largest integer <= Decimal::MAX
+        // 170141183460469231731 is the largest integer <= SignedDecimal::MAX
         assert_eq!(
-            SignedDecimal::from_ratio(340282366920938463463i128, 1i128),
-            SignedDecimal::from_str("340282366920938463463").unwrap()
+            SignedDecimal::from_ratio(170141183460469231731i128, 1i128),
+            SignedDecimal::from_str("170141183460469231731").unwrap()
         );
     }
 
     #[test]
     #[should_panic(expected = "Denominator must not be zero")]
-    fn decimal_from_ratio_panics_for_zero_denominator() {
+    fn signed_decimal_from_ratio_panics_for_zero_denominator() {
         SignedDecimal::from_ratio(1i128, 0i128);
     }
 
     #[test]
     #[should_panic(expected = "Multiplication overflow")]
-    fn decimal_from_ratio_panics_for_mul_overflow() {
+    fn signed_decimal_from_ratio_panics_for_mul_overflow() {
         SignedDecimal::from_ratio(i128::MAX, 1i128);
     }
 
     #[test]
-    fn decimal_checked_from_ratio_does_not_panic() {
+    fn signed_decimal_checked_from_ratio_does_not_panic() {
         assert_eq!(
             SignedDecimal::checked_from_ratio(1i128, 0i128),
             Err(CheckedFromRatioError::DivideByZero)
@@ -914,7 +934,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_implements_fraction() {
+    fn signed_decimal_implements_fraction() {
         let fraction = SignedDecimal::from_str("1234.567").unwrap();
         assert_eq!(
             fraction.numerator(),
@@ -927,7 +947,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_works() {
+    fn signed_decimal_from_str_works() {
         // Integers
         assert_eq!(
             SignedDecimal::from_str("0").unwrap(),
@@ -962,7 +982,7 @@ mod tests {
             SignedDecimal::percent(4200)
         );
 
-        // Decimals
+        // SignedDecimals
         assert_eq!(
             SignedDecimal::from_str("1.0").unwrap(),
             SignedDecimal::percent(100)
@@ -1009,13 +1029,13 @@ mod tests {
 
         // Works for documented max value
         assert_eq!(
-            SignedDecimal::from_str("340282366920938463463.374607431768211455").unwrap(),
+            SignedDecimal::from_str("170141183460469231731.687303715884105727").unwrap(),
             SignedDecimal::MAX
         );
     }
 
     #[test]
-    fn decimal_from_str_errors_for_broken_whole_part() {
+    fn signed_decimal_from_str_errors_for_broken_whole_part() {
         match SignedDecimal::from_str("").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
             e => panic!("Unexpected error: {e:?}"),
@@ -1033,7 +1053,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_broken_fractinal_part() {
+    fn signed_decimal_from_str_errors_for_broken_fractinal_part() {
         match SignedDecimal::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
@@ -1056,7 +1076,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_more_than_18_fractional_digits() {
+    fn signed_decimal_from_str_errors_for_more_than_18_fractional_digits() {
         match SignedDecimal::from_str("7.1234567890123456789").unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits",)
@@ -1074,7 +1094,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_invalid_number_of_dots() {
+    fn signed_decimal_from_str_errors_for_invalid_number_of_dots() {
         match SignedDecimal::from_str("1.2.3").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
             e => panic!("Unexpected error: {e:?}"),
@@ -1087,26 +1107,26 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_more_than_max_value() {
+    fn signed_decimal_from_str_errors_for_more_than_max_value() {
         // Integer
-        match SignedDecimal::from_str("340282366920938463464").unwrap_err() {
+        match SignedDecimal::from_str("170141183460469231732").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
-        // Decimal
-        match SignedDecimal::from_str("340282366920938463464.0").unwrap_err() {
+        // SignedDecimal
+        match SignedDecimal::from_str("170141183460469231732.0").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
-        match SignedDecimal::from_str("340282366920938463463.374607431768211456").unwrap_err() {
+        match SignedDecimal::from_str("170141183460469231731.687303715884105728").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
     }
 
     #[test]
-    fn decimal_atomics_works() {
+    fn signed_decimal_atomics_works() {
         let zero = SignedDecimal::zero();
         let one = SignedDecimal::one();
         let half = SignedDecimal::percent(50);
@@ -1121,7 +1141,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_decimal_places_works() {
+    fn signed_decimal_decimal_places_works() {
         let zero = SignedDecimal::zero();
         let one = SignedDecimal::one();
         let half = SignedDecimal::percent(50);
@@ -1136,7 +1156,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_is_zero_works() {
+    fn signed_decimal_is_zero_works() {
         assert!(SignedDecimal::zero().is_zero());
         assert!(SignedDecimal::percent(0).is_zero());
         assert!(SignedDecimal::permille(0).is_zero());
@@ -1147,7 +1167,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_inv_works() {
+    fn signed_decimal_inv_works() {
         // d = 0
         assert_eq!(SignedDecimal::zero().inv(), None);
 
@@ -1203,7 +1223,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn decimal_add_works() {
+    fn signed_decimal_add_works() {
         let value = SignedDecimal::one() + SignedDecimal::percent(50); // 1.5
         assert_eq!(
             value.0,
@@ -1235,12 +1255,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to add with overflow")]
-    fn decimal_add_overflow_panics() {
+    fn signed_decimal_add_overflow_panics() {
         let _value = SignedDecimal::MAX + SignedDecimal::percent(50);
     }
 
     #[test]
-    fn decimal_add_assign_works() {
+    fn signed_decimal_add_assign_works() {
         let mut a = SignedDecimal::percent(30);
         a += SignedDecimal::percent(20);
         assert_eq!(a, SignedDecimal::percent(50));
@@ -1255,7 +1275,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn decimal_sub_works() {
+    fn signed_decimal_sub_works() {
         let value = SignedDecimal::one() - SignedDecimal::percent(50); // 0.5
         assert_eq!(
             value.0,
@@ -1291,12 +1311,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
-    fn decimal_sub_overflow_panics() {
+    fn signed_decimal_sub_overflow_panics() {
         let _value = SignedDecimal::zero() - SignedDecimal::percent(50);
     }
 
     #[test]
-    fn decimal_sub_assign_works() {
+    fn signed_decimal_sub_assign_works() {
         let mut a = SignedDecimal::percent(20);
         a -= SignedDecimal::percent(2);
         assert_eq!(a, SignedDecimal::percent(18));
@@ -1311,7 +1331,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn decimal_implements_mul() {
+    fn signed_decimal_implements_mul() {
         let one = SignedDecimal::one();
         let two = one + one;
         let half = SignedDecimal::percent(50);
@@ -1415,39 +1435,39 @@ mod tests {
         let max = SignedDecimal::MAX;
         assert_eq!(
             max * dec("1.0"),
-            dec("340282366920938463463.374607431768211455")
+            dec("170141183460469231731.687303715884105727")
         );
         assert_eq!(
             max * dec("0.1"),
-            dec("34028236692093846346.337460743176821145")
+            dec("17014118346046923173.168730371588410572")
         );
         assert_eq!(
             max * dec("0.01"),
-            dec("3402823669209384634.633746074317682114")
+            dec("1701411834604692317.316873037158841057")
         );
         assert_eq!(
             max * dec("0.001"),
-            dec("340282366920938463.463374607431768211")
+            dec("170141183460469231.731687303715884105")
         );
         assert_eq!(
             max * dec("0.000001"),
-            dec("340282366920938.463463374607431768")
+            dec("170141183460469.231731687303715884")
         );
         assert_eq!(
             max * dec("0.000000001"),
-            dec("340282366920.938463463374607431")
+            dec("170141183460.469231731687303715")
         );
         assert_eq!(
             max * dec("0.000000000001"),
-            dec("340282366.920938463463374607")
+            dec("170141183.460469231731687303")
         );
         assert_eq!(
             max * dec("0.000000000000001"),
-            dec("340282.366920938463463374")
+            dec("170141.183460469231731687")
         );
         assert_eq!(
             max * dec("0.000000000000000001"),
-            dec("340.282366920938463463")
+            dec("170.141183460469231731")
         );
 
         // works for refs
@@ -1461,7 +1481,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_mul_assign_works() {
+    fn signed_decimal_mul_assign_works() {
         let mut a = SignedDecimal::percent(15);
         a *= SignedDecimal::percent(60);
         assert_eq!(a, SignedDecimal::percent(9));
@@ -1475,12 +1495,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to multiply with overflow")]
-    fn decimal_mul_overflow_panics() {
+    fn signed_decimal_mul_overflow_panics() {
         let _value = SignedDecimal::MAX * SignedDecimal::percent(101);
     }
 
     #[test]
-    fn decimal_checked_mul() {
+    fn signed_decimal_checked_mul() {
         let test_data = [
             (SignedDecimal::zero(), SignedDecimal::zero()),
             (SignedDecimal::zero(), SignedDecimal::one()),
@@ -1502,7 +1522,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_checked_mul_overflow() {
+    fn signed_decimal_checked_mul_overflow() {
         assert_eq!(
             SignedDecimal::MAX.checked_mul(SignedDecimal::percent(200)),
             Err(OverflowError {
@@ -1515,7 +1535,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn decimal_implements_div() {
+    fn signed_decimal_implements_div() {
         let one = SignedDecimal::one();
         let two = one + one;
         let half = SignedDecimal::percent(50);
@@ -1659,7 +1679,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_div_assign_works() {
+    fn signed_decimal_div_assign_works() {
         let mut a = SignedDecimal::percent(15);
         a /= SignedDecimal::percent(20);
         assert_eq!(a, SignedDecimal::percent(75));
@@ -1673,18 +1693,18 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Division failed - multiplication overflow")]
-    fn decimal_div_overflow_panics() {
+    fn signed_decimal_div_overflow_panics() {
         let _value = SignedDecimal::MAX / SignedDecimal::percent(10);
     }
 
     #[test]
     #[should_panic(expected = "Division failed - denominator must not be zero")]
-    fn decimal_div_by_zero_panics() {
+    fn signed_decimal_div_by_zero_panics() {
         let _value = SignedDecimal::one() / SignedDecimal::zero();
     }
 
     #[test]
-    fn decimal_int128_division() {
+    fn signed_decimal_int128_division() {
         // a/b
         let left = SignedDecimal::percent(150); // 1.5
         let right = Int128::new(3);
@@ -1698,14 +1718,14 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to divide by zero")]
-    fn decimal_int128_divide_by_zero() {
+    fn signed_decimal_int128_divide_by_zero() {
         let left = SignedDecimal::percent(150); // 1.5
         let right = Int128::new(0);
         let _result = left / right;
     }
 
     #[test]
-    fn decimal_int128_div_assign() {
+    fn signed_decimal_int128_div_assign() {
         // a/b
         let mut dec = SignedDecimal::percent(150); // 1.5
         dec /= Int128::new(3);
@@ -1719,14 +1739,14 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to divide by zero")]
-    fn decimal_int128_div_assign_by_zero() {
+    fn signed_decimal_int128_div_assign_by_zero() {
         // a/0
         let mut dec = SignedDecimal::percent(50);
         dec /= Int128::new(0);
     }
 
     #[test]
-    fn decimal_checked_pow() {
+    fn signed_decimal_checked_pow() {
         for exp in 0..10 {
             assert_eq!(
                 SignedDecimal::one().checked_pow(exp).unwrap(),
@@ -1808,7 +1828,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_checked_pow_overflow() {
+    fn signed_decimal_checked_pow_overflow() {
         assert_eq!(
             SignedDecimal::MAX.checked_pow(2),
             Err(OverflowError {
@@ -1820,13 +1840,13 @@ mod tests {
     }
 
     #[test]
-    fn decimal_to_string() {
+    fn signed_decimal_to_string() {
         // Integers
         assert_eq!(SignedDecimal::zero().to_string(), "0");
         assert_eq!(SignedDecimal::one().to_string(), "1");
         assert_eq!(SignedDecimal::percent(500).to_string(), "5");
 
-        // Decimals
+        // SignedDecimals
         assert_eq!(SignedDecimal::percent(125).to_string(), "1.25");
         assert_eq!(SignedDecimal::percent(42638).to_string(), "426.38");
         assert_eq!(SignedDecimal::percent(3).to_string(), "0.03");
@@ -1903,7 +1923,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_iter_sum() {
+    fn signed_decimal_iter_sum() {
         let items = vec![
             SignedDecimal::zero(),
             SignedDecimal(Int128::from(2i128)),
@@ -1923,7 +1943,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_serialize() {
+    fn signed_decimal_serialize() {
         assert_eq!(to_vec(&SignedDecimal::zero()).unwrap(), br#""0""#);
         assert_eq!(to_vec(&SignedDecimal::one()).unwrap(), br#""1""#);
         assert_eq!(to_vec(&SignedDecimal::percent(8)).unwrap(), br#""0.08""#);
@@ -1936,7 +1956,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_deserialize() {
+    fn signed_decimal_deserialize() {
         assert_eq!(
             from_slice::<SignedDecimal>(br#""0""#).unwrap(),
             SignedDecimal::zero()
@@ -1973,7 +1993,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_abs_diff_works() {
+    fn signed_decimal_abs_diff_works() {
         let a = SignedDecimal::percent(285);
         let b = SignedDecimal::percent(200);
         let expected = Decimal::percent(85);
@@ -1989,7 +2009,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::op_ref)]
-    fn decimal_rem_works() {
+    fn signed_decimal_rem_works() {
         // 4.02 % 1.11 = 0.69
         assert_eq!(
             SignedDecimal::percent(402) % SignedDecimal::percent(111),
@@ -2012,7 +2032,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_rem_assign_works() {
+    fn signed_decimal_rem_assign_works() {
         let mut a = SignedDecimal::percent(17673);
         a %= SignedDecimal::percent(2362);
         assert_eq!(a, SignedDecimal::percent(1139)); // 176.73 % 23.62 = 11.39
@@ -2025,12 +2045,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "divisor of zero")]
-    fn decimal_rem_panics_for_zero() {
+    fn signed_decimal_rem_panics_for_zero() {
         let _ = SignedDecimal::percent(777) % SignedDecimal::zero();
     }
 
     #[test]
-    fn decimal_checked_methods() {
+    fn signed_decimal_checked_methods() {
         // checked add
         assert_eq!(
             SignedDecimal::percent(402)
@@ -2097,7 +2117,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_pow_works() {
+    fn signed_decimal_pow_works() {
         assert_eq!(
             SignedDecimal::percent(200).pow(2),
             SignedDecimal::percent(400)
@@ -2110,12 +2130,12 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn decimal_pow_overflow_panics() {
+    fn signed_decimal_pow_overflow_panics() {
         _ = SignedDecimal::MAX.pow(2u32);
     }
 
     #[test]
-    fn decimal_saturating_works() {
+    fn signed_decimal_saturating_works() {
         assert_eq!(
             SignedDecimal::percent(200).saturating_add(SignedDecimal::percent(200)),
             SignedDecimal::percent(400)
@@ -2148,7 +2168,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_rounding() {
+    fn signed_decimal_rounding() {
         assert_eq!(SignedDecimal::one().floor(), SignedDecimal::one());
         assert_eq!(SignedDecimal::percent(150).floor(), SignedDecimal::one());
         assert_eq!(SignedDecimal::percent(199).floor(), SignedDecimal::one());
@@ -2176,12 +2196,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to ceil with overflow")]
-    fn decimal_ceil_panics() {
+    fn signed_decimal_ceil_panics() {
         let _ = SignedDecimal::MAX.ceil();
     }
 
     #[test]
-    fn decimal_checked_ceil() {
+    fn signed_decimal_checked_ceil() {
         assert_eq!(
             SignedDecimal::percent(199).checked_ceil(),
             Ok(SignedDecimal::percent(200))
@@ -2193,7 +2213,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_to_int_floor_works() {
+    fn signed_decimal_to_int_floor_works() {
         let d = SignedDecimal::from_str("12.000000000000000001").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(12));
         let d = SignedDecimal::from_str("12.345").unwrap();
@@ -2209,11 +2229,11 @@ mod tests {
         assert_eq!(d.to_int_floor(), Int128::new(0));
 
         let d = SignedDecimal::MAX;
-        assert_eq!(d.to_int_floor(), Int128::new(340282366920938463463));
+        assert_eq!(d.to_int_floor(), Int128::new(170141183460469231731));
     }
 
     #[test]
-    fn decimal_to_int_ceil_works() {
+    fn signed_decimal_to_int_ceil_works() {
         let d = SignedDecimal::from_str("12.000000000000000001").unwrap();
         assert_eq!(d.to_int_ceil(), Int128::new(13));
         let d = SignedDecimal::from_str("12.345").unwrap();
@@ -2227,11 +2247,17 @@ mod tests {
         assert_eq!(d.to_int_ceil(), Int128::new(0));
 
         let d = SignedDecimal::MAX;
-        assert_eq!(d.to_int_ceil(), Int128::new(340282366920938463464));
+        assert_eq!(d.to_int_ceil(), Int128::new(170141183460469231732));
     }
 
     #[test]
-    fn decimal_partial_eq() {
+    fn signed_decimal_neg_works() {
+        assert_eq!(-SignedDecimal::percent(50), SignedDecimal::percent(-50));
+        assert_eq!(-SignedDecimal::one(), SignedDecimal::negative_one());
+    }
+
+    #[test]
+    fn signed_decimal_partial_eq() {
         let test_cases = [
             ("1", "1", true),
             ("0.5", "0.5", true),
@@ -2251,7 +2277,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_implements_debug() {
+    fn signed_decimal_implements_debug() {
         let decimal = SignedDecimal::from_str("123.45").unwrap();
         assert_eq!(format!("{decimal:?}"), "Decimal(123.45)");
 
