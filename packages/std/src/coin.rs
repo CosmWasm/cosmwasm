@@ -55,6 +55,22 @@ impl fmt::Display for Coin {
     }
 }
 
+/// Equivalent to Coin, but with a reference to the denom
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+pub struct CoinRef<'a> {
+    pub denom: &'a str,
+    pub amount: Uint128,
+}
+
+impl From<CoinRef<'_>> for Coin {
+    fn from(value: CoinRef) -> Self {
+        Coin {
+            denom: value.denom.to_owned(),
+            amount: value.amount,
+        }
+    }
+}
+
 /// A shortcut constructor for a set of one denomination of coins
 ///
 /// # Examples

@@ -2,8 +2,10 @@ use alloc::collections::BTreeMap;
 use core::fmt;
 use core::str::FromStr;
 
-use crate::{errors::CoinsError, Coin, StdError, StdResult, Uint128};
-use crate::{OverflowError, OverflowOperation};
+use crate::{
+    errors::CoinsError, Coin, CoinRef, OverflowError, OverflowOperation, StdError, StdResult,
+    Uint128,
+};
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
 ///
@@ -206,6 +208,92 @@ impl Coins {
 
         Ok(())
     }
+
+    /// Returns an iterator over the coins.
+    /// The iterator does not yield [Coin]s, but [CoinRef]s as items.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{coin, Coin, CoinRef, Coins, Uint128};
+    /// let mut coins = Coins::default();
+    /// coins.add(coin(500, "uluna")).unwrap();
+    /// coins.add(coin(1000, "uatom")).unwrap();
+    /// let mut iterator = coins.iter();
+    ///
+    /// let uatom: CoinRef = iterator.next().unwrap();
+    /// assert_eq!(uatom.denom, "uatom");
+    /// assert_eq!(uatom.amount.u128(), 1000);
+    ///
+    /// let uluna = iterator.next().unwrap();
+    /// assert_eq!(uluna.denom, "uluna");
+    /// assert_eq!(uluna.amount.u128(), 500);
+    ///
+    /// assert_eq!(iterator.next(), None);
+    /// ```
+    pub fn iter(&self) -> CoinsIter<'_> {
+        CoinsIter(self.0.iter())
+    }
+}
+
+impl IntoIterator for Coins {
+    type Item = Coin;
+    type IntoIter = CoinsIntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        CoinsIntoIter(self.0.into_iter())
+    }
+}
+
+impl<'a> IntoIterator for &'a Coins {
+    type Item = CoinRef<'a>;
+    type IntoIter = CoinsIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[derive(Debug)]
+pub struct CoinsIntoIter(alloc::collections::btree_map::IntoIter<String, Uint128>);
+
+impl Iterator for CoinsIntoIter {
+    type Item = Coin;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(denom, amount)| Coin { denom, amount })
+    }
+}
+
+impl DoubleEndedIterator for CoinsIntoIter {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0
+            .next_back()
+            .map(|(denom, amount)| Coin { denom, amount })
+    }
+}
+
+#[derive(Debug)]
+pub struct CoinsIter<'a>(alloc::collections::btree_map::Iter<'a, String, Uint128>);
+
+impl<'a> Iterator for CoinsIter<'a> {
+    type Item = CoinRef<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(denom, amount)| CoinRef {
+            denom,
+            amount: *amount,
+        })
+    }
+}
+
+impl<'a> DoubleEndedIterator for CoinsIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0.next_back().map(|(denom, amount)| CoinRef {
+            denom,
+            amount: *amount,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -387,6 +475,30 @@ mod tests {
         // happy path
         let coins = Coins::from(coin(12345, "uatom"));
         assert_eq!(coins.len(), 1);
+        assert_eq!(coins.amount_of("uatom").u128(), 12345);
+    }
+
+    #[test]
+    fn can_iterate_owned() {
+        let coins = mock_coins();
+        let mut moved = Coins::default();
+        for c in coins {
+            moved.add(c).unwrap();
+        }
+        assert_eq!(moved.len(), 3);
+
+        assert!(mock_coins().into_iter().eq(mock_coins().to_vec()));
+    }
+
+    #[test]
+    fn can_iterate_borrowed() {
+        let coins = mock_coins();
+        assert!(coins
+            .iter()
+            .map(|c| c.denom)
+            .eq(coins.to_vec().iter().map(|c| &c.denom)));
+
+        // can still use the coins afterwards
         assert_eq!(coins.amount_of("uatom").u128(), 12345);
     }
 }
