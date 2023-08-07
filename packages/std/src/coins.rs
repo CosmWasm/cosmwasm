@@ -1,6 +1,7 @@
 use alloc::collections::BTreeMap;
 use core::fmt;
 use core::str::FromStr;
+use serde::{Deserialize, Serialize};
 
 use crate::{errors::CoinsError, Coin, StdError, StdResult, Uint128};
 use crate::{OverflowError, OverflowOperation};
@@ -14,7 +15,7 @@ use crate::{OverflowError, OverflowOperation};
 /// - coins are naturally sorted alphabetically by denom
 /// - duplicate denoms are automatically removed
 /// - cheaper for searching/inserting/deleting: O(log(n)) compared to O(n)
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct Coins(BTreeMap<String, Uint128>);
 
 /// Casting a Vec<Coin> to Coins.
