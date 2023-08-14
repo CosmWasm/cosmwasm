@@ -210,18 +210,17 @@ impl Coins {
     }
 
     /// Returns an iterator over the coins.
-    /// The iterator does not yield [Coin]s, but [CoinRef]s as items.
     ///
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{coin, Coin, CoinRef, Coins, Uint128};
+    /// # use cosmwasm_std::{coin, Coin, Coins, Uint128};
     /// let mut coins = Coins::default();
     /// coins.add(coin(500, "uluna")).unwrap();
     /// coins.add(coin(1000, "uatom")).unwrap();
     /// let mut iterator = coins.iter();
     ///
-    /// let uatom: CoinRef = iterator.next().unwrap();
+    /// let uatom = iterator.next().unwrap();
     /// assert_eq!(uatom.denom, "uatom");
     /// assert_eq!(uatom.amount.u128(), 1000);
     ///
