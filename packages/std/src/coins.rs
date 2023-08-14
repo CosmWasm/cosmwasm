@@ -92,8 +92,8 @@ impl fmt::Display for Coins {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = self
             .0
-            .iter()
-            .map(|(denom, amount)| format!("{amount}{denom}"))
+            .values()
+            .map(|coin| format!("{coin}"))
             .collect::<Vec<_>>()
             .join(",");
         write!(f, "{s}")
