@@ -336,7 +336,7 @@ pub fn wasm_instantiate(
     })
 }
 
-/// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
+/// Shortcut helper as the construction of WasmMsg::Execute can be quite verbose in contract code
 pub fn wasm_execute(
     contract_addr: impl Into<String>,
     msg: &impl Serialize,
