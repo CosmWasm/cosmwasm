@@ -162,7 +162,12 @@ pub enum WasmMsg {
         #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
         funds: Vec<Coin>,
-        /// A human-readbale label for the contract
+        /// A human-readbale label for the contract.
+        ///
+        /// Valid values should:
+        /// - not be empty
+        /// - not be bigger than 128 bytes (or some chain-specific limit)
+        /// - not start / end with whitespace
         label: String,
     },
     /// Instantiates a new contracts from previously uploaded Wasm code
@@ -176,7 +181,12 @@ pub enum WasmMsg {
     Instantiate2 {
         admin: Option<String>,
         code_id: u64,
-        /// A human-readbale label for the contract
+        /// A human-readbale label for the contract.
+        ///
+        /// Valid values should:
+        /// - not be empty
+        /// - not be bigger than 128 bytes (or some chain-specific limit)
+        /// - not start / end with whitespace
         label: String,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         #[derivative(Debug(format_with = "binary_to_string"))]
