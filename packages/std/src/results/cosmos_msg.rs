@@ -162,7 +162,7 @@ pub enum WasmMsg {
         #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
         funds: Vec<Coin>,
-        /// A human-readbale label for the contract.
+        /// A human-readable label for the contract.
         ///
         /// Valid values should:
         /// - not be empty
@@ -181,7 +181,7 @@ pub enum WasmMsg {
     Instantiate2 {
         admin: Option<String>,
         code_id: u64,
-        /// A human-readbale label for the contract.
+        /// A human-readable label for the contract.
         ///
         /// Valid values should:
         /// - not be empty
