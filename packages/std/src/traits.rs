@@ -224,6 +224,15 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
     }
 
+    /// This allows to convert any `QuerierWrapper` into a `QuerierWrapper` generic
+    /// over `Empty` custom query type.
+    pub fn into_empty(self) -> QuerierWrapper<'a, Empty> {
+        QuerierWrapper {
+            querier: self.querier,
+            custom_query_type: PhantomData,
+        }
+    }
+
     /// Makes the query and parses the response.
     ///
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
@@ -442,6 +451,8 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
 
 #[cfg(test)]
 mod tests {
+    use serde::Deserialize;
+
     use super::*;
     use crate::testing::MockQuerier;
     use crate::{coins, from_slice, Uint128};
@@ -571,5 +582,17 @@ mod tests {
                 ..
             } if msg == "Querier system error: No such contract: foobar"
         ));
+    }
+
+    #[test]
+    fn querier_into_empty() {
+        #[derive(Clone, Serialize, Deserialize)]
+        struct MyQuery;
+        impl CustomQuery for MyQuery {}
+
+        let querier: MockQuerier<MyQuery> = MockQuerier::new(&[]);
+        let wrapper = QuerierWrapper::<MyQuery>::new(&querier);
+
+        let _: QuerierWrapper<Empty> = wrapper.into_empty();
     }
 }
