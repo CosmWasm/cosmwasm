@@ -3,21 +3,20 @@ use core::fmt;
 use core::str::FromStr;
 
 use crate::{
-    errors::CoinsError, Coin, CoinRef, OverflowError, OverflowOperation, StdError, StdResult,
-    Uint128,
+    errors::CoinsError, Coin, OverflowError, OverflowOperation, StdError, StdResult, Uint128,
 };
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
 ///
 /// Differently from `sdk.Coins`, which is a vector of `sdk.Coin`, here we
-/// implement Coins as a BTreeMap that maps from coin denoms to amounts.
+/// implement Coins as a BTreeMap that maps from coin denoms to `Coin`.
 /// This has a number of advantages:
 ///
 /// - coins are naturally sorted alphabetically by denom
 /// - duplicate denoms are automatically removed
 /// - cheaper for searching/inserting/deleting: O(log(n)) compared to O(n)
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
-pub struct Coins(BTreeMap<String, Uint128>);
+pub struct Coins(BTreeMap<String, Coin>);
 
 /// Casting a Vec<Coin> to Coins.
 /// The Vec can be out of order, but must not contain duplicate denoms.
@@ -28,13 +27,13 @@ impl TryFrom<Vec<Coin>> for Coins {
 
     fn try_from(vec: Vec<Coin>) -> Result<Self, CoinsError> {
         let mut map = BTreeMap::new();
-        for Coin { amount, denom } in vec {
-            if amount.is_zero() {
+        for coin in vec {
+            if coin.amount.is_zero() {
                 continue;
             }
 
             // if the insertion returns a previous value, we have a duplicate denom
-            if map.insert(denom, amount).is_some() {
+            if map.insert(coin.denom.clone(), coin).is_some() {
                 return Err(CoinsError::DuplicateDenom);
             }
         }
@@ -104,21 +103,12 @@ impl fmt::Display for Coins {
 impl Coins {
     /// Conversion to Vec<Coin>, while NOT consuming the original object
     pub fn to_vec(&self) -> Vec<Coin> {
-        self.0
-            .iter()
-            .map(|(denom, amount)| Coin {
-                denom: denom.clone(),
-                amount: *amount,
-            })
-            .collect()
+        self.0.values().cloned().collect()
     }
 
     /// Conversion to Vec<Coin>, consuming the original object
     pub fn into_vec(self) -> Vec<Coin> {
-        self.0
-            .into_iter()
-            .map(|(denom, amount)| Coin { denom, amount })
-            .collect()
+        self.0.into_values().collect()
     }
 
     /// Returns the number of different denoms in this collection.
@@ -139,7 +129,10 @@ impl Coins {
 
     /// Returns the amount of the given denom or zero if the denom is not present.
     pub fn amount_of(&self, denom: &str) -> Uint128 {
-        self.0.get(denom).copied().unwrap_or_else(Uint128::zero)
+        self.0
+            .get(denom)
+            .map(|c| c.amount)
+            .unwrap_or_else(Uint128::zero)
     }
 
     /// Returns the amount of the given denom if and only if this collection contains only
@@ -163,7 +156,7 @@ impl Coins {
     /// ```
     pub fn contains_only(&self, denom: &str) -> Option<Uint128> {
         if self.len() == 1 {
-            self.0.get(denom).copied()
+            self.0.get(denom).map(|c| c.amount)
         } else {
             None
         }
@@ -176,8 +169,15 @@ impl Coins {
             return Ok(());
         }
 
-        let amount = self.0.entry(coin.denom).or_insert_with(Uint128::zero);
-        *amount = amount.checked_add(coin.amount)?;
+        // if the coin is not present yet, insert it, otherwise add to existing amount
+        match self.0.get_mut(&coin.denom) {
+            None => {
+                self.0.insert(coin.denom.clone(), coin);
+            }
+            Some(existing) => {
+                existing.amount = existing.amount.checked_add(coin.amount)?;
+            }
+        }
         Ok(())
     }
 
@@ -185,10 +185,10 @@ impl Coins {
     /// Errors in case of overflow or if the denom is not present.
     pub fn sub(&mut self, coin: Coin) -> StdResult<()> {
         match self.0.get_mut(&coin.denom) {
-            Some(v) => {
-                *v = v.checked_sub(coin.amount)?;
+            Some(existing) => {
+                existing.amount = existing.amount.checked_sub(coin.amount)?;
                 // make sure to remove zero coin
-                if v.is_zero() {
+                if existing.amount.is_zero() {
                     self.0.remove(&coin.denom);
                 }
             }
@@ -246,7 +246,7 @@ impl IntoIterator for Coins {
 }
 
 impl<'a> IntoIterator for &'a Coins {
-    type Item = CoinRef<'a>;
+    type Item = &'a Coin;
     type IntoIter = CoinsIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -255,44 +255,36 @@ impl<'a> IntoIterator for &'a Coins {
 }
 
 #[derive(Debug)]
-pub struct CoinsIntoIter(alloc::collections::btree_map::IntoIter<String, Uint128>);
+pub struct CoinsIntoIter(alloc::collections::btree_map::IntoIter<String, Coin>);
 
 impl Iterator for CoinsIntoIter {
     type Item = Coin;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|(denom, amount)| Coin { denom, amount })
+        self.0.next().map(|(_, coin)| coin)
     }
 }
 
 impl DoubleEndedIterator for CoinsIntoIter {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0
-            .next_back()
-            .map(|(denom, amount)| Coin { denom, amount })
+        self.0.next_back().map(|(_, coin)| coin)
     }
 }
 
 #[derive(Debug)]
-pub struct CoinsIter<'a>(alloc::collections::btree_map::Iter<'a, String, Uint128>);
+pub struct CoinsIter<'a>(alloc::collections::btree_map::Iter<'a, String, Coin>);
 
 impl<'a> Iterator for CoinsIter<'a> {
-    type Item = CoinRef<'a>;
+    type Item = &'a Coin;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|(denom, amount)| CoinRef {
-            denom,
-            amount: *amount,
-        })
+        self.0.next().map(|(_, coin)| coin)
     }
 }
 
 impl<'a> DoubleEndedIterator for CoinsIter<'a> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|(denom, amount)| CoinRef {
-            denom,
-            amount: *amount,
-        })
+        self.0.next_back().map(|(_, coin)| coin)
     }
 }
 
@@ -495,7 +487,7 @@ mod tests {
         let coins = mock_coins();
         assert!(coins
             .iter()
-            .map(|c| c.denom)
+            .map(|c| &c.denom)
             .eq(coins.to_vec().iter().map(|c| &c.denom)));
 
         // can still use the coins afterwards
