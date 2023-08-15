@@ -93,7 +93,7 @@ impl fmt::Display for Coins {
         let s = self
             .0
             .values()
-            .map(|coin| format!("{coin}"))
+            .map(|coin| coin.to_string())
             .collect::<Vec<_>>()
             .join(",");
         write!(f, "{s}")
