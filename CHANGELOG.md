@@ -9,6 +9,8 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Implement `Not` for `Uint{64,128,256}` ([#1799]).
+- cosmwasm-std: Implement `into_empty` for `QuerierWrapper`, `Deps` and
+  `DepsMut`.
 
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
 
