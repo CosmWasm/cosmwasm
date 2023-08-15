@@ -11,8 +11,10 @@ and this project adheres to
 - cosmwasm-std: Implement `Not` for `Uint{64,128,256}` ([#1799]).
 - cosmwasm-std: Implement `into_empty` for `QuerierWrapper`, `Deps` and
   `DepsMut`.
+- cosmwasm-std: Add iterators for `Coins` ([#1806]).
 
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
+[#1806]: https://github.com/CosmWasm/cosmwasm/pull/1806
 
 ### Changed
 
