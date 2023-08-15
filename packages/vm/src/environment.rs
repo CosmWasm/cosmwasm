@@ -322,6 +322,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
+    /// Returns the remaining gas measured in [CosmWasm gas].
+    ///
+    /// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md
     pub fn get_gas_left(&self, store: &mut impl AsStoreMut) -> u64 {
         self.with_wasmer_instance(|instance| {
             Ok(match get_remaining_points(store, instance) {
@@ -332,6 +335,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
+    /// Sets the remaining gas measured in [CosmWasm gas].
+    ///
+    /// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md
     pub fn set_gas_left(&self, store: &mut impl AsStoreMut, new_value: u64) {
         self.with_wasmer_instance(|instance| {
             set_remaining_points(store, instance, new_value);

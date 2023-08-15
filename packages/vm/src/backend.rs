@@ -10,6 +10,10 @@ use cosmwasm_std::{Order, Record};
 /// A structure that represents gas cost to be deducted from the remaining gas.
 /// This is always needed when computations are performed outside of
 /// Wasm execution, such as calling crypto APIs or calls into the blockchain.
+///
+/// All values are measured in [CosmWasm gas].
+///
+/// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct GasInfo {
     /// The gas cost of a computation that was executed already but not yet charged.
@@ -19,6 +23,12 @@ pub struct GasInfo {
     pub cost: u64,
     /// Gas that was used and charged externally. This is needed to
     /// adjust the VM's gas limit but does not affect the gas usage.
+    ///
+    /// Since this is measured in [CosmWasm gas], the caller may need
+    /// to convert from Cosmos SDK gas in cases where an SDK gas meter
+    /// is used.
+    ///
+    /// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md
     pub externally_used: u64,
 }
 
@@ -141,10 +151,12 @@ pub trait Querier {
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
     /// types.
     ///
-    /// The gas limit describes how much VM gas this particular query is allowed
+    /// The gas limit describes how much [CosmWasm gas] this particular query is allowed
     /// to comsume when measured separately from the rest of the contract.
     /// The returned gas info (in BackendResult) can exceed the gas limit in cases
     /// where the query could not be aborted exactly at the limit.
+    ///
+    /// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md
     fn query_raw(
         &self,
         request: &[u8],
@@ -153,8 +165,8 @@ pub trait Querier {
 }
 
 /// A result type for calling into the backend. Such a call can cause
-/// non-negligible computational cost in both success and faiure case and must always have gas information
-/// attached.
+/// non-negligible computational cost in both success and faiure case and
+/// must always have gas information attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 
 #[derive(Error, Debug, PartialEq, Eq)]
