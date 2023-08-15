@@ -262,11 +262,21 @@ impl Iterator for CoinsIntoIter {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|(_, coin)| coin)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
 }
 
 impl DoubleEndedIterator for CoinsIntoIter {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|(_, coin)| coin)
+    }
+}
+
+impl ExactSizeIterator for CoinsIntoIter {
+    fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
@@ -279,11 +289,21 @@ impl<'a> Iterator for CoinsIter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|(_, coin)| coin)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
 }
 
 impl<'a> DoubleEndedIterator for CoinsIter<'a> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|(_, coin)| coin)
+    }
+}
+
+impl<'a> ExactSizeIterator for CoinsIter<'a> {
+    fn len(&self) -> usize {
+        self.0.len()
     }
 }
 
@@ -467,6 +487,18 @@ mod tests {
         let coins = Coins::from(coin(12345, "uatom"));
         assert_eq!(coins.len(), 1);
         assert_eq!(coins.amount_of("uatom").u128(), 12345);
+    }
+
+    #[test]
+    fn exact_size_iterator() {
+        let coins = mock_coins();
+        let iter = coins.iter();
+        assert_eq!(iter.len(), 3);
+        assert_eq!(iter.size_hint(), (3, Some(3)));
+
+        let iter = coins.into_iter();
+        assert_eq!(iter.len(), 3);
+        assert_eq!(iter.size_hint(), (3, Some(3)));
     }
 
     #[test]
