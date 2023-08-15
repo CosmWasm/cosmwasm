@@ -264,6 +264,7 @@ impl Iterator for CoinsIntoIter {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
+        // Since btree_map::IntoIter implements ExactSizeIterator, this is guaranteed to return the exact length
         self.0.size_hint()
     }
 }
@@ -291,6 +292,7 @@ impl<'a> Iterator for CoinsIter<'a> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
+        // Since btree_map::Iter implements ExactSizeIterator, this is guaranteed to return the exact length
         self.0.size_hint()
     }
 }
