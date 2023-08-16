@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "1.3.1"
+version = "1.3.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "VM bindings to run cosmwams contracts"
@@ -39,8 +39,8 @@ bytes = "1.4.0" # need a higher version than the one required by Wasmer for the 
 clru = "0.4.0"
 crc32fast = "1.3.2"
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "1.3.1", default-features = false }
-cosmwasm-crypto = { path = "../crypto", version = "1.3.1" }
+cosmwasm-std = { path = "../std", version = "1.3.2", default-features = false }
+cosmwasm-crypto = { path = "../crypto", version = "1.3.2" }
 derivative = "2"
 hex = "0.4"
 schemars = "0.8.3"
