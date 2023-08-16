@@ -45,8 +45,9 @@ pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation,
-    RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError,
+    CoinFromStrError, CoinsError, ConversionOverflowError, DivideByZeroError, DivisionError,
+    OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
+    VerificationError,
 };
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::{
