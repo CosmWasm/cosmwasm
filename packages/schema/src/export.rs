@@ -7,7 +7,7 @@ use schemars::schema::RootSchema;
 
 use crate::casing::to_snake_case;
 
-// Exports a schema, auto-generating filename based on the metadata title of the generated schema.
+/// Exports a schema, auto-generating filename based on the metadata title of the generated schema.
 pub fn export_schema(schema: &RootSchema, out_dir: &Path) {
     let title = schema
         .schema
@@ -18,8 +18,8 @@ pub fn export_schema(schema: &RootSchema, out_dir: &Path) {
     write_schema(schema, out_dir, &title);
 }
 
-// use this if you want to override the auto-detected name of the object.
-// very useful when creating an alias for a type-alias.
+/// Use this if you want to override the auto-detected name of the object.
+/// very useful when creating an alias for a type-alias.
 pub fn export_schema_with_title(schema: &RootSchema, out_dir: &Path, title: &str) {
     let mut schema = schema.clone();
     // set the title explicitly on the schema's metadata

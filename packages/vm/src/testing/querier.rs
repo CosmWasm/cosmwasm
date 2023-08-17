@@ -26,7 +26,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         }
     }
 
-    // set a new balance for the given address and return the old balance
+    /// Set a new balance for the given address and return the old balance
     pub fn update_balance(
         &mut self,
         addr: impl Into<String>,

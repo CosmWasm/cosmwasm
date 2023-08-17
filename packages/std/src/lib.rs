@@ -33,9 +33,9 @@ mod timestamp;
 mod traits;
 mod types;
 
-// This modules is very advanced and will not be used directly by the vast majority of users.
-// We want to offer it to ensure a stable storage key composition system but don't encourage
-// contract devs to use it directly.
+/// This modules is very advanced and will not be used directly by the vast majority of users.
+/// We want to offer it to ensure a stable storage key composition system but don't encourage
+/// contract devs to use it directly.
 pub mod storage_keys;
 
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
@@ -111,8 +111,8 @@ pub use crate::exports::{
 #[cfg(target_arch = "wasm32")]
 pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 
-// Exposed for testing only
-// Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
+/// Exposed for testing only
+/// Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing;
 
