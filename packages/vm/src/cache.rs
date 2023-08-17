@@ -187,7 +187,7 @@ where
     /// This does the same as [`save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.available_capabilities)?;
+        check_wasm(wasm, &self.available_capabilities, None)?;
         self.save_wasm_unchecked(wasm)
     }
 

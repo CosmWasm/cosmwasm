@@ -127,7 +127,7 @@ pub fn mock_instance_with_options(
     wasm: &[u8],
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
-    check_wasm(wasm, &options.available_capabilities).unwrap();
+    check_wasm(wasm, &options.available_capabilities, None).unwrap();
     let contract_address = MOCK_CONTRACT_ADDR;
 
     // merge balances

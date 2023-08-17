@@ -108,7 +108,7 @@ fn check_wasm_tables(module: &ParsedWasm, table_size_limit: u32) -> VmResult<()>
             None => Err(ERR_UNBOUNDED),
         },
         _ => Err(ERR_MORE_THAN_ONE),
-                }
+    }
     .map_err(VmError::static_validation_err)
 }
 
@@ -250,18 +250,18 @@ mod tests {
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
-        check_wasm(CONTRACT, &default_capabilities()).unwrap();
+        check_wasm(CONTRACT, &default_capabilities(), None).unwrap();
     }
 
     #[test]
     fn check_wasm_allows_sign_ext() {
         // See https://github.com/CosmWasm/cosmwasm/issues/1727
-        check_wasm(CONTRACT_RUST_170, &default_capabilities()).unwrap();
+        check_wasm(CONTRACT_RUST_170, &default_capabilities(), None).unwrap();
     }
 
     #[test]
     fn check_wasm_old_contract() {
-        match check_wasm(CONTRACT_0_15, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_15, &default_capabilities(), None) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -270,7 +270,7 @@ mod tests {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_14, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_14, &default_capabilities(), None) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -279,7 +279,7 @@ mod tests {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_12, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_12, &default_capabilities(), None) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.contains(
                     "Wasm contract missing a required marker export: interface_version_*"
@@ -289,7 +289,7 @@ mod tests {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_7, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_7, &default_capabilities(), None) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.contains(
                     "Wasm contract missing a required marker export: interface_version_*"
@@ -308,7 +308,7 @@ mod tests {
 
         // One table (bound)
         let wasm = wat::parse_str("(module (table $name 123 123 funcref))").unwrap();
-        check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap()).unwrap();
+        check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap(), DEFAULT_TABLE_SIZE_LIMIT).unwrap();
 
         // One table (bound, initial > max)
         let wasm = wat::parse_str("(module (table $name 124 123 funcref))").unwrap();
@@ -320,14 +320,16 @@ mod tests {
 
         // One table (bound, max too large)
         let wasm = wat::parse_str("(module (table $name 100 9999 funcref))").unwrap();
-        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap()).unwrap_err();
+        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap(), DEFAULT_TABLE_SIZE_LIMIT)
+            .unwrap_err();
         assert!(err
             .to_string()
             .contains("Wasm contract's first table section has a too large max limit"));
 
         // One table (unbound)
         let wasm = wat::parse_str("(module (table $name 100 funcref))").unwrap();
-        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap()).unwrap_err();
+        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap(), DEFAULT_TABLE_SIZE_LIMIT)
+            .unwrap_err();
         assert!(err
             .to_string()
             .contains("Wasm contract must not have unbound table section"));
