@@ -29,6 +29,16 @@ pub fn main() {
                 .action(ArgAction::Set),
         )
         .arg(
+            Arg::new("TABLE_SIZE_LIMIT")
+                .long("wasm-max-table-size")
+                .alias("wasm-table-size-limit")
+                .help("Sets limits for Wasm's table size")
+                .required(false)
+                .num_args(1)
+                .value_parser(clap::value_parser!(u32))
+                .action(ArgAction::Append),
+        )
+        .arg(
             Arg::new("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
@@ -47,6 +57,12 @@ pub fn main() {
     println!("Available capabilities: {available_capabilities:?}");
     println!();
 
+    // WASM table size limit
+    let table_size_limit = matches.get_one::<u32>("TABLE_SIZE_LIMIT").copied();
+    if let Some(table_size_limit) = table_size_limit {
+        println!("Wasm's table size limit: {table_size_limit}\n");
+    }
+
     // File
     let paths = matches
         .get_many::<String>("WASM")
@@ -54,7 +70,7 @@ pub fn main() {
 
     let (passes, failures): (Vec<_>, _) = paths
         .map(|p| {
-            let result = check_contract(p, &available_capabilities);
+            let result = check_contract(p, &available_capabilities, table_size_limit);
             match &result {
                 Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
@@ -88,6 +104,7 @@ pub fn main() {
 fn check_contract(
     path: impl AsRef<Path>,
     available_capabilities: &HashSet<String>,
+    table_size_limit: Option<u32>,
 ) -> anyhow::Result<()> {
     let mut file = File::open(path)?;
 
@@ -96,7 +113,7 @@ fn check_contract(
     file.read_to_end(&mut wasm)?;
 
     // Check wasm
-    check_wasm(&wasm, available_capabilities)?;
+    check_wasm(&wasm, available_capabilities, table_size_limit)?;
 
     // Compile module
     let engine = make_compiling_engine(None);

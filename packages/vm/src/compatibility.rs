@@ -65,7 +65,7 @@ const MEMORY_LIMIT: u32 = 512; // in pages
 ///
 /// As of March 2023, on Juno mainnet the largest value for production contracts
 /// is 485. Most are between 100 and 300.
-const TABLE_SIZE_LIMIT: u32 = 2500; // entries
+const DEFAULT_TABLE_SIZE_LIMIT: u32 = 2500; // entries
 
 /// If the contract has more than this amount of imports, it will be rejected
 /// during static validation before even looking into the imports. We keep this
@@ -74,10 +74,17 @@ const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 const MAX_IMPORTS: usize = 100;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
-pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
+pub fn check_wasm(
+    wasm_code: &[u8],
+    available_capabilities: &HashSet<String>,
+    table_size_limit: Option<u32>,
+) -> VmResult<()> {
     let module = ParsedWasm::parse(wasm_code)?;
 
-    check_wasm_tables(&module)?;
+    check_wasm_tables(
+        &module,
+        table_size_limit.unwrap_or(DEFAULT_TABLE_SIZE_LIMIT),
+    )?;
     check_wasm_memories(&module)?;
     check_interface_version(&module)?;
     check_wasm_exports(&module)?;
@@ -87,28 +94,22 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
     Ok(())
 }
 
-fn check_wasm_tables(module: &ParsedWasm) -> VmResult<()> {
-    match module.tables.len() {
-        0 => Ok(()),
-        1 => {
-            let limits = &module.tables[0];
-            if let Some(maximum) = limits.maximum {
-                if maximum > TABLE_SIZE_LIMIT {
-                    return Err(VmError::static_validation_err(
-                        "Wasm contract's first table section has a too large max limit",
-                    ));
+fn check_wasm_tables(module: &ParsedWasm, table_size_limit: u32) -> VmResult<()> {
+    const ERR_MORE_THAN_ONE: &'static str = "Wasm contract must not have more than 1 table section";
+    const ERR_UNBOUNDED: &'static str = "Wasm contract must not have unbound table section";
+    const ERR_TOO_LARGE: &'static str =
+        "Wasm contract's first table section has a too large max limit";
+
+    match module.tables.as_slice() {
+        [] => Ok(()),
+        [limits] => match limits.maximum {
+            Some(maximum) if maximum <= table_size_limit => Ok(()),
+            Some(_) => Err(ERR_TOO_LARGE),
+            None => Err(ERR_UNBOUNDED),
+        },
+        _ => Err(ERR_MORE_THAN_ONE),
                 }
-                Ok(())
-            } else {
-                Err(VmError::static_validation_err(
-                    "Wasm contract must not have unbound table section",
-                ))
-            }
-        }
-        _ => Err(VmError::static_validation_err(
-            "Wasm contract must not have more than 1 table section",
-        )),
-    }
+    .map_err(VmError::static_validation_err)
 }
 
 fn check_wasm_memories(module: &ParsedWasm) -> VmResult<()> {
