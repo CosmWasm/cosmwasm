@@ -322,8 +322,8 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         self.query(&request)
     }
 
-    // this queries another wasm contract. You should know a priori the proper types for T and U
-    // (response and request) based on the contract API
+    /// Queries another wasm contract. You should know a priori the proper types for T and U
+    /// (response and request) based on the contract API
     pub fn query_wasm_smart<T: DeserializeOwned>(
         &self,
         contract_addr: impl Into<String>,
@@ -337,13 +337,14 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         self.query(&request)
     }
 
-    // this queries the raw storage from another wasm contract.
-    // you must know the exact layout and are implementation dependent
-    // (not tied to an interface like query_wasm_smart)
-    // that said, if you are building a few contracts together, this is a much cheaper approach
-    //
-    // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
-    // It only returns error on some runtime issue, not on any data cases.
+    /// Queries the raw storage from another wasm contract.
+    ///
+    /// You must know the exact layout and are implementation dependent
+    /// (not tied to an interface like query_wasm_smart).
+    /// That said, if you are building a few contracts together, this is a much cheaper approach
+    ///
+    /// Similar return value to [`Storage::get`]. Returns `Some(val)` or `None` if the data is there.
+    /// It only returns error on some runtime issue, not on any data cases.
     pub fn query_wasm_raw(
         &self,
         contract_addr: impl Into<String>,

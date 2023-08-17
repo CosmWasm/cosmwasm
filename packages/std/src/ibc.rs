@@ -617,11 +617,11 @@ impl<T> IbcBasicResponse<T> {
     }
 }
 
-// This defines the return value on packet response processing.
-// This "success" case should be returned even in application-level errors,
-// Where the acknowledgement bytes contain an encoded error message to be returned to
-// the calling chain. (Returning ContractResult::Err will abort processing of this packet
-// and not inform the calling chain).
+/// This defines the return value on packet response processing.
+/// This "success" case should be returned even in application-level errors,
+/// Where the acknowledgement bytes contain an encoded error message to be returned to
+/// the calling chain. (Returning ContractResult::Err will abort processing of this packet
+/// and not inform the calling chain).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty> {
