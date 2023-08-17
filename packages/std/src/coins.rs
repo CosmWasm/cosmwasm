@@ -101,12 +101,18 @@ impl fmt::Display for Coins {
 }
 
 impl Coins {
-    /// Conversion to Vec<Coin>, while NOT consuming the original object
+    /// Conversion to Vec<Coin>, while NOT consuming the original object.
+    ///
+    /// This produces a vector of coins that is sorted alphabetically by denom with
+    /// no duplicate denoms.
     pub fn to_vec(&self) -> Vec<Coin> {
         self.0.values().cloned().collect()
     }
 
-    /// Conversion to Vec<Coin>, consuming the original object
+    /// Conversion to Vec<Coin>, consuming the original object.
+    ///
+    /// This produces a vector of coins that is sorted alphabetically by denom with
+    /// no duplicate denoms.
     pub fn into_vec(self) -> Vec<Coin> {
         self.0.into_values().collect()
     }
