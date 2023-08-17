@@ -37,6 +37,7 @@ pub fn remove_schemas(schemas_dir: &path::Path) -> Result<(), io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(any(unix, target_os = "redox"))]
     use std::ffi::OsStr;
     use std::path::Path;
 
