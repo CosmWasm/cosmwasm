@@ -29,6 +29,7 @@ and this project adheres to
 - cosmwasm-check: Update clap dependency to version 4 ([#1677])
 - cosmwasm-vm: Use `wasmparser` for initial validation instead of `parity-wasm`
   ([#1786])
+- cosmwasm-std: Make constructors `Decimal{,256}::{percent,permille,bps}` const
 
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 [#1674]: https://github.com/CosmWasm/cosmwasm/pull/1674
