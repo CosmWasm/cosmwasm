@@ -5,7 +5,7 @@ use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
 
 use crate::{
     go::{GoField, GoStruct, GoType},
-    utils::suffixes,
+    utils::{replace_acronyms, suffixes},
 };
 
 pub trait SchemaExt {
@@ -155,7 +155,10 @@ pub fn type_from_instance_type(
             .rev()
             .find(|s| s.starts_with(char::is_uppercase))
             .unwrap_or(type_context.struct_name);
-        let new_struct_name = format!("{}{suffix}", type_context.field.to_pascal_case());
+        let new_struct_name = format!(
+            "{}{suffix}",
+            replace_acronyms(&type_context.field.to_pascal_case())
+        );
 
         let fields = schema
             .object

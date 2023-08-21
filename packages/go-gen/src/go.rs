@@ -3,6 +3,8 @@ use std::fmt::{self, Display, Write};
 use indenter::indented;
 use inflector::Inflector;
 
+use crate::utils::replace_acronyms;
+
 pub struct GoStruct {
     pub name: String,
     pub docs: Option<String>,
@@ -44,7 +46,7 @@ impl Display for GoField {
         write!(
             f,
             "{} {} `json:\"{}",
-            self.rust_name.to_pascal_case(),
+            replace_acronyms(&self.rust_name.to_pascal_case()),
             self.ty,
             self.rust_name
         )?;

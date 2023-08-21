@@ -4,6 +4,7 @@ use inflector::cases::pascalcase::to_pascal_case;
 use schema::{documentation, schema_object_type, SchemaExt, TypeContext};
 use schemars::schema::{ObjectValidation, RootSchema, Schema, SchemaObject};
 use std::fmt::Write;
+use utils::replace_acronyms;
 
 mod go;
 mod schema;
@@ -20,21 +21,23 @@ fn main() -> Result<()> {
 
 /// Generates the Go code for the given schema
 fn generate_go(root: RootSchema) -> Result<String> {
-    let title = root
-        .schema
-        .metadata
-        .as_ref()
-        .and_then(|m| m.title.as_ref())
-        .context("failed to get type name")?;
+    let title = replace_acronyms(
+        root.schema
+            .metadata
+            .as_ref()
+            .and_then(|m| m.title.as_ref())
+            .context("failed to get type name")?,
+    );
+
     let mut types = vec![];
-    build_type(title, &root.schema, &mut types)
+    build_type(&title, &root.schema, &mut types)
         .with_context(|| format!("failed to generate {title}"))?;
 
     // go through additional definitions
     for (name, additional_type) in &root.definitions {
         additional_type
             .object()
-            .map(|def| build_type(name, def, &mut types))
+            .map(|def| build_type(&replace_acronyms(name), def, &mut types))
             .and_then(|r| r)
             .context("failed to generate additional definitions")?;
     }
