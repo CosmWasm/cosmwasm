@@ -214,6 +214,26 @@ mod tests {
         );
     }
 
+    fn assert_code_eq_ignore_docs(actual: String, expected: &str) {
+        let actual_filtered = actual
+            .lines()
+            .map(|line| line.split("//").next().unwrap()) // ignore comments
+            .flat_map(|line| line.split_whitespace())
+            .collect::<Vec<_>>();
+        let expected_filtered = expected
+            .lines()
+            .map(|line| line.split("//").next().unwrap()) // ignore comments
+            .flat_map(|line| line.split_whitespace())
+            .collect::<Vec<_>>();
+
+        assert!(
+            actual_filtered == expected_filtered,
+            "assertion failed: `(actual == expected)`\nactual:\n`{}`,\nexpected:\n`\"{}\"`",
+            actual,
+            expected
+        );
+    }
+
     #[test]
     fn special_types() {
         #[cw_serde]
@@ -303,55 +323,38 @@ mod tests {
         assert_code_eq(code, "type Empty struct { }");
     }
 
+    /// Compares the generated code for a given type with the code in the corresponding file in
+    /// `tests/`.
+    /// The file name is derived from the type name by replacing `::` with `__` and adding `.go`.
+    macro_rules! compare_codes {
+        ($name:ty) => {{
+            let filename = stringify!($name).replace("::", "__");
+            let generated = generate_go(cosmwasm_schema::schema_for!($name)).unwrap();
+            let expected = std::fs::read_to_string(format!("tests/{}.go", filename)).unwrap();
+
+            assert_code_eq_ignore_docs(generated, &expected);
+        }};
+    }
+
     #[test]
     fn responses_work() {
         // bank
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::SupplyResponse)).unwrap();
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::BalanceResponse)).unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::AllBalanceResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::DenomMetadataResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::AllDenomMetadataResponse
-        ))
-        .unwrap();
+        compare_codes!(cosmwasm_std::SupplyResponse);
+        compare_codes!(cosmwasm_std::BalanceResponse);
+        // compare_codes!(cosmwasm_std::AllBalanceResponse); // has different name in wasmvm
+        compare_codes!(cosmwasm_std::DenomMetadataResponse);
+        // compare_codes!(cosmwasm_std::AllDenomMetadataResponse); // uses `[]byte` instead of `*[]byte`
         // staking
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::BondedDenomResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::AllDelegationsResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::DelegationResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::AllValidatorsResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::ValidatorResponse
-        ))
-        .unwrap();
+        compare_codes!(cosmwasm_std::BondedDenomResponse);
+        compare_codes!(cosmwasm_std::AllDelegationsResponse);
+        compare_codes!(cosmwasm_std::DelegationResponse);
+        compare_codes!(cosmwasm_std::AllValidatorsResponse);
+        // compare_codes!(cosmwasm_std::ValidatorResponse); // does not use "omitempty" for `Validator` field
         // distribution
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::DelegatorWithdrawAddressResponse
-        ))
-        .unwrap();
+        compare_codes!(cosmwasm_std::DelegatorWithdrawAddressResponse);
         // wasm
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::ContractInfoResponse
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::CodeInfoResponse)).unwrap();
+        compare_codes!(cosmwasm_std::ContractInfoResponse);
+        // compare_codes!(cosmwasm_std::CodeInfoResponse); // TODO: Checksum type and "omitempty"
     }
 
     #[test]
@@ -411,18 +414,18 @@ mod tests {
 
     #[test]
     fn queries_work() {
+        // compare_codes!(cosmwasm_std::QueryRequest<Empty>); // omit for now because it's huge
+        // just assert that it compiles
         generate_go(cosmwasm_schema::schema_for!(
             cosmwasm_std::QueryRequest<Empty>
         ))
         .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::BankQuery)).unwrap();
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::StakingQuery)).unwrap();
-        generate_go(cosmwasm_schema::schema_for!(
-            cosmwasm_std::DistributionQuery
-        ))
-        .unwrap();
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::IbcQuery)).unwrap();
-        generate_go(cosmwasm_schema::schema_for!(cosmwasm_std::WasmQuery)).unwrap();
+        // TODO: PageRequest.Key uses "omitempty" and no *
+        // compare_codes!(cosmwasm_std::BankQuery);
+        compare_codes!(cosmwasm_std::StakingQuery);
+        compare_codes!(cosmwasm_std::DistributionQuery);
+        compare_codes!(cosmwasm_std::IbcQuery);
+        compare_codes!(cosmwasm_std::WasmQuery);
     }
 
     #[test]
