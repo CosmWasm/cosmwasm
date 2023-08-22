@@ -330,7 +330,7 @@ impl Uint256 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn abs_diff(self, other: Self) -> Self {
+    pub const fn abs_diff(self, other: Self) -> Self {
         Self(self.0.abs_diff(other.0))
     }
 }

@@ -206,7 +206,7 @@ impl Int128 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn abs_diff(self, other: Self) -> Uint128 {
+    pub const fn abs_diff(self, other: Self) -> Uint128 {
         Uint128(self.0.abs_diff(other.0))
     }
 }
