@@ -157,7 +157,7 @@ pub fn type_from_instance_type(
             .unwrap_or(type_context.struct_name);
         let new_struct_name = format!(
             "{}{suffix}",
-            replace_acronyms(&type_context.field.to_pascal_case())
+            replace_acronyms(type_context.field.to_pascal_case())
         );
 
         let fields = schema

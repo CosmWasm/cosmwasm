@@ -46,7 +46,7 @@ impl Display for GoField {
         write!(
             f,
             "{} {} `json:\"{}",
-            replace_acronyms(&self.rust_name.to_pascal_case()),
+            replace_acronyms(self.rust_name.to_pascal_case()),
             self.ty,
             self.rust_name
         )?;
