@@ -158,7 +158,7 @@ impl Decimal256 {
     ) -> Result<Self, Decimal256RangeExceeded> {
         let atomics = atomics.into();
         let ten = Uint256::from(10u64); // TODO: make const
-        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES)) {
+        Ok(match decimal_places.cmp(&Self::DECIMAL_PLACES) {
             Ordering::Less => {
                 let digits = (Self::DECIMAL_PLACES) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
                 let factor = ten.checked_pow(digits).unwrap(); // Safe because digits <= 17
