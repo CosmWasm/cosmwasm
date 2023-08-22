@@ -179,6 +179,12 @@ impl SignedDecimal {
         self.0.is_zero()
     }
 
+    /// Returns `true` if the number is negative (< 0)
+    #[must_use]
+    pub const fn is_negative(&self) -> bool {
+        self.0.i128() < 0
+    }
+
     /// A decimal is an integer of atomic units plus a number that specifies the
     /// position of the decimal dot. So any decimal can be expressed as two numbers.
     ///
@@ -328,25 +334,26 @@ impl SignedDecimal {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_add(self, other: Self) -> Self {
-        match self.checked_add(other) {
-            Ok(value) => value,
-            Err(_) => Self::MAX,
-        }
+        Self(self.0.saturating_add(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_sub(self, other: Self) -> Self {
-        match self.checked_sub(other) {
-            Ok(value) => value,
-            Err(_) => Self::zero(),
-        }
+        Self(self.0.saturating_sub(other.0))
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn saturating_mul(self, other: Self) -> Self {
         match self.checked_mul(other) {
             Ok(value) => value,
-            Err(_) => Self::MAX,
+            Err(_) => {
+                // both negative or both positive results in positive number, otherwise negative
+                if self.is_negative() == other.is_negative() {
+                    Self::MAX
+                } else {
+                    Self::MIN
+                }
+            }
         }
     }
 
@@ -354,7 +361,15 @@ impl SignedDecimal {
     pub fn saturating_pow(self, exp: u32) -> Self {
         match self.checked_pow(exp) {
             Ok(value) => value,
-            Err(_) => Self::MAX,
+            Err(_) => {
+                // odd exponent of negative number results in negative number
+                // everything else results in positive number
+                if self.is_negative() && exp % 2 == 1 {
+                    Self::MIN
+                } else {
+                    Self::MAX
+                }
+            }
         }
     }
 
@@ -801,23 +816,23 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal::from_atomics(i128::MAX, 38).unwrap(),
-            SignedDecimal::from_str("3.402823669209384634").unwrap()
+            SignedDecimal::from_str("1.701411834604692317").unwrap()
         );
         assert_eq!(
             SignedDecimal::from_atomics(i128::MAX, 39).unwrap(),
-            SignedDecimal::from_str("0.340282366920938463").unwrap()
+            SignedDecimal::from_str("0.170141183460469231").unwrap()
         );
         assert_eq!(
             SignedDecimal::from_atomics(i128::MAX, 45).unwrap(),
-            SignedDecimal::from_str("0.000000340282366920").unwrap()
+            SignedDecimal::from_str("0.000000170141183460").unwrap()
         );
         assert_eq!(
             SignedDecimal::from_atomics(i128::MAX, 51).unwrap(),
-            SignedDecimal::from_str("0.000000000000340282").unwrap()
+            SignedDecimal::from_str("0.000000000000170141").unwrap()
         );
         assert_eq!(
             SignedDecimal::from_atomics(i128::MAX, 56).unwrap(),
-            SignedDecimal::from_str("0.000000000000000003").unwrap()
+            SignedDecimal::from_str("0.000000000000000001").unwrap()
         );
         assert_eq!(
             SignedDecimal::from_atomics(i128::MAX, 57).unwrap(),
@@ -2150,7 +2165,11 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal::zero().saturating_sub(SignedDecimal::percent(200)),
-            SignedDecimal::zero()
+            SignedDecimal::from_str("-2").unwrap()
+        );
+        assert_eq!(
+            SignedDecimal::MIN.saturating_sub(SignedDecimal::percent(200)),
+            SignedDecimal::MIN
         );
         assert_eq!(
             SignedDecimal::percent(200).saturating_mul(SignedDecimal::percent(50)),
@@ -2158,6 +2177,14 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal::MAX.saturating_mul(SignedDecimal::percent(200)),
+            SignedDecimal::MAX
+        );
+        assert_eq!(
+            SignedDecimal::MIN.saturating_mul(SignedDecimal::percent(200)),
+            SignedDecimal::MIN
+        );
+        assert_eq!(
+            SignedDecimal::MIN.saturating_mul(SignedDecimal::percent(-200)),
             SignedDecimal::MAX
         );
         assert_eq!(
