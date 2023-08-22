@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use wasmer::{Engine, Store};
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
@@ -12,10 +13,11 @@ use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::instance::{Instance, InstanceOptions};
-use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
+use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
+use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
-use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{compile, make_runtime_store};
+use crate::static_analysis::has_ibc_entry_points;
+use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -66,13 +68,21 @@ pub struct CacheOptions {
 pub struct CacheInner {
     /// The directory in which the Wasm blobs are stored in the file system.
     wasm_path: PathBuf,
-    /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
-    /// e.g. full MiBs.
-    instance_memory_limit: Size,
     pinned_memory_cache: PinnedMemoryCache,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
+    /// A single engine to execute all contracts in this cache instance (usually
+    /// this means all contracts in the process).
+    ///
+    /// This engine is headless, i.e. does not contain a Singlepass compiler.
+    /// It only executes modules compiled with other engines.
+    ///
+    /// The engine has one memory limit set which is the same for all contracts
+    /// running with it. If different memory limits would be needed for different
+    /// contracts at some point, we'd need multiple engines. This is because the tunables
+    /// that control the limit are attached to the engine.
+    runtime_engine: Engine,
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
@@ -125,23 +135,33 @@ where
         mkdir_p(&cache_path).map_err(|_e| VmError::cache_err("Error creating cache directory"))?;
         mkdir_p(&wasm_path).map_err(|_e| VmError::cache_err("Error creating wasm directory"))?;
 
-        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
-            .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
+        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR), false)
+            .map_err(|e| VmError::cache_err(format!("Error file system cache: {e}")))?;
         Ok(Cache {
             available_capabilities,
             inner: Mutex::new(CacheInner {
                 wasm_path,
-                instance_memory_limit,
                 pinned_memory_cache: PinnedMemoryCache::new(),
                 memory_cache: InMemoryCache::new(memory_cache_size),
                 fs_cache,
                 stats: Stats::default(),
+                runtime_engine: make_runtime_engine(Some(instance_memory_limit)),
             }),
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
             instantiation_lock: Mutex::new(()),
         })
+    }
+
+    /// If `unchecked` is true, the filesystem cache will use the `*_unchecked` wasmer functions for
+    /// loading modules from disk.
+    pub fn set_module_unchecked(&mut self, unchecked: bool) {
+        self.inner
+            .lock()
+            .unwrap()
+            .fs_cache
+            .set_module_unchecked(unchecked);
     }
 
     pub fn stats(&self) -> Stats {
@@ -180,7 +200,9 @@ where
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let module = compile(wasm, None, &[])?;
+        // We need a new engine for each Wasm -> module compilation due to the metering middleware.
+        let compiling_engine = make_compiling_engine(None);
+        let module = compile(&compiling_engine, wasm)?;
 
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
@@ -233,7 +255,7 @@ where
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
         // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
         let wasm = self.load_wasm(checksum)?;
-        let module = deserialize_wasm(&wasm)?;
+        let module = ParsedWasm::parse(&wasm)?;
         Ok(AnalysisReport {
             has_ibc_entry_points: has_ibc_entry_points(&module),
             required_capabilities: required_capabilities_from_module(&module),
@@ -242,41 +264,38 @@ where
 
     /// Pins a Module that was previously stored via save_wasm.
     ///
-    /// The module is lookup first in the memory cache, and then in the file system cache.
-    /// If not found, the code is loaded from the file system, compiled, and stored into the
+    /// The module is lookup first in the file system cache. If not found,
+    /// the code is loaded from the file system, compiled, and stored into the
     /// pinned cache.
-    /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
+    ///
+    /// If the given contract for the given checksum is not found, or the content
+    /// does not match the checksum, an error is returned.
     pub fn pin(&self, checksum: &Checksum) -> VmResult<()> {
         let mut cache = self.inner.lock().unwrap();
         if cache.pinned_memory_cache.has(checksum) {
             return Ok(());
         }
 
-        // Try to get module from the memory cache
-        if let Some(module) = cache.memory_cache.load(checksum)? {
-            cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            return cache
-                .pinned_memory_cache
-                .store(checksum, module.module, module.size);
-        }
+        // We don't load from the memory cache because we had to create new store here and
+        // serialize/deserialize the artifact to get a full clone. Could be done but adds some code
+        // for a not-so-relevant use case.
 
         // Try to get module from file system cache
-        let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some(module) = cache.fs_cache.load(checksum, &store)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
-            let module_size = loupe::size_of_val(&module);
             return cache
                 .pinned_memory_cache
                 .store(checksum, module, module_size);
         }
 
         // Re-compile from original Wasm bytecode
-        let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
+        let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let module = compile(&code, Some(cache.instance_memory_limit), &[])?;
+        // Module will run with a different engine, so we can set memory limit to None
+        let engine = make_compiling_engine(None);
+        let module = compile(&engine, &wasm)?;
         // Store into the fs cache too
-        cache.fs_cache.store(checksum, &module)?;
-        let module_size = loupe::size_of_val(&module);
+        let module_size = cache.fs_cache.store(checksum, &module)?;
         cache
             .pinned_memory_cache
             .store(checksum, module, module_size)
@@ -303,9 +322,10 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let module = self.get_module(checksum)?;
+        let (cached, store) = self.get_module(checksum)?;
         let instance = Instance::from_module(
-            &module,
+            store,
+            &cached.module,
             backend,
             options.gas_limit,
             options.print_debug,
@@ -318,30 +338,36 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<wasmer::Module> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Store)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
-        if let Some(module) = cache.pinned_memory_cache.load(checksum)? {
+        if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            return Ok(module);
+            let store = Store::new(cache.runtime_engine.clone());
+            return Ok((element, store));
         }
 
         // Get module from memory cache
-        if let Some(module) = cache.memory_cache.load(checksum)? {
+        if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            return Ok(module.module);
+            let store = Store::new(cache.runtime_engine.clone());
+            return Ok((element, store));
         }
 
         // Get module from file system cache
-        let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some(module) = cache.fs_cache.load(checksum, &store)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)? {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
-            let module_size = loupe::size_of_val(&module);
+
             cache
                 .memory_cache
                 .store(checksum, module.clone(), module_size)?;
-            return Ok(module);
+            let cached = CachedModule {
+                module,
+                size_estimate: module_size,
+            };
+            let store = Store::new(cache.runtime_engine.clone());
+            return Ok((cached, store));
         }
 
         // Re-compile module from wasm
@@ -351,13 +377,20 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        let module = compile(&wasm, Some(cache.instance_memory_limit), &[])?;
-        cache.fs_cache.store(checksum, &module)?;
-        let module_size = loupe::size_of_val(&module);
+        // Module will run with a different engine, so we can set memory limit to None
+        let engine = make_compiling_engine(None);
+        let module = compile(&engine, &wasm)?;
+        let module_size = cache.fs_cache.store(checksum, &module)?;
+
         cache
             .memory_cache
             .store(checksum, module.clone(), module_size)?;
-        Ok(module)
+        let cached = CachedModule {
+            module,
+            size_estimate: module_size,
+        };
+        let store = Store::new(cache.runtime_engine.clone());
+        Ok((cached, store))
     }
 }
 
@@ -393,9 +426,9 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
         .write(true)
         .create(true)
         .open(filepath)
-        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for writing: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for writing: {e}")))?;
     file.write_all(wasm)
-        .map_err(|e| VmError::cache_err(format!("Error writing Wasm file: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error writing Wasm file: {e}")))?;
 
     Ok(checksum)
 }
@@ -539,9 +572,9 @@ mod tests {
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
-                assert_eq!(msg, "Wasm contract doesn\'t have a memory section")
+                assert_eq!(msg, "Wasm contract must contain exactly one memory")
             }
-            e => panic!("Unexpected error {:?}", e),
+            e => panic!("Unexpected error {e:?}"),
         }
     }
 
@@ -633,7 +666,7 @@ mod tests {
             VmError::CacheErr { msg, .. } => {
                 assert_eq!(msg, "Error opening Wasm file for reading")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -663,7 +696,7 @@ mod tests {
         let res = cache.load_wasm(&checksum);
         match res {
             Err(VmError::IntegrityErr { .. }) => {}
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => panic!("Unexpected error: {e:?}"),
             Ok(_) => panic!("This must not succeed"),
         }
     }
@@ -687,7 +720,7 @@ mod tests {
             VmError::CacheErr { msg, .. } => {
                 assert_eq!(msg, "Error opening Wasm file for reading")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         // Removing again fails
@@ -695,7 +728,7 @@ mod tests {
             VmError::CacheErr { msg, .. } => {
                 assert_eq!(msg, "Wasm file does not exist")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -750,11 +783,11 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
-        // pinning hits the memory cache
+        // pinning hits the file system cache
         cache.pin(&checksum).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
-        assert_eq!(cache.stats().hits_memory_cache, 3);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 2);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // from pinned memory cache
@@ -762,8 +795,8 @@ mod tests {
             .get_instance(&checksum, backend4, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 3);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 2);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // from pinned memory cache again
@@ -771,8 +804,8 @@ mod tests {
             .get_instance(&checksum, backend5, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 2);
-        assert_eq!(cache.stats().hits_memory_cache, 3);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 2);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
     }
 
@@ -857,8 +890,8 @@ mod tests {
                 .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-            assert_eq!(cache.stats().hits_memory_cache, 2);
-            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_fs_cache, 2);
             assert_eq!(cache.stats().misses, 0);
 
             // init
@@ -940,8 +973,8 @@ mod tests {
                 .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-            assert_eq!(cache.stats().hits_memory_cache, 2);
-            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_fs_cache, 2);
             assert_eq!(cache.stats().misses, 0);
 
             // init
@@ -1044,7 +1077,7 @@ mod tests {
         assert!(instance1.get_gas_left() < original_gas);
 
         // Init from memory cache
-        let instance2 = cache
+        let mut instance2 = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
@@ -1078,7 +1111,7 @@ mod tests {
             .unwrap_err()
         {
             VmError::GasDepletion { .. } => (), // all good, continue
-            e => panic!("unexpected error, {:?}", e),
+            e => panic!("unexpected error, {e:?}"),
         }
         assert_eq!(instance1.get_gas_left(), 0);
 
@@ -1157,7 +1190,7 @@ mod tests {
 
         match remove_wasm_from_disk(path, &checksum).unwrap_err() {
             VmError::CacheErr { msg } => assert_eq!(msg, "Wasm file does not exist"),
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -1205,18 +1238,18 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
-        // first pin hits memory cache
+        // first pin hits file system cache
         cache.pin(&checksum).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // consecutive pins are no-ops
         cache.pin(&checksum).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // check pinned
@@ -1225,8 +1258,8 @@ mod tests {
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // unpin
@@ -1238,8 +1271,8 @@ mod tests {
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 2);
-        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
 
         // unpin again has no effect

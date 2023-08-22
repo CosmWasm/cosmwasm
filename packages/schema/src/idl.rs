@@ -118,7 +118,7 @@ impl JsonApi {
         if let Some(responses) = &self.responses {
             for (name, response) in responses {
                 result.push((
-                    format!("response_to_{}.json", name),
+                    format!("response_to_{name}.json"),
                     serde_json::to_string_pretty(&response)?,
                 ));
             }

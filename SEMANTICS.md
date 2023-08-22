@@ -172,10 +172,24 @@ will be ignored, and any messages they return will also be processed. If they
 return an error, the parent call will return an error, thus rolling back state
 of the whole transaction.
 
-Note that the messages are executed _depth-first_. This means if contract A
-returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`), and contract B (from
-the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and
+Note that the messages are executed
+[_depth-first_](https://en.wikipedia.org/wiki/Depth-first_search). This means if
+contract A returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`), and
+contract B (from the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and
 `DistributionMsg`), the order of execution would be **M1, N1, N2, M2**.
+
+```mermaid
+graph TD;
+    A[contract A]
+    M1[M1 / contract B]
+    M2[M2 / bank send]
+    N1[N1 / staking]
+    N2[N2 / distribution]
+    A --> M1;
+    A --> M2;
+    M1 --> N1;
+    M1 --> N2;
+```
 
 This may be hard to understand at first. "Why can't I just call another
 contract?", you may ask. However, we do this to prevent one of most widespread
@@ -184,7 +198,7 @@ this by following the actor model, which doesn't nest function calls, but
 returns messages that will be executed later. This means all state that is
 carried over between one call and the next happens in storage and not in memory.
 For more information on this design, I recommend you read
-[our docs on the Actor Model](https://docs.cosmwasm.com/docs/1.0/architecture/actor).
+[our docs on the Actor Model](https://book.cosmwasm.com/actor-model.html).
 
 ### Submessages
 
@@ -281,13 +295,13 @@ After the `submessage` is finished, the caller will get a chance to handle the
 result. It will get the original `id` of the subcall so it can switch on how to
 process this, and the `Result` of the execution, both success and error. Note
 that it includes all events returned by the submessage, which applies to native
-sdk modules as well (like Bank) as well as the data returned from below. This
-and the original call id provide all context to continue processing it. If you
-need more state, you must save some local context to the store (under the `id`)
-before returning the `submessage` in the original `execute`, and load it in
-`reply`. We explicitly prohibit passing information in contract memory, as that
-is the key vector for reentrancy attacks, which are a large security surface
-area in Ethereum.
+sdk modules (like Bank) as well as the data returned from below. This and the
+original call id provide all context to continue processing it. If you need more
+state, you must save some local context to the store (under the `id`) before
+returning the `submessage` in the original `execute`, and load it in `reply`. We
+explicitly prohibit passing information in contract memory, as that is the key
+vector for reentrancy attacks, which are a large security surface area in
+Ethereum.
 
 The `reply` call may return `Err` itself, in which case it is treated like the
 caller errored, and aborting the transaction. However, on successful processing,
@@ -352,7 +366,7 @@ of reentrancy, as the query cannot modify any state or execute our contract.
 When we "make a query", we serialize a
 [`QueryRequest` struct](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/query/mod.rs#L27-L48)
 that represents all possible calls, and then pass that over FFI to the runtime,
-where it is interpretted in the `x/wasm` SDK module. This is extensible with
+where it is interpreted in the `x/wasm` SDK module. This is extensible with
 blockchain-specific custom queries just like `CosmosMsg` accepts custom results.
 Also note the ability to perform raw protobuf "Stargate" queries:
 

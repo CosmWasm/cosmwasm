@@ -1,11 +1,13 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, StdError, StdResult, Storage};
+use cosmwasm_std::{
+    storage_keys::{to_length_prefixed, to_length_prefixed_nested},
+    to_vec, StdError, StdResult, Storage,
+};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, Record};
 
-use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
@@ -14,6 +16,9 @@ use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 /// An alias of Bucket::new for less verbose usage
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub fn bucket<'a, T>(storage: &'a mut dyn Storage, namespace: &[u8]) -> Bucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -22,6 +27,9 @@ where
 }
 
 /// An alias of ReadonlyBucket::new for less verbose usage
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub fn bucket_read<'a, T>(storage: &'a dyn Storage, namespace: &[u8]) -> ReadonlyBucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -29,6 +37,9 @@ where
     ReadonlyBucket::new(storage, namespace)
 }
 
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub struct Bucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -110,6 +121,9 @@ where
     }
 }
 
+#[deprecated(
+    note = "The crate cosmwasm-storage is unmaintained and will be removed in CosmWasm 2.0. Please consider migrating to cw-storage-plus or simple cosmwasm-std storage calls."
+)]
 pub struct ReadonlyBucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
@@ -395,7 +409,7 @@ mod tests {
         });
         match res.unwrap_err() {
             MyError::NotFound { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

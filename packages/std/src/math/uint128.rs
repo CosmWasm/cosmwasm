@@ -1,9 +1,10 @@
-use std::fmt::{self};
-use std::ops::{
+use core::fmt::{self};
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
     Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use std::ops::Not;
 
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
@@ -335,7 +336,7 @@ impl FromStr for Uint128 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {e}"))),
         }
     }
 }
@@ -515,6 +516,14 @@ impl Rem for Uint128 {
 }
 forward_ref_binop!(impl Rem, rem for Uint128, Uint128);
 
+impl Not for Uint128 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
+
 impl RemAssign<Uint128> for Uint128 {
     fn rem_assign(&mut self, rhs: Uint128) {
         *self = *self % rhs;
@@ -581,12 +590,12 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     {
         match v.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(E::custom(format!("invalid Uint128 '{}' - {}", v, e))),
+            Err(e) => Err(E::custom(format!("invalid Uint128 '{v}' - {e}"))),
         }
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint128
+impl<A> core::iter::Sum<A> for Uint128
 where
     Self: Add<A, Output = Self>,
 {
@@ -604,7 +613,15 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Uint128>(), 16);
+        assert_eq!(core::mem::size_of::<Uint128>(), 16);
+    }
+
+    #[test]
+    fn uint128_not_works() {
+        assert_eq!(!Uint128::new(1234806), Uint128::new(!1234806));
+
+        assert_eq!(!Uint128::MAX, Uint128::new(!u128::MAX));
+        assert_eq!(!Uint128::MIN, Uint128::new(!u128::MIN));
     }
 
     #[test]
@@ -663,18 +680,23 @@ mod tests {
     #[test]
     fn uint128_implements_display() {
         let a = Uint128(12345);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Uint128(0);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn uint128_display_padding_works() {
+        // width > natural representation
         let a = Uint128::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
+
+        // width < natural representation
+        let a = Uint128::from(123u64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
     }
 
     #[test]

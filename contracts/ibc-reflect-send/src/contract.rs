@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Order,
-    QueryResponse, Response, StdError, StdResult,
+    entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, QueryResponse,
+    Response, StdError, StdResult,
 };
 
 use crate::ibc::PACKET_LIFETIME;
@@ -9,7 +9,7 @@ use crate::msg::{
     AccountInfo, AccountResponse, AdminResponse, ExecuteMsg, InstantiateMsg, ListAccountsResponse,
     QueryMsg,
 };
-use crate::state::{accounts, accounts_read, config, config_read, Config};
+use crate::state::{load_account, load_config, range_accounts, save_config, Config};
 
 #[entry_point]
 pub fn instantiate(
@@ -20,7 +20,7 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     let cfg = Config { admin: info.sender };
-    config(deps.storage).save(&cfg)?;
+    save_config(deps.storage, &cfg)?;
 
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
@@ -48,12 +48,12 @@ pub fn handle_update_admin(
     new_admin: String,
 ) -> StdResult<Response> {
     // auth check
-    let mut cfg = config(deps.storage).load()?;
+    let mut cfg = load_config(deps.storage)?;
     if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may set new admin"));
     }
     cfg.admin = deps.api.addr_validate(&new_admin)?;
-    config(deps.storage).save(&cfg)?;
+    save_config(deps.storage, &cfg)?;
 
     Ok(Response::new()
         .add_attribute("action", "handle_update_admin")
@@ -68,12 +68,12 @@ pub fn handle_send_msgs(
     msgs: Vec<CosmosMsg>,
 ) -> StdResult<Response> {
     // auth check
-    let cfg = config(deps.storage).load()?;
+    let cfg = load_config(deps.storage)?;
     if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
-    accounts(deps.storage).load(channel_id.as_bytes())?;
+    load_account(deps.storage, &channel_id)?;
 
     // construct a packet to send
     let packet = PacketMsg::Dispatch { msgs };
@@ -96,12 +96,12 @@ pub fn handle_check_remote_balance(
     channel_id: String,
 ) -> StdResult<Response> {
     // auth check
-    let cfg = config(deps.storage).load()?;
+    let cfg = load_config(deps.storage)?;
     if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
-    accounts(deps.storage).load(channel_id.as_bytes())?;
+    load_account(deps.storage, &channel_id)?;
 
     // construct a packet to send
     let packet = PacketMsg::Balances {};
@@ -141,7 +141,7 @@ pub fn handle_send_funds(
     }
 
     // load remote account
-    let data = accounts(deps.storage).load(reflect_channel_id.as_bytes())?;
+    let data = load_account(deps.storage, &reflect_channel_id)?;
     let remote_addr = match data.remote_addr {
         Some(addr) => addr,
         None => {
@@ -175,16 +175,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 }
 
 fn query_account(deps: Deps, channel_id: String) -> StdResult<AccountResponse> {
-    let account = accounts_read(deps.storage).load(channel_id.as_bytes())?;
+    let account = load_account(deps.storage, &channel_id)?;
     Ok(account.into())
 }
 
 fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
-    let accounts: StdResult<Vec<_>> = accounts_read(deps.storage)
-        .range(None, None, Order::Ascending)
+    let accounts: StdResult<Vec<_>> = range_accounts(deps.storage)
         .map(|r| {
-            let (k, account) = r?;
-            let channel_id = String::from_utf8(k)?;
+            let (channel_id, account) = r?;
             Ok(AccountInfo::convert(channel_id, account))
         })
         .collect();
@@ -194,7 +192,7 @@ fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 }
 
 fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
-    let Config { admin } = config_read(deps.storage).load()?;
+    let Config { admin } = load_config(deps.storage)?;
     Ok(AdminResponse {
         admin: admin.into(),
     })

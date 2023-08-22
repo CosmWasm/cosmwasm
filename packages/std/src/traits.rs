@@ -1,6 +1,6 @@
+use core::marker::PhantomData;
+use core::ops::Deref;
 use serde::{de::DeserializeOwned, Serialize};
-use std::marker::PhantomData;
-use std::ops::Deref;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
@@ -21,9 +21,10 @@ use crate::query::{
     DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
 #[cfg(feature = "cosmwasm_1_3")]
-use crate::query::{AllDenomMetadataResponse, DenomMetadataResponse};
-#[cfg(feature = "cosmwasm_1_3")]
-use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
+use crate::query::{
+    AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
+    DistributionQuery,
+};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::ContractInfoResponse;
@@ -240,15 +241,14 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     /// eg. If you don't differentiate between contract missing and contract returned error
     pub fn query<U: DeserializeOwned>(&self, request: &QueryRequest<C>) -> StdResult<U> {
         let raw = to_vec(request).map_err(|serialize_err| {
-            StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+            StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
         })?;
         match self.raw_query(&raw) {
             SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
-                "Querier system error: {}",
-                system_err
+                "Querier system error: {system_err}"
             ))),
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {}", contract_err),
+                format!("Querier contract error: {contract_err}"),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }
@@ -322,8 +322,8 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         self.query(&request)
     }
 
-    // this queries another wasm contract. You should know a priori the proper types for T and U
-    // (response and request) based on the contract API
+    /// Queries another wasm contract. You should know a priori the proper types for T and U
+    /// (response and request) based on the contract API
     pub fn query_wasm_smart<T: DeserializeOwned>(
         &self,
         contract_addr: impl Into<String>,
@@ -337,13 +337,14 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         self.query(&request)
     }
 
-    // this queries the raw storage from another wasm contract.
-    // you must know the exact layout and are implementation dependent
-    // (not tied to an interface like query_wasm_smart)
-    // that said, if you are building a few contracts together, this is a much cheaper approach
-    //
-    // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
-    // It only returns error on some runtime issue, not on any data cases.
+    /// Queries the raw storage from another wasm contract.
+    ///
+    /// You must know the exact layout and are implementation dependent
+    /// (not tied to an interface like query_wasm_smart).
+    /// That said, if you are building a few contracts together, this is a much cheaper approach
+    ///
+    /// Similar return value to [`Storage::get`]. Returns `Some(val)` or `None` if the data is there.
+    /// It only returns error on some runtime issue, not on any data cases.
     pub fn query_wasm_raw(
         &self,
         contract_addr: impl Into<String>,
@@ -357,15 +358,14 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         // we cannot use query, as it will try to parse the binary data, when we just want to return it,
         // so a bit of code copy here...
         let raw = to_vec(&request).map_err(|serialize_err| {
-            StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+            StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
         })?;
         match self.raw_query(&raw) {
             SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
-                "Querier system error: {}",
-                system_err
+                "Querier system error: {system_err}"
             ))),
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
-                format!("Querier contract error: {}", contract_err),
+                format!("Querier contract error: {contract_err}"),
             )),
             SystemResult::Ok(ContractResult::Ok(value)) => {
                 if value.is_empty() {

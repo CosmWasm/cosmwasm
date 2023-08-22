@@ -46,6 +46,9 @@ pub enum PacketMsg {
     Dispatch { msgs: Vec<CosmosMsg> },
     WhoAmI {},
     Balances {},
+    Panic {},
+    ReturnErr { text: String },
+    ReturnMsgs { msgs: Vec<CosmosMsg> },
 }
 
 /// All acknowledgements are wrapped in `ContractResult`.
@@ -70,3 +73,7 @@ pub struct BalancesResponse {
     pub account: String,
     pub balances: Vec<Coin>,
 }
+
+/// This is the success response we send on ack for PacketMsg::ReturnMsgs.
+/// Just acknowledge success or error
+pub type ReturnMsgsResponse = ();

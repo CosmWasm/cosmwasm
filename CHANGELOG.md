@@ -6,6 +6,37 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `Not` for `Uint{64,128,256}` ([#1799]).
+- cosmwasm-std: Add iterators for `Coins` ([#1806]).
+
+[#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
+[#1806]: https://github.com/CosmWasm/cosmwasm/pull/1806
+
+### Changed
+
+- cosmwasm-vm: Avoid using loupe for getting the `Module` size in the file
+  system cache to prepare for the Wasmer 3 upgrade.
+- cosmwasm-vm: When enabling `print_debug` the debug logs are now printed to
+  STDERR instead of STDOUT by default ([#1667]).
+- cosmwasm-vm: Add `Instance::set_debug_handler`/`unset_debug_handler` to allow
+  customizing the handling of debug messages emitted by the contract ([#1667]).
+- cosmwasm-vm: Upgrade Wasmer to version 4.1. ([#1674], [#1693], [#1701],
+  [#1793])
+- cosmwasm-check: Update clap dependency to version 4 ([#1677])
+- cosmwasm-vm: Use `wasmparser` for initial validation instead of `parity-wasm`
+  ([#1786])
+- cosmwasm-std: Make constructors `Decimal{,256}::{percent,permille,bps}` const
+
+[#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
+[#1674]: https://github.com/CosmWasm/cosmwasm/pull/1674
+[#1677]: https://github.com/CosmWasm/cosmwasm/pull/1677
+[#1693]: https://github.com/CosmWasm/cosmwasm/pull/1693
+[#1701]: https://github.com/CosmWasm/cosmwasm/pull/1701
+[#1786]: https://github.com/CosmWasm/cosmwasm/pull/1786
+[#1793]: https://github.com/CosmWasm/cosmwasm/pull/1793
+
 ## [1.3.3] - 2023-08-22
 
 ### Added
@@ -88,6 +119,13 @@ and this project adheres to
 [#1631]: https://github.com/CosmWasm/cosmwasm/pull/1631
 [#1664]: https://github.com/CosmWasm/cosmwasm/pull/1664
 [#1686]: https://github.com/CosmWasm/cosmwasm/pull/1686
+
+### Deprecated
+
+- cosmwasm-storage: All exports are deprecated because this crate will be
+  removed with CosmWasm 2.0 ([#1596]).
+
+[#1596]: https://github.com/CosmWasm/cosmwasm/issues/1596
 
 ## [1.2.7] - 2023-06-19
 

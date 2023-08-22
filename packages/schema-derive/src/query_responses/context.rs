@@ -22,7 +22,7 @@ pub fn get_context(input: &ItemEnum) -> Context {
             if let Meta::List(l) = attr.parse_meta().unwrap() {
                 l.nested
             } else {
-                panic!("{} attribute must contain a meta list", ATTR_PATH);
+                panic!("{ATTR_PATH} attribute must contain a meta list");
             }
         })
         .map(|nested_meta| {
@@ -55,7 +55,7 @@ pub fn get_context(input: &ItemEnum) -> Context {
                 }
             }
             "nested" => ctx.is_nested = true,
-            path => panic!("unrecognized QueryResponses param: {}", path),
+            path => panic!("unrecognized QueryResponses param: {path}"),
         }
     }
 

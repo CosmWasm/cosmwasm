@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Int128, Int64, Uint128, Uint256, Uint64};
@@ -112,7 +112,7 @@ impl Int256 {
             words[1].to_be_bytes(),
             words[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -126,7 +126,7 @@ impl Int256 {
             words[2].to_le_bytes(),
             words[3].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     #[must_use]
@@ -358,7 +358,7 @@ impl FromStr for Int256 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match I256::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int256: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int256: {e}"))),
         }
     }
 }
@@ -371,12 +371,7 @@ impl From<Int256> for String {
 
 impl fmt::Display for Int256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The inner type doesn't work as expected with padding, so we
-        // work around that. Remove this code when the upstream padding is fixed.
-        let unpadded = self.0.to_string();
-        let numeric = unpadded.strip_prefix('-').unwrap_or(&unpadded);
-
-        f.pad_integral(self >= &Self::zero(), "", numeric)
+        self.0.fmt(f)
     }
 }
 
@@ -471,10 +466,7 @@ impl Shr<u32> for Int256 {
 
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!(
-                "right shift error: {} is larger or equal than the number of bits in Int256",
-                rhs,
-            )
+            panic!("right shift error: {rhs} is larger or equal than the number of bits in Int256",)
         })
     }
 }
@@ -485,10 +477,7 @@ impl Shl<u32> for Int256 {
 
     fn shl(self, rhs: u32) -> Self::Output {
         self.checked_shl(rhs).unwrap_or_else(|_| {
-            panic!(
-                "left shift error: {} is larger or equal than the number of bits in Int256",
-                rhs,
-            )
+            panic!("left shift error: {rhs} is larger or equal than the number of bits in Int256",)
         })
     }
 }
@@ -555,11 +544,11 @@ impl<'de> de::Visitor<'de> for Int256Visitor {
     where
         E: de::Error,
     {
-        Int256::try_from(v).map_err(|e| E::custom(format!("invalid Int256 '{}' - {}", v, e)))
+        Int256::try_from(v).map_err(|e| E::custom(format!("invalid Int256 '{v}' - {e}")))
     }
 }
 
-impl<A> std::iter::Sum<A> for Int256
+impl<A> core::iter::Sum<A> for Int256
 where
     Self: Add<A, Output = Self>,
 {
@@ -575,7 +564,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Int256>(), 32);
+        assert_eq!(core::mem::size_of::<Int256>(), 32);
     }
 
     #[test]
@@ -591,6 +580,18 @@ mod tests {
         let num = Int256::new(be_bytes);
         let resulting_bytes: [u8; 32] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn int256_not_works() {
+        let num = Int256::new([1; 32]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 32]);
+
+        assert_eq!(!Int256::from(-1234806i128), Int256::from(!-1234806i128));
+
+        assert_eq!(!Int256::MAX, Int256::MIN);
+        assert_eq!(!Int256::MIN, Int256::MAX);
     }
 
     #[test]
@@ -673,25 +674,31 @@ mod tests {
     #[test]
     fn int256_implements_display() {
         let a = Int256::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Int256::from(-12345i32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: -12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: -12345");
         assert_eq!(a.to_string(), "-12345");
 
         let a = Int256::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn int256_display_padding_works() {
+        // width > natural representation
         let a = Int256::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
-
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
         let a = Int256::from(-123i64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: -0123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: -0123");
+
+        // width < natural representation
+        let a = Int256::from(123u64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
+        let a = Int256::from(-123i64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: -123");
     }
 
     #[test]
@@ -1127,7 +1134,7 @@ mod tests {
         );
         // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
         assert_eq!(
-            Int256::MIN >> (std::mem::size_of::<Int256>() as u32 * 8 - 1),
+            Int256::MIN >> (core::mem::size_of::<Int256>() as u32 * 8 - 1),
             -Int256::one()
         );
     }
@@ -1146,7 +1153,7 @@ mod tests {
         );
         // left shift by by the maximum shift value should result in MIN
         assert_eq!(
-            Int256::one() << (std::mem::size_of::<Int256>() as u32 * 8 - 1),
+            Int256::one() << (core::mem::size_of::<Int256>() as u32 * 8 - 1),
             Int256::MIN
         );
     }

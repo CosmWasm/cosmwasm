@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{forward_ref_partial_eq, Uint64};
@@ -267,7 +267,7 @@ impl FromStr for Int64 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<i64>() {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int64: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int64: {e}"))),
         }
     }
 }
@@ -375,10 +375,7 @@ impl Shr<u32> for Int64 {
 
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
-            panic!(
-                "right shift error: {} is larger or equal than the number of bits in Int64",
-                rhs,
-            )
+            panic!("right shift error: {rhs} is larger or equal than the number of bits in Int64",)
         })
     }
 }
@@ -389,10 +386,7 @@ impl Shl<u32> for Int64 {
 
     fn shl(self, rhs: u32) -> Self::Output {
         self.checked_shl(rhs).unwrap_or_else(|_| {
-            panic!(
-                "left shift error: {} is larger or equal than the number of bits in Int64",
-                rhs,
-            )
+            panic!("left shift error: {rhs} is larger or equal than the number of bits in Int64",)
         })
     }
 }
@@ -459,11 +453,11 @@ impl<'de> de::Visitor<'de> for Int64Visitor {
     where
         E: de::Error,
     {
-        Int64::try_from(v).map_err(|e| E::custom(format!("invalid Int64 '{}' - {}", v, e)))
+        Int64::try_from(v).map_err(|e| E::custom(format!("invalid Int64 '{v}' - {e}")))
     }
 }
 
-impl<A> std::iter::Sum<A> for Int64
+impl<A> core::iter::Sum<A> for Int64
 where
     Self: Add<A, Output = Self>,
 {
@@ -479,7 +473,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Int64>(), 8);
+        assert_eq!(core::mem::size_of::<Int64>(), 8);
     }
 
     #[test]
@@ -507,6 +501,15 @@ mod tests {
 
         let num = Int64::new(i64::MIN);
         assert_eq!(num.i64(), i64::MIN);
+    }
+
+    #[test]
+    fn int64_not_works() {
+        assert_eq!(!Int64::new(222), Int64::new(!222));
+        assert_eq!(!Int64::new(-222), Int64::new(!-222));
+
+        assert_eq!(!Int64::MAX, Int64::new(!i64::MAX));
+        assert_eq!(!Int64::MIN, Int64::new(!i64::MIN));
     }
 
     #[test]
@@ -578,25 +581,31 @@ mod tests {
     #[test]
     fn int64_implements_display() {
         let a = Int64::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Int64::from(-12345i32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: -12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: -12345");
         assert_eq!(a.to_string(), "-12345");
 
         let a = Int64::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn int64_display_padding_works() {
+        // width > natural representation
         let a = Int64::from(123i64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
-
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
         let a = Int64::from(-123i64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: -0123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: -0123");
+
+        // width < natural representation
+        let a = Int64::from(123i64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
+        let a = Int64::from(-123i64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: -123");
     }
 
     #[test]
@@ -991,7 +1000,7 @@ mod tests {
         assert_eq!(x >> 4, Int64::from(0x0400_0000_0000_0000i64));
         // right shift of MIN value by the maximum shift value should result in -1 (filled with 1s)
         assert_eq!(
-            Int64::MIN >> (std::mem::size_of::<Int64>() as u32 * 8 - 1),
+            Int64::MIN >> (core::mem::size_of::<Int64>() as u32 * 8 - 1),
             -Int64::one()
         );
     }
@@ -1004,7 +1013,7 @@ mod tests {
         assert_eq!(x << 4, Int64::from(0x0800_0000_0000_0000i64 << 4));
         // left shift by by the maximum shift value should result in MIN
         assert_eq!(
-            Int64::one() << (std::mem::size_of::<Int64>() as u32 * 8 - 1),
+            Int64::one() << (core::mem::size_of::<Int64>() as u32 * 8 - 1),
             Int64::MIN
         );
     }

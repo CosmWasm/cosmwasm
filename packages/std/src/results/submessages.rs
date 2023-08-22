@@ -259,12 +259,12 @@ mod tests {
         let parse: StdResult<SubMsgResult> = from_slice(br#"{"unrelated":321,"error":"broken"}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
         let parse: StdResult<SubMsgResult> = from_slice(br#"{"error":"broken","unrelated":321}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

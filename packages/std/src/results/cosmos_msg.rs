@@ -1,7 +1,7 @@
+use core::fmt;
 use derivative::Derivative;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::binary::Binary;
 use crate::coin::Coin;
@@ -120,10 +120,10 @@ pub enum DistributionMsg {
     },
 }
 
-fn binary_to_string(data: &Binary, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-    match std::str::from_utf8(data.as_slice()) {
+fn binary_to_string(data: &Binary, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+    match core::str::from_utf8(data.as_slice()) {
         Ok(s) => fmt.write_str(s),
-        Err(_) => write!(fmt, "{:?}", data),
+        Err(_) => fmt::Debug::fmt(data, fmt),
     }
 }
 
@@ -162,7 +162,12 @@ pub enum WasmMsg {
         #[derivative(Debug(format_with = "binary_to_string"))]
         msg: Binary,
         funds: Vec<Coin>,
-        /// A human-readbale label for the contract
+        /// A human-readable label for the contract.
+        ///
+        /// Valid values should:
+        /// - not be empty
+        /// - not be bigger than 128 bytes (or some chain-specific limit)
+        /// - not start / end with whitespace
         label: String,
     },
     /// Instantiates a new contracts from previously uploaded Wasm code
@@ -176,7 +181,12 @@ pub enum WasmMsg {
     Instantiate2 {
         admin: Option<String>,
         code_id: u64,
-        /// A human-readbale label for the contract
+        /// A human-readable label for the contract.
+        ///
+        /// Valid values should:
+        /// - not be empty
+        /// - not be bigger than 128 bytes (or some chain-specific limit)
+        /// - not start / end with whitespace
         label: String,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         #[derivative(Debug(format_with = "binary_to_string"))]
@@ -336,7 +346,7 @@ pub fn wasm_instantiate(
     })
 }
 
-/// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
+/// Shortcut helper as the construction of WasmMsg::Execute can be quite verbose in contract code
 pub fn wasm_execute(
     contract_addr: impl Into<String>,
     msg: &impl Serialize,
@@ -520,7 +530,7 @@ mod tests {
         };
 
         assert_eq!(
-            format!("{:?}", msg),
+            format!("{msg:?}"),
             "Execute { contract_addr: \"joe\", msg: {\"mint\":{\"coin\":{\"denom\":\"BTC\",\"amount\":\"10\"}}}, funds: [] }"
         );
     }
@@ -534,7 +544,7 @@ mod tests {
         };
 
         assert_eq!(
-            format!("{:?}", msg),
+            format!("{msg:?}"),
             "Execute { contract_addr: \"joe\", msg: Binary(009f9296), funds: [] }"
         );
     }

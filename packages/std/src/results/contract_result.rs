@@ -1,6 +1,6 @@
+use core::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// This is the final result type that is created and serialized in a contract for
 /// every init/execute/migrate call. The VM then deserializes this type to distinguish
@@ -132,18 +132,18 @@ mod tests {
         let parse: StdResult<ContractResult<u64>> = from_slice(br#"{"unrelated":321,"ok":4554}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
         let parse: StdResult<ContractResult<u64>> = from_slice(br#"{"ok":4554,"unrelated":321}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
         let parse: StdResult<ContractResult<u64>> =
             from_slice(br#"{"ok":4554,"error":"What's up now?"}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

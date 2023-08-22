@@ -1,12 +1,13 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign,
     Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use std::ops::Not;
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
@@ -135,7 +136,7 @@ impl Uint256 {
             words[1].to_be_bytes(),
             words[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -148,7 +149,7 @@ impl Uint256 {
             words[2].to_le_bytes(),
             words[3].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 4], [u8; 32]>(words) }
     }
 
     #[must_use]
@@ -406,7 +407,7 @@ impl FromStr for Uint256 {
 
         match U256::from_str_radix(s, 10) {
             Ok(u) => Ok(Uint256(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {e}"))),
         }
     }
 }
@@ -419,11 +420,7 @@ impl From<Uint256> for String {
 
 impl fmt::Display for Uint256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The inner type doesn't work as expected with padding, so we
-        // work around that.
-        let unpadded = self.0.to_string();
-
-        f.pad_integral(true, "", &unpadded)
+        self.0.fmt(f)
     }
 }
 
@@ -500,6 +497,14 @@ impl Rem for Uint256 {
 }
 forward_ref_binop!(impl Rem, rem for Uint256, Uint256);
 
+impl Not for Uint256 {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
+
 impl RemAssign<Uint256> for Uint256 {
     fn rem_assign(&mut self, rhs: Uint256) {
         *self = *self % rhs;
@@ -533,8 +538,7 @@ impl Shr<u32> for Uint256 {
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
             panic!(
-                "right shift error: {} is larger or equal than the number of bits in Uint256",
-                rhs,
+                "right shift error: {rhs} is larger or equal than the number of bits in Uint256",
             )
         })
     }
@@ -646,11 +650,11 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     where
         E: de::Error,
     {
-        Uint256::try_from(v).map_err(|e| E::custom(format!("invalid Uint256 '{}' - {}", v, e)))
+        Uint256::try_from(v).map_err(|e| E::custom(format!("invalid Uint256 '{v}' - {e}")))
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint256
+impl<A> core::iter::Sum<A> for Uint256
 where
     Self: Add<A, Output = Self>,
 {
@@ -667,7 +671,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Uint256>(), 32);
+        assert_eq!(core::mem::size_of::<Uint256>(), 32);
     }
 
     #[test]
@@ -683,6 +687,16 @@ mod tests {
         let num = Uint256::new(be_bytes);
         let resulting_bytes: [u8; 32] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn uint256_not_works() {
+        let num = Uint256::new([1; 32]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 32]);
+
+        assert_eq!(!Uint256::MAX, Uint256::MIN);
+        assert_eq!(!Uint256::MIN, Uint256::MAX);
     }
 
     #[test]
@@ -1095,18 +1109,23 @@ mod tests {
     #[test]
     fn uint256_implements_display() {
         let a = Uint256::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Uint256::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn uint256_display_padding_works() {
+        // width > natural representation
         let a = Uint256::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
+
+        // width < natural representation
+        let a = Uint256::from(123u64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
     }
 
     #[test]

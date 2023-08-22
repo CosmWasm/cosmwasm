@@ -41,8 +41,8 @@ pub enum SystemError {
 
 impl std::error::Error for SystemError {}
 
-impl std::fmt::Display for SystemError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SystemError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             SystemError::InvalidRequest { error, request } => write!(
                 f,
@@ -56,11 +56,11 @@ impl std::fmt::Display for SystemError {
                 error,
                 String::from_utf8_lossy(response)
             ),
-            SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
-            SystemError::NoSuchCode { code_id } => write!(f, "No such code: {}", code_id),
+            SystemError::NoSuchContract { addr } => write!(f, "No such contract: {addr}"),
+            SystemError::NoSuchCode { code_id } => write!(f, "No such code: {code_id}"),
             SystemError::Unknown {} => write!(f, "Unknown system error"),
             SystemError::UnsupportedRequest { kind } => {
-                write!(f, "Unsupported query type: {}", kind)
+                write!(f, "Unsupported query type: {kind}")
             }
         }
     }

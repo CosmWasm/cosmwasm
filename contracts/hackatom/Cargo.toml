@@ -39,5 +39,4 @@ sha2 = "0.10"
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-storage = { path = "../../packages/storage", default-features = false }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }

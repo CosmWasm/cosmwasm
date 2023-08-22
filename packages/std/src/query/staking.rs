@@ -134,6 +134,6 @@ pub struct Validator {
     pub address: String,
     pub commission: Decimal,
     pub max_commission: Decimal,
-    /// TODO: what units are these (in terms of time)?
+    /// The maximum daily increase of the commission
     pub max_change_rate: Decimal,
 }

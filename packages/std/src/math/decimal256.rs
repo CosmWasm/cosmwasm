@@ -1,10 +1,10 @@
+use core::cmp::Ordering;
+use core::fmt::{self, Write};
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::cmp::Ordering;
-use std::fmt::{self, Write};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
-use std::str::FromStr;
 use thiserror::Error;
 
 use crate::errors::{
@@ -76,18 +76,56 @@ impl Decimal256 {
     }
 
     /// Convert x% into Decimal256
-    pub fn percent(x: u64) -> Self {
-        Self(Uint256::from(x) * Uint256::from(10_000_000_000_000_000u128))
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use std::str::FromStr;
+    /// # use cosmwasm_std::Decimal256;
+    /// const HALF: Decimal256 = Decimal256::percent(50);
+    ///
+    /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
+    /// ```
+    pub const fn percent(x: u64) -> Self {
+        // multiplication does not overflow since `u64::MAX` * 10**16 is well in u128 range
+        let atomics = (x as u128) * 10_000_000_000_000_000;
+        Self(Uint256::from_u128(atomics))
     }
 
     /// Convert permille (x/1000) into Decimal256
-    pub fn permille(x: u64) -> Self {
-        Self(Uint256::from(x) * Uint256::from(1_000_000_000_000_000u128))
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use std::str::FromStr;
+    /// # use cosmwasm_std::Decimal256;
+    /// const HALF: Decimal256 = Decimal256::permille(500);
+    ///
+    /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
+    /// ```
+    pub const fn permille(x: u64) -> Self {
+        // multiplication does not overflow since `u64::MAX` * 10**15 is well in u128 range
+        let atomics = (x as u128) * 1_000_000_000_000_000;
+        Self(Uint256::from_u128(atomics))
     }
 
     /// Convert basis points (x/10000) into Decimal256
-    pub fn bps(x: u64) -> Self {
-        Self(Uint256::from(x) * Uint256::from(100_000_000_000_000u128))
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use std::str::FromStr;
+    /// # use cosmwasm_std::Decimal256;
+    /// const TWO_BPS: Decimal256 = Decimal256::bps(2);
+    /// const HALF: Decimal256 = Decimal256::bps(5000);
+    ///
+    /// assert_eq!(TWO_BPS, Decimal256::from_str("0.0002").unwrap());
+    /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
+    /// ```
+    pub const fn bps(x: u64) -> Self {
+        // multiplication does not overflow since `u64::MAX` * 10**14 is well in u128 range
+        let atomics = (x as u128) * 100_000_000_000_000;
+        Self(Uint256::from_u128(atomics))
     }
 
     /// Creates a decimal from a number of atomic units and the number
@@ -119,11 +157,14 @@ impl Decimal256 {
         decimal_places: u32,
     ) -> Result<Self, Decimal256RangeExceeded> {
         let atomics = atomics.into();
-        let ten = Uint256::from(10u64); // TODO: make const
-        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES)) {
+        const TEN: Uint256 = Uint256::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 10,
+        ]);
+        Ok(match decimal_places.cmp(&Self::DECIMAL_PLACES) {
             Ordering::Less => {
                 let digits = (Self::DECIMAL_PLACES) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
-                let factor = ten.checked_pow(digits).unwrap(); // Safe because digits <= 17
+                let factor = TEN.checked_pow(digits).unwrap(); // Safe because digits <= 17
                 Self(
                     atomics
                         .checked_mul(factor)
@@ -133,7 +174,7 @@ impl Decimal256 {
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
                 let digits = decimal_places - (Self::DECIMAL_PLACES); // No overflow because decimal_places > DECIMAL_PLACES
-                if let Ok(factor) = ten.checked_pow(digits) {
+                if let Ok(factor) = TEN.checked_pow(digits) {
                     Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 } else {
                     // In this case `factor` exceeds the Uint256 range.
@@ -187,7 +228,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use cosmwasm_std::{Decimal256, Uint256};
-    /// # use std::str::FromStr;
+    /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = Decimal256::from_str("1.234").unwrap();
     /// assert_eq!(a.decimal_places(), 18);
@@ -401,7 +442,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
-    /// use std::str::FromStr;
+    /// use core::str::FromStr;
     /// use cosmwasm_std::{Decimal256, Uint256};
     ///
     /// let d = Decimal256::from_str("12.345").unwrap();
@@ -424,7 +465,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
-    /// use std::str::FromStr;
+    /// use core::str::FromStr;
     /// use cosmwasm_std::{Decimal256, Uint256};
     ///
     /// let d = Decimal256::from_str("12.345").unwrap();
@@ -541,7 +582,7 @@ impl fmt::Display for Decimal256 {
         let fractional = (self.0).checked_rem(Self::DECIMAL_FRACTIONAL).unwrap();
 
         if fractional.is_zero() {
-            write!(f, "{}", whole)
+            write!(f, "{whole}")
         } else {
             let fractional_string = format!(
                 "{:0>padding$}",
@@ -558,7 +599,7 @@ impl fmt::Display for Decimal256 {
 
 impl fmt::Debug for Decimal256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Decimal256({})", self)
+        write!(f, "Decimal256({self})")
     }
 }
 
@@ -703,7 +744,7 @@ impl RemAssign<Decimal256> for Decimal256 {
 }
 forward_ref_op_assign!(impl RemAssign, rem_assign for Decimal256, Decimal256);
 
-impl<A> std::iter::Sum<A> for Decimal256
+impl<A> core::iter::Sum<A> for Decimal256
 where
     Self: Add<A, Output = Self>,
 {
@@ -747,7 +788,7 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
     {
         match Self::Value::from_str(v) {
             Ok(d) => Ok(d),
-            Err(e) => Err(E::custom(format!("Error parsing decimal '{}': {}", v, e))),
+            Err(e) => Err(E::custom(format!("Error parsing decimal '{v}': {e}"))),
         }
     }
 }
@@ -1089,17 +1130,17 @@ mod tests {
     fn decimal256_from_str_errors_for_broken_whole_part() {
         match Decimal256::from_str("").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal256::from_str(" ").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal256::from_str("-1").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1107,22 +1148,22 @@ mod tests {
     fn decimal256_from_str_errors_for_broken_fractinal_part() {
         match Decimal256::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal256::from_str("1. ").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal256::from_str("1.e").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal256::from_str("1.2e3").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1132,7 +1173,7 @@ mod tests {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
@@ -1140,7 +1181,7 @@ mod tests {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits")
             }
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1148,12 +1189,12 @@ mod tests {
     fn decimal256_from_str_errors_for_invalid_number_of_dots() {
         match Decimal256::from_str("1.2.3").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal256::from_str("1.2.3.4").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1164,7 +1205,7 @@ mod tests {
             .unwrap_err()
         {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
 
         // Decimal
@@ -1172,7 +1213,7 @@ mod tests {
             .unwrap_err()
         {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
         match Decimal256::from_str(
             "115792089237316195423570985008687907853269984665640564039457.584007913129639936",
@@ -1180,7 +1221,7 @@ mod tests {
         .unwrap_err()
         {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {:?}", e),
+            e => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -1529,7 +1570,7 @@ mod tests {
             (Decimal256::permille(6), Decimal256::permille(13)),
         ];
 
-        // The regular std::ops::Mul is our source of truth for these tests.
+        // The regular core::ops::Mul is our source of truth for these tests.
         for (x, y) in test_data.into_iter() {
             assert_eq!(x * y, x.checked_mul(y).unwrap());
         }
@@ -2302,13 +2343,13 @@ mod tests {
     #[test]
     fn decimal256_implements_debug() {
         let decimal = Decimal256::from_str("123.45").unwrap();
-        assert_eq!(format!("{:?}", decimal), "Decimal256(123.45)");
+        assert_eq!(format!("{decimal:?}"), "Decimal256(123.45)");
 
         let test_cases = ["5", "5.01", "42", "0", "2"];
         for s in test_cases {
             let decimal256 = Decimal256::from_str(s).unwrap();
-            let expected = format!("Decimal256({})", s);
-            assert_eq!(format!("{:?}", decimal256), expected);
+            let expected = format!("Decimal256({s})");
+            assert_eq!(format!("{decimal256:?}"), expected);
         }
     }
 }

@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use wasmer::Val;
+use wasmer::Value;
 
 use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
@@ -206,9 +206,8 @@ where
         from_slice(&data, deserialization_limits::RESULT_QUERY)?;
     // Ensure query response is valid JSON
     if let ContractResult::Ok(binary_response) = &result {
-        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
-            VmError::generic_err(format!("Query response must be valid JSON. {}", e))
-        })?;
+        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice())
+            .map_err(|e| VmError::generic_err(format!("Query response must be valid JSON. {e}")))?;
     }
 
     Ok(result)
@@ -574,7 +573,7 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
 {
-    let mut arg_region_ptrs = Vec::<Val>::with_capacity(args.len());
+    let mut arg_region_ptrs = Vec::<Value>::with_capacity(args.len());
     for arg in args {
         let region_ptr = instance.allocate(arg.len())?;
         instance.write_memory(region_ptr, arg)?;
@@ -666,7 +665,7 @@ mod tests {
                     "RuntimeError: Aborted: panicked at 'This page intentionally faulted'"
                 ))
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 
@@ -688,7 +687,7 @@ mod tests {
             VmError::RuntimeErr { msg } => {
                 assert!(msg.contains("RuntimeError: unreachable"))
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 

@@ -1,12 +1,12 @@
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::fmt;
-use std::ops::{
+use core::fmt;
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use std::str::FromStr;
+use core::str::FromStr;
+use forward_ref::{forward_ref_binop, forward_ref_op_assign};
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
@@ -159,7 +159,7 @@ impl Uint512 {
             words[1].to_be_bytes(),
             words[0].to_be_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
 
     /// Returns a copy of the number as little endian bytes.
@@ -176,7 +176,7 @@ impl Uint512 {
             words[6].to_le_bytes(),
             words[7].to_le_bytes(),
         ];
-        unsafe { std::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
+        unsafe { core::mem::transmute::<[[u8; 8]; 8], [u8; 64]>(words) }
     }
 
     #[must_use]
@@ -394,7 +394,7 @@ impl FromStr for Uint512 {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match U512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u512: {e}"))),
         }
     }
 }
@@ -407,11 +407,7 @@ impl From<Uint512> for String {
 
 impl fmt::Display for Uint512 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // The inner type doesn't work as expected with padding, so we
-        // work around that.
-        let unpadded = self.0.to_string();
-
-        f.pad_integral(true, "", &unpadded)
+        self.0.fmt(f)
     }
 }
 
@@ -513,8 +509,7 @@ impl Shr<u32> for Uint512 {
     fn shr(self, rhs: u32) -> Self::Output {
         self.checked_shr(rhs).unwrap_or_else(|_| {
             panic!(
-                "right shift error: {} is larger or equal than the number of bits in Uint512",
-                rhs,
+                "right shift error: {rhs} is larger or equal than the number of bits in Uint512",
             )
         })
     }
@@ -626,11 +621,11 @@ impl<'de> de::Visitor<'de> for Uint512Visitor {
     where
         E: de::Error,
     {
-        Uint512::try_from(v).map_err(|e| E::custom(format!("invalid Uint512 '{}' - {}", v, e)))
+        Uint512::try_from(v).map_err(|e| E::custom(format!("invalid Uint512 '{v}' - {e}")))
     }
 }
 
-impl<A> std::iter::Sum<A> for Uint512
+impl<A> core::iter::Sum<A> for Uint512
 where
     Self: Add<A, Output = Self>,
 {
@@ -646,7 +641,7 @@ mod tests {
 
     #[test]
     fn size_of_works() {
-        assert_eq!(std::mem::size_of::<Uint512>(), 64);
+        assert_eq!(core::mem::size_of::<Uint512>(), 64);
     }
 
     #[test]
@@ -664,6 +659,16 @@ mod tests {
         let num = Uint512::new(be_bytes);
         let resulting_bytes: [u8; 64] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
+    }
+
+    #[test]
+    fn uint512_not_works() {
+        let num = Uint512::new([1; 64]);
+        let a = (!num).to_be_bytes();
+        assert_eq!(a, [254; 64]);
+
+        assert_eq!(!Uint512::MAX, Uint512::MIN);
+        assert_eq!(!Uint512::MIN, Uint512::MAX);
     }
 
     #[test]
@@ -790,18 +795,23 @@ mod tests {
     #[test]
     fn uint512_implements_display() {
         let a = Uint512::from(12345u32);
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");
         assert_eq!(a.to_string(), "12345");
 
         let a = Uint512::zero();
-        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(format!("Embedded: {a}"), "Embedded: 0");
         assert_eq!(a.to_string(), "0");
     }
 
     #[test]
     fn uint512_display_padding_works() {
+        // width > natural representation
         let a = Uint512::from(123u64);
-        assert_eq!(format!("Embedded: {:05}", a), "Embedded: 00123");
+        assert_eq!(format!("Embedded: {a:05}"), "Embedded: 00123");
+
+        // width < natural representation
+        let a = Uint512::from(123u64);
+        assert_eq!(format!("Embedded: {a:02}"), "Embedded: 123");
     }
 
     #[test]

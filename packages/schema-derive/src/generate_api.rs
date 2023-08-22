@@ -200,7 +200,7 @@ impl Parse for Options {
         };
 
         if let Some((invalid_option, _)) = map.into_iter().next() {
-            panic!("unknown generate_api option: {}", invalid_option);
+            panic!("unknown generate_api option: {invalid_option}");
         }
 
         Ok(Self {

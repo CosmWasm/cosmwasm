@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn response_add_attributes_works() {
-        let res = Response::<Empty>::new().add_attributes(std::iter::empty::<Attribute>());
+        let res = Response::<Empty>::new().add_attributes(core::iter::empty::<Attribute>());
         assert_eq!(res.attributes.len(), 0);
 
         let res = Response::<Empty>::new().add_attributes([Attribute::new("test", "ing")]);
