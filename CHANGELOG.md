@@ -10,6 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: Implement `Not` for `Uint{64,128,256}` ([#1799]).
 - cosmwasm-std: Add iterators for `Coins` ([#1806]).
+- cosmwasm-std: Make `abs_diff` const for `Uint{256,512}` and
+  `Int{64,128,256,512}`. It is now const for all integer types.
 
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
 [#1806]: https://github.com/CosmWasm/cosmwasm/pull/1806
