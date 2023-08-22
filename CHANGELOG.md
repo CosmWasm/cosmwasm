@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.3.3] - 2023-08-22
+
 ### Added
 
 - cosmwasm-std: Implement `into_empty` for `QuerierWrapper`, `Deps` and
@@ -1797,7 +1799,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.3.0
