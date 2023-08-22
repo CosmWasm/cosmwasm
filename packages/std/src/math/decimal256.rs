@@ -157,11 +157,14 @@ impl Decimal256 {
         decimal_places: u32,
     ) -> Result<Self, Decimal256RangeExceeded> {
         let atomics = atomics.into();
-        let ten = Uint256::from(10u64); // TODO: make const
-        Ok(match decimal_places.cmp(&(Self::DECIMAL_PLACES)) {
+        const TEN: Uint256 = Uint256::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 10,
+        ]);
+        Ok(match decimal_places.cmp(&Self::DECIMAL_PLACES) {
             Ordering::Less => {
                 let digits = (Self::DECIMAL_PLACES) - decimal_places; // No overflow because decimal_places < DECIMAL_PLACES
-                let factor = ten.checked_pow(digits).unwrap(); // Safe because digits <= 17
+                let factor = TEN.checked_pow(digits).unwrap(); // Safe because digits <= 17
                 Self(
                     atomics
                         .checked_mul(factor)
@@ -171,7 +174,7 @@ impl Decimal256 {
             Ordering::Equal => Self(atomics),
             Ordering::Greater => {
                 let digits = decimal_places - (Self::DECIMAL_PLACES); // No overflow because decimal_places > DECIMAL_PLACES
-                if let Ok(factor) = ten.checked_pow(digits) {
+                if let Ok(factor) = TEN.checked_pow(digits) {
                     Self(atomics.checked_div(factor).unwrap()) // Safe because factor cannot be zero
                 } else {
                     // In this case `factor` exceeds the Uint256 range.
