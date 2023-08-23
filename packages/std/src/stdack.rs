@@ -14,7 +14,11 @@ use crate::to_binary;
 /// In contrast to the original idea, [ICS-20](https://github.com/cosmos/ibc/tree/ed849c7bacf16204e9509f0f0df325391f3ce25c/spec/app/ics-020-fungible-token-transfer#technical-specification) and CosmWasm IBC protocols
 /// use JSON instead of a protobuf serialization.
 ///
-/// If ibc_receive_packet returns Err(), then x/wasm runtime will rollback the state and return an error message in this format.
+/// For compatibility, we use the field name "result" for the success case in JSON.
+/// However, all Rust APIs use the term "success" for clarity and discriminability from [Result].
+///
+/// If ibc_receive_packet returns Err(), then x/wasm runtime will rollback the state and
+/// return an error message in this format.
 ///
 /// ## Examples
 ///
@@ -32,14 +36,15 @@ use crate::to_binary;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StdAck {
-    Result(Binary),
+    #[serde(rename = "result")]
+    Success(Binary),
     Error(String),
 }
 
 impl StdAck {
     /// Creates a success ack with the given data
     pub fn success(data: impl Into<Binary>) -> Self {
-        StdAck::Result(data.into())
+        StdAck::Success(data.into())
     }
 
     /// Creates an error ack
@@ -50,7 +55,7 @@ impl StdAck {
     #[must_use = "if you intended to assert that this is a success, consider `.unwrap()` instead"]
     #[inline]
     pub const fn is_success(&self) -> bool {
-        matches!(*self, StdAck::Result(_))
+        matches!(*self, StdAck::Success(_))
     }
 
     #[must_use = "if you intended to assert that this is an error, consider `.unwrap_err()` instead"]
@@ -92,14 +97,14 @@ impl StdAck {
 
     pub fn unwrap(self) -> Binary {
         match self {
-            StdAck::Result(data) => data,
+            StdAck::Success(data) => data,
             StdAck::Error(err) => panic!("{}", err),
         }
     }
 
     pub fn unwrap_err(self) -> String {
         match self {
-            StdAck::Result(_) => panic!("not an error"),
+            StdAck::Success(_) => panic!("not an error"),
             StdAck::Error(err) => err,
         }
     }
@@ -119,7 +124,7 @@ mod tests {
     fn stdack_success_works() {
         let success = StdAck::success(b"foo");
         match success {
-            StdAck::Result(data) => assert_eq!(data, b"foo"),
+            StdAck::Success(data) => assert_eq!(data, b"foo"),
             StdAck::Error(_err) => panic!("must not be an error"),
         }
     }
@@ -128,7 +133,7 @@ mod tests {
     fn stdack_error_works() {
         let err = StdAck::error("bar");
         match err {
-            StdAck::Result(_data) => panic!("must not be a success"),
+            StdAck::Success(_data) => panic!("must not be a success"),
             StdAck::Error(err) => assert_eq!(err, "bar"),
         }
     }
