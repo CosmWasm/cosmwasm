@@ -82,15 +82,17 @@ impl StdAck {
     ///
     /// Set acknowledgement field in `IbcReceiveResponse`:
     ///
-    /// ```ignore
+    /// ```
     /// use cosmwasm_std::{StdAck, IbcReceiveResponse};
     ///
     /// let ack = StdAck::success(b"\x01"); // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
     ///
-    /// let res = IbcReceiveResponse::new().set_ack(ack.to_binary());
-    /// let res = IbcReceiveResponse::new().set_ack(ack); // Does the same but consumes the instance
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().set_ack(ack.to_binary());
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().set_ack(ack); // Does the same but consumes the instance
     /// ```
     pub fn to_binary(&self) -> Binary {
+        // We need a non-failing StdAck -> Binary conversion to allow using StdAck in
+        // `impl Into<Binary>` arguments.
         // Pretty sure this cannot fail. If that changes we can create a non-failing implementation here.
         to_binary(&self).unwrap()
     }
