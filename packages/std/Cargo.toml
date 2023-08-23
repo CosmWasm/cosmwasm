@@ -42,6 +42,10 @@ cosmwasm_1_2 = ["cosmwasm_1_1"]
 # This feature makes `BankQuery::DenomMetadata` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.3.0` or higher.
 cosmwasm_1_3 = ["cosmwasm_1_2"]
+# Together with the `iterator` feature this enables additional imports for more
+# efficient iteration over DB keys or values.
+# It requires the host blockchain to run CosmWasm `1.4.0` or higher.
+cosmwasm_1_4 = ["cosmwasm_1_3"]
 
 [dependencies]
 base64 = "0.21.0"

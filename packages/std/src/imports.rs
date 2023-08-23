@@ -37,6 +37,10 @@ extern "C" {
     fn db_scan(start_ptr: u32, end_ptr: u32, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
+    #[cfg(all(feature = "iterator", feature = "cosmwasm_1_4"))]
+    fn db_next_key(iterator_id: u32) -> u32;
+    #[cfg(all(feature = "iterator", feature = "cosmwasm_1_4"))]
+    fn db_next_value(iterator_id: u32) -> u32;
 
     fn addr_validate(source_ptr: u32) -> u32;
     fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
