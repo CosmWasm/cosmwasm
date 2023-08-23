@@ -12,9 +12,11 @@ and this project adheres to
 - cosmwasm-std: Add iterators for `Coins` ([#1806]).
 - cosmwasm-std: Make `abs_diff` const for `Uint{256,512}` and
   `Int{64,128,256,512}`. It is now const for all integer types.
+- cosmwasm-std: Implement `TryFrom<Decimal256>` for `Decimal` ([#1832])
 
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
 [#1806]: https://github.com/CosmWasm/cosmwasm/pull/1806
+[#1832]: https://github.com/CosmWasm/cosmwasm/pull/1832
 
 ### Changed
 

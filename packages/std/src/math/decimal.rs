@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::forward_ref_partial_eq;
+use crate::{forward_ref_partial_eq, Decimal256};
 
 use super::Fraction;
 use super::Isqrt;
@@ -498,6 +498,18 @@ impl Fraction<Uint128> for Decimal {
     }
 }
 
+impl TryFrom<Decimal256> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    fn try_from(value: Decimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal)
+            .map_err(|_| DecimalRangeExceeded)
+    }
+}
+
 impl FromStr for Decimal {
     type Err = StdError;
 
@@ -815,6 +827,22 @@ mod tests {
     fn decimal_bps() {
         let value = Decimal::bps(125);
         assert_eq!(value.0, Decimal::DECIMAL_FRACTIONAL / Uint128::from(80u8));
+    }
+
+    #[test]
+    fn decimal_from_decimal256_works() {
+        let too_big = Decimal256::new(Uint256::from(Uint128::MAX) + Uint256::one());
+        assert_eq!(Decimal::try_from(too_big), Err(DecimalRangeExceeded));
+
+        let just_right = Decimal256::new(Uint256::from(Uint128::MAX));
+        assert_eq!(Decimal::try_from(just_right), Ok(Decimal::MAX));
+
+        assert_eq!(Decimal::try_from(Decimal256::zero()), Ok(Decimal::zero()));
+        assert_eq!(Decimal::try_from(Decimal256::one()), Ok(Decimal::one()));
+        assert_eq!(
+            Decimal::try_from(Decimal256::percent(50)),
+            Ok(Decimal::percent(50))
+        );
     }
 
     #[test]
