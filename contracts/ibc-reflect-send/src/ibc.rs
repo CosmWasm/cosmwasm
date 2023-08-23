@@ -146,7 +146,7 @@ fn acknowledge_who_am_i(
     // ignore errors (but mention in log)
     let WhoAmIResponse { account } = match ack {
         AcknowledgementMsg::Ok(res) => res,
-        AcknowledgementMsg::Err(e) => {
+        AcknowledgementMsg::Error(e) => {
             return Ok(IbcBasicResponse::new()
                 .add_attribute("action", "acknowledge_who_am_i")
                 .add_attribute("error", e))
@@ -176,7 +176,7 @@ fn acknowledge_balances(
     // ignore errors (but mention in log)
     let BalancesResponse { account, balances } = match ack {
         AcknowledgementMsg::Ok(res) => res,
-        AcknowledgementMsg::Err(e) => {
+        AcknowledgementMsg::Error(e) => {
             return Ok(IbcBasicResponse::new()
                 .add_attribute("action", "acknowledge_balances")
                 .add_attribute("error", e))

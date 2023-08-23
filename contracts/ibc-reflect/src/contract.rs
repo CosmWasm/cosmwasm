@@ -224,7 +224,7 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
 // this encode an error or error message into a proper acknowledgement to the recevier
 fn encode_ibc_error(msg: impl Into<String>) -> Binary {
     // this cannot error, unwrap to keep the interface simple
-    to_binary(&AcknowledgementMsg::<()>::Err(msg.into())).unwrap()
+    to_binary(&AcknowledgementMsg::<()>::Error(msg.into())).unwrap()
 }
 
 #[entry_point]

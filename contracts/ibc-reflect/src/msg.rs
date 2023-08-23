@@ -62,22 +62,21 @@ pub enum PacketMsg {
 #[cw_serde]
 pub enum AcknowledgementMsg<S> {
     Ok(S),
-    #[serde(rename = "error")]
-    Err(String),
+    Error(String),
 }
 
 impl<S> AcknowledgementMsg<S> {
     pub fn unwrap(self) -> S {
         match self {
             AcknowledgementMsg::Ok(data) => data,
-            AcknowledgementMsg::Err(err) => panic!("{}", err),
+            AcknowledgementMsg::Error(err) => panic!("{}", err),
         }
     }
 
     pub fn unwrap_err(self) -> String {
         match self {
             AcknowledgementMsg::Ok(_) => panic!("not an error"),
-            AcknowledgementMsg::Err(err) => err,
+            AcknowledgementMsg::Error(err) => err,
         }
     }
 }
