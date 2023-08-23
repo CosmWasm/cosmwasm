@@ -1,4 +1,5 @@
-use cosmwasm_std::{Coin, ContractResult, CosmosMsg};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Coin, CosmosMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,9 +12,35 @@ pub enum PacketMsg {
     Balances {},
 }
 
-/// All IBC acknowledgements are wrapped in `ContractResult`.
-/// The success value depends on the PacketMsg variant.
-pub type AcknowledgementMsg<T> = ContractResult<T>;
+/// A custom acknowledgement type.
+/// The success type `T` depends on the PacketMsg variant.
+///
+/// This could be refactored to use [StdAck] at some point. However,
+/// it has a different success variant name ("ok" vs. "result") and
+/// a JSON payload instead of a binary payload.
+///
+/// [StdAck]: https://github.com/CosmWasm/cosmwasm/issues/1512
+#[cw_serde]
+pub enum AcknowledgementMsg<S> {
+    Ok(S),
+    Error(String),
+}
+
+impl<S> AcknowledgementMsg<S> {
+    pub fn unwrap(self) -> S {
+        match self {
+            AcknowledgementMsg::Ok(data) => data,
+            AcknowledgementMsg::Error(err) => panic!("{}", err),
+        }
+    }
+
+    pub fn unwrap_err(self) -> String {
+        match self {
+            AcknowledgementMsg::Ok(_) => panic!("not an error"),
+            AcknowledgementMsg::Error(err) => err,
+        }
+    }
+}
 
 /// This is the success response we send on ack for PacketMsg::Dispatch.
 /// Just acknowledge success or error

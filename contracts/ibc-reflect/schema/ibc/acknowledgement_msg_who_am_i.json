@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AcknowledgementMsgWhoAmI",
+  "description": "A custom acknowledgement type. The success type `T` depends on the PacketMsg variant.\n\nThis could be refactored to use [StdAck] at some point. However, it has a different success variant name (\"ok\" vs. \"result\") and a JSON payload instead of a binary payload.\n\n[StdAck]: https://github.com/CosmWasm/cosmwasm/issues/1512",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "$ref": "#/definitions/WhoAmIResponse"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "WhoAmIResponse": {
+      "description": "This is the success response we send on ack for PacketMsg::WhoAmI. Return the caller's account address on the remote chain",
+      "type": "object",
+      "required": [
+        "account"
+      ],
+      "properties": {
+        "account": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
