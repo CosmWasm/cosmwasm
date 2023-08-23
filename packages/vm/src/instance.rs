@@ -19,7 +19,7 @@ use crate::imports::{
     do_secp256k1_recover_pubkey, do_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
-use crate::imports::{do_db_next, do_db_scan};
+use crate::imports::{do_db_next, do_db_next_key, do_db_next_value, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::{compile, make_compiling_engine};
@@ -235,6 +235,27 @@ where
         env_imports.insert(
             "db_next",
             Function::new_typed_with_env(&mut store, &fe, do_db_next),
+        );
+
+        // Get next key of iterator with ID `iterator_id`.
+        // Creates a region containing the key and returns its address.
+        // Ownership of the result region is transferred to the contract.
+        // An empty key means no more elements.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_next_key",
+            Function::new_typed_with_env(&mut store, &fe, do_db_next_key),
+        );
+
+        // Get next value of iterator with ID `iterator_id`.
+        // Creates a region containing the value and returns its address.
+        // Ownership of the result region is transferred to the contract.
+        // The region uses the format value || has_next (without length encoding),
+        // where has_next is a bool (encoded as u8) indicating whether there are more elements.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_next_value",
+            Function::new_typed_with_env(&mut store, &fe, do_db_next_value),
         );
 
         import_obj.register_namespace("env", env_imports);

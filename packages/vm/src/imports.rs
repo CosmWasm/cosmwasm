@@ -533,6 +533,48 @@ pub fn do_db_next<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
     write_to_contract(data, &mut store, &out_data)
 }
 
+#[cfg(feature = "iterator")]
+pub fn do_db_next_key<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    iterator_id: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+
+    let (result, gas_info) =
+        data.with_storage_from_context::<_, _>(|store| Ok(store.next_key(iterator_id)))?;
+
+    process_gas_info(data, &mut store, gas_info)?;
+
+    // Empty key will later be treated as _no more element_.
+    let key = result?.unwrap_or_default();
+
+    write_to_contract(data, &mut store, &key)
+}
+
+#[cfg(feature = "iterator")]
+pub fn do_db_next_value<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    iterator_id: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+
+    let (result, gas_info) =
+        data.with_storage_from_context::<_, _>(|store| Ok(store.next_value(iterator_id)))?;
+
+    process_gas_info(data, &mut store, gas_info)?;
+
+    // Empty key will later be treated as _no more element_.
+    // No need to encode this further, as it is a single value.
+    let (mut value, has_next) = match result? {
+        Some(value) => (value, true),
+        None => (Vec::<u8>::new(), false),
+    };
+
+    // add has_next flag at the end
+    value.push(has_next as u8);
+    write_to_contract(data, &mut store, &value)
+}
+
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
 fn write_to_contract<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
     data: &Environment<A, S, Q>,
@@ -634,6 +676,8 @@ mod tests {
                 "db_remove" => Function::new_typed(&mut store, |_a: u32| {}),
                 "db_scan" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "db_next_key" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "db_next_value" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "query_chain" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "addr_validate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "addr_canonicalize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
@@ -2172,5 +2216,86 @@ mod tests {
             } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {e:?}"),
         }
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_db_next_key_works() {
+        let api = MockApi::default();
+        let (fe, mut store, _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        leave_default_data(&mut fe_mut);
+
+        let id = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Ascending.into()).unwrap();
+
+        // Entry 1
+        let key_region_ptr = do_db_next_key(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, key_region_ptr), KEY1);
+
+        // Entry 2
+        let key_region_ptr = do_db_next_key(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, key_region_ptr), KEY2);
+
+        // End
+        let key_region_ptr: u32 = do_db_next_key(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, key_region_ptr), b"");
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_db_next_value_works() {
+        let api = MockApi::default();
+        let (fe, mut store, _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        leave_default_data(&mut fe_mut);
+
+        let id = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Ascending.into()).unwrap();
+
+        // Entry 1
+        let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(
+            force_read(&mut fe_mut, value_region_ptr),
+            [VALUE1, &[1]].concat()
+        );
+
+        // Entry 2
+        let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(
+            force_read(&mut fe_mut, value_region_ptr),
+            [VALUE2, &[1]].concat()
+        );
+
+        // End
+        let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, value_region_ptr), [0]);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_db_next_works_mixed() {
+        let api = MockApi::default();
+        let (fe, mut store, _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        leave_default_data(&mut fe_mut);
+
+        let id = do_db_scan(fe_mut.as_mut(), 0, 0, Order::Ascending.into()).unwrap();
+
+        // Key 1
+        let key_region_ptr = do_db_next_key(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, key_region_ptr), KEY1);
+
+        // Value 2
+        let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(
+            force_read(&mut fe_mut, value_region_ptr),
+            [VALUE2, &[1]].concat()
+        );
+
+        // End
+        let kv_region_ptr = do_db_next(fe_mut.as_mut(), id).unwrap();
+        assert_eq!(force_read(&mut fe_mut, kv_region_ptr), b"\0\0\0\0\0\0\0\0");
     }
 }
