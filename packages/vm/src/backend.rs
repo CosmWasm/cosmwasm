@@ -123,6 +123,7 @@ pub trait Storage {
     fn next(&mut self, iterator_id: u32) -> BackendResult<Option<Record>>;
 
     /// Returns the next value of the iterator with the given ID.
+    /// Since the iterator is incremented, the corresponding key will never be accessible. 
     ///
     /// If the ID is not found, a BackendError::IteratorDoesNotExist is returned.
     ///
@@ -136,6 +137,7 @@ pub trait Storage {
     }
 
     /// Returns the next key of the iterator with the given ID.
+    /// Since the iterator is incremented, the corresponding value will never be accessible. 
     ///
     /// If the ID is not found, a BackendError::IteratorDoesNotExist is returned.
     ///
