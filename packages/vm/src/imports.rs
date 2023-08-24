@@ -545,8 +545,10 @@ pub fn do_db_next_key<A: BackendApi + 'static, S: Storage + 'static, Q: Querier 
 
     process_gas_info(data, &mut store, gas_info)?;
 
-    // Empty key will later be treated as _no more element_.
-    let key = result?.unwrap_or_default();
+    let key = match result? {
+        Some(key) => key,
+        None => return Ok(0),
+    };
 
     write_to_contract(data, &mut store, &key)
 }
@@ -563,15 +565,11 @@ pub fn do_db_next_value<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
 
     process_gas_info(data, &mut store, gas_info)?;
 
-    // Empty key will later be treated as _no more element_.
-    // No need to encode this further, as it is a single value.
-    let (mut value, has_next) = match result? {
-        Some(value) => (value, true),
-        None => (Vec::<u8>::new(), false),
+    let value = match result? {
+        Some(value) => value,
+        None => return Ok(0),
     };
 
-    // add has_next flag at the end
-    value.push(has_next as u8);
     write_to_contract(data, &mut store, &value)
 }
 
@@ -2239,7 +2237,7 @@ mod tests {
 
         // End
         let key_region_ptr: u32 = do_db_next_key(fe_mut.as_mut(), id).unwrap();
-        assert_eq!(force_read(&mut fe_mut, key_region_ptr), b"");
+        assert_eq!(key_region_ptr, 0);
     }
 
     #[test]
@@ -2255,21 +2253,15 @@ mod tests {
 
         // Entry 1
         let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
-        assert_eq!(
-            force_read(&mut fe_mut, value_region_ptr),
-            [VALUE1, &[1]].concat()
-        );
+        assert_eq!(force_read(&mut fe_mut, value_region_ptr), VALUE1);
 
         // Entry 2
         let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
-        assert_eq!(
-            force_read(&mut fe_mut, value_region_ptr),
-            [VALUE2, &[1]].concat()
-        );
+        assert_eq!(force_read(&mut fe_mut, value_region_ptr), VALUE2);
 
         // End
         let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
-        assert_eq!(force_read(&mut fe_mut, value_region_ptr), [0]);
+        assert_eq!(value_region_ptr, 0);
     }
 
     #[test]
@@ -2289,10 +2281,7 @@ mod tests {
 
         // Value 2
         let value_region_ptr = do_db_next_value(fe_mut.as_mut(), id).unwrap();
-        assert_eq!(
-            force_read(&mut fe_mut, value_region_ptr),
-            [VALUE2, &[1]].concat()
-        );
+        assert_eq!(force_read(&mut fe_mut, value_region_ptr), VALUE2);
 
         // End
         let kv_region_ptr = do_db_next(fe_mut.as_mut(), id).unwrap();

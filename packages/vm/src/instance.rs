@@ -110,7 +110,7 @@ where
         let mut import_obj = Imports::new();
         let mut env_imports = Exports::new();
 
-        // Reads the database entry at the given key into the the value.
+        // Reads the database entry at the given key into the value.
         // Returns 0 if key does not exist and pointer to result region otherwise.
         // Ownership of the key pointer is not transferred to the host.
         // Ownership of the value pointer is transferred to the contract.
@@ -238,9 +238,8 @@ where
         );
 
         // Get next key of iterator with ID `iterator_id`.
-        // Creates a region containing the key and returns its address.
+        // Returns 0 if there are no more entries and pointer to result region otherwise.
         // Ownership of the result region is transferred to the contract.
-        // An empty key means no more elements.
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next_key",
@@ -248,10 +247,8 @@ where
         );
 
         // Get next value of iterator with ID `iterator_id`.
-        // Creates a region containing the value and returns its address.
+        // Returns 0 if there are no more entries and pointer to result region otherwise.
         // Ownership of the result region is transferred to the contract.
-        // The region uses the format value || has_next (without length encoding),
-        // where has_next is a bool (encoded as u8) indicating whether there are more elements.
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next_value",
