@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AcknowledgementMsgDispatch",
+  "description": "A custom acknowledgement type. The success type `T` depends on the PacketMsg variant.\n\nThis could be refactored to use [StdAck] at some point. However, it has a different success variant name (\"ok\" vs. \"result\") and a JSON payload instead of a binary payload.\n\n[StdAck]: https://github.com/CosmWasm/cosmwasm/issues/1512",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "type": "null"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+[package]
+name = "go-gen"
+authors = ["Christoph Otter <chris@confio.gmbh>"]
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+schemars = "0.8.3"
+cosmwasm-std = { path = "../std", version = "1.3.1", features = ["cosmwasm_1_3", "staking", "stargate", "ibc3"] }
+cosmwasm-schema = { path = "../schema", version = "1.3.1" }
+anyhow = "1"
+Inflector = "0.11.4"
+indenter = "0.3.3"

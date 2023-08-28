@@ -19,6 +19,7 @@ fn main() {
     // Schemas for inter-contract communication
     let mut out_dir = current_dir().unwrap();
     out_dir.push("schema");
+    out_dir.push("ibc");
     export_schema(&schema_for!(PacketMsg), &out_dir);
     export_schema_with_title(
         &schema_for!(AcknowledgementMsg<BalancesResponse>),
