@@ -14,7 +14,7 @@ and this project adheres to
   `Int{64,128,256,512}`. It is now const for all integer types.
 - cosmwasm-std: Implement `TryFrom<Decimal256>` for `Decimal` ([#1832])
 - cosmwasm-std: Add new imports `db_next_{key, value}` for iterating storage
-  keys / values only and make `Storage::{range_key, range_value}` more
+  keys / values only and make `Storage::{range_keys, range_values}` more
   efficient. This requires the `cosmwasm_1_4` feature to be enabled. ([#1834])
 
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
