@@ -38,9 +38,6 @@ and this project adheres to
 - cosmwasm-vm: Use `wasmparser` for initial validation instead of `parity-wasm`
   ([#1786])
 - cosmwasm-std: Make constructors `Decimal{,256}::{percent,permille,bps}` const
-- cosmwasm-std: Use new `db_next_key` import to make `skip` and `nth`
-  implementation of `range` iterators more efficient. This requires the
-  `cosmwasm_1_4` feature to be enabled. ([#1838])
 
 [#1667]: https://github.com/CosmWasm/cosmwasm/pull/1667
 [#1674]: https://github.com/CosmWasm/cosmwasm/pull/1674
@@ -49,7 +46,6 @@ and this project adheres to
 [#1701]: https://github.com/CosmWasm/cosmwasm/pull/1701
 [#1786]: https://github.com/CosmWasm/cosmwasm/pull/1786
 [#1793]: https://github.com/CosmWasm/cosmwasm/pull/1793
-[#1838]: https://github.com/CosmWasm/cosmwasm/pull/1838
 
 ## [1.3.3] - 2023-08-22
 
