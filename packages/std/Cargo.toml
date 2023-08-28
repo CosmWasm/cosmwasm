@@ -44,7 +44,8 @@ cosmwasm_1_2 = ["cosmwasm_1_1"]
 cosmwasm_1_3 = ["cosmwasm_1_2"]
 # Together with the `iterator` feature this enables additional imports for more
 # efficient iteration over DB keys or values.
-# It also makes `DistributionQuery::DelegationRewards` available for the contract to call
+# It also makes `DistributionQuery::{DelegationRewards, DelegationTotalRewards, DelegatorValidators}`
+# available for the contract to call.
 # It requires the host blockchain to run CosmWasm `1.4.0` or higher.
 cosmwasm_1_4 = ["cosmwasm_1_3"]
 
