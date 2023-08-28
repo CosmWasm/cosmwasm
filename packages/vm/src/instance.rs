@@ -19,7 +19,7 @@ use crate::imports::{
     do_secp256k1_recover_pubkey, do_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
-use crate::imports::{do_db_next, do_db_scan};
+use crate::imports::{do_db_next, do_db_next_key, do_db_next_value, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::{compile, make_compiling_engine};
@@ -110,7 +110,7 @@ where
         let mut import_obj = Imports::new();
         let mut env_imports = Exports::new();
 
-        // Reads the database entry at the given key into the the value.
+        // Reads the database entry at the given key into the value.
         // Returns 0 if key does not exist and pointer to result region otherwise.
         // Ownership of the key pointer is not transferred to the host.
         // Ownership of the value pointer is transferred to the contract.
@@ -235,6 +235,24 @@ where
         env_imports.insert(
             "db_next",
             Function::new_typed_with_env(&mut store, &fe, do_db_next),
+        );
+
+        // Get next key of iterator with ID `iterator_id`.
+        // Returns 0 if there are no more entries and pointer to result region otherwise.
+        // Ownership of the result region is transferred to the contract.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_next_key",
+            Function::new_typed_with_env(&mut store, &fe, do_db_next_key),
+        );
+
+        // Get next value of iterator with ID `iterator_id`.
+        // Returns 0 if there are no more entries and pointer to result region otherwise.
+        // Ownership of the result region is transferred to the contract.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_next_value",
+            Function::new_typed_with_env(&mut store, &fe, do_db_next_value),
         );
 
         import_obj.register_namespace("env", env_imports);

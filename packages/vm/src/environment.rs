@@ -493,6 +493,8 @@ mod tests {
                 "db_remove" => Function::new_typed(&mut store, |_a: u32| {}),
                 "db_scan" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "db_next_key" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
+                "db_next_value" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "query_chain" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "addr_validate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "addr_canonicalize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),

@@ -122,6 +122,34 @@ pub trait Storage {
     #[cfg(feature = "iterator")]
     fn next(&mut self, iterator_id: u32) -> BackendResult<Option<Record>>;
 
+    /// Returns the next value of the iterator with the given ID.
+    /// Since the iterator is incremented, the corresponding key will never be accessible.
+    ///
+    /// If the ID is not found, a BackendError::IteratorDoesNotExist is returned.
+    ///
+    /// The default implementation uses [`Storage::next`] and discards the key.
+    /// More efficient implementations might be possible depending on the storage.
+    #[cfg(feature = "iterator")]
+    fn next_value(&mut self, iterator_id: u32) -> BackendResult<Option<Vec<u8>>> {
+        let (result, gas_info) = self.next(iterator_id);
+        let result = result.map(|record| record.map(|(_, v)| v));
+        (result, gas_info)
+    }
+
+    /// Returns the next key of the iterator with the given ID.
+    /// Since the iterator is incremented, the corresponding value will never be accessible.
+    ///
+    /// If the ID is not found, a BackendError::IteratorDoesNotExist is returned.
+    ///
+    /// The default implementation uses [`Storage::next`] and discards the value.
+    /// More efficient implementations might be possible depending on the storage.
+    #[cfg(feature = "iterator")]
+    fn next_key(&mut self, iterator_id: u32) -> BackendResult<Option<Vec<u8>>> {
+        let (result, gas_info) = self.next(iterator_id);
+        let result = result.map(|record| record.map(|(k, _)| k));
+        (result, gas_info)
+    }
+
     fn set(&mut self, key: &[u8], value: &[u8]) -> BackendResult<()>;
 
     /// Removes a database entry at `key`.

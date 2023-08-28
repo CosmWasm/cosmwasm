@@ -52,9 +52,8 @@ pub fn execute_cleanup(
         let take_this_scan = std::cmp::min(PER_SCAN, limit);
         let keys: Vec<_> = deps
             .storage
-            .range(None, None, Order::Ascending)
+            .range_keys(None, None, Order::Ascending)
             .take(take_this_scan)
-            .map(|(k, _)| k)
             .collect();
         let deleted_this_scan = keys.len();
         for k in keys {
