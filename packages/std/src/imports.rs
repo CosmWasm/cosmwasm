@@ -200,6 +200,15 @@ struct ExternalPartialIterator {
 impl Iterator for ExternalPartialIterator {
     type Item = Vec<u8>;
 
+    /// The default implementation calls `next` repeatedly,
+    /// which we can do a little more efficiently by using `db_next_key` instead.
+    /// It is used by `skip`, so it allows cheaper skipping.
+    #[cfg(feature = "cosmwasm_1_4")]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        skip_iter(self.iterator_id, n);
+        self.next()
+    }
+
     fn next(&mut self) -> Option<Self::Item> {
         // here we differentiate between the two types
         let next_result = match self.partial_type {
@@ -229,6 +238,15 @@ struct ExternalIterator {
 impl Iterator for ExternalIterator {
     type Item = Record;
 
+    /// The default implementation calls `next` repeatedly,
+    /// which we can do a little more efficiently by using `db_next_key` instead.
+    /// It is used by `skip`, so it allows cheaper skipping.
+    #[cfg(feature = "cosmwasm_1_4")]
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        skip_iter(self.iterator_id, n);
+        self.next()
+    }
+
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
         let kv_region_ptr = next_result as *mut Region;
@@ -239,6 +257,20 @@ impl Iterator for ExternalIterator {
         } else {
             Some((key, value))
         }
+    }
+}
+
+/// Helper function to skip `count` elements of an iterator.
+#[cfg(all(feature = "iterator", feature = "cosmwasm_1_4"))]
+fn skip_iter(iter_id: u32, count: usize) {
+    for _ in 0..count {
+        let region = unsafe { db_next_key(iter_id) };
+        if region == 0 {
+            // early return
+            return;
+        }
+        // just deallocate the region
+        unsafe { consume_region(region as *mut Region) };
     }
 }
 
