@@ -26,7 +26,7 @@ pub enum IbcMsg {
     /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
     /// module to.
     Transfer {
-        /// exisiting channel to send the tokens over
+        /// existing channel to send the tokens over
         channel_id: String,
         /// address on the remote chain to receive these tokens
         to_address: String,
@@ -164,7 +164,7 @@ pub enum IbcOrder {
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcTimeoutBlock {
     /// the version that the client is currently on
-    /// (eg. after reseting the chain this could increment 1 as height drops to 0)
+    /// (e.g. after resetting the chain this could increment 1 as height drops to 0)
     pub revision: u64,
     /// block height after which the packet times out.
     /// the height within the given revision
@@ -492,18 +492,18 @@ pub struct IbcBasicResponse<T = Empty> {
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
     pub attributes: Vec<Attribute>,
     /// Extra, custom events separate from the main `wasm` one. These will have
     /// `wasm-` prepended to the type.
     ///
     /// More info about events can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
     pub events: Vec<Event>,
 }
 
-// Custom imlementation in order to implement it for all `T`, even if `T` is not `Default`.
+// Custom implementation in order to implement it for all `T`, even if `T` is not `Default`.
 impl<T> Default for IbcBasicResponse<T> {
     fn default() -> Self {
         IbcBasicResponse {
@@ -532,7 +532,7 @@ impl<T> IbcBasicResponse<T> {
         self
     }
 
-    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// This takes an explicit SubMsg (creates via e.g. `reply_on_error`)
     /// and adds it to the list of messages to process.
     pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
         self.messages.push(msg);
@@ -626,7 +626,7 @@ impl<T> IbcBasicResponse<T> {
 #[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty> {
     /// The bytes we return to the contract that sent the packet.
-    /// This may represent a success or error of exection
+    /// This may represent a success or error of execution
     pub acknowledgement: Binary,
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
@@ -637,18 +637,18 @@ pub struct IbcReceiveResponse<T = Empty> {
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
     pub attributes: Vec<Attribute>,
     /// Extra, custom events separate from the main `wasm` one. These will have
     /// `wasm-` prepended to the type.
     ///
     /// More info about events can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/v0.42/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
     pub events: Vec<Event>,
 }
 
-// Custom imlementation in order to implement it for all `T`, even if `T` is not `Default`.
+// Custom implementation in order to implement it for all `T`, even if `T` is not `Default`.
 impl<T> Default for IbcReceiveResponse<T> {
     fn default() -> Self {
         IbcReceiveResponse {
@@ -695,7 +695,7 @@ impl<T> IbcReceiveResponse<T> {
         self
     }
 
-    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// This takes an explicit SubMsg (creates via e.g. `reply_on_error`)
     /// and adds it to the list of messages to process.
     pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
         self.messages.push(msg);
@@ -844,7 +844,7 @@ mod tests {
         };
 
         // basic checks
-        assert!(epoch1a == epoch1a);
+        assert_eq!(epoch1a, epoch1a);
         assert!(epoch1a < epoch1b);
         assert!(epoch1b > epoch1a);
         assert!(epoch2a > epoch1a);
