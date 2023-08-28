@@ -52,11 +52,15 @@ impl QueryResponseType for DelegationRewardsResponse {}
 #[serde(rename_all = "snake_case")]
 pub struct DecCoin {
     pub denom: String,
-    pub amount: crate::Decimal,
+    /// An amount in the base denom of the distributed token.
+    ///
+    /// Some chains have choosen atto (10^-18) for their token's base denomination. If we used `Decimal` here, we could only store
+    /// 340282366920938463463.374607431768211455atoken which is 340.28 TOKEN.
+    pub amount: crate::Decimal256,
 }
 
 impl DecCoin {
-    pub fn new(amount: crate::Decimal, denom: impl Into<String>) -> Self {
+    pub fn new(amount: crate::Decimal256, denom: impl Into<String>) -> Self {
         Self {
             denom: denom.into(),
             amount,

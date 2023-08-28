@@ -48,7 +48,7 @@ use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
-use crate::{Decimal, DelegationRewardsResponse, DelegatorValidatorsResponse};
+use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 
 use super::riffle_shuffle;
 
@@ -1045,7 +1045,7 @@ impl DistributionQuerier {
                                 acc.entry(&coin.denom)
                                     .or_insert_with(|| DecCoin {
                                         denom: coin.denom.clone(),
-                                        amount: Decimal::zero(),
+                                        amount: Decimal256::zero(),
                                     })
                                     .amount += coin.amount;
                             }
@@ -1675,12 +1675,12 @@ mod tests {
     #[cfg(feature = "cosmwasm_1_4")]
     #[test]
     fn distribution_querier_delegation_rewards() {
-        use crate::{DelegationTotalRewardsResponse, DelegatorReward};
+        use crate::{Decimal256, DelegationTotalRewardsResponse, DelegatorReward};
 
         let mut distribution = DistributionQuerier::default();
         let valoper0_rewards = vec![
-            DecCoin::new(Decimal::from_atomics(1234u128, 0).unwrap(), "uatom"),
-            DecCoin::new(Decimal::from_atomics(56781234u128, 4).unwrap(), "utest"),
+            DecCoin::new(Decimal256::from_atomics(1234u128, 0).unwrap(), "uatom"),
+            DecCoin::new(Decimal256::from_atomics(56781234u128, 4).unwrap(), "utest"),
         ];
         distribution.set_rewards("valoper0", "addr0", valoper0_rewards.clone());
 
@@ -1712,7 +1712,7 @@ mod tests {
         assert_eq!(res.rewards.len(), 0);
 
         // add one more validator
-        let valoper1_rewards = vec![DecCoin::new(Decimal::one(), "uatom")];
+        let valoper1_rewards = vec![DecCoin::new(Decimal256::one(), "uatom")];
         distribution.set_rewards("valoper1", "addr0", valoper1_rewards.clone());
 
         // total rewards
@@ -1738,11 +1738,11 @@ mod tests {
             res.total,
             [
                 DecCoin::new(
-                    Decimal::from_atomics(1234u128, 0).unwrap() + Decimal::one(),
+                    Decimal256::from_atomics(1234u128, 0).unwrap() + Decimal256::one(),
                     "uatom"
                 ),
                 // total for utest should still be the same
-                DecCoin::new(Decimal::from_atomics(56781234u128, 4).unwrap(), "utest")
+                DecCoin::new(Decimal256::from_atomics(56781234u128, 4).unwrap(), "utest")
             ]
         );
     }
