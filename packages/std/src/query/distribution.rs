@@ -47,7 +47,14 @@ impl_response_constructor!(DelegationRewardsResponse, rewards: Vec<DecCoin>);
 impl QueryResponseType for DelegationRewardsResponse {}
 
 /// A coin type with decimal amount.
-/// Modeled after the Cosmos SDK's [DecCoin](https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/base/v1beta1/coin.proto#L32-L41) type
+/// Modeled after the Cosmos SDK's [DecCoin] type.
+/// However, in contrast to the Cosmos SDK the `amount` string MUST always have a dot at JSON level,
+/// see <https://github.com/cosmos/cosmos-sdk/issues/10863>.
+/// Also if Cosmos SDK choses to migrate away from fixed point decimals
+/// (as shown [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/x/group/internal/math/dec.go#L13-L21 and discussed [here](https://github.com/cosmos/cosmos-sdk/issues/11783)),
+/// wasmd needs to truncate the decimal places to 18.
+///
+/// [DecCoin]: (https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/base/v1beta1/coin.proto#L28-L38)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct DecCoin {
