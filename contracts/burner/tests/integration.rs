@@ -62,6 +62,7 @@ fn migrate_sends_funds() {
     let payout = String::from("someone else");
     let msg = MigrateMsg {
         payout: payout.clone(),
+        delete: 0,
     };
     let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
     // check payout
@@ -94,7 +95,7 @@ fn execute_cleans_up_data() {
 
     // change the verifier via migrate
     let payout = String::from("someone else");
-    let msg = MigrateMsg { payout };
+    let msg = MigrateMsg { payout, delete: 0 };
     let _res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
 
     let res: Response = execute(

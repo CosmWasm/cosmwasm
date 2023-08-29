@@ -19,6 +19,13 @@
       "payout"
     ],
     "properties": {
+      "delete": {
+        "description": "Optional amount of items to delete in this call. If it is not provided, nothing will be deleted. You can delete further items in a subsequent execute call.",
+        "default": 0,
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0.0
+      },
       "payout": {
         "description": "The address we send all remaining balance to",
         "type": "string"

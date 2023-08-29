@@ -4,6 +4,11 @@ use cosmwasm_schema::cw_serde;
 pub struct MigrateMsg {
     /// The address we send all remaining balance to
     pub payout: String,
+    /// Optional amount of items to delete in this call.
+    /// If it is not provided, nothing will be deleted.
+    /// You can delete further items in a subsequent execute call.
+    #[serde(default)]
+    pub delete: u32,
 }
 
 /// A placeholder where we don't take any input
