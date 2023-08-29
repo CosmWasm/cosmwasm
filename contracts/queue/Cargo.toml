@@ -34,7 +34,8 @@ library = []
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
+# cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`
+cosmwasm-std = { path = "../../packages/std", features = ["iterator", "cosmwasm_1_4"] }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 

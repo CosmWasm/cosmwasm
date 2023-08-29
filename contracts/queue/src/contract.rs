@@ -42,11 +42,11 @@ fn handle_enqueue(deps: DepsMut, value: i32) -> StdResult<Response> {
 
 fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
     // find the last element in the queue and extract key
-    let last_item = storage.range(None, None, Order::Descending).next();
+    let last_item = storage.range_keys(None, None, Order::Descending).next();
 
     let new_key = match last_item {
         None => FIRST_KEY,
-        Some((key, _value)) => {
+        Some(key) => {
             let last_key = u32::from_be_bytes(key.try_into().unwrap());
             (last_key + 1).to_be_bytes()
         }
@@ -76,8 +76,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     // clear all
     let keys: Vec<_> = deps
         .storage
-        .range(None, None, Order::Ascending)
-        .map(|(key, _)| key)
+        .range_keys(None, None, Order::Ascending)
         .collect();
     for key in keys {
         deps.storage.remove(&key);
@@ -102,15 +101,18 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 }
 
 fn query_count(deps: Deps) -> CountResponse {
-    let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
+    let count = deps
+        .storage
+        .range_keys(None, None, Order::Ascending)
+        .count() as u32;
     CountResponse { count }
 }
 
 fn query_sum(deps: Deps) -> StdResult<SumResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
-        .range(None, None, Order::Ascending)
-        .map(|(_, v)| from_slice(&v))
+        .range_values(None, None, Order::Ascending)
+        .map(|v| from_slice(&v))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
     Ok(SumResponse { sum })
@@ -121,17 +123,17 @@ fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
     // val: StdResult<Item>
     for val in deps
         .storage
-        .range(None, None, Order::Ascending)
-        .map(|(_, v)| from_slice::<Item>(&v))
+        .range_values(None, None, Order::Ascending)
+        .map(|v| from_slice::<Item>(&v))
     {
         // this returns error on parse error
         let my_val = val?.value;
         // now, let's do second iterator
         let sum: i32 = deps
             .storage
-            .range(None, None, Order::Ascending)
+            .range_values(None, None, Order::Ascending)
             // get value. ignore parse errors, just count as 0
-            .map(|(_, v)| {
+            .map(|v| {
                 from_slice::<Item>(&v)
                     .map(|v| v.value)
                     .expect("error in item")
@@ -149,18 +151,18 @@ fn query_list(deps: Deps) -> ListResponse {
     const THRESHOLD: [u8; 4] = [0x00, 0x00, 0x00, 0x20];
     let empty: Vec<u32> = deps
         .storage
-        .range(Some(&THRESHOLD), Some(&THRESHOLD), Order::Ascending)
-        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
+        .range_keys(Some(&THRESHOLD), Some(&THRESHOLD), Order::Ascending)
+        .map(|k| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     let early: Vec<u32> = deps
         .storage
-        .range(None, Some(&THRESHOLD), Order::Ascending)
-        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
+        .range_keys(None, Some(&THRESHOLD), Order::Ascending)
+        .map(|k| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     let late: Vec<u32> = deps
         .storage
-        .range(Some(&THRESHOLD), None, Order::Ascending)
-        .map(|(k, _)| u32::from_be_bytes(k.try_into().unwrap()))
+        .range_keys(Some(&THRESHOLD), None, Order::Ascending)
+        .map(|k| u32::from_be_bytes(k.try_into().unwrap()))
         .collect();
     ListResponse { empty, early, late }
 }
