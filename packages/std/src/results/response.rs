@@ -209,7 +209,7 @@ impl<T> Response<T> {
     /// }
     /// ```
     pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
-        self.messages.extend(msgs.into_iter());
+        self.messages.extend(msgs);
         self
     }
 
@@ -219,7 +219,7 @@ impl<T> Response<T> {
     /// The `wasm-` prefix will be appended by the runtime to the provided types
     /// of events.
     pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
-        self.events.extend(events.into_iter());
+        self.events.extend(events);
         self
     }
 
@@ -261,11 +261,11 @@ mod tests {
         assert_eq!(res.attributes, attrs);
 
         let optional = Option::<Attribute>::None;
-        let res: Response = Response::new().add_attributes(optional.into_iter());
+        let res: Response = Response::new().add_attributes(optional);
         assert_eq!(res.attributes.len(), 0);
 
         let optional = Option::<Attribute>::Some(Attribute::new("test", "ing"));
-        let res: Response = Response::new().add_attributes(optional.into_iter());
+        let res: Response = Response::new().add_attributes(optional);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(
             res.attributes[0],

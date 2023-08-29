@@ -205,7 +205,7 @@ fn query_denoms(deps: Deps) -> StdResult<Vec<DenomMetadata>> {
         })?;
 
         let len = page.metadata.len() as u32;
-        all_metadata.extend(page.metadata.into_iter());
+        all_metadata.extend(page.metadata);
         next_key = page.next_key;
 
         if next_key.is_none() || len < PAGE_SIZE {

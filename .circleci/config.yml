@@ -72,7 +72,7 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
-              rust-version: ["1.67.0", "1.68.2"]
+              rust-version: ["1.67.0", "1.72.0"]
       - benchmarking:
           requires:
             - package_vm

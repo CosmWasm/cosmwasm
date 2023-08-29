@@ -602,7 +602,7 @@ impl<T> IbcBasicResponse<T> {
     /// }
     /// ```
     pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
-        self.messages.extend(msgs.into_iter());
+        self.messages.extend(msgs);
         self
     }
 
@@ -612,7 +612,7 @@ impl<T> IbcBasicResponse<T> {
     /// The `wasm-` prefix will be appended by the runtime to the provided types
     /// of events.
     pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
-        self.events.extend(events.into_iter());
+        self.events.extend(events);
         self
     }
 }
@@ -765,7 +765,7 @@ impl<T> IbcReceiveResponse<T> {
     /// }
     /// ```
     pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
-        self.messages.extend(msgs.into_iter());
+        self.messages.extend(msgs);
         self
     }
 
@@ -775,7 +775,7 @@ impl<T> IbcReceiveResponse<T> {
     /// The `wasm-` prefix will be appended by the runtime to the provided types
     /// of events.
     pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
-        self.events.extend(events.into_iter());
+        self.events.extend(events);
         self
     }
 }

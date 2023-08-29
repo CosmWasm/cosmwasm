@@ -111,8 +111,7 @@ fn get_bonded(querier: &QuerierWrapper, contract_addr: impl Into<String>) -> Std
         return Ok(Uint128::new(0));
     }
     let denom = bonds[0].amount.denom.as_str();
-    bonds.iter().fold(Ok(Uint128::new(0)), |racc, d| {
-        let acc = racc?;
+    bonds.iter().try_fold(Uint128::zero(), |acc, d| {
         if d.amount.denom.as_str() != denom {
             Err(StdError::generic_err(format!(
                 "different denoms in bonds: '{}' vs '{}'",
