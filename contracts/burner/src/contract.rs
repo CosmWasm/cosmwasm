@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
+    entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
 };
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
@@ -24,10 +24,14 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
         to_address: msg.payout.clone(),
         amount: balance,
     };
+
+    let deleted = cleanup(deps.storage, msg.delete as usize);
+
     Ok(Response::new()
         .add_message(send)
-        .add_attribute("action", "burn")
-        .add_attribute("payout", msg.payout))
+        .add_attribute("action", "migrate")
+        .add_attribute("payout", msg.payout)
+        .add_attribute("deleted_entries", deleted.to_string()))
 }
 
 #[entry_point]
@@ -43,32 +47,36 @@ pub fn execute_cleanup(
     _info: MessageInfo,
     limit: Option<u32>,
 ) -> StdResult<Response> {
-    // the number of elements we can still take (decreasing over time)
-    let mut limit = limit.unwrap_or(u32::MAX) as usize;
+    let limit = limit.unwrap_or(u32::MAX) as usize;
+    let deleted = cleanup(deps.storage, limit);
 
+    Ok(Response::new()
+        .add_attribute("action", "cleanup")
+        .add_attribute("deleted_entries", deleted.to_string()))
+}
+
+fn cleanup(storage: &mut dyn Storage, mut limit: usize) -> usize {
     let mut deleted = 0;
     const PER_SCAN: usize = 20;
     loop {
         let take_this_scan = std::cmp::min(PER_SCAN, limit);
-        let keys: Vec<_> = deps
-            .storage
+        let keys: Vec<_> = storage
             .range_keys(None, None, Order::Ascending)
             .take(take_this_scan)
             .collect();
         let deleted_this_scan = keys.len();
         for k in keys {
-            deps.storage.remove(&k);
+            storage.remove(&k);
         }
         deleted += deleted_this_scan;
+        // decrease the number of elements we can still take
         limit -= deleted_this_scan;
         if limit == 0 || deleted_this_scan < take_this_scan {
             break;
         }
     }
 
-    Ok(Response::new()
-        .add_attribute("action", "burn")
-        .add_attribute("deleted_entries", deleted.to_string()))
+    deleted
 }
 
 #[cfg(test)]
@@ -114,6 +122,7 @@ mod tests {
         let payout = String::from("someone else");
         let msg = MigrateMsg {
             payout: payout.clone(),
+            delete: 0,
         };
         let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         // check payout
@@ -129,6 +138,29 @@ mod tests {
     }
 
     #[test]
+    fn migrate_with_delete() {
+        let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+
+        // store some sample data
+        deps.storage.set(b"foo", b"bar");
+        deps.storage.set(b"key2", b"data2");
+        deps.storage.set(b"key3", b"cool stuff");
+        let cnt = deps.storage.range(None, None, Order::Ascending).count();
+        assert_eq!(cnt, 3);
+
+        // migrate all of the data in one go
+        let msg = MigrateMsg {
+            payout: "user".to_string(),
+            delete: 100,
+        };
+        migrate(deps.as_mut(), mock_env(), msg).unwrap();
+
+        // no more data
+        let cnt = deps.storage.range(None, None, Order::Ascending).count();
+        assert_eq!(cnt, 0);
+    }
+
+    #[test]
     fn execute_cleans_up_data() {
         let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
 
@@ -141,7 +173,7 @@ mod tests {
 
         // change the verifier via migrate
         let payout = String::from("someone else");
-        let msg = MigrateMsg { payout };
+        let msg = MigrateMsg { payout, delete: 0 };
         let _res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
 
         let res = execute(
