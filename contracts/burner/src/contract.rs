@@ -25,7 +25,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
         amount: balance,
     };
 
-    let deleted = cleanup(deps.storage, Some(msg.delete));
+    let deleted = cleanup(deps.storage, msg.delete as usize);
 
     Ok(Response::new()
         .add_message(send)
@@ -47,6 +47,7 @@ pub fn execute_cleanup(
     _info: MessageInfo,
     limit: Option<u32>,
 ) -> StdResult<Response> {
+    let limit = limit.unwrap_or(u32::MAX) as usize;
     let deleted = cleanup(deps.storage, limit);
 
     Ok(Response::new()
@@ -54,10 +55,7 @@ pub fn execute_cleanup(
         .add_attribute("deleted_entries", deleted.to_string()))
 }
 
-fn cleanup(storage: &mut dyn Storage, limit: Option<u32>) -> usize {
-    // the number of elements we can still take (decreasing over time)
-    let mut limit = limit.unwrap_or(u32::MAX) as usize;
-
+fn cleanup(storage: &mut dyn Storage, mut limit: usize) -> usize {
     let mut deleted = 0;
     const PER_SCAN: usize = 20;
     loop {
@@ -71,6 +69,7 @@ fn cleanup(storage: &mut dyn Storage, limit: Option<u32>) -> usize {
             storage.remove(&k);
         }
         deleted += deleted_this_scan;
+        // decrease the number of elements we can still take
         limit -= deleted_this_scan;
         if limit == 0 || deleted_this_scan < take_this_scan {
             break;
