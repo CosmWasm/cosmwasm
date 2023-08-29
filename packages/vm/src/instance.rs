@@ -99,7 +99,7 @@ where
             let e = Environment::new(backend.api, gas_limit);
             if print_debug {
                 e.set_debug_handler(Some(Rc::new(RefCell::new(
-                    |msg: &str, _gas_remaining: DebugInfo<'_>| {
+                    |msg: &str, _info: DebugInfo<'_>| {
                         eprintln!("{msg}");
                     },
                 ))))
