@@ -25,11 +25,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
         amount: balance,
     };
 
-    let deleted = if msg.delete != 0 {
-        cleanup(deps.storage, Some(msg.delete))
-    } else {
-        0
-    };
+    let deleted = cleanup(deps.storage, Some(msg.delete));
 
     Ok(Response::new()
         .add_message(send)
@@ -54,7 +50,7 @@ pub fn execute_cleanup(
     let deleted = cleanup(deps.storage, limit);
 
     Ok(Response::new()
-        .add_attribute("action", "burn")
+        .add_attribute("action", "cleanup")
         .add_attribute("deleted_entries", deleted.to_string()))
 }
 
