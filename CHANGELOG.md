@@ -6,6 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add
+  `DistributionQuery::{DelegationRewards, DelegationTotalRewards, DelegatorValidators}`.
+  This requires the `cosmwasm_1_4` feature to be enabled. ([#1788])
+
+[#1788]: https://github.com/CosmWasm/cosmwasm/pull/1788
+
 ## [1.4.0-beta.1] - 2023-08-29
 
 ### Added
