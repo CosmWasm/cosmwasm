@@ -22,28 +22,32 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
 | Vec\<T\>            | array of JSON type of `T`                 | `["one", "two", "three"]` (Vec\<String\>), `[true, false]` (Vec\<bool\>)              |
 | Vec\<u8\>           | array of numbers from 0 to 255            | `[187, 61, 11, 250]`                                                                  | ⚠️ Discouraged as this encoding is not as compact as it can be. See `Binary`.                                                                                                          |
 | struct MyType { … } | object                                    | `{"foo":12}`                                                                          |                                                                                                                                                                                        |
-| [Uint64]            | string containing number                  | `"1234321"`                                                                           | Used to support full uint64 range in all implementations                                                                                                                               |
-| [Uint128]           | string containing number                  | `"1234321"`                                                                           |                                                                                                                                                                                        |
-| [Uint256]           | string containing number                  | `"1234321"`                                                                           |                                                                                                                                                                                        |
-| [Uint512]           | string containing number                  | `"1234321"`                                                                           |                                                                                                                                                                                        |
+| [Uint64]/[Int64]    | string containing number                  | `"1234321"`, `"-1234321"`                                                             | Used to support full uint64/int64 range in all implementations                                                                                                                         |
+| [Uint128]/[Int128]  | string containing number                  | `"1234321"`, `"-1234321"`                                                             |                                                                                                                                                                                        |
+| [Uint256]/[Int256]  | string containing number                  | `"1234321"`, `"-1234321"`                                                             |                                                                                                                                                                                        |
+| [Uint512]/[Int512]  | string containing number                  | `"1234321"`, `"-1234321"`                                                             |                                                                                                                                                                                        |
 | [Decimal]           | string containing decimal number          | `"55.6584"`                                                                           |                                                                                                                                                                                        |
 | [Decimal256]        | string containing decimal number          | `"55.6584"`                                                                           |                                                                                                                                                                                        |
 | [Binary]            | string containing base64 data             | `"MTIzCg=="`                                                                          |                                                                                                                                                                                        |
 | [HexBinary]         | string containing hex data                | `"b5d7d24e428c"`                                                                      |                                                                                                                                                                                        |
 | [Timestamp]         | string containing nanoseconds since epoch | `"1677687687000000000"`                                                               |                                                                                                                                                                                        |
 
-[uint64]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint64.html
-[uint128]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint128.html
-[uint256]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint256.html
-[uint512]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Uint512.html
-[decimal]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Decimal.html
+[uint64]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Uint64.html
+[uint128]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Uint128.html
+[uint256]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Uint256.html
+[uint512]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Uint512.html
+[int64]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Int64.html
+[int128]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Int128.html
+[int256]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Int256.html
+[int512]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Int512.html
+[decimal]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Decimal.html
 [decimal256]:
-  https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Decimal256.html
-[binary]: https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Binary.html
+  https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Decimal256.html
+[binary]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Binary.html
 [hexbinary]:
-  https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.HexBinary.html
+  https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.HexBinary.html
 [timestamp]:
-  https://docs.rs/cosmwasm-std/1.2.5/cosmwasm_std/struct.Timestamp.html
+  https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Timestamp.html
 [dev-note-4]:
   https://medium.com/cosmwasm/dev-note-4-u128-i128-serialization-in-cosmwasm-90cb76784d44
 
