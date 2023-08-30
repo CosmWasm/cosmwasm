@@ -306,6 +306,7 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
+    #[must_use = "Calling ::recycle() without reusing the returned backend just drops the instance"]
     pub fn recycle(self) -> Option<Backend<A, S, Q>> {
         let Instance {
             _inner, fe, store, ..
