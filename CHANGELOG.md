@@ -6,15 +6,7 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Added
-
-- cosmwasm-std: Add
-  `DistributionQuery::{DelegationRewards, DelegationTotalRewards, DelegatorValidators}`.
-  This requires the `cosmwasm_1_4` feature to be enabled. ([#1788])
-
-[#1788]: https://github.com/CosmWasm/cosmwasm/pull/1788
-
-## [1.4.0-beta.1] - 2023-08-29
+## [1.4.0-rc.1] - 2023-08-30
 
 ### Added
 
@@ -27,12 +19,16 @@ and this project adheres to
 - cosmwasm-std: Add new imports `db_next_{key, value}` for iterating storage
   keys / values only and make `Storage::{range_keys, range_values}` more
   efficient. This requires the `cosmwasm_1_4` feature to be enabled. ([#1834])
+- cosmwasm-std: Add
+  `DistributionQuery::{DelegationRewards, DelegationTotalRewards, DelegatorValidators}`.
+  This requires the `cosmwasm_1_4` feature to be enabled. ([#1788])
 
 [#1512]: https://github.com/CosmWasm/cosmwasm/issues/1512
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
 [#1806]: https://github.com/CosmWasm/cosmwasm/pull/1806
 [#1832]: https://github.com/CosmWasm/cosmwasm/pull/1832
 [#1834]: https://github.com/CosmWasm/cosmwasm/pull/1834
+[#1788]: https://github.com/CosmWasm/cosmwasm/pull/1788
 
 ### Changed
 
@@ -1861,9 +1857,9 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0-beta.1...HEAD
-[1.4.0-beta.1]:
-  https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0-beta.1
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0-rc.1...HEAD
+[1.4.0-rc.1]:
+  https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0-rc.1
 [1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0...v1.3.1
