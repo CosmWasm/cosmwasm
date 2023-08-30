@@ -5,6 +5,8 @@ use core::ops::Bound;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
+#[cfg(feature = "cosmwasm_1_3")]
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 
 use crate::addresses::{Addr, CanonicalAddr};
@@ -39,12 +41,14 @@ use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
-    query::{AllDenomMetadataResponse, DenomMetadataResponse},
+    query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},
     PageRequest,
 };
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
+#[cfg(feature = "cosmwasm_1_4")]
+use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 
 use super::riffle_shuffle;
 
@@ -935,12 +939,19 @@ impl StakingQuerier {
 #[derive(Clone, Default)]
 pub struct DistributionQuerier {
     withdraw_addresses: HashMap<String, String>,
+    /// Mock of accumulated rewards, indexed first by delegator and then validator address.
+    rewards: BTreeMap<String, BTreeMap<String, Vec<DecCoin>>>,
+    /// Mock of validators that a delegator has bonded to.
+    validators: BTreeMap<String, BTreeSet<String>>,
 }
 
 #[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
     pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
-        DistributionQuerier { withdraw_addresses }
+        DistributionQuerier {
+            withdraw_addresses,
+            ..Default::default()
+        }
     }
 
     pub fn set_withdraw_address(
@@ -969,6 +980,31 @@ impl DistributionQuerier {
         self.withdraw_addresses.clear();
     }
 
+    /// Sets accumulated rewards for a given validator and delegator pair.
+    pub fn set_rewards(
+        &mut self,
+        validator: impl Into<String>,
+        delegator: impl Into<String>,
+        rewards: Vec<DecCoin>,
+    ) {
+        self.rewards
+            .entry(delegator.into())
+            .or_default()
+            .insert(validator.into(), rewards);
+    }
+
+    /// Sets the validators a given delegator has bonded to.
+    pub fn set_validators(
+        &mut self,
+        delegator: impl Into<String>,
+        validators: impl IntoIterator<Item = impl Into<String>>,
+    ) {
+        self.validators.insert(
+            delegator.into(),
+            validators.into_iter().map(Into::into).collect(),
+        );
+    }
+
     pub fn query(&self, request: &DistributionQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
             DistributionQuery::DelegatorWithdrawAddress { delegator_address } => {
@@ -981,9 +1017,77 @@ impl DistributionQuerier {
                 };
                 to_binary(&res).into()
             }
+            #[cfg(feature = "cosmwasm_1_4")]
+            DistributionQuery::DelegationRewards {
+                delegator_address,
+                validator_address,
+            } => {
+                let res = DelegationRewardsResponse {
+                    rewards: self
+                        .rewards
+                        .get(delegator_address)
+                        .and_then(|v| v.get(validator_address))
+                        .cloned()
+                        .unwrap_or_default(),
+                };
+                to_binary(&res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_4")]
+            DistributionQuery::DelegationTotalRewards { delegator_address } => {
+                let validator_rewards = self
+                    .validator_rewards(delegator_address)
+                    .unwrap_or_default();
+                let res = crate::DelegationTotalRewardsResponse {
+                    total: validator_rewards
+                        .iter()
+                        .fold(BTreeMap::<&str, DecCoin>::new(), |mut acc, rewards| {
+                            for coin in &rewards.reward {
+                                acc.entry(&coin.denom)
+                                    .or_insert_with(|| DecCoin {
+                                        denom: coin.denom.clone(),
+                                        amount: Decimal256::zero(),
+                                    })
+                                    .amount += coin.amount;
+                            }
+
+                            acc
+                        })
+                        .into_values()
+                        .collect(),
+                    rewards: validator_rewards,
+                };
+                to_binary(&res).into()
+            }
+            #[cfg(feature = "cosmwasm_1_4")]
+            DistributionQuery::DelegatorValidators { delegator_address } => {
+                let res = DelegatorValidatorsResponse {
+                    validators: self
+                        .validators
+                        .get(delegator_address)
+                        .map(|set| set.iter().cloned().collect())
+                        .unwrap_or_default(),
+                };
+                to_binary(&res).into()
+            }
         };
         // system result is always ok in the mock implementation
         SystemResult::Ok(contract_result)
+    }
+
+    /// Helper method to get all rewards for a given delegator.
+    #[cfg(feature = "cosmwasm_1_4")]
+    fn validator_rewards(&self, delegator_address: &str) -> Option<Vec<crate::DelegatorReward>> {
+        let validator_rewards = self.rewards.get(delegator_address)?;
+
+        Some(
+            validator_rewards
+                .iter()
+                .map(|(validator, rewards)| crate::DelegatorReward {
+                    validator_address: validator.clone(),
+                    reward: rewards.clone(),
+                })
+                .collect(),
+        )
     }
 }
 
@@ -1543,6 +1647,104 @@ mod tests {
         let res = distribution.query(&query).unwrap().unwrap();
         let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
         assert_eq!(res.withdraw_address, "addr1");
+    }
+
+    #[cfg(feature = "cosmwasm_1_4")]
+    #[test]
+    fn distribution_querier_delegator_validators() {
+        let mut distribution = DistributionQuerier::default();
+        distribution.set_validators("addr0", ["valoper1", "valoper2"]);
+
+        let query = DistributionQuery::DelegatorValidators {
+            delegator_address: "addr0".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorValidatorsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.validators, ["valoper1", "valoper2"]);
+
+        let query = DistributionQuery::DelegatorValidators {
+            delegator_address: "addr1".to_string(),
+        };
+
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegatorValidatorsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.validators, ([] as [String; 0]));
+    }
+
+    #[cfg(feature = "cosmwasm_1_4")]
+    #[test]
+    fn distribution_querier_delegation_rewards() {
+        use crate::{Decimal256, DelegationTotalRewardsResponse, DelegatorReward};
+
+        let mut distribution = DistributionQuerier::default();
+        let valoper0_rewards = vec![
+            DecCoin::new(Decimal256::from_atomics(1234u128, 0).unwrap(), "uatom"),
+            DecCoin::new(Decimal256::from_atomics(56781234u128, 4).unwrap(), "utest"),
+        ];
+        distribution.set_rewards("valoper0", "addr0", valoper0_rewards.clone());
+
+        // both exist / are set
+        let query = DistributionQuery::DelegationRewards {
+            delegator_address: "addr0".to_string(),
+            validator_address: "valoper0".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.rewards, valoper0_rewards);
+
+        // delegator does not exist
+        let query = DistributionQuery::DelegationRewards {
+            delegator_address: "nonexistent".to_string(),
+            validator_address: "valoper0".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.rewards.len(), 0);
+
+        // validator does not exist
+        let query = DistributionQuery::DelegationRewards {
+            delegator_address: "addr0".to_string(),
+            validator_address: "valopernonexistent".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(res.rewards.len(), 0);
+
+        // add one more validator
+        let valoper1_rewards = vec![DecCoin::new(Decimal256::one(), "uatom")];
+        distribution.set_rewards("valoper1", "addr0", valoper1_rewards.clone());
+
+        // total rewards
+        let query = DistributionQuery::DelegationTotalRewards {
+            delegator_address: "addr0".to_string(),
+        };
+        let res = distribution.query(&query).unwrap().unwrap();
+        let res: DelegationTotalRewardsResponse = from_binary(&res).unwrap();
+        assert_eq!(
+            res.rewards,
+            vec![
+                DelegatorReward {
+                    validator_address: "valoper0".into(),
+                    reward: valoper0_rewards
+                },
+                DelegatorReward {
+                    validator_address: "valoper1".into(),
+                    reward: valoper1_rewards
+                },
+            ]
+        );
+        assert_eq!(
+            res.total,
+            [
+                DecCoin::new(
+                    Decimal256::from_atomics(1234u128, 0).unwrap() + Decimal256::one(),
+                    "uatom"
+                ),
+                // total for utest should still be the same
+                DecCoin::new(Decimal256::from_atomics(56781234u128, 4).unwrap(), "utest")
+            ]
+        );
     }
 
     #[cfg(feature = "stargate")]

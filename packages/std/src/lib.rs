@@ -69,10 +69,11 @@ pub use crate::pagination::PageRequest;
 pub use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, AllDenomMetadataResponse, AllValidatorsResponse,
     BalanceResponse, BankQuery, BondedDenomResponse, ChannelResponse, CodeInfoResponse,
-    ContractInfoResponse, CustomQuery, Delegation, DelegationResponse,
-    DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery, FullDelegation,
-    IbcQuery, ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse,
-    Validator, ValidatorResponse, WasmQuery,
+    ContractInfoResponse, CustomQuery, DecCoin, Delegation, DelegationResponse,
+    DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
+    DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
+    DistributionQuery, FullDelegation, IbcQuery, ListChannelsResponse, PortIdResponse,
+    QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
 #[allow(deprecated)]
 pub use crate::results::SubMsgExecutionResponse;

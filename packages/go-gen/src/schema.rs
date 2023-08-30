@@ -264,6 +264,7 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
         "HexBinary" => Some("Checksum"),
         "Addr" => Some("string"),
         "Decimal" => Some("string"),
+        "Decimal256" => Some("string"),
         _ => None,
     }
 }

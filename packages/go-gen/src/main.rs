@@ -352,6 +352,9 @@ mod tests {
         // compare_codes!(cosmwasm_std::ValidatorResponse); // does not use "omitempty" for `Validator` field
         // distribution
         compare_codes!(cosmwasm_std::DelegatorWithdrawAddressResponse);
+        compare_codes!(cosmwasm_std::DelegationRewardsResponse);
+        compare_codes!(cosmwasm_std::DelegationTotalRewardsResponse);
+        compare_codes!(cosmwasm_std::DelegatorValidatorsResponse);
         // wasm
         compare_codes!(cosmwasm_std::ContractInfoResponse);
         // compare_codes!(cosmwasm_std::CodeInfoResponse); // TODO: Checksum type and "omitempty"
