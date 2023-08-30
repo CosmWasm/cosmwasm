@@ -475,6 +475,8 @@ impl FromStr for SignedDecimal {
         let mut parts_iter = input.split('.');
 
         let whole_part = parts_iter.next().unwrap(); // split always returns at least one element
+        let is_neg = whole_part.starts_with('-');
+
         let whole = whole_part
             .parse::<Int128>()
             .map_err(|_| StdError::generic_err("Error parsing whole"))?;
@@ -484,7 +486,7 @@ impl FromStr for SignedDecimal {
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part
-                .parse::<Int128>()
+                .parse::<u64>() // u64 is enough for 18 decimal places
                 .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
@@ -496,13 +498,20 @@ impl FromStr for SignedDecimal {
             )?;
             debug_assert!(exp <= Self::DECIMAL_PLACES);
             let fractional_factor = Int128::from(10i128.pow(exp));
-            atomics = atomics
-                .checked_add(
-                    // The inner multiplication can't overflow because
-                    // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
-                    fractional.checked_mul(fractional_factor).unwrap(),
-                )
-                .map_err(|_| StdError::generic_err("Value too big"))?;
+
+            // This multiplication can't overflow because
+            // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
+            let fractional_part = Int128::from(fractional)
+                .checked_mul(fractional_factor)
+                .unwrap();
+
+            // for negative numbers, we need to subtract the fractional part
+            atomics = if is_neg {
+                atomics.checked_sub(fractional_part)
+            } else {
+                atomics.checked_add(fractional_part)
+            }
+            .map_err(|_| StdError::generic_err("Value too big"))?;
         }
 
         if parts_iter.next().is_some() {
