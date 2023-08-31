@@ -11,7 +11,7 @@ use thiserror::Error;
 
 use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, RoundUpOverflowError, StdError,
+    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
 use crate::{forward_ref_partial_eq, Decimal, Int256};
 
@@ -219,10 +219,36 @@ impl SignedDecimal {
         Self::DECIMAL_PLACES
     }
 
-    /// Rounds value down after decimal places.
+    /// Rounds value by truncating the decimal places.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn trunc(&self) -> Self {
+        Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
+    }
+
+    /// Rounds value down after decimal places. Panics on overflow.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn floor(&self) -> Self {
-        Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
+        match self.checked_floor() {
+            Ok(value) => value,
+            Err(_) => panic!("attempt to floor with overflow"),
+        }
+    }
+
+    /// Rounds value down after decimal places.
+    pub fn checked_floor(&self) -> Result<Self, RoundDownOverflowError> {
+        if self.is_negative() {
+            let truncated = self.trunc();
+
+            if truncated != self {
+                truncated
+                    .checked_sub(SignedDecimal::one())
+                    .map_err(|_| RoundDownOverflowError)
+            } else {
+                Ok(truncated)
+            }
+        } else {
+            Ok(self.trunc())
+        }
     }
 
     /// Rounds value up after decimal places. Panics on overflow.

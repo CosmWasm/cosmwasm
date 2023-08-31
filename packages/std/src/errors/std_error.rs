@@ -600,6 +600,10 @@ pub enum CheckedFromRatioError {
 pub struct RoundUpOverflowError;
 
 #[derive(Error, Debug, PartialEq, Eq)]
+#[error("Round down operation failed because of overflow")]
+pub struct RoundDownOverflowError;
+
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CoinsError {
     #[error("Duplicate denom")]
     DuplicateDenom,
