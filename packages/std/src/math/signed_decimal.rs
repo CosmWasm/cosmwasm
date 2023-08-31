@@ -373,6 +373,42 @@ impl SignedDecimal {
         }
     }
 
+    /// Converts this decimal to an unsigned integer by rounding down
+    /// to the next integer, e.g. 22.5 becomes 22 and -1.2 becomes -2.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use core::str::FromStr;
+    /// use cosmwasm_std::{SignedDecimal, Int128};
+    ///
+    /// let d = SignedDecimal::from_str("12.345").unwrap();
+    /// assert_eq!(d.to_int_floor(), Int128::new(12));
+    ///
+    /// let d = SignedDecimal::from_str("-12.999").unwrap();
+    /// assert_eq!(d.to_int_floor(), Int128::new(-13));
+    ///
+    /// let d = SignedDecimal::from_str("-0.05").unwrap();
+    /// assert_eq!(d.to_int_floor(), Int128::new(-1));
+    /// ```
+    #[must_use]
+    pub fn to_int_floor(self) -> Int128 {
+        if self.is_negative() {
+            // Using `x.to_int_floor() = -(-x).to_int_ceil()` for a negative `x`,
+            // but avoiding overflow by implementing the formula from `to_int_ceil` directly.
+            let x = self.0;
+            let y = Self::DECIMAL_FRACTIONAL;
+            if x.is_zero() {
+                Int128::zero()
+            } else {
+                // making sure not to negate `x`, as this would overflow
+                -Int128::one() - ((-Int128::one() - x) / y)
+            }
+        } else {
+            self.to_int_trunc()
+        }
+    }
+
     /// Converts this decimal to an unsigned integer by truncating
     /// the fractional part, e.g. 22.5 becomes 22.
     ///
@@ -380,50 +416,54 @@ impl SignedDecimal {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{Decimal, Int128};
+    /// use cosmwasm_std::{SignedDecimal, Int128};
     ///
     /// let d = SignedDecimal::from_str("12.345").unwrap();
-    /// assert_eq!(d.to_int_floor(), Int128::new(12));
+    /// assert_eq!(d.to_int_trunc(), Int128::new(12));
     ///
-    /// let d = SignedDecimal::from_str("12.999").unwrap();
-    /// assert_eq!(d.to_int_floor(), Int128::new(12));
+    /// let d = SignedDecimal::from_str("-12.999").unwrap();
+    /// assert_eq!(d.to_int_trunc(), Int128::new(-12));
     ///
     /// let d = SignedDecimal::from_str("75.0").unwrap();
-    /// assert_eq!(d.to_int_floor(), Int128::new(75));
+    /// assert_eq!(d.to_int_trunc(), Int128::new(75));
     /// ```
     #[must_use]
-    pub fn to_int_floor(self) -> Int128 {
+    pub fn to_int_trunc(self) -> Int128 {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
 
-    /// Converts this decimal to an unsigned integer by rounting up
-    /// to the next integer, e.g. 22.3 becomes 23.
+    /// Converts this decimal to an unsigned integer by rounding up
+    /// to the next integer, e.g. 22.3 becomes 23 and -1.2 becomes -1.
     ///
     /// ## Examples
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{Decimal, Int128};
+    /// use cosmwasm_std::{SignedDecimal, Int128};
     ///
     /// let d = SignedDecimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int128::new(13));
     ///
-    /// let d = SignedDecimal::from_str("12.999").unwrap();
-    /// assert_eq!(d.to_int_ceil(), Int128::new(13));
+    /// let d = SignedDecimal::from_str("-12.999").unwrap();
+    /// assert_eq!(d.to_int_ceil(), Int128::new(-12));
     ///
     /// let d = SignedDecimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int128::new(75));
     /// ```
     #[must_use]
     pub fn to_int_ceil(self) -> Int128 {
-        // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
-        // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
-        let x = self.0;
-        let y = Self::DECIMAL_FRACTIONAL;
-        if x.is_zero() {
-            Int128::zero()
+        if self.is_negative() {
+            self.to_int_trunc()
         } else {
-            Int128::one() + ((x - Int128::one()) / y)
+            // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
+            // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
+            let x = self.0;
+            let y = Self::DECIMAL_FRACTIONAL;
+            if x.is_zero() {
+                Int128::zero()
+            } else {
+                Int128::one() + ((x - Int128::one()) / y)
+            }
         }
     }
 }
