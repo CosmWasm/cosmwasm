@@ -532,7 +532,7 @@ impl FromStr for SignedDecimal {
     type Err = StdError;
 
     /// Converts the decimal string to a SignedDecimal
-    /// Possible inputs: "1.23", "1", "000012", "1.123000000"
+    /// Possible inputs: "1.23", "1", "000012", "1.123000000", "-1.12300"
     /// Disallowed: "", ".23"
     ///
     /// This never performs any kind of rounding.
@@ -616,7 +616,7 @@ impl fmt::Display for SignedDecimal {
 
 impl fmt::Debug for SignedDecimal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Decimal({self})")
+        write!(f, "SignedDecimal({self})")
     }
 }
 
@@ -923,6 +923,10 @@ mod tests {
             SignedDecimal::from_str("0.000000000000000043").unwrap()
         );
         assert_eq!(
+            SignedDecimal::from_atomics(-4321i128, 20).unwrap(),
+            SignedDecimal::from_str("-0.000000000000000043").unwrap()
+        );
+        assert_eq!(
             SignedDecimal::from_atomics(6789i128, 20).unwrap(),
             SignedDecimal::from_str("0.000000000000000067").unwrap()
         );
@@ -960,6 +964,13 @@ mod tests {
         assert_eq!(
             SignedDecimal::from_atomics(max.atomics(), max.decimal_places()).unwrap(),
             max
+        );
+
+        // Can be used with min value
+        let min = SignedDecimal::MIN;
+        assert_eq!(
+            SignedDecimal::from_atomics(min.atomics(), min.decimal_places()).unwrap(),
+            min
         );
 
         // Overflow is only possible with digits < 18
@@ -1019,6 +1030,16 @@ mod tests {
         assert_eq!(
             SignedDecimal::from_ratio(125i64, 1000i64),
             SignedDecimal::permille(125)
+        );
+
+        // -0.125
+        assert_eq!(
+            SignedDecimal::from_ratio(-1i64, 8i64),
+            SignedDecimal::permille(-125)
+        );
+        assert_eq!(
+            SignedDecimal::from_ratio(125i64, -1000i64),
+            SignedDecimal::permille(-125)
         );
 
         // 1/3 (result floored)
@@ -1133,7 +1154,7 @@ mod tests {
             SignedDecimal::percent(4200)
         );
 
-        // SignedDecimals
+        // Positive decimals
         assert_eq!(
             SignedDecimal::from_str("1.0").unwrap(),
             SignedDecimal::percent(100)
@@ -1167,6 +1188,19 @@ mod tests {
             SignedDecimal::from_str("00.04").unwrap(),
             SignedDecimal::percent(4)
         );
+        // Negative decimals
+        assert_eq!(
+            SignedDecimal::from_str("-00.04").unwrap(),
+            SignedDecimal::percent(-4)
+        );
+        assert_eq!(
+            SignedDecimal::from_str("-00.40").unwrap(),
+            SignedDecimal::percent(-40)
+        );
+        assert_eq!(
+            SignedDecimal::from_str("-04.00").unwrap(),
+            SignedDecimal::percent(-400)
+        );
 
         // Can handle DECIMAL_PLACES fractional digits
         assert_eq!(
@@ -1183,6 +1217,11 @@ mod tests {
             SignedDecimal::from_str("170141183460469231731.687303715884105727").unwrap(),
             SignedDecimal::MAX
         );
+        // Works for documented min value
+        assert_eq!(
+            SignedDecimal::from_str("-170141183460469231731.687303715884105728").unwrap(),
+            SignedDecimal::MIN
+        );
         assert_eq!(
             SignedDecimal::from_str("-1").unwrap(),
             SignedDecimal::negative_one()
@@ -1197,6 +1236,11 @@ mod tests {
         }
 
         match SignedDecimal::from_str(" ").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            e => panic!("Unexpected error: {e:?}"),
+        }
+
+        match SignedDecimal::from_str("-").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
             e => panic!("Unexpected error: {e:?}"),
         }
@@ -1220,6 +1264,11 @@ mod tests {
         }
 
         match SignedDecimal::from_str("1.2e3").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            e => panic!("Unexpected error: {e:?}"),
+        }
+
+        match SignedDecimal::from_str("1.-2").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
         }
@@ -1263,6 +1312,10 @@ mod tests {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
+        match SignedDecimal::from_str("-170141183460469231732").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            e => panic!("Unexpected error: {e:?}"),
+        }
 
         // SignedDecimal
         match SignedDecimal::from_str("170141183460469231732.0").unwrap_err() {
@@ -1270,6 +1323,10 @@ mod tests {
             e => panic!("Unexpected error: {e:?}"),
         }
         match SignedDecimal::from_str("170141183460469231731.687303715884105728").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            e => panic!("Unexpected error: {e:?}"),
+        }
+        match SignedDecimal::from_str("-170141183460469231731.687303715884105729").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
@@ -1282,12 +1339,18 @@ mod tests {
         let half = SignedDecimal::percent(50);
         let two = SignedDecimal::percent(200);
         let max = SignedDecimal::MAX;
+        let neg_half = SignedDecimal::percent(-50);
+        let neg_two = SignedDecimal::percent(-200);
+        let min = SignedDecimal::MIN;
 
         assert_eq!(zero.atomics(), Int128::new(0));
         assert_eq!(one.atomics(), Int128::new(1000000000000000000));
         assert_eq!(half.atomics(), Int128::new(500000000000000000));
         assert_eq!(two.atomics(), Int128::new(2000000000000000000));
         assert_eq!(max.atomics(), Int128::MAX);
+        assert_eq!(neg_half.atomics(), Int128::new(-500000000000000000));
+        assert_eq!(neg_two.atomics(), Int128::new(-2000000000000000000));
+        assert_eq!(min.atomics(), Int128::MIN);
     }
 
     #[test]
@@ -1297,12 +1360,14 @@ mod tests {
         let half = SignedDecimal::percent(50);
         let two = SignedDecimal::percent(200);
         let max = SignedDecimal::MAX;
+        let neg_one = SignedDecimal::negative_one();
 
         assert_eq!(zero.decimal_places(), 18);
         assert_eq!(one.decimal_places(), 18);
         assert_eq!(half.decimal_places(), 18);
         assert_eq!(two.decimal_places(), 18);
         assert_eq!(max.decimal_places(), 18);
+        assert_eq!(neg_one.decimal_places(), 18);
     }
 
     #[test]
@@ -1313,7 +1378,7 @@ mod tests {
 
         assert!(!SignedDecimal::one().is_zero());
         assert!(!SignedDecimal::percent(123).is_zero());
-        assert!(!SignedDecimal::permille(1234).is_zero());
+        assert!(!SignedDecimal::permille(-1234).is_zero());
     }
 
     #[test]
@@ -1323,6 +1388,12 @@ mod tests {
 
         // d == 1
         assert_eq!(SignedDecimal::one().inv(), Some(SignedDecimal::one()));
+
+        // d == -1
+        assert_eq!(
+            SignedDecimal::negative_one().inv(),
+            Some(SignedDecimal::negative_one())
+        );
 
         // d > 1 exact
         assert_eq!(
@@ -1369,6 +1440,17 @@ mod tests {
             SignedDecimal::from_str("0.0005").unwrap().inv(),
             Some(SignedDecimal::from_str("2000").unwrap())
         );
+
+        // d < 0
+        assert_eq!(
+            SignedDecimal::from_str("-0.5").unwrap().inv(),
+            Some(SignedDecimal::from_str("-2").unwrap())
+        );
+        // d < 0 rounded
+        assert_eq!(
+            SignedDecimal::from_str("-3").unwrap().inv(),
+            Some(SignedDecimal::from_str("-0.333333333333333333").unwrap())
+        );
     }
 
     #[test]
@@ -1391,6 +1473,19 @@ mod tests {
         assert_eq!(
             SignedDecimal::zero() + SignedDecimal::zero(),
             SignedDecimal::zero()
+        );
+        // negative numbers
+        assert_eq!(
+            SignedDecimal::percent(-5) + SignedDecimal::percent(-4),
+            SignedDecimal::percent(-9)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-5) + SignedDecimal::percent(4),
+            SignedDecimal::percent(-1)
+        );
+        assert_eq!(
+            SignedDecimal::percent(5) + SignedDecimal::percent(-4),
+            SignedDecimal::percent(1)
         );
 
         // works for refs
@@ -1447,6 +1542,20 @@ mod tests {
         assert_eq!(
             SignedDecimal::zero() - SignedDecimal::zero(),
             SignedDecimal::zero()
+        );
+
+        // negative numbers
+        assert_eq!(
+            SignedDecimal::percent(-5) - SignedDecimal::percent(-4),
+            SignedDecimal::percent(-1)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-5) - SignedDecimal::percent(4),
+            SignedDecimal::percent(-9)
+        );
+        assert_eq!(
+            SignedDecimal::percent(500) - SignedDecimal::percent(-4),
+            SignedDecimal::percent(504)
         );
 
         // works for refs
@@ -1511,6 +1620,11 @@ mod tests {
             SignedDecimal::percent(1000)
         );
         assert_eq!(SignedDecimal::MAX * one, SignedDecimal::MAX);
+        assert_eq!(SignedDecimal::percent(-1) * one, SignedDecimal::percent(-1));
+        assert_eq!(
+            one * SignedDecimal::percent(-10),
+            SignedDecimal::percent(-10)
+        );
 
         // double
         assert_eq!(two * SignedDecimal::percent(0), SignedDecimal::percent(0));
@@ -1534,6 +1648,11 @@ mod tests {
         assert_eq!(
             SignedDecimal::percent(1000) * two,
             SignedDecimal::percent(2000)
+        );
+        assert_eq!(SignedDecimal::percent(-1) * two, SignedDecimal::percent(-2));
+        assert_eq!(
+            two * SignedDecimal::new(Int128::MIN / Int128::new(2)),
+            SignedDecimal::MIN
         );
 
         // half
@@ -1580,6 +1699,10 @@ mod tests {
         assert_eq!(dec("1000000000000") * a, dec("123127726548762.582"));
         assert_eq!(dec("1000000000000000") * a, dec("123127726548762582"));
         assert_eq!(dec("1000000000000000000") * a, dec("123127726548762582000"));
+        assert_eq!(
+            dec("-1000000000000000000") * a,
+            dec("-123127726548762582000")
+        );
 
         // Move right
         let max = SignedDecimal::MAX;
@@ -1663,6 +1786,8 @@ mod tests {
                 SignedDecimal::percent(200),
             ),
             (SignedDecimal::permille(6), SignedDecimal::permille(13)),
+            (SignedDecimal::permille(-6), SignedDecimal::permille(0)),
+            (SignedDecimal::MAX, SignedDecimal::negative_one()),
         ];
 
         // The regular core::ops::Mul is our source of truth for these tests.
@@ -1718,6 +1843,14 @@ mod tests {
             SignedDecimal::percent(1000) / one,
             SignedDecimal::percent(1000)
         );
+        assert_eq!(
+            one / SignedDecimal::percent(-1),
+            SignedDecimal::percent(-10_000)
+        );
+        assert_eq!(
+            one / SignedDecimal::percent(-10),
+            SignedDecimal::percent(-1_000)
+        );
 
         // double
         assert_eq!(
@@ -1746,6 +1879,14 @@ mod tests {
         assert_eq!(
             SignedDecimal::percent(1000) / two,
             SignedDecimal::percent(500)
+        );
+        assert_eq!(
+            two / SignedDecimal::percent(-1),
+            SignedDecimal::percent(-20_000)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-10000) / two,
+            SignedDecimal::percent(-5000)
         );
 
         // half
@@ -1800,6 +1941,18 @@ mod tests {
         assert_eq!(dec("1000000000000") / a, dec("0.000008121647560868"));
         assert_eq!(dec("1000000000000000") / a, dec("0.008121647560868164"));
         assert_eq!(dec("1000000000000000000") / a, dec("8.121647560868164773"));
+        // negative
+        let a = dec("-123127726548762582");
+        assert_eq!(a / dec("1"), dec("-123127726548762582"));
+        assert_eq!(a / dec("10"), dec("-12312772654876258.2"));
+        assert_eq!(a / dec("100"), dec("-1231277265487625.82"));
+        assert_eq!(a / dec("1000"), dec("-123127726548762.582"));
+        assert_eq!(a / dec("1000000"), dec("-123127726548.762582"));
+        assert_eq!(a / dec("1000000000"), dec("-123127726.548762582"));
+        assert_eq!(a / dec("1000000000000"), dec("-123127.726548762582"));
+        assert_eq!(a / dec("1000000000000000"), dec("-123.127726548762582"));
+        assert_eq!(a / dec("1000000000000000000"), dec("-0.123127726548762582"));
+        assert_eq!(dec("1") / a, dec("-0.000000000000000008"));
 
         // Move left
         let a = dec("0.123127726548762582");
@@ -1812,6 +1965,14 @@ mod tests {
         assert_eq!(a / dec("0.000000000001"), dec("123127726548.762582"));
         assert_eq!(a / dec("0.000000000000001"), dec("123127726548762.582"));
         assert_eq!(a / dec("0.000000000000000001"), dec("123127726548762582"));
+        // negative
+        let a = dec("-0.123127726548762582");
+        assert_eq!(a / dec("1.0"), dec("-0.123127726548762582"));
+        assert_eq!(a / dec("0.1"), dec("-1.23127726548762582"));
+        assert_eq!(a / dec("0.01"), dec("-12.3127726548762582"));
+        assert_eq!(a / dec("0.001"), dec("-123.127726548762582"));
+        assert_eq!(a / dec("0.000001"), dec("-123127.726548762582"));
+        assert_eq!(a / dec("0.000000001"), dec("-123127726.548762582"));
 
         assert_eq!(
             SignedDecimal::percent(15) / SignedDecimal::percent(60),
@@ -1859,6 +2020,11 @@ mod tests {
         let left = SignedDecimal::percent(150); // 1.5
         let right = Int128::new(3);
         assert_eq!(left / right, SignedDecimal::percent(50));
+
+        // negative
+        let left = SignedDecimal::percent(-150); // -1.5
+        let right = Int128::new(3);
+        assert_eq!(left / right, SignedDecimal::percent(-50));
 
         // 0/a
         let left = SignedDecimal::zero();
@@ -1918,6 +2084,18 @@ mod tests {
             );
         }
 
+        for exp in 1..10 {
+            assert_eq!(
+                SignedDecimal::negative_one().checked_pow(exp).unwrap(),
+                // alternates between 1 and -1
+                if exp % 2 == 0 {
+                    SignedDecimal::one()
+                } else {
+                    SignedDecimal::negative_one()
+                }
+            )
+        }
+
         for num in &[
             SignedDecimal::percent(50),
             SignedDecimal::percent(99),
@@ -1975,6 +2153,24 @@ mod tests {
             SignedDecimal::percent(10).checked_pow(18).unwrap(),
             SignedDecimal(1i128.into())
         );
+
+        let decimals = [
+            SignedDecimal::percent(-50),
+            SignedDecimal::percent(-99),
+            SignedDecimal::percent(-200),
+        ];
+        let exponents = [1, 2, 3, 4, 5, 8, 10];
+
+        for d in decimals {
+            for e in exponents {
+                // use multiplication as source of truth
+                let mut mul = Ok(d);
+                for _ in 1..e {
+                    mul = mul.and_then(|mul| mul.checked_mul(d));
+                }
+                assert_eq!(mul, d.checked_pow(e));
+            }
+        }
     }
 
     #[test]
@@ -1995,12 +2191,17 @@ mod tests {
         assert_eq!(SignedDecimal::zero().to_string(), "0");
         assert_eq!(SignedDecimal::one().to_string(), "1");
         assert_eq!(SignedDecimal::percent(500).to_string(), "5");
+        assert_eq!(SignedDecimal::percent(-500).to_string(), "-5");
 
         // SignedDecimals
         assert_eq!(SignedDecimal::percent(125).to_string(), "1.25");
         assert_eq!(SignedDecimal::percent(42638).to_string(), "426.38");
         assert_eq!(SignedDecimal::percent(3).to_string(), "0.03");
         assert_eq!(SignedDecimal::permille(987).to_string(), "0.987");
+        assert_eq!(SignedDecimal::percent(-125).to_string(), "-1.25");
+        assert_eq!(SignedDecimal::percent(-42638).to_string(), "-426.38");
+        assert_eq!(SignedDecimal::percent(-3).to_string(), "-0.03");
+        assert_eq!(SignedDecimal::permille(-987).to_string(), "-0.987");
 
         assert_eq!(
             SignedDecimal(Int128::from(1i128)).to_string(),
@@ -2070,6 +2271,18 @@ mod tests {
             SignedDecimal(Int128::from(100000000000000000i128)).to_string(),
             "0.1"
         );
+        assert_eq!(
+            SignedDecimal(Int128::from(-1i128)).to_string(),
+            "-0.000000000000000001"
+        );
+        assert_eq!(
+            SignedDecimal(Int128::from(-100000000000000i128)).to_string(),
+            "-0.0001"
+        );
+        assert_eq!(
+            SignedDecimal(Int128::from(-100000000000000000i128)).to_string(),
+            "-0.1"
+        );
     }
 
     #[test]
@@ -2078,14 +2291,15 @@ mod tests {
             SignedDecimal::zero(),
             SignedDecimal(Int128::from(2i128)),
             SignedDecimal(Int128::from(2i128)),
+            SignedDecimal(Int128::from(-2i128)),
         ];
         assert_eq!(
             items.iter().sum::<SignedDecimal>(),
-            SignedDecimal(Int128::from(4i128))
+            SignedDecimal(Int128::from(2i128))
         );
         assert_eq!(
             items.into_iter().sum::<SignedDecimal>(),
-            SignedDecimal(Int128::from(4i128))
+            SignedDecimal(Int128::from(2i128))
         );
 
         let empty: Vec<SignedDecimal> = vec![];
@@ -2103,6 +2317,12 @@ mod tests {
             to_vec(&SignedDecimal::percent(8765)).unwrap(),
             br#""87.65""#
         );
+        assert_eq!(
+            to_vec(&SignedDecimal::percent(-87654)).unwrap(),
+            br#""-876.54""#
+        );
+        assert_eq!(to_vec(&SignedDecimal::negative_one()).unwrap(), br#""-1""#);
+        assert_eq!(to_vec(&-SignedDecimal::percent(8)).unwrap(), br#""-0.08""#);
     }
 
     #[test]
@@ -2140,6 +2360,24 @@ mod tests {
             from_slice::<SignedDecimal>(br#""87.65""#).unwrap(),
             SignedDecimal::percent(8765)
         );
+
+        // negative numbers
+        assert_eq!(
+            from_slice::<SignedDecimal>(br#""-0""#).unwrap(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            from_slice::<SignedDecimal>(br#""-1""#).unwrap(),
+            SignedDecimal::negative_one()
+        );
+        assert_eq!(
+            from_slice::<SignedDecimal>(br#""-001""#).unwrap(),
+            SignedDecimal::negative_one()
+        );
+        assert_eq!(
+            from_slice::<SignedDecimal>(br#""-0.08""#).unwrap(),
+            SignedDecimal::percent(-8)
+        );
     }
 
     #[test]
@@ -2153,6 +2391,12 @@ mod tests {
         let a = SignedDecimal::percent(-200);
         let b = SignedDecimal::percent(200);
         let expected = Decimal::percent(400);
+        assert_eq!(a.abs_diff(b), expected);
+        assert_eq!(b.abs_diff(a), expected);
+
+        let a = SignedDecimal::percent(-200);
+        let b = SignedDecimal::percent(-240);
+        let expected = Decimal::percent(40);
         assert_eq!(a.abs_diff(b), expected);
         assert_eq!(b.abs_diff(a), expected);
     }
@@ -2170,6 +2414,12 @@ mod tests {
         assert_eq!(
             SignedDecimal::percent(1525) % SignedDecimal::percent(400),
             SignedDecimal::percent(325)
+        );
+
+        // -20.25 % 5 = -25
+        assert_eq!(
+            SignedDecimal::percent(-2025) % SignedDecimal::percent(500),
+            SignedDecimal::percent(-25)
         );
 
         let a = SignedDecimal::percent(318);
@@ -2191,6 +2441,11 @@ mod tests {
         let b = SignedDecimal::percent(1270);
         a %= &b;
         assert_eq!(a, SignedDecimal::percent(452)); // 42.62 % 12.7 = 4.52
+
+        let mut a = SignedDecimal::percent(-4262);
+        let b = SignedDecimal::percent(1270);
+        a %= &b;
+        assert_eq!(a, SignedDecimal::percent(-452)); // -42.62 % 12.7 = -4.52
     }
 
     #[test]
@@ -2212,6 +2467,10 @@ mod tests {
             SignedDecimal::MAX.checked_add(SignedDecimal::percent(1)),
             Err(OverflowError { .. })
         ));
+        assert!(matches!(
+            SignedDecimal::MIN.checked_add(SignedDecimal::percent(-1)),
+            Err(OverflowError { .. })
+        ));
 
         // checked sub
         assert_eq!(
@@ -2228,6 +2487,10 @@ mod tests {
         );
         assert!(matches!(
             SignedDecimal::MIN.checked_sub(SignedDecimal::percent(1)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            SignedDecimal::MAX.checked_sub(SignedDecimal::percent(-1)),
             Err(OverflowError { .. })
         ));
 
@@ -2252,6 +2515,18 @@ mod tests {
             SignedDecimal::MAX.checked_div(SignedDecimal::percent(1)),
             Err(CheckedFromRatioError::Overflow {})
         ));
+        assert_eq!(
+            SignedDecimal::percent(-88)
+                .checked_div(SignedDecimal::percent(20))
+                .unwrap(),
+            SignedDecimal::percent(-440)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-88)
+                .checked_div(SignedDecimal::percent(-20))
+                .unwrap(),
+            SignedDecimal::percent(440)
+        );
 
         // checked rem
         assert_eq!(
@@ -2266,6 +2541,18 @@ mod tests {
                 .unwrap(),
             SignedDecimal::percent(325)
         );
+        assert_eq!(
+            SignedDecimal::percent(-1525)
+                .checked_rem(SignedDecimal::percent(400))
+                .unwrap(),
+            SignedDecimal::percent(-325)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-1525)
+                .checked_rem(SignedDecimal::percent(-400))
+                .unwrap(),
+            SignedDecimal::percent(-325)
+        );
         assert!(matches!(
             SignedDecimal::MAX.checked_rem(SignedDecimal::zero()),
             Err(DivideByZeroError { .. })
@@ -2277,6 +2564,14 @@ mod tests {
         assert_eq!(
             SignedDecimal::percent(200).pow(2),
             SignedDecimal::percent(400)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).pow(2),
+            SignedDecimal::percent(400)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).pow(3),
+            SignedDecimal::percent(-800)
         );
         assert_eq!(
             SignedDecimal::percent(200).pow(10),
@@ -2297,12 +2592,32 @@ mod tests {
             SignedDecimal::percent(400)
         );
         assert_eq!(
+            SignedDecimal::percent(-200).saturating_add(SignedDecimal::percent(200)),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).saturating_add(SignedDecimal::percent(-200)),
+            SignedDecimal::percent(-400)
+        );
+        assert_eq!(
             SignedDecimal::MAX.saturating_add(SignedDecimal::percent(200)),
             SignedDecimal::MAX
         );
         assert_eq!(
+            SignedDecimal::MIN.saturating_add(SignedDecimal::percent(-1)),
+            SignedDecimal::MIN
+        );
+        assert_eq!(
             SignedDecimal::percent(200).saturating_sub(SignedDecimal::percent(100)),
             SignedDecimal::percent(100)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).saturating_sub(SignedDecimal::percent(100)),
+            SignedDecimal::percent(-300)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).saturating_sub(SignedDecimal::percent(-100)),
+            SignedDecimal::percent(-100)
         );
         assert_eq!(
             SignedDecimal::zero().saturating_sub(SignedDecimal::percent(200)),
@@ -2313,7 +2628,19 @@ mod tests {
             SignedDecimal::MIN
         );
         assert_eq!(
+            SignedDecimal::MAX.saturating_sub(SignedDecimal::percent(-200)),
+            SignedDecimal::MAX
+        );
+        assert_eq!(
             SignedDecimal::percent(200).saturating_mul(SignedDecimal::percent(50)),
+            SignedDecimal::percent(100)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).saturating_mul(SignedDecimal::percent(50)),
+            SignedDecimal::percent(-100)
+        );
+        assert_eq!(
+            SignedDecimal::percent(-200).saturating_mul(SignedDecimal::percent(-50)),
             SignedDecimal::percent(100)
         );
         assert_eq!(
@@ -2345,6 +2672,18 @@ mod tests {
             SignedDecimal::percent(200)
         );
         assert_eq!(SignedDecimal::percent(99).floor(), SignedDecimal::zero());
+        assert_eq!(
+            SignedDecimal(Int128::from(1i128)).floor(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            SignedDecimal(Int128::from(-1i128)).floor(),
+            SignedDecimal::negative_one()
+        );
+        assert_eq!(
+            SignedDecimal::permille(-1234).floor(),
+            SignedDecimal::percent(-200)
+        );
 
         assert_eq!(SignedDecimal::one().ceil(), SignedDecimal::one());
         assert_eq!(
@@ -2360,6 +2699,35 @@ mod tests {
             SignedDecimal(Int128::from(1i128)).ceil(),
             SignedDecimal::one()
         );
+        assert_eq!(
+            SignedDecimal(Int128::from(-1i128)).ceil(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            SignedDecimal::permille(-1234).ceil(),
+            SignedDecimal::negative_one()
+        );
+
+        assert_eq!(SignedDecimal::one().trunc(), SignedDecimal::one());
+        assert_eq!(SignedDecimal::percent(150).trunc(), SignedDecimal::one());
+        assert_eq!(SignedDecimal::percent(199).trunc(), SignedDecimal::one());
+        assert_eq!(
+            SignedDecimal::percent(200).trunc(),
+            SignedDecimal::percent(200)
+        );
+        assert_eq!(SignedDecimal::percent(99).trunc(), SignedDecimal::zero());
+        assert_eq!(
+            SignedDecimal(Int128::from(1i128)).trunc(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            SignedDecimal(Int128::from(-1i128)).trunc(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            SignedDecimal::permille(-1234).trunc(),
+            SignedDecimal::negative_one()
+        );
     }
 
     #[test]
@@ -2369,15 +2737,34 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "attempt to floor with overflow")]
+    fn signed_decimal_floor_panics() {
+        let _ = SignedDecimal::MIN.floor();
+    }
+
+    #[test]
     fn signed_decimal_checked_ceil() {
         assert_eq!(
             SignedDecimal::percent(199).checked_ceil(),
             Ok(SignedDecimal::percent(200))
         );
-        assert!(matches!(
-            SignedDecimal::MAX.checked_ceil(),
-            Err(RoundUpOverflowError { .. })
-        ));
+        assert_eq!(SignedDecimal::MAX.checked_ceil(), Err(RoundUpOverflowError));
+    }
+
+    #[test]
+    fn signed_decimal_checked_floor() {
+        assert_eq!(
+            SignedDecimal::percent(199).checked_floor(),
+            Ok(SignedDecimal::one())
+        );
+        assert_eq!(
+            SignedDecimal::percent(-199).checked_floor(),
+            Ok(SignedDecimal::percent(-200))
+        );
+        assert_eq!(
+            SignedDecimal::MIN.checked_floor(),
+            Err(RoundDownOverflowError)
+        );
     }
 
     #[test]
@@ -2390,14 +2777,22 @@ mod tests {
         assert_eq!(d.to_int_floor(), Int128::new(12));
         let d = SignedDecimal::from_str("0.98451384").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(0));
+        let d = SignedDecimal::from_str("-12.000000000000000001").unwrap();
+        assert_eq!(d.to_int_floor(), Int128::new(-13));
+        let d = SignedDecimal::from_str("-12.345").unwrap();
+        assert_eq!(d.to_int_floor(), Int128::new(-13));
 
         let d = SignedDecimal::from_str("75.0").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(75));
         let d = SignedDecimal::from_str("0.0").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(0));
+        let d = SignedDecimal::from_str("-75.0").unwrap();
+        assert_eq!(d.to_int_floor(), Int128::new(-75));
 
         let d = SignedDecimal::MAX;
         assert_eq!(d.to_int_floor(), Int128::new(170141183460469231731));
+        let d = SignedDecimal::MIN;
+        assert_eq!(d.to_int_floor(), Int128::new(-170141183460469231732));
     }
 
     #[test]
@@ -2408,14 +2803,48 @@ mod tests {
         assert_eq!(d.to_int_ceil(), Int128::new(13));
         let d = SignedDecimal::from_str("12.999").unwrap();
         assert_eq!(d.to_int_ceil(), Int128::new(13));
+        let d = SignedDecimal::from_str("-12.000000000000000001").unwrap();
+        assert_eq!(d.to_int_ceil(), Int128::new(-12));
+        let d = SignedDecimal::from_str("-12.345").unwrap();
+        assert_eq!(d.to_int_ceil(), Int128::new(-12));
 
         let d = SignedDecimal::from_str("75.0").unwrap();
         assert_eq!(d.to_int_ceil(), Int128::new(75));
         let d = SignedDecimal::from_str("0.0").unwrap();
         assert_eq!(d.to_int_ceil(), Int128::new(0));
+        let d = SignedDecimal::from_str("-75.0").unwrap();
+        assert_eq!(d.to_int_ceil(), Int128::new(-75));
 
         let d = SignedDecimal::MAX;
         assert_eq!(d.to_int_ceil(), Int128::new(170141183460469231732));
+        let d = SignedDecimal::MIN;
+        assert_eq!(d.to_int_ceil(), Int128::new(-170141183460469231731));
+    }
+
+    #[test]
+    fn signed_decimal_to_int_trunc_works() {
+        let d = SignedDecimal::from_str("12.000000000000000001").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(12));
+        let d = SignedDecimal::from_str("12.345").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(12));
+        let d = SignedDecimal::from_str("12.999").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(12));
+        let d = SignedDecimal::from_str("-12.000000000000000001").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(-12));
+        let d = SignedDecimal::from_str("-12.345").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(-12));
+
+        let d = SignedDecimal::from_str("75.0").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(75));
+        let d = SignedDecimal::from_str("0.0").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(0));
+        let d = SignedDecimal::from_str("-75.0").unwrap();
+        assert_eq!(d.to_int_trunc(), Int128::new(-75));
+
+        let d = SignedDecimal::MAX;
+        assert_eq!(d.to_int_trunc(), Int128::new(170141183460469231731));
+        let d = SignedDecimal::MIN;
+        assert_eq!(d.to_int_trunc(), Int128::new(-170141183460469231731));
     }
 
     #[test]
@@ -2431,6 +2860,11 @@ mod tests {
             ("0.5", "0.5", true),
             ("0.5", "0.51", false),
             ("0", "0.00000", true),
+            ("-1", "-1", true),
+            ("-0.5", "-0.5", true),
+            ("-0.5", "0.5", false),
+            ("-0.5", "-0.51", false),
+            ("-0", "-0.00000", true),
         ]
         .into_iter()
         .map(|(lhs, rhs, expected)| (dec(lhs), dec(rhs), expected));
@@ -2447,12 +2881,12 @@ mod tests {
     #[test]
     fn signed_decimal_implements_debug() {
         let decimal = SignedDecimal::from_str("123.45").unwrap();
-        assert_eq!(format!("{decimal:?}"), "Decimal(123.45)");
+        assert_eq!(format!("{decimal:?}"), "SignedDecimal(123.45)");
 
-        let test_cases = ["5", "5.01", "42", "0", "2"];
+        let test_cases = ["5", "5.01", "42", "0", "2", "-0.000001"];
         for s in test_cases {
             let decimal = SignedDecimal::from_str(s).unwrap();
-            let expected = format!("Decimal({s})");
+            let expected = format!("SignedDecimal({s})");
             assert_eq!(format!("{decimal:?}"), expected);
         }
     }
