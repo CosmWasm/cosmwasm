@@ -532,13 +532,18 @@ impl fmt::Display for SignedDecimal {
         } else {
             let fractional_string = format!(
                 "{:0>padding$}",
-                fractional,
+                fractional.abs(), // fractional should always be printed as positive
                 padding = Self::DECIMAL_PLACES as usize
             );
-            f.write_str(&whole.to_string())?;
-            f.write_char('.')?;
-            f.write_str(fractional_string.trim_end_matches('0'))?;
-            Ok(())
+            if self.is_negative() {
+                f.write_char('-')?;
+            }
+            write!(
+                f,
+                "{whole}.{fractional}",
+                whole = whole.abs(),
+                fractional = fractional_string.trim_end_matches('0')
+            )
         }
     }
 }
