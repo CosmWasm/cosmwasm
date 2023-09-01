@@ -294,6 +294,11 @@ impl Int512 {
     pub const fn abs_diff(self, other: Self) -> Uint512 {
         Uint512(self.0.abs_diff(other.0))
     }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn abs(self) -> Self {
+        Self(self.0.abs())
+    }
 }
 
 impl From<Uint256> for Int512 {
