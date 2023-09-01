@@ -179,12 +179,150 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "description": "This calls into the native bank module for querying metadata for a specific bank token. Return value is DenomMetadataResponse",
+          "type": "object",
+          "required": [
+            "denom_metadata"
+          ],
+          "properties": {
+            "denom_metadata": {
+              "type": "object",
+              "required": [
+                "denom"
+              ],
+              "properties": {
+                "denom": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "This calls into the native bank module for querying metadata for all bank tokens that have a metadata entry. Return value is AllDenomMetadataResponse",
+          "type": "object",
+          "required": [
+            "all_denom_metadata"
+          ],
+          "properties": {
+            "all_denom_metadata": {
+              "type": "object",
+              "properties": {
+                "pagination": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/PageRequest"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
       "type": "string"
+    },
+    "DistributionQuery": {
+      "oneOf": [
+        {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L222-L230>",
+          "type": "object",
+          "required": [
+            "delegator_withdraw_address"
+          ],
+          "properties": {
+            "delegator_withdraw_address": {
+              "type": "object",
+              "required": [
+                "delegator_address"
+              ],
+              "properties": {
+                "delegator_address": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L157-L167>",
+          "type": "object",
+          "required": [
+            "delegation_rewards"
+          ],
+          "properties": {
+            "delegation_rewards": {
+              "type": "object",
+              "required": [
+                "delegator_address",
+                "validator_address"
+              ],
+              "properties": {
+                "delegator_address": {
+                  "type": "string"
+                },
+                "validator_address": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L180-L187>",
+          "type": "object",
+          "required": [
+            "delegation_total_rewards"
+          ],
+          "properties": {
+            "delegation_total_rewards": {
+              "type": "object",
+              "required": [
+                "delegator_address"
+              ],
+              "properties": {
+                "delegator_address": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/b0acf60e6c39f7ab023841841fc0b751a12c13ff/proto/cosmos/distribution/v1beta1/query.proto#L202-L210>",
+          "type": "object",
+          "required": [
+            "delegator_validators"
+          ],
+          "properties": {
+            "delegator_validators": {
+              "type": "object",
+              "required": [
+                "delegator_address"
+              ],
+              "properties": {
+                "delegator_address": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "IbcQuery": {
       "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
@@ -252,6 +390,34 @@
         }
       ]
     },
+    "PageRequest": {
+      "description": "Simplified version of the PageRequest type for pagination from the cosmos-sdk",
+      "type": "object",
+      "required": [
+        "limit",
+        "reverse"
+      ],
+      "properties": {
+        "key": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "reverse": {
+          "type": "boolean"
+        }
+      }
+    },
     "QueryRequest_for_SpecialQuery": {
       "oneOf": [
         {
@@ -286,6 +452,18 @@
           "properties": {
             "staking": {
               "$ref": "#/definitions/StakingQuery"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "distribution"
+          ],
+          "properties": {
+            "distribution": {
+              "$ref": "#/definitions/DistributionQuery"
             }
           },
           "additionalProperties": false
@@ -561,6 +739,29 @@
               "properties": {
                 "contract_addr": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Returns a [`CodeInfoResponse`] with metadata of the code",
+          "type": "object",
+          "required": [
+            "code_info"
+          ],
+          "properties": {
+            "code_info": {
+              "type": "object",
+              "required": [
+                "code_id"
+              ],
+              "properties": {
+                "code_id": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
                 }
               }
             }
