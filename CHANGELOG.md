@@ -6,7 +6,7 @@ and this project adheres to
 
 ## [Unreleased]
 
-## [1.4.0-rc.1] - 2023-08-30
+## [1.4.0] - 2023-09-04
 
 ### Added
 
@@ -1857,8 +1857,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0-rc.1...HEAD
-[1.4.0-rc.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0-rc.1
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.0...v1.3.1
