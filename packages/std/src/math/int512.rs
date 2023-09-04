@@ -1230,6 +1230,22 @@ mod tests {
     }
 
     #[test]
+    fn int512_abs_works() {
+        let a = Int512::from(42i32);
+        assert_eq!(a.abs(), a);
+
+        let b = Int512::from(-42i32);
+        assert_eq!(b.abs(), a);
+        assert_eq!((Int512::MIN + Int512::one()).abs(), Int512::MAX);
+    }
+
+    #[test]
+    #[should_panic = "attempt to negate with overflow"]
+    fn int512_abs_min_panics() {
+        _ = Int512::MIN.abs();
+    }
+
+    #[test]
     #[should_panic = "attempt to negate with overflow"]
     fn int512_neg_min_panics() {
         _ = -Int512::MIN;

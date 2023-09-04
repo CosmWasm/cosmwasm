@@ -1037,6 +1037,22 @@ mod tests {
     }
 
     #[test]
+    fn int64_abs_works() {
+        let a = Int64::from(42i32);
+        assert_eq!(a.abs(), a);
+
+        let b = Int64::from(-42i32);
+        assert_eq!(b.abs(), a);
+        assert_eq!((Int64::MIN + Int64::one()).abs(), Int64::MAX);
+    }
+
+    #[test]
+    #[should_panic = "attempt to negate with overflow"]
+    fn int64_abs_min_panics() {
+        _ = Int64::MIN.abs();
+    }
+
+    #[test]
     #[should_panic = "attempt to negate with overflow"]
     fn int64_neg_min_panics() {
         _ = -Int64::MIN;
