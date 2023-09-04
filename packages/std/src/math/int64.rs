@@ -1043,6 +1043,8 @@ mod tests {
 
         let b = Int64::from(-42i32);
         assert_eq!(b.abs(), a);
+
+        assert_eq!(Int64::zero().abs(), Int64::zero());
         assert_eq!((Int64::MIN + Int64::one()).abs(), Int64::MAX);
     }
 

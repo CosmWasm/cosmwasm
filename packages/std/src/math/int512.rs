@@ -1236,6 +1236,8 @@ mod tests {
 
         let b = Int512::from(-42i32);
         assert_eq!(b.abs(), a);
+
+        assert_eq!(Int512::zero().abs(), Int512::zero());
         assert_eq!((Int512::MIN + Int512::one()).abs(), Int512::MAX);
     }
 

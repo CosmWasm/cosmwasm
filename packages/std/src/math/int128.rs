@@ -1100,6 +1100,8 @@ mod tests {
 
         let b = Int128::from(-42i32);
         assert_eq!(b.abs(), a);
+
+        assert_eq!(Int128::zero().abs(), Int128::zero());
         assert_eq!((Int128::MIN + Int128::one()).abs(), Int128::MAX);
     }
 

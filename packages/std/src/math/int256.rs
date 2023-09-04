@@ -1183,6 +1183,8 @@ mod tests {
 
         let b = Int256::from(-42i32);
         assert_eq!(b.abs(), a);
+
+        assert_eq!(Int256::zero().abs(), Int256::zero());
         assert_eq!((Int256::MIN + Int256::one()).abs(), Int256::MAX);
     }
 
