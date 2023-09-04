@@ -299,6 +299,11 @@ impl Int512 {
     pub const fn abs(self) -> Self {
         Self(self.0.abs())
     }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn unsigned_abs(self) -> Uint512 {
+        Uint512(self.0.unsigned_abs())
+    }
 }
 
 impl From<Uint256> for Int512 {
@@ -1239,6 +1244,19 @@ mod tests {
 
         assert_eq!(Int512::zero().abs(), Int512::zero());
         assert_eq!((Int512::MIN + Int512::one()).abs(), Int512::MAX);
+    }
+
+    #[test]
+    fn int512_unsigned_abs_works() {
+        assert_eq!(Int512::zero().unsigned_abs(), Uint512::zero());
+        assert_eq!(Int512::one().unsigned_abs(), Uint512::one());
+        assert_eq!(
+            Int512::MIN.unsigned_abs(),
+            Uint512::from_be_bytes(Int512::MAX.to_be_bytes()) + Uint512::one()
+        );
+
+        let v = Int512::from(-42i32);
+        assert_eq!(v.unsigned_abs(), v.abs_diff(Int512::zero()));
     }
 
     #[test]

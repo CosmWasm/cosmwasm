@@ -8,7 +8,8 @@ and this project adheres to
 
 ### Added
 
-- cosmwasm-std: Add `abs` for `Int{64,128,256,512}` ([#1854]).
+- cosmwasm-std: Add `abs` and `unsigned_abs` for `Int{64,128,256,512}`
+  ([#1854]).
 
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
 
