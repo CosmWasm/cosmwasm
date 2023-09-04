@@ -294,6 +294,16 @@ impl Int512 {
     pub const fn abs_diff(self, other: Self) -> Uint512 {
         Uint512(self.0.abs_diff(other.0))
     }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn abs(self) -> Self {
+        Self(self.0.abs())
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn unsigned_abs(self) -> Uint512 {
+        Uint512(self.0.unsigned_abs())
+    }
 }
 
 impl From<Uint256> for Int512 {
@@ -1222,6 +1232,37 @@ mod tests {
         let c = Int512::from(-5i32);
         assert_eq!(b.abs_diff(c), Uint512::from(10u32));
         assert_eq!(c.abs_diff(b), Uint512::from(10u32));
+    }
+
+    #[test]
+    fn int512_abs_works() {
+        let a = Int512::from(42i32);
+        assert_eq!(a.abs(), a);
+
+        let b = Int512::from(-42i32);
+        assert_eq!(b.abs(), a);
+
+        assert_eq!(Int512::zero().abs(), Int512::zero());
+        assert_eq!((Int512::MIN + Int512::one()).abs(), Int512::MAX);
+    }
+
+    #[test]
+    fn int512_unsigned_abs_works() {
+        assert_eq!(Int512::zero().unsigned_abs(), Uint512::zero());
+        assert_eq!(Int512::one().unsigned_abs(), Uint512::one());
+        assert_eq!(
+            Int512::MIN.unsigned_abs(),
+            Uint512::from_be_bytes(Int512::MAX.to_be_bytes()) + Uint512::one()
+        );
+
+        let v = Int512::from(-42i32);
+        assert_eq!(v.unsigned_abs(), v.abs_diff(Int512::zero()));
+    }
+
+    #[test]
+    #[should_panic = "attempt to negate with overflow"]
+    fn int512_abs_min_panics() {
+        _ = Int512::MIN.abs();
     }
 
     #[test]

@@ -209,6 +209,16 @@ impl Int128 {
     pub const fn abs_diff(self, other: Self) -> Uint128 {
         Uint128(self.0.abs_diff(other.0))
     }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn abs(self) -> Self {
+        Self(self.0.abs())
+    }
+
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn unsigned_abs(self) -> Uint128 {
+        Uint128(self.0.unsigned_abs())
+    }
 }
 
 impl From<Uint64> for Int128 {
@@ -1086,6 +1096,37 @@ mod tests {
         let c = Int128::from(-5i32);
         assert_eq!(b.abs_diff(c), Uint128::from(10u32));
         assert_eq!(c.abs_diff(b), Uint128::from(10u32));
+    }
+
+    #[test]
+    fn int128_abs_works() {
+        let a = Int128::from(42i32);
+        assert_eq!(a.abs(), a);
+
+        let b = Int128::from(-42i32);
+        assert_eq!(b.abs(), a);
+
+        assert_eq!(Int128::zero().abs(), Int128::zero());
+        assert_eq!((Int128::MIN + Int128::one()).abs(), Int128::MAX);
+    }
+
+    #[test]
+    fn int128_unsigned_abs_works() {
+        assert_eq!(Int128::zero().unsigned_abs(), Uint128::zero());
+        assert_eq!(Int128::one().unsigned_abs(), Uint128::one());
+        assert_eq!(
+            Int128::MIN.unsigned_abs(),
+            Uint128::new(Int128::MAX.0 as u128) + Uint128::one()
+        );
+
+        let v = Int128::from(-42i32);
+        assert_eq!(v.unsigned_abs(), v.abs_diff(Int128::zero()));
+    }
+
+    #[test]
+    #[should_panic = "attempt to negate with overflow"]
+    fn int128_abs_min_panics() {
+        _ = Int128::MIN.abs();
     }
 
     #[test]

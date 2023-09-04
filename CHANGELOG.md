@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `abs` and `unsigned_abs` for `Int{64,128,256,512}`
+  ([#1854]).
+
+[#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
+
 ## [1.4.0] - 2023-09-04
 
 ### Added
