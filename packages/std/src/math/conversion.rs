@@ -20,3 +20,25 @@ pub const fn grow_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
     }
     output
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn grow_be_int_works() {
+        // test against rust std's integers
+        let i32s = [i32::MIN, -1, 0, 1, 42, i32::MAX];
+        for i in i32s {
+            assert_eq!(grow_be_int(i.to_be_bytes()), (i as i64).to_be_bytes());
+            assert_eq!(grow_be_int(i.to_be_bytes()), (i as i128).to_be_bytes());
+        }
+        let i8s = [i8::MIN, -1, 0, 1, 42, i8::MAX];
+        for i in i8s {
+            assert_eq!(grow_be_int(i.to_be_bytes()), (i as i16).to_be_bytes());
+            assert_eq!(grow_be_int(i.to_be_bytes()), (i as i32).to_be_bytes());
+            assert_eq!(grow_be_int(i.to_be_bytes()), (i as i64).to_be_bytes());
+            assert_eq!(grow_be_int(i.to_be_bytes()), (i as i128).to_be_bytes());
+        }
+    }
+}
