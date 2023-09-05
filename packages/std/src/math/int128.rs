@@ -9,7 +9,9 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, ConversionOverflowError, Int256, Int64, Uint128, Uint64};
+use crate::{
+    forward_ref_partial_eq, ConversionOverflowError, Int256, Int512, Int64, Uint128, Uint64,
+};
 
 use super::conversion::shrink_be_int;
 
@@ -295,6 +297,16 @@ impl TryFrom<Int256> for Int128 {
     fn try_from(value: Int256) -> Result<Self, Self::Error> {
         shrink_be_int(value.to_be_bytes())
             .ok_or_else(|| ConversionOverflowError::new("Int256", "Int128", value))
+            .map(Self::from_be_bytes)
+    }
+}
+
+impl TryFrom<Int512> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Int512) -> Result<Self, Self::Error> {
+        shrink_be_int(value.to_be_bytes())
+            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int128", value))
             .map(Self::from_be_bytes)
     }
 }
