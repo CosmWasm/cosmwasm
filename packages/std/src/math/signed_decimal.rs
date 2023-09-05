@@ -39,19 +39,49 @@ impl SignedDecimal {
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
     pub const DECIMAL_PLACES: u32 = 18; // This needs to be an even number.
+
     /// The largest value that can be represented by this signed decimal type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// assert_eq!(SignedDecimal::MAX.to_string(), "170141183460469231731.687303715884105727");
+    /// ```
     pub const MAX: Self = Self(Int128::MAX);
+
     /// The smallest value that can be represented by this signed decimal type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// assert_eq!(SignedDecimal::MIN.to_string(), "-170141183460469231731.687303715884105728");
+    /// ```
     pub const MIN: Self = Self(Int128::MIN);
 
     /// Creates a SignedDecimal(value)
     /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{SignedDecimal, Int128};
+    /// assert_eq!(SignedDecimal::new(Int128::one()).to_string(), "0.000000000000000001");
+    /// ```
     pub const fn new(value: Int128) -> Self {
         Self(value)
     }
 
     /// Creates a SignedDecimal(Int128(value))
     /// This is equivalent to `SignedDecimal::from_atomics(value, 18)` but usable in a const context.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// assert_eq!(SignedDecimal::raw(1234i128).to_string(), "0.000000000000001234");
+    /// ```
     pub const fn raw(value: i128) -> Self {
         Self(Int128::new(value))
     }
@@ -145,6 +175,16 @@ impl SignedDecimal {
     }
 
     /// Returns the ratio (numerator / denominator) as a SignedDecimal
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// assert_eq!(
+    ///     SignedDecimal::from_ratio(1, 3).to_string(),
+    ///     "0.333333333333333333"
+    /// );
+    /// ```
     pub fn from_ratio(numerator: impl Into<Int128>, denominator: impl Into<Int128>) -> Self {
         match SignedDecimal::checked_from_ratio(numerator, denominator) {
             Ok(value) => value,
@@ -156,6 +196,20 @@ impl SignedDecimal {
     }
 
     /// Returns the ratio (numerator / denominator) as a SignedDecimal
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{SignedDecimal, CheckedFromRatioError};
+    /// assert_eq!(
+    ///     SignedDecimal::checked_from_ratio(1, 3).unwrap().to_string(),
+    ///     "0.333333333333333333"
+    /// );
+    /// assert_eq!(
+    ///     SignedDecimal::checked_from_ratio(1, 0),
+    ///     Err(CheckedFromRatioError::DivideByZero)
+    /// );
+    /// ```
     pub fn checked_from_ratio(
         numerator: impl Into<Int128>,
         denominator: impl Into<Int128>,
@@ -174,6 +228,7 @@ impl SignedDecimal {
         }
     }
 
+    /// Returns `true` if the number is 0
     #[must_use]
     pub const fn is_zero(&self) -> bool {
         self.0.is_zero()
@@ -220,12 +275,30 @@ impl SignedDecimal {
     }
 
     /// Rounds value by truncating the decimal places.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// # use core::str::FromStr;
+    /// assert!(SignedDecimal::from_str("0.6").unwrap().trunc().is_zero());
+    /// assert_eq!(SignedDecimal::from_str("-5.8").unwrap().trunc().to_string(), "-5");
+    /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn trunc(&self) -> Self {
         Self((self.0 / Self::DECIMAL_FRACTIONAL) * Self::DECIMAL_FRACTIONAL)
     }
 
     /// Rounds value down after decimal places. Panics on overflow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// # use core::str::FromStr;
+    /// assert!(SignedDecimal::from_str("0.6").unwrap().floor().is_zero());
+    /// assert_eq!(SignedDecimal::from_str("-5.2").unwrap().floor().to_string(), "-6");
+    /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn floor(&self) -> Self {
         match self.checked_floor() {
@@ -252,6 +325,15 @@ impl SignedDecimal {
     }
 
     /// Rounds value up after decimal places. Panics on overflow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::SignedDecimal;
+    /// # use core::str::FromStr;
+    /// assert_eq!(SignedDecimal::from_str("0.2").unwrap().ceil(), SignedDecimal::one());
+    /// assert_eq!(SignedDecimal::from_str("-5.8").unwrap().ceil().to_string(), "-5");
+    /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn ceil(&self) -> Self {
         match self.checked_ceil() {
@@ -272,6 +354,7 @@ impl SignedDecimal {
         }
     }
 
+    /// Computes `self + other`, returning an `OverflowError` if an overflow occurred.
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_add(other.0)
@@ -279,6 +362,7 @@ impl SignedDecimal {
             .map_err(|_| OverflowError::new(OverflowOperation::Add, self, other))
     }
 
+    /// Computes `self - other`, returning an `OverflowError` if an overflow occurred.
     pub fn checked_sub(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_sub(other.0)
@@ -346,6 +430,7 @@ impl SignedDecimal {
         SignedDecimal::checked_from_ratio(self.numerator(), other.numerator())
     }
 
+    /// Computes `self % other`, returning an `DivideByZeroError` if `other == 0`.
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
