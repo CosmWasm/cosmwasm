@@ -1,3 +1,4 @@
+mod conversion;
 mod decimal;
 mod decimal256;
 mod fraction;

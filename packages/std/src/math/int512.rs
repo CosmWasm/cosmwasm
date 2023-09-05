@@ -9,11 +9,13 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint512, Uint64};
+use crate::{forward_ref_partial_eq, Int128, Int256, Int64, Uint128, Uint256, Uint512, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::{I512, U512};
+
+use super::conversion::grow_be_int;
 
 /// An implementation of i512 that is using strings for JSON encoding/decoding,
 /// such that the full i512 range can be used for clients that convert JSON numbers to floats,
@@ -387,6 +389,24 @@ impl From<i8> for Int512 {
     }
 }
 
+impl From<Int64> for Int512 {
+    fn from(val: Int64) -> Self {
+        Int512(val.i64().into())
+    }
+}
+
+impl From<Int128> for Int512 {
+    fn from(val: Int128) -> Self {
+        Int512(val.i128().into())
+    }
+}
+
+impl From<Int256> for Int512 {
+    fn from(val: Int256) -> Self {
+        Self::from_be_bytes(grow_be_int(val.to_be_bytes()))
+    }
+}
+
 impl TryFrom<&str> for Int512 {
     type Error = StdError;
 
@@ -709,6 +729,40 @@ mod tests {
 
         let a = Int512::from(-5i8);
         assert_eq!(a.0, I512::from(-5i32));
+
+        // other big signed integers
+        let values = [
+            Int64::MAX,
+            Int64::MIN,
+            Int64::one(),
+            -Int64::one(),
+            Int64::zero(),
+        ];
+        for v in values {
+            assert_eq!(Int512::from(v).to_string(), v.to_string());
+        }
+
+        let values = [
+            Int128::MAX,
+            Int128::MIN,
+            Int128::one(),
+            -Int128::one(),
+            Int128::zero(),
+        ];
+        for v in values {
+            assert_eq!(Int512::from(v).to_string(), v.to_string());
+        }
+
+        let values = [
+            Int256::MAX,
+            Int256::MIN,
+            Int256::one(),
+            -Int256::one(),
+            Int256::zero(),
+        ];
+        for v in values {
+            assert_eq!(Int512::from(v).to_string(), v.to_string());
+        }
 
         let result = Int512::try_from("34567");
         assert_eq!(
