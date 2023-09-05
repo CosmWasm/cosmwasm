@@ -10,8 +10,13 @@ and this project adheres to
 
 - cosmwasm-std: Add `abs` and `unsigned_abs` for `Int{64,128,256,512}`
   ([#1854]).
+- cosmwasm-std: Add `From<Int{64,128,256}>` for `Int512`,
+  `TryFrom<Int{128,256,512}>` for `Int64`, `TryFrom<Int{256,512}>` for `Int128`,
+  `TryFrom<Int512>` for `Int256` and `Int256::from_i128` for const contexts
+  ([#1861]).
 
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
+[#1861]: https://github.com/CosmWasm/cosmwasm/pull/1861
 
 ## [1.4.0] - 2023-09-04
 
