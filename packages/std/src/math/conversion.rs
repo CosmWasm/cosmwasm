@@ -1,4 +1,5 @@
 /// Grows a big endian signed integer to a bigger size.
+/// See <https://en.wikipedia.org/wiki/Sign_extension>
 pub const fn grow_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
     input: [u8; INPUT_SIZE],
 ) -> [u8; OUTPUT_SIZE] {
@@ -22,6 +23,7 @@ pub const fn grow_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
 }
 
 /// Shrinks a big endian signed integer to a smaller size.
+/// This is the opposite operation of sign extension.
 pub fn shrink_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
     input: [u8; INPUT_SIZE],
 ) -> Option<[u8; OUTPUT_SIZE]> {
