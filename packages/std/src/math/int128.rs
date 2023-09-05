@@ -9,7 +9,11 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, Int64, Uint128, Uint64};
+use crate::{
+    forward_ref_partial_eq, ConversionOverflowError, Int256, Int512, Int64, Uint128, Uint64,
+};
+
+use super::conversion::shrink_be_int;
 
 /// An implementation of i128 that is using strings for JSON encoding/decoding,
 /// such that the full i128 range can be used for clients that convert JSON numbers to floats,
@@ -284,6 +288,16 @@ impl From<i16> for Int128 {
 impl From<i8> for Int128 {
     fn from(val: i8) -> Self {
         Int128(val.into())
+    }
+}
+
+impl TryFrom<Int256> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Int256) -> Result<Self, Self::Error> {
+        shrink_be_int(value.to_be_bytes())
+            .ok_or_else(|| ConversionOverflowError::new("Int256", "Int128", value))
+            .map(Self::from_be_bytes)
     }
 }
 
