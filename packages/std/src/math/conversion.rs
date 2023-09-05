@@ -27,19 +27,21 @@ pub fn shrink_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
 ) -> Option<[u8; OUTPUT_SIZE]> {
     debug_assert!(INPUT_SIZE >= OUTPUT_SIZE);
 
-    // A positive number should start with only 0s and a negative one with only 1s until
-    // the size we want to look at.
-    // If this is not the case, then the value is too large / small for the target type
-    let ignored_byte = if input[0] & 0b10000000 != 0 {
-        0b11111111u8
+    // check bounds
+    if input[0] & 0b10000000 != 0 {
+        // a negative number should start with only 1s, otherwise it's too small
+        for i in &input[0..(INPUT_SIZE - OUTPUT_SIZE)] {
+            if *i != 0b11111111u8 {
+                return None;
+            }
+        }
     } else {
-        0u8
-    };
-    // Rust doesn't allow us to create an array of size `OUTPUT_SIZE - INPUT_SIZE`,
-    // so we work around this by taking a slice of a bigger array
-    let ignore_bytes = [ignored_byte; INPUT_SIZE];
-    if input[0..(INPUT_SIZE - OUTPUT_SIZE)] != ignore_bytes[0..(INPUT_SIZE - OUTPUT_SIZE)] {
-        return None;
+        // a positive number should start with only 0s, otherwise it's too large
+        for i in &input[0..(INPUT_SIZE - OUTPUT_SIZE)] {
+            if *i != 0u8 {
+                return None;
+            }
+        }
     }
 
     // Now, we can just copy the last bytes
