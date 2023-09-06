@@ -57,7 +57,7 @@ impl Gatekeeper {
 impl Default for Gatekeeper {
     fn default() -> Self {
         Self::new(GatekeeperConfig {
-            allow_floats: false,
+            allow_floats: true,
             allow_feature_bulk_memory_operations: false,
             allow_feature_reference_types: false,
             allow_feature_simd: false,
