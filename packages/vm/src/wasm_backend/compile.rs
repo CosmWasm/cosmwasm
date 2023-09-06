@@ -16,9 +16,8 @@ mod tests {
     static CONTRACT: &[u8] = include_bytes!("../../testdata/floaty.wasm");
 
     #[test]
-    fn contract_with_floats_fails_check() {
+    fn contract_with_floats_passes_check() {
         let engine = make_compiling_engine(None);
-        let err = compile(&engine, CONTRACT).unwrap_err();
-        assert!(err.to_string().contains("Float operator detected:"));
+        assert!(compile(&engine, CONTRACT).is_ok());
     }
 }

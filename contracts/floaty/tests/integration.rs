@@ -6,7 +6,6 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/fl
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 #[test]
-#[should_panic(expected = "Float operator detected")]
-fn instantiate_fails() {
-    let mut _deps = mock_instance(WASM, &[]);
+fn validation_succeeds() {
+    mock_instance(WASM, &[]);
 }
