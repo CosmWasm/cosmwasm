@@ -9,11 +9,16 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, Int128, Int64, Uint128, Uint256, Uint64};
+use crate::{
+    forward_ref_partial_eq, ConversionOverflowError, Int128, Int512, Int64, Uint128, Uint256,
+    Uint64,
+};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::{I256, U256};
+
+use super::conversion::{grow_be_int, shrink_be_int};
 
 /// An implementation of i256 that is using strings for JSON encoding/decoding,
 /// such that the full i256 range can be used for clients that convert JSON numbers to floats,
@@ -61,6 +66,12 @@ impl Int256 {
     #[inline]
     pub const fn one() -> Self {
         Self(I256::ONE)
+    }
+
+    /// A conversion from `i128` that, unlike the one provided by the `From` trait,
+    /// can be used in a `const` context.
+    pub const fn from_i128(v: i128) -> Self {
+        Self::from_be_bytes(grow_be_int(v.to_be_bytes()))
     }
 
     #[must_use]
@@ -351,6 +362,16 @@ impl From<i16> for Int256 {
 impl From<i8> for Int256 {
     fn from(val: i8) -> Self {
         Int256(val.into())
+    }
+}
+
+impl TryFrom<Int512> for Int256 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Int512) -> Result<Self, Self::Error> {
+        shrink_be_int(value.to_be_bytes())
+            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int256", value))
+            .map(Self::from_be_bytes)
     }
 }
 
@@ -679,6 +700,25 @@ mod tests {
 
         let result = Int256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int256_from_i128() {
+        assert_eq!(Int256::from_i128(123i128), Int256::from_str("123").unwrap());
+
+        assert_eq!(
+            Int256::from_i128(9785746283745i128),
+            Int256::from_str("9785746283745").unwrap()
+        );
+
+        assert_eq!(
+            Int256::from_i128(i128::MAX).to_string(),
+            i128::MAX.to_string()
+        );
+        assert_eq!(
+            Int256::from_i128(i128::MIN).to_string(),
+            i128::MIN.to_string()
+        );
     }
 
     #[test]
