@@ -87,6 +87,11 @@ impl Int64 {
         self.0 == 0
     }
 
+    #[must_use]
+    pub const fn is_negative(&self) -> bool {
+        self.0.is_negative()
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         Self(self.0.pow(exp))
@@ -702,6 +707,16 @@ mod tests {
         assert!(!Int64::from(1u32).is_zero());
         assert!(!Int64::from(123u32).is_zero());
         assert!(!Int64::from(-123i32).is_zero());
+    }
+
+    #[test]
+    fn int64_is_negative_works() {
+        assert!(Int64::MIN.is_negative());
+        assert!(Int64::from(-123i32).is_negative());
+
+        assert!(!Int64::MAX.is_negative());
+        assert!(!Int64::zero().is_negative());
+        assert!(!Int64::from(123u32).is_negative());
     }
 
     #[test]
