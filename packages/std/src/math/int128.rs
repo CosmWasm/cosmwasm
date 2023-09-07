@@ -10,7 +10,8 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
-    forward_ref_partial_eq, ConversionOverflowError, Int256, Int512, Int64, Uint128, Uint64,
+    forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int256, Int512,
+    Int64, Uint128, Uint64,
 };
 
 use super::conversion::shrink_be_int;
@@ -97,6 +98,45 @@ impl Int128 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         Self(self.0.pow(exp))
+    }
+
+    /// Returns `self * numerator / denominator`.
+    ///
+    /// Due to the nature of the integer division involved, the result is always floored.
+    /// E.g. 5 * 99/100 = 4.
+    pub fn checked_multiply_ratio<A: Into<Self>, B: Into<Self>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Result<Self, CheckedMultiplyRatioError> {
+        let numerator = numerator.into();
+        let denominator = denominator.into();
+        if denominator.is_zero() {
+            return Err(CheckedMultiplyRatioError::DivideByZero);
+        }
+        match (self.full_mul(numerator) / Int256::from(denominator)).try_into() {
+            Ok(ratio) => Ok(ratio),
+            Err(_) => Err(CheckedMultiplyRatioError::Overflow),
+        }
+    }
+
+    /// Multiplies two [`Int128`] values without overflow, producing an
+    /// [`Int256`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Int128;
+    ///
+    /// let a = Int128::MAX;
+    /// let result = a.full_mul(2i32);
+    /// assert_eq!(result.to_string(), "340282366920938463463374607431768211454");
+    /// ```
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn full_mul(self, rhs: impl Into<Self>) -> Int256 {
+        Int256::from(self.i128())
+            .checked_mul(Int256::from(rhs.into()))
+            .unwrap()
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -910,6 +950,65 @@ mod tests {
     #[should_panic]
     fn int128_pow_overflow_panics() {
         _ = Int128::MAX.pow(2u32);
+    }
+
+    #[test]
+    fn int128_checked_multiply_ratio_works() {
+        let base = Int128(500);
+
+        // factor 1/1
+        assert_eq!(base.checked_multiply_ratio(1i128, 1i128).unwrap(), base);
+        assert_eq!(base.checked_multiply_ratio(3i128, 3i128).unwrap(), base);
+        assert_eq!(
+            base.checked_multiply_ratio(654321i128, 654321i128).unwrap(),
+            base
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(i128::MAX, i128::MAX).unwrap(),
+            base
+        );
+
+        // factor 3/2
+        assert_eq!(
+            base.checked_multiply_ratio(3i128, 2i128).unwrap(),
+            Int128(750)
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(333333i128, 222222i128).unwrap(),
+            Int128(750)
+        );
+
+        // factor 2/3 (integer devision always floors the result)
+        assert_eq!(
+            base.checked_multiply_ratio(2i128, 3i128).unwrap(),
+            Int128(333)
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(222222i128, 333333i128).unwrap(),
+            Int128(333)
+        );
+
+        // factor 5/6 (integer devision always floors the result)
+        assert_eq!(
+            base.checked_multiply_ratio(5i128, 6i128).unwrap(),
+            Int128(416)
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(100i128, 120i128).unwrap(),
+            Int128(416)
+        );
+    }
+
+    #[test]
+    fn int128_checked_multiply_ratio_does_not_panic() {
+        assert_eq!(
+            Int128(500i128).checked_multiply_ratio(1i128, 0i128),
+            Err(CheckedMultiplyRatioError::DivideByZero),
+        );
+        assert_eq!(
+            Int128(500i128).checked_multiply_ratio(i128::MAX, 1i128),
+            Err(CheckedMultiplyRatioError::Overflow),
+        );
     }
 
     #[test]
