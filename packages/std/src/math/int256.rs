@@ -10,8 +10,8 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
-    forward_ref_partial_eq, ConversionOverflowError, Int128, Int512, Int64, Uint128, Uint256,
-    Uint64,
+    forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int128, Int512,
+    Int64, Uint128, Uint256, Uint64,
 };
 
 /// Used internally - we don't want to leak this type since we might change
@@ -153,6 +153,48 @@ impl Int256 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         Self(self.0.pow(exp))
+    }
+
+    /// Returns `self * numerator / denominator`.
+    ///
+    /// Due to the nature of the integer division involved, the result is always floored.
+    /// E.g. 5 * 99/100 = 4.
+    pub fn checked_multiply_ratio<A: Into<Self>, B: Into<Self>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Result<Self, CheckedMultiplyRatioError> {
+        let numerator = numerator.into();
+        let denominator = denominator.into();
+        if denominator.is_zero() {
+            return Err(CheckedMultiplyRatioError::DivideByZero);
+        }
+        match (self.full_mul(numerator) / Int512::from(denominator)).try_into() {
+            Ok(ratio) => Ok(ratio),
+            Err(_) => Err(CheckedMultiplyRatioError::Overflow),
+        }
+    }
+
+    /// Multiplies two [`Int256`] values without overflow, producing an
+    /// [`Int512`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::Int256;
+    ///
+    /// let a = Int256::MAX;
+    /// let result = a.full_mul(2i32);
+    /// assert_eq!(
+    ///     result.to_string(),
+    ///     "115792089237316195423570985008687907853269984665640564039457584007913129639934"
+    /// );
+    /// ```
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn full_mul(self, rhs: impl Into<Self>) -> Int512 {
+        Int512::from(self)
+            .checked_mul(Int512::from(rhs.into()))
+            .unwrap()
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -1007,6 +1049,65 @@ mod tests {
     #[should_panic]
     fn int256_pow_overflow_panics() {
         _ = Int256::MAX.pow(2u32);
+    }
+
+    #[test]
+    fn int256_checked_multiply_ratio_works() {
+        let base = Int256::from_i128(500);
+
+        // factor 1/1
+        assert_eq!(base.checked_multiply_ratio(1i128, 1i128).unwrap(), base);
+        assert_eq!(base.checked_multiply_ratio(3i128, 3i128).unwrap(), base);
+        assert_eq!(
+            base.checked_multiply_ratio(654321i128, 654321i128).unwrap(),
+            base
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(i128::MAX, i128::MAX).unwrap(),
+            base
+        );
+
+        // factor 3/2
+        assert_eq!(
+            base.checked_multiply_ratio(3i128, 2i128).unwrap(),
+            Int256::from_i128(750)
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(333333i128, 222222i128).unwrap(),
+            Int256::from_i128(750)
+        );
+
+        // factor 2/3 (integer devision always floors the result)
+        assert_eq!(
+            base.checked_multiply_ratio(2i128, 3i128).unwrap(),
+            Int256::from_i128(333)
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(222222i128, 333333i128).unwrap(),
+            Int256::from_i128(333)
+        );
+
+        // factor 5/6 (integer devision always floors the result)
+        assert_eq!(
+            base.checked_multiply_ratio(5i128, 6i128).unwrap(),
+            Int256::from_i128(416)
+        );
+        assert_eq!(
+            base.checked_multiply_ratio(100i128, 120i128).unwrap(),
+            Int256::from_i128(416)
+        );
+    }
+
+    #[test]
+    fn int256_checked_multiply_ratio_does_not_panic() {
+        assert_eq!(
+            Int256::from_i128(500i128).checked_multiply_ratio(1i128, 0i128),
+            Err(CheckedMultiplyRatioError::DivideByZero),
+        );
+        assert_eq!(
+            Int256::MAX.checked_multiply_ratio(Int256::MAX, 1i128),
+            Err(CheckedMultiplyRatioError::Overflow),
+        );
     }
 
     #[test]
