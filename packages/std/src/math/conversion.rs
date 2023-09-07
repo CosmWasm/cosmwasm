@@ -37,12 +37,20 @@ pub fn shrink_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
                 return None;
             }
         }
+        // the sign bit also has to be 1
+        if input[INPUT_SIZE - OUTPUT_SIZE] & 0b10000000 == 0 {
+            return None;
+        }
     } else {
         // a positive number should start with only 0s, otherwise it's too large
         for i in &input[0..(INPUT_SIZE - OUTPUT_SIZE)] {
             if *i != 0u8 {
                 return None;
             }
+        }
+        // the sign bit also has to be 0
+        if input[INPUT_SIZE - OUTPUT_SIZE] & 0b10000000 != 0 {
+            return None;
         }
     }
 
@@ -97,8 +105,25 @@ mod tests {
             i32::MAX,
         ];
         for i in oob {
+            // 32 -> 16 bit
             assert_eq!(shrink_be_int::<4, 2>(i.to_be_bytes()), None);
+            // 32 -> 8 bit
             assert_eq!(shrink_be_int::<4, 1>(i.to_be_bytes()), None);
+        }
+
+        // compare against whole i16 range
+        for i in i16::MIN..=i16::MAX {
+            let cast = i as i8 as i16;
+            if i == cast {
+                // if the cast is lossless, `shrink_be_int` should get the same result
+                assert_eq!(
+                    shrink_be_int::<2, 1>(i.to_be_bytes()),
+                    Some((i as i8).to_be_bytes())
+                );
+            } else {
+                // otherwise, we should get None
+                assert_eq!(shrink_be_int::<2, 1>(i.to_be_bytes()), None);
+            }
         }
     }
 }
