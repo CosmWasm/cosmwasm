@@ -172,6 +172,11 @@ impl Int512 {
         self.0.is_zero()
     }
 
+    #[must_use]
+    pub const fn is_negative(&self) -> bool {
+        self.0.is_negative()
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn pow(self, exp: u32) -> Self {
         Self(self.0.pow(exp))
@@ -886,6 +891,16 @@ mod tests {
         assert!(!Int512::from(1u32).is_zero());
         assert!(!Int512::from(123u32).is_zero());
         assert!(!Int512::from(-123i32).is_zero());
+    }
+
+    #[test]
+    fn int512_is_negative_works() {
+        assert!(Int512::MIN.is_negative());
+        assert!(Int512::from(-123i32).is_negative());
+
+        assert!(!Int512::MAX.is_negative());
+        assert!(!Int512::zero().is_negative());
+        assert!(!Int512::from(123u32).is_negative());
     }
 
     #[test]

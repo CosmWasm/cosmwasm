@@ -14,9 +14,11 @@ and this project adheres to
   `TryFrom<Int{128,256,512}>` for `Int64`, `TryFrom<Int{256,512}>` for `Int128`,
   `TryFrom<Int512>` for `Int256` and `Int256::from_i128` for const contexts
   ([#1861]).
+- cosmwasm-std: Add `is_negative` for `Int{64,128,256,512}` ([#1867]).
 
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
 [#1861]: https://github.com/CosmWasm/cosmwasm/pull/1861
+[#1867]: https://github.com/CosmWasm/cosmwasm/pull/1867
 
 ## [1.4.0] - 2023-09-04
 
