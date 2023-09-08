@@ -3,34 +3,26 @@
   "title": "QueryMsg",
   "oneOf": [
     {
-      "description": "returns a human-readable representation of the verifier use to ensure query path works in integration tests",
+      "description": "Performs a huge amount of floating point operations and hashes them together",
       "type": "object",
       "required": [
-        "verifier"
+        "run"
       ],
       "properties": {
-        "verifier": {
-          "type": "object",
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
-      "type": "object",
-      "required": [
-        "other_balance"
-      ],
-      "properties": {
-        "other_balance": {
+        "run": {
           "type": "object",
           "required": [
-            "address"
+            "instruction",
+            "seed"
           ],
           "properties": {
-            "address": {
+            "instruction": {
               "type": "string"
+            },
+            "seed": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
             }
           },
           "additionalProperties": false
