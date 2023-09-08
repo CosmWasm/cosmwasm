@@ -812,10 +812,10 @@ mod tests {
                 let result = match call_query(&mut instance, &mock_env(), msg.as_bytes()) {
                     Ok(ContractResult::Ok(r)) => format!("{:?}", from_slice::<Value>(&r).unwrap()),
                     Err(VmError::RuntimeErr { msg }) => msg,
-                    e => panic!("unexpected error: {:?}", e),
+                    e => panic!("unexpected error: {e:?}"),
                 };
                 // add the result to the hash
-                hasher.update(format!("{}{}{}", instr, seed, result).as_bytes());
+                hasher.update(format!("{instr}{seed}{result}").as_bytes());
             }
         }
         let hash = Digest::finalize(hasher);
