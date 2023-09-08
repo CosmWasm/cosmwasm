@@ -4,6 +4,7 @@ use cosmwasm_std::{
 };
 use rand_chacha::rand_core::SeedableRng;
 
+#[cfg(target_arch = "wasm32")]
 use crate::instructions::run_instruction;
 use crate::msg::QueryMsg;
 
@@ -35,16 +36,13 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     }
 }
 
-fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
-    let data = deps
-        .storage
-        .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_slice(&data)?;
-    Ok(VerifierResponse {
-        verifier: state.verifier.into(),
-    })
-}
+fn query_floats(_deps: Deps, instruction: &str, seed: u64) -> StdResult<u64> {
+    let mut rng = rand_chacha::ChaChaRng::seed_from_u64(seed);
+
+    #[cfg(target_arch = "wasm32")]
+    let result = run_instruction(instruction, &mut rng);
+    #[cfg(not(target_arch = "wasm32"))]
+    let result = panic!();
 
     Ok(result)
 }
