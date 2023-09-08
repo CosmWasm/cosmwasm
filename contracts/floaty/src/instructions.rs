@@ -246,6 +246,7 @@ macro_rules! run {
 pub(crate) use run;
 
 /// Runs the given instruction with random inputs
+#[cfg(target_arch = "wasm32")]
 pub fn run_instruction(instr: &str, rng: &mut impl RngCore) -> u64 {
     let a = random_f32(rng);
     let b = random_f32(rng);
@@ -336,3 +337,82 @@ pub fn run_instruction(instr: &str, rng: &mut impl RngCore) -> u64 {
         _ => panic!("unknown instruction: {}", instr),
     }
 }
+
+pub const FLOAT_INSTRUCTIONS: [&'static str; 70] = [
+    "f32.eq",
+    "f32.ne",
+    "f32.lt",
+    "f32.gt",
+    "f32.le",
+    "f32.ge",
+    "f64.eq",
+    "f64.ne",
+    "f64.lt",
+    "f64.gt",
+    "f64.le",
+    "f64.ge",
+    //
+    "f32.abs",
+    "f32.neg",
+    "f32.ceil",
+    "f32.floor",
+    "f32.trunc",
+    "f32.nearest",
+    "f32.sqrt",
+    "f32.add",
+    "f32.sub",
+    "f32.mul",
+    "f32.div",
+    "f32.min",
+    "f32.max",
+    "f32.copysign",
+    "f64.abs",
+    "f64.neg",
+    "f64.ceil",
+    "f64.floor",
+    "f64.trunc",
+    "f64.nearest",
+    "f64.sqrt",
+    "f64.add",
+    "f64.sub",
+    "f64.mul",
+    "f64.div",
+    "f64.min",
+    "f64.max",
+    "f64.copysign",
+    //
+    "i32.trunc_f32_s",
+    "i32.trunc_f32_u",
+    "i32.trunc_f64_s",
+    "i32.trunc_f64_u",
+    //
+    "i64.trunc_f32_s",
+    "i64.trunc_f32_u",
+    "i64.trunc_f64_s",
+    "i64.trunc_f64_u",
+    //
+    "f32.convert_i32_s",
+    "f32.convert_i32_u",
+    "f32.convert_i64_s",
+    "f32.convert_i64_u",
+    "f32.demote_f64",
+    "f64.convert_i32_s",
+    "f64.convert_i32_u",
+    "f64.convert_i64_s",
+    "f64.convert_i64_u",
+    "f64.promote_f32",
+    //
+    "i32.reinterpret_f32",
+    "i64.reinterpret_f64",
+    "f32.reinterpret_i32",
+    "f64.reinterpret_i64",
+    //
+    "i32.trunc_sat_f32_s",
+    "i32.trunc_sat_f32_u",
+    "i32.trunc_sat_f64_s",
+    "i32.trunc_sat_f64_u",
+    "i64.trunc_sat_f32_s",
+    "i64.trunc_sat_f32_u",
+    "i64.trunc_sat_f64_s",
+    "i64.trunc_sat_f64_u",
+];

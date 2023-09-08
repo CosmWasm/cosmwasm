@@ -6,7 +6,7 @@ use rand_chacha::rand_core::SeedableRng;
 
 #[cfg(target_arch = "wasm32")]
 use crate::instructions::run_instruction;
-use crate::msg::QueryMsg;
+use crate::{instructions::FLOAT_INSTRUCTIONS, msg::QueryMsg};
 
 #[entry_point]
 pub fn instantiate(
@@ -31,8 +31,8 @@ pub fn execute(
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
-        QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
+        QueryMsg::Instructions {} => to_binary(&FLOAT_INSTRUCTIONS.to_vec()),
+        QueryMsg::Run { instruction, seed } => to_binary(&query_floats(deps, &instruction, seed)?),
     }
 }
 

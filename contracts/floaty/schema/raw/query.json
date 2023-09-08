@@ -3,6 +3,20 @@
   "title": "QueryMsg",
   "oneOf": [
     {
+      "description": "Returns a list of all instructions",
+      "type": "object",
+      "required": [
+        "instructions"
+      ],
+      "properties": {
+        "instructions": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
       "description": "Performs a huge amount of floating point operations and hashes them together",
       "type": "object",
       "required": [

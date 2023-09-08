@@ -2,7 +2,6 @@
 
 pub mod contract;
 pub(crate) mod floats;
-#[cfg(target_arch = "wasm32")]
 mod instructions;
 pub mod msg;
 pub mod state;
