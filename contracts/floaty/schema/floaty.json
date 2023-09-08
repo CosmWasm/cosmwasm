@@ -19,27 +19,13 @@
     "title": "QueryMsg",
     "oneOf": [
       {
-        "description": "Returns a list of all instructions",
+        "description": "Returns valid random arguments for the given instruction",
         "type": "object",
         "required": [
-          "instructions"
+          "random_args_for"
         ],
         "properties": {
-          "instructions": {
-            "type": "object",
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "description": "Performs a huge amount of floating point operations and hashes them together",
-        "type": "object",
-        "required": [
-          "run"
-        ],
-        "properties": {
-          "run": {
+          "random_args_for": {
             "type": "object",
             "required": [
               "instruction",
@@ -59,8 +45,113 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Returns a list of all instructions",
+        "type": "object",
+        "required": [
+          "instructions"
+        ],
+        "properties": {
+          "instructions": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Runs the given instruction with the given arguments and returns the result",
+        "type": "object",
+        "required": [
+          "run"
+        ],
+        "properties": {
+          "run": {
+            "type": "object",
+            "required": [
+              "args",
+              "instruction"
+            ],
+            "properties": {
+              "args": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Value"
+                }
+              },
+              "instruction": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
-    ]
+    ],
+    "definitions": {
+      "Value": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "u32"
+            ],
+            "properties": {
+              "u32": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "u64"
+            ],
+            "properties": {
+              "u64": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "f32"
+            ],
+            "properties": {
+              "f32": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "f64"
+            ],
+            "properties": {
+              "f64": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
   },
   "migrate": null,
   "sudo": null,
@@ -73,12 +164,137 @@
         "type": "string"
       }
     },
+    "random_args_for": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Value",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Value"
+      },
+      "definitions": {
+        "Value": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "u32"
+              ],
+              "properties": {
+                "u32": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "u64"
+              ],
+              "properties": {
+                "u64": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "f32"
+              ],
+              "properties": {
+                "f32": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "f64"
+              ],
+              "properties": {
+                "f64": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      }
+    },
     "run": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "uint64",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+      "title": "Value",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "u32"
+          ],
+          "properties": {
+            "u32": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "u64"
+          ],
+          "properties": {
+            "u64": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "f32"
+          ],
+          "properties": {
+            "f32": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "f64"
+          ],
+          "properties": {
+            "f64": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     }
   }
 }

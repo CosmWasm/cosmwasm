@@ -12,6 +12,13 @@ const SIGN_MASK_64: u64 = 0x8000000000000000;
 const MANTISSA_MASK_32: u32 = 0x007fffff;
 const MANTISSA_MASK_64: u64 = 0x000fffffffffffff;
 
+/// Returns a random `f32`.
+///
+/// We want to cover all classes of floats: NaNs, subnormals, infinities, and normal floats.
+/// Because of that, we don't just generate a random `u32` and convert it to an `f32`
+/// (that would make e.g. infinities highly unlikely)
+/// Instead, we give each of these classes a probability of 25% and
+/// then generate a random pattern within that class
 pub fn random_f32(rng: &mut impl RngCore) -> f32 {
     let decider = rng.next_u32();
     let bits = if decider < u32::MAX / 4 {
@@ -34,6 +41,9 @@ pub fn random_f32(rng: &mut impl RngCore) -> f32 {
     f32::from_bits(bits)
 }
 
+/// Returns a random `f64`.
+///
+/// See [`random_f32`] for more details.
 pub fn random_f64(rng: &mut impl RngCore) -> f64 {
     let decider = rng.next_u64();
     let bits = if decider < u64::MAX / 4 {

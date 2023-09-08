@@ -6,7 +6,10 @@ use rand_chacha::rand_core::SeedableRng;
 
 #[cfg(target_arch = "wasm32")]
 use crate::instructions::run_instruction;
-use crate::{instructions::FLOAT_INSTRUCTIONS, msg::QueryMsg};
+use crate::{
+    instructions::{random_args_for, Value, FLOAT_INSTRUCTIONS},
+    msg::QueryMsg,
+};
 
 #[entry_point]
 pub fn instantiate(
@@ -29,22 +32,26 @@ pub fn execute(
 }
 
 #[entry_point]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
+        QueryMsg::RandomArgsFor { instruction, seed } => {
+            let mut rng = rand_chacha::ChaChaRng::seed_from_u64(seed);
+            to_binary(&random_args_for(&instruction, &mut rng))
+        }
         QueryMsg::Instructions {} => to_binary(&FLOAT_INSTRUCTIONS.to_vec()),
-        QueryMsg::Run { instruction, seed } => to_binary(&query_floats(deps, &instruction, seed)?),
+        QueryMsg::Run { instruction, args } => to_binary(&query_run(&instruction, args)?),
     }
 }
 
-fn query_floats(_deps: Deps, instruction: &str, seed: u64) -> StdResult<u64> {
-    let mut rng = rand_chacha::ChaChaRng::seed_from_u64(seed);
+fn query_run(instruction: &str, args: Vec<Value>) -> StdResult<Value> {
+    #[cfg(not(target_arch = "wasm32"))]
+    panic!();
 
     #[cfg(target_arch = "wasm32")]
-    let result = run_instruction(instruction, &mut rng);
-    #[cfg(not(target_arch = "wasm32"))]
-    let result = panic!();
-
-    Ok(result)
+    {
+        let result = run_instruction(instruction, &args);
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
