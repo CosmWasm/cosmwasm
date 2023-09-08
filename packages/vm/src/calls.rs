@@ -590,11 +590,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::{mock_env, mock_info, mock_instance};
-    use cosmwasm_std::{coins, Empty};
+    use crate::testing::{
+        mock_env, mock_info, mock_instance, mock_instance_with_options, MockInstanceOptions,
+    };
+    use cosmwasm_std::{coins, from_slice, Empty};
+    use sha2::{Digest, Sha256};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
+    static FLOATY2: &[u8] = include_bytes!("../testdata/floaty_2.0.wasm");
 
     #[test]
     fn call_instantiate_works() {
@@ -732,6 +736,93 @@ mod tests {
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    }
+
+    #[test]
+    fn float_instrs_are_deterministic() {
+        #[derive(Debug, serde::Serialize, serde::Deserialize)]
+        #[serde(rename_all = "snake_case")]
+        pub enum Value {
+            U32(u32),
+            U64(u64),
+            F32(u32),
+            F64(u64),
+        }
+
+        let mut instance = mock_instance_with_options(
+            FLOATY2,
+            MockInstanceOptions {
+                gas_limit: u64::MAX,
+                memory_limit: None,
+                ..Default::default()
+            },
+        );
+
+        // init
+        let info = mock_info("creator", &[]);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            .unwrap()
+            .unwrap();
+
+        // query instructions
+        let msg = br#"{"instructions":{}}"#;
+        let contract_result = call_query(&mut instance, &mock_env(), msg)
+            .unwrap()
+            .unwrap();
+        let instructions: Vec<String> = from_slice(&contract_result).unwrap();
+        // little sanity check
+        assert_eq!(instructions.len(), 70);
+
+        const RUNS_PER_INSTRUCTION: u64 = 150;
+        let mut hasher = Sha256::new();
+        for instr in &instructions {
+            for seed in 0..RUNS_PER_INSTRUCTION {
+                // query some input values for the instruction
+                let args: Vec<Value> = from_slice(
+                    &call_query(
+                        &mut instance,
+                        &mock_env(),
+                        format!(
+                            r#"{{"random_args_for":{{ "instruction": "{instr}", "seed": {seed}}}}}"#
+                        )
+                        .as_bytes(),
+                    )
+                    .unwrap()
+                    .unwrap(),
+                )
+                .unwrap();
+
+                // build the run message
+                let arg_str = args
+                    .iter()
+                    .map(|a| {
+                        let serialized = to_vec(a).unwrap();
+                        core::str::from_utf8(&serialized).unwrap().to_string()
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let msg: String = format!(
+                    r#"{{"run":{{
+                        "instruction": "{instr}",
+                        "args": [{arg_str}]
+                    }}}}"#
+                );
+                // run the instruction
+                // this might throw a runtime error (e.g. if the instruction traps)
+                let result = match call_query(&mut instance, &mock_env(), msg.as_bytes()) {
+                    Ok(ContractResult::Ok(r)) => format!("{:?}", from_slice::<Value>(&r).unwrap()),
+                    Err(VmError::RuntimeErr { msg }) => msg,
+                    e => panic!("unexpected error: {:?}", e),
+                };
+                // add the result to the hash
+                hasher.update(format!("{}{}{}", instr, seed, result).as_bytes());
+            }
+        }
+        let hash = Digest::finalize(hasher);
+        assert_eq!(
+            hex::encode(hash.as_slice()),
+            "03b185aa78dc8a8071c7221228b02a1dab78a2e4cf20520d6569cf2a0ea1d5cf"
+        );
     }
 
     #[cfg(feature = "stargate")]
