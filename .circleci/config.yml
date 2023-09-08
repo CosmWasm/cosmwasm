@@ -61,7 +61,7 @@ workflows:
       - contract_hackatom
       - contract_ibc_reflect
       - contract_ibc_reflect_send
-      - contract_floaty
+      # - contract_floaty # This contract needs nightly Rust to compile
       - contract_queue
       - contract_reflect
       - contract_staking
