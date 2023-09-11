@@ -61,7 +61,7 @@ impl SignedDecimal {
     pub const MIN: Self = Self(Int128::MIN);
 
     /// Creates a SignedDecimal(value)
-    /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    /// This is equivalent to `SignedDecimal::from_atomics(value, 18)` but usable in a const context.
     ///
     /// # Examples
     ///
@@ -370,7 +370,7 @@ impl SignedDecimal {
             .map_err(|_| OverflowError::new(OverflowOperation::Sub, self, other))
     }
 
-    /// Multiplies one `Decimal` by another, returning an `OverflowError` if an overflow occurred.
+    /// Multiplies one `SignedDecimal` by another, returning an `OverflowError` if an overflow occurred.
     pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
         let result_as_int256 =
             self.numerator().full_mul(other.numerator()) / Int256::from(Self::DECIMAL_FRACTIONAL);
@@ -484,7 +484,7 @@ impl SignedDecimal {
         }
     }
 
-    /// Converts this decimal to an unsigned integer by rounding down
+    /// Converts this decimal to a signed integer by rounding down
     /// to the next integer, e.g. 22.5 becomes 22 and -1.2 becomes -2.
     ///
     /// ## Examples
@@ -520,7 +520,7 @@ impl SignedDecimal {
         }
     }
 
-    /// Converts this decimal to an unsigned integer by truncating
+    /// Converts this decimal to a signed integer by truncating
     /// the fractional part, e.g. 22.5 becomes 22.
     ///
     /// ## Examples
@@ -543,7 +543,7 @@ impl SignedDecimal {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
 
-    /// Converts this decimal to an unsigned integer by rounding up
+    /// Converts this decimal to a signed integer by rounding up
     /// to the next integer, e.g. 22.3 becomes 23 and -1.2 becomes -1.
     ///
     /// ## Examples
