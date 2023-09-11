@@ -678,6 +678,18 @@ mod tests {
     }
 
     #[test]
+    fn uint128_try_into() {
+        assert!(Uint64::try_from(Uint128::MAX).is_err());
+
+        assert_eq!(Uint64::try_from(Uint128::zero()), Ok(Uint64::zero()));
+
+        assert_eq!(
+            Uint64::try_from(Uint128::from(42u64)),
+            Ok(Uint64::from(42u64))
+        );
+    }
+
+    #[test]
     fn uint128_implements_display() {
         let a = Uint128(12345);
         assert_eq!(format!("Embedded: {a}"), "Embedded: 12345");

@@ -389,6 +389,16 @@ impl TryFrom<Uint256> for Uint128 {
     }
 }
 
+impl TryFrom<Uint256> for Uint64 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
+        Ok(Uint64::new(value.0.try_into().map_err(|_| {
+            ConversionOverflowError::new("Uint256", "Uint64", value.to_string())
+        })?))
+    }
+}
+
 impl TryFrom<&str> for Uint256 {
     type Error = StdError;
 
@@ -1060,6 +1070,24 @@ mod tests {
 
         let result = Uint256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint256_try_into() {
+        assert!(Uint64::try_from(Uint256::MAX).is_err());
+        assert!(Uint128::try_from(Uint256::MAX).is_err());
+
+        assert_eq!(Uint64::try_from(Uint256::zero()), Ok(Uint64::zero()));
+        assert_eq!(Uint128::try_from(Uint256::zero()), Ok(Uint128::zero()));
+
+        assert_eq!(
+            Uint64::try_from(Uint256::from(42u64)),
+            Ok(Uint64::from(42u64))
+        );
+        assert_eq!(
+            Uint128::try_from(Uint256::from(42u128)),
+            Ok(Uint128::from(42u128))
+        );
     }
 
     #[test]
