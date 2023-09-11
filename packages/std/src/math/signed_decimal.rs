@@ -13,7 +13,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal, Int256};
+use crate::{forward_ref_partial_eq, Decimal, Int256, SignedDecimal256};
 
 use super::Fraction;
 use super::Int128;
@@ -610,6 +610,18 @@ impl Neg for SignedDecimal {
 
     fn neg(self) -> Self::Output {
         Self(-self.0)
+    }
+}
+
+impl TryFrom<SignedDecimal256> for SignedDecimal {
+    type Error = SignedDecimalRangeExceeded;
+
+    fn try_from(value: SignedDecimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(SignedDecimal)
+            .map_err(|_| SignedDecimalRangeExceeded)
     }
 }
 
@@ -1415,6 +1427,36 @@ mod tests {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
+    }
+
+    #[test]
+    fn signed_decimal_conversions_work() {
+        // signed decimal to signed decimal
+        assert_eq!(
+            SignedDecimal::try_from(SignedDecimal256::MAX).unwrap_err(),
+            SignedDecimalRangeExceeded
+        );
+        assert_eq!(
+            SignedDecimal::try_from(SignedDecimal256::MIN).unwrap_err(),
+            SignedDecimalRangeExceeded
+        );
+
+        assert_eq!(
+            SignedDecimal::try_from(SignedDecimal256::zero()).unwrap(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(
+            SignedDecimal::try_from(SignedDecimal256::one()).unwrap(),
+            SignedDecimal::one()
+        );
+        assert_eq!(
+            SignedDecimal::try_from(SignedDecimal256::percent(50)).unwrap(),
+            SignedDecimal::percent(50)
+        );
+        assert_eq!(
+            SignedDecimal::try_from(SignedDecimal256::percent(-200)).unwrap(),
+            SignedDecimal::percent(-200)
+        );
     }
 
     #[test]

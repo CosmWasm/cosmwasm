@@ -13,7 +13,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal256, Int512};
+use crate::{forward_ref_partial_eq, Decimal256, Int512, SignedDecimal};
 
 use super::Fraction;
 use super::Int256;
@@ -628,6 +628,12 @@ impl Neg for SignedDecimal256 {
 
     fn neg(self) -> Self::Output {
         Self(-self.0)
+    }
+}
+
+impl From<SignedDecimal> for SignedDecimal256 {
+    fn from(value: SignedDecimal) -> Self {
+        Self::from_atomics(value.atomics(), SignedDecimal::DECIMAL_PLACES).unwrap()
     }
 }
 
@@ -1459,6 +1465,34 @@ mod tests {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
+    }
+
+    #[test]
+    fn signed_decimal_256_conversions_work() {
+        assert_eq!(
+            SignedDecimal256::from(SignedDecimal::zero()),
+            SignedDecimal256::zero()
+        );
+        assert_eq!(
+            SignedDecimal256::from(SignedDecimal::one()),
+            SignedDecimal256::one()
+        );
+        assert_eq!(
+            SignedDecimal256::from(SignedDecimal::percent(50)),
+            SignedDecimal256::percent(50)
+        );
+        assert_eq!(
+            SignedDecimal256::from(SignedDecimal::MAX),
+            SignedDecimal256::new(Int256::from_i128(i128::MAX))
+        );
+        assert_eq!(
+            SignedDecimal256::from(SignedDecimal::percent(-50)),
+            SignedDecimal256::percent(-50)
+        );
+        assert_eq!(
+            SignedDecimal256::from(SignedDecimal::MIN),
+            SignedDecimal256::new(Int256::from_i128(i128::MIN))
+        );
     }
 
     #[test]
