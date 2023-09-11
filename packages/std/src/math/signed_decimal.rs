@@ -625,6 +625,20 @@ impl TryFrom<SignedDecimal256> for SignedDecimal {
     }
 }
 
+impl TryFrom<Decimal> for SignedDecimal {
+    type Error = SignedDecimalRangeExceeded;
+
+    fn try_from(value: Decimal) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .u128()
+            .try_into() // convert to i128
+            .map(Int128::new)
+            .map(SignedDecimal)
+            .map_err(|_| SignedDecimalRangeExceeded)
+    }
+}
+
 impl FromStr for SignedDecimal {
     type Err = StdError;
 
@@ -1440,7 +1454,6 @@ mod tests {
             SignedDecimal::try_from(SignedDecimal256::MIN).unwrap_err(),
             SignedDecimalRangeExceeded
         );
-
         assert_eq!(
             SignedDecimal::try_from(SignedDecimal256::zero()).unwrap(),
             SignedDecimal::zero()
@@ -1457,6 +1470,23 @@ mod tests {
             SignedDecimal::try_from(SignedDecimal256::percent(-200)).unwrap(),
             SignedDecimal::percent(-200)
         );
+
+        // unsigned to signed decimal
+        assert_eq!(
+            SignedDecimal::try_from(Decimal::MAX).unwrap_err(),
+            SignedDecimalRangeExceeded
+        );
+        let max = Decimal::raw(SignedDecimal::MAX.atomics().i128() as u128);
+        let too_big = max + Decimal::raw(1);
+        assert_eq!(
+            SignedDecimal::try_from(too_big).unwrap_err(),
+            SignedDecimalRangeExceeded
+        );
+        assert_eq!(
+            SignedDecimal::try_from(Decimal::zero()).unwrap(),
+            SignedDecimal::zero()
+        );
+        assert_eq!(SignedDecimal::try_from(max).unwrap(), SignedDecimal::MAX);
     }
 
     #[test]

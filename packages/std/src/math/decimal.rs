@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal256};
+use crate::{forward_ref_partial_eq, Decimal256, SignedDecimal};
 
 use super::Fraction;
 use super::Isqrt;
@@ -510,6 +510,20 @@ impl TryFrom<Decimal256> for Decimal {
     }
 }
 
+impl TryFrom<SignedDecimal> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    fn try_from(value: SignedDecimal) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .i128()
+            .try_into() // convert to u128
+            .map(Uint128::new)
+            .map(Decimal)
+            .map_err(|_| DecimalRangeExceeded)
+    }
+}
+
 impl FromStr for Decimal {
     type Err = StdError;
 
@@ -842,6 +856,34 @@ mod tests {
         assert_eq!(
             Decimal::try_from(Decimal256::percent(50)),
             Ok(Decimal::percent(50))
+        );
+    }
+
+    #[test]
+    fn decimal_try_from_signed_works() {
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::MAX).unwrap(),
+            Decimal::raw(SignedDecimal::MAX.atomics().i128() as u128)
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::zero()).unwrap(),
+            Decimal::zero()
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::one()).unwrap(),
+            Decimal::one()
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::percent(50)).unwrap(),
+            Decimal::percent(50)
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::negative_one()),
+            Err(DecimalRangeExceeded)
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::MIN),
+            Err(DecimalRangeExceeded)
         );
     }
 
