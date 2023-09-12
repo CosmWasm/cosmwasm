@@ -1,3 +1,4 @@
+use bnum::prelude::As;
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -9,7 +10,10 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::{forward_ref_partial_eq, Int128, Int256, Int64, Uint128, Uint256, Uint512, Uint64};
+use crate::{
+    forward_ref_partial_eq, ConversionOverflowError, Int128, Int256, Int64, Uint128, Uint256,
+    Uint512, Uint64,
+};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
@@ -313,6 +317,21 @@ impl Int512 {
     }
 }
 
+// Uint to Int
+impl TryFrom<Uint512> for Int512 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
+        // Self::MAX fits into Uint512, so we can just cast it
+        if value.0 > Self::MAX.0.as_() {
+            return Err(ConversionOverflowError::new("Uint512", "Int512", value));
+        }
+
+        // at this point we know it fits
+        Ok(Self(value.0.as_()))
+    }
+}
+
 impl From<Uint256> for Int512 {
     fn from(val: Uint256) -> Self {
         let mut bytes = [0u8; 64];
@@ -334,6 +353,7 @@ impl From<Uint64> for Int512 {
     }
 }
 
+// uint to Int
 impl From<u128> for Int512 {
     fn from(val: u128) -> Self {
         Int512(val.into())
@@ -364,6 +384,7 @@ impl From<u8> for Int512 {
     }
 }
 
+// int to Int
 impl From<i128> for Int512 {
     fn from(val: i128) -> Self {
         Int512(val.into())
@@ -394,6 +415,7 @@ impl From<i8> for Int512 {
     }
 }
 
+// Int to Int
 impl From<Int64> for Int512 {
     fn from(val: Int64) -> Self {
         Int512(val.i64().into())

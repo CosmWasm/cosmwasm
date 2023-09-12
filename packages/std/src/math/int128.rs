@@ -11,7 +11,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
     forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int256, Int512,
-    Int64, Uint128, Uint64,
+    Int64, Uint128, Uint256, Uint512, Uint64,
 };
 
 use super::conversion::shrink_be_int;
@@ -270,12 +270,50 @@ impl Int128 {
     }
 }
 
+// Uint to Int
 impl From<Uint64> for Int128 {
     fn from(val: Uint64) -> Self {
         val.u64().into()
     }
 }
 
+impl TryFrom<Uint128> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint128) -> Result<Self, Self::Error> {
+        value
+            .u128()
+            .try_into() // convert to i128
+            .map(Self::new)
+            .map_err(|_| ConversionOverflowError::new("Uint128", "Int128", value))
+    }
+}
+
+impl TryFrom<Uint256> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
+        value
+            .0
+            .try_into() // convert to i128
+            .map(Self::new)
+            .map_err(|_| ConversionOverflowError::new("Uint256", "Int128", value))
+    }
+}
+
+impl TryFrom<Uint512> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
+        value
+            .0
+            .try_into() // convert to i128
+            .map(Self::new)
+            .map_err(|_| ConversionOverflowError::new("Uint512", "Int128", value))
+    }
+}
+
+// uint to Int
 impl From<u64> for Int128 {
     fn from(val: u64) -> Self {
         Int128(val.into())
@@ -300,12 +338,34 @@ impl From<u8> for Int128 {
     }
 }
 
+// Int to Int
 impl From<Int64> for Int128 {
     fn from(val: Int64) -> Self {
         val.i64().into()
     }
 }
 
+impl TryFrom<Int256> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Int256) -> Result<Self, Self::Error> {
+        shrink_be_int(value.to_be_bytes())
+            .ok_or_else(|| ConversionOverflowError::new("Int256", "Int128", value))
+            .map(Self::from_be_bytes)
+    }
+}
+
+impl TryFrom<Int512> for Int128 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Int512) -> Result<Self, Self::Error> {
+        shrink_be_int(value.to_be_bytes())
+            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int128", value))
+            .map(Self::from_be_bytes)
+    }
+}
+
+// int to Int
 impl From<i128> for Int128 {
     fn from(val: i128) -> Self {
         Int128(val)
@@ -333,26 +393,6 @@ impl From<i16> for Int128 {
 impl From<i8> for Int128 {
     fn from(val: i8) -> Self {
         Int128(val.into())
-    }
-}
-
-impl TryFrom<Int256> for Int128 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Int256) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int256", "Int128", value))
-            .map(Self::from_be_bytes)
-    }
-}
-
-impl TryFrom<Int512> for Int128 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Int512) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int128", value))
-            .map(Self::from_be_bytes)
     }
 }
 

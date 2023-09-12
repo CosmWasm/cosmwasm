@@ -11,7 +11,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
     forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int128, Int256,
-    Int512, Uint64,
+    Int512, Uint128, Uint256, Uint512, Uint64,
 };
 
 use super::conversion::shrink_be_int;
@@ -270,6 +270,7 @@ impl Int64 {
     }
 }
 
+// uint to Int
 impl From<u32> for Int64 {
     fn from(val: u32) -> Self {
         Int64(val.into())
@@ -288,6 +289,7 @@ impl From<u8> for Int64 {
     }
 }
 
+// int to Int
 impl From<i64> for Int64 {
     fn from(val: i64) -> Self {
         Int64(val)
@@ -312,6 +314,7 @@ impl From<i8> for Int64 {
     }
 }
 
+// Int to Int
 impl TryFrom<Int128> for Int64 {
     type Error = ConversionOverflowError;
 
@@ -339,6 +342,55 @@ impl TryFrom<Int512> for Int64 {
         shrink_be_int(value.to_be_bytes())
             .ok_or_else(|| ConversionOverflowError::new("Int512", "Int64", value))
             .map(Self::from_be_bytes)
+    }
+}
+
+// Uint to Int
+impl TryFrom<Uint64> for Int64 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint64) -> Result<Self, Self::Error> {
+        value
+            .u64()
+            .try_into() // convert to i64
+            .map(Self::new)
+            .map_err(|_| ConversionOverflowError::new("Uint64", "Int64", value))
+    }
+}
+
+impl TryFrom<Uint128> for Int64 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint128) -> Result<Self, Self::Error> {
+        value
+            .u128()
+            .try_into() // convert to i64
+            .map(Self::new)
+            .map_err(|_| ConversionOverflowError::new("Uint64", "Int64", value))
+    }
+}
+
+impl TryFrom<Uint256> for Int64 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
+        value
+            .0
+            .try_into()
+            .map(Int64)
+            .map_err(|_| ConversionOverflowError::new("Uint256", "Int64", value))
+    }
+}
+
+impl TryFrom<Uint512> for Int64 {
+    type Error = ConversionOverflowError;
+
+    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
+        value
+            .0
+            .try_into()
+            .map(Int64)
+            .map_err(|_| ConversionOverflowError::new("Uint512", "Int64", value))
     }
 }
 
