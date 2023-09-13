@@ -13,8 +13,7 @@ use crate::errors::{
     OverflowOperation, StdError,
 };
 use crate::{
-    forward_ref_partial_eq, impl_mul_fraction, ConversionOverflowError, Fraction, Int128, Int256,
-    Int512, Int64, Uint128,
+    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
 };
 
 use super::conversion::forward_try_from;

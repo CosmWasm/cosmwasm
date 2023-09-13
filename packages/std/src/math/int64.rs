@@ -10,8 +10,8 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
-    forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int128, Int256,
-    Int512, Uint128, Uint256, Uint512, Uint64,
+    forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256,
+    Uint512, Uint64,
 };
 
 use super::conversion::{forward_try_from, try_from_int_to_int};
