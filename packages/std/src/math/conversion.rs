@@ -79,12 +79,15 @@ macro_rules! forward_try_from {
 }
 pub(crate) use forward_try_from;
 
-// TODO: assert statically that input is bigger than output and that both are ints
 /// Helper macro to implement `TryFrom` for a conversion from a bigger signed int to a smaller one.
 /// This is needed because `bnum` does not implement `TryFrom` for those conversions
 /// because of limitations of const generics.
 macro_rules! try_from_int_to_int {
     ($input: ty, $output: ty) => {
+        // statically assert that the input is bigger than the output
+        static_assertions::const_assert!(
+            core::mem::size_of::<$input>() > core::mem::size_of::<$output>()
+        );
         impl TryFrom<$input> for $output {
             type Error = $crate::ConversionOverflowError;
 
@@ -103,13 +106,22 @@ pub(crate) use try_from_int_to_int;
 /// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
 macro_rules! try_from_uint_to_int {
     ($input: ty, $output: ty) => {
+        // statically assert that...
+        // input is unsigned
+        static_assertions::const_assert_eq!(stringify!($input).as_bytes()[0], b'U');
+        // output is signed
+        static_assertions::const_assert_eq!(stringify!($output).as_bytes()[0], b'I');
+        // input is bigger than output (otherwise we would not need a `TryFrom` impl)
+        static_assertions::const_assert!(
+            core::mem::size_of::<$input>() >= core::mem::size_of::<$output>()
+        );
+
         impl TryFrom<$input> for $output {
             type Error = $crate::ConversionOverflowError;
 
             fn try_from(value: $input) -> Result<Self, Self::Error> {
-                // $input::MAX has to be bigger than $output::MAX,
-                // otherwise we would not need a `TryFrom` impl, so we can just cast it
                 use bnum::prelude::As;
+                // $input::MAX has to be bigger than $output::MAX, so we can just cast it
                 if value.0 > Self::MAX.0.as_() {
                     return Err(Self::Error::new(
                         stringify!($input),
@@ -131,6 +143,12 @@ pub(crate) use try_from_uint_to_int;
 /// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
 macro_rules! try_from_int_to_uint {
     ($input: ty, $output: ty) => {
+        // statically assert that...
+        // input is signed
+        static_assertions::const_assert_eq!(stringify!($input).as_bytes()[0], b'I');
+        // output is unsigned
+        static_assertions::const_assert_eq!(stringify!($output).as_bytes()[0], b'U');
+
         impl TryFrom<$input> for $output {
             type Error = ConversionOverflowError;
 
