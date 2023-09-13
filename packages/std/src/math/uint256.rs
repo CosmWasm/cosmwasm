@@ -19,6 +19,8 @@ use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128, Uint51
 /// the implementation in the future.
 use bnum::types::U256;
 
+use super::conversion::forward_try_from;
+
 /// An implementation of u256 that is using strings for JSON encoding/decoding,
 /// such that the full u256 range can be used for clients that convert JSON numbers to floats,
 /// like JavaScript and jq.
@@ -379,15 +381,7 @@ impl From<u8> for Uint256 {
     }
 }
 
-impl TryFrom<Uint256> for Uint128 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
-        Ok(Uint128::new(value.0.try_into().map_err(|_| {
-            ConversionOverflowError::new("Uint256", "Uint128", value.to_string())
-        })?))
-    }
-}
+forward_try_from!(Uint256, Uint128);
 
 impl TryFrom<Uint256> for Uint64 {
     type Error = ConversionOverflowError;

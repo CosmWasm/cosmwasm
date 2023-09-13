@@ -17,6 +17,8 @@ use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
 /// the implementation in the future.
 use bnum::types::U512;
 
+use super::conversion::forward_try_from;
+
 /// An implementation of u512 that is using strings for JSON encoding/decoding,
 /// such that the full u512 range can be used for clients that convert JSON numbers to floats,
 /// like JavaScript and jq.
@@ -370,15 +372,7 @@ impl TryFrom<Uint512> for Uint256 {
     }
 }
 
-impl TryFrom<Uint512> for Uint128 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
-        Ok(Uint128::new(value.0.try_into().map_err(|_| {
-            ConversionOverflowError::new("Uint512", "Uint128", value.to_string())
-        })?))
-    }
-}
+forward_try_from!(Uint512, Uint128);
 
 impl TryFrom<Uint512> for Uint64 {
     type Error = ConversionOverflowError;

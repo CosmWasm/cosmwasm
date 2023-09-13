@@ -1,4 +1,3 @@
-use bnum::prelude::As;
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -19,7 +18,7 @@ use crate::{
 /// the implementation in the future.
 use bnum::types::{I256, U256};
 
-use super::conversion::{grow_be_int, shrink_be_int};
+use super::conversion::{grow_be_int, try_from_int_to_int, try_from_uint_to_int};
 
 /// An implementation of i256 that is using strings for JSON encoding/decoding,
 /// such that the full i256 range can be used for clients that convert JSON numbers to floats,
@@ -42,7 +41,7 @@ use super::conversion::{grow_be_int, shrink_be_int};
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int256(#[schemars(with = "String")] I256);
+pub struct Int256(#[schemars(with = "String")] pub(crate) I256);
 
 forward_ref_partial_eq!(Int256, Int256);
 
@@ -330,33 +329,8 @@ impl Int256 {
 }
 
 // Uint to Int
-impl TryFrom<Uint512> for Int256 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
-        // Self::MAX fits into Uint512, so we can just cast it
-        if value.0 > Self::MAX.0.as_() {
-            return Err(ConversionOverflowError::new("Uint512", "Int256", value));
-        }
-
-        // at this point we know it fits
-        Ok(Self(value.0.as_()))
-    }
-}
-
-impl TryFrom<Uint256> for Int256 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
-        // Self::MAX fits into Uint256, so we can just cast it
-        if value.0 > Self::MAX.0.as_() {
-            return Err(ConversionOverflowError::new("Uint256", "Int256", value));
-        }
-
-        // at this point we know it fits
-        Ok(Self(value.0.as_()))
-    }
-}
+try_from_uint_to_int!(Uint512, Int256);
+try_from_uint_to_int!(Uint256, Int256);
 
 impl From<Uint128> for Int256 {
     fn from(val: Uint128) -> Self {
@@ -402,15 +376,7 @@ impl From<u8> for Int256 {
 }
 
 // Int to Int
-impl TryFrom<Int512> for Int256 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Int512) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int256", value))
-            .map(Self::from_be_bytes)
-    }
-}
+try_from_int_to_int!(Int512, Int256);
 
 impl From<Int128> for Int256 {
     fn from(val: Int128) -> Self {

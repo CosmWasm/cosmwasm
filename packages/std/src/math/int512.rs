@@ -1,4 +1,3 @@
-use bnum::prelude::As;
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -19,7 +18,7 @@ use crate::{
 /// the implementation in the future.
 use bnum::types::{I512, U512};
 
-use super::conversion::grow_be_int;
+use super::conversion::{grow_be_int, try_from_uint_to_int};
 
 /// An implementation of i512 that is using strings for JSON encoding/decoding,
 /// such that the full i512 range can be used for clients that convert JSON numbers to floats,
@@ -46,7 +45,7 @@ use super::conversion::grow_be_int;
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int512(#[schemars(with = "String")] I512);
+pub struct Int512(#[schemars(with = "String")] pub(crate) I512);
 
 forward_ref_partial_eq!(Int512, Int512);
 
@@ -318,19 +317,7 @@ impl Int512 {
 }
 
 // Uint to Int
-impl TryFrom<Uint512> for Int512 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
-        // Self::MAX fits into Uint512, so we can just cast it
-        if value.0 > Self::MAX.0.as_() {
-            return Err(ConversionOverflowError::new("Uint512", "Int512", value));
-        }
-
-        // at this point we know it fits
-        Ok(Self(value.0.as_()))
-    }
-}
+try_from_uint_to_int!(Uint512, Int512);
 
 impl From<Uint256> for Int512 {
     fn from(val: Uint256) -> Self {
