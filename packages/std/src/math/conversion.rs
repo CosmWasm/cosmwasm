@@ -61,16 +61,18 @@ pub fn shrink_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
 }
 
 /// Helper macro to implement `TryFrom` for a type that is just a wrapper around another type.
-/// This can be used for all our integer conversions where `bint` implements `TryFrom`.
+/// This can be used for all our integer conversions where `bnum` implements `TryFrom`.
 macro_rules! forward_try_from {
     ($input: ty, $output: ty) => {
         impl TryFrom<$input> for $output {
-            type Error = ConversionOverflowError;
+            type Error = $crate::ConversionOverflowError;
 
             fn try_from(value: $input) -> Result<Self, Self::Error> {
-                value.0.try_into().map(Self).map_err(|_| {
-                    ConversionOverflowError::new(stringify!($input), stringify!($output), value)
-                })
+                value
+                    .0
+                    .try_into()
+                    .map(Self)
+                    .map_err(|_| Self::Error::new(stringify!($input), stringify!($output), value))
             }
         }
     };
@@ -79,18 +81,16 @@ pub(crate) use forward_try_from;
 
 // TODO: assert statically that input is bigger than output and that both are ints
 /// Helper macro to implement `TryFrom` for a conversion from a bigger signed int to a smaller one.
-/// This is needed because `bint` does not implement `TryFrom` for those conversions
+/// This is needed because `bnum` does not implement `TryFrom` for those conversions
 /// because of limitations of const generics.
 macro_rules! try_from_int_to_int {
     ($input: ty, $output: ty) => {
         impl TryFrom<$input> for $output {
-            type Error = ConversionOverflowError;
+            type Error = $crate::ConversionOverflowError;
 
             fn try_from(value: $input) -> Result<Self, Self::Error> {
                 $crate::math::conversion::shrink_be_int(value.to_be_bytes())
-                    .ok_or_else(|| {
-                        ConversionOverflowError::new(stringify!($input), stringify!($output), value)
-                    })
+                    .ok_or_else(|| Self::Error::new(stringify!($input), stringify!($output), value))
                     .map(Self::from_be_bytes)
             }
         }
@@ -98,18 +98,20 @@ macro_rules! try_from_int_to_int {
 }
 pub(crate) use try_from_int_to_int;
 
-// TODO: assert statically that input is bigger than output and that both are ints
+/// Helper macro to implement `TryFrom` for a conversion from a unsigned int to a smaller or
+/// equal sized signed int.
+/// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
 macro_rules! try_from_uint_to_int {
     ($input: ty, $output: ty) => {
         impl TryFrom<$input> for $output {
-            type Error = ConversionOverflowError;
+            type Error = $crate::ConversionOverflowError;
 
             fn try_from(value: $input) -> Result<Self, Self::Error> {
-                // $input has to be bigger than $output,
+                // $input::MAX has to be bigger than $output::MAX,
                 // otherwise we would not need a `TryFrom` impl, so we can just cast it
                 use bnum::prelude::As;
                 if value.0 > Self::MAX.0.as_() {
-                    return Err(ConversionOverflowError::new(
+                    return Err(Self::Error::new(
                         stringify!($input),
                         stringify!($output),
                         value,
@@ -124,6 +126,49 @@ macro_rules! try_from_uint_to_int {
 }
 
 pub(crate) use try_from_uint_to_int;
+
+/// Helper macro to implement `TryFrom` for a conversion from a signed int to an unsigned int.
+/// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
+macro_rules! try_from_int_to_uint {
+    ($input: ty, $output: ty) => {
+        impl TryFrom<$input> for $output {
+            type Error = ConversionOverflowError;
+
+            fn try_from(value: $input) -> Result<Self, Self::Error> {
+                use bnum::prelude::As;
+                // if $input::MAX is smaller than $output::MAX, we only need to check the sign
+                if core::mem::size_of::<$input>() <= core::mem::size_of::<$output>() {
+                    if value.is_negative() {
+                        return Err(ConversionOverflowError::new(
+                            stringify!($input),
+                            stringify!($output),
+                            value,
+                        ));
+                    }
+
+                    // otherwise we can just cast it
+                    Ok(Self(value.0.as_()))
+                } else {
+                    // $output::MAX is smaller than $input::MAX.
+                    // If it is negative or too big, we error.
+                    // We can safely cast $output::MAX to $input size
+                    if value.is_negative() || value.0 > <$output>::MAX.0.as_() {
+                        return Err(ConversionOverflowError::new(
+                            stringify!($input),
+                            stringify!($output),
+                            value,
+                        ));
+                    }
+
+                    // at this point we know it fits
+                    Ok(Self(value.0.as_()))
+                }
+            }
+        }
+    };
+}
+
+pub(crate) use try_from_int_to_uint;
 
 #[cfg(test)]
 mod tests {

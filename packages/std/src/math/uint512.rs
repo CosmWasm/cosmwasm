@@ -11,13 +11,13 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
+use crate::{forward_ref_partial_eq, Int128, Int256, Int512, Int64, Uint128, Uint256, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::U512;
 
-use super::conversion::forward_try_from;
+use super::conversion::{forward_try_from, try_from_int_to_uint};
 
 /// An implementation of u512 that is using strings for JSON encoding/decoding,
 /// such that the full u512 range can be used for clients that convert JSON numbers to floats,
@@ -373,16 +373,13 @@ impl TryFrom<Uint512> for Uint256 {
 }
 
 forward_try_from!(Uint512, Uint128);
+forward_try_from!(Uint512, Uint64);
 
-impl TryFrom<Uint512> for Uint64 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
-        Ok(Uint64::new(value.0.try_into().map_err(|_| {
-            ConversionOverflowError::new("Uint512", "Uint64", value.to_string())
-        })?))
-    }
-}
+// Int to Uint
+try_from_int_to_uint!(Int64, Uint512);
+try_from_int_to_uint!(Int128, Uint512);
+try_from_int_to_uint!(Int256, Uint512);
+try_from_int_to_uint!(Int512, Uint512);
 
 impl TryFrom<&str> for Uint512 {
     type Error = StdError;
