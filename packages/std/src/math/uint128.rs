@@ -608,7 +608,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
-    use crate::{from_slice, to_vec, Decimal};
+    use crate::{from_slice, to_vec, ConversionOverflowError, Decimal};
 
     use super::*;
 
