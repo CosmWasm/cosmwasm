@@ -149,7 +149,7 @@ where
         + core::ops::Add<Output = I>,
     O: TryFrom<I, Error = crate::ConversionOverflowError>
         + From<u32>
-        + NumConsts
+        + super::num_consts::NumConsts
         + core::cmp::PartialEq
         + core::fmt::Debug,
     String: From<I>,
@@ -195,10 +195,15 @@ where
 #[cfg(test)]
 pub(crate) fn test_try_from_int_to_uint<I, O>(input_type: &'static str, output_type: &'static str)
 where
-    I: NumConsts + From<i32> + Copy + TryFrom<O> + core::fmt::Debug + core::ops::Add<Output = I>,
+    I: super::num_consts::NumConsts
+        + From<i32>
+        + Copy
+        + TryFrom<O>
+        + core::fmt::Debug
+        + core::ops::Add<Output = I>,
     O: TryFrom<I, Error = crate::ConversionOverflowError>
         + From<u32>
-        + NumConsts
+        + super::num_consts::NumConsts
         + core::cmp::PartialEq
         + core::fmt::Debug,
     String: From<I>,
@@ -315,8 +320,6 @@ macro_rules! try_from_int_to_uint {
     };
 }
 pub(crate) use try_from_int_to_uint;
-
-use super::num_consts::NumConsts;
 
 #[cfg(test)]
 mod tests {
