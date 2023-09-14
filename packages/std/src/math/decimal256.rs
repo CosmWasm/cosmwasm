@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal, Uint512};
+use crate::{forward_ref_partial_eq, Decimal, SignedDecimal, SignedDecimal256, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -522,6 +522,30 @@ impl From<Decimal> for Decimal256 {
         // Unwrap is safe because Decimal256 and Decimal have the same decimal places.
         // Every Decimal value can be stored in Decimal256.
         Decimal256::from_atomics(input.atomics(), input.decimal_places()).unwrap()
+    }
+}
+
+impl TryFrom<SignedDecimal> for Decimal256 {
+    type Error = Decimal256RangeExceeded;
+
+    fn try_from(value: SignedDecimal) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal256)
+            .map_err(|_| Decimal256RangeExceeded)
+    }
+}
+
+impl TryFrom<SignedDecimal256> for Decimal256 {
+    type Error = Decimal256RangeExceeded;
+
+    fn try_from(value: SignedDecimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal256)
+            .map_err(|_| Decimal256RangeExceeded)
     }
 }
 

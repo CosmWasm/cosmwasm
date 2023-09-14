@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal256, SignedDecimal};
+use crate::{forward_ref_partial_eq, Decimal256, SignedDecimal, SignedDecimal256};
 
 use super::Fraction;
 use super::Isqrt;
@@ -516,9 +516,19 @@ impl TryFrom<SignedDecimal> for Decimal {
     fn try_from(value: SignedDecimal) -> Result<Self, Self::Error> {
         value
             .atomics()
-            .i128()
-            .try_into() // convert to u128
-            .map(Uint128::new)
+            .try_into()
+            .map(Decimal)
+            .map_err(|_| DecimalRangeExceeded)
+    }
+}
+
+impl TryFrom<SignedDecimal256> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    fn try_from(value: SignedDecimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
             .map(Decimal)
             .map_err(|_| DecimalRangeExceeded)
     }

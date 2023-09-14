@@ -13,7 +13,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal256, Int512, SignedDecimal};
+use crate::{forward_ref_partial_eq, Decimal, Decimal256, Int512, SignedDecimal};
 
 use super::Fraction;
 use super::Int256;
@@ -633,7 +633,25 @@ impl Neg for SignedDecimal256 {
 
 impl From<SignedDecimal> for SignedDecimal256 {
     fn from(value: SignedDecimal) -> Self {
-        Self::from_atomics(value.atomics(), SignedDecimal::DECIMAL_PLACES).unwrap()
+        Self::new(value.atomics().into())
+    }
+}
+
+impl From<Decimal> for SignedDecimal256 {
+    fn from(value: Decimal) -> Self {
+        Self::new(value.atomics().into())
+    }
+}
+
+impl TryFrom<Decimal256> for SignedDecimal256 {
+    type Error = SignedDecimal256RangeExceeded;
+
+    fn try_from(value: Decimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(SignedDecimal256)
+            .map_err(|_| SignedDecimal256RangeExceeded)
     }
 }
 
