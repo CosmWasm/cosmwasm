@@ -15,6 +15,7 @@ use crate::{
 };
 
 use super::conversion::{forward_try_from, try_from_int_to_int};
+use super::num_consts::NumConsts;
 
 /// An implementation of i64 that is using strings for JSON encoding/decoding,
 /// such that the full i64 range can be used for clients that convert JSON numbers to floats,
@@ -268,6 +269,13 @@ impl Int64 {
     pub const fn unsigned_abs(self) -> Uint64 {
         Uint64(self.0.unsigned_abs())
     }
+}
+
+impl NumConsts for Int64 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 }
 
 // uint to Int
@@ -541,7 +549,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -648,6 +656,14 @@ mod tests {
 
         let result = Int64::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int64_try_from_unsigned_works() {
+        test_try_from_uint_to_int::<Uint64, Int64>("Uint64", "Int64");
+        test_try_from_uint_to_int::<Uint128, Int64>("Uint128", "Int64");
+        test_try_from_uint_to_int::<Uint256, Int64>("Uint256", "Int64");
+        test_try_from_uint_to_int::<Uint512, Int64>("Uint512", "Int64");
     }
 
     #[test]

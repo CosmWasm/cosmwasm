@@ -23,6 +23,7 @@ use crate::{
 use bnum::types::U256;
 
 use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::num_consts::NumConsts;
 
 /// An implementation of u256 that is using strings for JSON encoding/decoding,
 /// such that the full u256 range can be used for clients that convert JSON numbers to floats,
@@ -338,6 +339,13 @@ impl Uint256 {
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(self.0.abs_diff(other.0))
     }
+}
+
+impl NumConsts for Uint256 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 }
 
 impl_mul_fraction!(Uint256);
@@ -671,6 +679,7 @@ where
 mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
+    use crate::math::conversion::test_try_from_int_to_uint;
     use crate::{from_slice, to_vec, Decimal, Decimal256};
 
     #[test]
@@ -1064,6 +1073,14 @@ mod tests {
 
         let result = Uint256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint256_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint256>("Int64", "Uint256");
+        test_try_from_int_to_uint::<Int128, Uint256>("Int128", "Uint256");
+        test_try_from_int_to_uint::<Int256, Uint256>("Int256", "Uint256");
+        test_try_from_int_to_uint::<Int512, Uint256>("Int512", "Uint256");
     }
 
     #[test]

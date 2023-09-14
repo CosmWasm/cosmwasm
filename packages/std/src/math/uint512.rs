@@ -18,6 +18,7 @@ use crate::{forward_ref_partial_eq, Int128, Int256, Int512, Int64, Uint128, Uint
 use bnum::types::U512;
 
 use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::num_consts::NumConsts;
 
 /// An implementation of u512 that is using strings for JSON encoding/decoding,
 /// such that the full u512 range can be used for clients that convert JSON numbers to floats,
@@ -300,6 +301,13 @@ impl Uint512 {
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(self.0.abs_diff(other.0))
     }
+}
+
+impl NumConsts for Uint512 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 }
 
 impl From<Uint256> for Uint512 {
@@ -638,7 +646,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_int_to_uint, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -747,6 +755,14 @@ mod tests {
 
         let result = Uint512::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint512_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint512>("Int64", "Uint512");
+        test_try_from_int_to_uint::<Int128, Uint512>("Int128", "Uint512");
+        test_try_from_int_to_uint::<Int256, Uint512>("Int256", "Uint512");
+        test_try_from_int_to_uint::<Int512, Uint512>("Int512", "Uint512");
     }
 
     #[test]

@@ -136,8 +136,137 @@ macro_rules! try_from_uint_to_int {
         }
     };
 }
-
 pub(crate) use try_from_uint_to_int;
+
+#[cfg(test)]
+pub(crate) fn test_try_from_uint_to_int<I, O>(input_type: &'static str, output_type: &'static str)
+where
+    I: super::num_consts::NumConsts
+        + From<u32>
+        + Copy
+        + TryFrom<O, Error = crate::ConversionOverflowError>
+        + core::fmt::Debug
+        + core::ops::Add<Output = I>,
+    O: TryFrom<I, Error = crate::ConversionOverflowError>
+        + From<u32>
+        + NumConsts
+        + core::cmp::PartialEq
+        + core::fmt::Debug,
+    String: From<I>,
+{
+    let v = I::MAX;
+    assert_eq!(
+        O::try_from(v),
+        Err(crate::ConversionOverflowError::new(
+            input_type,
+            output_type,
+            v
+        )),
+        "input::MAX value should not fit"
+    );
+
+    let max = I::try_from(O::MAX).unwrap();
+    assert_eq!(O::try_from(max), Ok(O::MAX), "output::MAX value should fit");
+
+    // but $output::MAX + 1 should not fit
+    let v = max + I::ONE;
+    assert_eq!(
+        O::try_from(v),
+        Err(crate::ConversionOverflowError::new(
+            input_type,
+            output_type,
+            v
+        )),
+        "output::MAX + 1 should not fit"
+    );
+
+    // zero should work
+    let v = I::ZERO;
+    assert_eq!(O::try_from(v), Ok(O::ZERO), "zero should fit");
+
+    // 42 should work
+    assert_eq!(
+        O::try_from(I::from(42u32)),
+        Ok(O::from(42u32)),
+        "42 should fit"
+    )
+}
+
+#[cfg(test)]
+pub(crate) fn test_try_from_int_to_uint<I, O>(input_type: &'static str, output_type: &'static str)
+where
+    I: NumConsts + From<i32> + Copy + TryFrom<O> + core::fmt::Debug + core::ops::Add<Output = I>,
+    O: TryFrom<I, Error = crate::ConversionOverflowError>
+        + From<u32>
+        + NumConsts
+        + core::cmp::PartialEq
+        + core::fmt::Debug,
+    String: From<I>,
+    <I as std::convert::TryFrom<O>>::Error: std::fmt::Debug,
+{
+    if core::mem::size_of::<I>() <= core::mem::size_of::<O>() {
+        // if the input type is smaller than the output type, then `I::MAX` should fit into `O`
+        let v = I::MAX;
+        assert_eq!(
+            O::try_from(v),
+            Ok(O::try_from(v).unwrap()),
+            "input::MAX value should fit"
+        );
+    } else {
+        // if the input is bigger than the output, then `I::MAX` should not fit into `O`
+        let v = I::MAX;
+        assert_eq!(
+            O::try_from(v),
+            Err(crate::ConversionOverflowError::new(
+                input_type,
+                output_type,
+                v
+            )),
+            "input::MAX value should not fit"
+        );
+        // but `O::MAX` should fit
+        let max = I::try_from(O::MAX).unwrap();
+        assert_eq!(
+            O::try_from(max),
+            Ok(O::try_from(max).unwrap()),
+            "output::MAX value should fit"
+        );
+        // while `O::MAX + 1` should not
+        let v = max + I::ONE;
+        assert_eq!(
+            O::try_from(v),
+            Err(crate::ConversionOverflowError::new(
+                input_type,
+                output_type,
+                v
+            )),
+            "output::MAX + 1 should not fit"
+        );
+    }
+
+    // negative numbers should fail
+    let v = I::from(-42i32);
+    assert_eq!(
+        O::try_from(v),
+        Err(crate::ConversionOverflowError::new(
+            input_type,
+            output_type,
+            v
+        )),
+        "negative numbers should not fit"
+    );
+
+    // zero should work
+    let v = I::ZERO;
+    assert_eq!(O::try_from(v), Ok(O::ZERO), "zero should fit");
+
+    // 42 should work
+    assert_eq!(
+        O::try_from(I::from(42i32)),
+        Ok(O::from(42u32)),
+        "42 should fit"
+    )
+}
 
 /// Helper macro to implement `TryFrom` for a conversion from a signed int to an unsigned int.
 /// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
@@ -185,8 +314,9 @@ macro_rules! try_from_int_to_uint {
         }
     };
 }
-
 pub(crate) use try_from_int_to_uint;
+
+use super::num_consts::NumConsts;
 
 #[cfg(test)]
 mod tests {

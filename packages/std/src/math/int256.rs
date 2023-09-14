@@ -19,6 +19,7 @@ use crate::{
 use bnum::types::{I256, U256};
 
 use super::conversion::{grow_be_int, try_from_int_to_int, try_from_uint_to_int};
+use super::num_consts::NumConsts;
 
 /// An implementation of i256 that is using strings for JSON encoding/decoding,
 /// such that the full i256 range can be used for clients that convert JSON numbers to floats,
@@ -326,6 +327,13 @@ impl Int256 {
     pub const fn unsigned_abs(self) -> Uint256 {
         Uint256(self.0.unsigned_abs())
     }
+}
+
+impl NumConsts for Int256 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 }
 
 // Uint to Int
@@ -637,7 +645,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -746,6 +754,12 @@ mod tests {
 
         let result = Int256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int256_try_from_unsigned_works() {
+        test_try_from_uint_to_int::<Uint256, Int256>("Uint256", "Int256");
+        test_try_from_uint_to_int::<Uint512, Int256>("Uint512", "Int256");
     }
 
     #[test]

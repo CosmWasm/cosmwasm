@@ -20,6 +20,7 @@ use crate::{
 };
 
 use super::conversion::forward_try_from;
+use super::num_consts::NumConsts;
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -270,6 +271,13 @@ impl Uint128 {
             self.0 - other.0
         })
     }
+}
+
+impl NumConsts for Uint128 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 }
 
 impl_mul_fraction!(Uint128);
@@ -608,6 +616,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
+    use crate::math::conversion::test_try_from_int_to_uint;
     use crate::{from_slice, to_vec, ConversionOverflowError, Decimal};
 
     use super::*;
@@ -676,6 +685,14 @@ mod tests {
 
         let result = Uint128::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint128_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint128>("Int64", "Uint128");
+        test_try_from_int_to_uint::<Int128, Uint128>("Int128", "Uint128");
+        test_try_from_int_to_uint::<Int256, Uint128>("Int256", "Uint128");
+        test_try_from_int_to_uint::<Int512, Uint128>("Int512", "Uint128");
     }
 
     #[test]

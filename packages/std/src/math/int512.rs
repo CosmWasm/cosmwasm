@@ -16,6 +16,7 @@ use crate::{forward_ref_partial_eq, Int128, Int256, Int64, Uint128, Uint256, Uin
 use bnum::types::{I512, U512};
 
 use super::conversion::{grow_be_int, try_from_uint_to_int};
+use super::num_consts::NumConsts;
 
 /// An implementation of i512 that is using strings for JSON encoding/decoding,
 /// such that the full i512 range can be used for clients that convert JSON numbers to floats,
@@ -311,6 +312,13 @@ impl Int512 {
     pub const fn unsigned_abs(self) -> Uint512 {
         Uint512(self.0.unsigned_abs())
     }
+}
+
+impl NumConsts for Int512 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
 }
 
 // Uint to Int
@@ -634,7 +642,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -783,6 +791,12 @@ mod tests {
 
         let result = Int512::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int512_try_from_unsigned_works() {
+        test_try_from_uint_to_int::<Uint256, Int256>("Uint256", "Int256");
+        test_try_from_uint_to_int::<Uint512, Int256>("Uint512", "Int256");
     }
 
     #[test]
