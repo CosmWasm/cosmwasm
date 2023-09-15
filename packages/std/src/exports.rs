@@ -15,9 +15,8 @@ use serde::de::DeserializeOwned;
 use crate::deps::OwnedDeps;
 #[cfg(feature = "stargate")]
 use crate::ibc::{
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcChannelOpenResponse, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
@@ -531,10 +530,10 @@ where
 
 #[cfg(feature = "stargate")]
 fn _do_ibc_channel_open<Q, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelOpenMsg) -> Result<IbcChannelOpenResponse, E>,
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelOpenMsg) -> Result<(), E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<IbcChannelOpenResponse>
+) -> ContractResult<()>
 where
     Q: CustomQuery,
     E: ToString,

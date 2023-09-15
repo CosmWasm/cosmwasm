@@ -299,9 +299,6 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
     }
 }
 
-/// Note that this serializes as "null".
-#[cfg(not(feature = "ibc3"))]
-pub type IbcChannelOpenResponse = ();
 /// This serializes either as "null" or a JSON object.
 #[cfg(feature = "ibc3")]
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
@@ -410,11 +407,6 @@ pub struct IbcPacketReceiveMsg {
 }
 
 impl IbcPacketReceiveMsg {
-    #[cfg(not(feature = "ibc3"))]
-    pub fn new(packet: IbcPacket) -> Self {
-        Self { packet }
-    }
-
     #[cfg(feature = "ibc3")]
     pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
@@ -432,14 +424,6 @@ pub struct IbcPacketAckMsg {
 }
 
 impl IbcPacketAckMsg {
-    #[cfg(not(feature = "ibc3"))]
-    pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
-        Self {
-            acknowledgement,
-            original_packet,
-        }
-    }
-
     #[cfg(feature = "ibc3")]
     pub fn new(
         acknowledgement: IbcAcknowledgement,
@@ -464,11 +448,6 @@ pub struct IbcPacketTimeoutMsg {
 }
 
 impl IbcPacketTimeoutMsg {
-    #[cfg(not(feature = "ibc3"))]
-    pub fn new(packet: IbcPacket) -> Self {
-        Self { packet }
-    }
-
     #[cfg(feature = "ibc3")]
     pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
