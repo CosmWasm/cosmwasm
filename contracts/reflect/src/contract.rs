@@ -274,7 +274,7 @@ mod tests {
             }
             .into(),
             // make sure we can pass through custom native messages
-            CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
+            CustomMsg::Raw(Binary::new(b"{\"foo\":123}".to_vec())).into(),
             CustomMsg::Debug("Hi, Dad!".to_string()).into(),
             StakingMsg::Delegate {
                 validator: String::from("validator"),

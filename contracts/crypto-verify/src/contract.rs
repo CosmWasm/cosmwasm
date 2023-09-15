@@ -34,9 +34,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             public_key,
         } => to_json_binary(&query_verify_cosmos(
             deps,
-            &message.0,
-            &signature.0,
-            &public_key.0,
+            message.as_slice(),
+            signature.as_slice(),
+            public_key.as_slice(),
         )?),
         QueryMsg::VerifyEthereumText {
             message,
@@ -69,9 +69,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             public_key,
         } => to_json_binary(&query_verify_tendermint(
             deps,
-            &message.0,
-            &signature.0,
-            &public_key.0,
+            message.as_slice(),
+            signature.as_slice(),
+            public_key.as_slice(),
         )?),
         QueryMsg::VerifyTendermintBatch {
             messages,
@@ -268,9 +268,9 @@ mod tests {
         let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
 
         let verify_msg = QueryMsg::VerifyCosmosSignature {
-            message: Binary(message),
-            signature: Binary(signature),
-            public_key: Binary(public_key),
+            message: Binary::new(message),
+            signature: Binary::new(signature),
+            public_key: Binary::new(public_key),
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
@@ -290,9 +290,9 @@ mod tests {
         let public_key = hex::decode(SECP256K1_PUBLIC_KEY_HEX).unwrap();
 
         let verify_msg = QueryMsg::VerifyCosmosSignature {
-            message: Binary(message),
-            signature: Binary(signature),
-            public_key: Binary(public_key),
+            message: Binary::new(message),
+            signature: Binary::new(signature),
+            public_key: Binary::new(public_key),
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
@@ -310,9 +310,9 @@ mod tests {
         let public_key = vec![];
 
         let verify_msg = QueryMsg::VerifyCosmosSignature {
-            message: Binary(message),
-            signature: Binary(signature),
-            public_key: Binary(public_key),
+            message: Binary::new(message),
+            signature: Binary::new(signature),
+            public_key: Binary::new(public_key),
         };
 
         let res = query(deps.as_ref(), mock_env(), verify_msg);
@@ -457,15 +457,15 @@ mod tests {
 
         let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
 
         let verify_msg = QueryMsg::VerifyTendermintBatch {
@@ -487,18 +487,18 @@ mod tests {
         // One message
         let messages = [ED25519_MESSAGE_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // Multiple signatures
         //FIXME: Use different signatures / pubkeys
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // Multiple pubkeys
         let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
 
         let verify_msg = QueryMsg::VerifyTendermintBatch {
@@ -521,18 +521,18 @@ mod tests {
         //FIXME: Use different messages
         let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // Multiple signatures
         //FIXME: Use different signatures
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // One pubkey
         let public_keys = [ED25519_PUBLIC_KEY_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
 
         let verify_msg = QueryMsg::VerifyTendermintBatch {
@@ -553,17 +553,19 @@ mod tests {
 
         let mut messages: Vec<Binary> = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // Alter one of the messages
-        messages[0].0[0] ^= 0x01;
+        let mut b: Vec<_> = messages.pop().unwrap().into();
+        b[0] ^= 0x01;
+        messages.push(Binary::new(b));
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
 
         let verify_msg = QueryMsg::VerifyTendermintBatch {
@@ -584,16 +586,16 @@ mod tests {
 
         let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
         // One of the public keys is empty
         let public_keys = ["", ED25519_PUBLIC_KEY_HEX]
             .iter()
-            .map(|m| Binary(hex::decode(m).unwrap()))
+            .map(|m| Binary::new(hex::decode(m).unwrap()))
             .collect();
 
         let verify_msg = QueryMsg::VerifyTendermintBatch {
@@ -620,9 +622,9 @@ mod tests {
         let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
 
         let verify_msg = QueryMsg::VerifyTendermintSignature {
-            message: Binary(message),
-            signature: Binary(signature),
-            public_key: Binary(public_key),
+            message: Binary::new(message),
+            signature: Binary::new(signature),
+            public_key: Binary::new(public_key),
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
@@ -642,9 +644,9 @@ mod tests {
         let public_key = hex::decode(ED25519_PUBLIC_KEY_HEX).unwrap();
 
         let verify_msg = QueryMsg::VerifyTendermintSignature {
-            message: Binary(message),
-            signature: Binary(signature),
-            public_key: Binary(public_key),
+            message: Binary::new(message),
+            signature: Binary::new(signature),
+            public_key: Binary::new(public_key),
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
@@ -662,9 +664,9 @@ mod tests {
         let public_key = vec![];
 
         let verify_msg = QueryMsg::VerifyTendermintSignature {
-            message: Binary(message),
-            signature: Binary(signature),
-            public_key: Binary(public_key),
+            message: Binary::new(message),
+            signature: Binary::new(signature),
+            public_key: Binary::new(public_key),
         };
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
