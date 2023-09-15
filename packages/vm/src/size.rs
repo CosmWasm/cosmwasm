@@ -1,5 +1,5 @@
 #[derive(Copy, Clone, Debug)]
-pub struct Size(pub usize);
+pub struct Size(pub(crate) usize);
 
 impl Size {
     /// Creates a size of `n` kilo

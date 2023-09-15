@@ -87,7 +87,7 @@ mod tests {
     #[test]
     fn limit_to_pages_works() {
         // rounds down
-        assert_eq!(limit_to_pages(Size(0)), Pages(0));
+        assert_eq!(limit_to_pages(Size::kilo(0)), Pages(0));
         assert_eq!(limit_to_pages(Size(1)), Pages(0));
         assert_eq!(limit_to_pages(Size::kibi(63)), Pages(0));
         assert_eq!(limit_to_pages(Size::kibi(64)), Pages(1));
