@@ -148,8 +148,8 @@ impl Uint128 {
     /// assert_eq!(result.to_string(), "680564733841876926926749214863536422910");
     /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn full_mul(self, rhs: impl Into<u128>) -> Uint256 {
-        Uint256::from(self.u128())
+    pub fn full_mul(self, rhs: impl Into<Self>) -> Uint256 {
+        Uint256::from(self)
             .checked_mul(Uint256::from(rhs.into()))
             .unwrap()
     }

@@ -135,7 +135,7 @@ impl Int128 {
     /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn full_mul(self, rhs: impl Into<Self>) -> Int256 {
-        Int256::from(self.i128())
+        Int256::from(self)
             .checked_mul(Int256::from(rhs.into()))
             .unwrap()
     }
