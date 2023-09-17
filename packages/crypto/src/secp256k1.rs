@@ -44,7 +44,7 @@ pub fn secp256k1_verify(
     public_key: &[u8],
 ) -> CryptoResult<bool> {
     let message_hash = read_hash(message_hash)?;
-    let signature = read_signature(signature)?;signature);
+    let signature = read_signature(signature)?;
     check_pubkey(public_key)?;
 
     // Already hashed, just build Digest container
