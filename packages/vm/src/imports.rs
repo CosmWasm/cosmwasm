@@ -4,7 +4,8 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
+    secp256r1_verify, CryptoError,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -310,6 +311,48 @@ pub fn do_secp256k1_recover_pubkey<
             }
         },
     }
+}
+
+/// Return code (error code) for a valid signature
+const SECP256R1_VERIFY_CODE_VALID: u32 = 0;
+
+/// Return code (error code) for an invalid signature
+const SECP256R1_VERIFY_CODE_INVALID: u32 = 1;
+
+pub fn do_secp256r1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    pubkey_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+
+    let hash = read_region(&data.memory(&mut store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&data.memory(&mut store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(&data.memory(&mut store), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+
+    let gas_info = GasInfo::with_cost(data.gas_config.secp256r1_verify_cost);
+    process_gas_info(data, &mut store, gas_info)?;
+    let result = secp256r1_verify(&hash, &signature, &pubkey);
+    let code = match result {
+        Ok(valid) => {
+            if valid {
+                SECP256R1_VERIFY_CODE_VALID
+            } else {
+                SECP256R1_VERIFY_CODE_INVALID
+            }
+        }
+        Err(err) => match err {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::GenericErr { .. } => err.code(),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    };
+    Ok(code)
 }
 
 /// Return code (error code) for a valid signature
@@ -671,6 +714,7 @@ mod tests {
                 "addr_humanize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
+                "secp256r1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_typed(&mut store, |_a: u32| {}),
@@ -1642,6 +1686,285 @@ mod tests {
         let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
         assert_eq!(error, 0);
         assert_eq!(force_read(&mut fe_mut, pubkey_ptr), expected);
+    }
+
+    #[test]
+    fn do_secp256r1_verify_works() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn do_secp256r1_verify_wrong_hash_verify_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        // alter hash
+        hash[0] ^= 0x01;
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_secp256r1_verify_larger_hash_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        // extend / break hash
+        hash.push(0x00);
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, MESSAGE_HASH_MAX_LEN + 1),
+            e => panic!("Unexpected error: {e:?}"),
+        }
+    }
+
+    #[test]
+    fn do_secp256r1_verify_shorter_hash_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        // reduce / break hash
+        hash.pop();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            3 // mapped InvalidHashFormat
+        );
+    }
+
+    #[test]
+    fn do_secp256r1_verify_wrong_sig_verify_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        // alter sig
+        sig[0] ^= 0x01;
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_secp256r1_verify_larger_sig_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        // extend / break sig
+        sig.push(0x00);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, ECDSA_SIGNATURE_LEN + 1),
+            e => panic!("Unexpected error: {e:?}"),
+        }
+    }
+
+    #[test]
+    fn do_secp256r1_verify_shorter_sig_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        // reduce / break sig
+        sig.pop();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            4 // mapped InvalidSignatureFormat
+        )
+    }
+
+    #[test]
+    fn do_secp256r1_verify_wrong_pubkey_format_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        // alter pubkey format
+        pubkey[0] ^= 0x01;
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped InvalidPubkeyFormat
+        )
+    }
+
+    #[test]
+    fn do_secp256r1_verify_wrong_pubkey_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        // alter pubkey
+        pubkey[1] ^= 0x01;
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            10 // mapped GenericErr
+        )
+    }
+
+    #[test]
+    fn do_secp256r1_verify_larger_pubkey_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        // extend / break pubkey
+        pubkey.push(0x00);
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, ECDSA_PUBKEY_MAX_LEN + 1),
+            e => panic!("Unexpected error: {e:?}"),
+        }
+    }
+
+    #[test]
+    fn do_secp256r1_verify_shorter_pubkey_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        // reduce / break pubkey
+        pubkey.pop();
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped InvalidPubkeyFormat
+        )
+    }
+
+    #[test]
+    fn do_secp256r1_verify_empty_pubkey_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = vec![];
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped InvalidPubkeyFormat
+        )
+    }
+
+    #[test]
+    fn do_secp256r1_verify_wrong_data_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, mut _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig = vec![0x22; ECDSA_SIGNATURE_LEN];
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let pubkey = vec![0x04; ECDSA_PUBKEY_MAX_LEN];
+        let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            10 // mapped GenericErr
+        )
     }
 
     #[test]
