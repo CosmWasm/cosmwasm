@@ -215,6 +215,19 @@ impl Api for MockApi {
         Ok(pubkey.to_vec())
     }
 
+    fn secp256r1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError> {
+        Ok(cosmwasm_crypto::secp256r1_verify(
+            message_hash,
+            signature,
+            public_key,
+        )?)
+    }
+
     fn ed25519_verify(
         &self,
         message: &[u8],

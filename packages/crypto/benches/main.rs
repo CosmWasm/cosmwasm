@@ -11,7 +11,7 @@ use k256::ecdsa::SigningKey; // type alias
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, secp256r1_verify
 };
 use std::cmp::min;
 
