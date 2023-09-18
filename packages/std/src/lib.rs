@@ -51,7 +51,6 @@ pub use crate::errors::{
     VerificationError,
 };
 pub use crate::hex_binary::HexBinary;
-#[cfg(feature = "ibc3")]
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,

@@ -825,7 +825,6 @@ mod tests {
         use crate::testing::{
             mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
         };
-        #[cfg(feature = "ibc3")]
         use cosmwasm_std::testing::mock_ibc_packet_timeout;
         use cosmwasm_std::testing::{
             mock_ibc_channel_close_init, mock_ibc_channel_connect_ack, mock_ibc_channel_open_init,

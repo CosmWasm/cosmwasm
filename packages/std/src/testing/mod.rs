@@ -24,8 +24,6 @@ pub use mock::{
 pub use mock::{
     mock_ibc_channel, mock_ibc_channel_close_confirm, mock_ibc_channel_close_init,
     mock_ibc_channel_connect_ack, mock_ibc_channel_connect_confirm, mock_ibc_channel_open_init,
-    mock_ibc_channel_open_try,
+    mock_ibc_channel_open_try, mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
 };
-#[cfg(feature = "ibc3")]
-pub use mock::{mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout};
 pub use shuffle::riffle_shuffle;

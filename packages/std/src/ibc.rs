@@ -5,7 +5,6 @@ use core::cmp::{Ord, Ordering, PartialOrd};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "ibc3")]
 use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coin::Coin;
@@ -300,7 +299,6 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 }
 
 /// This serializes either as "null" or a JSON object.
-#[cfg(feature = "ibc3")]
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -402,12 +400,10 @@ impl From<IbcChannelCloseMsg> for IbcChannel {
 #[non_exhaustive]
 pub struct IbcPacketReceiveMsg {
     pub packet: IbcPacket,
-    #[cfg(feature = "ibc3")]
     pub relayer: Addr,
 }
 
 impl IbcPacketReceiveMsg {
-    #[cfg(feature = "ibc3")]
     pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
     }
@@ -419,12 +415,10 @@ impl IbcPacketReceiveMsg {
 pub struct IbcPacketAckMsg {
     pub acknowledgement: IbcAcknowledgement,
     pub original_packet: IbcPacket,
-    #[cfg(feature = "ibc3")]
     pub relayer: Addr,
 }
 
 impl IbcPacketAckMsg {
-    #[cfg(feature = "ibc3")]
     pub fn new(
         acknowledgement: IbcAcknowledgement,
         original_packet: IbcPacket,
@@ -443,12 +437,10 @@ impl IbcPacketAckMsg {
 #[non_exhaustive]
 pub struct IbcPacketTimeoutMsg {
     pub packet: IbcPacket,
-    #[cfg(feature = "ibc3")]
     pub relayer: Addr,
 }
 
 impl IbcPacketTimeoutMsg {
-    #[cfg(feature = "ibc3")]
     pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
         Self { packet, relayer }
     }

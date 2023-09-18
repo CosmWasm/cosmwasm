@@ -1,7 +1,8 @@
 use cosmwasm_std::{
-    entry_point, from_json, to_json_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, Never, StdError, StdResult,
+    entry_point, from_json, to_json_binary, DepsMut, Env, Ibc3ChannelOpenResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcChannelOpenResponse, IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, Never, StdError, StdResult,
 };
 
 use crate::ibc_msg::{
@@ -17,7 +18,11 @@ pub const PACKET_LIFETIME: u64 = 60 * 60;
 
 #[entry_point]
 /// enforces ordering and versioing constraints
-pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
+pub fn ibc_channel_open(
+    _deps: DepsMut,
+    _env: Env,
+    msg: IbcChannelOpenMsg,
+) -> StdResult<IbcChannelOpenResponse> {
     let channel = msg.channel();
 
     if channel.order != IbcOrder::Ordered {
@@ -37,7 +42,9 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
         }
     }
 
-    Ok(())
+    Ok(Some(Ibc3ChannelOpenResponse {
+        version: IBC_APP_VERSION.to_string(),
+    }))
 }
 
 #[entry_point]
