@@ -136,7 +136,7 @@ impl Api for MockApi {
     fn addr_validate(&self, input: &str) -> StdResult<Addr> {
         let canonical = self.addr_canonicalize(input)?;
         let normalized = self.addr_humanize(&canonical)?;
-        if input != normalized {
+        if input != normalized.as_str() {
             return Err(StdError::generic_err(
                 "Invalid input: address not normalized",
             ));
@@ -1203,7 +1203,7 @@ mod tests {
 
         // valid
         let addr = api.addr_validate("foobar123").unwrap();
-        assert_eq!(addr, "foobar123");
+        assert_eq!(addr.as_str(), "foobar123");
 
         // invalid: too short
         api.addr_validate("").unwrap_err();
@@ -1232,20 +1232,20 @@ mod tests {
         let original = String::from("shorty");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered, original);
+        assert_eq!(recovered.as_str(), original);
 
         // normalizes input
         let original = String::from("CosmWasmChef");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered, "cosmwasmchef");
+        assert_eq!(recovered.as_str(), "cosmwasmchef");
 
         // Long input (Juno contract address)
         let original =
             String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered, original);
+        assert_eq!(recovered.as_str(), original);
     }
 
     #[test]
@@ -1695,7 +1695,7 @@ mod tests {
 
         let res = distribution.query(&query).unwrap().unwrap();
         let res: DelegatorWithdrawAddressResponse = from_json(res).unwrap();
-        assert_eq!(res.withdraw_address, "withdraw0");
+        assert_eq!(res.withdraw_address.as_str(), "withdraw0");
 
         let query = DistributionQuery::DelegatorWithdrawAddress {
             delegator_address: "addr1".to_string(),
@@ -1703,7 +1703,7 @@ mod tests {
 
         let res = distribution.query(&query).unwrap().unwrap();
         let res: DelegatorWithdrawAddressResponse = from_json(res).unwrap();
-        assert_eq!(res.withdraw_address, "addr1");
+        assert_eq!(res.withdraw_address.as_str(), "addr1");
     }
 
     #[cfg(feature = "cosmwasm_1_4")]
@@ -2169,9 +2169,16 @@ mod tests {
             let mut storage1 = HashMap::<Binary, Binary>::default();
             storage1.insert(b"the key".into(), b"the value".into());
 
+            let api = MockApi::default();
+
             match request {
                 WasmQuery::Raw { contract_addr, key } => {
-                    if *contract_addr == constract1 {
+                    let Ok(addr) = api.addr_validate(contract_addr) else {
+                        return SystemResult::Err(SystemError::NoSuchContract {
+                            addr: contract_addr.clone(),
+                        });
+                    };
+                    if addr == constract1 {
                         if let Some(value) = storage1.get(key) {
                             SystemResult::Ok(ContractResult::Ok(value.clone()))
                         } else {
@@ -2184,7 +2191,12 @@ mod tests {
                     }
                 }
                 WasmQuery::Smart { contract_addr, msg } => {
-                    if *contract_addr == constract1 {
+                    let Ok(addr) = api.addr_validate(contract_addr) else {
+                        return SystemResult::Err(SystemError::NoSuchContract {
+                            addr: contract_addr.clone(),
+                        });
+                    };
+                    if addr == constract1 {
                         #[derive(Deserialize)]
                         struct MyMsg {}
                         let _msg: MyMsg = match from_json(msg) {
@@ -2202,7 +2214,12 @@ mod tests {
                     }
                 }
                 WasmQuery::ContractInfo { contract_addr } => {
-                    if *contract_addr == constract1 {
+                    let Ok(addr) = api.addr_validate(contract_addr) else {
+                        return SystemResult::Err(SystemError::NoSuchContract {
+                            addr: contract_addr.clone(),
+                        });
+                    };
+                    if addr == constract1 {
                         let response = ContractInfoResponse {
                             code_id: 4,
                             creator: "lalala".into(),

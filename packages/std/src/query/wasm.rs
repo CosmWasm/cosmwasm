@@ -47,23 +47,14 @@ pub struct ContractInfoResponse {
 
 impl QueryResponseType for ContractInfoResponse {}
 
-impl ContractInfoResponse {
-    /// Constructor for testing frameworks such as cw-multi-test.
-    /// This is required because query response types should be #[non_exhaustive].
-    /// As a contract developer you should not need this constructor since
-    /// query responses are constructed for you via deserialization.
-    #[doc(hidden)]
-    #[deprecated(
-        note = "Use ContractInfoResponse::default() and mutate the fields you want to set."
-    )]
-    pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
-        ContractInfoResponse {
-            code_id,
-            creator: creator.into(),
-            ..Default::default()
-        }
-    }
-}
+impl_response_constructor!(
+    ContractInfoResponse,
+    code_id: u64,
+    creator: String,
+    admin: Option<String>,
+    pinned: bool,
+    ibc_port: Option<String>
+);
 
 /// The essential data from wasmd's [CodeInfo]/[CodeInfoResponse].
 ///
