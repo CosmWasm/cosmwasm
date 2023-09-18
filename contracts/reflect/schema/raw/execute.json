@@ -451,6 +451,7 @@
               "required": [
                 "amount",
                 "channel_id",
+                "memo",
                 "timeout",
                 "to_address"
               ],
@@ -465,6 +466,10 @@
                 },
                 "channel_id": {
                   "description": "existing channel to send the tokens over",
+                  "type": "string"
+                },
+                "memo": {
+                  "description": "optional memo",
                   "type": "string"
                 },
                 "timeout": {
