@@ -1043,7 +1043,7 @@ jobs:
           command: |
             TAG="$CIRCLE_TAG"
             TITLE="$TAG"
-            BODY="Attached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
+            BODY="The release notes are available in [CHANGELOG.md](https://github.com/CosmWasm/cosmwasm/blob/$TAG/CHANGELOG.md). For upgrading contracts also consult [MIGRATING.md](https://github.com/CosmWasm/cosmwasm/blob/$TAG/MIGRATING.md).\n\nAttached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
             ghr -t "$GITHUB_TOKEN" \
               -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" \
               -c "$CIRCLE_SHA1" \
