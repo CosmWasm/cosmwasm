@@ -275,7 +275,7 @@ fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceRespo
 
 fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
     // perform all hashes as requested
-    let mut hashed: Vec<u8> = contract.as_str().into();
+    let mut hashed: Vec<u8> = contract.as_ref().into();
     for _ in 0..work {
         hashed = Sha256::digest(&hashed).to_vec()
     }

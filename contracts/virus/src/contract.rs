@@ -45,7 +45,7 @@ pub fn execute_spread(
         return Ok(Response::new());
     }
 
-    let creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
+    let creator = deps.api.addr_canonicalize(env.contract.address.as_ref())?;
     let ContractInfoResponse { code_id, .. } = deps
         .querier
         .query_wasm_contract_info(env.contract.address)?;

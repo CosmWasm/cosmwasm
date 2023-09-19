@@ -83,7 +83,7 @@ pub fn transfer(
     send: Uint128,
 ) -> StdResult<Response> {
     let rcpt_raw = deps.api.addr_canonicalize(&recipient)?;
-    let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
 
     let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
     save_map(
@@ -135,7 +135,7 @@ fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
 }
 
 pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
-    let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
 
     // ensure we have the proper denom
     let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
@@ -189,8 +189,8 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
         )));
     }
 
-    let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
-    let owner_raw = deps.api.addr_canonicalize(invest.owner.as_str())?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
+    let owner_raw = deps.api.addr_canonicalize(invest.owner.as_ref())?;
 
     // calculate tax and remainer to unbond
     let tax = amount * invest.exit_tax;
@@ -254,7 +254,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     }
 
     // check how much to send - min(balance, claims[sender]), and reduce the claim
-    let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
     let claim = may_load_map(deps.storage, PREFIX_CLAIMS, &sender_raw)?
         .ok_or_else(|| StdError::generic_err("no claim for this address"))?;
     let to_send = balance.amount.min(claim);
