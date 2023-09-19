@@ -368,7 +368,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     /// Creates a MemoryView.
     /// This must be short living and not be used after the memory was grown.
-    pub fn memory<'a>(&self, store: &'a mut impl AsStoreMut) -> MemoryView<'a> {
+    pub fn memory<'a>(&self, store: &'a impl AsStoreMut) -> MemoryView<'a> {
         self.memory
             .as_ref()
             .expect("Memory is not set. This is a bug in the lifecycle.")

@@ -45,11 +45,11 @@ const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Length of a serialized Ed25519  signature
 const MAX_LENGTH_ED25519_SIGNATURE: usize = 64;
 /// Max length of a Ed25519 message in bytes.
-/// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
+/// This is an arbitrary value, for performance / memory constraints. If you need to verify larger
 /// messages, let us know.
 const MAX_LENGTH_ED25519_MESSAGE: usize = 128 * 1024;
 /// Max number of batch Ed25519 messages / signatures / public_keys.
-/// This is an arbitrary value, for performance / memory contraints. If you need to batch-verify a
+/// This is an arbitrary value, for performance / memory constraints. If you need to batch-verify a
 /// larger number of signatures, let us know.
 const MAX_COUNT_ED25519_BATCH: usize = 256;
 
@@ -73,7 +73,7 @@ pub fn do_db_read<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) = data.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
     process_gas_info(data, &mut store, gas_info)?;
@@ -98,8 +98,8 @@ pub fn do_db_write<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + '
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
-    let value = read_region(&data.memory(&mut store), value_ptr, MAX_LENGTH_DB_VALUE)?;
+    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let value = read_region(&data.memory(&store), value_ptr, MAX_LENGTH_DB_VALUE)?;
 
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
@@ -119,7 +119,7 @@ pub fn do_db_remove<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&data.memory(&mut store), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
@@ -135,11 +135,7 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let source_data = read_region(
-        &data.memory(&mut store),
-        source_ptr,
-        MAX_LENGTH_HUMAN_ADDRESS,
-    )?;
+    let source_data = read_region(&data.memory(&store), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
         return write_to_contract(data, &mut store, b"Input is empty");
     }
@@ -183,11 +179,7 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let source_data = read_region(
-        &data.memory(&mut store),
-        source_ptr,
-        MAX_LENGTH_HUMAN_ADDRESS,
-    )?;
+    let source_data = read_region(&data.memory(&store), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
         return write_to_contract(data, &mut store, b"Input is empty");
     }
@@ -201,11 +193,7 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
     process_gas_info(data, &mut store, gas_info)?;
     match result {
         Ok(canonical) => {
-            write_region(
-                &data.memory(&mut store),
-                destination_ptr,
-                canonical.as_slice(),
-            )?;
+            write_region(&data.memory(&store), destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {
@@ -223,7 +211,7 @@ pub fn do_addr_humanize<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
     let (data, mut store) = env.data_and_store_mut();
 
     let canonical = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         source_ptr,
         MAX_LENGTH_CANONICAL_ADDRESS,
     )?;
@@ -232,7 +220,7 @@ pub fn do_addr_humanize<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
     process_gas_info(data, &mut store, gas_info)?;
     match result {
         Ok(human) => {
-            write_region(&data.memory(&mut store), destination_ptr, human.as_bytes())?;
+            write_region(&data.memory(&store), destination_ptr, human.as_bytes())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {
@@ -256,9 +244,9 @@ pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let hash = read_region(&data.memory(&mut store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&data.memory(&mut store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-    let pubkey = read_region(&data.memory(&mut store), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+    let hash = read_region(&data.memory(&store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&data.memory(&store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(&data.memory(&store), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let gas_info = GasInfo::with_cost(data.gas_config.secp256k1_verify_cost);
     process_gas_info(data, &mut store, gas_info)?;
@@ -296,8 +284,8 @@ pub fn do_secp256k1_recover_pubkey<
 ) -> VmResult<u64> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let hash = read_region(&data.memory(&mut store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&data.memory(&mut store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let hash = read_region(&data.memory(&store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&data.memory(&store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
     let recover_param: u8 = match recover_param.try_into() {
         Ok(rp) => rp,
         Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
@@ -338,16 +326,16 @@ pub fn do_ed25519_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Queri
     let (data, mut store) = env.data_and_store_mut();
 
     let message = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         message_ptr,
         MAX_LENGTH_ED25519_MESSAGE,
     )?;
     let signature = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         signature_ptr,
         MAX_LENGTH_ED25519_SIGNATURE,
     )?;
-    let pubkey = read_region(&data.memory(&mut store), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
+    let pubkey = read_region(&data.memory(&store), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let gas_info = GasInfo::with_cost(data.gas_config.ed25519_verify_cost);
     process_gas_info(data, &mut store, gas_info)?;
@@ -387,17 +375,17 @@ pub fn do_ed25519_batch_verify<
     let (data, mut store) = env.data_and_store_mut();
 
     let messages = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         messages_ptr,
         (MAX_LENGTH_ED25519_MESSAGE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let signatures = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         signatures_ptr,
         (MAX_LENGTH_ED25519_SIGNATURE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let public_keys = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         public_keys_ptr,
         (EDDSA_PUBKEY_LEN + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
@@ -444,7 +432,7 @@ pub fn do_debug<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'sta
     let (data, mut store) = env.data_and_store_mut();
 
     if let Some(debug_handler) = data.debug_handler() {
-        let message_data = read_region(&data.memory(&mut store), message_ptr, MAX_LENGTH_DEBUG)?;
+        let message_data = read_region(&data.memory(&store), message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
         let gas_remaining = data.get_gas_left(&mut store);
         debug_handler.borrow_mut()(
@@ -463,9 +451,9 @@ pub fn do_abort<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'sta
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    let (data, mut store) = env.data_and_store_mut();
+    let (data, store) = env.data_and_store_mut();
 
-    let message_data = read_region(&data.memory(&mut store), message_ptr, MAX_LENGTH_ABORT)?;
+    let message_data = read_region(&data.memory(&store), message_ptr, MAX_LENGTH_ABORT)?;
     let msg = String::from_utf8_lossy(&message_data);
     Err(VmError::aborted(msg))
 }
@@ -477,7 +465,7 @@ pub fn do_query_chain<A: BackendApi + 'static, S: Storage + 'static, Q: Querier 
     let (data, mut store) = env.data_and_store_mut();
 
     let request = read_region(
-        &data.memory(&mut store),
+        &data.memory(&store),
         request_ptr,
         MAX_LENGTH_QUERY_CHAIN_REQUEST,
     )?;
@@ -500,8 +488,8 @@ pub fn do_db_scan<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let start = maybe_read_region(&data.memory(&mut store), start_ptr, MAX_LENGTH_DB_KEY)?;
-    let end = maybe_read_region(&data.memory(&mut store), end_ptr, MAX_LENGTH_DB_KEY)?;
+    let start = maybe_read_region(&data.memory(&store), start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(&data.memory(&store), end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
@@ -715,7 +703,7 @@ mod tests {
     fn leave_default_data(
         fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
     ) {
-        let (env, mut _store) = fe_mut.data_and_store_mut();
+        let (env, _store) = fe_mut.data_and_store_mut();
 
         // create some mock data
         let mut storage = MockStorage::new();
@@ -736,12 +724,12 @@ mod tests {
             .call_function1(&mut store, "allocate", &[(data.len() as u32).into()])
             .unwrap();
         let region_ptr = ref_to_u32(&result).unwrap();
-        write_region(&env.memory(&mut store), region_ptr, data).expect("error writing");
+        write_region(&env.memory(&store), region_ptr, data).expect("error writing");
         region_ptr
     }
 
     fn create_empty(
-        wasmer_instance: &mut WasmerInstance,
+        wasmer_instance: &WasmerInstance,
         fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
         capacity: u32,
     ) -> u32 {
@@ -761,9 +749,9 @@ mod tests {
         fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
         region_ptr: u32,
     ) -> Vec<u8> {
-        let (env, mut store) = fe_mut.data_and_store_mut();
+        let (env, store) = fe_mut.data_and_store_mut();
 
-        read_region(&env.memory(&mut store), region_ptr, 5000).unwrap()
+        read_region(&env.memory(&store), region_ptr, 5000).unwrap()
     }
 
     #[test]
@@ -1005,7 +993,7 @@ mod tests {
 
         leave_default_data(&mut fe_mut);
 
-        // Note: right now we cannot differnetiate between an existent and a non-existent key
+        // Note: right now we cannot differentiate between an existent and a non-existent key
         do_db_remove(fe_mut.as_mut(), key_ptr).unwrap();
 
         let value = fe_mut
@@ -1160,12 +1148,12 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_works() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
         let api = MockApi::default();
 
         let source_ptr = write_data(&mut fe_mut, b"foo");
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, api.canonical_length() as u32);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, api.canonical_length() as u32);
 
         leave_default_data(&mut fe_mut);
 
@@ -1179,13 +1167,13 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr1 = write_data(&mut fe_mut, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&mut fe_mut, b""); // empty
         let source_ptr3 = write_data(&mut fe_mut, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 70);
 
         leave_default_data(&mut fe_mut);
 
@@ -1211,11 +1199,11 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr = write_data(&mut fe_mut, b"foo");
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 7);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 7);
 
         leave_default_data(&mut fe_mut);
 
@@ -1232,11 +1220,11 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_large_inputs() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr = write_data(&mut fe_mut, &[61; 333]);
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 8);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 8);
 
         leave_default_data(&mut fe_mut);
 
@@ -1259,11 +1247,11 @@ mod tests {
     #[test]
     fn do_addr_canonicalize_fails_for_small_destination_region() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr = write_data(&mut fe_mut, b"foo");
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 7);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 7);
 
         leave_default_data(&mut fe_mut);
 
@@ -1283,13 +1271,13 @@ mod tests {
     #[test]
     fn do_addr_humanize_works() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
         let source_ptr = write_data(&mut fe_mut, &source_data);
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 70);
 
         leave_default_data(&mut fe_mut);
 
@@ -1301,11 +1289,11 @@ mod tests {
     #[test]
     fn do_addr_humanize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr = write_data(&mut fe_mut, b"foo"); // too short
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 70);
 
         leave_default_data(&mut fe_mut);
 
@@ -1318,11 +1306,11 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr = write_data(&mut fe_mut, b"foo\0\0\0\0\0");
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 70);
 
         leave_default_data(&mut fe_mut);
 
@@ -1339,11 +1327,11 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_input_too_long() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let source_ptr = write_data(&mut fe_mut, &[61; 65]);
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 70);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 70);
 
         leave_default_data(&mut fe_mut);
 
@@ -1366,13 +1354,13 @@ mod tests {
     #[test]
     fn do_addr_humanize_fails_for_destination_region_too_small() {
         let api = MockApi::default();
-        let (fe, mut store, mut instance) = make_instance(api);
+        let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length()];
         let source_ptr = write_data(&mut fe_mut, &source_data);
-        let dest_ptr = create_empty(&mut instance, &mut fe_mut, 2);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, 2);
 
         leave_default_data(&mut fe_mut);
 
@@ -1392,7 +1380,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_works() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1411,7 +1399,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_hash_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1432,7 +1420,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_hash_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1457,7 +1445,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_hash_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1478,7 +1466,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1499,7 +1487,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1524,7 +1512,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1545,7 +1533,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_format_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1566,7 +1554,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1587,7 +1575,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1612,7 +1600,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1633,7 +1621,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
@@ -1652,7 +1640,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
@@ -1671,7 +1659,7 @@ mod tests {
     #[test]
     fn do_secp256k1_recover_pubkey_works() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
@@ -1694,7 +1682,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_works() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1713,7 +1701,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_msg_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1734,7 +1722,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_msg_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1759,7 +1747,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1780,7 +1768,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1805,7 +1793,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1826,7 +1814,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_pubkey_verify_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1847,7 +1835,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1872,7 +1860,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1893,7 +1881,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
@@ -1912,7 +1900,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (fe, mut store, mut _instance) = make_instance(api);
+        let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
         let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
