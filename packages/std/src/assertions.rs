@@ -45,12 +45,12 @@ macro_rules! ensure {
 /// #     Unauthorized {},
 /// # }
 /// # struct Config {
-/// #     admin: String,
+/// #     admin: Addr,
 /// # }
 /// #
 /// # fn body() -> Result<(), ContractError> {
 /// # let info = MessageInfo { sender: Addr::unchecked("foo"), funds: Vec::new() };
-/// # let cfg = Config { admin: "foo".to_string() };
+/// # let cfg = Config { admin: Addr::unchecked("foo") };
 /// use cosmwasm_std::ensure_eq;
 ///
 /// ensure_eq!(info.sender, cfg.admin, ContractError::Unauthorized {});

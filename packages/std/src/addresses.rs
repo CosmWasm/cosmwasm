@@ -48,7 +48,7 @@ impl Addr {
     /// ```
     /// # use cosmwasm_std::{Addr};
     /// let address = Addr::unchecked("foobar");
-    /// assert_eq!(address, "foobar");
+    /// assert_eq!(address.as_str(), "foobar");
     /// ```
     pub fn unchecked(input: impl Into<String>) -> Addr {
         Addr(input.into())

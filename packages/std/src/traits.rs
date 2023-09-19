@@ -132,7 +132,7 @@ pub trait Api {
     /// # let api = MockApi::default();
     /// let input = "what-users-provide";
     /// let validated: Addr = api.addr_validate(input).unwrap();
-    /// assert_eq!(validated, input);
+    /// assert_eq!(validated.as_str(), input);
     /// ```
     fn addr_validate(&self, human: &str) -> StdResult<Addr>;
 
