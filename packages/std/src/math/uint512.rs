@@ -11,11 +11,14 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{forward_ref_partial_eq, Uint128, Uint256, Uint64};
+use crate::{forward_ref_partial_eq, Int128, Int256, Int512, Int64, Uint128, Uint256, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::U512;
+
+use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::num_consts::NumConsts;
 
 /// An implementation of u512 that is using strings for JSON encoding/decoding,
 /// such that the full u512 range can be used for clients that convert JSON numbers to floats,
@@ -300,6 +303,13 @@ impl Uint512 {
     }
 }
 
+impl NumConsts for Uint512 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
 impl From<Uint256> for Uint512 {
     fn from(val: Uint256) -> Self {
         let mut bytes = [0u8; 64];
@@ -370,15 +380,14 @@ impl TryFrom<Uint512> for Uint256 {
     }
 }
 
-impl TryFrom<Uint512> for Uint128 {
-    type Error = ConversionOverflowError;
+forward_try_from!(Uint512, Uint128);
+forward_try_from!(Uint512, Uint64);
 
-    fn try_from(value: Uint512) -> Result<Self, Self::Error> {
-        Ok(Uint128::new(value.0.try_into().map_err(|_| {
-            ConversionOverflowError::new("Uint512", "Uint128", value.to_string())
-        })?))
-    }
-}
+// Int to Uint
+try_from_int_to_uint!(Int64, Uint512);
+try_from_int_to_uint!(Int128, Uint512);
+try_from_int_to_uint!(Int256, Uint512);
+try_from_int_to_uint!(Int512, Uint512);
 
 impl TryFrom<&str> for Uint512 {
     type Error = StdError;
@@ -637,7 +646,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_int_to_uint, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -746,6 +755,38 @@ mod tests {
 
         let result = Uint512::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint512_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint512>("Int64", "Uint512");
+        test_try_from_int_to_uint::<Int128, Uint512>("Int128", "Uint512");
+        test_try_from_int_to_uint::<Int256, Uint512>("Int256", "Uint512");
+        test_try_from_int_to_uint::<Int512, Uint512>("Int512", "Uint512");
+    }
+
+    #[test]
+    fn uint512_try_into() {
+        assert!(Uint64::try_from(Uint512::MAX).is_err());
+        assert!(Uint128::try_from(Uint512::MAX).is_err());
+        assert!(Uint256::try_from(Uint512::MAX).is_err());
+
+        assert_eq!(Uint64::try_from(Uint512::zero()), Ok(Uint64::zero()));
+        assert_eq!(Uint128::try_from(Uint512::zero()), Ok(Uint128::zero()));
+        assert_eq!(Uint256::try_from(Uint512::zero()), Ok(Uint256::zero()));
+
+        assert_eq!(
+            Uint64::try_from(Uint512::from(42u64)),
+            Ok(Uint64::from(42u64))
+        );
+        assert_eq!(
+            Uint128::try_from(Uint512::from(42u128)),
+            Ok(Uint128::from(42u128))
+        );
+        assert_eq!(
+            Uint256::try_from(Uint512::from(42u128)),
+            Ok(Uint256::from(42u128))
+        );
     }
 
     #[test]

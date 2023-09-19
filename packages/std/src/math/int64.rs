@@ -10,11 +10,12 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
-    forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int128, Int256,
-    Int512, Uint64,
+    forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256,
+    Uint512, Uint64,
 };
 
-use super::conversion::shrink_be_int;
+use super::conversion::{forward_try_from, try_from_int_to_int};
+use super::num_consts::NumConsts;
 
 /// An implementation of i64 that is using strings for JSON encoding/decoding,
 /// such that the full i64 range can be used for clients that convert JSON numbers to floats,
@@ -30,7 +31,7 @@ use super::conversion::shrink_be_int;
 /// assert_eq!(a.i64(), 258);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int64(#[schemars(with = "String")] i64);
+pub struct Int64(#[schemars(with = "String")] pub(crate) i64);
 
 forward_ref_partial_eq!(Int64, Int64);
 
@@ -270,6 +271,14 @@ impl Int64 {
     }
 }
 
+impl NumConsts for Int64 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
+// uint to Int
 impl From<u32> for Int64 {
     fn from(val: u32) -> Self {
         Int64(val.into())
@@ -288,6 +297,7 @@ impl From<u8> for Int64 {
     }
 }
 
+// int to Int
 impl From<i64> for Int64 {
     fn from(val: i64) -> Self {
         Int64(val)
@@ -312,35 +322,16 @@ impl From<i8> for Int64 {
     }
 }
 
-impl TryFrom<Int128> for Int64 {
-    type Error = ConversionOverflowError;
+// Int to Int
+try_from_int_to_int!(Int128, Int64);
+try_from_int_to_int!(Int256, Int64);
+try_from_int_to_int!(Int512, Int64);
 
-    fn try_from(value: Int128) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int128", "Int64", value))
-            .map(Self::from_be_bytes)
-    }
-}
-
-impl TryFrom<Int256> for Int64 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Int256) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int256", "Int64", value))
-            .map(Self::from_be_bytes)
-    }
-}
-
-impl TryFrom<Int512> for Int64 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Int512) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int64", value))
-            .map(Self::from_be_bytes)
-    }
-}
+// Uint to Int
+forward_try_from!(Uint64, Int64);
+forward_try_from!(Uint128, Int64);
+forward_try_from!(Uint256, Int64);
+forward_try_from!(Uint512, Int64);
 
 impl TryFrom<&str> for Int64 {
     type Error = StdError;
@@ -558,7 +549,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -665,6 +656,14 @@ mod tests {
 
         let result = Int64::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int64_try_from_unsigned_works() {
+        test_try_from_uint_to_int::<Uint64, Int64>("Uint64", "Int64");
+        test_try_from_uint_to_int::<Uint128, Int64>("Uint128", "Int64");
+        test_try_from_uint_to_int::<Uint256, Int64>("Uint256", "Int64");
+        test_try_from_uint_to_int::<Uint512, Int64>("Uint512", "Int64");
     }
 
     #[test]

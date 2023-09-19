@@ -12,7 +12,12 @@ use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, StdError,
 };
-use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128};
+use crate::{
+    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
+};
+
+use super::conversion::forward_try_from;
+use super::num_consts::NumConsts;
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
 /// such that the full u64 range can be used for clients that convert JSON numbers to floats,
@@ -262,6 +267,13 @@ impl Uint64 {
     }
 }
 
+impl NumConsts for Uint64 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
 impl_mul_fraction!(Uint64);
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
@@ -269,6 +281,7 @@ impl_mul_fraction!(Uint64);
 // of the conflict with `TryFrom<&str>` as described here
 // https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
 
+// uint to Uint
 impl From<u64> for Uint64 {
     fn from(val: u64) -> Self {
         Uint64(val)
@@ -292,6 +305,12 @@ impl From<u8> for Uint64 {
         Uint64(val.into())
     }
 }
+
+// Int to Uint
+forward_try_from!(Int64, Uint64);
+forward_try_from!(Int128, Uint64);
+forward_try_from!(Int256, Uint64);
+forward_try_from!(Int512, Uint64);
 
 impl TryFrom<&str> for Uint64 {
     type Error = StdError;
@@ -559,6 +578,7 @@ where
 mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
+    use crate::math::conversion::test_try_from_int_to_uint;
     use crate::{from_slice, to_vec, ConversionOverflowError};
 
     #[test]
@@ -616,6 +636,14 @@ mod tests {
 
         let result = Uint64::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint64_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint64>("Int64", "Uint64");
+        test_try_from_int_to_uint::<Int128, Uint64>("Int128", "Uint64");
+        test_try_from_int_to_uint::<Int256, Uint64>("Int256", "Uint64");
+        test_try_from_int_to_uint::<Int512, Uint64>("Int512", "Uint64");
     }
 
     #[test]

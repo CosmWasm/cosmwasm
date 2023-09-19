@@ -15,7 +15,8 @@ use crate::{forward_ref_partial_eq, Int128, Int256, Int64, Uint128, Uint256, Uin
 /// the implementation in the future.
 use bnum::types::{I512, U512};
 
-use super::conversion::grow_be_int;
+use super::conversion::{grow_be_int, try_from_uint_to_int};
+use super::num_consts::NumConsts;
 
 /// An implementation of i512 that is using strings for JSON encoding/decoding,
 /// such that the full i512 range can be used for clients that convert JSON numbers to floats,
@@ -42,7 +43,7 @@ use super::conversion::grow_be_int;
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int512(#[schemars(with = "String")] I512);
+pub struct Int512(#[schemars(with = "String")] pub(crate) I512);
 
 forward_ref_partial_eq!(Int512, Int512);
 
@@ -313,6 +314,16 @@ impl Int512 {
     }
 }
 
+impl NumConsts for Int512 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
+// Uint to Int
+try_from_uint_to_int!(Uint512, Int512);
+
 impl From<Uint256> for Int512 {
     fn from(val: Uint256) -> Self {
         let mut bytes = [0u8; 64];
@@ -334,6 +345,7 @@ impl From<Uint64> for Int512 {
     }
 }
 
+// uint to Int
 impl From<u128> for Int512 {
     fn from(val: u128) -> Self {
         Int512(val.into())
@@ -364,6 +376,7 @@ impl From<u8> for Int512 {
     }
 }
 
+// int to Int
 impl From<i128> for Int512 {
     fn from(val: i128) -> Self {
         Int512(val.into())
@@ -394,6 +407,7 @@ impl From<i8> for Int512 {
     }
 }
 
+// Int to Int
 impl From<Int64> for Int512 {
     fn from(val: Int64) -> Self {
         Int512(val.i64().into())
@@ -628,7 +642,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -777,6 +791,12 @@ mod tests {
 
         let result = Int512::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int512_try_from_unsigned_works() {
+        test_try_from_uint_to_int::<Uint256, Int256>("Uint256", "Int256");
+        test_try_from_uint_to_int::<Uint512, Int256>("Uint512", "Int256");
     }
 
     #[test]

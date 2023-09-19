@@ -7,6 +7,7 @@ mod int256;
 mod int512;
 mod int64;
 mod isqrt;
+mod num_consts;
 mod uint128;
 mod uint256;
 mod uint512;
@@ -71,6 +72,7 @@ mod tests {
         + ShrAssign<u32>
         + ShrAssign<&'a u32>
         + Not<Output = Self>
+        + super::num_consts::NumConsts
     {
     }
 

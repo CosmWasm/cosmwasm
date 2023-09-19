@@ -15,8 +15,12 @@ use crate::errors::{
     OverflowOperation, StdError,
 };
 use crate::{
-    forward_ref_partial_eq, impl_mul_fraction, ConversionOverflowError, Fraction, Uint256, Uint64,
+    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint256,
+    Uint64,
 };
+
+use super::conversion::forward_try_from;
+use super::num_consts::NumConsts;
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
@@ -269,6 +273,13 @@ impl Uint128 {
     }
 }
 
+impl NumConsts for Uint128 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
 impl_mul_fraction!(Uint128);
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
@@ -312,15 +323,13 @@ impl From<u8> for Uint128 {
     }
 }
 
-impl TryFrom<Uint128> for Uint64 {
-    type Error = ConversionOverflowError;
+forward_try_from!(Uint128, Uint64);
 
-    fn try_from(value: Uint128) -> Result<Self, Self::Error> {
-        Ok(Uint64::new(value.0.try_into().map_err(|_| {
-            ConversionOverflowError::new("Uint128", "Uint64", value.to_string())
-        })?))
-    }
-}
+// Int to Uint
+forward_try_from!(Int64, Uint128);
+forward_try_from!(Int128, Uint128);
+forward_try_from!(Int256, Uint128);
+forward_try_from!(Int512, Uint128);
 
 impl TryFrom<&str> for Uint128 {
     type Error = StdError;
@@ -607,7 +616,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
-    use crate::{from_slice, to_vec, Decimal};
+    use crate::math::conversion::test_try_from_int_to_uint;
+    use crate::{from_slice, to_vec, ConversionOverflowError, Decimal};
 
     use super::*;
 
@@ -675,6 +685,26 @@ mod tests {
 
         let result = Uint128::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint128_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint128>("Int64", "Uint128");
+        test_try_from_int_to_uint::<Int128, Uint128>("Int128", "Uint128");
+        test_try_from_int_to_uint::<Int256, Uint128>("Int256", "Uint128");
+        test_try_from_int_to_uint::<Int512, Uint128>("Int512", "Uint128");
+    }
+
+    #[test]
+    fn uint128_try_into() {
+        assert!(Uint64::try_from(Uint128::MAX).is_err());
+
+        assert_eq!(Uint64::try_from(Uint128::zero()), Ok(Uint64::zero()));
+
+        assert_eq!(
+            Uint64::try_from(Uint128::from(42u64)),
+            Ok(Uint64::from(42u64))
+        );
     }
 
     #[test]

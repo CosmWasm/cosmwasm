@@ -17,11 +17,14 @@ and this project adheres to
 - cosmwasm-std: Add `Int{64,128,256}::{checked_multiply_ratio, full_mul}`
   ([#1866])
 - cosmwasm-std: Add `is_negative` for `Int{64,128,256,512}` ([#1867]).
+- cosmwasm-std: Add `TryFrom<Uint{256,512}> for Uint64` and
+  `TryFrom<Uint{A}> for Int{B}` where `A >= B` ([#1870]).
 
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
 [#1861]: https://github.com/CosmWasm/cosmwasm/pull/1861
 [#1866]: https://github.com/CosmWasm/cosmwasm/pull/1866
 [#1867]: https://github.com/CosmWasm/cosmwasm/pull/1867
+[#1870]: https://github.com/CosmWasm/cosmwasm/pull/1870
 
 ## [1.4.0] - 2023-09-04
 

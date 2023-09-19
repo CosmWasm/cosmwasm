@@ -10,15 +10,16 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::{
-    forward_ref_partial_eq, CheckedMultiplyRatioError, ConversionOverflowError, Int128, Int512,
-    Int64, Uint128, Uint256, Uint64,
+    forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int512, Int64, Uint128, Uint256,
+    Uint512, Uint64,
 };
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::{I256, U256};
 
-use super::conversion::{grow_be_int, shrink_be_int};
+use super::conversion::{grow_be_int, try_from_int_to_int, try_from_uint_to_int};
+use super::num_consts::NumConsts;
 
 /// An implementation of i256 that is using strings for JSON encoding/decoding,
 /// such that the full i256 range can be used for clients that convert JSON numbers to floats,
@@ -41,7 +42,7 @@ use super::conversion::{grow_be_int, shrink_be_int};
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int256(#[schemars(with = "String")] I256);
+pub struct Int256(#[schemars(with = "String")] pub(crate) I256);
 
 forward_ref_partial_eq!(Int256, Int256);
 
@@ -328,6 +329,17 @@ impl Int256 {
     }
 }
 
+impl NumConsts for Int256 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
+// Uint to Int
+try_from_uint_to_int!(Uint512, Int256);
+try_from_uint_to_int!(Uint256, Int256);
+
 impl From<Uint128> for Int256 {
     fn from(val: Uint128) -> Self {
         val.u128().into()
@@ -340,6 +352,7 @@ impl From<Uint64> for Int256 {
     }
 }
 
+// uint to Int
 impl From<u128> for Int256 {
     fn from(val: u128) -> Self {
         Int256(val.into())
@@ -370,6 +383,9 @@ impl From<u8> for Int256 {
     }
 }
 
+// Int to Int
+try_from_int_to_int!(Int512, Int256);
+
 impl From<Int128> for Int256 {
     fn from(val: Int128) -> Self {
         val.i128().into()
@@ -382,6 +398,7 @@ impl From<Int64> for Int256 {
     }
 }
 
+// int to Int
 impl From<i128> for Int256 {
     fn from(val: i128) -> Self {
         Int256(val.into())
@@ -409,16 +426,6 @@ impl From<i16> for Int256 {
 impl From<i8> for Int256 {
     fn from(val: i8) -> Self {
         Int256(val.into())
-    }
-}
-
-impl TryFrom<Int512> for Int256 {
-    type Error = ConversionOverflowError;
-
-    fn try_from(value: Int512) -> Result<Self, Self::Error> {
-        shrink_be_int(value.to_be_bytes())
-            .ok_or_else(|| ConversionOverflowError::new("Int512", "Int256", value))
-            .map(Self::from_be_bytes)
     }
 }
 
@@ -638,7 +645,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
 
     #[test]
     fn size_of_works() {
@@ -747,6 +754,12 @@ mod tests {
 
         let result = Int256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn int256_try_from_unsigned_works() {
+        test_try_from_uint_to_int::<Uint256, Int256>("Uint256", "Int256");
+        test_try_from_uint_to_int::<Uint512, Int256>("Uint512", "Int256");
     }
 
     #[test]

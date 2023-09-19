@@ -13,11 +13,17 @@ use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
     DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
-use crate::{forward_ref_partial_eq, impl_mul_fraction, Fraction, Uint128, Uint512, Uint64};
+use crate::{
+    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
+    Uint512, Uint64,
+};
 
 /// Used internally - we don't want to leak this type since we might change
 /// the implementation in the future.
 use bnum::types::U256;
+
+use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::num_consts::NumConsts;
 
 /// An implementation of u256 that is using strings for JSON encoding/decoding,
 /// such that the full u256 range can be used for clients that convert JSON numbers to floats,
@@ -335,6 +341,13 @@ impl Uint256 {
     }
 }
 
+impl NumConsts for Uint256 {
+    const ZERO: Self = Self::zero();
+    const ONE: Self = Self::one();
+    const MAX: Self = Self::MAX;
+    const MIN: Self = Self::MIN;
+}
+
 impl_mul_fraction!(Uint256);
 
 impl From<Uint128> for Uint256 {
@@ -379,15 +392,14 @@ impl From<u8> for Uint256 {
     }
 }
 
-impl TryFrom<Uint256> for Uint128 {
-    type Error = ConversionOverflowError;
+forward_try_from!(Uint256, Uint128);
+forward_try_from!(Uint256, Uint64);
 
-    fn try_from(value: Uint256) -> Result<Self, Self::Error> {
-        Ok(Uint128::new(value.0.try_into().map_err(|_| {
-            ConversionOverflowError::new("Uint256", "Uint128", value.to_string())
-        })?))
-    }
-}
+// Int to Uint
+try_from_int_to_uint!(Int64, Uint256);
+try_from_int_to_uint!(Int128, Uint256);
+try_from_int_to_uint!(Int256, Uint256);
+try_from_int_to_uint!(Int512, Uint256);
 
 impl TryFrom<&str> for Uint256 {
     type Error = StdError;
@@ -667,6 +679,7 @@ where
 mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
+    use crate::math::conversion::test_try_from_int_to_uint;
     use crate::{from_slice, to_vec, Decimal, Decimal256};
 
     #[test]
@@ -1060,6 +1073,32 @@ mod tests {
 
         let result = Uint256::try_from("1.23");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint256_try_from_signed_works() {
+        test_try_from_int_to_uint::<Int64, Uint256>("Int64", "Uint256");
+        test_try_from_int_to_uint::<Int128, Uint256>("Int128", "Uint256");
+        test_try_from_int_to_uint::<Int256, Uint256>("Int256", "Uint256");
+        test_try_from_int_to_uint::<Int512, Uint256>("Int512", "Uint256");
+    }
+
+    #[test]
+    fn uint256_try_into() {
+        assert!(Uint64::try_from(Uint256::MAX).is_err());
+        assert!(Uint128::try_from(Uint256::MAX).is_err());
+
+        assert_eq!(Uint64::try_from(Uint256::zero()), Ok(Uint64::zero()));
+        assert_eq!(Uint128::try_from(Uint256::zero()), Ok(Uint128::zero()));
+
+        assert_eq!(
+            Uint64::try_from(Uint256::from(42u64)),
+            Ok(Uint64::from(42u64))
+        );
+        assert_eq!(
+            Uint128::try_from(Uint256::from(42u128)),
+            Ok(Uint128::from(42u128))
+        );
     }
 
     #[test]
