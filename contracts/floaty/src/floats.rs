@@ -21,22 +21,28 @@ const MANTISSA_MASK_64: u64 = 0x000fffffffffffff;
 /// then generate a random pattern within that class
 pub fn random_f32(rng: &mut impl RngCore) -> f32 {
     let decider = rng.next_u32();
-    let bits = if decider < u32::MAX / 4 {
-        // 25% chance of being a NaN
-        random_nan_32(rng)
-    } else if decider < u32::MAX / 2 {
-        // 25% chance of being a subnormal
-        random_subnormal_32(rng)
-    } else if decider < u32::MAX / 4 * 3 {
-        // 25% chance of being an infinite
-        if decider % 2 == 0 {
-            INF_32
-        } else {
-            NEG_INF_32
+    let bits = match decider % 4 {
+        0 => {
+            // 25% chance of being a NaN
+            random_nan_32(rng)
         }
-    } else {
-        // 25% chance of being a random bit pattern
-        rng.next_u32()
+        1 => {
+            // 25% chance of being a subnormal
+            random_subnormal_32(rng)
+        }
+        2 => {
+            // 25% chance of being an infinite
+            if decider % 2 == 0 {
+                INF_32
+            } else {
+                NEG_INF_32
+            }
+        }
+        3 => {
+            // 25% chance of being a random bit pattern
+            rng.next_u32()
+        }
+        _ => unreachable!(),
     };
     f32::from_bits(bits)
 }

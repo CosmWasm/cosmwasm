@@ -22,16 +22,6 @@ pub fn instantiate(
 }
 
 #[entry_point]
-pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: Empty,
-) -> Result<Response, String> {
-    Ok(Response::default())
-}
-
-#[entry_point]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::RandomArgsFor { instruction, seed } => {
