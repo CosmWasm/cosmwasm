@@ -106,9 +106,9 @@ const CANONICAL_LENGTH: usize = 90; // n = 45
 const SHUFFLES_ENCODE: usize = 10;
 const SHUFFLES_DECODE: usize = 2;
 
-// MockPrecompiles zero pads all human addresses to make them fit the canonical_length
+// Mock precompiles zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
-// not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
+// not really smart, but allows us to see a difference (and consistent length for canonical addresses)
 #[derive(Copy, Clone)]
 pub struct MockApi {
     /// Length of canonical addresses created with this API. Contracts should not make any assumptions
@@ -152,7 +152,7 @@ impl Api for MockApi {
             ));
         }
 
-        // mimicks formats like hex or bech32 where different casings are valid for one address
+        // mimics formats like hex or bech32 where different casings are valid for one address
         let normalized = input.to_lowercase();
 
         let mut out = Vec::from(normalized);

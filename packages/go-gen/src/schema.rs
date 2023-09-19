@@ -85,6 +85,7 @@ pub fn schema_object_type(
 /// Tries to extract the type of the non-null variant of an anyOf schema.
 ///
 /// Returns `Ok(None)` if the type is not nullable.
+#[allow(clippy::manual_try_fold)]
 pub fn nullable_type(subschemas: &[Schema]) -> Result<Option<&SchemaObject>, anyhow::Error> {
     let (found_null, nullable_type): (bool, Option<&SchemaObject>) = subschemas
         .iter()
