@@ -88,18 +88,18 @@ pub fn schema_object_type(
 pub fn nullable_type(subschemas: &[Schema]) -> Result<Option<&SchemaObject>, anyhow::Error> {
     let (found_null, nullable_type): (bool, Option<&SchemaObject>) = subschemas
         .iter()
-        .fold(Ok((false, None)), |result: Result<_>, subschema| {
-            result.and_then(|(nullable, not_null)| {
+        .try_fold(
+            (false, None),
+            |(nullable, not_null), subschema| -> Result<_> {
                 let subschema = subschema.object()?;
                 if is_null(subschema) {
                     Ok((true, not_null))
                 } else {
                     Ok((nullable, Some(subschema)))
                 }
-            })
-        })
+            },
+        )
         .context("failed to get anyOf subschemas")?;
-
     Ok(if found_null { nullable_type } else { None })
 }
 

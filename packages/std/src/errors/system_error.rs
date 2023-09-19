@@ -7,7 +7,7 @@ use crate::Binary;
 ///
 /// This is used on return values for Querier as a nested result: Result<StdResult<T>, SystemError>
 /// The first wrap (SystemError) will trigger if the contract address doesn't exist,
-/// the QueryRequest is malformated, etc. The second wrap will be an error message from
+/// the QueryRequest is malformed, etc. The second wrap will be an error message from
 /// the contract itself.
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure

@@ -318,7 +318,6 @@ pub fn bench_instance_threads(c: &mut Criterion) {
                         let checksum = random_checksum();
 
                         thread::spawn(move || {
-                            let checksum = checksum;
                             // Perform measurement internally
                             let t = SystemTime::now();
                             black_box(

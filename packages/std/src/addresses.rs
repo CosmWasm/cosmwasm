@@ -167,7 +167,7 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 ///
 /// The safe way to obtain a valid `CanonicalAddr` is using `Api::addr_canonicalize`. In
 /// addition to that there are many unsafe ways to convert any binary data into an instance.
-/// So the type shoud be treated as a marker to express the intended data type, not as
+/// So the type should be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
@@ -358,7 +358,7 @@ pub fn instantiate2_address(
 }
 
 /// The instantiate2 address derivation implementation. This API is used for
-/// testing puposes only. The `msg` field is discouraged and should not be used.
+/// testing purposes only. The `msg` field is discouraged and should not be used.
 /// Use [`instantiate2_address`].
 #[doc(hidden)]
 fn instantiate2_address_impl(
@@ -751,7 +751,7 @@ mod tests {
     }
 
     #[test]
-    fn instantiate2_address_impl_works_for_cosmjs_testvectors() {
+    fn instantiate2_address_impl_works_for_cosmjs_test_vectors() {
         // Test data from https://github.com/cosmos/cosmjs/pull/1253
         const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/instantiate2_addresses.json";
 
