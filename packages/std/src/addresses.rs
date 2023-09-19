@@ -97,7 +97,7 @@ impl Addr {
     #[inline]
     #[deprecated(
         since = "1.5.0",
-        note = "will be removed in version 2.0, please use to_string() or into() instead."
+        note = "will be removed in version 2.0, please use into() instead."
     )]
     pub fn into_string(self) -> String {
         self.0
