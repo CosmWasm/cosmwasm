@@ -106,7 +106,7 @@ const CANONICAL_LENGTH: usize = 90; // n = 45
 const SHUFFLES_ENCODE: usize = 10;
 const SHUFFLES_DECODE: usize = 2;
 
-// Mock zero pads all human addresses to make them fit the canonical_length
+// MockApi zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
 // not really smart, but allows us to see a difference (and consistent length for canonical addresses)
 #[derive(Copy, Clone)]
