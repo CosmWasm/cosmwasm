@@ -132,7 +132,7 @@ pub trait Api {
     /// # let api = MockApi::default();
     /// let input = "what-users-provide";
     /// let validated: Addr = api.addr_validate(input).unwrap();
-    /// assert_eq!(validated, input);
+    /// assert_eq!(validated.as_ref(), input);
     /// ```
     fn addr_validate(&self, human: &str) -> StdResult<Addr>;
 
@@ -144,7 +144,7 @@ pub trait Api {
     /// But that might change. So your contract should not make assumptions on the size.
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
 
-    /// Takes a canonical address and returns a human readble address.
+    /// Takes a canonical address and returns a human readable address.
     /// This is the inverse of [`addr_canonicalize`].
     ///
     /// [`addr_canonicalize`]: Api::addr_canonicalize

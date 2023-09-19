@@ -42,23 +42,23 @@ macro_rules! ensure {
 /// # use cosmwasm_std::{MessageInfo, Addr};
 /// #
 /// # enum ContractError {
-/// #     Unauthorized {},
+/// #     Unauthorized,
 /// # }
 /// # struct Config {
-/// #     admin: String,
+/// #     admin: Addr,
 /// # }
 /// #
 /// # fn body() -> Result<(), ContractError> {
 /// # let info = MessageInfo { sender: Addr::unchecked("foo"), funds: Vec::new() };
-/// # let cfg = Config { admin: "foo".to_string() };
+/// # let cfg = Config { admin: Addr::unchecked("foo") };
 /// use cosmwasm_std::ensure_eq;
 ///
-/// ensure_eq!(info.sender, cfg.admin, ContractError::Unauthorized {});
+/// ensure_eq!(info.sender, cfg.admin, ContractError::Unauthorized);
 ///
 /// // is the same as
 ///
 /// if info.sender != cfg.admin {
-///   return Err(ContractError::Unauthorized {});
+///   return Err(ContractError::Unauthorized);
 /// }
 /// # Ok(())
 /// # }

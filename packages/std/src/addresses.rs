@@ -48,13 +48,17 @@ impl Addr {
     /// ```
     /// # use cosmwasm_std::{Addr};
     /// let address = Addr::unchecked("foobar");
-    /// assert_eq!(address, "foobar");
+    /// assert_eq!(address.as_ref(), "foobar");
     /// ```
     pub fn unchecked(input: impl Into<String>) -> Addr {
         Addr(input.into())
     }
 
     #[inline]
+    #[deprecated(
+        since = "1.5.0",
+        note = "will be removed in version 2.0, please use as_ref() instead."
+    )]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
@@ -69,6 +73,10 @@ impl Addr {
 
     /// Utility for explicit conversion to `String`.
     #[inline]
+    #[deprecated(
+        since = "1.5.0",
+        note = "will be removed in version 2.0, please use to_string() instead."
+    )]
     pub fn into_string(self) -> String {
         self.0
     }
@@ -83,7 +91,7 @@ impl fmt::Display for Addr {
 impl AsRef<str> for Addr {
     #[inline]
     fn as_ref(&self) -> &str {
-        self.as_str()
+        self.0.as_str()
     }
 }
 
@@ -336,7 +344,7 @@ impl fmt::Display for Instantiate2AddressError {
 ///     info: MessageInfo,
 ///     msg: ExecuteMsg,
 /// ) -> Result<Response, StdError> {
-///     let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_str())?;
+///     let canonical_creator = deps.api.addr_canonicalize(env.contract.address.as_ref())?;
 ///     let checksum = HexBinary::from_hex("9af782a3a1bcbcd22dbb6a45c751551d9af782a3a1bcbcd22dbb6a45c751551d")?;
 ///     let salt = b"instance 1231";
 ///     let canonical_addr = instantiate2_address(&checksum, &canonical_creator, salt)
@@ -414,7 +422,13 @@ mod tests {
     #[test]
     fn addr_as_str_works() {
         let addr = Addr::unchecked("literal-string");
-        assert_eq!(addr.as_str(), "literal-string");
+        assert_eq!("literal-string", addr.as_ref());
+    }
+
+    #[test]
+    fn addr_to_string_works() {
+        let addr = Addr::unchecked("literal-string");
+        assert_eq!("literal-string", addr.to_string());
     }
 
     #[test]
@@ -447,13 +461,13 @@ mod tests {
         let addr = Addr::unchecked("cos934gh9034hg04g0h134");
 
         // `Addr == &str`
-        assert_eq!(addr, "cos934gh9034hg04g0h134");
+        assert_eq!("cos934gh9034hg04g0h134", addr.as_ref());
         // `&str == Addr`
-        assert_eq!("cos934gh9034hg04g0h134", addr);
+        assert_eq!("cos934gh9034hg04g0h134", addr.as_ref());
         // `Addr == String`
-        assert_eq!(addr, String::from("cos934gh9034hg04g0h134"));
+        assert_eq!(String::from("cos934gh9034hg04g0h134"), addr.as_ref());
         // `String == Addr`
-        assert_eq!(String::from("cos934gh9034hg04g0h134"), addr);
+        assert_eq!(String::from("cos934gh9034hg04g0h134"), addr.as_ref());
     }
 
     #[test]

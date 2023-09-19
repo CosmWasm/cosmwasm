@@ -128,7 +128,7 @@ impl Api for MockApi {
     fn addr_validate(&self, input: &str) -> StdResult<Addr> {
         let canonical = self.addr_canonicalize(input)?;
         let normalized = self.addr_humanize(&canonical)?;
-        if input != normalized {
+        if input != normalized.as_ref() {
             return Err(StdError::generic_err(
                 "Invalid input: address not normalized",
             ));
@@ -909,7 +909,7 @@ impl StakingQuerier {
                 let delegations: Vec<_> = self
                     .delegations
                     .iter()
-                    .filter(|d| d.delegator.as_str() == delegator)
+                    .filter(|d| d.delegator.as_ref() == delegator)
                     .cloned()
                     .map(|d| d.into())
                     .collect();
@@ -923,7 +923,7 @@ impl StakingQuerier {
                 let delegation = self
                     .delegations
                     .iter()
-                    .find(|d| d.delegator.as_str() == delegator && d.validator == *validator);
+                    .find(|d| d.delegator.as_ref() == delegator && d.validator == *validator);
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
@@ -1146,7 +1146,7 @@ mod tests {
 
         // valid
         let addr = api.addr_validate("foobar123").unwrap();
-        assert_eq!(addr, "foobar123");
+        assert_eq!(addr.as_ref(), "foobar123");
 
         // invalid: too short
         api.addr_validate("").unwrap_err();
@@ -1175,20 +1175,20 @@ mod tests {
         let original = String::from("shorty");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered, original);
+        assert_eq!(recovered.as_ref(), original);
 
         // normalizes input
         let original = String::from("CosmWasmChef");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered, "cosmwasmchef");
+        assert_eq!(recovered.as_ref(), "cosmwasmchef");
 
         // Long input (Juno contract address)
         let original =
             String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered, original);
+        assert_eq!(recovered.as_ref(), original);
     }
 
     #[test]
@@ -1638,7 +1638,7 @@ mod tests {
 
         let res = distribution.query(&query).unwrap().unwrap();
         let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
-        assert_eq!(res.withdraw_address, "withdraw0");
+        assert_eq!(res.withdraw_address.as_ref(), "withdraw0");
 
         let query = DistributionQuery::DelegatorWithdrawAddress {
             delegator_address: "addr1".to_string(),
@@ -1646,7 +1646,7 @@ mod tests {
 
         let res = distribution.query(&query).unwrap().unwrap();
         let res: DelegatorWithdrawAddressResponse = from_binary(&res).unwrap();
-        assert_eq!(res.withdraw_address, "addr1");
+        assert_eq!(res.withdraw_address.as_ref(), "addr1");
     }
 
     #[cfg(feature = "cosmwasm_1_4")]
@@ -2114,7 +2114,7 @@ mod tests {
 
             match request {
                 WasmQuery::Raw { contract_addr, key } => {
-                    if *contract_addr == constract1 {
+                    if contract_addr == constract1.as_ref() {
                         if let Some(value) = storage1.get(key) {
                             SystemResult::Ok(ContractResult::Ok(value.clone()))
                         } else {
@@ -2127,7 +2127,7 @@ mod tests {
                     }
                 }
                 WasmQuery::Smart { contract_addr, msg } => {
-                    if *contract_addr == constract1 {
+                    if contract_addr == constract1.as_ref() {
                         #[derive(Deserialize)]
                         struct MyMsg {}
                         let _msg: MyMsg = match from_binary(msg) {
@@ -2145,7 +2145,7 @@ mod tests {
                     }
                 }
                 WasmQuery::ContractInfo { contract_addr } => {
-                    if *contract_addr == constract1 {
+                    if contract_addr == constract1.as_ref() {
                         let response = ContractInfoResponse {
                             code_id: 4,
                             creator: "lalala".into(),
