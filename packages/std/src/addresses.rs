@@ -1,4 +1,5 @@
 use alloc::borrow::Cow;
+use bech32::{encode, ToBase32, Variant};
 use core::fmt;
 use core::ops::Deref;
 use schemars::JsonSchema;
@@ -9,7 +10,7 @@ use sha2::{
 };
 use thiserror::Error;
 
-use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
+use crate::{binary::Binary, forward_ref_partial_eq, HexBinary, StdError, StdResult};
 
 /// A human readable address.
 ///
@@ -18,9 +19,10 @@ use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
 ///
 /// This type represents a validated address. It can be created in the following ways
 /// 1. Use `Addr::unchecked(input)`
-/// 2. Use `let checked: Addr = deps.api.addr_validate(input)?`
-/// 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`
-/// 4. Deserialize from JSON. This must only be done from JSON that was validated before
+/// 2. Use `let checked: Addr = Addr::hashed(prefix,input)?`
+/// 3. Use `let checked: Addr = deps.api.addr_validate(input)?`
+/// 4. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`
+/// 5. Deserialize from JSON. This must only be done from JSON that was validated before
 ///    such as a contract's state. `Addr` must not be used in messages sent by the user
 ///    because this would result in unvalidated instances.
 ///
@@ -35,23 +37,43 @@ pub struct Addr(String);
 forward_ref_partial_eq!(Addr, Addr);
 
 impl Addr {
-    /// Creates a new `Addr` instance from the given input without checking the validity
+    /// Creates a new [Addr] instance from the given input without checking the validity
     /// of the input. Since `Addr` must always contain valid addresses, the caller is
     /// responsible for ensuring the input is valid.
     ///
     /// Use this in cases where the address was validated before or in test code.
     /// If you see this in contract code, it should most likely be replaced with
-    /// `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`.
+    /// ```text
+    /// let checked: Addr = deps.api.addr_humanize(canonical_addr)?
+    /// ```
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```
     /// # use cosmwasm_std::{Addr};
-    /// let address = Addr::unchecked("foobar");
-    /// assert_eq!(address.as_ref(), "foobar");
+    /// let addr = Addr::unchecked("foobar");
+    /// assert_eq!("foobar", addr.as_ref());
     /// ```
     pub fn unchecked(input: impl Into<String>) -> Addr {
         Addr(input.into())
+    }
+
+    /// Creates a new [Addr] instance containing Bech32 encoded address,
+    /// generated from given prefix and input.
+    /// Returned address is always validated and normalized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Addr};
+    /// let addr = Addr::hashed("cosmwasm", "foobar").unwrap();
+    /// assert_eq!("cosmwasm1cw4clufhyr52myz8m5u5v6eu396wtykzlgur6j3evpc5ethscneqcvjs3e", addr.as_ref());
+    /// ```
+    pub fn hashed(prefix: &str, input: &str) -> StdResult<Addr> {
+        let data = Sha256::digest(input.as_bytes());
+        let address = encode(prefix, data.to_base32(), Variant::Bech32)
+            .map_err(|e| StdError::generic_err(format!("Invalid input: {}", e.to_string())))?;
+        Ok(Addr(address))
     }
 
     #[inline]
@@ -75,7 +97,7 @@ impl Addr {
     #[inline]
     #[deprecated(
         since = "1.5.0",
-        note = "will be removed in version 2.0, please use to_string() instead."
+        note = "will be removed in version 2.0, please use to_string() or into() instead."
     )]
     pub fn into_string(self) -> String {
         self.0
@@ -417,6 +439,19 @@ mod tests {
         let b = Addr::unchecked("be");
         assert_eq!(a, aa);
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn addr_hashed_works() {
+        let a = Addr::hashed("juno", "sender").unwrap();
+        let b = Addr::hashed("juno", "admin").unwrap();
+        let c = Addr::hashed("osmosis", "admin").unwrap();
+        assert!(a.as_ref().starts_with("juno1"));
+        assert!(b.as_ref().starts_with("juno1"));
+        assert!(c.as_ref().starts_with("osmosis1"));
+        assert_ne!(a, b);
+        assert_ne!(a, c);
+        assert_ne!(b, c);
     }
 
     #[test]
