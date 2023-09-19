@@ -31,6 +31,7 @@ pub enum IbcQuery {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct PortIdResponse {
     pub port_id: String,
 }
@@ -38,6 +39,7 @@ pub struct PortIdResponse {
 impl_response_constructor!(PortIdResponse, port_id: String);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct ListChannelsResponse {
     pub channels: Vec<IbcChannel>,
 }
@@ -45,6 +47,7 @@ pub struct ListChannelsResponse {
 impl_response_constructor!(ListChannelsResponse, channels: Vec<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,
 }
