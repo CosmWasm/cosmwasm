@@ -70,12 +70,7 @@ pub struct Delegation {
     pub amount: Coin,
 }
 
-impl_response_constructor!(
-    Delegation,
-    delegator: Addr,
-    validator: String,
-    amount: Coin
-);
+impl_response_constructor!(Delegation, delegator: Addr, validator: String, amount: Coin);
 
 impl From<FullDelegation> for Delegation {
     fn from(full: FullDelegation) -> Self {
