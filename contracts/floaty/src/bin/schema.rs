@@ -7,6 +7,5 @@ fn main() {
     write_api! {
         instantiate: Empty,
         query: QueryMsg,
-        execute: Empty,
     }
 }
