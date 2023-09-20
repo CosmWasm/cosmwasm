@@ -412,23 +412,24 @@ mod tests {
     use std::str::FromStr;
 
     fn sample_validator(addr: &str) -> Validator {
-        Validator {
-            address: addr.to_owned(),
-            commission: Decimal::percent(3),
-            max_commission: Decimal::percent(10),
-            max_change_rate: Decimal::percent(1),
-        }
+        serde_json::from_value(serde_json::json!({
+            "address": addr.to_owned(),
+            "commission": Decimal::percent(3),
+            "max_commission": Decimal::percent(10),
+            "max_change_rate": Decimal::percent(1),
+        }))
+        .unwrap()
     }
 
     fn sample_delegation(validator_addr: &str, amount: Coin) -> FullDelegation {
-        let can_redelegate = amount.clone();
-        FullDelegation {
-            validator: validator_addr.to_owned(),
-            delegator: Addr::unchecked(MOCK_CONTRACT_ADDR),
-            amount,
-            can_redelegate,
-            accumulated_rewards: Vec::new(),
-        }
+        serde_json::from_value(serde_json::json!({
+            "validator": validator_addr.to_owned(),
+            "delegator": Addr::unchecked(MOCK_CONTRACT_ADDR),
+            "amount": amount,
+            "can_redelegate": amount,
+            "accumulated_rewards": Vec::<Coin>::new(),
+        }))
+        .unwrap()
     }
 
     fn set_validator(querier: &mut MockQuerier) {

@@ -34,12 +34,13 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/st
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 fn sample_validator(addr: &str) -> Validator {
-    Validator {
-        address: addr.to_owned(),
-        commission: Decimal::percent(3),
-        max_commission: Decimal::percent(10),
-        max_change_rate: Decimal::percent(1),
-    }
+    serde_json::from_value(serde_json::json!({
+        "address": addr.to_owned(),
+        "commission": Decimal::percent(3),
+        "max_commission": Decimal::percent(10),
+        "max_change_rate": Decimal::percent(1),
+    }))
+    .unwrap()
 }
 
 #[test]

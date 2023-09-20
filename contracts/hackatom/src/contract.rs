@@ -2,8 +2,8 @@ use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
     entry_point, from_json, to_json_binary, to_json_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
-    StdError, StdResult, WasmMsg, WasmQuery,
+    BankQuery, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse,
+    Response, StdError, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -269,8 +269,8 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
 }
 
 fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
-    let amount = deps.querier.query_all_balances(address)?;
-    Ok(AllBalanceResponse { amount })
+    deps.querier
+        .query(&BankQuery::AllBalances { address }.into())
 }
 
 fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
