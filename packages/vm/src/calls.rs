@@ -821,7 +821,7 @@ mod tests {
         let hash = Digest::finalize(hasher);
         assert_eq!(
             hex::encode(hash.as_slice()),
-            "5a91c9d299468606eda65921b57e999fe19cffa81be4a23c94118088b2532ae2"
+            "95f70fa6451176ab04a9594417a047a1e4d8e2ff809609b8f81099496bee2393"
         );
     }
 

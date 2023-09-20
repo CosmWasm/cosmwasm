@@ -52,22 +52,28 @@ pub fn random_f32(rng: &mut impl RngCore) -> f32 {
 /// See [`random_f32`] for more details.
 pub fn random_f64(rng: &mut impl RngCore) -> f64 {
     let decider = rng.next_u64();
-    let bits = if decider < u64::MAX / 4 {
-        // 25% chance of being a NaN
-        random_nan_64(rng)
-    } else if decider < u64::MAX / 2 {
-        // 25% chance of being a subnormal
-        random_subnormal_64(rng)
-    } else if decider < u64::MAX / 4 * 3 {
-        // 25% chance of being an infinite
-        if decider % 2 == 0 {
-            INF_64
-        } else {
-            NEG_INF_64
+    let bits = match decider % 4 {
+        0 => {
+            // 25% chance of being a NaN
+            random_nan_64(rng)
         }
-    } else {
-        // 25% chance of being a random bit pattern
-        rng.next_u64()
+        1 => {
+            // 25% chance of being a subnormal
+            random_subnormal_64(rng)
+        }
+        2 => {
+            // 25% chance of being an infinite
+            if decider % 2 == 0 {
+                INF_64
+            } else {
+                NEG_INF_64
+            }
+        }
+        3 => {
+            // 25% chance of being a random bit pattern
+            rng.next_u64()
+        }
+        _ => unreachable!(),
     };
     f64::from_bits(bits)
 }
