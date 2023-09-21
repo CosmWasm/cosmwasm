@@ -18,7 +18,7 @@ while ago and can be adjusted when necessary.
 
 ## CosmWasm gas pricing
 
-For CosmWasm gas, the target gas consumption is 1 Teragas (10^12 gas) per
+For CosmWasm gas, the target gas consumption is 1 Gigagas (10^12 gas) per
 millisecond. This idea is [inspired by NEAR][neargas] and we encourage you to
 read their excellent docs on that topic.
 
@@ -26,7 +26,7 @@ In order to meet this target, we execute Argon2 in a test contract ([#1120]).
 This is a CPU and memory intense job that does not call out into the host. At a
 constant gas cost per operation of 1 (pre CosmWasm 1.0), this consumed 96837752
 gas and took 15ms on our CI system. The ideal cost per operation for this system
-is `10**12 / (96837752 / 15)`: 154898. This is rounded to 150000 for simplicity.
+is `10**9 / (96837752 / 15)`: 154. This is rounded to 150 for simplicity.
 
 Each machine is different, we know that. But the above target helps us in
 multiple ways:
@@ -45,14 +45,14 @@ multiple ways:
 
 ## Gas overflow potential
 
-CosmWasm gas aims for 1 Teragas/millisecond, i.e. the uint64 range exceeds after
-18 million seconds (5 hours)<sup>1</sup>. Assuming a max supported block
+CosmWasm gas aims for 1 Gigagas/millisecond, i.e. the uint64 range exceeds after
+18 million seconds (5000 hours)<sup>1</sup>. Assuming a max supported block
 execution time of 30 seconds, the gas price has to be over-priced by a factor of
-614 (614 Teragas/millisecond) in order to exceed the uint64 range<sup>2</sup>.
+614891 (614891 Gigagas/millisecond) in order to exceed the uint64 range<sup>2</sup>.
 Since serious over or underpricing is considered a bug, using uint64 for gas
 measurements is considered safe.
 
-Cosmos SDK gas uses values that are smaller by a factor of 150_000, so those
+Cosmos SDK gas uses values that are smaller by a factor of 150, so those
 don't overflow as well. Since no Cosmos SDK gas values are processed inside of
 this repository, this is not our main concern. However, it's good to know that
 we can safely pass them in uint64 fields, as long as the full range is
@@ -62,6 +62,6 @@ their JSON implementation. Go and Rust do that while many other implementations
 don't support integers, and convert them to IEEE-754 doubles, which has a safe
 integer range up to about 53 bit (e.g. JavaScript and jq).
 
-<sup>1</sup> Python3: `(2**64-1)/1000 / 10**12`
+<sup>1</sup> Python3: `(2**64-1)/1000 / 10**9`
 
-<sup>2</sup> Python3: `((2**64-1)/1000/30) / 10**122`
+<sup>2</sup> Python3: `((2**64-1)/1000/30) / 10**9`
