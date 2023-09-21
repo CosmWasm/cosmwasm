@@ -31,7 +31,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cy
 
 #[test]
 fn execute_argon2() {
-    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
 
     let init_info = mock_info("admin", &[]);
     let init_res: Response = instantiate(&mut deps, mock_env(), init_info, Empty {}).unwrap();
@@ -51,7 +51,7 @@ fn execute_argon2() {
     let gas_used = gas_before - deps.get_gas_left();
     // Note: the exact gas usage depends on the Rust version used to compile Wasm,
     // which we only fix when using rust-optimizer, not integration tests.
-    let expected = 8635688250000; // +/- 20%
+    let expected = 8635688250; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {gas_used}");
     assert!(gas_used < expected * 120 / 100, "Gas used: {gas_used}");
 }
@@ -60,7 +60,7 @@ fn execute_argon2() {
 // cargo integration-test debug_works -- --nocapture
 #[test]
 fn debug_works() {
-    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
 
     let _res: Response =
         instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
@@ -89,7 +89,7 @@ fn debug_works() {
 // cargo integration-test debug_timing -- --nocapture
 #[test]
 fn debug_timing() {
-    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
 
     let _res: Response =
         instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
@@ -115,7 +115,7 @@ fn debug_timing() {
 
 #[test]
 fn debug_file() {
-    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000_000);
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
 
     let _res: Response =
         instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();

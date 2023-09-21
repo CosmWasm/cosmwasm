@@ -17,12 +17,12 @@ use cosmwasm_vm::{
 
 // Instance
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
-const DEFAULT_GAS_LIMIT: u64 = 1_000_000_000_000; // ~1ms
+const DEFAULT_GAS_LIMIT: u64 = 1_000_000_000; // ~1ms
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,
     print_debug: false,
 };
-const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000_000; // ~20s, allows many calls on one instance
+const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000; // ~20s, allows many calls on one instance
 
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);

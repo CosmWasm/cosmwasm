@@ -8,7 +8,7 @@ use super::storage::MockStorage;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
-const GAS_COST_HUMANIZE: u64 = 44;
+const GAS_COST_HUMANIZE: u64 = 44; // TODO: these seem very low
 const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
