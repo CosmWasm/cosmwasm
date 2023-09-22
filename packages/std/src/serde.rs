@@ -48,7 +48,7 @@ where
 }
 
 #[deprecated = "use to_json_binary instead"]
-pub fn to_binary_replace<T>(data: &T) -> StdResult<Binary>
+pub fn to_binary<T>(data: &T) -> StdResult<Binary>
 where
     T: Serialize + ?Sized,
 {

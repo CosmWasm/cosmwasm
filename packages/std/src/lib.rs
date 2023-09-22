@@ -90,7 +90,7 @@ pub use crate::results::{DistributionMsg, StakingMsg};
 pub use crate::results::{GovMsg, VoteOption};
 #[allow(deprecated)]
 pub use crate::serde::{
-    from_binary, from_json_binary, from_json_slice, from_json_str, from_slice, to_binary_replace,
+    from_binary, from_json_binary, from_json_slice, from_json_str, from_slice, to_binary,
     to_json_binary, to_json_string, to_json_vec, to_vec,
 };
 pub use crate::stdack::StdAck;
