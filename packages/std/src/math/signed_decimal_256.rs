@@ -527,12 +527,8 @@ impl SignedDecimal256 {
             // but avoiding overflow by implementing the formula from `to_int_ceil` directly.
             let x = self.0;
             let y = Self::DECIMAL_FRACTIONAL;
-            if x.is_zero() {
-                Int256::zero()
-            } else {
-                // making sure not to negate `x`, as this would overflow
-                -Int256::one() - ((-Int256::one() - x) / y)
-            }
+            // making sure not to negate `x`, as this would overflow
+            -Int256::one() - ((-Int256::one() - x) / y)
         } else {
             self.to_int_trunc()
         }
