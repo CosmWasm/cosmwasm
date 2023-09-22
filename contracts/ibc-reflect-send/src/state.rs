@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice,
+    from_json,
     storage_keys::{namespace_with_key, to_length_prefixed},
-    to_vec, Addr, Coin, Order, StdError, StdResult, Storage, Timestamp,
+    to_json_vec, Addr, Coin, Order, StdError, StdResult, Storage, Timestamp,
 };
 
 pub const KEY_CONFIG: &[u8] = b"config";
@@ -33,7 +33,7 @@ pub struct AccountData {
 pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<AccountData>> {
     storage
         .get(&namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()))
-        .map(|v| from_slice(&v))
+        .map(from_json)
         .transpose()
 }
 
@@ -44,7 +44,7 @@ pub fn load_account(storage: &dyn Storage, id: &str) -> StdResult<AccountData> {
 pub fn save_account(storage: &mut dyn Storage, id: &str, account: &AccountData) -> StdResult<()> {
     storage.set(
         &namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()),
-        &to_vec(account)?,
+        &to_json_vec(account)?,
     );
     Ok(())
 }
@@ -63,7 +63,7 @@ pub fn range_accounts(
         .map(|(key, val)| {
             Ok((
                 String::from_utf8(key[PREFIX_ACCOUNTS.len() + 2..].to_vec())?,
-                from_slice(&val)?,
+                from_json(val)?,
             ))
         })
 }
@@ -72,10 +72,10 @@ pub fn load_config(storage: &dyn Storage) -> StdResult<Config> {
     storage
         .get(&to_length_prefixed(KEY_CONFIG))
         .ok_or_else(|| StdError::not_found("config"))
-        .and_then(|v| from_slice(&v))
+        .and_then(from_json)
 }
 
 pub fn save_config(storage: &mut dyn Storage, item: &Config) -> StdResult<()> {
-    storage.set(&to_length_prefixed(KEY_CONFIG), &to_vec(item)?);
+    storage.set(&to_length_prefixed(KEY_CONFIG), &to_json_vec(item)?);
     Ok(())
 }

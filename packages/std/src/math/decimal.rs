@@ -781,7 +781,7 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_json, to_json_vec};
 
     fn dec(input: &str) -> Decimal {
         Decimal::from_str(input).unwrap()
@@ -1908,35 +1908,35 @@ mod tests {
 
     #[test]
     fn decimal_serialize() {
-        assert_eq!(to_vec(&Decimal::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_vec(&Decimal::one()).unwrap(), br#""1""#);
-        assert_eq!(to_vec(&Decimal::percent(8)).unwrap(), br#""0.08""#);
-        assert_eq!(to_vec(&Decimal::percent(87)).unwrap(), br#""0.87""#);
-        assert_eq!(to_vec(&Decimal::percent(876)).unwrap(), br#""8.76""#);
-        assert_eq!(to_vec(&Decimal::percent(8765)).unwrap(), br#""87.65""#);
+        assert_eq!(to_json_vec(&Decimal::zero()).unwrap(), br#""0""#);
+        assert_eq!(to_json_vec(&Decimal::one()).unwrap(), br#""1""#);
+        assert_eq!(to_json_vec(&Decimal::percent(8)).unwrap(), br#""0.08""#);
+        assert_eq!(to_json_vec(&Decimal::percent(87)).unwrap(), br#""0.87""#);
+        assert_eq!(to_json_vec(&Decimal::percent(876)).unwrap(), br#""8.76""#);
+        assert_eq!(to_json_vec(&Decimal::percent(8765)).unwrap(), br#""87.65""#);
     }
 
     #[test]
     fn decimal_deserialize() {
-        assert_eq!(from_slice::<Decimal>(br#""0""#).unwrap(), Decimal::zero());
-        assert_eq!(from_slice::<Decimal>(br#""1""#).unwrap(), Decimal::one());
-        assert_eq!(from_slice::<Decimal>(br#""000""#).unwrap(), Decimal::zero());
-        assert_eq!(from_slice::<Decimal>(br#""001""#).unwrap(), Decimal::one());
+        assert_eq!(from_json::<Decimal>(br#""0""#).unwrap(), Decimal::zero());
+        assert_eq!(from_json::<Decimal>(br#""1""#).unwrap(), Decimal::one());
+        assert_eq!(from_json::<Decimal>(br#""000""#).unwrap(), Decimal::zero());
+        assert_eq!(from_json::<Decimal>(br#""001""#).unwrap(), Decimal::one());
 
         assert_eq!(
-            from_slice::<Decimal>(br#""0.08""#).unwrap(),
+            from_json::<Decimal>(br#""0.08""#).unwrap(),
             Decimal::percent(8)
         );
         assert_eq!(
-            from_slice::<Decimal>(br#""0.87""#).unwrap(),
+            from_json::<Decimal>(br#""0.87""#).unwrap(),
             Decimal::percent(87)
         );
         assert_eq!(
-            from_slice::<Decimal>(br#""8.76""#).unwrap(),
+            from_json::<Decimal>(br#""8.76""#).unwrap(),
             Decimal::percent(876)
         );
         assert_eq!(
-            from_slice::<Decimal>(br#""87.65""#).unwrap(),
+            from_json::<Decimal>(br#""87.65""#).unwrap(),
             Decimal::percent(8765)
         );
     }

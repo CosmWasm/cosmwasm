@@ -36,7 +36,7 @@ pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: Record<Vec<u8>>) -> StdRes
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{to_vec, StdError};
+    use cosmwasm_std::{to_json_vec, StdError};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -51,7 +51,7 @@ mod tests {
             name: "Maria".to_string(),
             age: 42,
         };
-        let value = to_vec(&person).unwrap();
+        let value = to_json_vec(&person).unwrap();
 
         let may_parse: Option<Person> = may_deserialize(&Some(value)).unwrap();
         assert_eq!(may_parse, Some(person));
@@ -69,7 +69,7 @@ mod tests {
             name: "Maria".to_string(),
             age: 42,
         };
-        let value = to_vec(&person).unwrap();
+        let value = to_json_vec(&person).unwrap();
         let loaded = Some(value);
 
         let parsed: Person = must_deserialize(&loaded).unwrap();

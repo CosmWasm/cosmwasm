@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{from_binary, Empty, Env, Response};
+use cosmwasm_std::{from_json, Empty, Env, Response};
 use cosmwasm_vm::testing::{
     execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_with_gas_limit, query,
 };
@@ -152,13 +152,13 @@ fn test_env() {
     )
     .unwrap();
 
-    let received_env: Env = from_binary(&res.data.unwrap()).unwrap();
+    let received_env: Env = from_json(res.data.unwrap()).unwrap();
 
     assert_eq!(received_env, env);
 
     let env = mock_env();
     let received_env: Env =
-        from_binary(&query(&mut deps, env.clone(), QueryMsg::MirrorEnv {}).unwrap()).unwrap();
+        from_json(query(&mut deps, env.clone(), QueryMsg::MirrorEnv {}).unwrap()).unwrap();
 
     assert_eq!(received_env, env);
 }

@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    assert_approx_eq, coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary,
+    assert_approx_eq, coins, from_json, to_json_vec, Addr, AllBalanceResponse, BankMsg, Binary,
     ContractResult, Empty, Response, SubMsg,
 };
 use cosmwasm_vm::{
@@ -183,7 +183,7 @@ fn querier_callbacks_work() {
     // querying with balance gets the balance
     let query_msg = QueryMsg::OtherBalance { address: rich_addr };
     let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+    let bal: AllBalanceResponse = from_json(query_response).unwrap();
     assert_eq!(bal.amount, rich_balance);
 
     // querying other accounts gets none
@@ -191,7 +191,7 @@ fn querier_callbacks_work() {
         address: String::from("someone else"),
     };
     let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+    let bal: AllBalanceResponse = from_json(query_response).unwrap();
     assert_eq!(bal.amount, vec![]);
 }
 
@@ -322,7 +322,7 @@ fn execute_cpu_loop() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&ExecuteMsg::CpuLoop {}).unwrap(),
+        &to_json_vec(&ExecuteMsg::CpuLoop {}).unwrap(),
     );
     assert!(execute_res.is_err());
     assert_eq!(deps.get_gas_left(), 0);
@@ -344,7 +344,7 @@ fn execute_storage_loop() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&ExecuteMsg::StorageLoop {}).unwrap(),
+        &to_json_vec(&ExecuteMsg::StorageLoop {}).unwrap(),
     );
     assert!(execute_res.is_err());
     assert_eq!(deps.get_gas_left(), 0);
@@ -366,7 +366,7 @@ fn execute_memory_loop() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&ExecuteMsg::MemoryLoop {}).unwrap(),
+        &to_json_vec(&ExecuteMsg::MemoryLoop {}).unwrap(),
     );
     assert!(execute_res.is_err());
     assert_eq!(deps.get_gas_left(), 0);
@@ -448,7 +448,7 @@ fn execute_panic() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&ExecuteMsg::Panic {}).unwrap(),
+        &to_json_vec(&ExecuteMsg::Panic {}).unwrap(),
     );
     match execute_res.unwrap_err() {
         VmError::RuntimeErr { msg, .. } => {

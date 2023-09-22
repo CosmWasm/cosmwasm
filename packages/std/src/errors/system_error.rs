@@ -69,7 +69,7 @@ impl core::fmt::Display for SystemError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_json, to_json_vec};
 
     #[test]
     fn system_error_no_such_contract_serialization() {
@@ -78,14 +78,14 @@ mod tests {
         };
 
         // ser
-        let json = to_vec(&err).unwrap();
+        let json = to_json_vec(&err).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"no_such_contract":{"addr":"gibtsnicht"}}"#,
         );
 
         // de
-        let err: SystemError = from_slice(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
+        let err: SystemError = from_json(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
         assert_eq!(
             err,
             SystemError::NoSuchContract {
@@ -99,14 +99,14 @@ mod tests {
         let err = SystemError::NoSuchCode { code_id: 13 };
 
         // ser
-        let json = to_vec(&err).unwrap();
+        let json = to_json_vec(&err).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"no_such_code":{"code_id":13}}"#,
         );
 
         // de
-        let err: SystemError = from_slice(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
+        let err: SystemError = from_json(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
         assert_eq!(err, SystemError::NoSuchCode { code_id: 987 },);
     }
 }

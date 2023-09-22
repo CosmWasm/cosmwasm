@@ -19,12 +19,16 @@ and this project adheres to
 - cosmwasm-std: Add `is_negative` for `Int{64,128,256,512}` ([#1867]).
 - cosmwasm-std: Add `TryFrom<Uint{256,512}> for Uint64` and
   `TryFrom<Uint{A}> for Int{B}` where `A >= B` ([#1870]).
+- cosmwasm-std: Add `to_json_{vec,binary,string}` and `from_json` and deprecate
+  `to_{vec,binary}` in favor of `to_json_{vec,binary}` and `from_{slice,binary}`
+  in favor of `from_json`. ([#1886])
 
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
 [#1861]: https://github.com/CosmWasm/cosmwasm/pull/1861
 [#1866]: https://github.com/CosmWasm/cosmwasm/pull/1866
 [#1867]: https://github.com/CosmWasm/cosmwasm/pull/1867
 [#1870]: https://github.com/CosmWasm/cosmwasm/pull/1870
+[#1886]: https://github.com/CosmWasm/cosmwasm/pull/1886
 
 ## [1.4.0] - 2023-09-04
 

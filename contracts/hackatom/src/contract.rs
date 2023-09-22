@@ -1,7 +1,7 @@
 use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
+    entry_point, from_json, to_json_binary, to_json_vec, Addr, AllBalanceResponse, Api, BankMsg,
     CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
     StdError, StdResult, WasmMsg, WasmQuery,
 };
@@ -24,7 +24,7 @@ pub fn instantiate(
 
     deps.storage.set(
         CONFIG_KEY,
-        &to_vec(&State {
+        &to_json_vec(&State {
             verifier: deps.api.addr_validate(&msg.verifier)?,
             beneficiary: deps.api.addr_validate(&msg.beneficiary)?,
             funder: info.sender,
@@ -41,9 +41,9 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Ha
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
-    let mut config: State = from_slice(&data)?;
+    let mut config: State = from_json(data)?;
     config.verifier = deps.api.addr_validate(&msg.verifier)?;
-    deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
+    deps.storage.set(CONFIG_KEY, &to_json_vec(&config)?);
 
     Ok(Response::default())
 }
@@ -85,7 +85,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_slice(&data)?;
+    let state: State = from_json(data)?;
 
     if info.sender == state.verifier {
         let to_addr = state.beneficiary;
@@ -136,7 +136,7 @@ fn do_memory_loop() -> Result<Response, HackError> {
 fn do_message_loop(env: Env) -> Result<Response, HackError> {
     let resp = Response::new().add_message(WasmMsg::Execute {
         contract_addr: env.contract.address.into(),
-        msg: to_binary(&ExecuteMsg::MessageLoop {})?,
+        msg: to_json_binary(&ExecuteMsg::MessageLoop {})?,
         funds: vec![],
     });
     Ok(resp)
@@ -248,12 +248,12 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
 #[entry_point]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
-        QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
+        QueryMsg::Verifier {} => to_json_binary(&query_verifier(deps)?),
+        QueryMsg::OtherBalance { address } => to_json_binary(&query_other_balance(deps, address)?),
         QueryMsg::Recurse { depth, work } => {
-            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
+            to_json_binary(&query_recurse(deps, depth, work, env.contract.address)?)
         }
-        QueryMsg::GetInt {} => to_binary(&query_int()),
+        QueryMsg::GetInt {} => to_json_binary(&query_int()),
     }
 }
 
@@ -262,7 +262,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_slice(&data)?;
+    let state: State = from_json(data)?;
     Ok(VerifierResponse {
         verifier: state.verifier.into(),
     })
@@ -293,7 +293,7 @@ fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult
         };
         let query = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract.into(),
-            msg: to_binary(&req)?,
+            msg: to_json_binary(&req)?,
         });
         deps.querier.query(&query)
     }
@@ -336,7 +336,7 @@ mod tests {
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
+        let state: State = from_json(data).unwrap();
         assert_eq!(state, expected_state);
     }
 
@@ -514,7 +514,7 @@ mod tests {
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
+        let state: State = from_json(data).unwrap();
         assert_eq!(
             state,
             State {

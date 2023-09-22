@@ -247,7 +247,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 mod tests {
     use super::*;
 
-    use crate::{assert_hash_works, from_slice, to_vec, StdError};
+    use crate::{assert_hash_works, from_json, to_json_vec, StdError};
 
     #[test]
     fn from_hex_works() {
@@ -376,7 +376,7 @@ mod tests {
     }
 
     #[test]
-    fn from_slice_works() {
+    fn from_json_works() {
         let original: &[u8] = &[0u8, 187, 61, 11, 250, 0];
         let binary: HexBinary = original.into();
         assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
@@ -515,8 +515,8 @@ mod tests {
     fn serialization_works() {
         let binary = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
 
-        let json = to_vec(&binary).unwrap();
-        let deserialized: HexBinary = from_slice(&json).unwrap();
+        let json = to_json_vec(&binary).unwrap();
+        let deserialized: HexBinary = from_json(json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -527,16 +527,16 @@ mod tests {
         // this is the binary behind above string
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
-        let serialized = to_vec(&hex).unwrap();
-        let deserialized: HexBinary = from_slice(&serialized).unwrap();
+        let serialized = to_json_vec(&hex).unwrap();
+        let deserialized: HexBinary = from_json(serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 
     #[test]
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
-        let serialized = to_vec(&invalid_str).unwrap();
-        let res = from_slice::<HexBinary>(&serialized);
+        let serialized = to_json_vec(&invalid_str).unwrap();
+        let res = from_json::<HexBinary>(&serialized);
         assert!(res.is_err());
     }
 

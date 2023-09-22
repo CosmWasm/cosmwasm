@@ -94,14 +94,14 @@ impl QueryResponseType for CodeInfoResponse {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::to_binary;
+    use crate::to_json_binary;
 
     #[test]
     fn wasm_query_contract_info_serialization() {
         let query = WasmQuery::ContractInfo {
             contract_addr: "aabbccdd456".into(),
         };
-        let json = to_binary(&query).unwrap();
+        let json = to_json_binary(&query).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"contract_info":{"contract_addr":"aabbccdd456"}}"#,
@@ -112,7 +112,7 @@ mod tests {
     #[cfg(feature = "cosmwasm_1_2")]
     fn wasm_query_code_info_serialization() {
         let query = WasmQuery::CodeInfo { code_id: 70 };
-        let json = to_binary(&query).unwrap();
+        let json = to_json_binary(&query).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"code_info":{"code_id":70}}"#,
@@ -128,7 +128,7 @@ mod tests {
             pinned: true,
             ibc_port: Some("wasm.123".to_string()),
         };
-        let json = to_binary(&response).unwrap();
+        let json = to_json_binary(&response).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"code_id":67,"creator":"jane","admin":"king","pinned":true,"ibc_port":"wasm.123"}"#,
@@ -148,7 +148,7 @@ mod tests {
             )
             .unwrap(),
         };
-        let json = to_binary(&response).unwrap();
+        let json = to_json_binary(&response).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"code_id":67,"creator":"jane","checksum":"f7bb7b18fb01bbf425cf4ed2cd4b7fb26a019a7fc75a4dc87e8a0b768c501f00"}"#,

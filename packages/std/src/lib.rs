@@ -88,7 +88,11 @@ pub use crate::results::{
 pub use crate::results::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use crate::results::{GovMsg, VoteOption};
-pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
+#[allow(deprecated)]
+pub use crate::serde::{
+    from_binary, from_json, from_slice, to_binary, to_json_binary, to_json_string, to_json_vec,
+    to_vec,
+};
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;

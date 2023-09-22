@@ -8,7 +8,7 @@ use crate::coin::Coin;
 use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
-use crate::serde::to_binary;
+use crate::serde::to_json_binary;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 use crate::Decimal;
 
@@ -336,7 +336,7 @@ pub fn wasm_instantiate(
     funds: Vec<Coin>,
     label: String,
 ) -> StdResult<WasmMsg> {
-    let payload = to_binary(msg)?;
+    let payload = to_json_binary(msg)?;
     Ok(WasmMsg::Instantiate {
         admin: None,
         code_id,
@@ -352,7 +352,7 @@ pub fn wasm_execute(
     msg: &impl Serialize,
     funds: Vec<Coin>,
 ) -> StdResult<WasmMsg> {
-    let payload = to_binary(msg)?;
+    let payload = to_json_binary(msg)?;
     Ok(WasmMsg::Execute {
         contract_addr: contract_addr.into(),
         msg: payload,
@@ -427,7 +427,7 @@ mod tests {
             funds: vec![],
             label: "my instance".to_string(),
         };
-        let json = to_binary(&msg).unwrap();
+        let json = to_json_binary(&msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"instantiate":{"admin":"king","code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[],"label":"my instance"}}"#,
@@ -441,7 +441,7 @@ mod tests {
             funds: vec![],
             label: "my instance".to_string(),
         };
-        let json = to_binary(&msg).unwrap();
+        let json = to_json_binary(&msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"instantiate":{"admin":null,"code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[],"label":"my instance"}}"#,
@@ -455,7 +455,7 @@ mod tests {
             funds: vec![coin(321, "stones")],
             label: "my instance".to_string(),
         };
-        let json = to_binary(&msg).unwrap();
+        let json = to_json_binary(&msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"instantiate":{"admin":null,"code_id":7897,"msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"label":"my instance"}}"#,
@@ -472,7 +472,7 @@ mod tests {
                 funds: vec![coin(321, "stones")],
                 salt: Binary::from_base64("UkOVazhiwoo=").unwrap(),
             };
-            let json = to_binary(&msg).unwrap();
+            let json = to_json_binary(&msg).unwrap();
             assert_eq!(
                 String::from_utf8_lossy(&json),
                 r#"{"instantiate2":{"admin":null,"code_id":7897,"label":"my instance","msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"salt":"UkOVazhiwoo="}}"#,
@@ -486,7 +486,7 @@ mod tests {
         // FundCommunityPool
         let fund_coins = vec![coin(200, "feathers"), coin(200, "stones")];
         let fund_msg = DistributionMsg::FundCommunityPool { amount: fund_coins };
-        let fund_json = to_binary(&fund_msg).unwrap();
+        let fund_json = to_json_binary(&fund_msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&fund_json),
             r#"{"fund_community_pool":{"amount":[{"denom":"feathers","amount":"200"},{"denom":"stones","amount":"200"}]}}"#,
@@ -496,7 +496,7 @@ mod tests {
         let set_msg = DistributionMsg::SetWithdrawAddress {
             address: String::from("withdrawer"),
         };
-        let set_json = to_binary(&set_msg).unwrap();
+        let set_json = to_json_binary(&set_msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&set_json),
             r#"{"set_withdraw_address":{"address":"withdrawer"}}"#,
@@ -506,7 +506,7 @@ mod tests {
         let withdraw_msg = DistributionMsg::WithdrawDelegatorReward {
             validator: String::from("fancyoperator"),
         };
-        let withdraw_json = to_binary(&withdraw_msg).unwrap();
+        let withdraw_json = to_json_binary(&withdraw_msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&withdraw_json),
             r#"{"withdraw_delegator_reward":{"validator":"fancyoperator"}}"#
@@ -522,7 +522,7 @@ mod tests {
 
         let msg = WasmMsg::Execute {
             contract_addr: "joe".to_string(),
-            msg: to_binary(&ExecuteMsg::Mint {
+            msg: to_json_binary(&ExecuteMsg::Mint {
                 coin: coin(10, "BTC"),
             })
             .unwrap(),
@@ -557,7 +557,7 @@ mod tests {
             proposal_id: 4,
             vote: VoteOption::NoWithVeto,
         };
-        let json = to_binary(&msg).unwrap();
+        let json = to_json_binary(&msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"vote":{"proposal_id":4,"vote":"no_with_veto"}}"#,
@@ -584,7 +584,7 @@ mod tests {
                 ],
             };
 
-            let json = to_binary(&msg).unwrap();
+            let json = to_json_binary(&msg).unwrap();
             assert_eq!(
                 String::from_utf8_lossy(&json),
                 r#"{"vote_weighted":{"proposal_id":25,"options":[{"option":"yes","weight":"0.25"},{"option":"no","weight":"0.25"},{"option":"abstain","weight":"0.5"}]}}"#,

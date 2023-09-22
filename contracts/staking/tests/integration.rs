@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coin, from_binary, ContractResult, Decimal, Response, Uint128, Validator};
+use cosmwasm_std::{coin, from_json, ContractResult, Decimal, Response, Uint128, Validator};
 use cosmwasm_vm::testing::{
     instantiate, mock_backend, mock_env, mock_info, mock_instance_options, query,
 };
@@ -106,7 +106,7 @@ fn proper_initialization() {
 
     // token info is proper
     let res = query(&mut deps, mock_env(), QueryMsg::TokenInfo {}).unwrap();
-    let token: TokenInfoResponse = from_binary(&res).unwrap();
+    let token: TokenInfoResponse = from_json(res).unwrap();
     assert_eq!(&token.name, &msg.name);
     assert_eq!(&token.symbol, &msg.symbol);
     assert_eq!(token.decimals, msg.decimals);
@@ -120,7 +120,7 @@ fn proper_initialization() {
         },
     )
     .unwrap();
-    let bal: BalanceResponse = from_binary(&res).unwrap();
+    let bal: BalanceResponse = from_json(res).unwrap();
     assert_eq!(bal.balance, Uint128::new(0));
 
     // no claims
@@ -132,12 +132,12 @@ fn proper_initialization() {
         },
     )
     .unwrap();
-    let claim: ClaimsResponse = from_binary(&res).unwrap();
+    let claim: ClaimsResponse = from_json(res).unwrap();
     assert_eq!(claim.claims, Uint128::new(0));
 
     // investment info correct
     let res = query(&mut deps, mock_env(), QueryMsg::Investment {}).unwrap();
-    let invest: InvestmentResponse = from_binary(&res).unwrap();
+    let invest: InvestmentResponse = from_json(res).unwrap();
     assert_eq!(&invest.owner, &creator);
     assert_eq!(&invest.validator, &msg.validator);
     assert_eq!(invest.exit_tax, msg.exit_tax);

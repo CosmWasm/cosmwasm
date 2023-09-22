@@ -4,9 +4,9 @@ use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice,
+    from_json,
     storage_keys::{namespace_with_key, to_length_prefixed},
-    to_vec, Addr, CanonicalAddr, Decimal, StdError, StdResult, Storage, Uint128,
+    to_json_vec, Addr, CanonicalAddr, Decimal, StdError, StdResult, Storage, Uint128,
 };
 
 pub const KEY_INVESTMENT: &[u8] = b"invest";
@@ -23,7 +23,7 @@ pub fn may_load_map(
 ) -> StdResult<Option<Uint128>> {
     storage
         .get(&namespace_with_key(&[prefix], key))
-        .map(|v| from_slice(&v))
+        .map(from_json)
         .transpose()
 }
 
@@ -33,7 +33,7 @@ pub fn save_map(
     key: &CanonicalAddr,
     value: Uint128,
 ) -> StdResult<()> {
-    storage.set(&namespace_with_key(&[prefix], key), &to_vec(&value)?);
+    storage.set(&namespace_with_key(&[prefix], key), &to_json_vec(&value)?);
     Ok(())
 }
 
@@ -85,11 +85,11 @@ pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdR
     storage
         .get(&to_length_prefixed(key))
         .ok_or_else(|| StdError::not_found(type_name::<T>()))
-        .and_then(|v| from_slice(&v))
+        .and_then(from_json)
 }
 
 pub fn save_item<T: Serialize>(storage: &mut dyn Storage, key: &[u8], item: &T) -> StdResult<()> {
-    storage.set(&to_length_prefixed(key), &to_vec(item)?);
+    storage.set(&to_length_prefixed(key), &to_json_vec(item)?);
     Ok(())
 }
 

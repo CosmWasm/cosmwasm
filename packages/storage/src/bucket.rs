@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{
     storage_keys::{to_length_prefixed, to_length_prefixed_nested},
-    to_vec, StdError, StdResult, Storage,
+    to_json_vec, StdError, StdResult, Storage,
 };
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, Record};
@@ -72,7 +72,7 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, key: &[u8], data: &T) -> StdResult<()> {
-        set_with_prefix(self.storage, &self.prefix, key, &to_vec(data)?);
+        set_with_prefix(self.storage, &self.prefix, key, &to_json_vec(data)?);
         Ok(())
     }
 
@@ -399,7 +399,7 @@ mod tests {
                     return Err(StdError::generic_err("Current age is negative").into());
                 }
                 if data.age > 10 {
-                    to_vec(&data)?; // Uses From to convert StdError to MyError
+                    to_json_vec(&data)?; // Uses From to convert StdError to MyError
                 }
                 data.age += 1;
                 Ok(data)

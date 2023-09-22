@@ -570,7 +570,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, math::conversion::test_try_from_uint_to_int, to_vec};
+    use crate::{from_json, math::conversion::test_try_from_uint_to_int, to_json_vec};
 
     #[test]
     fn size_of_works() {
@@ -822,9 +822,9 @@ mod tests {
     #[test]
     fn int128_json() {
         let orig = Int128::from(1234567890987654321i128);
-        let serialized = to_vec(&orig).unwrap();
+        let serialized = to_json_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int128 = from_slice(&serialized).unwrap();
+        let parsed: Int128 = from_json(serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

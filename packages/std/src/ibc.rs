@@ -11,7 +11,7 @@ use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::errors::StdResult;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
-use crate::serde::to_binary;
+use crate::serde::to_json_binary;
 use crate::timestamp::Timestamp;
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
@@ -240,7 +240,7 @@ impl IbcAcknowledgement {
 
     pub fn encode_json(data: &impl Serialize) -> StdResult<Self> {
         Ok(IbcAcknowledgement {
-            data: to_binary(data)?,
+            data: to_json_binary(data)?,
         })
     }
 }

@@ -235,7 +235,7 @@ mod tests {
     use super::super::BankMsg;
     use super::*;
     use crate::results::submessages::{ReplyOn, UNUSED_MSG_ID};
-    use crate::{coins, from_slice, to_vec, ContractResult};
+    use crate::{coins, from_json, to_json_vec, ContractResult};
 
     #[test]
     fn response_add_attributes_works() {
@@ -308,8 +308,8 @@ mod tests {
             events: vec![],
             data: Some(Binary::from([0xAA, 0xBB])),
         };
-        let serialized = to_vec(&original).expect("encode contract result");
-        let deserialized: Response = from_slice(&serialized).expect("decode contract result");
+        let serialized = to_json_vec(&original).expect("encode contract result");
+        let deserialized: Response = from_json(serialized).expect("decode contract result");
         assert_eq!(deserialized, original);
     }
 

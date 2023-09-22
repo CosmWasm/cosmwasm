@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Api, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo,
+    entry_point, to_json_binary, Api, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo,
     PageRequest, QueryResponse, Response, StdError, StdResult, WasmMsg,
 };
 
@@ -94,7 +94,7 @@ fn execute_memory_loop() -> Result<Response, ContractError> {
 fn execute_message_loop(env: Env) -> Result<Response, ContractError> {
     let resp = Response::new().add_message(WasmMsg::Execute {
         contract_addr: env.contract.address.into(),
-        msg: to_binary(&ExecuteMsg::MessageLoop {})?,
+        msg: to_json_binary(&ExecuteMsg::MessageLoop {})?,
         funds: vec![],
     });
     Ok(resp)
@@ -148,7 +148,7 @@ fn execute_unreachable() -> Result<Response, ContractError> {
 }
 
 fn execute_mirror_env(env: Env) -> Result<Response, ContractError> {
-    Ok(Response::new().set_data(to_binary(&env)?))
+    Ok(Response::new().set_data(to_json_binary(&env)?))
 }
 
 fn execute_debug(api: &dyn Api) -> Result<Response, ContractError> {
@@ -183,9 +183,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     use QueryMsg::*;
 
     match msg {
-        MirrorEnv {} => to_binary(&query_mirror_env(env)),
-        Denoms {} => to_binary(&query_denoms(deps)?),
-        Denom { denom } => to_binary(&query_denom(deps, denom)?),
+        MirrorEnv {} => to_json_binary(&query_mirror_env(env)),
+        Denoms {} => to_json_binary(&query_denoms(deps)?),
+        Denom { denom } => to_json_binary(&query_denom(deps, denom)?),
     }
 }
 
@@ -226,7 +226,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_binary, DenomMetadata, DenomUnit, OwnedDeps};
+    use cosmwasm_std::{from_json, DenomMetadata, DenomUnit, OwnedDeps};
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
@@ -274,12 +274,12 @@ mod tests {
         );
 
         let symbols: Vec<DenomMetadata> =
-            from_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
+            from_json(query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
 
         assert_eq!(symbols.len(), 98);
 
-        let denom: DenomMetadata = from_binary(
-            &query(
+        let denom: DenomMetadata = from_json(
+            query(
                 deps.as_ref(),
                 mock_env(),
                 QueryMsg::Denom {

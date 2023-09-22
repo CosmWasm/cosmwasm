@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::msg::{SpecialQuery, SpecialResponse};
 
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, OwnedDeps, SystemResult};
+use cosmwasm_std::{to_json_binary, Binary, Coin, ContractResult, OwnedDeps, SystemResult};
 
 /// A drop-in replacement for cosmwasm_std::testing::mock_dependencies
 /// this uses our CustomQuerier.
@@ -26,18 +26,18 @@ pub fn custom_query_execute(query: &SpecialQuery) -> ContractResult<Binary> {
         SpecialQuery::Ping {} => "pong".to_string(),
         SpecialQuery::Capitalized { text } => text.to_uppercase(),
     };
-    to_binary(&SpecialResponse { msg }).into()
+    to_json_binary(&SpecialResponse { msg }).into()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{from_binary, QuerierWrapper, QueryRequest};
+    use cosmwasm_std::{from_json, QuerierWrapper, QueryRequest};
 
     #[test]
     fn custom_query_execute_ping() {
         let res = custom_query_execute(&SpecialQuery::Ping {}).unwrap();
-        let response: SpecialResponse = from_binary(&res).unwrap();
+        let response: SpecialResponse = from_json(res).unwrap();
         assert_eq!(response.msg, "pong");
     }
 
@@ -47,7 +47,7 @@ mod tests {
             text: "fOObaR".to_string(),
         })
         .unwrap();
-        let response: SpecialResponse = from_binary(&res).unwrap();
+        let response: SpecialResponse = from_json(res).unwrap();
         assert_eq!(response.msg, "FOOBAR");
     }
 

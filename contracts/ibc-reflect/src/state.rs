@@ -1,9 +1,9 @@
 use std::any::type_name;
 
 use cosmwasm_std::{
-    from_slice,
+    from_json,
     storage_keys::{namespace_with_key, to_length_prefixed},
-    to_vec, Addr, Order, StdError, StdResult, Storage,
+    to_json_vec, Addr, Order, StdError, StdResult, Storage,
 };
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub struct Config {
 pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<Addr>> {
     storage
         .get(&namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()))
-        .map(|v| from_slice(&v))
+        .map(from_json)
         .transpose()
 }
 
@@ -33,7 +33,7 @@ pub fn load_account(storage: &dyn Storage, id: &str) -> StdResult<Addr> {
 pub fn save_account(storage: &mut dyn Storage, id: &str, account: &Addr) -> StdResult<()> {
     storage.set(
         &namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()),
-        &to_vec(account)?,
+        &to_json_vec(account)?,
     );
     Ok(())
 }
@@ -52,7 +52,7 @@ pub fn range_accounts(
         .map(|(key, val)| {
             Ok((
                 String::from_utf8(key[PREFIX_ACCOUNTS.len() + 2..].to_vec())?,
-                from_slice(&val)?,
+                from_json(val)?,
             ))
         })
 }
@@ -61,10 +61,10 @@ pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdR
     storage
         .get(&to_length_prefixed(key))
         .ok_or_else(|| StdError::not_found(type_name::<T>()))
-        .and_then(|v| from_slice(&v))
+        .and_then(from_json)
 }
 
 pub fn save_item<T: Serialize>(storage: &mut dyn Storage, key: &[u8], item: &T) -> StdResult<()> {
-    storage.set(&to_length_prefixed(key), &to_vec(item)?);
+    storage.set(&to_length_prefixed(key), &to_json_vec(item)?);
     Ok(())
 }

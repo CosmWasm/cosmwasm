@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{storage_keys::to_length_prefixed, to_vec, StdError, StdResult, Storage};
+use cosmwasm_std::{storage_keys::to_length_prefixed, to_json_vec, StdError, StdResult, Storage};
 
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
@@ -58,7 +58,7 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, data: &T) -> StdResult<()> {
-        self.storage.set(&self.key, &to_vec(data)?);
+        self.storage.set(&self.key, &to_json_vec(data)?);
         Ok(())
     }
 
@@ -307,7 +307,7 @@ mod tests {
                 return Err(StdError::generic_err("broken stuff").into()); // Uses Into to convert StdError to MyError
             }
             if c.max_tokens > 10 {
-                to_vec(&c)?; // Uses From to convert StdError to MyError
+                to_json_vec(&c)?; // Uses From to convert StdError to MyError
             }
             c.max_tokens += 20;
             Ok(c)

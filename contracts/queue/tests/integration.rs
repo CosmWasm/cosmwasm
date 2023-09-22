@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{from_binary, from_slice, MessageInfo, Response};
+use cosmwasm_std::{from_json, MessageInfo, Response};
 use cosmwasm_vm::{
     testing::{
         execute, instantiate, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query,
@@ -48,13 +48,13 @@ fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInf
 
 fn get_count(deps: &mut Instance<MockApi, MockStorage, MockQuerier>) -> u32 {
     let data = query(deps, mock_env(), QueryMsg::Count {}).unwrap();
-    let res: CountResponse = from_binary(&data).unwrap();
+    let res: CountResponse = from_json(data).unwrap();
     res.count
 }
 
 fn get_sum(deps: &mut Instance<MockApi, MockStorage, MockQuerier>) -> i32 {
     let data = query(deps, mock_env(), QueryMsg::Sum {}).unwrap();
-    let res: SumResponse = from_binary(&data).unwrap();
+    let res: SumResponse = from_json(data).unwrap();
     res.sum
 }
 
@@ -128,7 +128,7 @@ fn push_and_pop() {
     // ensure we popped properly
     assert!(res.data.is_some());
     let data = res.data.unwrap();
-    let item: Item = from_slice(data.as_slice()).unwrap();
+    let item: Item = from_json(data).unwrap();
     assert_eq!(item.value, 25);
 
     assert_eq!(get_count(&mut deps), 1);
@@ -169,7 +169,7 @@ fn push_and_reduce() {
     assert_eq!(get_count(&mut deps), 4);
     assert_eq!(get_sum(&mut deps), 130);
     let data = query(&mut deps, mock_env(), QueryMsg::Reducer {}).unwrap();
-    let counters = from_binary::<ReducerResponse>(&data).unwrap().counters;
+    let counters = from_json::<ReducerResponse>(&data).unwrap().counters;
     assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
 }
 
@@ -223,7 +223,7 @@ fn query_list() {
     // since we count up to 0x20 in early, we get early and late both with data
 
     let query_msg = QueryMsg::List {};
-    let ids: ListResponse = from_binary(&query(&mut deps, mock_env(), query_msg).unwrap()).unwrap();
+    let ids: ListResponse = from_json(query(&mut deps, mock_env(), query_msg).unwrap()).unwrap();
     assert_eq!(ids.empty, Vec::<u32>::new());
     assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
     assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);

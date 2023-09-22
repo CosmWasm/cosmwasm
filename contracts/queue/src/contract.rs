@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Empty, Env, MessageInfo,
-    Order, QueryResponse, Response, StdResult, Storage,
+    entry_point, from_json, to_json_binary, to_json_vec, Binary, Deps, DepsMut, Empty, Env,
+    MessageInfo, Order, QueryResponse, Response, StdResult, Storage,
 };
 
 use crate::msg::{
@@ -51,7 +51,7 @@ fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
             (last_key + 1).to_be_bytes()
         }
     };
-    let new_value = to_vec(&Item { value })?;
+    let new_value = to_json_vec(&Item { value })?;
 
     storage.set(&new_key, &new_value);
     Ok(())
@@ -92,11 +92,11 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Count {} => to_binary(&query_count(deps)),
-        QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
-        QueryMsg::Reducer {} => to_binary(&query_reducer(deps)?),
-        QueryMsg::List {} => to_binary(&query_list(deps)),
-        QueryMsg::OpenIterators { count } => to_binary(&query_open_iterators(deps, count)),
+        QueryMsg::Count {} => to_json_binary(&query_count(deps)),
+        QueryMsg::Sum {} => to_json_binary(&query_sum(deps)?),
+        QueryMsg::Reducer {} => to_json_binary(&query_reducer(deps)?),
+        QueryMsg::List {} => to_json_binary(&query_list(deps)),
+        QueryMsg::OpenIterators { count } => to_json_binary(&query_open_iterators(deps, count)),
     }
 }
 
@@ -112,7 +112,7 @@ fn query_sum(deps: Deps) -> StdResult<SumResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range_values(None, None, Order::Ascending)
-        .map(|v| from_slice(&v))
+        .map(from_json)
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
     Ok(SumResponse { sum })
@@ -124,7 +124,7 @@ fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
     for val in deps
         .storage
         .range_values(None, None, Order::Ascending)
-        .map(|v| from_slice::<Item>(&v))
+        .map(|v| from_json::<Item>(&v))
     {
         // this returns error on parse error
         let my_val = val?.value;
@@ -134,7 +134,7 @@ fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
             .range_values(None, None, Order::Ascending)
             // get value. ignore parse errors, just count as 0
             .map(|v| {
-                from_slice::<Item>(&v)
+                from_json::<Item>(&v)
                     .map(|v| v.value)
                     .expect("error in item")
             })
@@ -181,7 +181,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coins, from_binary, OwnedDeps};
+    use cosmwasm_std::{coins, from_json, OwnedDeps};
 
     /// Instantiates a contract with no elements
     fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
@@ -270,7 +270,7 @@ mod tests {
         // ensure we popped properly
         assert!(res.data.is_some());
         let data = res.data.unwrap();
-        let state: Item = from_slice(data.as_slice()).unwrap();
+        let state: Item = from_json(data.as_slice()).unwrap();
         assert_eq!(state.value, 25);
 
         assert_eq!(get_count(deps.as_ref()), 1);
@@ -340,7 +340,7 @@ mod tests {
 
         let query_msg = QueryMsg::List {};
         let ids: ListResponse =
-            from_binary(&query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
+            from_json(query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
         assert_eq!(ids.empty, Vec::<u32>::new());
         assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
         assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
