@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, DistributionMsg, Env,
+    coin, entry_point, to_json_binary, BankMsg, Decimal, Deps, DepsMut, DistributionMsg, Env,
     MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128,
     WasmMsg,
 };
@@ -289,7 +289,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
 pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Response> {
     let contract_addr = env.contract.address;
     let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
-    let msg = to_binary(&ExecuteMsg::_BondAllTokens {})?;
+    let msg = to_json_binary(&ExecuteMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
     let res = Response::new()
@@ -349,10 +349,10 @@ pub fn _bond_all_tokens(
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
-        QueryMsg::Investment {} => to_binary(&query_investment(deps)?),
-        QueryMsg::Balance { address } => to_binary(&query_balance(deps, &address)?),
-        QueryMsg::Claims { address } => to_binary(&query_claims(deps, &address)?),
+        QueryMsg::TokenInfo {} => to_json_binary(&query_token_info(deps)?),
+        QueryMsg::Investment {} => to_json_binary(&query_investment(deps)?),
+        QueryMsg::Balance { address } => to_json_binary(&query_balance(deps, &address)?),
+        QueryMsg::Claims { address } => to_json_binary(&query_claims(deps, &address)?),
     }
 }
 

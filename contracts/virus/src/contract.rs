@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, instantiate2_address, to_binary, Attribute, Binary, CodeInfoResponse,
+    entry_point, instantiate2_address, to_json_binary, Attribute, Binary, CodeInfoResponse,
     ContractInfoResponse, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 
@@ -72,7 +72,7 @@ pub fn execute_spread(
             admin: None,
             code_id,
             label,
-            msg: to_binary(&InstantiateMsg {})?,
+            msg: to_json_binary(&InstantiateMsg {})?,
             funds: vec![],
             salt,
         });
@@ -80,7 +80,7 @@ pub fn execute_spread(
         // we know the address of the newly instantiated contract, so let's execute it right away
         msgs.push(WasmMsg::Execute {
             contract_addr: address.into(),
-            msg: to_binary(&ExecuteMsg::Spread {
+            msg: to_json_binary(&ExecuteMsg::Spread {
                 parent_path: path,
                 levels: levels - 1,
             })?,

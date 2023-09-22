@@ -26,7 +26,7 @@ use crate::query::{
     DistributionQuery,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::serde::{from_binary, to_binary, to_vec};
+use crate::serde::{from_json_binary, to_json_binary, to_json_vec};
 use crate::ContractInfoResponse;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
@@ -240,7 +240,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     /// one level. Only use this if you don't need to check the SystemError
     /// eg. If you don't differentiate between contract missing and contract returned error
     pub fn query<U: DeserializeOwned>(&self, request: &QueryRequest<C>) -> StdResult<U> {
-        let raw = to_vec(request).map_err(|serialize_err| {
+        let raw = to_json_vec(request).map_err(|serialize_err| {
             StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
         })?;
         match self.raw_query(&raw) {
@@ -250,7 +250,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
                 format!("Querier contract error: {contract_err}"),
             )),
-            SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_json_binary(&value),
         }
     }
 
@@ -376,7 +376,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
             contract_addr: contract_addr.into(),
-            msg: to_binary(msg)?,
+            msg: to_json_binary(msg)?,
         }
         .into();
         self.query(&request)
@@ -402,7 +402,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         .into();
         // we cannot use query, as it will try to parse the binary data, when we just want to return it,
         // so a bit of code copy here...
-        let raw = to_vec(&request).map_err(|serialize_err| {
+        let raw = to_json_vec(&request).map_err(|serialize_err| {
             StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
         })?;
         match self.raw_query(&raw) {
@@ -500,7 +500,7 @@ mod tests {
 
     use super::*;
     use crate::testing::MockQuerier;
-    use crate::{coins, from_slice, Uint128};
+    use crate::{coins, from_json_slice, Uint128};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -533,10 +533,10 @@ mod tests {
         });
 
         let raw = wrapper
-            .raw_query(&to_vec(&query).unwrap())
+            .raw_query(&to_json_vec(&query).unwrap())
             .unwrap()
             .unwrap();
-        let balance: BalanceResponse = from_slice(&raw).unwrap();
+        let balance: BalanceResponse = from_json_slice(&raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
     }
 
@@ -579,7 +579,7 @@ mod tests {
             if q == &(WasmQuery::ContractInfo {
                 contract_addr: ACCT.to_string(),
             }) {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&mock_resp()).unwrap()))
+                SystemResult::Ok(ContractResult::Ok(to_json_binary(&mock_resp()).unwrap()))
             } else {
                 SystemResult::Err(crate::SystemError::NoSuchContract {
                     addr: ACCT.to_string(),
@@ -610,7 +610,7 @@ mod tests {
             if q == &(WasmQuery::ContractInfo {
                 contract_addr: ACCT.to_string(),
             }) {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&mock_resp()).unwrap()))
+                SystemResult::Ok(ContractResult::Ok(to_json_binary(&mock_resp()).unwrap()))
             } else {
                 SystemResult::Err(crate::SystemError::NoSuchContract {
                     addr: ACCT.to_string(),

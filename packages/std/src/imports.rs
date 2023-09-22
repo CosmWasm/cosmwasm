@@ -8,7 +8,7 @@ use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
 use crate::sections::decode_sections2;
 use crate::sections::encode_sections;
-use crate::serde::from_slice;
+use crate::serde::from_json_slice;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
 #[cfg(feature = "iterator")]
 use crate::{
@@ -498,7 +498,7 @@ impl Querier for ExternalQuerier {
         let response_ptr = unsafe { query_chain(request_ptr) };
         let response = unsafe { consume_region(response_ptr as *mut Region) };
 
-        from_slice(&response).unwrap_or_else(|parsing_err| {
+        from_json_slice(&response).unwrap_or_else(|parsing_err| {
             SystemResult::Err(SystemError::InvalidResponse {
                 error: parsing_err.to_string(),
                 response: response.into(),

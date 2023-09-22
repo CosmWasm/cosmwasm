@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::binary::Binary;
-use crate::to_binary;
+use crate::to_json_binary;
 
 /// This is a standard IBC acknowledgement type. IBC application are free
 /// to use any acknowledgement format they want. However, for compatibility
@@ -94,7 +94,7 @@ impl StdAck {
         // We need a non-failing StdAck -> Binary conversion to allow using StdAck in
         // `impl Into<Binary>` arguments.
         // Pretty sure this cannot fail. If that changes we can create a non-failing implementation here.
-        to_binary(&self).unwrap()
+        to_json_binary(&self).unwrap()
     }
 
     pub fn unwrap(self) -> Binary {

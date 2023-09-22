@@ -601,7 +601,7 @@ fn to_low_half(data: u32) -> u64 {
 mod tests {
     use super::*;
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, QueryRequest,
+        coins, from_json_binary, AllBalanceResponse, BankQuery, Binary, Empty, QueryRequest,
         SystemError, SystemResult, WasmQuery,
     };
     use hex_literal::hex;
@@ -1925,7 +1925,7 @@ mod tests {
         let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
             address: INIT_ADDR.to_string(),
         });
-        let request_data = cosmwasm_std::to_vec(&request).unwrap();
+        let request_data = cosmwasm_std::to_json_vec(&request).unwrap();
         let request_ptr = write_data(&mut fe_mut, &request_data);
 
         leave_default_data(&mut fe_mut);
@@ -1934,10 +1934,10 @@ mod tests {
         let response = force_read(&mut fe_mut, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
-            cosmwasm_std::from_slice(&response).unwrap();
+            cosmwasm_std::from_json_slice(&response).unwrap();
         let query_result_inner = query_result.unwrap();
         let query_result_inner_inner = query_result_inner.unwrap();
-        let parsed_again: AllBalanceResponse = from_binary(&query_result_inner_inner).unwrap();
+        let parsed_again: AllBalanceResponse = from_json_binary(&query_result_inner_inner).unwrap();
         assert_eq!(parsed_again.amount, coins(INIT_AMOUNT, INIT_DENOM));
     }
 
@@ -1956,7 +1956,7 @@ mod tests {
         let response = force_read(&mut fe_mut, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
-            cosmwasm_std::from_slice(&response).unwrap();
+            cosmwasm_std::from_json_slice(&response).unwrap();
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::InvalidRequest { request: err, .. }) => {
@@ -1976,7 +1976,7 @@ mod tests {
             contract_addr: String::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });
-        let request_data = cosmwasm_std::to_vec(&request).unwrap();
+        let request_data = cosmwasm_std::to_json_vec(&request).unwrap();
         let request_ptr = write_data(&mut fe_mut, &request_data);
 
         leave_default_data(&mut fe_mut);
@@ -1985,7 +1985,7 @@ mod tests {
         let response = force_read(&mut fe_mut, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
-            cosmwasm_std::from_slice(&response).unwrap();
+            cosmwasm_std::from_json_slice(&response).unwrap();
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::NoSuchContract { addr }) => {
