@@ -516,7 +516,7 @@ mod tests {
         let binary = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
 
         let json = to_json_vec(&binary).unwrap();
-        let deserialized: HexBinary = from_json(&json).unwrap();
+        let deserialized: HexBinary = from_json(json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -528,7 +528,7 @@ mod tests {
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
         let serialized = to_json_vec(&hex).unwrap();
-        let deserialized: HexBinary = from_json(&serialized).unwrap();
+        let deserialized: HexBinary = from_json(serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 

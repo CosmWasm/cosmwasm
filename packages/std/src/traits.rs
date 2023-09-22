@@ -250,7 +250,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
                 format!("Querier contract error: {contract_err}"),
             )),
-            SystemResult::Ok(ContractResult::Ok(value)) => from_json(&value),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_json(value),
         }
     }
 
@@ -536,7 +536,7 @@ mod tests {
             .raw_query(&to_json_vec(&query).unwrap())
             .unwrap()
             .unwrap();
-        let balance: BalanceResponse = from_json(&raw).unwrap();
+        let balance: BalanceResponse = from_json(raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
     }
 

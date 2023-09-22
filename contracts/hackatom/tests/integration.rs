@@ -183,7 +183,7 @@ fn querier_callbacks_work() {
     // querying with balance gets the balance
     let query_msg = QueryMsg::OtherBalance { address: rich_addr };
     let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_json(&query_response).unwrap();
+    let bal: AllBalanceResponse = from_json(query_response).unwrap();
     assert_eq!(bal.amount, rich_balance);
 
     // querying other accounts gets none
@@ -191,7 +191,7 @@ fn querier_callbacks_work() {
         address: String::from("someone else"),
     };
     let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_json(&query_response).unwrap();
+    let bal: AllBalanceResponse = from_json(query_response).unwrap();
     assert_eq!(bal.amount, vec![]);
 }
 

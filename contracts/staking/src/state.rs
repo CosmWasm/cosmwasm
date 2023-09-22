@@ -23,7 +23,7 @@ pub fn may_load_map(
 ) -> StdResult<Option<Uint128>> {
     storage
         .get(&namespace_with_key(&[prefix], key))
-        .map(|v| from_json(&v))
+        .map(from_json)
         .transpose()
 }
 
@@ -85,7 +85,7 @@ pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdR
     storage
         .get(&to_length_prefixed(key))
         .ok_or_else(|| StdError::not_found(type_name::<T>()))
-        .and_then(|v| from_json(&v))
+        .and_then(from_json)
 }
 
 pub fn save_item<T: Serialize>(storage: &mut dyn Storage, key: &[u8], item: &T) -> StdResult<()> {

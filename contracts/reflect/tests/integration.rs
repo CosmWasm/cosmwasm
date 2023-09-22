@@ -83,7 +83,7 @@ fn proper_initialization() {
 
     // it worked, let's query the state
     let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
-    let value: OwnerResponse = from_json(&res).unwrap();
+    let value: OwnerResponse = from_json(res).unwrap();
     assert_eq!("creator", value.owner.as_str());
 }
 
@@ -159,7 +159,7 @@ fn transfer() {
     // should change state
     assert_eq!(0, res.messages.len());
     let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
-    let value: OwnerResponse = from_json(&res).unwrap();
+    let value: OwnerResponse = from_json(res).unwrap();
     assert_eq!("friend", value.owner.as_str());
 }
 
@@ -203,8 +203,8 @@ fn supply_query() {
     )
     .unwrap();
 
-    let res: ChainResponse = from_json(&res).unwrap();
-    let res: SupplyResponse = from_json(&res.data).unwrap();
+    let res: ChainResponse = from_json(res).unwrap();
+    let res: SupplyResponse = from_json(res.data).unwrap();
     assert_eq!(res.amount, coin(25, "OSMO"));
 }
 
@@ -225,7 +225,7 @@ fn dispatch_custom_query() {
         },
     )
     .unwrap();
-    let value: CapitalizedResponse = from_json(&res).unwrap();
+    let value: CapitalizedResponse = from_json(res).unwrap();
     assert_eq!(value.text, "DEMO ONE");
 }
 
@@ -282,7 +282,7 @@ fn reply_and_query() {
 
     // query for the real id
     let raw = query(&mut deps, mock_env(), QueryMsg::SubMsgResult { id }).unwrap();
-    let qres: Reply = from_json(&raw).unwrap();
+    let qres: Reply = from_json(raw).unwrap();
     assert_eq!(qres.id, id);
     let result = qres.result.unwrap();
     assert_eq!(result.data, Some(data));

@@ -37,7 +37,7 @@ mod tests {
     #[test]
     fn custom_query_execute_ping() {
         let res = custom_query_execute(&SpecialQuery::Ping {}).unwrap();
-        let response: SpecialResponse = from_json(&res).unwrap();
+        let response: SpecialResponse = from_json(res).unwrap();
         assert_eq!(response.msg, "pong");
     }
 
@@ -47,7 +47,7 @@ mod tests {
             text: "fOObaR".to_string(),
         })
         .unwrap();
-        let response: SpecialResponse = from_json(&res).unwrap();
+        let response: SpecialResponse = from_json(res).unwrap();
         assert_eq!(response.msg, "FOOBAR");
     }
 

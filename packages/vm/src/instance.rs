@@ -970,7 +970,7 @@ mod tests {
                     .unwrap()
                     .unwrap()
                     .unwrap();
-                let BalanceResponse { amount } = from_json(&response).unwrap();
+                let BalanceResponse { amount } = from_json(response).unwrap();
                 assert_eq!(amount.amount.u128(), 8000);
                 assert_eq!(amount.denom, "silver");
                 Ok(())
@@ -991,7 +991,7 @@ mod tests {
                     .unwrap()
                     .unwrap()
                     .unwrap();
-                let AllBalanceResponse { amount } = from_json(&response).unwrap();
+                let AllBalanceResponse { amount } = from_json(response).unwrap();
                 assert_eq!(amount.len(), 2);
                 assert_eq!(amount[0].amount.u128(), 10000);
                 assert_eq!(amount[0].denom, "gold");
@@ -1026,7 +1026,7 @@ mod tests {
                     .unwrap()
                     .unwrap()
                     .unwrap();
-                let BalanceResponse { amount } = from_json(&response).unwrap();
+                let BalanceResponse { amount } = from_json(response).unwrap();
                 assert_eq!(amount.amount.u128(), 500);
                 Ok(())
             })
@@ -1055,7 +1055,7 @@ mod tests {
                     .unwrap()
                     .unwrap()
                     .unwrap();
-                let BalanceResponse { amount } = from_json(&response).unwrap();
+                let BalanceResponse { amount } = from_json(response).unwrap();
                 assert_eq!(amount.amount.u128(), 8000);
                 Ok(())
             })

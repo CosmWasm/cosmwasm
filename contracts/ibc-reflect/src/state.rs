@@ -22,7 +22,7 @@ pub struct Config {
 pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<Addr>> {
     storage
         .get(&namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()))
-        .map(|v| from_json(&v))
+        .map(from_json)
         .transpose()
 }
 
@@ -52,7 +52,7 @@ pub fn range_accounts(
         .map(|(key, val)| {
             Ok((
                 String::from_utf8(key[PREFIX_ACCOUNTS.len() + 2..].to_vec())?,
-                from_json(&val)?,
+                from_json(val)?,
             ))
         })
 }
@@ -61,7 +61,7 @@ pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdR
     storage
         .get(&to_length_prefixed(key))
         .ok_or_else(|| StdError::not_found(type_name::<T>()))
-        .and_then(|v| from_json(&v))
+        .and_then(from_json)
 }
 
 pub fn save_item<T: Serialize>(storage: &mut dyn Storage, key: &[u8], item: &T) -> StdResult<()> {

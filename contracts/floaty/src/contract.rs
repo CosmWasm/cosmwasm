@@ -40,7 +40,7 @@ pub fn execute(
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_json(&data)?;
+    let state: State = from_json(data)?;
 
     if info.sender == state.verifier {
         let to_addr = state.beneficiary;
@@ -77,7 +77,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_json(&data)?;
+    let state: State = from_json(data)?;
     Ok(VerifierResponse {
         verifier: state.verifier.into(),
     })
@@ -124,7 +124,7 @@ mod tests {
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_json(&data).unwrap();
+        let state: State = from_json(data).unwrap();
         assert_eq!(state, expected_state);
     }
 
@@ -246,7 +246,7 @@ mod tests {
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_json(&data).unwrap();
+        let state: State = from_json(data).unwrap();
         assert_eq!(
             state,
             State {

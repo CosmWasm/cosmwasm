@@ -796,7 +796,7 @@ mod tests {
         let orig = Int64::from(1234567890987654321i64);
         let serialized = to_json_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int64 = from_json(&serialized).unwrap();
+        let parsed: Int64 = from_json(serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

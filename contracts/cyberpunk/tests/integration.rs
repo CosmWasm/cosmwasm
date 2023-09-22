@@ -152,13 +152,13 @@ fn test_env() {
     )
     .unwrap();
 
-    let received_env: Env = from_json(&res.data.unwrap()).unwrap();
+    let received_env: Env = from_json(res.data.unwrap()).unwrap();
 
     assert_eq!(received_env, env);
 
     let env = mock_env();
     let received_env: Env =
-        from_json(&query(&mut deps, env.clone(), QueryMsg::MirrorEnv {}).unwrap()).unwrap();
+        from_json(query(&mut deps, env.clone(), QueryMsg::MirrorEnv {}).unwrap()).unwrap();
 
     assert_eq!(received_env, env);
 }

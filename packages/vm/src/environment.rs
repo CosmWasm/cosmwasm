@@ -899,7 +899,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let balance: AllBalanceResponse = from_json(&res).unwrap();
+        let balance: AllBalanceResponse = from_json(res).unwrap();
 
         assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
     }

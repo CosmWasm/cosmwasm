@@ -1933,10 +1933,10 @@ mod tests {
         let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
         let response = force_read(&mut fe_mut, response_ptr);
 
-        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(&response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
         let query_result_inner = query_result.unwrap();
         let query_result_inner_inner = query_result_inner.unwrap();
-        let parsed_again: AllBalanceResponse = from_json(&query_result_inner_inner).unwrap();
+        let parsed_again: AllBalanceResponse = from_json(query_result_inner_inner).unwrap();
         assert_eq!(parsed_again.amount, coins(INIT_AMOUNT, INIT_DENOM));
     }
 
@@ -1954,7 +1954,7 @@ mod tests {
         let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
         let response = force_read(&mut fe_mut, response_ptr);
 
-        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(&response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::InvalidRequest { request: err, .. }) => {
@@ -1982,7 +1982,7 @@ mod tests {
         let response_ptr = do_query_chain(fe_mut.as_mut(), request_ptr).unwrap();
         let response = force_read(&mut fe_mut, response_ptr);
 
-        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(&response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::NoSuchContract { addr }) => {

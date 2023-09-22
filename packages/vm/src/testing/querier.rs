@@ -147,7 +147,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: AllBalanceResponse = from_json(&all).unwrap();
+        let res: AllBalanceResponse = from_json(all).unwrap();
         assert_eq!(&res.amount, &balance);
     }
 
@@ -171,7 +171,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json(&fly).unwrap();
+        let res: BalanceResponse = from_json(fly).unwrap();
         assert_eq!(res.amount, coin(777, "FLY"));
 
         // missing denom
@@ -188,7 +188,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json(&miss).unwrap();
+        let res: BalanceResponse = from_json(miss).unwrap();
         assert_eq!(res.amount, coin(0, "MISS"));
     }
 
@@ -211,7 +211,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: AllBalanceResponse = from_json(&all).unwrap();
+        let res: AllBalanceResponse = from_json(all).unwrap();
         assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
@@ -228,7 +228,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json(&miss).unwrap();
+        let res: BalanceResponse = from_json(miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
     }
 }

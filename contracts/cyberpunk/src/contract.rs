@@ -274,12 +274,12 @@ mod tests {
         );
 
         let symbols: Vec<DenomMetadata> =
-            from_json(&query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
+            from_json(query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
 
         assert_eq!(symbols.len(), 98);
 
         let denom: DenomMetadata = from_json(
-            &query(
+            query(
                 deps.as_ref(),
                 mock_env(),
                 QueryMsg::Denom {

@@ -365,7 +365,7 @@ mod tests {
             text: "demo one".to_string(),
         };
         let response = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let value: CapitalizedResponse = from_json(&response).unwrap();
+        let value: CapitalizedResponse = from_json(response).unwrap();
         assert_eq!(value.text, "DEMO ONE");
     }
 
@@ -381,8 +381,8 @@ mod tests {
             .into(),
         };
         let response = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let outer: ChainResponse = from_json(&response).unwrap();
-        let inner: AllBalanceResponse = from_json(&outer.data).unwrap();
+        let outer: ChainResponse = from_json(response).unwrap();
+        let inner: AllBalanceResponse = from_json(outer.data).unwrap();
         assert_eq!(inner.amount, coins(123, "ucosm"));
 
         // with custom query
@@ -390,8 +390,8 @@ mod tests {
             request: SpecialQuery::Ping {}.into(),
         };
         let response = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let outer: ChainResponse = from_json(&response).unwrap();
-        let inner: SpecialResponse = from_json(&outer.data).unwrap();
+        let outer: ChainResponse = from_json(response).unwrap();
+        let inner: SpecialResponse = from_json(outer.data).unwrap();
         assert_eq!(inner.msg, "pong");
     }
 
@@ -452,7 +452,7 @@ mod tests {
 
         // query for the real id
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubMsgResult { id }).unwrap();
-        let qres: Reply = from_json(&raw).unwrap();
+        let qres: Reply = from_json(raw).unwrap();
         assert_eq!(qres.id, id);
         let result = qres.result.unwrap();
         assert_eq!(result.data, Some(data));

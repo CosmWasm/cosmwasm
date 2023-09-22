@@ -108,18 +108,18 @@ pub fn ibc_packet_ack(
     // which local channel was this packet send from
     let caller = msg.original_packet.src.channel_id;
     // we need to parse the ack based on our request
-    let packet: PacketMsg = from_json(&msg.original_packet.data)?;
+    let packet: PacketMsg = from_json(msg.original_packet.data)?;
     match packet {
         PacketMsg::Dispatch { .. } => {
-            let res: AcknowledgementMsg<DispatchResponse> = from_json(&msg.acknowledgement.data)?;
+            let res: AcknowledgementMsg<DispatchResponse> = from_json(msg.acknowledgement.data)?;
             acknowledge_dispatch(deps, caller, res)
         }
         PacketMsg::WhoAmI {} => {
-            let res: AcknowledgementMsg<WhoAmIResponse> = from_json(&msg.acknowledgement.data)?;
+            let res: AcknowledgementMsg<WhoAmIResponse> = from_json(msg.acknowledgement.data)?;
             acknowledge_who_am_i(deps, caller, res)
         }
         PacketMsg::Balances {} => {
-            let res: AcknowledgementMsg<BalancesResponse> = from_json(&msg.acknowledgement.data)?;
+            let res: AcknowledgementMsg<BalancesResponse> = from_json(msg.acknowledgement.data)?;
             acknowledge_balances(deps, env, caller, res)
         }
     }
@@ -305,7 +305,7 @@ mod tests {
             channel_id: channel_id.into(),
         };
         let r = query(deps.as_ref(), mock_env(), q).unwrap();
-        let acct: AccountResponse = from_json(&r).unwrap();
+        let acct: AccountResponse = from_json(r).unwrap();
         assert!(acct.remote_addr.is_none());
         assert!(acct.remote_balance.is_empty());
         assert_eq!(0, acct.last_update_time.nanos());
@@ -319,7 +319,7 @@ mod tests {
             channel_id: channel_id.into(),
         };
         let r = query(deps.as_ref(), mock_env(), q).unwrap();
-        let acct: AccountResponse = from_json(&r).unwrap();
+        let acct: AccountResponse = from_json(r).unwrap();
         assert_eq!(acct.remote_addr.unwrap(), remote_addr);
         assert!(acct.remote_balance.is_empty());
         assert_eq!(0, acct.last_update_time.nanos());

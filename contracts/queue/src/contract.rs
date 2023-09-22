@@ -112,7 +112,7 @@ fn query_sum(deps: Deps) -> StdResult<SumResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range_values(None, None, Order::Ascending)
-        .map(|v| from_json(&v))
+        .map(from_json)
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
     Ok(SumResponse { sum })
@@ -340,7 +340,7 @@ mod tests {
 
         let query_msg = QueryMsg::List {};
         let ids: ListResponse =
-            from_json(&query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
+            from_json(query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
         assert_eq!(ids.empty, Vec::<u32>::new());
         assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
         assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);

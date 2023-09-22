@@ -309,7 +309,7 @@ mod tests {
             data: Some(Binary::from([0xAA, 0xBB])),
         };
         let serialized = to_json_vec(&original).expect("encode contract result");
-        let deserialized: Response = from_json(&serialized).expect("decode contract result");
+        let deserialized: Response = from_json(serialized).expect("decode contract result");
         assert_eq!(deserialized, original);
     }
 

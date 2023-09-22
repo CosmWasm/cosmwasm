@@ -451,7 +451,7 @@ mod tests {
         let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
         let json = to_json_vec(&binary).unwrap();
-        let deserialized: Binary = from_json(&json).unwrap();
+        let deserialized: Binary = from_json(json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -463,7 +463,7 @@ mod tests {
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
         let serialized = to_json_vec(&b64_str).unwrap();
-        let deserialized: Binary = from_json(&serialized).unwrap();
+        let deserialized: Binary = from_json(serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 

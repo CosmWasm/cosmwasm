@@ -959,7 +959,7 @@ mod tests {
         let orig = Int512::from(1234567890987654321u128);
         let serialized = to_json_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int512 = from_json(&serialized).unwrap();
+        let parsed: Int512 = from_json(serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

@@ -33,7 +33,7 @@ pub struct AccountData {
 pub fn may_load_account(storage: &dyn Storage, id: &str) -> StdResult<Option<AccountData>> {
     storage
         .get(&namespace_with_key(&[PREFIX_ACCOUNTS], id.as_bytes()))
-        .map(|v| from_json(&v))
+        .map(from_json)
         .transpose()
 }
 
@@ -63,7 +63,7 @@ pub fn range_accounts(
         .map(|(key, val)| {
             Ok((
                 String::from_utf8(key[PREFIX_ACCOUNTS.len() + 2..].to_vec())?,
-                from_json(&val)?,
+                from_json(val)?,
             ))
         })
 }
@@ -72,7 +72,7 @@ pub fn load_config(storage: &dyn Storage) -> StdResult<Config> {
     storage
         .get(&to_length_prefixed(KEY_CONFIG))
         .ok_or_else(|| StdError::not_found("config"))
-        .and_then(|v| from_json(&v))
+        .and_then(from_json)
 }
 
 pub fn save_config(storage: &mut dyn Storage, item: &Config) -> StdResult<()> {
