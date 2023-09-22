@@ -205,7 +205,7 @@ pub type SubMsgExecutionResponse = SubMsgResponse;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json_slice, to_json_vec, StdError, StdResult};
+    use crate::{from_json, to_json_vec, StdError, StdResult};
 
     #[test]
     fn sub_msg_result_serialization_works() {
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn sub_msg_result_deserialization_works() {
-        let result: SubMsgResult = from_json_slice(br#"{"ok":{"events":[],"data":null}}"#).unwrap();
+        let result: SubMsgResult = from_json(br#"{"ok":{"events":[],"data":null}}"#).unwrap();
         assert_eq!(
             result,
             SubMsgResult::Ok(SubMsgResponse {
@@ -242,7 +242,7 @@ mod tests {
             })
         );
 
-        let result: SubMsgResult = from_json_slice(
+        let result: SubMsgResult = from_json(
             br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg=="}}"#).unwrap();
         assert_eq!(
             result,
@@ -252,18 +252,16 @@ mod tests {
             })
         );
 
-        let result: SubMsgResult = from_json_slice(br#"{"error":"broken"}"#).unwrap();
+        let result: SubMsgResult = from_json(br#"{"error":"broken"}"#).unwrap();
         assert_eq!(result, SubMsgResult::Err("broken".to_string()));
 
         // fails for additional attributes
-        let parse: StdResult<SubMsgResult> =
-            from_json_slice(br#"{"unrelated":321,"error":"broken"}"#);
+        let parse: StdResult<SubMsgResult> = from_json(br#"{"unrelated":321,"error":"broken"}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
         }
-        let parse: StdResult<SubMsgResult> =
-            from_json_slice(br#"{"error":"broken","unrelated":321}"#);
+        let parse: StdResult<SubMsgResult> = from_json(br#"{"error":"broken","unrelated":321}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),

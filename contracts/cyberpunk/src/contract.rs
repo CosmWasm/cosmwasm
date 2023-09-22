@@ -226,7 +226,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_json_binary, DenomMetadata, DenomUnit, OwnedDeps};
+    use cosmwasm_std::{from_json, DenomMetadata, DenomUnit, OwnedDeps};
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
@@ -274,12 +274,11 @@ mod tests {
         );
 
         let symbols: Vec<DenomMetadata> =
-            from_json_binary(&query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap())
-                .unwrap();
+            from_json(&query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
 
         assert_eq!(symbols.len(), 98);
 
-        let denom: DenomMetadata = from_json_binary(
+        let denom: DenomMetadata = from_json(
             &query(
                 deps.as_ref(),
                 mock_env(),

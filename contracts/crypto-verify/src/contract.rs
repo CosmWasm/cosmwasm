@@ -218,7 +218,7 @@ mod tests {
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{
-        from_json_slice, Binary, OwnedDeps, RecoverPubkeyError, StdError, VerificationError,
+        from_json, Binary, OwnedDeps, RecoverPubkeyError, StdError, VerificationError,
     };
     use hex_literal::hex;
 
@@ -274,7 +274,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -296,7 +296,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
     }
@@ -339,7 +339,7 @@ mod tests {
             signer_address: signer_address.into(),
         };
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -360,7 +360,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: false });
     }
 
@@ -380,7 +380,7 @@ mod tests {
             signer_address: signer_address.into(),
         };
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: false });
 
         // Broken signature
@@ -447,7 +447,7 @@ mod tests {
             v,
         };
         let raw = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: true });
     }
 
@@ -475,7 +475,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -508,7 +508,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -542,7 +542,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -573,7 +573,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
     }
@@ -626,7 +626,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -648,7 +648,7 @@ mod tests {
         };
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
-        let res: VerifyResponse = from_json_slice(&raw).unwrap();
+        let res: VerifyResponse = from_json(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
     }
@@ -683,7 +683,7 @@ mod tests {
         let query_msg = QueryMsg::ListVerificationSchemes {};
 
         let raw = query(deps.as_ref(), mock_env(), query_msg).unwrap();
-        let res: ListVerificationsResponse = from_json_slice(&raw).unwrap();
+        let res: ListVerificationsResponse = from_json(&raw).unwrap();
 
         assert_eq!(
             res,

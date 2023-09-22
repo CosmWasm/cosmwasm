@@ -253,7 +253,7 @@ mod tests {
     use super::*;
     use crate::assert_hash_works;
     use crate::errors::StdError;
-    use crate::serde::{from_json_slice, to_json_vec};
+    use crate::serde::{from_json, to_json_vec};
 
     #[test]
     fn to_array_works() {
@@ -451,7 +451,7 @@ mod tests {
         let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
         let json = to_json_vec(&binary).unwrap();
-        let deserialized: Binary = from_json_slice(&json).unwrap();
+        let deserialized: Binary = from_json(&json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -463,7 +463,7 @@ mod tests {
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
         let serialized = to_json_vec(&b64_str).unwrap();
-        let deserialized: Binary = from_json_slice(&serialized).unwrap();
+        let deserialized: Binary = from_json(&serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 
@@ -471,7 +471,7 @@ mod tests {
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
         let serialized = to_json_vec(&invalid_str).unwrap();
-        let res = from_json_slice::<Binary>(&serialized);
+        let res = from_json::<Binary>(&serialized);
         assert!(res.is_err());
     }
 

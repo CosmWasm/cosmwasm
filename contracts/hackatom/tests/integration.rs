@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    assert_approx_eq, coins, from_json_binary, to_json_vec, Addr, AllBalanceResponse, BankMsg,
-    Binary, ContractResult, Empty, Response, SubMsg,
+    assert_approx_eq, coins, from_json, to_json_vec, Addr, AllBalanceResponse, BankMsg, Binary,
+    ContractResult, Empty, Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
@@ -183,7 +183,7 @@ fn querier_callbacks_work() {
     // querying with balance gets the balance
     let query_msg = QueryMsg::OtherBalance { address: rich_addr };
     let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_json_binary(&query_response).unwrap();
+    let bal: AllBalanceResponse = from_json(&query_response).unwrap();
     assert_eq!(bal.amount, rich_balance);
 
     // querying other accounts gets none
@@ -191,7 +191,7 @@ fn querier_callbacks_work() {
         address: String::from("someone else"),
     };
     let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_json_binary(&query_response).unwrap();
+    let bal: AllBalanceResponse = from_json(&query_response).unwrap();
     assert_eq!(bal.amount, vec![]);
 }
 

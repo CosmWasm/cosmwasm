@@ -113,9 +113,7 @@ impl MockQuerier {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{
-        coin, from_json_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
-    };
+    use cosmwasm_std::{coin, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty};
 
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
@@ -149,7 +147,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: AllBalanceResponse = from_json_binary(&all).unwrap();
+        let res: AllBalanceResponse = from_json(&all).unwrap();
         assert_eq!(&res.amount, &balance);
     }
 
@@ -173,7 +171,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json_binary(&fly).unwrap();
+        let res: BalanceResponse = from_json(&fly).unwrap();
         assert_eq!(res.amount, coin(777, "FLY"));
 
         // missing denom
@@ -190,7 +188,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json_binary(&miss).unwrap();
+        let res: BalanceResponse = from_json(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "MISS"));
     }
 
@@ -213,7 +211,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: AllBalanceResponse = from_json_binary(&all).unwrap();
+        let res: AllBalanceResponse = from_json(&all).unwrap();
         assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
@@ -230,7 +228,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json_binary(&miss).unwrap();
+        let res: BalanceResponse = from_json(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
     }
 }

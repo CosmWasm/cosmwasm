@@ -34,7 +34,7 @@ use crate::query::{
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::serde::{from_json_slice, to_json_binary};
+use crate::serde::{from_json, to_json_binary};
 use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
@@ -561,7 +561,7 @@ impl Default for MockQuerier {
 
 impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let request: QueryRequest<C> = match from_json_slice(bin_request) {
+        let request: QueryRequest<C> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -1109,7 +1109,7 @@ mod tests {
     use super::*;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{coin, coins, from_json_binary, to_json_binary, ContractInfoResponse, Response};
+    use crate::{coin, coins, from_json, to_json_binary, ContractInfoResponse, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use hex_literal::hex;
@@ -1442,7 +1442,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: SupplyResponse = from_json_binary(&elf).unwrap();
+        let res: SupplyResponse = from_json(&elf).unwrap();
         assert_eq!(res.amount, coin(444, "ELF"));
 
         let fly = bank
@@ -1451,7 +1451,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: SupplyResponse = from_json_binary(&fly).unwrap();
+        let res: SupplyResponse = from_json(&fly).unwrap();
         assert_eq!(res.amount, coin(777, "FLY"));
 
         // if a denom does not exist, should return zero amount, instead of throwing an error
@@ -1461,7 +1461,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: SupplyResponse = from_json_binary(&atom).unwrap();
+        let res: SupplyResponse = from_json(&atom).unwrap();
         assert_eq!(res.amount, coin(0, "ATOM"));
     }
 
@@ -1475,7 +1475,7 @@ mod tests {
             .query(&BankQuery::AllBalances { address: addr })
             .unwrap()
             .unwrap();
-        let res: AllBalanceResponse = from_json_binary(&all).unwrap();
+        let res: AllBalanceResponse = from_json(&all).unwrap();
         assert_eq!(&res.amount, &balance);
     }
 
@@ -1493,7 +1493,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json_binary(&fly).unwrap();
+        let res: BalanceResponse = from_json(&fly).unwrap();
         assert_eq!(res.amount, coin(777, "FLY"));
 
         // missing denom
@@ -1504,7 +1504,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json_binary(&miss).unwrap();
+        let res: BalanceResponse = from_json(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "MISS"));
     }
 
@@ -1521,7 +1521,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: AllBalanceResponse = from_json_binary(&all).unwrap();
+        let res: AllBalanceResponse = from_json(&all).unwrap();
         assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
@@ -1532,7 +1532,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: BalanceResponse = from_json_binary(&miss).unwrap();
+        let res: BalanceResponse = from_json(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
     }
 
@@ -1570,7 +1570,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: AllDenomMetadataResponse = from_json_binary(&res).unwrap();
+        let res: AllDenomMetadataResponse = from_json(&res).unwrap();
         assert_eq!(res.metadata.len(), 10);
         assert!(res.next_key.is_some());
 
@@ -1585,7 +1585,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res2: AllDenomMetadataResponse = from_json_binary(&res2).unwrap();
+        let res2: AllDenomMetadataResponse = from_json(&res2).unwrap();
         assert_eq!(res2.metadata.len(), 10);
         assert_ne!(res.metadata.last(), res2.metadata.first());
         // should have no overlap
@@ -1604,7 +1604,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: AllDenomMetadataResponse = from_json_binary(&res).unwrap();
+        let res: AllDenomMetadataResponse = from_json(&res).unwrap();
         assert_eq!(res.metadata.len(), 100);
         assert!(res.next_key.is_none(), "no more data should be available");
         assert_eq!(res.metadata[0].symbol, "FOO99", "should have been reversed");
@@ -1619,7 +1619,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let more_res: AllDenomMetadataResponse = from_json_binary(&more_res).unwrap();
+        let more_res: AllDenomMetadataResponse = from_json(&more_res).unwrap();
         assert_eq!(
             more_res.metadata, res.metadata,
             "should be same as previous query"
@@ -1637,7 +1637,7 @@ mod tests {
         };
 
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegatorWithdrawAddressResponse = from_json_binary(&res).unwrap();
+        let res: DelegatorWithdrawAddressResponse = from_json(&res).unwrap();
         assert_eq!(res.withdraw_address, "withdraw0");
 
         let query = DistributionQuery::DelegatorWithdrawAddress {
@@ -1645,7 +1645,7 @@ mod tests {
         };
 
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegatorWithdrawAddressResponse = from_json_binary(&res).unwrap();
+        let res: DelegatorWithdrawAddressResponse = from_json(&res).unwrap();
         assert_eq!(res.withdraw_address, "addr1");
     }
 
@@ -1660,7 +1660,7 @@ mod tests {
         };
 
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegatorValidatorsResponse = from_json_binary(&res).unwrap();
+        let res: DelegatorValidatorsResponse = from_json(&res).unwrap();
         assert_eq!(res.validators, ["valoper1", "valoper2"]);
 
         let query = DistributionQuery::DelegatorValidators {
@@ -1668,7 +1668,7 @@ mod tests {
         };
 
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegatorValidatorsResponse = from_json_binary(&res).unwrap();
+        let res: DelegatorValidatorsResponse = from_json(&res).unwrap();
         assert_eq!(res.validators, ([] as [String; 0]));
     }
 
@@ -1690,7 +1690,7 @@ mod tests {
             validator_address: "valoper0".to_string(),
         };
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegationRewardsResponse = from_json_binary(&res).unwrap();
+        let res: DelegationRewardsResponse = from_json(&res).unwrap();
         assert_eq!(res.rewards, valoper0_rewards);
 
         // delegator does not exist
@@ -1699,7 +1699,7 @@ mod tests {
             validator_address: "valoper0".to_string(),
         };
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegationRewardsResponse = from_json_binary(&res).unwrap();
+        let res: DelegationRewardsResponse = from_json(&res).unwrap();
         assert_eq!(res.rewards.len(), 0);
 
         // validator does not exist
@@ -1708,7 +1708,7 @@ mod tests {
             validator_address: "valopernonexistent".to_string(),
         };
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegationRewardsResponse = from_json_binary(&res).unwrap();
+        let res: DelegationRewardsResponse = from_json(&res).unwrap();
         assert_eq!(res.rewards.len(), 0);
 
         // add one more validator
@@ -1720,7 +1720,7 @@ mod tests {
             delegator_address: "addr0".to_string(),
         };
         let res = distribution.query(&query).unwrap().unwrap();
-        let res: DelegationTotalRewardsResponse = from_json_binary(&res).unwrap();
+        let res: DelegationTotalRewardsResponse = from_json(&res).unwrap();
         assert_eq!(
             res.rewards,
             vec![
@@ -1761,7 +1761,7 @@ mod tests {
             port_id: Some("my_port".to_string()),
         };
         let raw = ibc.query(query).unwrap().unwrap();
-        let chan: ChannelResponse = from_json_binary(&raw).unwrap();
+        let chan: ChannelResponse = from_json(&raw).unwrap();
         assert_eq!(chan.channel, Some(chan1));
     }
 
@@ -1791,7 +1791,7 @@ mod tests {
             port_id: Some("myport".to_string()),
         };
         let raw = ibc.query(query).unwrap().unwrap();
-        let chan: ChannelResponse = from_json_binary(&raw).unwrap();
+        let chan: ChannelResponse = from_json(&raw).unwrap();
         assert_eq!(chan.channel, Some(chan1));
     }
 
@@ -1809,7 +1809,7 @@ mod tests {
             port_id: None,
         };
         let raw = ibc.query(query).unwrap().unwrap();
-        let chan: ChannelResponse = from_json_binary(&raw).unwrap();
+        let chan: ChannelResponse = from_json(&raw).unwrap();
         assert_eq!(chan.channel, None);
     }
 
@@ -1826,7 +1826,7 @@ mod tests {
             port_id: Some("my_port".to_string()),
         };
         let raw = ibc.query(query).unwrap().unwrap();
-        let res: ListChannelsResponse = from_json_binary(&raw).unwrap();
+        let res: ListChannelsResponse = from_json(&raw).unwrap();
         assert_eq!(res.channels, vec![chan1, chan2]);
     }
 
@@ -1841,7 +1841,7 @@ mod tests {
         // query channels matching "myport" (should be none)
         let query = &IbcQuery::ListChannels { port_id: None };
         let raw = ibc.query(query).unwrap().unwrap();
-        let res: ListChannelsResponse = from_json_binary(&raw).unwrap();
+        let res: ListChannelsResponse = from_json(&raw).unwrap();
         assert_eq!(res.channels, vec![]);
     }
 
@@ -1855,7 +1855,7 @@ mod tests {
         // query channels matching "myport" (should be none)
         let query = &IbcQuery::PortId {};
         let raw = ibc.query(query).unwrap().unwrap();
-        let res: PortIdResponse = from_json_binary(&raw).unwrap();
+        let res: PortIdResponse = from_json(&raw).unwrap();
         assert_eq!(res.port_id, "myport");
     }
 
@@ -1882,7 +1882,7 @@ mod tests {
             .query(&StakingQuery::AllValidators {})
             .unwrap()
             .unwrap();
-        let vals: AllValidatorsResponse = from_json_binary(&raw).unwrap();
+        let vals: AllValidatorsResponse = from_json(&raw).unwrap();
         assert_eq!(vals.validators, vec![val1, val2]);
     }
 
@@ -1913,7 +1913,7 @@ mod tests {
             .query(&StakingQuery::Validator { address: address1 })
             .unwrap()
             .unwrap();
-        let res: ValidatorResponse = from_json_binary(&raw).unwrap();
+        let res: ValidatorResponse = from_json(&raw).unwrap();
         assert_eq!(res.validator, Some(val1));
 
         // query 2
@@ -1921,7 +1921,7 @@ mod tests {
             .query(&StakingQuery::Validator { address: address2 })
             .unwrap()
             .unwrap();
-        let res: ValidatorResponse = from_json_binary(&raw).unwrap();
+        let res: ValidatorResponse = from_json(&raw).unwrap();
         assert_eq!(res.validator, Some(val2));
 
         // query non-existent
@@ -1931,7 +1931,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let res: ValidatorResponse = from_json_binary(&raw).unwrap();
+        let res: ValidatorResponse = from_json(&raw).unwrap();
         assert_eq!(res.validator, None);
     }
 
@@ -1947,7 +1947,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let dels: AllDelegationsResponse = from_json_binary(&raw).unwrap();
+        let dels: AllDelegationsResponse = from_json(&raw).unwrap();
         dels.delegations
     }
 
@@ -1965,7 +1965,7 @@ mod tests {
             })
             .unwrap()
             .unwrap();
-        let dels: DelegationResponse = from_json_binary(&raw).unwrap();
+        let dels: DelegationResponse = from_json(&raw).unwrap();
         dels.delegation
     }
 
@@ -2130,7 +2130,7 @@ mod tests {
                     if *contract_addr == constract1 {
                         #[derive(Deserialize)]
                         struct MyMsg {}
-                        let _msg: MyMsg = match from_json_binary(msg) {
+                        let _msg: MyMsg = match from_json(msg) {
                             Ok(msg) => msg,
                             Err(err) => {
                                 return SystemResult::Ok(ContractResult::Err(err.to_string()))

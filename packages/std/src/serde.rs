@@ -8,35 +8,22 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::binary::Binary;
 use crate::errors::{StdError, StdResult};
 
-#[deprecated = "use from_json_slice instead"]
+#[deprecated = "use from_json instead"]
 pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
-    from_json_slice(value)
+    from_json(value)
 }
 
-#[deprecated = "use from_json_binary instead"]
+#[deprecated = "use from_json instead"]
 pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
-    from_json_binary(value)
-}
-
-/// Deserializes the given JSON byte vector to a data structure.
-///
-/// Errors if the input is not valid JSON or cannot be deserialized to the given type.
-pub fn from_json_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
-    serde_json_wasm::from_slice(value).map_err(|e| StdError::parse_err(type_name::<T>(), e))
+    from_json(value)
 }
 
 /// Deserializes the given JSON bytes to a data structure.
 ///
 /// Errors if the input is not valid JSON or cannot be deserialized to the given type.
-pub fn from_json_str<T: DeserializeOwned>(value: &str) -> StdResult<T> {
-    serde_json_wasm::from_str(value).map_err(|e| StdError::parse_err(type_name::<T>(), e))
-}
-
-/// Deserializes the given JSON bytes to a data structure.
-///
-/// Errors if the input is not valid JSON or cannot be deserialized to the given type.
-pub fn from_json_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
-    from_json_slice(value.as_slice())
+pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> StdResult<T> {
+    serde_json_wasm::from_slice(value.as_ref())
+        .map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
 #[deprecated = "use to_json_vec instead"]
@@ -119,34 +106,40 @@ mod tests {
     }
 
     #[test]
-    fn from_json_slice_works() {
-        let deserialized: SomeMsg = from_json_slice(br#"{"refund":{}}"#).unwrap();
+    fn from_json_works() {
+        let deserialized: SomeMsg = from_json(br#"{"refund":{}}"#).unwrap();
         assert_eq!(deserialized, SomeMsg::Refund {});
 
-        let deserialized: SomeMsg = from_json_slice(
+        let expected = SomeMsg::ReleaseAll {
+            image: "foo".to_string(),
+            amount: 42,
+            time: 18446744073709551615,
+            karma: -17,
+        };
+        // &[u8]
+        let deserialized: SomeMsg = from_json(
             br#"{"release_all":{"image":"foo","amount":42,"time":18446744073709551615,"karma":-17}}"#,
         )
         .unwrap();
-        assert_eq!(
-            deserialized,
-            SomeMsg::ReleaseAll {
-                image: "foo".to_string(),
-                amount: 42,
-                time: 18446744073709551615,
-                karma: -17
-            }
-        );
+        assert_eq!(deserialized, expected);
+
+        // &str
+        let deserialized: SomeMsg = from_json(
+            r#"{"release_all":{"image":"foo","amount":42,"time":18446744073709551615,"karma":-17}}"#,
+        )
+        .unwrap();
+        assert_eq!(deserialized, expected);
     }
 
     #[test]
-    fn from_json_slice_or_binary() {
+    fn from_json_or_binary() {
         let msg = SomeMsg::Refund {};
         let serialized: Binary = to_json_binary(&msg).unwrap();
 
-        let parse_binary: SomeMsg = from_json_binary(&serialized).unwrap();
+        let parse_binary: SomeMsg = from_json(&serialized).unwrap();
         assert_eq!(parse_binary, msg);
 
-        let parse_slice: SomeMsg = from_json_slice(&serialized).unwrap();
+        let parse_slice: SomeMsg = from_json(serialized.as_slice()).unwrap();
         assert_eq!(parse_slice, msg);
     }
 
@@ -160,34 +153,12 @@ mod tests {
     }
 
     #[test]
-    fn from_json_slice_works_for_special_chars() {
-        let deserialized: SomeMsg =
-            from_json_slice(br#"{"cowsay":{"text":"foo\"bar\\\"bla"}}"#).unwrap();
+    fn from_json_works_for_special_chars() {
+        let deserialized: SomeMsg = from_json(br#"{"cowsay":{"text":"foo\"bar\\\"bla"}}"#).unwrap();
         assert_eq!(
             deserialized,
             SomeMsg::Cowsay {
                 text: "foo\"bar\\\"bla".to_string(),
-            }
-        );
-    }
-
-    #[test]
-    fn from_json_str_works() {
-        let deserialized: SomeMsg = from_json_str(r#"{"refund":{}}"#).unwrap();
-        assert_eq!(deserialized, SomeMsg::Refund {});
-
-        let deserialized: SomeMsg = from_json_str(
-            r#"{"release_all":{"image":"foo","amount":42,"time":18446744073709551615,"karma":-17}}"#,
-        )
-        .unwrap();
-
-        assert_eq!(
-            deserialized,
-            SomeMsg::ReleaseAll {
-                image: "foo".to_string(),
-                amount: 42,
-                time: 18446744073709551615,
-                karma: -17
             }
         );
     }

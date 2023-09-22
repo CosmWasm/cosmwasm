@@ -797,7 +797,7 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
 mod tests {
     use super::*;
     use crate::errors::StdError;
-    use crate::{from_json_slice, to_json_vec};
+    use crate::{from_json, to_json_vec};
 
     fn dec(input: &str) -> Decimal256 {
         Decimal256::from_str(input).unwrap()
@@ -2037,36 +2037,36 @@ mod tests {
     #[test]
     fn decimal256_deserialize() {
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""0""#).unwrap(),
+            from_json::<Decimal256>(br#""0""#).unwrap(),
             Decimal256::zero()
         );
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""1""#).unwrap(),
+            from_json::<Decimal256>(br#""1""#).unwrap(),
             Decimal256::one()
         );
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""000""#).unwrap(),
+            from_json::<Decimal256>(br#""000""#).unwrap(),
             Decimal256::zero()
         );
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""001""#).unwrap(),
+            from_json::<Decimal256>(br#""001""#).unwrap(),
             Decimal256::one()
         );
 
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""0.08""#).unwrap(),
+            from_json::<Decimal256>(br#""0.08""#).unwrap(),
             Decimal256::percent(8)
         );
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""0.87""#).unwrap(),
+            from_json::<Decimal256>(br#""0.87""#).unwrap(),
             Decimal256::percent(87)
         );
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""8.76""#).unwrap(),
+            from_json::<Decimal256>(br#""8.76""#).unwrap(),
             Decimal256::percent(876)
         );
         assert_eq!(
-            from_json_slice::<Decimal256>(br#""87.65""#).unwrap(),
+            from_json::<Decimal256>(br#""87.65""#).unwrap(),
             Decimal256::percent(8765)
         );
     }

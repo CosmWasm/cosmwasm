@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, from_json_slice, to_json_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps,
+    entry_point, from_json, to_json_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps,
     DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
     IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg,
     IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never,
@@ -241,7 +241,7 @@ pub fn ibc_packet_receive(
         let packet = msg.packet;
         // which local channel did this packet come on
         let caller = packet.dest.channel_id;
-        let msg: PacketMsg = from_json_slice(&packet.data)?;
+        let msg: PacketMsg = from_json(&packet.data)?;
         match msg {
             PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
             PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
@@ -358,7 +358,7 @@ mod tests {
         mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
         mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{attr, coin, coins, from_json_slice, BankMsg, OwnedDeps, WasmMsg};
+    use cosmwasm_std::{attr, coin, coins, from_json, BankMsg, OwnedDeps, WasmMsg};
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
@@ -482,7 +482,7 @@ mod tests {
 
         // no accounts set yet
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_json_slice(&raw).unwrap();
+        let res: ListAccountsResponse = from_json(&raw).unwrap();
         assert_eq!(0, res.accounts.len());
 
         // fake a reply and ensure this works
@@ -497,7 +497,7 @@ mod tests {
 
         // ensure this is now registered
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_json_slice(&raw).unwrap();
+        let res: ListAccountsResponse = from_json(&raw).unwrap();
         assert_eq!(1, res.accounts.len());
         assert_eq!(
             &res.accounts[0],
@@ -516,7 +516,7 @@ mod tests {
             },
         )
         .unwrap();
-        let res: AccountResponse = from_json_slice(&raw).unwrap();
+        let res: AccountResponse = from_json(&raw).unwrap();
         assert_eq!(res.account.unwrap(), REFLECT_ADDR);
     }
 
@@ -546,8 +546,7 @@ mod tests {
             res.events[0]
         );
         // acknowledgement is an error
-        let ack: AcknowledgementMsg<DispatchResponse> =
-            from_json_slice(&res.acknowledgement).unwrap();
+        let ack: AcknowledgementMsg<DispatchResponse> = from_json(&res.acknowledgement).unwrap();
         assert_eq!(
             ack.unwrap_err(),
             "invalid packet: account channel-123 not found"
@@ -561,7 +560,7 @@ mod tests {
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
 
         // assert app-level success
-        let ack: AcknowledgementMsg<()> = from_json_slice(&res.acknowledgement).unwrap();
+        let ack: AcknowledgementMsg<()> = from_json(&res.acknowledgement).unwrap();
         ack.unwrap();
 
         // and we dispatch the BankMsg via submessage
@@ -578,7 +577,7 @@ mod tests {
             assert_eq!(account, contract_addr.as_str());
             assert_eq!(0, funds.len());
             // parse the message - should callback with proper channel_id
-            let rmsg: ReflectExecuteMsg = from_json_slice(msg).unwrap();
+            let rmsg: ReflectExecuteMsg = from_json(msg).unwrap();
             assert_eq!(
                 rmsg,
                 ReflectExecuteMsg::ReflectMsg {
@@ -598,8 +597,7 @@ mod tests {
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
         // acknowledgement is an error
-        let ack: AcknowledgementMsg<DispatchResponse> =
-            from_json_slice(&res.acknowledgement).unwrap();
+        let ack: AcknowledgementMsg<DispatchResponse> = from_json(&res.acknowledgement).unwrap();
         assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`");
     }
 
@@ -618,7 +616,7 @@ mod tests {
 
         // channel should be listed and have balance
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_json_slice(&raw).unwrap();
+        let res: ListAccountsResponse = from_json(&raw).unwrap();
         assert_eq!(1, res.accounts.len());
         let balance = deps.as_ref().querier.query_all_balances(account).unwrap();
         assert_eq!(funds, balance);
@@ -634,7 +632,7 @@ mod tests {
         }) = &res.messages[0].msg
         {
             assert_eq!(contract_addr.as_str(), account);
-            let reflect: ReflectExecuteMsg = from_json_slice(msg).unwrap();
+            let reflect: ReflectExecuteMsg = from_json(msg).unwrap();
             match reflect {
                 ReflectExecuteMsg::ReflectMsg { msgs } => {
                     assert_eq!(1, msgs.len());
@@ -654,7 +652,7 @@ mod tests {
 
         // and removes the account lookup
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_json_slice(&raw).unwrap();
+        let res: ListAccountsResponse = from_json(&raw).unwrap();
         assert_eq!(0, res.accounts.len());
     }
 }

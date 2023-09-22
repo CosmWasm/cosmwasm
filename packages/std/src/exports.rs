@@ -25,7 +25,7 @@ use crate::memory::{alloc, consume_region, release_buffer, Region};
 use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
-use crate::serde::{from_json_slice, to_json_vec};
+use crate::serde::{from_json, to_json_vec};
 use crate::types::Env;
 use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
 
@@ -415,9 +415,9 @@ where
     let info: Vec<u8> = unsafe { consume_region(info_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let info: MessageInfo = try_into_contract_result!(from_json_slice(&info));
-    let msg: M = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let info: MessageInfo = try_into_contract_result!(from_json(&info));
+    let msg: M = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     instantiate_fn(deps.as_mut(), env, info, msg).into()
@@ -439,9 +439,9 @@ where
     let info: Vec<u8> = unsafe { consume_region(info_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let info: MessageInfo = try_into_contract_result!(from_json_slice(&info));
-    let msg: M = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let info: MessageInfo = try_into_contract_result!(from_json(&info));
+    let msg: M = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     execute_fn(deps.as_mut(), env, info, msg).into()
@@ -461,8 +461,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: M = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: M = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     migrate_fn(deps.as_mut(), env, msg).into()
@@ -482,8 +482,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: M = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: M = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     sudo_fn(deps.as_mut(), env, msg).into()
@@ -502,8 +502,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: Reply = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: Reply = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     reply_fn(deps.as_mut(), env, msg).into()
@@ -522,8 +522,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: M = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: M = try_into_contract_result!(from_json(&msg));
 
     let deps = make_dependencies();
     query_fn(deps.as_ref(), env, msg).into()
@@ -542,8 +542,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: IbcChannelOpenMsg = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: IbcChannelOpenMsg = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()
@@ -563,8 +563,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: IbcChannelConnectMsg = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: IbcChannelConnectMsg = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()
@@ -584,8 +584,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: IbcChannelCloseMsg = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: IbcChannelCloseMsg = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()
@@ -605,8 +605,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()
@@ -626,8 +626,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: IbcPacketAckMsg = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: IbcPacketAckMsg = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()
@@ -647,8 +647,8 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = try_into_contract_result!(from_json_slice(&env));
-    let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json_slice(&msg));
+    let env: Env = try_into_contract_result!(from_json(&env));
+    let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

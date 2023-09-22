@@ -680,7 +680,7 @@ mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
     use crate::math::conversion::test_try_from_int_to_uint;
-    use crate::{from_json_slice, to_json_vec, Decimal, Decimal256};
+    use crate::{from_json, to_json_vec, Decimal, Decimal256};
 
     #[test]
     fn size_of_works() {
@@ -1308,7 +1308,7 @@ mod tests {
         let orig = Uint256::from(1234567890987654321u128);
         let serialized = to_json_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Uint256 = from_json_slice(&serialized).unwrap();
+        let parsed: Uint256 = from_json(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

@@ -69,7 +69,7 @@ impl core::fmt::Display for SystemError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json_slice, to_json_vec};
+    use crate::{from_json, to_json_vec};
 
     #[test]
     fn system_error_no_such_contract_serialization() {
@@ -85,7 +85,7 @@ mod tests {
         );
 
         // de
-        let err: SystemError = from_json_slice(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
+        let err: SystemError = from_json(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
         assert_eq!(
             err,
             SystemError::NoSuchContract {
@@ -106,7 +106,7 @@ mod tests {
         );
 
         // de
-        let err: SystemError = from_json_slice(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
+        let err: SystemError = from_json(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
         assert_eq!(err, SystemError::NoSuchCode { code_id: 987 },);
     }
 }

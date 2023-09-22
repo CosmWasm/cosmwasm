@@ -26,7 +26,7 @@ use crate::query::{
     DistributionQuery,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::serde::{from_json_binary, to_json_binary, to_json_vec};
+use crate::serde::{from_json, to_json_binary, to_json_vec};
 use crate::ContractInfoResponse;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
@@ -250,7 +250,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
                 format!("Querier contract error: {contract_err}"),
             )),
-            SystemResult::Ok(ContractResult::Ok(value)) => from_json_binary(&value),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_json(&value),
         }
     }
 
@@ -500,7 +500,7 @@ mod tests {
 
     use super::*;
     use crate::testing::MockQuerier;
-    use crate::{coins, from_json_slice, Uint128};
+    use crate::{coins, from_json, Uint128};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -536,7 +536,7 @@ mod tests {
             .raw_query(&to_json_vec(&query).unwrap())
             .unwrap()
             .unwrap();
-        let balance: BalanceResponse = from_json_slice(&raw).unwrap();
+        let balance: BalanceResponse = from_json(&raw).unwrap();
         assert_eq!(balance.amount.amount, Uint128::new(5));
     }
 

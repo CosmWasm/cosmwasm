@@ -32,12 +32,12 @@ pub fn custom_query_execute(query: &SpecialQuery) -> ContractResult<Binary> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{from_json_binary, QuerierWrapper, QueryRequest};
+    use cosmwasm_std::{from_json, QuerierWrapper, QueryRequest};
 
     #[test]
     fn custom_query_execute_ping() {
         let res = custom_query_execute(&SpecialQuery::Ping {}).unwrap();
-        let response: SpecialResponse = from_json_binary(&res).unwrap();
+        let response: SpecialResponse = from_json(&res).unwrap();
         assert_eq!(response.msg, "pong");
     }
 
@@ -47,7 +47,7 @@ mod tests {
             text: "fOObaR".to_string(),
         })
         .unwrap();
-        let response: SpecialResponse = from_json_binary(&res).unwrap();
+        let response: SpecialResponse = from_json(&res).unwrap();
         assert_eq!(response.msg, "FOOBAR");
     }
 

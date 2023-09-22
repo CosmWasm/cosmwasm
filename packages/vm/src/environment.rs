@@ -454,7 +454,7 @@ mod tests {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, make_compiling_engine};
     use cosmwasm_std::{
-        coins, from_json_binary, to_json_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
+        coins, from_json, to_json_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
     use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
@@ -899,7 +899,7 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let balance: AllBalanceResponse = from_json_binary(&res).unwrap();
+        let balance: AllBalanceResponse = from_json(&res).unwrap();
 
         assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
     }
