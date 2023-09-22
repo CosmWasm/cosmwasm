@@ -907,6 +907,7 @@ impl<'de> de::Visitor<'de> for SignedDecimalVisitor {
 mod tests {
     use super::*;
     use crate::{from_slice, to_vec};
+    use schemars::schema_for;
 
     fn dec(input: &str) -> SignedDecimal {
         SignedDecimal::from_str(input).unwrap()
@@ -1347,106 +1348,72 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_broken_whole_part() {
-        match SignedDecimal::from_str("").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str(" ").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str("-").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        let expected_err = StdError::generic_err("Error parsing whole");
+        assert_eq!(expected_err, SignedDecimal::from_str("").unwrap_err());
+        assert_eq!(expected_err, SignedDecimal::from_str(" ").unwrap_err());
+        assert_eq!(expected_err, SignedDecimal::from_str("-").unwrap_err());
     }
 
     #[test]
     fn signed_decimal_from_str_errors_for_broken_fractional_part() {
-        match SignedDecimal::from_str("1.").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str("1. ").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str("1.e").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str("1.2e3").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str("1.-2").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        let expected_err = StdError::generic_err("Error parsing fractional");
+        assert_eq!(expected_err, SignedDecimal::from_str("1.").unwrap_err());
+        assert_eq!(expected_err, SignedDecimal::from_str("1. ").unwrap_err());
+        assert_eq!(expected_err, SignedDecimal::from_str("1.e").unwrap_err());
+        assert_eq!(expected_err, SignedDecimal::from_str("1.2e3").unwrap_err());
+        assert_eq!(expected_err, SignedDecimal::from_str("1.-2").unwrap_err());
     }
 
     #[test]
     fn signed_decimal_from_str_errors_for_more_than_18_fractional_digits() {
-        match SignedDecimal::from_str("7.1234567890123456789").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits",)
-            }
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
+        let expected_err = StdError::generic_err("Cannot parse more than 18 fractional digits");
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("7.1234567890123456789").unwrap_err()
+        );
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
-        match SignedDecimal::from_str("7.1230000000000000000").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
-            }
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("7.1230000000000000000").unwrap_err()
+        );
     }
 
     #[test]
     fn signed_decimal_from_str_errors_for_invalid_number_of_dots() {
-        match SignedDecimal::from_str("1.2.3").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-
-        match SignedDecimal::from_str("1.2.3.4").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        let expected_err = StdError::generic_err("Unexpected number of dots");
+        assert_eq!(expected_err, SignedDecimal::from_str("1.2.3").unwrap_err());
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("1.2.3.4").unwrap_err()
+        );
     }
 
     #[test]
     fn signed_decimal_from_str_errors_for_more_than_max_value() {
+        let expected_err = StdError::generic_err("Value too big");
         // Integer
-        match SignedDecimal::from_str("170141183460469231732").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-        match SignedDecimal::from_str("-170141183460469231732").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("170141183460469231732").unwrap_err()
+        );
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("-170141183460469231732").unwrap_err()
+        );
 
         // SignedDecimal
-        match SignedDecimal::from_str("170141183460469231732.0").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-        match SignedDecimal::from_str("170141183460469231731.687303715884105728").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
-        match SignedDecimal::from_str("-170141183460469231731.687303715884105729").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
-            e => panic!("Unexpected error: {e:?}"),
-        }
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("170141183460469231732.0").unwrap_err()
+        );
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("170141183460469231731.687303715884105728").unwrap_err()
+        );
+        assert_eq!(
+            expected_err,
+            SignedDecimal::from_str("-170141183460469231731.687303715884105729").unwrap_err()
+        );
     }
 
     #[test]
@@ -2823,6 +2790,9 @@ mod tests {
             SignedDecimal::percent(1600)
         );
         assert_eq!(SignedDecimal::MAX.saturating_pow(2u32), SignedDecimal::MAX);
+        assert_eq!(SignedDecimal::MAX.saturating_pow(3u32), SignedDecimal::MAX);
+        assert_eq!(SignedDecimal::MIN.saturating_pow(2u32), SignedDecimal::MAX);
+        assert_eq!(SignedDecimal::MIN.saturating_pow(3u32), SignedDecimal::MIN);
     }
 
     #[test]
@@ -2928,6 +2898,10 @@ mod tests {
             SignedDecimal::MIN.checked_floor(),
             Err(RoundDownOverflowError)
         );
+        assert_eq!(
+            SignedDecimal::negative_one().checked_floor(),
+            Ok(SignedDecimal::negative_one())
+        );
     }
 
     #[test]
@@ -2944,14 +2918,18 @@ mod tests {
         assert_eq!(d.to_int_floor(), Int128::new(-13));
         let d = SignedDecimal::from_str("-12.345").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(-13));
-
         let d = SignedDecimal::from_str("75.0").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(75));
+        let d = SignedDecimal::from_str("0.0001").unwrap();
+        assert_eq!(d.to_int_floor(), Int128::new(0));
         let d = SignedDecimal::from_str("0.0").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(0));
+        let d = SignedDecimal::from_str("-0.0").unwrap();
+        assert_eq!(d.to_int_floor(), Int128::new(0));
+        let d = SignedDecimal::from_str("-0.0001").unwrap();
+        assert_eq!(d.to_int_floor(), Int128::new(-1));
         let d = SignedDecimal::from_str("-75.0").unwrap();
         assert_eq!(d.to_int_floor(), Int128::new(-75));
-
         let d = SignedDecimal::MAX;
         assert_eq!(d.to_int_floor(), Int128::new(170141183460469231731));
         let d = SignedDecimal::MIN;
@@ -3052,5 +3030,56 @@ mod tests {
             let expected = format!("SignedDecimal({s})");
             assert_eq!(format!("{decimal:?}"), expected);
         }
+    }
+
+    #[test]
+    fn signed_decimal_can_be_instantiated_from_decimal256() {
+        let d: SignedDecimal = Decimal256::zero().try_into().unwrap();
+        assert_eq!(d, SignedDecimal::zero());
+    }
+
+    #[test]
+    fn signed_decimal_may_fail_when_instantiated_from_decimal256() {
+        let err = <Decimal256 as TryInto<SignedDecimal>>::try_into(Decimal256::MAX).unwrap_err();
+        assert_eq!("SignedDecimalRangeExceeded", format!("{:?}", err));
+        assert_eq!("SignedDecimal range exceeded", format!("{}", err));
+    }
+
+    #[test]
+    fn signed_decimal_can_be_serialized_and_deserialized() {
+        // properly deserialized
+        let value: SignedDecimal = serde_json::from_str(r#""123""#).unwrap();
+        assert_eq!(SignedDecimal::from_str("123").unwrap(), value);
+
+        // properly serialized
+        let value = SignedDecimal::from_str("456").unwrap();
+        assert_eq!(r#""456""#, serde_json::to_string(&value).unwrap());
+
+        // invalid: not a string encoded decimal
+        assert_eq!(
+            "invalid type: integer `123`, expected string-encoded decimal at line 1 column 3",
+            serde_json::from_str::<SignedDecimal>("123")
+                .err()
+                .unwrap()
+                .to_string()
+        );
+
+        // invalid: not properly defined signed decimal value
+        assert_eq!(
+            "Error parsing decimal '1.e': Generic error: Error parsing fractional at line 1 column 5",
+            serde_json::from_str::<SignedDecimal>(r#""1.e""#)
+                .err()
+                .unwrap()
+                .to_string()
+        );
+    }
+
+    #[test]
+    fn signed_decimal_has_defined_json_schema() {
+        let schema = schema_for!(SignedDecimal);
+        assert_eq!(
+            "SignedDecimal",
+            schema.schema.metadata.unwrap().title.unwrap()
+        );
     }
 }
