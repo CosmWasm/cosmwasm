@@ -8,26 +8,75 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::binary::Binary;
 use crate::errors::{StdError, StdResult};
 
+#[deprecated = "use from_json_slice instead"]
 pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
+    from_json_slice(value)
+}
+
+#[deprecated = "use from_json_binary instead"]
+pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
+    from_json_binary(value)
+}
+
+/// Deserializes the given JSON byte vector to a data structure.
+///
+/// Errors if the input is not valid JSON or cannot be deserialized to the given type.
+pub fn from_json_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
     serde_json_wasm::from_slice(value).map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
-pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
-    from_slice(value.as_slice())
+/// Deserializes the given JSON bytes to a data structure.
+///
+/// Errors if the input is not valid JSON or cannot be deserialized to the given type.
+pub fn from_json_str<T: DeserializeOwned>(value: &str) -> StdResult<T> {
+    serde_json_wasm::from_str(value).map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
+/// Deserializes the given JSON bytes to a data structure.
+///
+/// Errors if the input is not valid JSON or cannot be deserialized to the given type.
+pub fn from_json_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
+    from_json_slice(value.as_slice())
+}
+
+#[deprecated = "use to_json_vec instead"]
 pub fn to_vec<T>(data: &T) -> StdResult<Vec<u8>>
+where
+    T: Serialize + ?Sized,
+{
+    to_json_vec(data)
+}
+
+#[deprecated = "use to_json_binary instead"]
+pub fn to_binary_replace<T>(data: &T) -> StdResult<Binary>
+where
+    T: Serialize + ?Sized,
+{
+    to_json_binary(data)
+}
+
+/// Serializes the given data structure as a JSON byte vector.
+pub fn to_json_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
     serde_json_wasm::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
-pub fn to_binary<T>(data: &T) -> StdResult<Binary>
+/// Serializes the given data structure as a JSON string.
+pub fn to_json_string<T>(data: &T) -> StdResult<String>
 where
     T: Serialize + ?Sized,
 {
-    to_vec(data).map(Binary)
+    serde_json_wasm::to_string(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+}
+
+/// Serializes the given data structure as JSON bytes.
+pub fn to_json_binary<T>(data: &T) -> StdResult<Binary>
+where
+    T: Serialize + ?Sized,
+{
+    to_json_vec(data).map(Binary)
 }
 
 #[cfg(test)]
@@ -51,9 +100,9 @@ mod tests {
     }
 
     #[test]
-    fn to_vec_works() {
+    fn to_json_vec_works() {
         let msg = SomeMsg::Refund {};
-        let serialized = to_vec(&msg).unwrap();
+        let serialized = to_json_vec(&msg).unwrap();
         assert_eq!(serialized, br#"{"refund":{}}"#);
 
         let msg = SomeMsg::ReleaseAll {
@@ -62,7 +111,7 @@ mod tests {
             time: 9007199254740999, // Number.MAX_SAFE_INTEGER + 7
             karma: -17,
         };
-        let serialized = String::from_utf8(to_vec(&msg).unwrap()).unwrap();
+        let serialized = String::from_utf8(to_json_vec(&msg).unwrap()).unwrap();
         assert_eq!(
             serialized,
             r#"{"release_all":{"image":"foo","amount":42,"time":9007199254740999,"karma":-17}}"#
@@ -70,11 +119,11 @@ mod tests {
     }
 
     #[test]
-    fn from_slice_works() {
-        let deserialized: SomeMsg = from_slice(br#"{"refund":{}}"#).unwrap();
+    fn from_json_slice_works() {
+        let deserialized: SomeMsg = from_json_slice(br#"{"refund":{}}"#).unwrap();
         assert_eq!(deserialized, SomeMsg::Refund {});
 
-        let deserialized: SomeMsg = from_slice(
+        let deserialized: SomeMsg = from_json_slice(
             br#"{"release_all":{"image":"foo","amount":42,"time":18446744073709551615,"karma":-17}}"#,
         )
         .unwrap();
@@ -90,35 +139,75 @@ mod tests {
     }
 
     #[test]
-    fn from_slice_or_binary() {
+    fn from_json_slice_or_binary() {
         let msg = SomeMsg::Refund {};
-        let serialized: Binary = to_binary(&msg).unwrap();
+        let serialized: Binary = to_json_binary(&msg).unwrap();
 
-        let parse_binary: SomeMsg = from_binary(&serialized).unwrap();
+        let parse_binary: SomeMsg = from_json_binary(&serialized).unwrap();
         assert_eq!(parse_binary, msg);
 
-        let parse_slice: SomeMsg = from_slice(&serialized).unwrap();
+        let parse_slice: SomeMsg = from_json_slice(&serialized).unwrap();
         assert_eq!(parse_slice, msg);
     }
 
     #[test]
-    fn to_vec_works_for_special_chars() {
+    fn to_json_vec_works_for_special_chars() {
         let msg = SomeMsg::Cowsay {
             text: "foo\"bar\\\"bla".to_string(),
         };
-        let serialized = String::from_utf8(to_vec(&msg).unwrap()).unwrap();
+        let serialized = String::from_utf8(to_json_vec(&msg).unwrap()).unwrap();
         assert_eq!(serialized, r#"{"cowsay":{"text":"foo\"bar\\\"bla"}}"#);
     }
 
     #[test]
-    fn from_slice_works_for_special_chars() {
+    fn from_json_slice_works_for_special_chars() {
         let deserialized: SomeMsg =
-            from_slice(br#"{"cowsay":{"text":"foo\"bar\\\"bla"}}"#).unwrap();
+            from_json_slice(br#"{"cowsay":{"text":"foo\"bar\\\"bla"}}"#).unwrap();
         assert_eq!(
             deserialized,
             SomeMsg::Cowsay {
                 text: "foo\"bar\\\"bla".to_string(),
             }
+        );
+    }
+
+    #[test]
+    fn from_json_str_works() {
+        let deserialized: SomeMsg = from_json_str(r#"{"refund":{}}"#).unwrap();
+        assert_eq!(deserialized, SomeMsg::Refund {});
+
+        let deserialized: SomeMsg = from_json_str(
+            r#"{"release_all":{"image":"foo","amount":42,"time":18446744073709551615,"karma":-17}}"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            deserialized,
+            SomeMsg::ReleaseAll {
+                image: "foo".to_string(),
+                amount: 42,
+                time: 18446744073709551615,
+                karma: -17
+            }
+        );
+    }
+
+    #[test]
+    fn to_json_string_works() {
+        let msg = SomeMsg::Refund {};
+        let serialized = to_json_string(&msg).unwrap();
+        assert_eq!(serialized, r#"{"refund":{}}"#);
+
+        let msg = SomeMsg::ReleaseAll {
+            image: "foo".to_string(),
+            amount: 42,
+            time: 9007199254740999, // Number.MAX_SAFE_INTEGER + 7
+            karma: -17,
+        };
+        let serialized = to_json_string(&msg).unwrap();
+        assert_eq!(
+            serialized,
+            r#"{"release_all":{"image":"foo","amount":42,"time":9007199254740999,"karma":-17}}"#
         );
     }
 }
