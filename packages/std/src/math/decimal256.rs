@@ -33,15 +33,9 @@ pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
     const DECIMAL_FRACTIONAL: Uint256 = // 1*10**18
-        Uint256::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
-            179, 167, 100, 0, 0,
-        ]);
+        Uint256::from_u128(1_000_000_000_000_000_000);
     const DECIMAL_FRACTIONAL_SQUARED: Uint256 = // 1*10**36
-        Uint256::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
-            75, 159, 16, 0, 0, 0, 0,
-        ]);
+        Uint256::from_u128(1_000_000_000_000_000_000_000_000_000_000_000_000);
 
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.

@@ -38,15 +38,9 @@ pub struct SignedDecimal256RangeExceeded;
 
 impl SignedDecimal256 {
     const DECIMAL_FRACTIONAL: Int256 = // 1*10**18
-        Int256::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
-            179, 167, 100, 0, 0,
-        ]);
+        Int256::from_i128(1_000_000_000_000_000_000);
     const DECIMAL_FRACTIONAL_SQUARED: Int256 = // 1*10**36
-        Int256::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
-            75, 159, 16, 0, 0, 0, 0,
-        ]);
+        Int256::from_i128(1_000_000_000_000_000_000_000_000_000_000_000_000);
 
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
@@ -112,8 +106,9 @@ impl SignedDecimal256 {
 
     /// Create a -1.0 SignedDecimal256
     #[inline]
-    pub fn negative_one() -> Self {
-        Self(-Self::DECIMAL_FRACTIONAL) // TODO: constify
+    pub const fn negative_one() -> Self {
+        // -DECIMAL_FRATIONAL
+        Self(Int256::from_i128(-1_000_000_000_000_000_000))
     }
 
     /// Create a 0.0 SignedDecimal256
