@@ -435,7 +435,7 @@ impl Decimal {
     /// let d = Decimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint128::new(75));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_uint_floor(self) -> Uint128 {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
@@ -458,7 +458,7 @@ impl Decimal {
     /// let d = Decimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint128::new(75));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_uint_ceil(self) -> Uint128 {
         // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
         // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.

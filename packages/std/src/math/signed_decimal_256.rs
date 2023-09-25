@@ -515,7 +515,7 @@ impl SignedDecimal256 {
     /// let d = SignedDecimal256::from_str("-0.05").unwrap();
     /// assert_eq!(d.to_int_floor(), Int256::from(-1));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_int_floor(self) -> Int256 {
         if self.is_negative() {
             // Using `x.to_int_floor() = -(-x).to_int_ceil()` for a negative `x`,
@@ -547,7 +547,7 @@ impl SignedDecimal256 {
     /// let d = SignedDecimal256::from_str("75.0").unwrap();
     /// assert_eq!(d.to_int_trunc(), Int256::from(75));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_int_trunc(self) -> Int256 {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
@@ -570,7 +570,7 @@ impl SignedDecimal256 {
     /// let d = SignedDecimal256::from_str("75.0").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int256::from(75));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_int_ceil(self) -> Int256 {
         if self.is_negative() {
             self.to_int_trunc()
