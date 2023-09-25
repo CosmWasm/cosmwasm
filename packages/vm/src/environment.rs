@@ -1,6 +1,7 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 use std::rc::Rc;
@@ -107,6 +108,20 @@ pub struct DebugInfo<'a> {
 //                            v                                                 v
 pub type DebugHandlerFn = dyn for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>);
 
+#[derive(Clone)]
+pub enum KeyType {
+    Read,
+    Write,
+    Remove,
+}
+
+#[derive(Clone)]
+pub struct CacheStore {
+    pub value: Vec<u8>,
+    pub gas_info: GasInfo,
+    pub key_type: KeyType,
+}
+
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
 pub struct Environment<A, S, Q> {
@@ -114,6 +129,7 @@ pub struct Environment<A, S, Q> {
     pub api: A,
     pub gas_config: GasConfig,
     data: Arc<RwLock<ContextData<S, Q>>>,
+    pub state_cache: BTreeMap<Vec<u8>, CacheStore>,
 }
 
 unsafe impl<A: BackendApi, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}
@@ -127,6 +143,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
             api: self.api,
             gas_config: self.gas_config.clone(),
             data: self.data.clone(),
+            state_cache: self.state_cache.clone(),
         }
     }
 }
@@ -138,6 +155,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             api,
             gas_config: GasConfig::default(),
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
+            state_cache: BTreeMap::new(),
         }
     }
 

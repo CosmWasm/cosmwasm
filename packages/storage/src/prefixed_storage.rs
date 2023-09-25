@@ -59,12 +59,23 @@ impl<'a> Storage for PrefixedStorage<'a> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
+    fn get_ex(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.get(key)
+    }
+
     fn set(&mut self, key: &[u8], value: &[u8]) {
         set_with_prefix(self.storage, &self.prefix, key, value);
     }
 
+    fn set_ex(&mut self, key: &[u8], value: &[u8]) {
+        self.set(key, value)
+    }
+
     fn remove(&mut self, key: &[u8]) {
         remove_with_prefix(self.storage, &self.prefix, key);
+    }
+    fn remove_ex(&mut self, key: &[u8]) {
+        self.remove(key)
     }
 
     #[cfg(feature = "iterator")]
@@ -111,12 +122,22 @@ impl<'a> Storage for ReadonlyPrefixedStorage<'a> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
+    fn get_ex(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.get(key)
+    }
+
     fn set(&mut self, _key: &[u8], _value: &[u8]) {
         unimplemented!();
+    }
+    fn set_ex(&mut self, _key: &[u8], _value: &[u8]) {
+        self.set(_key, _value)
     }
 
     fn remove(&mut self, _key: &[u8]) {
         unimplemented!();
+    }
+    fn remove_ex(&mut self, _key: &[u8]) {
+        self.remove(_key)
     }
 
     #[cfg(feature = "iterator")]

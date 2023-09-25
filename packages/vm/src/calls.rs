@@ -341,12 +341,14 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(
+    let result = call_raw(
         instance,
         "instantiate",
         &[env, info, msg],
         read_limits::RESULT_INSTANTIATE,
-    )
+    );
+    instance.commit_store()?;
+    result
 }
 
 /// Calls Wasm export "execute" and returns raw data from the contract.
@@ -363,12 +365,14 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(
+    let result = call_raw(
         instance,
         "execute",
         &[env, info, msg],
         read_limits::RESULT_EXECUTE,
-    )
+    );
+    instance.commit_store()?;
+    result
 }
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
@@ -590,11 +594,14 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::{mock_env, mock_info, mock_instance};
+    use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
     use cosmwasm_std::{coins, Empty};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
+    static COUNTER_TEST_DB_READ_EX: &[u8] = include_bytes!("../testdata/ex_test/1000u128.wasm");
+    static COUNTER_TEST_DB_READ_EX_LIMIT: &[u8] =
+        include_bytes!("../testdata/ex_test/1000000000000000000000000000000u128.wasm");
 
     #[test]
     fn call_instantiate_works() {
@@ -625,6 +632,44 @@ mod tests {
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
+    }
+
+    #[test]
+    fn test_db_read_ex() {
+        let mut instance = mock_instance_with_gas_limit(COUNTER_TEST_DB_READ_EX, 50000000000000);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{}"#;
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // execute
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"other_opt":{"opt_type":"read","times":"5"}}"#;
+        let result = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+        assert_eq!(result.unwrap().unwrap().attributes[1].value, "1000"); // len=6 [34, 49, 48, 48, 48, 34]
+
+        let mut instance =
+            mock_instance_with_gas_limit(COUNTER_TEST_DB_READ_EX_LIMIT, 50000000000000);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{}"#;
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // execute
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"other_opt":{"opt_type":"read","times":"5"}}"#;
+        let result1 = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+        assert_eq!(
+            result1.unwrap().unwrap().attributes[1].value,
+            "1000000000000000000000000000000"
+        )
+        // len=33 [34, 49, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 34]
     }
 
     #[test]

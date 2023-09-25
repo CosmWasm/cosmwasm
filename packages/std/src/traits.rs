@@ -41,6 +41,8 @@ pub trait Storage {
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 
+    fn get_ex(&self, key: &[u8]) -> Option<Vec<u8>>;
+
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
@@ -88,12 +90,14 @@ pub trait Storage {
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]);
+    fn set_ex(&mut self, key: &[u8], value: &[u8]);
 
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
     fn remove(&mut self, key: &[u8]);
+    fn remove_ex(&mut self, key: &[u8]);
 }
 
 /// Api are callbacks to system functions implemented outside of the wasm modules.

@@ -25,6 +25,10 @@ impl Storage for MemoryStorage {
         self.data.get(key).cloned()
     }
 
+    fn get_ex(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.get(key)
+    }
+
     fn set(&mut self, key: &[u8], value: &[u8]) {
         if value.is_empty() {
             panic!("TL;DR: Value must not be empty in Storage::set but in most cases you can use Storage::remove instead. Long story: Getting empty values from storage is not well supported at the moment. Some of our internal interfaces cannot differentiate between a non-existent key and an empty value. Right now, you cannot rely on the behaviour of empty values. To protect you from trouble later on, we stop here. Sorry for the inconvenience! We highly welcome you to contribute to CosmWasm, making this more solid one way or the other.");
@@ -33,8 +37,16 @@ impl Storage for MemoryStorage {
         self.data.insert(key.to_vec(), value.to_vec());
     }
 
+    fn set_ex(&mut self, key: &[u8], value: &[u8]) {
+        self.set(key, value)
+    }
+
     fn remove(&mut self, key: &[u8]) {
         self.data.remove(key);
+    }
+
+    fn remove_ex(&mut self, key: &[u8]) {
+        self.remove(key)
     }
 
     #[cfg(feature = "iterator")]
