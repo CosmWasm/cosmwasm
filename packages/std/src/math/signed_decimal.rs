@@ -3041,8 +3041,8 @@ mod tests {
     #[test]
     fn signed_decimal_may_fail_when_instantiated_from_decimal256() {
         let err = <Decimal256 as TryInto<SignedDecimal>>::try_into(Decimal256::MAX).unwrap_err();
-        assert_eq!("SignedDecimalRangeExceeded", format!("{:?}", err));
-        assert_eq!("SignedDecimal range exceeded", format!("{}", err));
+        assert_eq!("SignedDecimalRangeExceeded", format!("{err:?}"));
+        assert_eq!("SignedDecimal range exceeded", format!("{err}"));
     }
 
     #[test]
