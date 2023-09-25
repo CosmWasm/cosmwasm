@@ -304,7 +304,7 @@ impl Decimal256 {
             .try_into()
             .map(Self)
             .map_err(|_| OverflowError {
-                operation: crate::OverflowOperation::Mul,
+                operation: OverflowOperation::Mul,
                 operand1: self.to_string(),
                 operand2: other.to_string(),
             })
@@ -346,7 +346,7 @@ impl Decimal256 {
         }
 
         inner(self, exp).map_err(|_| OverflowError {
-            operation: crate::OverflowOperation::Pow,
+            operation: OverflowOperation::Pow,
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
@@ -1169,7 +1169,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_from_str_errors_for_broken_fractinal_part() {
+    fn decimal256_from_str_errors_for_broken_fractional_part() {
         match Decimal256::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
@@ -1605,7 +1605,7 @@ mod tests {
         assert_eq!(
             Decimal256::MAX.checked_mul(Decimal256::percent(200)),
             Err(OverflowError {
-                operation: crate::OverflowOperation::Mul,
+                operation: OverflowOperation::Mul,
                 operand1: Decimal256::MAX.to_string(),
                 operand2: Decimal256::percent(200).to_string(),
             })
@@ -1854,7 +1854,7 @@ mod tests {
             );
         }
 
-        // This case is mathematically undefined but we ensure consistency with Rust stdandard types
+        // This case is mathematically undefined but we ensure consistency with Rust standard types
         // https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=20df6716048e77087acd40194b233494
         assert_eq!(
             Decimal256::zero().checked_pow(0).unwrap(),
@@ -1932,7 +1932,7 @@ mod tests {
         assert_eq!(
             Decimal256::MAX.checked_pow(2),
             Err(OverflowError {
-                operation: crate::OverflowOperation::Pow,
+                operation: OverflowOperation::Pow,
                 operand1: Decimal256::MAX.to_string(),
                 operand2: "2".to_string(),
             })
