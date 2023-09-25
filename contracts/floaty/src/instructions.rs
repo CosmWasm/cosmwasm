@@ -13,10 +13,10 @@ macro_rules! run_instr {
         };
         ret
     }};
-    ($instr:expr, $input1:expr, $input1_ty:ty, $input2:expr, $input2_ty:ty, $returnty:ty) => {{
+    ($instr:expr, $input1:expr, $input1_ty:ty, $input2:expr, $input2_ty:ty, $return_ty:ty) => {{
         let input1: $input1_ty = $input1;
         let input2: $input2_ty = $input2;
-        let ret: $returnty;
+        let ret: $return_ty;
         unsafe {
             core::arch::asm!("local.get {0}", "local.get {1}", $instr, "local.set {2}", in(local) input1, in(local) input2, out(local) ret)
         };
