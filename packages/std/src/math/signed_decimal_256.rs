@@ -907,7 +907,7 @@ impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec};
+    use crate::{from_json, to_json_vec};
     use schemars::schema_for;
 
     fn dec(input: &str) -> SignedDecimal256 {
@@ -2541,31 +2541,34 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_serialize() {
-        assert_eq!(to_vec(&SignedDecimal256::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_vec(&SignedDecimal256::one()).unwrap(), br#""1""#);
-        assert_eq!(to_vec(&SignedDecimal256::percent(8)).unwrap(), br#""0.08""#);
+        assert_eq!(to_json_vec(&SignedDecimal256::zero()).unwrap(), br#""0""#);
+        assert_eq!(to_json_vec(&SignedDecimal256::one()).unwrap(), br#""1""#);
         assert_eq!(
-            to_vec(&SignedDecimal256::percent(87)).unwrap(),
+            to_json_vec(&SignedDecimal256::percent(8)).unwrap(),
+            br#""0.08""#
+        );
+        assert_eq!(
+            to_json_vec(&SignedDecimal256::percent(87)).unwrap(),
             br#""0.87""#
         );
         assert_eq!(
-            to_vec(&SignedDecimal256::percent(876)).unwrap(),
+            to_json_vec(&SignedDecimal256::percent(876)).unwrap(),
             br#""8.76""#
         );
         assert_eq!(
-            to_vec(&SignedDecimal256::percent(8765)).unwrap(),
+            to_json_vec(&SignedDecimal256::percent(8765)).unwrap(),
             br#""87.65""#
         );
         assert_eq!(
-            to_vec(&SignedDecimal256::percent(-87654)).unwrap(),
+            to_json_vec(&SignedDecimal256::percent(-87654)).unwrap(),
             br#""-876.54""#
         );
         assert_eq!(
-            to_vec(&SignedDecimal256::negative_one()).unwrap(),
+            to_json_vec(&SignedDecimal256::negative_one()).unwrap(),
             br#""-1""#
         );
         assert_eq!(
-            to_vec(&-SignedDecimal256::percent(8)).unwrap(),
+            to_json_vec(&-SignedDecimal256::percent(8)).unwrap(),
             br#""-0.08""#
         );
     }
@@ -2573,54 +2576,54 @@ mod tests {
     #[test]
     fn signed_decimal_256_deserialize() {
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""0""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""0""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""1""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""1""#).unwrap(),
             SignedDecimal256::one()
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""000""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""000""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""001""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""001""#).unwrap(),
             SignedDecimal256::one()
         );
 
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""0.08""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""0.08""#).unwrap(),
             SignedDecimal256::percent(8)
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""0.87""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""0.87""#).unwrap(),
             SignedDecimal256::percent(87)
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""8.76""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""8.76""#).unwrap(),
             SignedDecimal256::percent(876)
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""87.65""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""87.65""#).unwrap(),
             SignedDecimal256::percent(8765)
         );
 
         // negative numbers
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""-0""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""-0""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""-1""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""-1""#).unwrap(),
             SignedDecimal256::negative_one()
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""-001""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""-001""#).unwrap(),
             SignedDecimal256::negative_one()
         );
         assert_eq!(
-            from_slice::<SignedDecimal256>(br#""-0.08""#).unwrap(),
+            from_json::<SignedDecimal256>(br#""-0.08""#).unwrap(),
             SignedDecimal256::percent(-8)
         );
     }
