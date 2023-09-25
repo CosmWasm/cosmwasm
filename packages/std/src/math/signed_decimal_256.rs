@@ -1356,24 +1356,24 @@ mod tests {
     #[test]
     fn signed_decimal_256_from_str_errors_for_broken_whole_part() {
         let expected_err = StdError::generic_err("Error parsing whole");
-        assert_eq!(expected_err, SignedDecimal256::from_str("").unwrap_err());
-        assert_eq!(expected_err, SignedDecimal256::from_str(" ").unwrap_err());
-        assert_eq!(expected_err, SignedDecimal256::from_str("-").unwrap_err());
+        assert_eq!(SignedDecimal256::from_str("").unwrap_err(), expected_err);
+        assert_eq!(SignedDecimal256::from_str(" ").unwrap_err(), expected_err);
+        assert_eq!(SignedDecimal256::from_str("-").unwrap_err(), expected_err);
     }
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_broken_fractional_part() {
         let expected_err = StdError::generic_err("Error parsing fractional");
-        assert_eq!(expected_err, SignedDecimal256::from_str("1.").unwrap_err());
-        assert_eq!(expected_err, SignedDecimal256::from_str("1. ").unwrap_err());
-        assert_eq!(expected_err, SignedDecimal256::from_str("1.e").unwrap_err());
+        assert_eq!(SignedDecimal256::from_str("1.").unwrap_err(), expected_err);
+        assert_eq!(SignedDecimal256::from_str("1. ").unwrap_err(), expected_err);
+        assert_eq!(SignedDecimal256::from_str("1.e").unwrap_err(), expected_err);
         assert_eq!(
-            expected_err,
-            SignedDecimal256::from_str("1.2e3").unwrap_err()
+            SignedDecimal256::from_str("1.2e3").unwrap_err(),
+            expected_err
         );
         assert_eq!(
-            expected_err,
-            SignedDecimal256::from_str("1.-2").unwrap_err()
+            SignedDecimal256::from_str("1.-2").unwrap_err(),
+            expected_err
         );
     }
 
@@ -1381,13 +1381,13 @@ mod tests {
     fn signed_decimal_256_from_str_errors_for_more_than_18_fractional_digits() {
         let expected_err = StdError::generic_err("Cannot parse more than 18 fractional digits");
         assert_eq!(
-            expected_err,
-            SignedDecimal256::from_str("7.1234567890123456789").unwrap_err()
+            SignedDecimal256::from_str("7.1234567890123456789").unwrap_err(),
+            expected_err
         );
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
         assert_eq!(
-            expected_err,
-            SignedDecimal256::from_str("7.1230000000000000000").unwrap_err()
+            SignedDecimal256::from_str("7.1230000000000000000").unwrap_err(),
+            expected_err
         );
     }
 
@@ -1395,12 +1395,12 @@ mod tests {
     fn signed_decimal_256_from_str_errors_for_invalid_number_of_dots() {
         let expected_err = StdError::generic_err("Unexpected number of dots");
         assert_eq!(
-            expected_err,
-            SignedDecimal256::from_str("1.2.3").unwrap_err()
+            SignedDecimal256::from_str("1.2.3").unwrap_err(),
+            expected_err
         );
         assert_eq!(
-            expected_err,
-            SignedDecimal256::from_str("1.2.3.4").unwrap_err()
+            SignedDecimal256::from_str("1.2.3.4").unwrap_err(),
+            expected_err
         );
     }
 
@@ -1409,41 +1409,41 @@ mod tests {
         let expected_err = StdError::generic_err("Value too big");
         // Integer
         assert_eq!(
-            expected_err,
             SignedDecimal256::from_str(
                 "57896044618658097711785492504343953926634992332820282019729",
             )
-            .unwrap_err()
+            .unwrap_err(),
+            expected_err
         );
         assert_eq!(
-            expected_err,
             SignedDecimal256::from_str(
                 "-57896044618658097711785492504343953926634992332820282019729",
             )
-            .unwrap_err()
+            .unwrap_err(),
+            expected_err
         );
 
         // SignedDecimal256
         assert_eq!(
-            expected_err,
             SignedDecimal256::from_str(
                 "57896044618658097711785492504343953926634992332820282019729.0",
             )
-            .unwrap_err()
+            .unwrap_err(),
+            expected_err
         );
         assert_eq!(
-            expected_err,
             SignedDecimal256::from_str(
                 "57896044618658097711785492504343953926634992332820282019728.792003956564819968",
             )
-            .unwrap_err()
+            .unwrap_err(),
+            expected_err
         );
         assert_eq!(
-            expected_err,
             SignedDecimal256::from_str(
                 "-57896044618658097711785492504343953926634992332820282019728.792003956564819969",
             )
-            .unwrap_err()
+            .unwrap_err(),
+            expected_err
         );
     }
 
