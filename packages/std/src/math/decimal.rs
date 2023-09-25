@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal256};
+use crate::{forward_ref_partial_eq, Decimal256, SignedDecimal, SignedDecimal256};
 
 use super::Fraction;
 use super::Isqrt;
@@ -289,7 +289,7 @@ impl Decimal {
             .try_into()
             .map(Self)
             .map_err(|_| OverflowError {
-                operation: crate::OverflowOperation::Mul,
+                operation: OverflowOperation::Mul,
                 operand1: self.to_string(),
                 operand2: other.to_string(),
             })
@@ -331,7 +331,7 @@ impl Decimal {
         }
 
         inner(self, exp).map_err(|_| OverflowError {
-            operation: crate::OverflowOperation::Pow,
+            operation: OverflowOperation::Pow,
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
@@ -435,7 +435,7 @@ impl Decimal {
     /// let d = Decimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint128::new(75));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_uint_floor(self) -> Uint128 {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
@@ -458,7 +458,7 @@ impl Decimal {
     /// let d = Decimal::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint128::new(75));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_uint_ceil(self) -> Uint128 {
         // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
         // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
@@ -502,6 +502,30 @@ impl TryFrom<Decimal256> for Decimal {
     type Error = DecimalRangeExceeded;
 
     fn try_from(value: Decimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal)
+            .map_err(|_| DecimalRangeExceeded)
+    }
+}
+
+impl TryFrom<SignedDecimal> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    fn try_from(value: SignedDecimal) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal)
+            .map_err(|_| DecimalRangeExceeded)
+    }
+}
+
+impl TryFrom<SignedDecimal256> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    fn try_from(value: SignedDecimal256) -> Result<Self, Self::Error> {
         value
             .atomics()
             .try_into()
@@ -846,6 +870,34 @@ mod tests {
     }
 
     #[test]
+    fn decimal_try_from_signed_works() {
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::MAX).unwrap(),
+            Decimal::raw(SignedDecimal::MAX.atomics().i128() as u128)
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::zero()).unwrap(),
+            Decimal::zero()
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::one()).unwrap(),
+            Decimal::one()
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::percent(50)).unwrap(),
+            Decimal::percent(50)
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::negative_one()),
+            Err(DecimalRangeExceeded)
+        );
+        assert_eq!(
+            Decimal::try_from(SignedDecimal::MIN),
+            Err(DecimalRangeExceeded)
+        );
+    }
+
+    #[test]
     fn decimal_from_atomics_works() {
         let one = Decimal::one();
         let two = one + one;
@@ -1069,7 +1121,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal_from_str_errors_for_broken_fractinal_part() {
+    fn decimal_from_str_errors_for_broken_fractional_part() {
         match Decimal::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
@@ -1485,7 +1537,7 @@ mod tests {
         assert_eq!(
             Decimal::MAX.checked_mul(Decimal::percent(200)),
             Err(OverflowError {
-                operation: crate::OverflowOperation::Mul,
+                operation: OverflowOperation::Mul,
                 operand1: Decimal::MAX.to_string(),
                 operand2: Decimal::percent(200).to_string(),
             })
@@ -1727,7 +1779,7 @@ mod tests {
             assert_eq!(Decimal::one().checked_pow(exp).unwrap(), Decimal::one());
         }
 
-        // This case is mathematically undefined but we ensure consistency with Rust stdandard types
+        // This case is mathematically undefined but we ensure consistency with Rust standard types
         // https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=20df6716048e77087acd40194b233494
         assert_eq!(Decimal::zero().checked_pow(0).unwrap(), Decimal::one());
 
@@ -1799,7 +1851,7 @@ mod tests {
         assert_eq!(
             Decimal::MAX.checked_pow(2),
             Err(OverflowError {
-                operation: crate::OverflowOperation::Pow,
+                operation: OverflowOperation::Pow,
                 operand1: Decimal::MAX.to_string(),
                 operand2: "2".to_string(),
             })

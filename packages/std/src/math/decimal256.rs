@@ -11,7 +11,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundUpOverflowError, StdError,
 };
-use crate::{forward_ref_partial_eq, Decimal, Uint512};
+use crate::{forward_ref_partial_eq, Decimal, SignedDecimal, SignedDecimal256, Uint512};
 
 use super::Fraction;
 use super::Isqrt;
@@ -33,15 +33,9 @@ pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
     const DECIMAL_FRACTIONAL: Uint256 = // 1*10**18
-        Uint256::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 224, 182,
-            179, 167, 100, 0, 0,
-        ]);
+        Uint256::from_u128(1_000_000_000_000_000_000);
     const DECIMAL_FRACTIONAL_SQUARED: Uint256 = // 1*10**36
-        Uint256::from_be_bytes([
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 151, 206, 123, 201, 7, 21, 179,
-            75, 159, 16, 0, 0, 0, 0,
-        ]);
+        Uint256::from_u128(1_000_000_000_000_000_000_000_000_000_000_000_000);
 
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
@@ -304,7 +298,7 @@ impl Decimal256 {
             .try_into()
             .map(Self)
             .map_err(|_| OverflowError {
-                operation: crate::OverflowOperation::Mul,
+                operation: OverflowOperation::Mul,
                 operand1: self.to_string(),
                 operand2: other.to_string(),
             })
@@ -346,7 +340,7 @@ impl Decimal256 {
         }
 
         inner(self, exp).map_err(|_| OverflowError {
-            operation: crate::OverflowOperation::Pow,
+            operation: OverflowOperation::Pow,
             operand1: self.to_string(),
             operand2: exp.to_string(),
         })
@@ -454,7 +448,7 @@ impl Decimal256 {
     /// let d = Decimal256::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint256::from(75u64));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_uint_floor(self) -> Uint256 {
         self.0 / Self::DECIMAL_FRACTIONAL
     }
@@ -477,7 +471,7 @@ impl Decimal256 {
     /// let d = Decimal256::from_str("75.0").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint256::from(75u64));
     /// ```
-    #[must_use]
+    #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn to_uint_ceil(self) -> Uint256 {
         // Using `q = 1 + ((x - 1) / y); // if x != 0` with unsigned integers x, y, q
         // from https://stackoverflow.com/a/2745086/2013738. We know `x + y` CAN overflow.
@@ -522,6 +516,30 @@ impl From<Decimal> for Decimal256 {
         // Unwrap is safe because Decimal256 and Decimal have the same decimal places.
         // Every Decimal value can be stored in Decimal256.
         Decimal256::from_atomics(input.atomics(), input.decimal_places()).unwrap()
+    }
+}
+
+impl TryFrom<SignedDecimal> for Decimal256 {
+    type Error = Decimal256RangeExceeded;
+
+    fn try_from(value: SignedDecimal) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal256)
+            .map_err(|_| Decimal256RangeExceeded)
+    }
+}
+
+impl TryFrom<SignedDecimal256> for Decimal256 {
+    type Error = Decimal256RangeExceeded;
+
+    fn try_from(value: SignedDecimal256) -> Result<Self, Self::Error> {
+        value
+            .atomics()
+            .try_into()
+            .map(Decimal256)
+            .map_err(|_| Decimal256RangeExceeded)
     }
 }
 
@@ -1145,7 +1163,7 @@ mod tests {
     }
 
     #[test]
-    fn decimal256_from_str_errors_for_broken_fractinal_part() {
+    fn decimal256_from_str_errors_for_broken_fractional_part() {
         match Decimal256::from_str("1.").unwrap_err() {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
@@ -1581,7 +1599,7 @@ mod tests {
         assert_eq!(
             Decimal256::MAX.checked_mul(Decimal256::percent(200)),
             Err(OverflowError {
-                operation: crate::OverflowOperation::Mul,
+                operation: OverflowOperation::Mul,
                 operand1: Decimal256::MAX.to_string(),
                 operand2: Decimal256::percent(200).to_string(),
             })
@@ -1830,7 +1848,7 @@ mod tests {
             );
         }
 
-        // This case is mathematically undefined but we ensure consistency with Rust stdandard types
+        // This case is mathematically undefined but we ensure consistency with Rust standard types
         // https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=20df6716048e77087acd40194b233494
         assert_eq!(
             Decimal256::zero().checked_pow(0).unwrap(),
@@ -1908,7 +1926,7 @@ mod tests {
         assert_eq!(
             Decimal256::MAX.checked_pow(2),
             Err(OverflowError {
-                operation: crate::OverflowOperation::Pow,
+                operation: OverflowOperation::Pow,
                 operand1: Decimal256::MAX.to_string(),
                 operand2: "2".to_string(),
             })

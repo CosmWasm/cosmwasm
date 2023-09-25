@@ -61,7 +61,8 @@ pub use crate::ibc::{
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
-    Int512, Int64, Isqrt, Uint128, Uint256, Uint512, Uint64,
+    Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
+    SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
 };
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
