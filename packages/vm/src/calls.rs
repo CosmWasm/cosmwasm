@@ -593,7 +593,7 @@ mod tests {
     use crate::testing::{
         mock_env, mock_info, mock_instance, mock_instance_with_options, MockInstanceOptions,
     };
-    use cosmwasm_std::{coins, from_slice, Empty};
+    use cosmwasm_std::{coins, from_json, to_json_string, Empty};
     use sha2::{Digest, Sha256};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
@@ -769,7 +769,7 @@ mod tests {
         let contract_result = call_query(&mut instance, &mock_env(), msg)
             .unwrap()
             .unwrap();
-        let instructions: Vec<String> = from_slice(&contract_result).unwrap();
+        let instructions: Vec<String> = from_json(&contract_result).unwrap();
         // little sanity check
         assert_eq!(instructions.len(), 70);
 
@@ -778,7 +778,7 @@ mod tests {
         for instr in &instructions {
             for seed in 0..RUNS_PER_INSTRUCTION {
                 // query some input values for the instruction
-                let args: Vec<Value> = from_slice(
+                let args: Vec<Value> = from_json(
                     &call_query(
                         &mut instance,
                         &mock_env(),
@@ -793,24 +793,17 @@ mod tests {
                 .unwrap();
 
                 // build the run message
-                let arg_str = args
-                    .iter()
-                    .map(|a| {
-                        let serialized = to_vec(a).unwrap();
-                        core::str::from_utf8(&serialized).unwrap().to_string()
-                    })
-                    .collect::<Vec<_>>()
-                    .join(",");
+                let args = to_json_string(&args).unwrap();
                 let msg: String = format!(
                     r#"{{"run":{{
                         "instruction": "{instr}",
-                        "args": [{arg_str}]
+                        "args": {args}
                     }}}}"#
                 );
                 // run the instruction
                 // this might throw a runtime error (e.g. if the instruction traps)
                 let result = match call_query(&mut instance, &mock_env(), msg.as_bytes()) {
-                    Ok(ContractResult::Ok(r)) => format!("{:?}", from_slice::<Value>(&r).unwrap()),
+                    Ok(ContractResult::Ok(r)) => format!("{:?}", from_json::<Value>(&r).unwrap()),
                     Err(VmError::RuntimeErr { msg }) => msg,
                     e => panic!("unexpected error: {e:?}"),
                 };
