@@ -1,11 +1,11 @@
 use cosmwasm_schema::write_api;
 
-use floaty::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use cosmwasm_std::Empty;
+use floaty::msg::QueryMsg;
 
 fn main() {
     write_api! {
-        instantiate: InstantiateMsg,
+        instantiate: Empty,
         query: QueryMsg,
-        execute: ExecuteMsg,
     }
 }

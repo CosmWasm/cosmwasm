@@ -3,13 +3,41 @@
   "title": "QueryMsg",
   "oneOf": [
     {
-      "description": "returns a human-readable representation of the verifier use to ensure query path works in integration tests",
+      "description": "Returns valid random arguments for the given instruction",
       "type": "object",
       "required": [
-        "verifier"
+        "random_args_for"
       ],
       "properties": {
-        "verifier": {
+        "random_args_for": {
+          "type": "object",
+          "required": [
+            "instruction",
+            "seed"
+          ],
+          "properties": {
+            "instruction": {
+              "type": "string"
+            },
+            "seed": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns a list of all instructions",
+      "type": "object",
+      "required": [
+        "instructions"
+      ],
+      "properties": {
+        "instructions": {
           "type": "object",
           "additionalProperties": false
         }
@@ -17,19 +45,26 @@
       "additionalProperties": false
     },
     {
-      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
+      "description": "Runs the given instruction with the given arguments and returns the result",
       "type": "object",
       "required": [
-        "other_balance"
+        "run"
       ],
       "properties": {
-        "other_balance": {
+        "run": {
           "type": "object",
           "required": [
-            "address"
+            "args",
+            "instruction"
           ],
           "properties": {
-            "address": {
+            "args": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Value"
+              }
+            },
+            "instruction": {
               "type": "string"
             }
           },
@@ -38,5 +73,67 @@
       },
       "additionalProperties": false
     }
-  ]
+  ],
+  "definitions": {
+    "Value": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "u32"
+          ],
+          "properties": {
+            "u32": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "u64"
+          ],
+          "properties": {
+            "u64": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "f32"
+          ],
+          "properties": {
+            "f32": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "f64"
+          ],
+          "properties": {
+            "f64": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
 }

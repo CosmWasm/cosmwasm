@@ -1,30 +1,26 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
-#[cw_serde]
-pub struct InstantiateMsg {
-    pub verifier: String,
-    pub beneficiary: String,
-}
+use crate::instructions::Value;
 
 #[cw_serde]
-pub enum ExecuteMsg {
-    /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
-    Release {},
+pub enum ValueType {
+    Float,
+    Int,
 }
 
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    /// returns a human-readable representation of the verifier
-    /// use to ensure query path works in integration tests
-    #[returns(VerifierResponse)]
-    Verifier {},
-    /// This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
-    #[returns(cosmwasm_std::AllBalanceResponse)]
-    OtherBalance { address: String },
-}
-
-#[cw_serde]
-pub struct VerifierResponse {
-    pub verifier: String,
+    /// Returns valid random arguments for the given instruction
+    #[returns(Vec<Value>)]
+    RandomArgsFor { instruction: String, seed: u64 },
+    /// Returns a list of all instructions
+    #[returns(Vec<String>)]
+    Instructions {},
+    /// Runs the given instruction with the given arguments and returns the result
+    #[returns(Value)]
+    Run {
+        instruction: String,
+        args: Vec<Value>,
+    },
 }

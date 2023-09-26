@@ -57,7 +57,7 @@ impl Gatekeeper {
 impl Default for Gatekeeper {
     fn default() -> Self {
         Self::new(GatekeeperConfig {
-            allow_floats: false,
+            allow_floats: true,
             allow_feature_bulk_memory_operations: false,
             allow_feature_reference_types: false,
             allow_feature_simd: false,
@@ -727,7 +727,7 @@ mod tests {
     }
 
     #[test]
-    fn parser_floats_are_not_supported() {
+    fn parser_floats_are_supported() {
         let wasm = wat::parse_str(
             r#"
             (module
@@ -744,10 +744,7 @@ mod tests {
         compiler.push_middleware(deterministic);
         let store = Store::new(compiler);
         let result = Module::new(&store, wasm);
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Float operator detected:"));
+        assert!(result.is_ok());
     }
 
     #[test]

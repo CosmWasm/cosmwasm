@@ -27,16 +27,13 @@ fn invalid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn invalid_contract_check_float_operator() -> Result<(), Box<dyn std::error::Error>> {
+fn valid_contract_check_float_operator() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 
     cmd.arg("../vm/testdata/floaty.wasm");
     cmd.assert()
-        .failure()
-        .stdout(predicate::str::contains("Float operator detected"))
-        .stdout(predicate::str::contains(
-            "The use of floats is not supported",
-        ));
+        .success()
+        .stdout(predicate::str::contains("pass"));
 
     Ok(())
 }

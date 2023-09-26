@@ -23,6 +23,7 @@ and this project adheres to
   `to_{vec,binary}` in favor of `to_json_{vec,binary}` and `from_{slice,binary}`
   in favor of `from_json`. ([#1886])
 - cosmwasm-std: Add `SignedDecimal` and `SignedDecimal256` ([#1807]).
+- cosmwasm-vm: Allow float operations with NaN canonicalization ([#1864]).
 
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
 [#1861]: https://github.com/CosmWasm/cosmwasm/pull/1861
@@ -31,6 +32,7 @@ and this project adheres to
 [#1870]: https://github.com/CosmWasm/cosmwasm/pull/1870
 [#1886]: https://github.com/CosmWasm/cosmwasm/pull/1886
 [#1807]: https://github.com/CosmWasm/cosmwasm/pull/1807
+[#1864]: https://github.com/CosmWasm/cosmwasm/pull/1864
 
 ## [1.4.0] - 2023-09-04
 

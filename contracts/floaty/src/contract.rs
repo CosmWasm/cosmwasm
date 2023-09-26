@@ -1,91 +1,47 @@
 use cosmwasm_std::{
-    entry_point, from_json, to_json_binary, to_json_vec, AllBalanceResponse, BankMsg, Deps,
-    DepsMut, Env, Event, MessageInfo, QueryResponse, Response, StdError, StdResult,
+    entry_point, from_slice, to_binary, to_vec, AllBalanceResponse, BankMsg, Deps, DepsMut, Env,
+    Event, MessageInfo, QueryResponse, Response, StdError, StdResult,
 };
+use rand_chacha::rand_core::SeedableRng;
 
-use crate::errors::HackError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, VerifierResponse};
-use crate::state::{State, CONFIG_KEY};
+#[cfg(target_arch = "wasm32")]
+use crate::instructions::run_instruction;
+use crate::{
+    instructions::{random_args_for, Value, FLOAT_INSTRUCTIONS},
+    msg::QueryMsg,
+};
 
 #[entry_point]
 pub fn instantiate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
-) -> Result<Response, HackError> {
-    deps.api.debug("here we go 🚀");
-
-    deps.storage.set(
-        CONFIG_KEY,
-        &to_json_vec(&State {
-            verifier: deps.api.addr_validate(&msg.verifier)?,
-            beneficiary: deps.api.addr_validate(&msg.beneficiary)?,
-            funder: info.sender,
-        })?,
-    );
-
-    // This adds some unrelated event attribute for testing purposes
-    Ok(Response::new().add_attribute("Let the", "hacking begin"))
+    _info: MessageInfo,
+    _msg: Empty,
+) -> Result<Response, String> {
+    Ok(Response::default())
 }
 
 #[entry_point]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    _msg: ExecuteMsg,
-) -> Result<Response, HackError> {
-    let data = deps
-        .storage
-        .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_json(data)?;
-
-    if info.sender == state.verifier {
-        let to_addr = state.beneficiary;
-        let balance = deps.querier.query_all_balances(env.contract.address)?;
-
-        let mut fl = balance[0].amount.u128() as f64;
-        fl *= 0.3;
-
-        let resp = Response::new()
-            .add_attribute("action", "release")
-            .add_attribute("destination", to_addr.clone())
-            .add_attribute("foo", fl.to_string())
-            .add_event(Event::new("hackatom").add_attribute("action", "release"))
-            .add_message(BankMsg::Send {
-                to_address: to_addr.into(),
-                amount: balance,
-            })
-            .set_data([0xF0, 0x0B, 0xAA]);
-        Ok(resp)
-    } else {
-        Err(HackError::Unauthorized {})
-    }
-}
-
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => to_json_binary(&query_verifier(deps)?),
-        QueryMsg::OtherBalance { address } => to_json_binary(&query_other_balance(deps, address)?),
+        QueryMsg::RandomArgsFor { instruction, seed } => {
+            let mut rng = rand_chacha::ChaChaRng::seed_from_u64(seed);
+            to_binary(&random_args_for(&instruction, &mut rng))
+        }
+        QueryMsg::Instructions {} => to_binary(&FLOAT_INSTRUCTIONS.to_vec()),
+        QueryMsg::Run { instruction, args } => to_binary(&query_run(&instruction, args)?),
     }
 }
 
-fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
-    let data = deps
-        .storage
-        .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
-    let state: State = from_json(data)?;
-    Ok(VerifierResponse {
-        verifier: state.verifier.into(),
-    })
-}
+fn query_run(instruction: &str, args: Vec<Value>) -> StdResult<Value> {
+    #[cfg(not(target_arch = "wasm32"))]
+    panic!();
 
-fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
-    let amount = deps.querier.query_all_balances(address)?;
-    Ok(AllBalanceResponse { amount })
+    #[cfg(target_arch = "wasm32")]
+    {
+        let result = run_instruction(instruction, &args);
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -124,7 +80,7 @@ mod tests {
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_json(data).unwrap();
+        let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
 
@@ -246,7 +202,7 @@ mod tests {
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_json(data).unwrap();
+        let state: State = from_slice(&data).unwrap();
         assert_eq!(
             state,
             State {

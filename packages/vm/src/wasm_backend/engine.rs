@@ -54,6 +54,7 @@ pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     #[cfg(not(feature = "cranelift"))]
     let mut compiler = Singlepass::default();
 
+    compiler.canonicalize_nans(true);
     compiler.push_middleware(deterministic);
     compiler.push_middleware(metering);
     let mut engine = Engine::from(compiler);
