@@ -156,6 +156,7 @@ pub enum WasmMsg {
     /// This is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.16.0-alpha1/x/wasm/internal/types/tx.proto#L47-L61).
     /// `sender` is automatically filled with the current contract's address.
     Instantiate {
+        admin: Option<String>,
         code_id: u64,
         /// code_hash is the hex encoded hash of the code. This is used by Secret Network to harden against replaying the contract
         /// It is used to bind the request to a destination contract in a stronger way than just the contract address which can be faked
@@ -215,7 +216,10 @@ pub enum VoteOption {
     NoWithVeto,
 }
 
+
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
+///
+/// When using this, `admin` is always unset. If you need more flexibility, create the message directly.
 pub fn wasm_instantiate(
     code_id: u64,
     code_hash: impl Into<String>,
@@ -225,6 +229,7 @@ pub fn wasm_instantiate(
 ) -> StdResult<WasmMsg> {
     let payload = to_binary(msg)?;
     Ok(WasmMsg::Instantiate {
+        admin: None,
         code_id,
         code_hash: code_hash.into(),
         msg: payload,
