@@ -968,18 +968,16 @@ jobs:
   coverage:
     # https://circleci.com/developer/images?imageType=machine
     docker:
-      - image: rust:1.67.0
+      - image: rust:1.72.0
     steps:
       - checkout
       - run:
           name: Install grcov
           command: |
             rustup component add llvm-tools-preview
-            cargo install grcov
+            cargo install grcov --locked
       - run:
           name: Run tests with coverage
-          # See https://github.com/xd009642/tarpaulin/blob/develop/CHANGELOG.md and https://hub.docker.com/r/xd009642/tarpaulin/tags
-          # for tarpaulin versions.
           command: |
             mkdir -p reports
             cargo test
