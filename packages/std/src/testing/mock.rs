@@ -253,7 +253,7 @@ pub fn mock_env() -> Env {
                 Binary::from_base64("wLsKdf/sYqvSMI0G0aWRjob25mrIB0VQVjTjDXnDafk=").unwrap(),
             ),
         },
-        transaction: Some(TransactionInfo { index: 3, hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }),
+        transaction: Some(TransactionInfo { index: 3, hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string() }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
             code_hash: "".to_string(),
