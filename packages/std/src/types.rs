@@ -55,7 +55,7 @@ pub struct BlockInfo {
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #      },
-    /// #     transaction: Some(TransactionInfo { index: 3 }),
+    /// #     transaction: Some(TransactionInfo { index: 3, hash: "".to_string() }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #         code_hash: "".to_string()
@@ -80,7 +80,7 @@ pub struct BlockInfo {
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     transaction: Some(TransactionInfo { index: 3 }),
+    /// #     transaction: Some(TransactionInfo { index: 3, hash: "".to_string() }),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #         code_hash: "".to_string()
