@@ -102,17 +102,12 @@ pub fn do_db_write<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + '
     fn convert_error(e: VmError, kind: &'static str) -> VmError {
         if let VmError::CommunicationErr {
             source: CommunicationError::RegionLengthTooBig { length, max_length },
-            #[cfg(feature = "backtraces")]
-            backtrace,
+            ..
         } = e
         {
-            VmError::GenericErr {
-                msg: format!(
+            VmError::generic_err(format!(
                 "{kind} too big. Tried to write {length} bytes to storage, limit is {max_length}"
-            ),
-                #[cfg(feature = "backtraces")]
-                backtrace,
-            }
+            ))
         } else {
             e
         }
