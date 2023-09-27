@@ -27,7 +27,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - name: Add wasm toolchain
         run: |
-          rustup target add wasm32-unknown-unknown
+          rustup target add --toolchain ${{ matrix.rust }} wasm32-unknown-unknown
 
       - name: Install Clippy
         if: matrix.make.name == 'Clippy'
