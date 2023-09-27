@@ -106,7 +106,7 @@ pub fn do_db_write<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + '
         } = e
         {
             VmError::generic_err(format!(
-                "{kind} too big. Tried to write {length} bytes to storage, limit is {max_length}"
+                "{kind} too big. Tried to write {length} bytes to storage, limit is {max_length}."
             ))
         } else {
             e
@@ -901,7 +901,7 @@ mod tests {
         leave_default_data(&mut fe_mut);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
-        assert_eq!(result.unwrap_err().to_string(), format!("Generic error: Key too big. Tried to write {KEY_SIZE} bytes to storage, limit is {MAX_LENGTH_DB_KEY}"));
+        assert_eq!(result.unwrap_err().to_string(), format!("Generic error: Key too big. Tried to write {KEY_SIZE} bytes to storage, limit is {MAX_LENGTH_DB_KEY}."));
     }
 
     #[test]
@@ -917,7 +917,7 @@ mod tests {
         leave_default_data(&mut fe_mut);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
-        assert_eq!(result.unwrap_err().to_string(), format!("Generic error: Value too big. Tried to write {VAL_SIZE} bytes to storage, limit is {MAX_LENGTH_DB_VALUE}"));
+        assert_eq!(result.unwrap_err().to_string(), format!("Generic error: Value too big. Tried to write {VAL_SIZE} bytes to storage, limit is {MAX_LENGTH_DB_VALUE}."));
     }
 
     #[test]
