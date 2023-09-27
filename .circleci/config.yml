@@ -966,7 +966,6 @@ jobs:
           key: cargocache-v2-benchmarking-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   coverage:
-    # https://circleci.com/developer/images?imageType=machine
     docker:
       - image: rust:1.72.0
     steps:
