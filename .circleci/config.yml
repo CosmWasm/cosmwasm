@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3.2.0
+  codecov: codecov/codecov@3.2.5
   win: circleci/windows@5.0
 
 commands:
@@ -86,7 +86,7 @@ workflows:
                 # Add your branch here if benchmarking matters to your work
                 - fix-benchmarking
                 - w3
-      # - coverage # disabled temporarily because Rust version is too low
+      - coverage
   deploy:
     jobs:
       - build_and_upload_devcontracts:
@@ -966,43 +966,48 @@ jobs:
           key: cargocache-v2-benchmarking-rust:1.67.0-{{ checksum "Cargo.lock" }}
 
   coverage:
-    # https://circleci.com/developer/images?imageType=machine
-    machine:
-      image: ubuntu-2004:202201-02
+    docker:
+      - image: rust:1.72.0
     steps:
       - checkout
       - run:
-          name: Run tests with coverage
-          # See https://github.com/xd009642/tarpaulin/blob/develop/CHANGELOG.md and https://hub.docker.com/r/xd009642/tarpaulin/tags
-          # for tarpaulin versions.
+          name: Install grcov
           command: |
-            mkdir -p reports/crypto
-            mkdir -p reports/derive
-            mkdir -p reports/schema
-            mkdir -p reports/std
-            mkdir -p reports/storage
-            CRYPTO=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/crypto  --packages cosmwasm-crypto"
-            DERIVE=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/derive  --packages cosmwasm-derive"
-            SCHEMA=" cargo tarpaulin --skip-clean --out Xml --output-dir reports/schema  --packages cosmwasm-schema"
-            STD="    cargo tarpaulin --skip-clean --out Xml --output-dir reports/std     --packages cosmwasm-std     --features abort,iterator,staking,stargate,cosmwasm_1_4"
-            STORAGE="cargo tarpaulin --skip-clean --out Xml --output-dir reports/storage --packages cosmwasm-storage"
-            docker run --security-opt seccomp=unconfined -v "${PWD}:/volume" xd009642/tarpaulin:0.21.0 \
-              sh -c "$CRYPTO && $DERIVE && $SCHEMA && $STD && $STORAGE"
+            rustup component add llvm-tools-preview
+            cargo install grcov --locked
+      - run:
+          name: Run tests with coverage
+          command: |
+            mkdir -p reports
+            cargo test
+
+            grcov . -s packages/crypto --binary-path ./target/debug -t lcov -o ./reports/crypto.info
+            grcov . -s packages/derive --binary-path ./target/debug -t lcov -o ./reports/derive.info
+            grcov . -s packages/schema --binary-path ./target/debug -t lcov -o ./reports/schema.info
+            grcov . -s packages/std --binary-path ./target/debug -t lcov -o ./reports/std.info
+            grcov . -s packages/storage --binary-path ./target/debug -t lcov -o ./reports/storage.info
+            grcov . -s packages/vm --binary-path ./target/debug -t lcov -o ./reports/vm.info
+          environment:
+            RUSTFLAGS: "-Cinstrument-coverage"
+            LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
       - codecov/upload:
-          file: reports/crypto/cobertura.xml
+          file: reports/crypto.info
           flags: cosmwasm-crypto
       - codecov/upload:
-          file: reports/derive/cobertura.xml
+          file: reports/derive.info
           flags: cosmwasm-derive
       - codecov/upload:
-          file: reports/schema/cobertura.xml
+          file: reports/schema.info
           flags: cosmwasm-schema
       - codecov/upload:
-          file: reports/std/cobertura.xml
+          file: reports/std.info
           flags: cosmwasm-std
       - codecov/upload:
-          file: reports/storage/cobertura.xml
+          file: reports/storage.info
           flags: cosmwasm-storage
+      - codecov/upload:
+          file: reports/vm.info
+          flags: cosmwasm-vm
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:
