@@ -29,6 +29,14 @@ pub enum VmError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("{kind} too big. Tried to write {length} bytes to storage, limit is {max_length}")]
+    WriteTooBig {
+        kind: &'static str,
+        length: usize,
+        max_length: usize,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Error in guest/host communication: {source}")]
     CommunicationErr {
         #[from]
