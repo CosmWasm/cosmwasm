@@ -98,8 +98,25 @@ pub fn do_db_write<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + '
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)?;
-    let value = read_region(&data.memory(&store), value_ptr, MAX_LENGTH_DB_VALUE)?;
+    /// Converts a region length error to a different variant for better understandability
+    fn convert_error(e: VmError, kind: &'static str) -> VmError {
+        if let VmError::CommunicationErr {
+            source: CommunicationError::RegionLengthTooBig { length, max_length },
+            ..
+        } = e
+        {
+            VmError::generic_err(format!(
+                "{kind} too big. Tried to write {length} bytes to storage, limit is {max_length}."
+            ))
+        } else {
+            e
+        }
+    }
+
+    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)
+        .map_err(|e| convert_error(e, "Key"))?;
+    let value = read_region(&data.memory(&store), value_ptr, MAX_LENGTH_DB_VALUE)
+        .map_err(|e| convert_error(e, "Value"))?;
 
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
@@ -877,25 +894,14 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let key_ptr = write_data(&mut fe_mut, &vec![4u8; 300 * 1024]);
+        const KEY_SIZE: usize = 300 * 1024;
+        let key_ptr = write_data(&mut fe_mut, &vec![4u8; KEY_SIZE]);
         let value_ptr = write_data(&mut fe_mut, b"new value");
 
         leave_default_data(&mut fe_mut);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
-        match result.unwrap_err() {
-            VmError::CommunicationErr {
-                source:
-                    CommunicationError::RegionLengthTooBig {
-                        length, max_length, ..
-                    },
-                ..
-            } => {
-                assert_eq!(length, 300 * 1024);
-                assert_eq!(max_length, MAX_LENGTH_DB_KEY);
-            }
-            err => panic!("unexpected error: {err:?}"),
-        };
+        assert_eq!(result.unwrap_err().to_string(), format!("Generic error: Key too big. Tried to write {KEY_SIZE} bytes to storage, limit is {MAX_LENGTH_DB_KEY}."));
     }
 
     #[test]
@@ -904,25 +910,14 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
+        const VAL_SIZE: usize = 300 * 1024;
         let key_ptr = write_data(&mut fe_mut, b"new storage key");
-        let value_ptr = write_data(&mut fe_mut, &vec![5u8; 300 * 1024]);
+        let value_ptr = write_data(&mut fe_mut, &vec![5u8; VAL_SIZE]);
 
         leave_default_data(&mut fe_mut);
 
         let result = do_db_write(fe_mut, key_ptr, value_ptr);
-        match result.unwrap_err() {
-            VmError::CommunicationErr {
-                source:
-                    CommunicationError::RegionLengthTooBig {
-                        length, max_length, ..
-                    },
-                ..
-            } => {
-                assert_eq!(length, 300 * 1024);
-                assert_eq!(max_length, MAX_LENGTH_DB_VALUE);
-            }
-            err => panic!("unexpected error: {err:?}"),
-        };
+        assert_eq!(result.unwrap_err().to_string(), format!("Generic error: Value too big. Tried to write {VAL_SIZE} bytes to storage, limit is {MAX_LENGTH_DB_VALUE}."));
     }
 
     #[test]
