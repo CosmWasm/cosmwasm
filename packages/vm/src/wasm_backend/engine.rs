@@ -87,16 +87,16 @@ mod tests {
     #[test]
     fn limit_to_pages_works() {
         // rounds down
-        assert_eq!(limit_to_pages(Size::kilo(0)), Pages(0));
-        assert_eq!(limit_to_pages(Size(1)), Pages(0));
+        assert_eq!(limit_to_pages(Size::new(0)), Pages(0));
+        assert_eq!(limit_to_pages(Size::new(1)), Pages(0));
         assert_eq!(limit_to_pages(Size::kibi(63)), Pages(0));
         assert_eq!(limit_to_pages(Size::kibi(64)), Pages(1));
         assert_eq!(limit_to_pages(Size::kibi(65)), Pages(1));
-        assert_eq!(limit_to_pages(Size(u32::MAX as usize)), Pages(65535));
+        assert_eq!(limit_to_pages(Size::new(u32::MAX as usize)), Pages(65535));
         // caps at 4 GiB
         assert_eq!(limit_to_pages(Size::gibi(3)), Pages(49152));
         assert_eq!(limit_to_pages(Size::gibi(4)), Pages(65536));
         assert_eq!(limit_to_pages(Size::gibi(5)), Pages(65536));
-        assert_eq!(limit_to_pages(Size(usize::MAX)), Pages(65536));
+        assert_eq!(limit_to_pages(Size::new(usize::MAX)), Pages(65536));
     }
 }
