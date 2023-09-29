@@ -118,6 +118,12 @@ impl From<StdAck> for Binary {
     }
 }
 
+impl From<StdAck> for Option<Binary> {
+    fn from(original: StdAck) -> Option<Binary> {
+        Some(original.into())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -240,7 +240,7 @@ fn handle_dispatch_packet() {
     );
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> =
-        from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
+        from_slice(&res.acknowledgement.unwrap(), DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(
         ack.unwrap_err(),
         "invalid packet: account channel-123 not found"
@@ -255,7 +255,7 @@ fn handle_dispatch_packet() {
 
     // assert app-level success
     let ack: AcknowledgementMsg<DispatchResponse> =
-        from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
+        from_slice(&res.acknowledgement.unwrap(), DESERIALIZATION_LIMIT).unwrap();
     ack.unwrap();
 
     // and we dispatch the BankMsg
@@ -293,6 +293,6 @@ fn handle_dispatch_packet() {
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> =
-        from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
+        from_slice(&res.acknowledgement.unwrap(), DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`");
 }
