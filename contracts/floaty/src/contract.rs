@@ -33,6 +33,7 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> 
     }
 }
 
+#[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
 fn query_run(instruction: &str, args: Vec<Value>) -> StdResult<Value> {
     #[cfg(not(target_arch = "wasm32"))]
     panic!();
