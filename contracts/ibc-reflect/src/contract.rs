@@ -255,8 +255,7 @@ pub fn ibc_packet_receive(
         // we try to capture all app-level errors and convert them into
         // acknowledgement packets that contain an error code.
         let acknowledgement = encode_ibc_error(format!("invalid packet: {e}"));
-        Ok(IbcReceiveResponse::new()
-            .set_ack(acknowledgement)
+        Ok(IbcReceiveResponse::new(acknowledgement)
             .add_event(Event::new("ibc").add_attribute("packet", "receive")))
     })
 }
@@ -269,9 +268,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     };
     let acknowledgement = to_json_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
-    Ok(IbcReceiveResponse::new()
-        .set_ack(acknowledgement)
-        .add_attribute("action", "receive_who_am_i"))
+    Ok(IbcReceiveResponse::new(acknowledgement).add_attribute("action", "receive_who_am_i"))
 }
 
 // processes PacketMsg::Balances variant
@@ -284,9 +281,7 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     };
     let acknowledgement = to_json_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
-    Ok(IbcReceiveResponse::new()
-        .set_ack(acknowledgement)
-        .add_attribute("action", "receive_balances"))
+    Ok(IbcReceiveResponse::new(acknowledgement).add_attribute("action", "receive_balances"))
 }
 
 // processes PacketMsg::Dispatch variant
@@ -307,8 +302,7 @@ fn receive_dispatch(
     // we wrap it in a submessage to properly report errors
     let msg = SubMsg::reply_on_error(wasm_msg, RECEIVE_DISPATCH_ID);
 
-    Ok(IbcReceiveResponse::new()
-        .set_ack(acknowledgement)
+    Ok(IbcReceiveResponse::new(acknowledgement)
         .add_submessage(msg)
         .add_attribute("action", "receive_dispatch"))
 }
@@ -324,8 +318,7 @@ fn execute_error(text: String) -> StdResult<IbcReceiveResponse> {
 fn execute_return_msgs(msgs: Vec<CosmosMsg>) -> StdResult<IbcReceiveResponse> {
     let acknowledgement = to_json_binary(&AcknowledgementMsg::<ReturnMsgsResponse>::Ok(()))?;
 
-    Ok(IbcReceiveResponse::new()
-        .set_ack(acknowledgement)
+    Ok(IbcReceiveResponse::new(acknowledgement)
         .add_messages(msgs)
         .add_attribute("action", "receive_dispatch"))
 }
