@@ -4,6 +4,7 @@ use rand_chacha::rand_core::RngCore;
 use crate::floats::{random_f32, random_f64};
 
 /// Not intended for direct usage
+#[cfg_attr(not(target_arch = "wasm32"), allow(unused_macros))]
 macro_rules! run_instr {
     ($instr:expr, $input:expr, $input_ty:ty, $return_ty:ty) => {{
         let input: $input_ty = $input;
@@ -23,9 +24,11 @@ macro_rules! run_instr {
         ret
     }};
 }
+#[cfg_attr(not(target_arch = "wasm32"), allow(unused_imports))]
 pub(crate) use run_instr;
 
 /// Helper to run a single WebAssembly instruction in a type-safe way
+#[cfg_attr(not(target_arch = "wasm32"), allow(unused_macros))]
 macro_rules! run {
     ("f32.eq", $input1:expr, $input2:expr) => {
         $crate::instructions::run_instr!("f32.eq", $input1, f32, $input2, f32, u32)
@@ -244,6 +247,7 @@ macro_rules! run {
         $crate::instructions::run_instr!("i64.trunc_sat_f64_u", $input, f64, u64)
     };
 }
+#[cfg_attr(not(target_arch = "wasm32"), allow(unused_imports))]
 pub(crate) use run;
 
 #[cw_serde]
@@ -471,7 +475,7 @@ pub fn random_args_for(instr: &str, rng: &mut impl RngCore) -> Vec<Value> {
     }
 }
 
-pub const FLOAT_INSTRUCTIONS: [&'static str; 70] = [
+pub const FLOAT_INSTRUCTIONS: [&str; 70] = [
     "f32.eq",
     "f32.ne",
     "f32.lt",
