@@ -203,12 +203,7 @@ impl Coins {
                 if coin.amount.is_zero() {
                     return Ok(());
                 }
-                return Err(OverflowError::new(
-                    OverflowOperation::Sub,
-                    Uint128::zero(),
-                    coin.amount,
-                )
-                .into());
+                return Err(OverflowError::new(OverflowOperation::Sub).into());
             }
         }
 

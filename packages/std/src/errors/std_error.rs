@@ -493,24 +493,14 @@ impl fmt::Display for OverflowOperation {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
-#[error("Cannot {operation} with {operand1} and {operand2}")]
+#[error("Cannot {operation} with given operands")]
 pub struct OverflowError {
     pub operation: OverflowOperation,
-    pub operand1: String,
-    pub operand2: String,
 }
 
 impl OverflowError {
-    pub fn new(
-        operation: OverflowOperation,
-        operand1: impl ToString,
-        operand2: impl ToString,
-    ) -> Self {
-        Self {
-            operation,
-            operand1: operand1.to_string(),
-            operand2: operand2.to_string(),
-        }
+    pub fn new(operation: OverflowOperation) -> Self {
+        Self { operation }
     }
 }
 
@@ -521,38 +511,28 @@ impl OverflowError {
 /// [`Uint256`]: crate::Uint256
 /// [`Uint128`]: crate::Uint128
 #[derive(Error, Debug, PartialEq, Eq)]
-#[error("Error converting {source_type} to {target_type} for {value}")]
+#[error("Error converting {source_type} to {target_type}")]
 pub struct ConversionOverflowError {
     pub source_type: &'static str,
     pub target_type: &'static str,
-    pub value: String,
 }
 
 impl ConversionOverflowError {
-    pub fn new(
-        source_type: &'static str,
-        target_type: &'static str,
-        value: impl Into<String>,
-    ) -> Self {
+    pub fn new(source_type: &'static str, target_type: &'static str) -> Self {
         Self {
             source_type,
             target_type,
-            value: value.into(),
         }
     }
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Cannot divide {operand} by zero")]
-pub struct DivideByZeroError {
-    pub operand: String,
-}
+#[derive(Error, Debug, Default, PartialEq, Eq)]
+#[error("Cannot divide by zero")]
+pub struct DivideByZeroError;
 
 impl DivideByZeroError {
-    pub fn new(operand: impl ToString) -> Self {
-        Self {
-            operand: operand.to_string(),
-        }
+    pub fn new() -> Self {
+        Self
     }
 }
 
@@ -789,87 +769,73 @@ mod tests {
 
     #[test]
     fn underflow_works_for_u128() {
-        let error =
-            StdError::overflow(OverflowError::new(OverflowOperation::Sub, 123u128, 456u128));
-        match error {
+        let error = StdError::overflow(OverflowError::new(OverflowOperation::Sub));
+        assert!(matches!(
+            error,
             StdError::Overflow {
-                source:
-                    OverflowError {
-                        operation,
-                        operand1,
-                        operand2,
-                    },
+                source: OverflowError {
+                    operation: OverflowOperation::Sub
+                },
                 ..
-            } => {
-                assert_eq!(operation, OverflowOperation::Sub);
-                assert_eq!(operand1, "123");
-                assert_eq!(operand2, "456");
             }
-            _ => panic!("expect different error"),
-        }
+        ));
     }
 
     #[test]
     fn overflow_works_for_i64() {
-        let error = StdError::overflow(OverflowError::new(OverflowOperation::Sub, 777i64, 1234i64));
-        match error {
+        let error = StdError::overflow(OverflowError::new(OverflowOperation::Sub));
+        assert!(matches!(
+            error,
             StdError::Overflow {
-                source:
-                    OverflowError {
-                        operation,
-                        operand1,
-                        operand2,
-                    },
+                source: OverflowError {
+                    operation: OverflowOperation::Sub
+                },
                 ..
-            } => {
-                assert_eq!(operation, OverflowOperation::Sub);
-                assert_eq!(operand1, "777");
-                assert_eq!(operand2, "1234");
             }
-            _ => panic!("expect different error"),
-        }
+        ));
     }
 
     #[test]
     fn divide_by_zero_works() {
-        let error = StdError::divide_by_zero(DivideByZeroError::new(123u128));
-        match error {
+        let error = StdError::divide_by_zero(DivideByZeroError);
+        assert!(matches!(
+            error,
             StdError::DivideByZero {
-                source: DivideByZeroError { operand },
+                source: DivideByZeroError,
                 ..
-            } => assert_eq!(operand, "123"),
-            _ => panic!("expect different error"),
-        }
+            }
+        ));
     }
 
     #[test]
     fn implements_debug() {
-        let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
+        let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Debug: {error:?}");
         #[cfg(not(feature = "backtraces"))]
-        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" } }"#;
+        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub } }"#;
         #[cfg(feature = "backtraces")]
-        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" }, backtrace: <disabled> }"#;
+        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub }, backtrace: <disabled> }"#;
         assert_eq!(embedded, expected);
     }
 
     #[test]
     fn implements_display() {
-        let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
+        let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Display: {error}");
-        assert_eq!(embedded, "Display: Overflow: Cannot Sub with 3 and 5");
+        assert_eq!(
+            embedded,
+            "Display: Overflow: Cannot Sub with given operands"
+        );
     }
 
     #[test]
     fn implements_partial_eq() {
-        let u1 = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
-        let u2 = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
-        let u3 = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 7));
+        let u1 = StdError::from(OverflowError::new(OverflowOperation::Sub));
+        let u2 = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let s1 = StdError::serialize_err("Book", "Content too long");
         let s2 = StdError::serialize_err("Book", "Content too long");
         let s3 = StdError::serialize_err("Book", "Title too long");
         assert_eq!(u1, u2);
-        assert_ne!(u1, u3);
         assert_ne!(u1, s1);
         assert_eq!(s1, s2);
         assert_ne!(s1, s3);
