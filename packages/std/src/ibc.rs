@@ -492,14 +492,14 @@ pub struct IbcBasicResponse<T = Empty> {
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/learn/advanced/events
     pub attributes: Vec<Attribute>,
     /// Extra, custom events separate from the main `wasm` one. These will have
     /// `wasm-` prepended to the type.
     ///
     /// More info about events can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/learn/advanced/events
     pub events: Vec<Event>,
 }
 
@@ -637,14 +637,14 @@ pub struct IbcReceiveResponse<T = Empty> {
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/learn/advanced/events
     pub attributes: Vec<Attribute>,
     /// Extra, custom events separate from the main `wasm` one. These will have
     /// `wasm-` prepended to the type.
     ///
     /// More info about events can be found in [*Cosmos SDK* docs].
     ///
-    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/core/events.html
+    /// [*Cosmos SDK* docs]: https://docs.cosmos.network/main/learn/advanced/events
     pub events: Vec<Event>,
 }
 
