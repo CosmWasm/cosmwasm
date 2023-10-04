@@ -35,7 +35,7 @@ pub enum BankQuery {
     AllDenomMetadata { pagination: Option<PageRequest> },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct SupplyResponse {
@@ -48,7 +48,7 @@ impl_response_constructor!(SupplyResponse, amount: Coin);
 
 impl QueryResponseType for SupplyResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct BalanceResponse {
@@ -61,7 +61,7 @@ impl_response_constructor!(BalanceResponse, amount: Coin);
 
 impl QueryResponseType for BalanceResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct AllBalanceResponse {
