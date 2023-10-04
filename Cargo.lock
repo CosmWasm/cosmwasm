@@ -438,6 +438,7 @@ version = "1.4.0"
 dependencies = [
  "criterion",
  "digest 0.10.6",
+ "ecdsa",
  "ed25519-zebra",
  "english-numbers",
  "hex",
