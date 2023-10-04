@@ -11,9 +11,9 @@ pub struct Coin {
 }
 
 impl Coin {
-    pub fn new(amount: u128, denom: impl Into<String>) -> Self {
+    pub fn new(amount: impl Into<Uint128>, denom: impl Into<String>) -> Self {
         Coin {
-            amount: Uint128::new(amount),
+            amount: amount.into(),
             denom: denom.into(),
         }
     }
@@ -195,16 +195,16 @@ mod tests {
 
     #[test]
     fn parse_coin() {
-        let expected = Coin::new(123, "ucosm");
+        let expected = Coin::new(123u128, "ucosm");
         assert_eq!("123ucosm".parse::<Coin>().unwrap(), expected);
         // leading zeroes should be ignored
         assert_eq!("00123ucosm".parse::<Coin>().unwrap(), expected);
         // 0 amount parses correctly
-        assert_eq!("0ucosm".parse::<Coin>().unwrap(), Coin::new(0, "ucosm"));
+        assert_eq!("0ucosm".parse::<Coin>().unwrap(), Coin::new(0u128, "ucosm"));
         // ibc denom should work
         let ibc_str = "11111ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2";
         let ibc_coin = Coin::new(
-            11111,
+            11111u128,
             "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
         );
         assert_eq!(ibc_str.parse::<Coin>().unwrap(), ibc_coin);
@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn debug_coin() {
-        let coin = Coin::new(123, "ucosm");
+        let coin = Coin::new(123u128, "ucosm");
         assert_eq!(format!("{coin:?}"), r#"Coin { 123 "ucosm" }"#);
     }
 }

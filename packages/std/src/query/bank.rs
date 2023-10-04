@@ -106,11 +106,11 @@ mod tests {
 
     #[test]
     fn private_constructor_works() {
-        let response = AllBalanceResponse::new(vec![Coin::new(1234, "uatom")]);
+        let response = AllBalanceResponse::new(vec![Coin::new(1234u128, "uatom")]);
         assert_eq!(
             response,
             AllBalanceResponse {
-                amount: vec![Coin::new(1234, "uatom")]
+                amount: vec![Coin::new(1234u128, "uatom")]
             }
         );
     }

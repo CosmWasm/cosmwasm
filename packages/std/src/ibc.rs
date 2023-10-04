@@ -791,7 +791,7 @@ mod tests {
         let msg = IbcMsg::Transfer {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
-            amount: Coin::new(12345678, "uatom"),
+            amount: Coin::new(12345678u128, "uatom"),
             timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
         };
         let encoded = to_string(&msg).unwrap();
