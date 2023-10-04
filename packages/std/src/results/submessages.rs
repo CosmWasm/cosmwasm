@@ -124,6 +124,7 @@ pub struct Reply {
 ///
 /// ```
 /// # use cosmwasm_std::{to_json_string, Binary, Event, SubMsgResponse, SubMsgResult};
+/// #[allow(deprecated)]
 /// let response = SubMsgResponse {
 ///     data: Some(Binary::from_base64("MTIzCg==").unwrap()),
 ///     events: vec![Event::new("wasm").add_attribute("fo", "ba")],
@@ -203,6 +204,7 @@ impl From<SubMsgResult> for Result<SubMsgResponse, String> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct SubMsgResponse {
     pub events: Vec<Event>,
+    #[deprecated = "deprecated in the cosmos-sdk in favor of msg_responses"]
     pub data: Option<Binary>,
     #[serde(default)]
     pub msg_responses: Vec<MsgResponseValue>,
@@ -215,6 +217,7 @@ pub struct MsgResponseValue {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use crate::{from_json, to_json_vec, StdError, StdResult};
