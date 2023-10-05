@@ -37,7 +37,8 @@ schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.10"
 thiserror = "1.0.26"
-enumset = "1.1.0"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
+# Temporary hack to avoid enumset 1.0 trait `EnumSetTypeRepr` is private
+enumset = "1.1.0"
