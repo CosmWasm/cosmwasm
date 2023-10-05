@@ -888,7 +888,7 @@ mod tests {
     }
 
     #[test]
-    fn from_std_string_fromutf8error_works() {
+    fn from_std_string_from_utf8error_works() {
         let error: StdError = String::from_utf8(b"Hello \xF0\x90\x80World".to_vec())
             .unwrap_err()
             .into();
