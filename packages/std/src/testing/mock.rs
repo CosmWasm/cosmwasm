@@ -278,11 +278,11 @@ impl MockApi {
     /// # use cosmwasm_std::testing::MockApi;
     /// #
     /// let mock_api = MockApi::default();
-    /// let addr = mock_api.make_addr("creator");
+    /// let addr = mock_api.addr_make("creator");
     ///
     /// assert_eq!("cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp", addr.to_string());
     /// ```
-    pub fn make_addr(&self, input: &str) -> Addr {
+    pub fn addr_make(&self, input: &str) -> Addr {
         let digest = Sha256::digest(input).to_vec();
         if self.bech32_input_length > 0 && self.bech32_input_length <= digest.len() {
             if let Ok(address) = encode(
@@ -2325,34 +2325,34 @@ mod tests {
         // address generated using default settings
         assert_eq!(
             "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
-            mock_api.make_addr("creator").to_string()
+            mock_api.addr_make("creator").to_string()
         );
 
         // address generated using default settings and from empty input string
         assert_eq!(
             "cosmwasm1uwcvgs5clswpfxhm7nyfjmaeysn6us0yvjdexn9yjkv3k7zjhp2sly4xh9",
-            mock_api.make_addr("").to_string()
+            mock_api.addr_make("").to_string()
         );
 
         // address generated using "juno" prefix
         mock_api.bech32_prefix = "juno";
         assert_eq!(
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp",
-            mock_api.make_addr("creator").to_string()
+            mock_api.addr_make("creator").to_string()
         );
 
         // address generated using "juno" prefix and 20 bytes from the SHA256 digest
         mock_api.bech32_input_length = 20;
         assert_eq!(
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qywe5hq",
-            mock_api.make_addr("creator").to_string()
+            mock_api.addr_make("creator").to_string()
         );
 
         // address generated using "juno" prefix, 20 bytes from the SHA256 digest and Bech32m variant
         mock_api.bech32_variant = Variant::Bech32m;
         assert_eq!(
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8q3jfcjz",
-            mock_api.make_addr("creator").to_string()
+            mock_api.addr_make("creator").to_string()
         );
     }
 
@@ -2368,7 +2368,7 @@ mod tests {
                 bech32_prefix: "",
                 ..Default::default()
             }
-            .make_addr("creator")
+            .addr_make("creator")
             .to_string()
         );
 
@@ -2379,7 +2379,7 @@ mod tests {
                 bech32_input_length: 0,
                 ..Default::default()
             }
-            .make_addr("creator")
+            .addr_make("creator")
             .to_string()
         );
 
@@ -2390,7 +2390,7 @@ mod tests {
                 bech32_input_length: 120,
                 ..Default::default()
             }
-            .make_addr("creator")
+            .addr_make("creator")
             .to_string()
         );
     }
