@@ -997,6 +997,42 @@ mod tests {
     }
 
     #[test]
+    fn call_execute_on_recompiled_contract() {
+        let options = make_testing_options();
+        let cache = unsafe { Cache::new(options.clone()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        // Remove compiled module from disk
+        remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
+
+        // Recompiles the Wasm (miss on all caches)
+        let backend = mock_backend(&[]);
+        let mut instance = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 0);
+        assert_eq!(cache.stats().misses, 1);
+
+        // instantiate
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
+        let response = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.messages.len(), 0);
+
+        // execute
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"release":{}}"#;
+        let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.messages.len(), 1);
+    }
+
+    #[test]
     fn use_multiple_cached_instances_of_same_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
