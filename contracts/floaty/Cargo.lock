@@ -699,7 +699,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vm",
- "enumset",
  "rand_chacha",
  "schemars",
  "serde",

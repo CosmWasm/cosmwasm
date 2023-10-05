@@ -454,7 +454,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vm",
- "enumset",
  "hex",
  "hex-literal",
  "rlp",
