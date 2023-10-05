@@ -39,5 +39,3 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator", "stargate"] }
-# Temporary hack to avoid enumset 1.0 trait `EnumSetTypeRepr` is private
-enumset = "1.1.0"
