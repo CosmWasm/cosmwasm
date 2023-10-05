@@ -113,14 +113,6 @@ const SHUFFLES_DECODE: usize = 2;
 /// Prefix should not be empty.
 const BECH32_PREFIX: &str = "cosmwasm";
 
-/// Default Bech32 variant used when creating Bech32 encoded address.
-const BECH32_VARIANT: Variant = Variant::Bech32;
-
-/// Number of bytes taken from digest as input data for generating Bech32 encoded addresses.
-///
-/// This value should be currently set to 32 or 20 bytes.
-const BECH32_INPUT_LENGTH: usize = 32;
-
 // MockApi zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
 // not really smart, but allows us to see a difference (and consistent length for canonical addresses)
@@ -131,10 +123,6 @@ pub struct MockApi {
     canonical_length: usize,
     /// Prefix used for creating addresses in Bech32 encoding.
     bech32_prefix: &'static str,
-    /// Variant of the Bech32 encoding used for generating addresses.
-    bech32_variant: Variant,
-    /// Maximum length of the inout data used for generating Bech32 encoded addresses.
-    bech32_input_length: usize,
 }
 
 impl Default for MockApi {
@@ -142,8 +130,6 @@ impl Default for MockApi {
         MockApi {
             canonical_length: CANONICAL_LENGTH,
             bech32_prefix: BECH32_PREFIX,
-            bech32_variant: BECH32_VARIANT,
-            bech32_input_length: BECH32_INPUT_LENGTH,
         }
     }
 }
@@ -269,6 +255,26 @@ impl Api for MockApi {
 }
 
 impl MockApi {
+    /// Returns [MockApi] with Bech32 prefix set to provided value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use cosmwasm_std::Addr;
+    /// # use cosmwasm_std::testing::MockApi;
+    /// #
+    /// let mock_api = MockApi::with_prefix("juno");
+    /// let addr = mock_api.addr_make("creator").to_string();
+    ///
+    /// assert_eq!("juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp", addr);
+    /// ```
+    pub fn with_prefix(prefix: &'static str) -> Self {
+        Self {
+            bech32_prefix: prefix,
+            ..Default::default()
+        }
+    }
+
     /// Returns an address built from provided input string.
     ///
     /// # Example
@@ -278,22 +284,16 @@ impl MockApi {
     /// # use cosmwasm_std::testing::MockApi;
     /// #
     /// let mock_api = MockApi::default();
-    /// let addr = mock_api.addr_make("creator");
+    /// let addr = mock_api.addr_make("creator").to_string();
     ///
-    /// assert_eq!("cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp", addr.to_string());
+    /// assert_eq!("cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp", addr);
     /// ```
     pub fn addr_make(&self, input: &str) -> Addr {
         let digest = Sha256::digest(input).to_vec();
-        if self.bech32_input_length > 0 && self.bech32_input_length <= digest.len() {
-            if let Ok(address) = encode(
-                self.bech32_prefix,
-                (&digest[..self.bech32_input_length]).to_base32(),
-                self.bech32_variant,
-            ) {
-                return Addr::unchecked(address);
-            }
+        match encode(self.bech32_prefix, digest.to_base32(), Variant::Bech32) {
+            Ok(address) => Addr::unchecked(address),
+            Err(reason) => panic!("Generating address failed with reason: {}", reason),
         }
-        Addr::unchecked(input)
     }
 }
 
@@ -2320,78 +2320,28 @@ mod tests {
 
     #[test]
     fn making_an_address_works() {
-        let mut mock_api = MockApi::default();
+        let mock_api = MockApi::default();
 
-        // address generated using default settings
         assert_eq!(
             "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
             mock_api.addr_make("creator").to_string()
         );
 
-        // address generated using default settings and from empty input string
         assert_eq!(
             "cosmwasm1uwcvgs5clswpfxhm7nyfjmaeysn6us0yvjdexn9yjkv3k7zjhp2sly4xh9",
             mock_api.addr_make("").to_string()
         );
 
-        // address generated using "juno" prefix
-        mock_api.bech32_prefix = "juno";
+        let mock_api = MockApi::with_prefix("juno");
         assert_eq!(
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp",
-            mock_api.addr_make("creator").to_string()
-        );
-
-        // address generated using "juno" prefix and 20 bytes from the SHA256 digest
-        mock_api.bech32_input_length = 20;
-        assert_eq!(
-            "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qywe5hq",
-            mock_api.addr_make("creator").to_string()
-        );
-
-        // address generated using "juno" prefix, 20 bytes from the SHA256 digest and Bech32m variant
-        mock_api.bech32_variant = Variant::Bech32m;
-        assert_eq!(
-            "juno1h34lmpywh4upnjdg90cjf4j70aee6z8q3jfcjz",
             mock_api.addr_make("creator").to_string()
         );
     }
 
     #[test]
-    fn making_an_address_fails() {
-        // when for some reason generating the address fails,
-        // then the original input is returned as an unchecked address
-
-        // empty prefix
-        assert_eq!(
-            "creator",
-            MockApi {
-                bech32_prefix: "",
-                ..Default::default()
-            }
-            .addr_make("creator")
-            .to_string()
-        );
-
-        // no bytes taken from SHA256 digest
-        assert_eq!(
-            "creator",
-            MockApi {
-                bech32_input_length: 0,
-                ..Default::default()
-            }
-            .addr_make("creator")
-            .to_string()
-        );
-
-        // SHA256 digest has not so many bytes as expected
-        assert_eq!(
-            "creator",
-            MockApi {
-                bech32_input_length: 120,
-                ..Default::default()
-            }
-            .addr_make("creator")
-            .to_string()
-        );
+    #[should_panic(expected = "Generating address failed with reason: invalid length")]
+    fn making_an_address_with_empty_prefix_should_panic() {
+        MockApi::with_prefix("").addr_make("creator");
     }
 }
