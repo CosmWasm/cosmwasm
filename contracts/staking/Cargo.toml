@@ -40,5 +40,3 @@ snafu = "0.6.6"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["staking"] }
-# Temporary hack to avoid enumset 1.0 trait `EnumSetTypeRepr` is private
-enumset = "1.1.0"
