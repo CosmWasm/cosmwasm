@@ -377,11 +377,22 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        // Module will run with a different engine, so we can set memory limit to None
-        let engine = make_compiling_engine(None);
-        let module = compile(&engine, &wasm)?;
-        let module_size = cache.fs_cache.store(checksum, &module)?;
+        {
+            // Module will run with a different engine, so we can set memory limit to None
+            let compiling_engine = make_compiling_engine(None);
+            // Note that module cannot be used directly as it was not created with the
+            // runtime engine.
+            let module = compile(&compiling_engine, &wasm)?;
+            cache.fs_cache.store(checksum, &module)?;
+        }
 
+        // This time we'll hit the file-system cache.
+        let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)?
+        else {
+            return Err(VmError::generic_err(
+                "Can't load module from file system cache after storing it to file system cache",
+            ));
+        };
         cache
             .memory_cache
             .store(checksum, module.clone(), module_size)?;
