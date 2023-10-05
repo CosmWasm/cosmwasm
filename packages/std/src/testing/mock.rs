@@ -263,12 +263,12 @@ impl MockApi {
     /// # use cosmwasm_std::Addr;
     /// # use cosmwasm_std::testing::MockApi;
     /// #
-    /// let mock_api = MockApi::with_prefix("juno");
+    /// let mock_api = MockApi::default().with_prefix("juno");
     /// let addr = mock_api.addr_make("creator").to_string();
     ///
     /// assert_eq!("juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp", addr);
     /// ```
-    pub fn with_prefix(prefix: &'static str) -> Self {
+    pub fn with_prefix(self, prefix: &'static str) -> Self {
         Self {
             bech32_prefix: prefix,
             ..Default::default()
@@ -2332,7 +2332,7 @@ mod tests {
             mock_api.addr_make("").to_string()
         );
 
-        let mock_api = MockApi::with_prefix("juno");
+        let mock_api = MockApi::default().with_prefix("juno");
         assert_eq!(
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp",
             mock_api.addr_make("creator").to_string()
@@ -2342,6 +2342,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "Generating address failed with reason: invalid length")]
     fn making_an_address_with_empty_prefix_should_panic() {
-        MockApi::with_prefix("").addr_make("creator");
+        MockApi::default().with_prefix("").addr_make("creator");
     }
 }
