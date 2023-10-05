@@ -33,8 +33,9 @@ cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort", "cosmwasm_1_3"] }
 rust-argon2 = "0.8"
 thiserror = "1.0.26"
-enumset = "1.1.0"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
 tempfile = "3.1.0"
+# Temporary hack to avoid enumset 1.0 trait `EnumSetTypeRepr` is private
+enumset = "1.1.0"
