@@ -854,7 +854,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let res =
@@ -873,7 +873,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let res =
@@ -894,7 +894,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 2);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let res =
@@ -919,7 +919,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let response =
@@ -947,7 +947,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let response =
@@ -977,7 +977,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 2);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let response =
@@ -1005,7 +1005,7 @@ mod tests {
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
 
-        // init instance 1
+        // instantiate instance 1
         let mut instance = cache
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
@@ -1017,7 +1017,7 @@ mod tests {
         assert_eq!(msgs.len(), 0);
         let backend1 = instance.recycle().unwrap();
 
-        // init instance 2
+        // instantiate instance 2
         let mut instance = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
