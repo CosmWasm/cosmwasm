@@ -790,7 +790,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vm",
- "enumset",
  "schemars",
  "serde",
  "sha2 0.10.3",

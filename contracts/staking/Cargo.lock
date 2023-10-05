@@ -1466,7 +1466,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vm",
- "enumset",
  "schemars",
  "serde",
  "snafu",
