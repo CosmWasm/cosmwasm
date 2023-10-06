@@ -543,6 +543,30 @@ mod tests {
         }
     }
 
+    /// Takes an instance and executes it
+    fn test_hackatom_instance_execution<A, S, Q>(instance: &mut Instance<A, S, Q>)
+    where
+        A: BackendApi + 'static,
+        S: Storage + 'static,
+        Q: Querier + 'static,
+    {
+        // instantiate
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
+        let response = call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.messages.len(), 0);
+
+        // execute
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"release":{}}"#;
+        let response = call_execute::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.messages.len(), 1);
+    }
+
     #[test]
     fn new_base_dir_will_be_created() {
         let my_base_dir = TempDir::new()
@@ -1025,22 +1049,7 @@ mod tests {
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 0);
         assert_eq!(cache.stats().misses, 1);
-
-        // instantiate
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        let response = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-        assert_eq!(response.messages.len(), 0);
-
-        // execute
-        let info = mock_info("verifies", &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
-        let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-        assert_eq!(response.messages.len(), 1);
+        test_hackatom_instance_execution(&mut instance);
     }
 
     #[test]
