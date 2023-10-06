@@ -264,9 +264,9 @@ impl MockApi {
     /// # use cosmwasm_std::testing::MockApi;
     /// #
     /// let mock_api = MockApi::default().with_prefix("juno");
-    /// let addr = mock_api.addr_make("creator").to_string();
+    /// let addr = mock_api.addr_make("creator");
     ///
-    /// assert_eq!("juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp", addr);
+    /// assert_eq!(addr.to_string(), "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
     /// ```
     pub fn with_prefix(self, bech32_prefix: &'static str) -> Self {
         let MockApi {
@@ -287,9 +287,9 @@ impl MockApi {
     /// # use cosmwasm_std::testing::MockApi;
     /// #
     /// let mock_api = MockApi::default();
-    /// let addr = mock_api.addr_make("creator").to_string();
+    /// let addr = mock_api.addr_make("creator");
     ///
-    /// assert_eq!("cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp", addr);
+    /// assert_eq!(addr.to_string(), "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp");
     /// ```
     pub fn addr_make(&self, input: &str) -> Addr {
         let digest = Sha256::digest(input).to_vec();
@@ -2326,19 +2326,19 @@ mod tests {
         let mock_api = MockApi::default();
 
         assert_eq!(
+            mock_api.addr_make("creator").to_string(),
             "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
-            mock_api.addr_make("creator").to_string()
         );
 
         assert_eq!(
+            mock_api.addr_make("").to_string(),
             "cosmwasm1uwcvgs5clswpfxhm7nyfjmaeysn6us0yvjdexn9yjkv3k7zjhp2sly4xh9",
-            mock_api.addr_make("").to_string()
         );
 
         let mock_api = MockApi::default().with_prefix("juno");
         assert_eq!(
+            mock_api.addr_make("creator").to_string(),
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp",
-            mock_api.addr_make("creator").to_string()
         );
     }
 
