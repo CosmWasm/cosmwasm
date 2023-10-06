@@ -268,10 +268,13 @@ impl MockApi {
     ///
     /// assert_eq!("juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp", addr);
     /// ```
-    pub fn with_prefix(self, prefix: &'static str) -> Self {
+    pub fn with_prefix(self, bech32_prefix: &'static str) -> Self {
+        let MockApi {
+            canonical_length, ..
+        } = self;
         Self {
-            bech32_prefix: prefix,
-            ..Default::default()
+            canonical_length,
+            bech32_prefix,
         }
     }
 
