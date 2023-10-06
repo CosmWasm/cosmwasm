@@ -8,6 +8,8 @@ and this project adheres to
 
 ### Added
 
+- cosmwasm-std: Add `addr_make` and `with_prefix` for
+  `cosmwasm_std::testing::MockApi` ([#1905]).
 - cosmwasm-std: Add `abs` and `unsigned_abs` for `Int{64,128,256,512}`
   ([#1854]).
 - cosmwasm-std: Add `From<Int{64,128,256}>` for `Int512`,
@@ -25,6 +27,7 @@ and this project adheres to
 - cosmwasm-std: Add `SignedDecimal` and `SignedDecimal256` ([#1807]).
 - cosmwasm-vm: Allow float operations with NaN canonicalization ([#1864]).
 
+[#1905]: https://github.com/CosmWasm/cosmwasm/pull/1905
 [#1854]: https://github.com/CosmWasm/cosmwasm/pull/1854
 [#1861]: https://github.com/CosmWasm/cosmwasm/pull/1861
 [#1866]: https://github.com/CosmWasm/cosmwasm/pull/1866
