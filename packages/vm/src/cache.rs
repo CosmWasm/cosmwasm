@@ -1286,13 +1286,14 @@ mod tests {
 
         // check not pinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
+        test_hackatom_instance_execution(&mut instance);
 
         // first pin hits file system cache
         cache.pin(&checksum).unwrap();
@@ -1310,26 +1311,28 @@ mod tests {
 
         // check pinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
+        test_hackatom_instance_execution(&mut instance);
 
         // unpin
         cache.unpin(&checksum).unwrap();
 
         // verify unpinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 1);
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
+        test_hackatom_instance_execution(&mut instance);
 
         // unpin again has no effect
         cache.unpin(&checksum).unwrap();
