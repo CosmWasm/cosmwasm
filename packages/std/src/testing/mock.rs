@@ -268,14 +268,9 @@ impl MockApi {
     ///
     /// assert_eq!(addr.to_string(), "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
     /// ```
-    pub fn with_prefix(self, bech32_prefix: &'static str) -> Self {
-        let MockApi {
-            canonical_length, ..
-        } = self;
-        Self {
-            canonical_length,
-            bech32_prefix,
-        }
+    pub fn with_prefix(mut self, prefix: &'static str) -> Self {
+        self.bech32_prefix = prefix;
+        self
     }
 
     /// Returns an address built from provided input string.
