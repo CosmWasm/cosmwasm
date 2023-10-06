@@ -1361,13 +1361,14 @@ mod tests {
 
         // After the compilation in pin, the module can be used from pinned memory cache
         let backend = mock_backend(&[]);
-        let _ = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 0);
         assert_eq!(cache.stats().misses, 1);
+        test_hackatom_instance_execution(&mut instance);
     }
 
     #[test]
