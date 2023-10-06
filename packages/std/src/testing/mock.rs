@@ -109,8 +109,6 @@ const SHUFFLES_ENCODE: usize = 10;
 const SHUFFLES_DECODE: usize = 2;
 
 /// Default prefix used when creating Bech32 encoded address.
-///
-/// Prefix should not be empty.
 const BECH32_PREFIX: &str = "cosmwasm";
 
 // MockApi zero pads all human addresses to make them fit the canonical_length
@@ -257,6 +255,8 @@ impl Api for MockApi {
 impl MockApi {
     /// Returns [MockApi] with Bech32 prefix set to provided value.
     ///
+    /// Bech32 prefix must not be empty.
+    ///
     /// # Example
     ///
     /// ```
@@ -286,6 +286,12 @@ impl MockApi {
     ///
     /// assert_eq!(addr.to_string(), "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp");
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// This function panics when generating a valid address is not possible,
+    /// especially when Bech32 prefix set in function [with_prefix](Self::with_prefix) is empty.
+    ///
     pub fn addr_make(&self, input: &str) -> Addr {
         let digest = Sha256::digest(input).to_vec();
         match encode(self.bech32_prefix, digest.to_base32(), Variant::Bech32) {
