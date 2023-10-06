@@ -82,6 +82,7 @@ pub fn assert_hash_works_impl<T: Clone + Eq + Hash>(left: T, right: T, panic_msg
     }
 
     // Check clone
+    #[allow(clippy::redundant_clone)]
     let clone = left.clone();
     if left != clone {
         do_panic("assertion failed: `left == left.clone()`", panic_msg);
