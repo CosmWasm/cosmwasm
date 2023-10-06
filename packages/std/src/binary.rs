@@ -7,10 +7,10 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
 
-/// Binary is a wrapper around Vec<u8> to add base64 de/serialization
+/// Binary is a wrapper around `Vec<u8>` to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///
-/// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
+/// This is only needed as serde-json-{core,wasm} has a horrible encoding for `Vec<u8>`.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
@@ -96,7 +96,7 @@ impl fmt::Debug for Binary {
     }
 }
 
-/// Just like Vec<u8>, Binary is a smart pointer to [u8].
+/// Just like `Vec<u8>`, Binary is a smart pointer to [u8].
 /// This implements `*binary` for us and allows us to
 /// do `&*binary`, returning a `&[u8]` from a `&Binary`.
 /// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),

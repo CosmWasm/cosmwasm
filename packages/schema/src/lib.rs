@@ -36,13 +36,13 @@ pub use remove::remove_schemas;
 /// }
 /// ```
 pub use cosmwasm_schema_derive::cw_serde;
-/// Generates an [`Api`](crate::Api) for the contract. The body describes the message
+/// Generates an [Api] for the contract. The body describes the message
 /// types exported in the schema and allows setting contract name and version overrides.
 ///
 /// The only obligatory field is `instantiate` - to set the InstantiateMsg type.
 ///
 /// # Available fields
-/// See [`write_api`](crate::write_api).
+/// See [write_api].
 ///
 /// # Example
 /// ```

@@ -49,7 +49,7 @@ pub enum CosmosMsg<T = Empty> {
 
 /// The message types of the bank module.
 ///
-/// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto
+/// See <https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto>.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -70,7 +70,7 @@ pub enum BankMsg {
 
 /// The message types of the staking module.
 ///
-/// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto
+/// See <https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto>.
 #[cfg(feature = "staking")]
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -93,7 +93,7 @@ pub enum StakingMsg {
 
 /// The message types of the distribution module.
 ///
-/// See https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto
+/// See <https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto>.
 #[cfg(feature = "staking")]
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -129,7 +129,7 @@ fn binary_to_string(data: &Binary, fmt: &mut core::fmt::Formatter) -> core::fmt:
 
 /// The message types of the wasm module.
 ///
-/// See https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto
+/// See <https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto>.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Derivative, PartialEq, Eq, JsonSchema)]
 #[derivative(Debug)]
@@ -172,7 +172,7 @@ pub enum WasmMsg {
     },
     /// Instantiates a new contracts from previously uploaded Wasm code
     /// using a predictable address derivation algorithm implemented in
-    /// [`cosmwasm_std::instantiate2_address`].
+    /// [instantiate2_address](crate::addresses::instantiate2_address).
     ///
     /// This is translated to a [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L73-L96).
     /// `sender` is automatically filled with the current contract's address.

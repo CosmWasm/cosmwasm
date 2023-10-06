@@ -17,10 +17,10 @@ use crate::modules::current_wasmer_module_version;
 /// This needs to be done e.g. when switching between the jit/native engine.
 ///
 /// The string is used as a folder and should be named in a way that is
-/// easy to interprete for system admins. It should allow easy clearing
+/// easy to interpret for system admins. It should allow easy clearing
 /// of old versions.
 ///
-/// See https://github.com/wasmerio/wasmer/issues/2781 for more information
+/// See <https://github.com/wasmerio/wasmer/issues/2781> for more information
 /// on Wasmer's module stability concept.
 ///
 /// ## Version history:

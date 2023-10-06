@@ -1,7 +1,7 @@
 /// Performs a perfect shuffle (in shuffle)
 ///
-/// https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles
-/// https://en.wikipedia.org/wiki/In_shuffle
+/// <https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles>
+/// <https://en.wikipedia.org/wiki/In_shuffle>
 ///
 /// The number of shuffles required to restore the original order are listed in
 /// <https://oeis.org/A002326> and <https://oeis.org/A002326/list>, e.g.:

@@ -709,7 +709,7 @@ pub struct BankQuerier {
     supplies: HashMap<String, Uint128>,
     /// HashMap<address, coins>
     balances: HashMap<String, Vec<Coin>>,
-    /// Vec<Metadata>
+    /// `Vec<Metadata>`
     denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
 }
 

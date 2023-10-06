@@ -6,7 +6,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::{Binary, StdError, StdResult};
 
-/// This is a wrapper around Vec<u8> to add hex de/serialization
+/// This is a wrapper around `Vec<u8>` to add hex de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
@@ -79,7 +79,7 @@ impl fmt::Debug for HexBinary {
     }
 }
 
-/// Just like Vec<u8>, HexBinary is a smart pointer to [u8].
+/// Just like `Vec<u8>`, HexBinary is a smart pointer to [u8].
 /// This implements `*data` for us and allows us to
 /// do `&*data`, returning a `&[u8]` from a `&HexBinary`.
 /// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),

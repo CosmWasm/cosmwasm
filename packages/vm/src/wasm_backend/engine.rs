@@ -17,7 +17,7 @@ use super::limiting_tunables::LimitingTunables;
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
 /// most 65536 pages, for a total of 2^32 bytes (4 gibibytes).
-/// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
+/// <https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md>
 const MAX_WASM_PAGES: u32 = 65536;
 
 fn cost(_operator: &Operator) -> u64 {

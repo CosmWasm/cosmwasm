@@ -49,7 +49,7 @@ pub struct InstanceOptions {
 pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
-    /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245.
+    /// instance to a context. See also: <https://github.com/CosmWasm/cosmwasm/pull/245>.
     ///
     /// This instance should only be accessed via the Environment, which provides safe access.
     _inner: Box<WasmerInstance>,
@@ -350,7 +350,7 @@ where
     /// Returns the size of the default memory in pages.
     /// This provides a rough idea of the peak memory consumption. Note that
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
-    /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
+    /// <https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836>.
     pub fn memory_pages(&mut self) -> usize {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
         let (env, store) = fe_mut.data_and_store_mut();

@@ -90,7 +90,7 @@ impl AsRef<str> for Addr {
 /// Implement `Addr == &str`
 ///
 /// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
+/// Will be removed soon: <https://github.com/CosmWasm/cosmwasm/issues/1669>.
 impl PartialEq<&str> for Addr {
     fn eq(&self, rhs: &&str) -> bool {
         self.0 == *rhs
@@ -100,7 +100,7 @@ impl PartialEq<&str> for Addr {
 /// Implement `&str == Addr`
 ///
 /// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
+/// Will be removed soon: <https://github.com/CosmWasm/cosmwasm/issues/1669>.
 impl PartialEq<Addr> for &str {
     fn eq(&self, rhs: &Addr) -> bool {
         *self == rhs.0
@@ -110,7 +110,7 @@ impl PartialEq<Addr> for &str {
 /// Implement `Addr == String`
 ///
 /// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
+/// Will be removed soon: <https://github.com/CosmWasm/cosmwasm/issues/1669>.
 impl PartialEq<String> for Addr {
     fn eq(&self, rhs: &String) -> bool {
         &self.0 == rhs
@@ -120,7 +120,7 @@ impl PartialEq<String> for Addr {
 /// Implement `String == Addr`
 ///
 /// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
+/// Will be removed soon: <https://github.com/CosmWasm/cosmwasm/issues/1669>.
 impl PartialEq<Addr> for String {
     fn eq(&self, rhs: &Addr) -> bool {
         self == &rhs.0
@@ -262,7 +262,7 @@ impl From<CanonicalAddr> for HexBinary {
     }
 }
 
-/// Just like Vec<u8>, CanonicalAddr is a smart pointer to [u8].
+/// Just like `Vec<u8>`, CanonicalAddr is a smart pointer to [u8].
 /// This implements `*canonical_address` for us and allows us to
 /// do `&*canonical_address`, returning a `&[u8]` from a `&CanonicalAddr`.
 /// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
@@ -390,7 +390,7 @@ fn instantiate2_address_impl(
 }
 
 /// The "Basic Address" Hash from
-/// https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/docs/architecture/adr-028-public-key-addresses.md
+/// <https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/docs/architecture/adr-028-public-key-addresses.md>.
 fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
     let inner = Sha256::digest(ty.as_bytes());
     Sha256::new().chain(inner).chain(key).finalize().to_vec()

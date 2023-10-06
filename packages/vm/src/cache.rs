@@ -181,10 +181,10 @@ where
 
     /// Takes a Wasm bytecode and stores it to the cache.
     ///
-    /// This performs static checks, compiles the bytescode to a module and
+    /// This performs static checks, compiles the bytecode to a module and
     /// stores the Wasm file on disk.
     ///
-    /// This does the same as [`save_wasm_unchecked`] plus the static checks.
+    /// This does the same as [save_wasm_unchecked](Self::save_wasm_unchecked) plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.available_capabilities)?;
@@ -193,10 +193,10 @@ where
 
     /// Takes a Wasm bytecode and stores it to the cache.
     ///
-    /// This compiles the bytescode to a module and
+    /// This compiles the bytecode to a module and
     /// stores the Wasm file on disk.
     ///
-    /// This does the same as [`save_wasm`] but without the static checks.
+    /// This does the same as [save_wasm](Self::save_wasm) but without the static checks.
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
@@ -218,7 +218,7 @@ where
     pub fn remove_wasm(&self, checksum: &Checksum) -> VmResult<()> {
         let mut cache = self.inner.lock().unwrap();
 
-        // Remove compiled moduled from disk (if it exists).
+        // Remove compiled module from disk (if it exists).
         // Here we could also delete from memory caches but this is not really
         // necessary as they are pushed out from the LRU over time or disappear
         // when the node process restarts.
@@ -250,7 +250,7 @@ where
 
     /// Performs static anlyzation on this Wasm without compiling or instantiating it.
     ///
-    /// Once the contract was stored via [`save_wasm`], this can be called at any point in time.
+    /// Once the contract was stored via [save_wasm](Self::save_wasm), this can be called at any point in time.
     /// It does not depend on any caching of the contract.
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
         // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
@@ -420,7 +420,7 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
     let filepath = dir.into().join(filename).with_extension("wasm");
 
     // write data to file
-    // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
+    // Since the same filename (a collision resistant hash) cannot be generated from two different byte codes
     // (even if a malicious actor tried), it is safe to override.
     let mut file = OpenOptions::new()
         .write(true)

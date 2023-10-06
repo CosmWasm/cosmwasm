@@ -5,7 +5,7 @@ use crate::Binary;
 
 /// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
 ///
-/// This is used on return values for Querier as a nested result: Result<StdResult<T>, SystemError>
+/// This is used on return values for Querier as a nested result: `Result<StdResult<T>, SystemError>`
 /// The first wrap (SystemError) will trigger if the contract address doesn't exist,
 /// the QueryRequest is malformed, etc. The second wrap will be an error message from
 /// the contract itself.

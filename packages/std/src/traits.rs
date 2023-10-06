@@ -34,8 +34,8 @@ use crate::{DenomMetadata, PageRequest};
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
 pub trait Storage {
-    /// Returns None when key does not exist.
-    /// Returns Some(Vec<u8>) when key exists.
+    /// Returns `None` when key does not exist.
+    /// Returns `Some(Vec<u8>)` when key exists.
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
@@ -92,7 +92,7 @@ pub trait Storage {
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
-    /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
+    /// before and one that didn't exist. See <https://github.com/CosmWasm/cosmwasm/issues/290>.
     fn remove(&mut self, key: &[u8]);
 }
 

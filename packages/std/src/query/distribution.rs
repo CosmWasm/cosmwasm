@@ -50,8 +50,8 @@ impl QueryResponseType for DelegationRewardsResponse {}
 /// Modeled after the Cosmos SDK's [DecCoin] type.
 /// However, in contrast to the Cosmos SDK the `amount` string MUST always have a dot at JSON level,
 /// see <https://github.com/cosmos/cosmos-sdk/issues/10863>.
-/// Also if Cosmos SDK choses to migrate away from fixed point decimals
-/// (as shown [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/x/group/internal/math/dec.go#L13-L21 and discussed [here](https://github.com/cosmos/cosmos-sdk/issues/11783)),
+/// Also if Cosmos SDK chooses to migrate away from fixed point decimals
+/// (as shown [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/x/group/internal/math/dec.go#L13-L21) and discussed [here](https://github.com/cosmos/cosmos-sdk/issues/11783)),
 /// wasmd needs to truncate the decimal places to 18.
 ///
 /// [DecCoin]: (https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/base/v1beta1/coin.proto#L28-L38)

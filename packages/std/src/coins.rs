@@ -18,7 +18,7 @@ use crate::{
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Coins(BTreeMap<String, Coin>);
 
-/// Casting a Vec<Coin> to Coins.
+/// Casting a `Vec<Coin>` to Coins.
 /// The Vec can be out of order, but must not contain duplicate denoms.
 /// If you want to sum up duplicates, create an empty instance using `Coins::default` and
 /// use `Coins::add` to add your coins.
@@ -101,7 +101,7 @@ impl fmt::Display for Coins {
 }
 
 impl Coins {
-    /// Conversion to Vec<Coin>, while NOT consuming the original object.
+    /// Conversion to `Vec<Coin>`, while NOT consuming the original object.
     ///
     /// This produces a vector of coins that is sorted alphabetically by denom with
     /// no duplicate denoms.
@@ -109,7 +109,7 @@ impl Coins {
         self.0.values().cloned().collect()
     }
 
-    /// Conversion to Vec<Coin>, consuming the original object.
+    /// Conversion to `Vec<Coin>`, consuming the original object.
     ///
     /// This produces a vector of coins that is sorted alphabetically by denom with
     /// no duplicate denoms.

@@ -86,16 +86,16 @@ pub struct Backend<A: BackendApi, S: Storage, Q: Querier> {
 
 /// Access to the VM's backend storage, i.e. the chain
 pub trait Storage {
-    /// Returns Err on error.
-    /// Returns Ok(None) when key does not exist.
-    /// Returns Ok(Some(Vec<u8>)) when key exists.
+    /// Returns `Err` on error.
+    /// Returns `Ok(None)` when key does not exist.
+    /// Returns `Ok(Some(Vec<u8>))` when key exists.
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
     fn get(&self, key: &[u8]) -> BackendResult<Option<Vec<u8>>>;
 
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
-    /// Returns an interator ID that is unique within the Storage instance.
+    /// Returns an iterator ID that is unique within the Storage instance.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
@@ -155,7 +155,7 @@ pub trait Storage {
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
-    /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
+    /// before and one that didn't exist. See <https://github.com/CosmWasm/cosmwasm/issues/290>
     fn remove(&mut self, key: &[u8]) -> BackendResult<()>;
 }
 

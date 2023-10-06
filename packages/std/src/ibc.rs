@@ -31,7 +31,7 @@ pub enum IbcMsg {
         /// address on the remote chain to receive these tokens
         to_address: String,
         /// packet data only supports one coin
-        /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
+        /// <https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20>
         amount: Coin,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
@@ -147,7 +147,7 @@ impl IbcChannel {
 }
 
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
-/// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
+/// Values come from <https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80>.
 /// Naming comes from the protobuf files and go translations.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub enum IbcOrder {
@@ -249,9 +249,9 @@ impl IbcAcknowledgement {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelOpenMsg {
-    /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    /// The ChanOpenInit step from <https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management>.
     OpenInit { channel: IbcChannel },
-    /// The ChanOpenTry step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    /// The ChanOpenTry step from <https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management>.
     OpenTry {
         channel: IbcChannel,
         counterparty_version: String,
@@ -314,12 +314,12 @@ pub struct Ibc3ChannelOpenResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelConnectMsg {
-    /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    /// The ChanOpenAck step from <https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management>.
     OpenAck {
         channel: IbcChannel,
         counterparty_version: String,
     },
-    /// The ChanOpenConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    /// The ChanOpenConfirm step from <https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management>.
     OpenConfirm { channel: IbcChannel },
 }
 
@@ -366,9 +366,9 @@ impl From<IbcChannelConnectMsg> for IbcChannel {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelCloseMsg {
-    /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    /// The ChanCloseInit step from <https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management>.
     CloseInit { channel: IbcChannel },
-    /// The ChanCloseConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    /// The ChanCloseConfirm step from <https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management>.
     CloseConfirm { channel: IbcChannel }, // pub channel: IbcChannel,
 }
 

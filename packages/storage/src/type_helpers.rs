@@ -7,7 +7,7 @@ use cosmwasm_std::{from_slice, StdError, StdResult};
 
 /// may_deserialize parses json bytes from storage (Option), returning Ok(None) if no data present
 ///
-/// value is an odd type, but this is meant to be easy to use with output from storage.get (Option<Vec<u8>>)
+/// value is an odd type, but this is meant to be easy to use with output from storage.get (`Option<Vec<u8>>`)
 /// and value.map(|s| s.as_slice()) seems trickier than &value
 pub(crate) fn may_deserialize<T: DeserializeOwned>(
     value: &Option<Vec<u8>>,

@@ -75,7 +75,7 @@ pub fn secp256k1_verify(
 /// are not stored on chain directly.
 ///
 /// `recovery_param` must be 0 or 1. The values 2 and 3 are unsupported by this implementation,
-/// which is the same restriction as Ethereum has (https://github.com/ethereum/go-ethereum/blob/v1.9.25/internal/ethapi/api.go#L466-L469).
+/// which is the same restriction as Ethereum has <https://github.com/ethereum/go-ethereum/blob/v1.9.25/internal/ethapi/api.go#L466-L469>.
 /// All other values are invalid.
 ///
 /// Returns the recovered pubkey in compressed form, which can be used

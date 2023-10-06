@@ -131,7 +131,7 @@ impl_response_constructor!(ValidatorResponse, validator: Option<Validator>);
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Validator {
     /// The operator address of the validator (e.g. cosmosvaloper1...).
-    /// See https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/staking/v1beta1/staking.proto#L95-L96
+    /// See <https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/staking/v1beta1/staking.proto#L95-L96>.
     /// for more information.
     ///
     /// This uses `String` instead of `Addr` since the bech32 address prefix is different from

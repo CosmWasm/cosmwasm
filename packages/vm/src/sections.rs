@@ -33,7 +33,7 @@ pub fn decode_sections(data: &[u8]) -> Vec<&[u8]> {
 ///
 /// The resulting data looks like this:
 ///
-/// ```ignore
+/// ```text
 /// section1 || section1_len || section2 || section2_len || section3 || section3_len || …
 /// ```
 #[allow(dead_code)]

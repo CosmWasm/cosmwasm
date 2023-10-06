@@ -96,7 +96,7 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 }
 
 #[cfg(feature = "iterator")]
-/// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, Vec<u8>>::range.
+/// The BTreeMap specific key-value pair reference type, as returned by `BTreeMap<Vec<u8>, Vec<u8>>::range`.
 /// This is internal as it can change any time if the map implementation is swapped out.
 type BTreeMapRecordRef<'a> = (&'a Vec<u8>, &'a Vec<u8>);
 
