@@ -6,6 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- cosmwasm-vm: Fix a 1.3.x -> 1.4.0 regression bug leading to a _Wasmer runtime
+  error: RuntimeError: out of bounds memory access_ in cases when the Wasm file
+  is re-compiled and used right away. ([#1907])
+
+[#1907]: https://github.com/CosmWasm/cosmwasm/pull/1907
+
 ### Changed
 
 - cosmwasm-check: Use "=" for pinning the versions of cosmwasm-vm and
