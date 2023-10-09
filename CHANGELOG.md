@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.4.1] - 2023-10-09
+
 ## Fixed
 
 - cosmwasm-vm: Fix a 1.3.x -> 1.4.0 regression bug leading to a _Wasmer runtime
@@ -1877,7 +1879,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...v1.3.2
