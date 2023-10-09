@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "stargate", "staking", "ibc3", "cosmwasm_1_3"]
+features = ["abort", "stargate", "staking", "ibc3", "cosmwasm_1_4"]
 
 [features]
 default = ["iterator", "abort"]
