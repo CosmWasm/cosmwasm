@@ -769,7 +769,7 @@ mod tests {
         let contract_result = call_query(&mut instance, &mock_env(), msg)
             .unwrap()
             .unwrap();
-        let instructions: Vec<String> = from_json(&contract_result).unwrap();
+        let instructions: Vec<String> = from_json(contract_result).unwrap();
         // little sanity check
         assert_eq!(instructions.len(), 70);
 
