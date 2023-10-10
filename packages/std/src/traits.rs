@@ -129,8 +129,8 @@ pub trait Api {
     /// ```
     /// # use cosmwasm_std::{Api, Addr};
     /// # use cosmwasm_std::testing::MockApi;
-    /// # let api = MockApi::default();
-    /// let input = "what-users-provide";
+    /// let api = MockApi::default().with_prefix("juno");
+    /// let input = "juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95";
     /// let validated: Addr = api.addr_validate(input).unwrap();
     /// assert_eq!(validated.as_str(), input);
     /// ```

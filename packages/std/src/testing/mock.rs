@@ -1,5 +1,5 @@
 use alloc::collections::BTreeMap;
-use bech32::{encode, ToBase32, Variant};
+use bech32::{decode, encode, FromBase32, ToBase32, Variant};
 use core::iter::IntoIterator;
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
@@ -53,8 +53,6 @@ use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 
-use super::riffle_shuffle;
-
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// Creates all external requirements that can be injected for unit tests.
@@ -96,19 +94,6 @@ pub fn mock_dependencies_with_balances(
 // We can later make simplifications here if needed
 pub type MockStorage = MemoryStorage;
 
-/// Length of canonical addresses created with this API. Contracts should not make any assumptions
-/// what this value is.
-///
-/// The mock API can only canonicalize and humanize addresses up to this length. So it must be
-/// long enough to store common bech32 addresses.
-///
-/// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-/// See <https://oeis.org/A002326/list> for a table of those values.
-const CANONICAL_LENGTH: usize = 90; // n = 45
-
-const SHUFFLES_ENCODE: usize = 10;
-const SHUFFLES_DECODE: usize = 2;
-
 /// Default prefix used when creating Bech32 encoded address.
 const BECH32_PREFIX: &str = "cosmwasm";
 
@@ -117,9 +102,6 @@ const BECH32_PREFIX: &str = "cosmwasm";
 // not really smart, but allows us to see a difference (and consistent length for canonical addresses)
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    /// Length of canonical addresses created with this API. Contracts should not make any assumptions
-    /// what this value is.
-    canonical_length: usize,
     /// Prefix used for creating addresses in Bech32 encoding.
     bech32_prefix: &'static str,
 }
@@ -127,7 +109,6 @@ pub struct MockApi {
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
-            canonical_length: CANONICAL_LENGTH,
             bech32_prefix: BECH32_PREFIX,
         }
     }
@@ -142,62 +123,29 @@ impl Api for MockApi {
                 "Invalid input: address not normalized",
             ));
         }
-
         Ok(Addr::unchecked(input))
     }
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
-        // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        let min_length = 3;
-        let max_length = self.canonical_length;
-        if input.len() < min_length {
-            return Err(StdError::generic_err(
-                format!("Invalid input: human address too short for this mock implementation (must be >= {min_length})."),
-            ));
+        if let Ok((prefix, decoded, Variant::Bech32)) = decode(input) {
+            if prefix == self.bech32_prefix {
+                if let Ok(bytes) = Vec::<u8>::from_base32(&decoded) {
+                    return Ok(bytes.into());
+                }
+            }
         }
-        if input.len() > max_length {
-            return Err(StdError::generic_err(
-                format!("Invalid input: human address too long for this mock implementation (must be <= {max_length})."),
-            ));
-        }
-
-        // mimics formats like hex or bech32 where different casings are valid for one address
-        let normalized = input.to_lowercase();
-
-        let mut out = Vec::from(normalized);
-
-        // pad to canonical length with NULL bytes
-        out.resize(self.canonical_length, 0x00);
-        // content-dependent rotate followed by shuffle to destroy
-        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
-        let rotate_by = digit_sum(&out) % self.canonical_length;
-        out.rotate_left(rotate_by);
-        for _ in 0..SHUFFLES_ENCODE {
-            out = riffle_shuffle(&out);
-        }
-        Ok(out.into())
+        Err(StdError::generic_err("Invalid input"))
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
-        if canonical.len() != self.canonical_length {
-            return Err(StdError::generic_err(
-                "Invalid input: canonical address length not correct",
-            ));
-        }
-
-        let mut tmp: Vec<u8> = canonical.clone().into();
-        // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..SHUFFLES_DECODE {
-            tmp = riffle_shuffle(&tmp);
-        }
-        // Rotate back
-        let rotate_by = digit_sum(&tmp) % self.canonical_length;
-        tmp.rotate_right(rotate_by);
-        // Remove NULL bytes (i.e. the padding)
-        let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
-        // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed)?;
-        Ok(Addr::unchecked(human))
+        let Ok(encoded) = encode(
+            self.bech32_prefix,
+            canonical.as_slice().to_base32(),
+            Variant::Bech32,
+        ) else {
+            return Err(StdError::generic_err("Invalid canonical address"));
+        };
+        Ok(Addr::unchecked(encoded))
     }
 
     fn secp256k1_verify(
@@ -1197,11 +1145,13 @@ mod tests {
 
     #[test]
     fn addr_validate_works() {
+        // default prefix is 'cosmwasm'
         let api = MockApi::default();
 
         // valid
-        let addr = api.addr_validate("foobar123").unwrap();
-        assert_eq!(addr.as_str(), "foobar123");
+        let humanized = "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp";
+        let addr = api.addr_validate(humanized).unwrap();
+        assert_eq!(addr, humanized);
 
         // invalid: too short
         api.addr_validate("").unwrap_err();
@@ -1214,31 +1164,44 @@ mod tests {
     fn addr_canonicalize_works() {
         let api = MockApi::default();
 
-        api.addr_canonicalize("foobar123").unwrap();
+        api.addr_canonicalize(
+            "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
+        )
+        .unwrap();
 
         // is case insensitive
-        let data1 = api.addr_canonicalize("foo123").unwrap();
-        let data2 = api.addr_canonicalize("FOO123").unwrap();
+        let data1 = api
+            .addr_canonicalize(
+                "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
+            )
+            .unwrap();
+        let data2 = api
+            .addr_canonicalize(
+                "COSMWASM1H34LMPYWH4UPNJDG90CJF4J70AEE6Z8QQFSPUGAMJP42E4Q28KQS8S7VCP",
+            )
+            .unwrap();
         assert_eq!(data1, data2);
     }
 
     #[test]
     fn canonicalize_and_humanize_restores_original() {
+        // create api with 'cosmwasm' prefix
         let api = MockApi::default();
 
-        // simple
-        let original = String::from("shorty");
-        let canonical = api.addr_canonicalize(&original).unwrap();
-        let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered.as_str(), original);
-
         // normalizes input
-        let original = String::from("CosmWasmChef");
+        let original =
+            String::from("COSMWASM1H34LMPYWH4UPNJDG90CJF4J70AEE6Z8QQFSPUGAMJP42E4Q28KQS8S7VCP");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered.as_str(), "cosmwasmchef");
+        assert_eq!(
+            recovered,
+            "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp"
+        );
 
-        // Long input (Juno contract address)
+        // create api with 'juno' prefix
+        let api = MockApi::default().with_prefix("juno");
+
+        // long input (Juno contract address)
         let original =
             String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
         let canonical = api.addr_canonicalize(&original).unwrap();
@@ -1247,32 +1210,29 @@ mod tests {
     }
 
     #[test]
-    fn addr_canonicalize_min_input_length() {
+    fn addr_canonicalize_short_input() {
         let api = MockApi::default();
-        let human = String::from("1");
-        let err = api.addr_canonicalize(&human).unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("human address too short for this mock implementation (must be >= 3)"));
+        let human = String::from("cosmwasm1pj90vm");
+        assert_eq!(api.addr_canonicalize(&human).unwrap().to_string(), "");
     }
 
     #[test]
-    fn addr_canonicalize_max_input_length() {
+    fn addr_canonicalize_long_input() {
         let api = MockApi::default();
         let human =
-            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-supported------------------------");
-        let err = api.addr_canonicalize(&human).unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("human address too long for this mock implementation (must be <= 90)"));
+            "some-extremely-long-address-some-extremely-long-address-some-extremely-long-address-some-extremely-long-address";
+        let err = api.addr_canonicalize(human).unwrap_err();
+        assert!(err.to_string().contains("Invalid input"));
     }
 
     #[test]
-    #[should_panic(expected = "length not correct")]
     fn addr_humanize_input_length() {
         let api = MockApi::default();
-        let input = CanonicalAddr::from(vec![61; 11]);
-        api.addr_humanize(&input).unwrap();
+        let input = CanonicalAddr::from(vec![]);
+        assert_eq!(
+            api.addr_humanize(&input).unwrap(),
+            Addr::unchecked("cosmwasm1pj90vm")
+        );
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
@@ -2362,28 +2322,5 @@ mod tests {
     #[should_panic(expected = "Generating address failed with reason: invalid length")]
     fn making_an_address_with_empty_prefix_should_panic() {
         MockApi::default().with_prefix("").addr_make("creator");
-    }
-
-    #[test]
-    #[cfg(feature = "cosmwasm_1_3")]
-    fn distribution_querier_new_works() {
-        let addresses = [
-            ("addr0000".to_string(), "addr0001".to_string()),
-            ("addr0002".to_string(), "addr0001".to_string()),
-        ];
-        let btree_map = BTreeMap::from(addresses.clone());
-
-        // should still work with HashMap
-        let hashmap = HashMap::from(addresses.clone());
-        let querier = DistributionQuerier::new(hashmap);
-        assert_eq!(querier.withdraw_addresses, btree_map);
-
-        // should work with BTreeMap
-        let querier = DistributionQuerier::new(btree_map.clone());
-        assert_eq!(querier.withdraw_addresses, btree_map);
-
-        // should work with array
-        let querier = DistributionQuerier::new(addresses);
-        assert_eq!(querier.withdraw_addresses, btree_map);
     }
 }
