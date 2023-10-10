@@ -49,7 +49,10 @@ use crate::modules::current_wasmer_module_version;
 /// - **v7**:<br>
 ///   New version because of Wasmer 2.3.0 -> 4 upgrade.
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
-const MODULE_SERIALIZATION_VERSION: &str = "v7";
+/// - **v8**:<br>
+///   New version because of Wasmer 4.1.2 -> 4.2.2 upgrade.
+///   Module compatibility between wasmer versions is not guaranteed.
+const MODULE_SERIALIZATION_VERSION: &str = "v8";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -287,7 +290,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v7-wasmer5/**/{}",
+            "{}/v8-wasmer5/**/{}",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -365,9 +368,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v7-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules\\v8-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v7-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules/v8-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }
