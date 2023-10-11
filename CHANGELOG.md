@@ -37,6 +37,13 @@ and this project adheres to
 [#1807]: https://github.com/CosmWasm/cosmwasm/pull/1807
 [#1864]: https://github.com/CosmWasm/cosmwasm/pull/1864
 
+### Changed
+
+- cosmwasm-vm: Added `.module` extension to file names in the file system cache
+  ([#1913]).
+
+[#1913]: https://github.com/CosmWasm/cosmwasm/pull/1913
+
 ## [1.4.1] - 2023-10-09
 
 ## Fixed
