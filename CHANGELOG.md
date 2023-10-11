@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.5.0-rc.0]
+
 ### Added
 
 - cosmwasm-std: Add `addr_make` and `with_prefix` for
@@ -591,8 +593,9 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...HEAD
-[1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...1.4.1
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0-rc.0...HEAD
+[1.5.0-rc.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0-rc.0
+[1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...v1.3.2
