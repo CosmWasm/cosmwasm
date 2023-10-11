@@ -968,6 +968,7 @@ jobs:
   coverage:
     docker:
       - image: rust:1.72.0
+    resource_class: medium+
     steps:
       - checkout
       - run:
