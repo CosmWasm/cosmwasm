@@ -49,7 +49,10 @@ use crate::modules::current_wasmer_module_version;
 /// - **v7**:<br>
 ///   New version because of Wasmer 2.3.0 -> 4 upgrade.
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
-const MODULE_SERIALIZATION_VERSION: &str = "v7";
+/// - **v8**:<br>
+///   New version because of Wasmer 4.1.2 -> 4.2.2 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed.
+const MODULE_SERIALIZATION_VERSION: &str = "v8";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -118,6 +121,14 @@ impl FileSystemCache {
         self.unchecked_modules = unchecked;
     }
 
+    /// Returns the path to the serialized module with the given checksum.
+    fn module_file(&self, checksum: &Checksum) -> PathBuf {
+        let mut path = self.modules_path.clone();
+        path.push(checksum.to_hex());
+        path.set_extension("module");
+        path
+    }
+
     /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
     /// along with the size of the serialized module.
     pub fn load(
@@ -125,8 +136,7 @@ impl FileSystemCache {
         checksum: &Checksum,
         engine: &impl AsEngineRef,
     ) -> VmResult<Option<(Module, usize)>> {
-        let filename = checksum.to_hex();
-        let file_path = self.modules_path.join(filename);
+        let file_path = self.module_file(checksum);
 
         let result = if self.unchecked_modules {
             unsafe { Module::deserialize_from_file_unchecked(engine, &file_path) }
@@ -155,8 +165,7 @@ impl FileSystemCache {
         mkdir_p(&self.modules_path)
             .map_err(|_e| VmError::cache_err("Error creating modules directory"))?;
 
-        let filename = checksum.to_hex();
-        let path = self.modules_path.join(filename);
+        let path = self.module_file(checksum);
         module
             .serialize_to_file(&path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {e}")))?;
@@ -168,8 +177,7 @@ impl FileSystemCache {
     ///
     /// Returns true if the file existed and false if the file did not exist.
     pub fn remove(&mut self, checksum: &Checksum) -> VmResult<bool> {
-        let filename = checksum.to_hex();
-        let file_path = self.modules_path.join(filename);
+        let file_path = self.module_file(checksum);
 
         if file_path.exists() {
             fs::remove_file(file_path)
@@ -287,7 +295,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v7-wasmer5/**/{}",
+            "{}/v8-wasmer5/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -365,9 +373,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v7-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules\\v8-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v7-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules/v8-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }
