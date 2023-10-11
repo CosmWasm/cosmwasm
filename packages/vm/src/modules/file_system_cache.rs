@@ -51,7 +51,7 @@ use crate::modules::current_wasmer_module_version;
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
 /// - **v8**:<br>
 ///   New version because of Wasmer 4.1.2 -> 4.2.2 upgrade.
-///   Module compatibility between wasmer versions is not guaranteed.
+///   Module compatibility between Wasmer versions is not guaranteed.
 const MODULE_SERIALIZATION_VERSION: &str = "v8";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
