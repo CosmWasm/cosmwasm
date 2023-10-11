@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-std"
-version = "1.4.0"
+version = "1.4.1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "stargate", "staking", "ibc3", "cosmwasm_1_3"]
+features = ["abort", "stargate", "staking", "ibc3", "cosmwasm_1_4"]
 
 [features]
 default = ["iterator", "abort"]
@@ -51,13 +51,16 @@ cosmwasm_1_4 = ["cosmwasm_1_3"]
 
 [dependencies]
 base64 = "0.21.0"
-cosmwasm-derive = { path = "../derive", version = "1.4.0" }
+cosmwasm-derive = { path = "../derive", version = "1.4.1" }
 derivative = "2"
 forward_ref = "1"
 hex = "0.4"
 schemars = "0.8.3"
 sha2 = "0.10.3"
-serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1.0.103", default-features = false, features = [
+  "derive",
+  "alloc",
+] }
 serde-json-wasm = { version = "0.5.0" }
 thiserror = "1.0.26"
 bnum = "0.8.0"
@@ -65,12 +68,15 @@ static_assertions = "1.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.9.1"
-cosmwasm-crypto = { path = "../crypto", version = "1.4.0" }
+cosmwasm-crypto = { path = "../crypto", version = "1.4.1" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
-chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
+chrono = { version = "0.4", default-features = false, features = [
+  "alloc",
+  "std",
+] }
 crc32fast = "1.3.2"
 hex-literal = "0.3.1"
 serde_json = "1.0.81"

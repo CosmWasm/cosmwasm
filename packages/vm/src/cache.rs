@@ -202,6 +202,7 @@ where
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
         // We need a new engine for each Wasm -> module compilation due to the metering middleware.
         let compiling_engine = make_compiling_engine(None);
+        // This module cannot be executed directly as it was not created with the runtime engine
         let module = compile(&compiling_engine, wasm)?;
 
         let mut cache = self.inner.lock().unwrap();
@@ -291,11 +292,22 @@ where
         // Re-compile from original Wasm bytecode
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        // Module will run with a different engine, so we can set memory limit to None
-        let engine = make_compiling_engine(None);
-        let module = compile(&engine, &wasm)?;
-        // Store into the fs cache too
-        let module_size = cache.fs_cache.store(checksum, &module)?;
+        {
+            // Module will run with a different engine, so we can set memory limit to None
+            let compiling_engine = make_compiling_engine(None);
+            // This module cannot be executed directly as it was not created with the runtime engine
+            let module = compile(&compiling_engine, &wasm)?;
+            cache.fs_cache.store(checksum, &module)?;
+        }
+
+        // This time we'll hit the file-system cache.
+        let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)?
+        else {
+            return Err(VmError::generic_err(
+                "Can't load module from file system cache after storing it to file system cache (pin)",
+            ));
+        };
+
         cache
             .pinned_memory_cache
             .store(checksum, module, module_size)
@@ -377,11 +389,21 @@ where
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
-        // Module will run with a different engine, so we can set memory limit to None
-        let engine = make_compiling_engine(None);
-        let module = compile(&engine, &wasm)?;
-        let module_size = cache.fs_cache.store(checksum, &module)?;
+        {
+            // Module will run with a different engine, so we can set memory limit to None
+            let compiling_engine = make_compiling_engine(None);
+            // This module cannot be executed directly as it was not created with the runtime engine
+            let module = compile(&compiling_engine, &wasm)?;
+            cache.fs_cache.store(checksum, &module)?;
+        }
 
+        // This time we'll hit the file-system cache.
+        let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)?
+        else {
+            return Err(VmError::generic_err(
+                "Can't load module from file system cache after storing it to file system cache (get_module)",
+            ));
+        };
         cache
             .memory_cache
             .store(checksum, module.clone(), module_size)?;
@@ -530,6 +552,30 @@ mod tests {
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
+    }
+
+    /// Takes an instance and executes it
+    fn test_hackatom_instance_execution<A, S, Q>(instance: &mut Instance<A, S, Q>)
+    where
+        A: BackendApi + 'static,
+        S: Storage + 'static,
+        Q: Querier + 'static,
+    {
+        // instantiate
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
+        let response = call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.messages.len(), 0);
+
+        // execute
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"release":{}}"#;
+        let response = call_execute::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        assert_eq!(response.messages.len(), 1);
     }
 
     #[test]
@@ -854,7 +900,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let res =
@@ -873,7 +919,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let res =
@@ -894,7 +940,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 2);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let res =
@@ -919,7 +965,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let response =
@@ -947,7 +993,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let response =
@@ -977,7 +1023,7 @@ mod tests {
             assert_eq!(cache.stats().hits_fs_cache, 2);
             assert_eq!(cache.stats().misses, 0);
 
-            // init
+            // instantiate
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let response =
@@ -997,6 +1043,27 @@ mod tests {
     }
 
     #[test]
+    fn call_execute_on_recompiled_contract() {
+        let options = make_testing_options();
+        let cache = unsafe { Cache::new(options.clone()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        // Remove compiled module from disk
+        remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
+
+        // Recompiles the Wasm (miss on all caches)
+        let backend = mock_backend(&[]);
+        let mut instance = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 0);
+        assert_eq!(cache.stats().misses, 1);
+        test_hackatom_instance_execution(&mut instance);
+    }
+
+    #[test]
     fn use_multiple_cached_instances_of_same_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
@@ -1005,7 +1072,7 @@ mod tests {
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
 
-        // init instance 1
+        // instantiate instance 1
         let mut instance = cache
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
@@ -1017,7 +1084,7 @@ mod tests {
         assert_eq!(msgs.len(), 0);
         let backend1 = instance.recycle().unwrap();
 
-        // init instance 2
+        // instantiate instance 2
         let mut instance = cache
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
@@ -1230,13 +1297,14 @@ mod tests {
 
         // check not pinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
+        test_hackatom_instance_execution(&mut instance);
 
         // first pin hits file system cache
         cache.pin(&checksum).unwrap();
@@ -1254,26 +1322,28 @@ mod tests {
 
         // check pinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
+        test_hackatom_instance_execution(&mut instance);
 
         // unpin
         cache.unpin(&checksum).unwrap();
 
         // verify unpinned
         let backend = mock_backend(&[]);
-        let _instance = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 1);
         assert_eq!(cache.stats().hits_fs_cache, 2);
         assert_eq!(cache.stats().misses, 0);
+        test_hackatom_instance_execution(&mut instance);
 
         // unpin again has no effect
         cache.unpin(&checksum).unwrap();
@@ -1302,13 +1372,14 @@ mod tests {
 
         // After the compilation in pin, the module can be used from pinned memory cache
         let backend = mock_backend(&[]);
-        let _ = cache
+        let mut instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
         assert_eq!(cache.stats().hits_memory_cache, 0);
         assert_eq!(cache.stats().hits_fs_cache, 0);
         assert_eq!(cache.stats().misses, 1);
+        test_hackatom_instance_execution(&mut instance);
     }
 
     #[test]

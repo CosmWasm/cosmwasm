@@ -37,6 +37,28 @@ and this project adheres to
 [#1807]: https://github.com/CosmWasm/cosmwasm/pull/1807
 [#1864]: https://github.com/CosmWasm/cosmwasm/pull/1864
 
+## [1.4.1] - 2023-10-09
+
+## Fixed
+
+- cosmwasm-vm: Fix a 1.3.x -> 1.4.0 regression bug leading to a _Wasmer runtime
+  error: RuntimeError: out of bounds memory access_ in cases when the Wasm file
+  is re-compiled and used right away. ([#1907])
+
+[#1907]: https://github.com/CosmWasm/cosmwasm/pull/1907
+
+### Changed
+
+- cosmwasm-check: Use "=" for pinning the versions of cosmwasm-vm and
+  cosmwasm-std dependencies. This ensures that you can use an older version of
+  cosmwasm-check together with the VM of the same version by doing
+  `cargo install cosmwasm-check@1.4.1`. A typical use case would be to check a
+  contract with CosmWasm 1.4, 1.5 and 2.0. Note that other dependencies are
+  still upgraded when using `cargo install` which may lead to API, behavioural
+  or compiler incompatibilities. The
+  [--locked](https://doc.rust-lang.org/cargo/commands/cargo-install.html#dealing-with-the-lockfile)
+  feature allows you use the versions locked when the release was created.
+
 ## [1.4.0] - 2023-09-04
 
 ### Added
@@ -562,7 +584,8 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.1...v1.3.2
