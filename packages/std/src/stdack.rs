@@ -118,12 +118,6 @@ impl From<StdAck> for Binary {
     }
 }
 
-impl From<StdAck> for Option<Binary> {
-    fn from(original: StdAck) -> Option<Binary> {
-        Some(original.into())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,14 +159,5 @@ mod tests {
 
         let ack2 = StdAck::error("kaputt");
         assert_eq!(ack2.to_binary(), br#"{"error":"kaputt"}"#);
-    }
-
-    #[test]
-    fn stdack_to_option_binary_works() {
-        let ack1 = StdAck::success(b"\x01");
-        assert_eq!(Option::<Binary>::from(ack1.clone()), Some(ack1.to_binary()));
-
-        let ack2 = StdAck::error("kaputt");
-        assert_eq!(Option::<Binary>::from(ack2.clone()), Some(ack2.to_binary()));
     }
 }

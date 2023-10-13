@@ -638,7 +638,20 @@ impl<T> IbcReceiveResponse<T> {
     /// ```
     pub fn new(ack: impl Into<Binary>) -> Self {
         Self {
-            acknowledgement: ack.into(),
+            acknowledgement: Some(ack.into()),
+            messages: vec![],
+            attributes: vec![],
+            events: vec![],
+        }
+    }
+
+    /// Creates a new response without an acknowledgement.
+    ///
+    /// This allows you to send the acknowledgement asynchronously later using [`IbcMsg::WriteAcknowledgement`].
+    /// If you want to send the acknowledgement immediately, use [`IbcReceiveResponse::new`].
+    pub fn without_ack() -> Self {
+        Self {
+            acknowledgement: None,
             messages: vec![],
             attributes: vec![],
             events: vec![],
