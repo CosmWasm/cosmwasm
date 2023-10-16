@@ -48,7 +48,7 @@ impl Addr {
     /// ```
     /// # use cosmwasm_std::{Addr};
     /// let address = Addr::unchecked("foobar");
-    /// assert_eq!(address, "foobar");
+    /// assert_eq!(address.as_str(), "foobar");
     /// ```
     pub fn unchecked(input: impl Into<String>) -> Addr {
         Addr(input.into())
@@ -84,46 +84,6 @@ impl AsRef<str> for Addr {
     #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
-    }
-}
-
-/// Implement `Addr == &str`
-///
-/// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
-impl PartialEq<&str> for Addr {
-    fn eq(&self, rhs: &&str) -> bool {
-        self.0 == *rhs
-    }
-}
-
-/// Implement `&str == Addr`
-///
-/// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
-impl PartialEq<Addr> for &str {
-    fn eq(&self, rhs: &Addr) -> bool {
-        *self == rhs.0
-    }
-}
-
-/// Implement `Addr == String`
-///
-/// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
-impl PartialEq<String> for Addr {
-    fn eq(&self, rhs: &String) -> bool {
-        &self.0 == rhs
-    }
-}
-
-/// Implement `String == Addr`
-///
-/// Deprecated. This comparison unsafe. Convert both sides to Addr first.
-/// Will be removed soon: https://github.com/CosmWasm/cosmwasm/issues/1669
-impl PartialEq<Addr> for String {
-    fn eq(&self, rhs: &Addr) -> bool {
-        self == &rhs.0
     }
 }
 
@@ -438,22 +398,6 @@ mod tests {
     fn addr_implements_as_ref_for_str() {
         let addr = Addr::unchecked("literal-string");
         assert_eq!(addr.as_ref(), "literal-string");
-    }
-
-    // Please note that this will be removed soon
-    // https://github.com/CosmWasm/cosmwasm/issues/1669
-    #[test]
-    fn addr_implements_partial_eq_with_str_and_string() {
-        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
-
-        // `Addr == &str`
-        assert_eq!(addr, "cos934gh9034hg04g0h134");
-        // `&str == Addr`
-        assert_eq!("cos934gh9034hg04g0h134", addr);
-        // `Addr == String`
-        assert_eq!(addr, String::from("cos934gh9034hg04g0h134"));
-        // `String == Addr`
-        assert_eq!(String::from("cos934gh9034hg04g0h134"), addr);
     }
 
     #[test]

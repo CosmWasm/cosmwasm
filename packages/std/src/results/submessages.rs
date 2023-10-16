@@ -199,9 +199,6 @@ pub struct SubMsgResponse {
     pub data: Option<Binary>,
 }
 
-#[deprecated(note = "Renamed to SubMsgResponse")]
-pub type SubMsgExecutionResponse = SubMsgResponse;
-
 #[cfg(test)]
 mod tests {
     use super::*;

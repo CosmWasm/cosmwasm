@@ -6,6 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Replace `ContractInfoResponse::new` with new (unstable)
+  constructor, remove `SubMsgExecutionResponse` (Use `SubMsgResponse` instead)
+  and remove `PartialEq<&str> for Addr` (validate the address and use
+  `PartialEq<Addr> for Addr` instead). ([#1879])
+
+[#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
+
 ## [1.5.0-rc.0]
 
 ### Added
