@@ -4,6 +4,56 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 1.5.x -> 2.0.0
+
+- Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```toml
+  [dependencies]
+  cosmwasm-std = "2.0.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "2.0.0"
+  cosmwasm-vm = "2.0.0"
+  # ...
+  ```
+
+- `ContractInfoResponse::new` now takes all fields of the response as
+  parameters:
+
+  ```diff
+  -ContractInfoResponse::new(code_id, creator)
+  +ContractInfoResponse::new(code_id, creator, admin, pinned, ibc_port)
+  ```
+
+  Please note that, in the future, this function signature can change between
+  minor versions.
+
+- Replace all uses of `SubMsgExecutionResponse` with `SubMsgResponse`.
+- Replace all uses of `PartialEq<&str> for Addr` with `PartialEq<Addr> for Addr`
+  like this:
+
+  ```diff
+  -if addr == "admin" {
+  -    // ...
+  -}
+  +let admin = deps.api.addr_validate("admin")?;
+  +if addr == admin {
+  +  // ...
+  +}
+  ```
+
+  If you really want to compare the string representation (e.g. in tests), you
+  can use `Addr::as_str`:
+
+  ```diff
+  -assert_eq!(addr, "admin");
+  +assert_eq!(addr.as_str(), "admin");
+  ```
+
+  But keep in mind that this is case sensitive (while addresses are not).
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
