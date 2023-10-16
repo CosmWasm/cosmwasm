@@ -646,23 +646,6 @@ impl<T> IbcReceiveResponse<T> {
         }
     }
 
-    /// Set the acknowledgement for this response.
-    ///
-    /// ## Examples
-    ///
-    /// ```
-    /// use cosmwasm_std::{StdAck, IbcReceiveResponse};
-    ///
-    /// fn make_response_with_ack() -> IbcReceiveResponse {
-    ///     let ack = StdAck::success(b"\x01"); // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
-    ///     IbcReceiveResponse::new(ack)
-    /// }
-    /// ```
-    pub fn set_ack(mut self, ack: impl Into<Binary>) -> Self {
-        self.acknowledgement = ack.into();
-        self
-    }
-
     /// Add an attribute included in the main `wasm` event.
     pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.attributes.push(Attribute::new(key, value));
