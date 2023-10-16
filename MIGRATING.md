@@ -1044,7 +1044,7 @@ arbitrary ones.
   because it did not set the address for one withdraw only but for all following
   withdrawls. Since withdrawls are [triggered by different
   events][distribution docs] such as validators changing their commission rate,
-  an address that was set for a one-time withdrawl would be used for future
+  an address that was set for a one-time withdrawal would be used for future
   withdrawls not considered by the contract author.
 
   If the contract never set a withdraw address other than the contract itself
@@ -1055,7 +1055,7 @@ arbitrary ones.
 
   1. `SetWithdrawAddress { address: recipient }` to temporarily change the
      recipient
-  2. `WithdrawDelegatorReward { validator }` to do a manual withdrawl from the
+  2. `WithdrawDelegatorReward { validator }` to do a manual withdrawal from the
      given validator
   3. `SetWithdrawAddress { address: env.contract.address.into() }` to change it
      back for all future withdrawls

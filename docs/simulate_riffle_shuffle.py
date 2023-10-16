@@ -1,6 +1,6 @@
 import functools
 
-# Create a funtion that executed f recusively n times, i.e. f**n
+# Create a function that executed f recusively n times, i.e. f**n
 def power(f, n):
     functions = [f for _ in range(n)]
     def compose2(f, g):

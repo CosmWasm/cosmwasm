@@ -71,7 +71,7 @@ This particular contract above accepts
 and sends those to a remote chain, as well as receiving the tokens back and
 releasing the original cw20 token to a new owner. It does not (yet) allow
 minting coins originating from the remote chain. I recommend opening up the
-source code for that contract and refering to it when you want a concrete
+source code for that contract and referring to it when you want a concrete
 example for anything discussed below.
 
 In order to enable IBC communication, a contract must expose the following 6
@@ -168,7 +168,7 @@ pub fn ibc_channel_connect(
 ```
 
 At this point, it is expected that the contract updates its internal state and
-may return `CosmosMsg` in the `Reponse` to interact with other contracts, just
+may return `CosmosMsg` in the `Response` to interact with other contracts, just
 like in `execute`. In particular, you will most likely want to store the local
 channel_id (`channel.endpoint.channel_id`) in the contract's storage, so it
 knows what open channels it has (and can expose those via queries or maintain
