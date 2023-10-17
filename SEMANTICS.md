@@ -215,7 +215,8 @@ intended to be used for most cases, but is needed for eg. the cron job to
 protect it from an infinite loop in the submessage burning all gas and aborting
 the transaction).
 
-Submessage is a generalization of the message concept: indeed, a message is simply a submessage that never handles any response.
+Submessage is a generalization of the message concept: indeed, a message is
+simply a submessage that never handles any response.
 
 This makes use of `CosmosMsg` as above, but it wraps it inside a `SubMsg`
 envelope:
@@ -328,12 +329,10 @@ JSON string instead of `null` and handled as any other `Some` value.
 
 #### Order and Rollback
 
-Submessages follow the same _depth first_ order rules as `messages`,
-with their replies considered as an immediate additional message call.
-Here is a simple example.
-Contract A returns submessages S1 and S2, and message M1. Submessage S1
-returns message N1.
-The order will be: **S1, N1, reply(S1), S2, reply(S2), M1**.
+Submessages follow the same _depth first_ order rules as `messages`, with their
+replies considered as an immediate additional message call. Here is a simple
+example. Contract A returns submessages S1 and S2, and message M1. Submessage S1
+returns message N1. The order will be: **S1, N1, reply(S1), S2, reply(S2), M1**.
 
 Please keep in mind that submessage `execution` and `reply` can happen within
 the context of another submessage. For example
@@ -344,8 +343,8 @@ It just ends up returning `Err` to contract-A's `reply` function.
 
 Note that errors are not handled with `ReplyOn::Success`, meaning, in such a
 case, an error will be treated just like a normal `message` returning an error.
-This diagram may help explain. Imagine a contract returned two submesssages - (a)
-with `ReplyOn::Success` and (b) with `ReplyOn::Error`:
+This diagram may help explain. Imagine a contract returned two submesssages -
+(a) with `ReplyOn::Success` and (b) with `ReplyOn::Error`:
 
 | processing a) | processing b) | reply called | may overwrite result from reply | note                                              |
 | ------------- | ------------- | ------------ | ------------------------------- | ------------------------------------------------- |
