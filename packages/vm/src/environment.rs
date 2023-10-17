@@ -28,6 +28,7 @@ pub enum Never {}
 /** gas config data */
 
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub struct GasConfig {
     /// Gas costs of VM (not Backend) provided functionality
     /// secp256k1 signature verification cost
