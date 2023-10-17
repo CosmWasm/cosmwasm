@@ -241,7 +241,7 @@ fn send_remote_funds() {
             assert_eq!(&coin(12344, "utrgd"), amount);
             assert!(timeout.block().is_none());
             assert!(timeout.timestamp().is_some());
-            assert_eq!(memo, "");
+            assert!(memo.is_none());
         }
         o => panic!("unexpected message: {o:?}"),
     }

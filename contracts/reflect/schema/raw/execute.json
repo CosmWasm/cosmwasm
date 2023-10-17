@@ -451,7 +451,6 @@
               "required": [
                 "amount",
                 "channel_id",
-                "memo",
                 "timeout",
                 "to_address"
               ],
@@ -470,7 +469,10 @@
                 },
                 "memo": {
                   "description": "optional memo",
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "timeout": {
                   "description": "when packet times out, measured on remote chain",
