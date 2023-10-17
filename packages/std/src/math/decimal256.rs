@@ -680,30 +680,6 @@ impl MulAssign for Decimal256 {
 }
 forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal256, Decimal256);
 
-/// Both d*u and u*d with d: Decimal256 and u: Uint256 returns an Uint256. There is no
-/// specific reason for this decision other than the initial use cases we have. If you
-/// need a Decimal256 result for the same calculation, use Decimal256(d*u) or Decimal256(u*d).
-impl Mul<Decimal256> for Uint256 {
-    type Output = Self;
-
-    #[allow(clippy::suspicious_arithmetic_impl)]
-    fn mul(self, rhs: Decimal256) -> Self::Output {
-        // 0*a and b*0 is always 0
-        if self.is_zero() || rhs.is_zero() {
-            return Uint256::zero();
-        }
-        self.multiply_ratio(rhs.0, Decimal256::DECIMAL_FRACTIONAL)
-    }
-}
-
-impl Mul<Uint256> for Decimal256 {
-    type Output = Uint256;
-
-    fn mul(self, rhs: Uint256) -> Self::Output {
-        rhs * self
-    }
-}
-
 impl Div for Decimal256 {
     type Output = Self;
 
@@ -1607,44 +1583,6 @@ mod tests {
     }
 
     #[test]
-    // in this test the Decimal256 is on the right
-    fn uint128_decimal_multiply() {
-        // a*b
-        let left = Uint256::from(300u128);
-        let right = Decimal256::one() + Decimal256::percent(50); // 1.5
-        assert_eq!(left * right, Uint256::from(450u32));
-
-        // a*0
-        let left = Uint256::from(300u128);
-        let right = Decimal256::zero();
-        assert_eq!(left * right, Uint256::from(0u128));
-
-        // 0*a
-        let left = Uint256::from(0u128);
-        let right = Decimal256::one() + Decimal256::percent(50); // 1.5
-        assert_eq!(left * right, Uint256::from(0u128));
-    }
-
-    #[test]
-    // in this test the Decimal256 is on the left
-    fn decimal256_uint128_multiply() {
-        // a*b
-        let left = Decimal256::one() + Decimal256::percent(50); // 1.5
-        let right = Uint256::from(300u128);
-        assert_eq!(left * right, Uint256::from(450u128));
-
-        // 0*a
-        let left = Decimal256::zero();
-        let right = Uint256::from(300u128);
-        assert_eq!(left * right, Uint256::from(0u128));
-
-        // a*0
-        let left = Decimal256::one() + Decimal256::percent(50); // 1.5
-        let right = Uint256::from(0u128);
-        assert_eq!(left * right, Uint256::from(0u128));
-    }
-
-    #[test]
     #[allow(clippy::op_ref)]
     fn decimal256_implements_div() {
         let one = Decimal256::one();
@@ -2311,14 +2249,26 @@ mod tests {
         // Does the same as the old workaround `Uint256::one() * my_decimal`.
         // This block can be deleted as part of https://github.com/CosmWasm/cosmwasm/issues/1485.
         let tests = vec![
-            Decimal256::from_str("12.345").unwrap(),
-            Decimal256::from_str("0.98451384").unwrap(),
-            Decimal256::from_str("178.0").unwrap(),
-            Decimal256::MIN,
-            Decimal256::MAX,
+            (
+                Decimal256::from_str("12.345").unwrap(),
+                Uint256::from(12u128),
+            ),
+            (
+                Decimal256::from_str("0.98451384").unwrap(),
+                Uint256::from(0u128),
+            ),
+            (
+                Decimal256::from_str("178.0").unwrap(),
+                Uint256::from(178u128),
+            ),
+            (Decimal256::MIN, Uint256::from(0u128)),
+            (
+                Decimal256::MAX,
+                Uint256::MAX / Decimal256::DECIMAL_FRACTIONAL,
+            ),
         ];
-        for my_decimal in tests.into_iter() {
-            assert_eq!(my_decimal.to_uint_floor(), Uint256::one() * my_decimal);
+        for (my_decimal, expected) in tests.into_iter() {
+            assert_eq!(my_decimal.to_uint_floor(), expected);
         }
     }
 

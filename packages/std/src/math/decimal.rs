@@ -671,30 +671,6 @@ impl MulAssign for Decimal {
 }
 forward_ref_op_assign!(impl MulAssign, mul_assign for Decimal, Decimal);
 
-/// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
-/// specific reason for this decision other than the initial use cases we have. If you
-/// need a Decimal result for the same calculation, use Decimal(d*u) or Decimal(u*d).
-impl Mul<Decimal> for Uint128 {
-    type Output = Self;
-
-    #[allow(clippy::suspicious_arithmetic_impl)]
-    fn mul(self, rhs: Decimal) -> Self::Output {
-        // 0*a and b*0 is always 0
-        if self.is_zero() || rhs.is_zero() {
-            return Uint128::zero();
-        }
-        self.multiply_ratio(rhs.0, Decimal::DECIMAL_FRACTIONAL)
-    }
-}
-
-impl Mul<Uint128> for Decimal {
-    type Output = Uint128;
-
-    fn mul(self, rhs: Uint128) -> Self::Output {
-        rhs * self
-    }
-}
-
 impl Div for Decimal {
     type Output = Self;
 
@@ -1545,44 +1521,6 @@ mod tests {
     }
 
     #[test]
-    // in this test the Decimal is on the right
-    fn uint128_decimal_multiply() {
-        // a*b
-        let left = Uint128::new(300);
-        let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128::new(450));
-
-        // a*0
-        let left = Uint128::new(300);
-        let right = Decimal::zero();
-        assert_eq!(left * right, Uint128::new(0));
-
-        // 0*a
-        let left = Uint128::new(0);
-        let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128::new(0));
-    }
-
-    #[test]
-    // in this test the Decimal is on the left
-    fn decimal_uint128_multiply() {
-        // a*b
-        let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128::new(300);
-        assert_eq!(left * right, Uint128::new(450));
-
-        // 0*a
-        let left = Decimal::zero();
-        let right = Uint128::new(300);
-        assert_eq!(left * right, Uint128::new(0));
-
-        // a*0
-        let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128::new(0);
-        assert_eq!(left * right, Uint128::new(0));
-    }
-
-    #[test]
     #[allow(clippy::op_ref)]
     fn decimal_implements_div() {
         let one = Decimal::one();
@@ -2211,14 +2149,14 @@ mod tests {
         // Does the same as the old workaround `Uint128::one() * my_decimal`.
         // This block can be deleted as part of https://github.com/CosmWasm/cosmwasm/issues/1485.
         let tests = vec![
-            Decimal::from_str("12.345").unwrap(),
-            Decimal::from_str("0.98451384").unwrap(),
-            Decimal::from_str("178.0").unwrap(),
-            Decimal::MIN,
-            Decimal::MAX,
+            (Decimal::from_str("12.345").unwrap(), 12u128),
+            (Decimal::from_str("0.98451384").unwrap(), 0u128),
+            (Decimal::from_str("178.0").unwrap(), 178u128),
+            (Decimal::MIN, 0u128),
+            (Decimal::MAX, u128::MAX / Decimal::DECIMAL_FRACTIONAL.u128()),
         ];
-        for my_decimal in tests.into_iter() {
-            assert_eq!(my_decimal.to_uint_floor(), Uint128::one() * my_decimal);
+        for (my_decimal, expected) in tests.into_iter() {
+            assert_eq!(my_decimal.to_uint_floor(), Uint128::new(expected));
         }
     }
 

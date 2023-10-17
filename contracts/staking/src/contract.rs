@@ -154,7 +154,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let to_mint = if supply.issued.is_zero() || bonded.is_zero() {
-        FALLBACK_RATIO * payment.amount
+        payment.amount.mul_floor(FALLBACK_RATIO)
     } else {
         payment.amount.multiply_ratio(supply.issued, bonded)
     };
@@ -193,7 +193,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let owner_raw = deps.api.addr_canonicalize(invest.owner.as_str())?;
 
     // calculate tax and remainer to unbond
-    let tax = amount * invest.exit_tax;
+    let tax = amount.mul_floor(invest.exit_tax);
 
     // deduct all from the account
     let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
