@@ -12,8 +12,12 @@ and this project adheres to
   constructor, remove `SubMsgExecutionResponse` (Use `SubMsgResponse` instead)
   and remove `PartialEq<&str> for Addr` (validate the address and use
   `PartialEq<Addr> for Addr` instead). ([#1879])
+- cosmwasm-std: Remove `Mul<Decimal> for Uint128` and
+  `Mul<Decimal256> for Uint256`. Use `Uint{128,256}::mul_floor` instead.
+  ([#1890])
 
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
+[#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
 
 ## [1.5.0-rc.0]
 

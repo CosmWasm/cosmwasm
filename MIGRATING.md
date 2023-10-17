@@ -54,6 +54,14 @@ major releases of `cosmwasm`. Note that you can also view the
 
   But keep in mind that this is case sensitive (while addresses are not).
 
+- Replace all uses of `Mul<Decimal> for Uint128` and
+  `Mul<Decimal256> for Uint256` with `Uint{128,256}::mul_floor`:
+
+  ```diff
+  -Uint128::new(123456) * Decimal::percent(1);
+  +Uint128::new(123456).mul_floor(Decimal::percent(1));
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
