@@ -121,12 +121,12 @@ fn bench_instance(c: &mut Criterion) {
 fn bench_cache(c: &mut Criterion) {
     let mut group = c.benchmark_group("Cache");
 
-    let options = CacheOptions {
-        base_dir: TempDir::new().unwrap().into_path(),
-        available_capabilities: capabilities_from_csv("iterator,staking"),
-        memory_cache_size: MEMORY_CACHE_SIZE,
-        instance_memory_limit: DEFAULT_MEMORY_LIMIT,
-    };
+    let options = CacheOptions::new(
+        TempDir::new().unwrap().into_path(),
+        capabilities_from_csv("iterator,staking"),
+        MEMORY_CACHE_SIZE,
+        DEFAULT_MEMORY_LIMIT,
+    );
 
     group.bench_function("save wasm", |b| {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
@@ -150,7 +150,7 @@ fn bench_cache(c: &mut Criterion) {
     });
 
     group.bench_function("load wasm unchecked", |b| {
-        let options = CacheOptions { ..options.clone() };
+        let options = options.clone();
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
         cache.set_module_unchecked(true);
@@ -174,12 +174,12 @@ fn bench_cache(c: &mut Criterion) {
     });
 
     group.bench_function("instantiate from fs", |b| {
-        let non_memcache = CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
-            available_capabilities: capabilities_from_csv("iterator,staking"),
-            memory_cache_size: Size(0),
-            instance_memory_limit: DEFAULT_MEMORY_LIMIT,
-        };
+        let non_memcache = CacheOptions::new(
+            TempDir::new().unwrap().into_path(),
+            capabilities_from_csv("iterator,staking"),
+            Size(0),
+            DEFAULT_MEMORY_LIMIT,
+        );
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
@@ -196,12 +196,12 @@ fn bench_cache(c: &mut Criterion) {
     });
 
     group.bench_function("instantiate from fs unchecked", |b| {
-        let non_memcache = CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
-            available_capabilities: capabilities_from_csv("iterator,staking"),
-            memory_cache_size: Size(0),
-            instance_memory_limit: DEFAULT_MEMORY_LIMIT,
-        };
+        let non_memcache = CacheOptions::new(
+            TempDir::new().unwrap().into_path(),
+            capabilities_from_csv("iterator,staking"),
+            Size(0),
+            DEFAULT_MEMORY_LIMIT,
+        );
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
         cache.set_module_unchecked(true);
@@ -263,12 +263,12 @@ fn bench_cache(c: &mut Criterion) {
 
 pub fn bench_instance_threads(c: &mut Criterion) {
     c.bench_function("multi-threaded get_instance", |b| {
-        let options = CacheOptions {
-            base_dir: TempDir::new().unwrap().into_path(),
-            available_capabilities: capabilities_from_csv("iterator,staking"),
-            memory_cache_size: MEMORY_CACHE_SIZE,
-            instance_memory_limit: DEFAULT_MEMORY_LIMIT,
-        };
+        let options = CacheOptions::new(
+            TempDir::new().unwrap().into_path(),
+            capabilities_from_csv("iterator,staking"),
+            MEMORY_CACHE_SIZE,
+            DEFAULT_MEMORY_LIMIT,
+        );
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };

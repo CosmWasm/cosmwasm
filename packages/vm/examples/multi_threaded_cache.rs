@@ -26,12 +26,12 @@ const INSTANTIATION_THREADS: usize = 2048;
 const THREADS: usize = SAVE_WASM_THREADS + INSTANTIATION_THREADS;
 
 pub fn main() {
-    let options = CacheOptions {
-        base_dir: TempDir::new().unwrap().into_path(),
-        available_capabilities: capabilities_from_csv("iterator,staking"),
-        memory_cache_size: MEMORY_CACHE_SIZE,
-        instance_memory_limit: DEFAULT_MEMORY_LIMIT,
-    };
+    let options = CacheOptions::new(
+        TempDir::new().unwrap().into_path(),
+        capabilities_from_csv("iterator,staking"),
+        MEMORY_CACHE_SIZE,
+        DEFAULT_MEMORY_LIMIT,
+    );
 
     let cache: Cache<MockApi, MockStorage, MockQuerier> = unsafe { Cache::new(options).unwrap() };
     let cache = Arc::new(cache);

@@ -52,6 +52,7 @@ pub struct Metrics {
 }
 
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub struct CacheOptions {
     /// The base directory of this cache.
     ///
@@ -63,6 +64,22 @@ pub struct CacheOptions {
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
     pub instance_memory_limit: Size,
+}
+
+impl CacheOptions {
+    pub fn new(
+        base_dir: impl Into<PathBuf>,
+        available_capabilities: impl Into<HashSet<String>>,
+        memory_cache_size: Size,
+        instance_memory_limit: Size,
+    ) -> Self {
+        Self {
+            base_dir: base_dir.into(),
+            available_capabilities: available_capabilities.into(),
+            memory_cache_size,
+            instance_memory_limit,
+        }
+    }
 }
 
 pub struct CacheInner {
