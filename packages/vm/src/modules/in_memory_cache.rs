@@ -117,6 +117,28 @@ mod tests {
     // Based on `examples/module_size.sh`
     const TESTING_WASM_SIZE_FACTOR: usize = 18;
 
+    const WAT1: &str = r#"(module
+        (type $t0 (func (param i32) (result i32)))
+        (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+            get_local $p0
+            i32.const 1
+            i32.add)
+        )"#;
+    const WAT2: &str = r#"(module
+        (type $t0 (func (param i32) (result i32)))
+        (func $add_one (export "add_two") (type $t0) (param $p0 i32) (result i32)
+            get_local $p0
+            i32.const 2
+            i32.add)
+        )"#;
+    const WAT3: &str = r#"(module
+        (type $t0 (func (param i32) (result i32)))
+        (func $add_one (export "add_three") (type $t0) (param $p0 i32) (result i32)
+            get_local $p0
+            i32.const 3
+            i32.add)
+        )"#;
+
     #[test]
     fn check_element_sizes() {
         let key_size = mem::size_of::<Checksum>();
@@ -135,16 +157,7 @@ mod tests {
         let mut cache = InMemoryCache::new(Size::mebi(200));
 
         // Create module
-        let wasm = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 1
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm = wat::parse_str(WAT1).unwrap();
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
@@ -188,38 +201,11 @@ mod tests {
         let mut cache = InMemoryCache::new(Size::mebi(2));
 
         // Create module
-        let wasm1 = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 1
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm1 = wat::parse_str(WAT1).unwrap();
         let checksum1 = Checksum::generate(&wasm1);
-        let wasm2 = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_two") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 2
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm2 = wat::parse_str(WAT2).unwrap();
         let checksum2 = Checksum::generate(&wasm2);
-        let wasm3 = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_three") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 3
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm3 = wat::parse_str(WAT3).unwrap();
         let checksum3 = Checksum::generate(&wasm3);
 
         assert_eq!(cache.len(), 0);
@@ -248,38 +234,11 @@ mod tests {
         let mut cache = InMemoryCache::new(Size::mebi(2));
 
         // Create module
-        let wasm1 = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 1
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm1 = wat::parse_str(WAT1).unwrap();
         let checksum1 = Checksum::generate(&wasm1);
-        let wasm2 = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_two") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 2
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm2 = wat::parse_str(WAT2).unwrap();
         let checksum2 = Checksum::generate(&wasm2);
-        let wasm3 = wat::parse_str(
-            r#"(module
-            (type $t0 (func (param i32) (result i32)))
-            (func $add_one (export "add_three") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 3
-                i32.add)
-            )"#,
-        )
-        .unwrap();
+        let wasm3 = wat::parse_str(WAT3).unwrap();
         let checksum3 = Checksum::generate(&wasm3);
 
         assert_eq!(cache.size(), 0);
@@ -301,5 +260,40 @@ mod tests {
         let module = compile(&engine3, &wasm3).unwrap();
         cache.store(&checksum3, module, 1_500_000).unwrap();
         assert_eq!(cache.size(), 1_500_032);
+    }
+
+    #[test]
+    fn in_memory_cache_works_for_zero_size() {
+        // A cache size of 0 practically disabled the cache. It must work
+        // like any cache with insufficient space.
+        // We test all common methods here.
+
+        let mut cache = InMemoryCache::new(Size::mebi(0));
+
+        // Create module
+        let wasm = wat::parse_str(WAT1).unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        // Module does not exist
+        let cache_entry = cache.load(&checksum).unwrap();
+        assert!(cache_entry.is_none());
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.size(), 0);
+
+        // Compile module
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
+
+        // Store module
+        let size = wasm.len() * TESTING_WASM_SIZE_FACTOR;
+        cache.store(&checksum, original, size).unwrap();
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.size(), 0);
+
+        // Load module
+        let cached = cache.load(&checksum).unwrap();
+        assert!(cached.is_none());
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.size(), 0);
     }
 }
