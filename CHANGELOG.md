@@ -15,7 +15,10 @@ and this project adheres to
 - cosmwasm-std: Remove `Mul<Decimal> for Uint128` and
   `Mul<Decimal256> for Uint256`. Use `Uint{128,256}::mul_floor` instead.
   ([#1890])
+- cosmwasm-std: `Uint{64,128}::full_mul` now take `Into<Self>` as an argument.
+  ([#1874])
 
+[#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
 [#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
 

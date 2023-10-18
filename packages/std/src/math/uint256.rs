@@ -223,7 +223,7 @@ impl Uint256 {
     /// );
     /// ```
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn full_mul(self, rhs: impl Into<Uint256>) -> Uint512 {
+    pub fn full_mul(self, rhs: impl Into<Self>) -> Uint512 {
         Uint512::from(self)
             .checked_mul(Uint512::from(rhs.into()))
             .unwrap()
