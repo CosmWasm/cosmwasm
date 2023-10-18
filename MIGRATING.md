@@ -62,6 +62,13 @@ major releases of `cosmwasm`. Note that you can also view the
   +Uint128::new(123456).mul_floor(Decimal::percent(1));
   ```
 
+- When calling `Coin::new`, you now have to explicitly specify the integer type:
+
+  ```diff
+  -Coin::new(1234, "uatom")
+  +Coin::new(1234u128, "uatom")
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):

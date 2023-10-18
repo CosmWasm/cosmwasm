@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Addr;
+use crate::{Addr, Decimal256};
 
 use super::query_response::QueryResponseType;
 
@@ -63,14 +63,14 @@ pub struct DecCoin {
     ///
     /// Some chains have choosen atto (10^-18) for their token's base denomination. If we used `Decimal` here, we could only store
     /// 340282366920938463463.374607431768211455atoken which is 340.28 TOKEN.
-    pub amount: crate::Decimal256,
+    pub amount: Decimal256,
 }
 
 impl DecCoin {
-    pub fn new(amount: crate::Decimal256, denom: impl Into<String>) -> Self {
+    pub fn new(amount: impl Into<Decimal256>, denom: impl Into<String>) -> Self {
         Self {
             denom: denom.into(),
-            amount,
+            amount: amount.into(),
         }
     }
 }
