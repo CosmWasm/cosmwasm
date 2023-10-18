@@ -77,6 +77,7 @@ pub use crate::query::{
     DistributionQuery, FullDelegation, IbcQuery, ListChannelsResponse, PortIdResponse,
     QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
+pub use crate::results::IntoAny;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;
 pub use crate::results::{

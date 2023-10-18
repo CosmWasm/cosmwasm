@@ -40,6 +40,10 @@ pub enum CosmosMsg<T = Empty> {
         type_url: String,
         value: Binary,
     },
+    Any {
+        type_url: String,
+        value: Binary,
+    },
     #[cfg(feature = "stargate")]
     Ibc(IbcMsg),
     Wasm(WasmMsg),
@@ -383,6 +387,18 @@ impl<T> From<DistributionMsg> for CosmosMsg<T> {
 impl<T> From<WasmMsg> for CosmosMsg<T> {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
+    }
+}
+
+pub trait IntoAny {
+    /// Takes self and returns a (type_url, value) pair.
+    fn into_any(self) -> (String, Binary);
+}
+
+impl<S: IntoAny, T> From<S> for CosmosMsg<T> {
+    fn from(source: S) -> Self {
+        let (type_url, value) = source.into_any();
+        CosmosMsg::<T>::Any { type_url, value }
     }
 }
 
