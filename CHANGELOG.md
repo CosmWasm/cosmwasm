@@ -17,10 +17,13 @@ and this project adheres to
   ([#1890])
 - cosmwasm-std: `Uint{64,128}::full_mul` now take `Into<Self>` as an argument.
   ([#1874])
+- cosmwasm-vm: Make `CacheOptions` non-exhaustive and add a constructor.
+  ([#1898])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
 [#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
+[#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 
 ## [1.5.0-rc.0]
 
