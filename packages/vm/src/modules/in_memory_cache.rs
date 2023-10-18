@@ -261,4 +261,39 @@ mod tests {
         cache.store(&checksum3, module, 1_500_000).unwrap();
         assert_eq!(cache.size(), 1_500_032);
     }
+
+    #[test]
+    fn in_memory_cache_works_for_zero_size() {
+        // A cache size of 0 practically disabled the cache. It must work
+        // like any cache with insufficient space.
+        // We test all common methods here.
+
+        let mut cache = InMemoryCache::new(Size::mebi(0));
+
+        // Create module
+        let wasm = wat::parse_str(WAT1).unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        // Module does not exist
+        let cache_entry = cache.load(&checksum).unwrap();
+        assert!(cache_entry.is_none());
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.size(), 0);
+
+        // Compile module
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
+
+        // Store module
+        let size = wasm.len() * TESTING_WASM_SIZE_FACTOR;
+        cache.store(&checksum, original, size).unwrap();
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.size(), 0);
+
+        // Load module
+        let cached = cache.load(&checksum).unwrap();
+        assert!(cached.is_none());
+        assert_eq!(cache.len(), 0);
+        assert_eq!(cache.size(), 0);
+    }
 }
