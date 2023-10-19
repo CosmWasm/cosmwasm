@@ -22,10 +22,13 @@ and this project adheres to
 - cosmwasm-std: `Coin::new` now takes `Into<Uint128>` instead of `u128` as the
   first argument and `DecCoin::new` takes `Into<Decimal256>` instead of
   `Decimal256`. ([#1902])
+- cosmwasm-std: Remove operand strings from `OverflowError`,
+  `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
 [#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
+[#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
 

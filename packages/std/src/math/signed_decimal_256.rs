@@ -372,7 +372,7 @@ impl SignedDecimal256 {
         self.0
             .checked_add(other.0)
             .map(Self)
-            .map_err(|_| OverflowError::new(OverflowOperation::Add, self, other))
+            .map_err(|_| OverflowError::new(OverflowOperation::Add))
     }
 
     /// Computes `self - other`, returning an `OverflowError` if an overflow occurred.
@@ -380,7 +380,7 @@ impl SignedDecimal256 {
         self.0
             .checked_sub(other.0)
             .map(Self)
-            .map_err(|_| OverflowError::new(OverflowOperation::Sub, self, other))
+            .map_err(|_| OverflowError::new(OverflowOperation::Sub))
     }
 
     /// Multiplies one `SignedDecimal256` by another, returning an `OverflowError` if an overflow occurred.
@@ -390,11 +390,7 @@ impl SignedDecimal256 {
         result_as_int512
             .try_into()
             .map(Self)
-            .map_err(|_| OverflowError {
-                operation: OverflowOperation::Mul,
-                operand1: self.to_string(),
-                operand2: other.to_string(),
-            })
+            .map_err(|_| OverflowError::new(OverflowOperation::Mul))
     }
 
     /// Raises a value to the power of `exp`, panics if an overflow occurred.
@@ -432,11 +428,7 @@ impl SignedDecimal256 {
             Ok(x * y)
         }
 
-        inner(self, exp).map_err(|_| OverflowError {
-            operation: OverflowOperation::Pow,
-            operand1: self.to_string(),
-            operand2: exp.to_string(),
-        })
+        inner(self, exp).map_err(|_| OverflowError::new(OverflowOperation::Pow))
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, CheckedFromRatioError> {
@@ -448,7 +440,7 @@ impl SignedDecimal256 {
         self.0
             .checked_rem(other.0)
             .map(Self)
-            .map_err(|_| DivideByZeroError::new(self))
+            .map_err(|_| DivideByZeroError)
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
@@ -2009,11 +2001,7 @@ mod tests {
     fn signed_decimal_256_checked_mul_overflow() {
         assert_eq!(
             SignedDecimal256::MAX.checked_mul(SignedDecimal256::percent(200)),
-            Err(OverflowError {
-                operation: OverflowOperation::Mul,
-                operand1: SignedDecimal256::MAX.to_string(),
-                operand2: SignedDecimal256::percent(200).to_string(),
-            })
+            Err(OverflowError::new(OverflowOperation::Mul))
         );
     }
 
@@ -2407,11 +2395,7 @@ mod tests {
     fn signed_decimal_256_checked_pow_overflow() {
         assert_eq!(
             SignedDecimal256::MAX.checked_pow(2),
-            Err(OverflowError {
-                operation: OverflowOperation::Pow,
-                operand1: SignedDecimal256::MAX.to_string(),
-                operand2: "2".to_string(),
-            })
+            Err(OverflowError::new(OverflowOperation::Pow))
         );
     }
 

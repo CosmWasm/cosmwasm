@@ -158,54 +158,54 @@ impl Uint128 {
         self.0
             .checked_add(other.0)
             .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Add, self, other))
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Add))
     }
 
     pub fn checked_sub(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_sub(other.0)
             .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Sub, self, other))
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Sub))
     }
 
     pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
         self.0
             .checked_mul(other.0)
             .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Mul))
     }
 
     pub fn checked_pow(self, exp: u32) -> Result<Self, OverflowError> {
         self.0
             .checked_pow(exp)
             .map(Self)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow, self, exp))
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Pow))
     }
 
     pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_div(other.0)
             .map(Self)
-            .ok_or_else(|| DivideByZeroError::new(self))
+            .ok_or(DivideByZeroError)
     }
 
     pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_div_euclid(other.0)
             .map(Self)
-            .ok_or_else(|| DivideByZeroError::new(self))
+            .ok_or(DivideByZeroError)
     }
 
     pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
         self.0
             .checked_rem(other.0)
             .map(Self)
-            .ok_or_else(|| DivideByZeroError::new(self))
+            .ok_or(DivideByZeroError)
     }
 
     pub fn checked_shr(self, other: u32) -> Result<Self, OverflowError> {
         if other >= 128 {
-            return Err(OverflowError::new(OverflowOperation::Shr, self, other));
+            return Err(OverflowError::new(OverflowOperation::Shr));
         }
 
         Ok(Self(self.0.shr(other)))
@@ -213,7 +213,7 @@ impl Uint128 {
 
     pub fn checked_shl(self, other: u32) -> Result<Self, OverflowError> {
         if other >= 128 {
-            return Err(OverflowError::new(OverflowOperation::Shl, self, other));
+            return Err(OverflowError::new(OverflowOperation::Shl));
         }
 
         Ok(Self(self.0.shl(other)))
@@ -837,10 +837,8 @@ mod tests {
 
         // error result on underflow (- would produce negative result)
         let underflow_result = a.checked_sub(b);
-        let OverflowError {
-            operand1, operand2, ..
-        } = underflow_result.unwrap_err();
-        assert_eq!((operand1, operand2), (a.to_string(), b.to_string()));
+        let OverflowError { operation } = underflow_result.unwrap_err();
+        assert_eq!(operation, OverflowOperation::Sub);
     }
 
     #[test]
@@ -1252,7 +1250,6 @@ mod tests {
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint256",
                 target_type: "Uint128",
-                value: "893241213167463466591358344508391555069".to_string()
             })),
         );
     }
@@ -1269,9 +1266,7 @@ mod tests {
         let fraction = (21u128, 0u128);
         assert_eq!(
             Uint128::new(123456).checked_mul_floor(fraction),
-            Err(DivideByZero(DivideByZeroError {
-                operand: "2592576".to_string()
-            })),
+            Err(DivideByZero(DivideByZeroError)),
         );
     }
 
@@ -1335,7 +1330,6 @@ mod tests {
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint256",
                 target_type: "Uint128",
-                value: "893241213167463466591358344508391555069".to_string() // raises prior to rounding up
             })),
         );
     }
@@ -1352,9 +1346,7 @@ mod tests {
         let fraction = (21u128, 0u128);
         assert_eq!(
             Uint128::new(123456).checked_mul_ceil(fraction),
-            Err(DivideByZero(DivideByZeroError {
-                operand: "2592576".to_string()
-            })),
+            Err(DivideByZero(DivideByZeroError)),
         );
     }
 
@@ -1424,7 +1416,6 @@ mod tests {
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint256",
                 target_type: "Uint128",
-                value: "893241213167463466591358344508391555069".to_string()
             })),
         );
     }
@@ -1495,7 +1486,6 @@ mod tests {
             Err(ConversionOverflow(ConversionOverflowError {
                 source_type: "Uint256",
                 target_type: "Uint128",
-                value: "893241213167463466591358344508391555069".to_string()
             })),
         );
     }

@@ -72,7 +72,7 @@ macro_rules! forward_try_from {
                     .0
                     .try_into()
                     .map(Self)
-                    .map_err(|_| Self::Error::new(stringify!($input), stringify!($output), value))
+                    .map_err(|_| Self::Error::new(stringify!($input), stringify!($output)))
             }
         }
     };
@@ -93,7 +93,7 @@ macro_rules! try_from_int_to_int {
 
             fn try_from(value: $input) -> Result<Self, Self::Error> {
                 $crate::math::conversion::shrink_be_int(value.to_be_bytes())
-                    .ok_or_else(|| Self::Error::new(stringify!($input), stringify!($output), value))
+                    .ok_or_else(|| Self::Error::new(stringify!($input), stringify!($output)))
                     .map(Self::from_be_bytes)
             }
         }
@@ -123,11 +123,7 @@ macro_rules! try_from_uint_to_int {
                 use bnum::prelude::As;
                 // $input::MAX has to be bigger than $output::MAX, so we can just cast it
                 if value.0 > Self::MAX.0.as_() {
-                    return Err(Self::Error::new(
-                        stringify!($input),
-                        stringify!($output),
-                        value,
-                    ));
+                    return Err(Self::Error::new(stringify!($input), stringify!($output)));
                 }
 
                 // at this point we know it fits
@@ -157,11 +153,7 @@ where
     let v = I::MAX;
     assert_eq!(
         O::try_from(v),
-        Err(crate::ConversionOverflowError::new(
-            input_type,
-            output_type,
-            v
-        )),
+        Err(crate::ConversionOverflowError::new(input_type, output_type)),
         "input::MAX value should not fit"
     );
 
@@ -172,11 +164,7 @@ where
     let v = max + I::ONE;
     assert_eq!(
         O::try_from(v),
-        Err(crate::ConversionOverflowError::new(
-            input_type,
-            output_type,
-            v
-        )),
+        Err(crate::ConversionOverflowError::new(input_type, output_type)),
         "output::MAX + 1 should not fit"
     );
 
@@ -222,11 +210,7 @@ where
         let v = I::MAX;
         assert_eq!(
             O::try_from(v),
-            Err(crate::ConversionOverflowError::new(
-                input_type,
-                output_type,
-                v
-            )),
+            Err(crate::ConversionOverflowError::new(input_type, output_type)),
             "input::MAX value should not fit"
         );
         // but `O::MAX` should fit
@@ -240,11 +224,7 @@ where
         let v = max + I::ONE;
         assert_eq!(
             O::try_from(v),
-            Err(crate::ConversionOverflowError::new(
-                input_type,
-                output_type,
-                v
-            )),
+            Err(crate::ConversionOverflowError::new(input_type, output_type)),
             "output::MAX + 1 should not fit"
         );
     }
@@ -253,11 +233,7 @@ where
     let v = I::from(-42i32);
     assert_eq!(
         O::try_from(v),
-        Err(crate::ConversionOverflowError::new(
-            input_type,
-            output_type,
-            v
-        )),
+        Err(crate::ConversionOverflowError::new(input_type, output_type,)),
         "negative numbers should not fit"
     );
 
@@ -294,7 +270,6 @@ macro_rules! try_from_int_to_uint {
                         return Err(ConversionOverflowError::new(
                             stringify!($input),
                             stringify!($output),
-                            value,
                         ));
                     }
 
@@ -308,7 +283,6 @@ macro_rules! try_from_int_to_uint {
                         return Err(ConversionOverflowError::new(
                             stringify!($input),
                             stringify!($output),
-                            value,
                         ));
                     }
 
