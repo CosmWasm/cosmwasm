@@ -13,7 +13,7 @@ pub use contract_result::ContractResult;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use cosmos_msg::WeightedVoteOption;
 pub use cosmos_msg::{
-    wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, CustomMsg, IntoAny, WasmMsg,
+    wasm_execute, wasm_instantiate, AnyMsg, BankMsg, CosmosMsg, CustomMsg, WasmMsg,
 };
 #[cfg(feature = "staking")]
 pub use cosmos_msg::{DistributionMsg, StakingMsg};
