@@ -67,6 +67,11 @@ impl<T> SubMsg<T> {
         Self::reply_on(msg.into(), id, ReplyOn::Always)
     }
 
+    /// create a `SubMsg` that will never `reply`. This is equivalent to standard message semantics.
+    pub fn reply_never(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
+        Self::reply_on(msg.into(), id, ReplyOn::Never)
+    }
+
     /// Add a gas limit to the message.
     /// This gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     ///
