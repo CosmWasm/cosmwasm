@@ -12,7 +12,7 @@ readme = "README.md"
 features = ["abort", "stargate", "staking", "ibc3", "cosmwasm_1_4"]
 
 [features]
-default = ["iterator", "abort"]
+default = ["iterator", "abort", "std"]
 abort = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
@@ -49,6 +49,9 @@ cosmwasm_1_3 = ["cosmwasm_1_2"]
 # It requires the host blockchain to run CosmWasm `1.4.0` or higher.
 cosmwasm_1_4 = ["cosmwasm_1_3"]
 
+unstable = ["serde/unstable", "serde-json-wasm/unstable"]
+std = ["serde/std","serde-json-wasm/std"]
+
 [dependencies]
 base64 = "0.21.0"
 cosmwasm-derive = { path = "../derive", version = "1.5.0-rc.0" }
@@ -57,11 +60,11 @@ forward_ref = "1"
 hex = "0.4"
 schemars = "0.8.3"
 sha2 = "0.10.3"
-serde = { version = "1.0.103", default-features = false, features = [
+serde = { version = "^1.0.181", default-features = false, features = [
   "derive",
   "alloc",
 ] }
-serde-json-wasm = { version = "0.5.0" }
+serde-json-wasm = { version = "1.0.0", default-features = false}
 thiserror = "1.0.26"
 bnum = "0.8.0"
 static_assertions = "1.1.0"

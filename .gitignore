@@ -17,3 +17,7 @@ artifacts/
 
 # Log files (e.g. memory profiling)
 *.log
+
+
+rust-toolchain.toml
+shell.nix
