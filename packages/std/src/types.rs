@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use alloc::vec::Vec;
 use crate::addresses::Addr;
 use crate::coin::Coin;
 use crate::timestamp::Timestamp;

@@ -1,5 +1,6 @@
 use core::marker::PhantomData;
 use core::ops::Deref;
+use alloc::vec::Vec;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::addresses::{Addr, CanonicalAddr};

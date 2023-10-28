@@ -1,5 +1,6 @@
 use alloc::collections::BTreeMap;
 use core::fmt;
+use alloc::vec::Vec;
 #[cfg(feature = "iterator")]
 use core::iter;
 #[cfg(feature = "iterator")]
