@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 /// Performs a perfect shuffle (in shuffle)
 ///
 /// https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles

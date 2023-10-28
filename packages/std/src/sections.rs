@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use crate::conversion::force_to_u32;
 
 /// A sections decoder for the special case of two elements
