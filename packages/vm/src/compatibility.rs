@@ -44,8 +44,6 @@ const REQUIRED_EXPORTS: &[&str] = &[
     // IO
     "allocate",
     "deallocate",
-    // Required entry points
-    "instantiate",
 ];
 
 const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
@@ -565,7 +563,6 @@ mod tests {
                 (export "add_one" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
-                (export "instantiate" (func 0))
             )"#,
         )
         .unwrap();
@@ -606,20 +603,6 @@ mod tests {
                 assert!(
                     msg.starts_with("Wasm contract doesn't have required export: \"deallocate\"")
                 );
-            }
-            Err(e) => panic!("Unexpected error {e:?}"),
-            Ok(_) => panic!("Didn't reject wasm with invalid api"),
-        }
-    }
-
-    #[test]
-    fn check_wasm_exports_of_old_contract() {
-        let module = ParsedWasm::parse(CONTRACT_0_7).unwrap();
-        match check_wasm_exports(&module) {
-            Err(VmError::StaticValidationErr { msg, .. }) => {
-                assert!(
-                    msg.starts_with("Wasm contract doesn't have required export: \"instantiate\"")
-                )
             }
             Err(e) => panic!("Unexpected error {e:?}"),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
