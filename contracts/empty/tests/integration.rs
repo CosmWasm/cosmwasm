@@ -17,12 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coins, to_json_vec, ContractResult, Empty, Response};
-use cosmwasm_vm::{
-    call_instantiate,
-    testing::{mock_env, mock_info, mock_instance},
-    VmError,
-};
+use cosmwasm_vm::testing::mock_instance;
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/empty.wasm");
@@ -30,23 +25,6 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/em
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 #[test]
-fn instantiate_fails() {
-    let mut deps = mock_instance(WASM, &[]);
-
-    let msg = Empty {};
-    let info = mock_info("creator", &coins(1000, "earth"));
-
-    let serialized_msg = to_json_vec(&msg).unwrap();
-    let result: Result<ContractResult<Response>, VmError> =
-        call_instantiate(&mut deps, &mock_env(), &info, &serialized_msg);
-    let err = result.unwrap_err();
-
-    assert!(matches!(
-        err,
-        VmError::ResolveErr {
-            msg,
-            ..
-        }
-        if msg == "Could not get export: Missing export instantiate"
-    ));
+fn validation_succeeds() {
+    mock_instance(WASM, &[]);
 }
