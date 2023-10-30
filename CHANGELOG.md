@@ -24,8 +24,10 @@ and this project adheres to
   `Decimal256`. ([#1902])
 - cosmwasm-std: Remove operand strings from `OverflowError`,
   `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
+- cosmwasm-std: Add optional memo field to `IbcMsg::Transfer`. ([#1878])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
+[#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
 [#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
 [#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
