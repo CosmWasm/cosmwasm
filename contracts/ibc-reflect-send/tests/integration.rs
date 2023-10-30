@@ -234,12 +234,14 @@ fn send_remote_funds() {
             to_address,
             amount,
             timeout,
+            memo,
         }) => {
             assert_eq!(transfer_channel_id, channel_id.as_str());
             assert_eq!(remote_addr, to_address.as_str());
             assert_eq!(&coin(12344, "utrgd"), amount);
             assert!(timeout.block().is_none());
             assert!(timeout.timestamp().is_some());
+            assert!(memo.is_none());
         }
         o => panic!("unexpected message: {o:?}"),
     }

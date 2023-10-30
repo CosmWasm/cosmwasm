@@ -35,6 +35,8 @@ pub enum IbcMsg {
         amount: Coin,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
+        /// optional memo
+        memo: Option<String>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
@@ -793,9 +795,10 @@ mod tests {
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678u128, "uatom"),
             timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
+            memo: None,
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"}}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"},"memo":null}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 
