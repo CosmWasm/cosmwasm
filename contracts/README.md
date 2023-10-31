@@ -38,6 +38,8 @@ Introducing the development contracts in the order they were created.
    that hackatom has.
 10. **virus** is a contract that reproduces itself and does nothing useful
     beyond that, showing how to use instantiate2 from a contract.
+11. **empty** is an empty contract that does nothing. It is used to test that we
+    can store contracts with no entry points.
 
 ## Optimized builds
 
@@ -99,6 +101,11 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_virus",target=/code/contracts/virus/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.12.13 ./contracts/virus
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_empty",target=/code/contracts/empty/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.13 ./contracts/empty
 ```
 
 ## Entry points

@@ -5,8 +5,8 @@
 This is an abstraction layer around the wasmer VM to expose just what we need to
 run cosmwasm contracts in a high-level manner. This is intended both for
 efficient writing of unit tests, as well as a public API to run contracts in eg.
-go-cosmwasm. As such it includes all glue code needed for typical actions, like
-fs caching.
+[wasmvm](https://github.com/CosmWasm/wasmvm). As such it includes all glue code
+needed for typical actions, like fs caching.
 
 ## Compatibility
 
@@ -69,10 +69,10 @@ docker run --rm -v "$(pwd)":/code \
   && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_1.2.wasm
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
+  --mount type=volume,source="devcontract_cache_empty",target=/code/contracts/empty/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.13 ./contracts/floaty \
-  && cp artifacts/floaty.wasm packages/vm/testdata/floaty_1.2.wasm
+  cosmwasm/rust-optimizer:0.12.13 ./contracts/empty \
+  && cp artifacts/empty.wasm packages/vm/testdata/empty.wasm
 ```
 
 The `cyberpunk_rust170.wasm` for
@@ -84,6 +84,14 @@ cd contracts/cyberpunk
 rm -r target
 RUSTFLAGS='-C link-arg=-s' cargo build --release --lib --target wasm32-unknown-unknown --locked
 cp target/wasm32-unknown-unknown/release/cyberpunk.wasm ../../packages/vm/testdata/cyberpunk_rust170.wasm
+```
+
+The `floaty_2.0.wasm` is built using Rust nightly as follows (non-reproducible):
+
+```sh
+cd contracts/floaty
+RUSTFLAGS="-C link-arg=-s -C target-feature=+nontrapping-fptoint" cargo wasm
+cp target/wasm32-unknown-unknown/release/floaty.wasm ../../packages/vm/testdata/floaty_2.0.wasm
 ```
 
 ## Testing
