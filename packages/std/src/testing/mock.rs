@@ -18,12 +18,9 @@ use crate::deps::OwnedDeps;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
-    IbcAcknowledgement, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
-};
-#[cfg(feature = "stargate")]
-use crate::ibc::{
-    IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder,
 };
 use crate::math::Uint128;
 #[cfg(feature = "cosmwasm_1_1")]
