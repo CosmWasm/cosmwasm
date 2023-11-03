@@ -515,14 +515,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-storage"
-version = "1.5.0"
-dependencies = [
- "cosmwasm-std",
- "serde",
-]
-
-[[package]]
 name = "cosmwasm-vm"
 version = "1.5.0"
 dependencies = [
