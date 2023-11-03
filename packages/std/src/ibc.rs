@@ -298,7 +298,9 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
     }
 }
 
-/// This serializes either as "null" or a JSON object.
+/// This serializes either as `null` or a JSON object.
+/// Within the response, a channel version can be specified.
+/// If `null` is provided instead, the incoming channel version is accepted.
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
