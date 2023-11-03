@@ -710,8 +710,8 @@ mod tests {
             r#"
             (module
                 (func (export "sum") (param i32 i32) (result i32)
-                    get_local 0
-                    get_local 1
+                    local.get 0
+                    local.get 1
                     i32.add
                 ))
             "#,
@@ -732,8 +732,8 @@ mod tests {
             r#"
             (module
                 (func $to_float (param i32) (result f32)
-                    get_local 0
-                    f32.convert_u/i32
+                    local.get 0
+                    f32.convert_i32_u
                 ))
             "#,
         )
