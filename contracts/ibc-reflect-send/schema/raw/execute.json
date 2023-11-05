@@ -413,6 +413,13 @@
                   "description": "existing channel to send the tokens over",
                   "type": "string"
                 },
+                "memo": {
+                  "description": "optional memo",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "timeout": {
                   "description": "when packet times out, measured on remote chain",
                   "allOf": [

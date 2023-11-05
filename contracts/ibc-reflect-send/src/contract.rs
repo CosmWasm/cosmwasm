@@ -157,6 +157,7 @@ pub fn handle_send_funds(
         to_address: remote_addr,
         amount,
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        memo: None,
     };
 
     let res = Response::new()
