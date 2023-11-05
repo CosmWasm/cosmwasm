@@ -24,6 +24,7 @@ and this project adheres to
   `Decimal256`. ([#1902])
 - cosmwasm-std: Remove operand strings from `OverflowError`,
   `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
+- cosmwasm-std: Add `SubMsg:reply_never` constructor ([#1929])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
@@ -31,6 +32,7 @@ and this project adheres to
 [#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
+[#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
 
 ## [1.5.0-rc.0]
 
