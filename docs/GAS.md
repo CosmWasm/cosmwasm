@@ -66,3 +66,19 @@ JavaScript and jq).
 <sup>1</sup> Python3: `(2**64-1) / 10**12`
 
 <sup>2</sup> Python3: `((2**64-1)/30) / 10**12`
+
+## CosmWasm 1.x -> 2.0 changes
+
+In all versions before 2.0, the gas values were bigger by a factor of 1000.
+There is no need to have them this big and in order to reduce the risk of
+overflow, the gas values were lowered in [#1599]. Here is a breakdown of what
+this change entails:
+
+|                            | CosmWasm 1.x          | CosmWasm 2.x          |
+| -------------------------- | --------------------- | --------------------- |
+| Cost target                | 1 Teragas/millisecond | 1 Teragas/second      |
+| Exceeds uint64 range after | 5 hours               | 5124 hours (213 days) |
+| Cost per Wasm op           | 150_000               | 150                   |
+| Multiplier                 | 140_000_000           | 140_000               |
+
+[#1599]: https://github.com/CosmWasm/cosmwasm/pull/1599
