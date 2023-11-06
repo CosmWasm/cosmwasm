@@ -123,6 +123,28 @@ impl_response_constructor!(
     accumulated_rewards: Vec<Coin>
 );
 
+impl FullDelegation {
+    /// Creates a new delegation.
+    ///
+    /// If fields get added to the [`FullDelegation`] struct in the future, this constructor will
+    /// provide default values for them, but these default values may not be sensible.
+    pub fn create(
+        delegator: Addr,
+        validator: String,
+        amount: Coin,
+        can_redelegate: Coin,
+        accumulated_rewards: Vec<Coin>,
+    ) -> Self {
+        Self {
+            delegator,
+            validator,
+            amount,
+            can_redelegate,
+            accumulated_rewards,
+        }
+    }
+}
+
 /// The data format returned from StakingRequest::AllValidators query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
@@ -169,3 +191,23 @@ impl_response_constructor!(
     max_commission: Decimal,
     max_change_rate: Decimal
 );
+
+impl Validator {
+    /// Creates a new validator.
+    ///
+    /// If fields get added to the [`Validator`] struct in the future, this constructor will
+    /// provide default values for them, but these default values may not be sensible.
+    pub fn create(
+        address: String,
+        commission: Decimal,
+        max_commission: Decimal,
+        max_change_rate: Decimal,
+    ) -> Self {
+        Self {
+            address,
+            commission,
+            max_commission,
+            max_change_rate,
+        }
+    }
+}
