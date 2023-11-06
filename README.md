@@ -17,9 +17,8 @@ The following packages are maintained here:
 | cosmwasm-vm     | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         | [![Coverage][cov-badge-vm]][cov-link-vm]         |
 | cosmwasm-check  | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)    | `cosmwasm-check -h`                                                                   | N/A                                              |
 
-We used to maintain
-[cosmwasm-storage](https://crates.io/crates/cosmwasm-storage) here too, but it
-is no longer maintained and has been dropped in favor of
+[cosmwasm-storage](https://crates.io/crates/cosmwasm-storage) is no longer
+maintained and has been dropped in favor of
 [cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus).
 
 [cov-badge-crypto]:
