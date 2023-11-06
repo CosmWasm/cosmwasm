@@ -26,8 +26,12 @@ and this project adheres to
   `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
 - cosmwasm-std: Add `SubMsg:reply_never` constructor ([#1929])
 - cosmwasm-std: Add optional memo field to `IbcMsg::Transfer`. ([#1878])
+- cosmwasm-std: Make inner values of `CanonicalAddr` and `Binary` private and
+  add constructor for `Binary`. ([#1876])
+- cosmwasm-vm: Make inner value of `Size` private and add constructor. ([#1876])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
+[#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
 [#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
 [#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
