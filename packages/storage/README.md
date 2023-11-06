@@ -1,3 +1,9 @@
+# WARNING: Unmaintained
+
+This crate is no longer maintained and should not be used anymore. For an
+alternative, please check out
+[cw-storage-plus](https://crates.io/crates/cw-storage-plus)
+
 # cosmwasm-storage
 
 [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage)
@@ -8,10 +14,14 @@ boilerplate.
 
 ## Contents
 
-- [PrefixedStorage](#prefixed-storage)
-- [TypedStorage](#typed-storage)
-- [Bucket](#bucket)
-- [Singleton](#singleton)
+- [WARNING: Unmaintained](#warning-unmaintained)
+- [cosmwasm-storage](#cosmwasm-storage)
+  - [Contents](#contents)
+    - [Prefixed Storage](#prefixed-storage)
+    - [Typed Storage](#typed-storage)
+    - [Bucket](#bucket)
+    - [Singleton](#singleton)
+  - [License](#license)
 
 ### Prefixed Storage
 
