@@ -44,12 +44,7 @@ pub const UNUSED_MSG_ID: u64 = 0;
 impl<T> SubMsg<T> {
     /// new creates a "fire and forget" message with the pre-0.14 semantics
     pub fn new(msg: impl Into<CosmosMsg<T>>) -> Self {
-        SubMsg {
-            id: UNUSED_MSG_ID,
-            msg: msg.into(),
-            reply_on: ReplyOn::Never,
-            gas_limit: None,
-        }
+        Self::reply_never(msg)
     }
 
     /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Ok`
@@ -65,6 +60,11 @@ impl<T> SubMsg<T> {
     /// create a `SubMsg` that will always provide a `reply` with the given id
     pub fn reply_always(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Always)
+    }
+
+    /// create a `SubMsg` that will never `reply`. This is equivalent to standard message semantics.
+    pub fn reply_never(msg: impl Into<CosmosMsg<T>>) -> Self {
+        Self::reply_on(msg.into(), UNUSED_MSG_ID, ReplyOn::Never)
     }
 
     /// Add a gas limit to the message.
