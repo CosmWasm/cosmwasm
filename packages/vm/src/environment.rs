@@ -45,7 +45,7 @@ pub struct GasConfig {
 
 impl Default for GasConfig {
     fn default() -> Self {
-        // Target is 10^9 per millisecond (see GAS.md), i.e. 10^6 gas per µ second.
+        // Target is 10^12 per second (see GAS.md), i.e. 10^6 gas per µ second.
         const GAS_PER_US: u64 = 1_000_000;
         Self {
             // ~154 us in crypto benchmarks
