@@ -69,6 +69,22 @@ major releases of `cosmwasm`. Note that you can also view the
   +Coin::new(1234u128, "uatom")
   ```
 
+- When creating a `Binary` or `Size` instance from an inner value, you now have
+  to explicitly call `new`:
+
+  ```diff
+  -Binary(vec![1u8])
+  +Binary::new(vec![1u8])
+  ```
+
+- When accessing the inner value of a `CanonicalAddr` or `Binary`, use
+  `as_slice` instead:
+
+  ```diff
+  -&canonical_addr.0
+  +canonical_addr.as_slice()
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):

@@ -13,7 +13,7 @@ use crate::errors::{StdError, StdResult};
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
-pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
+pub struct Binary(#[schemars(with = "String")] Vec<u8>);
 
 impl Binary {
     /// Base64 encoding engine used in conversion to/from base64.
@@ -25,6 +25,11 @@ impl Binary {
         base64::engine::GeneralPurposeConfig::new()
             .with_decode_padding_mode(base64::engine::DecodePaddingMode::Indifferent),
     );
+
+    /// Creates a new `Binary` containing the given data.
+    pub const fn new(data: Vec<u8>) -> Self {
+        Self(data)
+    }
 
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64

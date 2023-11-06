@@ -130,7 +130,7 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 /// So the type should be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
-pub struct CanonicalAddr(pub Binary);
+pub struct CanonicalAddr(Binary);
 
 /// Implement `CanonicalAddr == Binary`
 impl PartialEq<Binary> for CanonicalAddr {
@@ -485,26 +485,34 @@ mod tests {
         let original_ptr = original.as_ptr();
         let addr: CanonicalAddr = original.into();
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
-        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+        assert_eq!(
+            (addr.0).as_slice().as_ptr(),
+            original_ptr,
+            "must not be copied"
+        );
 
         // From<Vec<u8>> for CanonicalAddr
         let original = vec![0u8, 187, 61, 11, 250, 0];
         let original_ptr = original.as_ptr();
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
-        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+        assert_eq!(
+            (addr.0).as_slice().as_ptr(),
+            original_ptr,
+            "must not be copied"
+        );
 
         // Into<Vec<u8>> for CanonicalAddr
         // This test is a bit pointless because we get Into from the From implementation
         let original = CanonicalAddr::from(vec![0u8, 187, 61, 11, 250, 0]);
-        let original_ptr = (original.0).0.as_ptr();
+        let original_ptr = (original.0).as_slice().as_ptr();
         let vec: Vec<u8> = original.into();
         assert_eq!(vec.as_slice(), [0u8, 187, 61, 11, 250, 0]);
         assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
 
         // From<CanonicalAddr> for Vec<u8>
         let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
-        let original_ptr = (original.0).0.as_ptr();
+        let original_ptr = (original.0).as_slice().as_ptr();
         let vec = Vec::<u8>::from(original);
         assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
@@ -517,11 +525,15 @@ mod tests {
         let original_ptr = original.as_ptr();
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
-        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+        assert_eq!(
+            (addr.0).as_slice().as_ptr(),
+            original_ptr,
+            "must not be copied"
+        );
 
         // From<CanonicalAddr> for Binary
         let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
-        let original_ptr = (original.0).0.as_ptr();
+        let original_ptr = (original.0).as_slice().as_ptr();
         let bin = Binary::from(original);
         assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(bin.as_ptr(), original_ptr, "must not be copied");
@@ -534,11 +546,15 @@ mod tests {
         let original_ptr = original.as_ptr();
         let addr = CanonicalAddr::from(original);
         assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
-        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+        assert_eq!(
+            (addr.0).as_slice().as_ptr(),
+            original_ptr,
+            "must not be copied"
+        );
 
         // From<CanonicalAddr> for HexBinary
         let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
-        let original_ptr = (original.0).0.as_ptr();
+        let original_ptr = (original.0).as_slice().as_ptr();
         let bin = HexBinary::from(original);
         assert_eq!(bin.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(bin.as_ptr(), original_ptr, "must not be copied");

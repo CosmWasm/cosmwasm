@@ -63,7 +63,7 @@ pub fn to_json_binary<T>(data: &T) -> StdResult<Binary>
 where
     T: Serialize + ?Sized,
 {
-    to_json_vec(data).map(Binary)
+    to_json_vec(data).map(Binary::new)
 }
 
 #[cfg(test)]

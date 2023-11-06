@@ -654,7 +654,7 @@ pub struct IbcReceiveResponse<T = Empty> {
 impl<T> Default for IbcReceiveResponse<T> {
     fn default() -> Self {
         IbcReceiveResponse {
-            acknowledgement: Binary(vec![]),
+            acknowledgement: Binary::default(),
             messages: vec![],
             attributes: vec![],
             events: vec![],

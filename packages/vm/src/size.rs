@@ -1,7 +1,12 @@
 #[derive(Copy, Clone, Debug)]
-pub struct Size(pub usize);
+pub struct Size(pub(crate) usize);
 
 impl Size {
+    /// Creates a size of `n`
+    pub const fn new(n: usize) -> Self {
+        Size(n)
+    }
+
     /// Creates a size of `n` kilo
     pub const fn kilo(n: usize) -> Self {
         Size(n * 1000)
@@ -39,8 +44,8 @@ mod tests {
 
     #[test]
     fn constructors_work() {
-        assert_eq!(Size(0).0, 0);
-        assert_eq!(Size(3).0, 3);
+        assert_eq!(Size::new(0).0, Size(0).0);
+        assert_eq!(Size::new(3).0, Size(3).0);
 
         assert_eq!(Size::kilo(0).0, 0);
         assert_eq!(Size::kilo(3).0, 3000);
@@ -63,8 +68,8 @@ mod tests {
 
     #[test]
     fn implements_debug() {
-        assert_eq!(format!("{:?}", Size(0)), "Size(0)");
-        assert_eq!(format!("{:?}", Size(123)), "Size(123)");
+        assert_eq!(format!("{:?}", Size::new(0)), "Size(0)");
+        assert_eq!(format!("{:?}", Size::new(123)), "Size(123)");
         assert_eq!(format!("{:?}", Size::kibi(2)), "Size(2048)");
         assert_eq!(format!("{:?}", Size::mebi(1)), "Size(1048576)");
     }

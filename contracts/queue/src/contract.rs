@@ -66,7 +66,7 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<Response> {
     if let Some((key, value)) = first {
         // remove from storage and return old value
         deps.storage.remove(&key);
-        res.data = Some(Binary(value));
+        res.data = Some(Binary::new(value));
     }
     Ok(res)
 }
