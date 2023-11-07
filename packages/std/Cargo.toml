@@ -58,7 +58,7 @@ serde = { version = "1.0.103", default-features = false, features = [
   "derive",
   "alloc",
 ] }
-serde-json-wasm = { version = "0.5.0" }
+serde-json-wasm = { version = "1.0.0" }
 thiserror = "1.0.26"
 bnum = "0.8.0"
 static_assertions = "1.1.0"
