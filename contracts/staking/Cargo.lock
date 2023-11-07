@@ -1475,7 +1475,6 @@ dependencies = [
  "cosmwasm-vm",
  "schemars",
  "serde",
- "serde_json",
  "snafu",
 ]
 
