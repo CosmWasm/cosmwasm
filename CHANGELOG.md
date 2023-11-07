@@ -33,7 +33,7 @@ and this project adheres to
 - cosmwasm-vm: Reduce gas values by a factor of 1000. ([#1884])
 - cosmwasm-std: Upgrade to `serde-json-wasm` 1.0. This means `u128` and `i128`
   are now serialized as numbers instead of strings. Use `Uint128` and `Int128`
-  instead. ([#1898])
+  instead. ([#1939])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -41,6 +41,7 @@ and this project adheres to
 [#1884]: https://github.com/CosmWasm/cosmwasm/pull/1884
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
+[#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
 
 ### Removed
 
