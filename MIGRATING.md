@@ -93,6 +93,17 @@ major releases of `cosmwasm`. Note that you can also view the
   `Uint128` and `Int128` respectively to preserve the current serialization.
   Failing to do this will result in deserialization errors!
 
+  ```diff
+  #[cw_serde]
+  struct MyStorage {
+  -  a: u128,
+  -  b: i128,
+  +  a: Uint128,
+  +  b: Int128,
+  }
+  -const map: Map<u128, MyStorage> = Map::new("map");
+  +const map: Map<Uint128, MyStorage> = Map::new("map");
+  ```
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
