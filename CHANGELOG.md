@@ -42,6 +42,13 @@ and this project adheres to
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
 [#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
 
+### Removed
+
+- cosmwasm-storage: Removed, use [cw-storage-plus] instead. ([#1936])
+
+[cw-storage-plus]: https://github.com/CosmWasm/cw-storage-plus
+[#1936]: https://github.com/CosmWasm/cosmwasm/pull/1936
+
 ## [1.5.0] - 2023-10-31
 
 ### Added
