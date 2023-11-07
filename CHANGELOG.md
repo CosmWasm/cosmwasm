@@ -30,10 +30,12 @@ and this project adheres to
 - cosmwasm-std: Make inner values of `CanonicalAddr` and `Binary` private and
   add constructor for `Binary`. ([#1876])
 - cosmwasm-vm: Make inner value of `Size` private and add constructor. ([#1876])
+- cosmwasm-vm: Reduce gas values by a factor of 1000. ([#1884])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
+[#1884]: https://github.com/CosmWasm/cosmwasm/pull/1884
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
 

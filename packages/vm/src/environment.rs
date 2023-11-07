@@ -1,5 +1,5 @@
 //! Internal details to be used by instance.rs only
-use std::borrow::{Borrow, BorrowMut};
+use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
@@ -45,8 +45,8 @@ pub struct GasConfig {
 
 impl Default for GasConfig {
     fn default() -> Self {
-        // Target is 10^12 per millisecond (see GAS.md), i.e. 10^9 gas per µ second.
-        const GAS_PER_US: u64 = 1_000_000_000;
+        // Target is 10^12 per second (see GAS.md), i.e. 10^6 gas per µ second.
+        const GAS_PER_US: u64 = 1_000_000;
         Self {
             // ~154 us in crypto benchmarks
             secp256k1_verify_cost: 154 * GAS_PER_US,
@@ -169,8 +169,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         C: FnOnce(&ContextData<S, Q>) -> R,
     {
         let guard = self.data.as_ref().read().unwrap();
-        let context_data = guard.borrow();
-        callback(context_data)
+        callback(&guard)
     }
 
     pub fn with_gas_state<C, R>(&self, callback: C) -> R
@@ -469,7 +468,7 @@ mod tests {
     const INIT_AMOUNT: u128 = 500;
     const INIT_DENOM: &str = "TOKEN";
 
-    const TESTING_GAS_LIMIT: u64 = 500_000_000_000; // ~0.5ms
+    const TESTING_GAS_LIMIT: u64 = 500_000_000; // ~0.5ms
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
