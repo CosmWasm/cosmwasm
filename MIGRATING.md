@@ -101,8 +101,10 @@ major releases of `cosmwasm`. Note that you can also view the
   +  a: Uint128,
   +  b: Int128,
   }
-  -const map: Map<u128, MyStorage> = Map::new("map");
-  +const map: Map<Uint128, MyStorage> = Map::new("map");
+  const map: Map<u128, MyStorage> = Map::new("map");
+
+  -const item: Item<u128> = Item::new("item");
+  +const item: Item<Uint128> = Item::new("item");
   ```
 
 ## 1.4.x -> 1.5.0
