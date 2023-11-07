@@ -29,8 +29,10 @@ and this project adheres to
 - cosmwasm-std: Make inner values of `CanonicalAddr` and `Binary` private and
   add constructor for `Binary`. ([#1876])
 - cosmwasm-vm: Make inner value of `Size` private and add constructor. ([#1876])
+- cosmwasm-std: Remove old IBC version and make v3 the default. ([#1875])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
+[#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
 [#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879

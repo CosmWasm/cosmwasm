@@ -433,7 +433,6 @@ pub fn mock_ibc_packet_recv(
             }
             .into(),
         },
-        #[cfg(feature = "ibc3")]
         Addr::unchecked("relayer"),
     ))
 }
@@ -476,25 +475,20 @@ pub fn mock_ibc_packet_ack(
     Ok(IbcPacketAckMsg::new(
         ack,
         packet,
-        #[cfg(feature = "ibc3")]
         Addr::unchecked("relayer"),
     ))
 }
 
 /// Creates a IbcPacketTimeoutMsg for testing ibc_packet_timeout. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
-/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest./
+/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
 #[cfg(feature = "stargate")]
 pub fn mock_ibc_packet_timeout(
     my_channel_id: &str,
     data: &impl Serialize,
 ) -> StdResult<IbcPacketTimeoutMsg> {
     let packet = mock_ibc_packet(my_channel_id, data)?;
-    Ok(IbcPacketTimeoutMsg::new(
-        packet,
-        #[cfg(feature = "ibc3")]
-        Addr::unchecked("relayer"),
-    ))
+    Ok(IbcPacketTimeoutMsg::new(packet, Addr::unchecked("relayer")))
 }
 
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in

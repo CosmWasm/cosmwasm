@@ -19,6 +19,10 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
+  If you were using cosmwasm-std's `ibc3` feature, you can remove it, as it is
+  the default now. Depending on your usage, you might have to enable the
+  `stargate` feature instead, since it was previously implied by `ibc3`.
+
 - `ContractInfoResponse::new` now takes all fields of the response as
   parameters:
 
