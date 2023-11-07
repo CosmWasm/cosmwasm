@@ -89,6 +89,10 @@ major releases of `cosmwasm`. Note that you can also view the
   +canonical_addr.as_slice()
   ```
 
+- If you use any `u128` or `i128` in storage or message types, replace them with
+  `Uint128` and `Int128` respectively to preserve the current serialization.
+  Failing to do this will result in deserialization errors!
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):

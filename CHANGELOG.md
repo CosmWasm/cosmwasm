@@ -31,6 +31,9 @@ and this project adheres to
   add constructor for `Binary`. ([#1876])
 - cosmwasm-vm: Make inner value of `Size` private and add constructor. ([#1876])
 - cosmwasm-vm: Reduce gas values by a factor of 1000. ([#1884])
+- cosmwasm-std: Upgrade to `serde-json-wasm` 1.0. This means `u128` and `i128`
+  are now serialized as numbers instead of strings. Use `Uint128` and `Int128`
+  instead. ([#1898])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
