@@ -6,15 +6,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `SubMsg:reply_never` constructor ([#1929])
+- cosmwasm-std: Add optional memo field to `IbcMsg::Transfer`. ([#1878])
+
+[#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
+[#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
+
 ### Changed
 
 - cosmwasm-std: Replace `ContractInfoResponse::new` with new (unstable)
   constructor, remove `SubMsgExecutionResponse` (Use `SubMsgResponse` instead)
   and remove `PartialEq<&str> for Addr` (validate the address and use
   `PartialEq<Addr> for Addr` instead). ([#1879])
-- cosmwasm-std: Remove `Mul<Decimal> for Uint128` and
-  `Mul<Decimal256> for Uint256`. Use `Uint{128,256}::mul_floor` instead.
-  ([#1890])
 - cosmwasm-std: `Uint{64,128}::full_mul` now take `Into<Self>` as an argument.
   ([#1874])
 - cosmwasm-vm: Make `CacheOptions` non-exhaustive and add a constructor.
@@ -22,25 +27,31 @@ and this project adheres to
 - cosmwasm-std: `Coin::new` now takes `Into<Uint128>` instead of `u128` as the
   first argument and `DecCoin::new` takes `Into<Decimal256>` instead of
   `Decimal256`. ([#1902])
-- cosmwasm-std: Remove operand strings from `OverflowError`,
-  `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
-- cosmwasm-std: Add `SubMsg:reply_never` constructor ([#1929])
-- cosmwasm-std: Add optional memo field to `IbcMsg::Transfer`. ([#1878])
 - cosmwasm-std: Make inner values of `CanonicalAddr` and `Binary` private and
   add constructor for `Binary`. ([#1876])
 - cosmwasm-vm: Make inner value of `Size` private and add constructor. ([#1876])
-- cosmwasm-std: Remove old IBC version and make v3 the default. ([#1875])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
-[#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
-[#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
-[#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
-[#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
-[#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
+
+### Removed
+
+- cosmwasm-std: Remove `Mul<Decimal> for Uint128` and
+  `Mul<Decimal256> for Uint256`. Use `Uint{128,256}::mul_floor` instead.
+  ([#1890])
+- cosmwasm-std: Remove operand strings from `OverflowError`,
+  `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
+- cosmwasm-std: Remove old IBC version and make v3 the default. ([#1875])
+- cosmwasm-storage: Removed, use [cw-storage-plus] instead. ([#1936])
+
+[cw-storage-plus]: https://github.com/CosmWasm/cw-storage-plus
+[#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875
+[#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
+[#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
+[#1936]: https://github.com/CosmWasm/cosmwasm/pull/1936
 
 ## [1.5.0] - 2023-10-31
 

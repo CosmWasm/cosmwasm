@@ -72,7 +72,6 @@ projects = [
     "cosmwasm_derive",
     "cosmwasm_schema",
     "cosmwasm_std",
-    "cosmwasm_storage",
     "cosmwasm_vm"
 ]
 

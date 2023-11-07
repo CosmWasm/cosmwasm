@@ -8,15 +8,18 @@
 
 The following packages are maintained here:
 
-| Crate            | Usage                | Download                                                                                                                            | Docs                                                                                    | Coverage                                           |
-| ---------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| cosmwasm-crypto  | Internal only        | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto)    | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto)   | [![Coverage][cov-badge-crypto]][cov-link-crypto]   |
-| cosmwasm-derive  | Internal only        | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive)    | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive)   | [![Coverage][cov-badge-derive]][cov-link-derive]   |
-| cosmwasm-schema  | Contract development | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema)    | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema)   | [![Coverage][cov-badge-schema]][cov-link-schema]   |
-| cosmwasm-std     | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)             | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)         | [![Coverage][cov-badge-std]][cov-link-std]         |
-| cosmwasm-storage | Contract development | [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage) | [![Docs](https://docs.rs/cosmwasm-storage/badge.svg)](https://docs.rs/cosmwasm-storage) | [![Coverage][cov-badge-storage]][cov-link-storage] |
-| cosmwasm-vm      | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)                | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)           | ([#1151])                                          |
-| cosmwasm-check   | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)       | `cosmwasm-check -h`                                                                     | N/A                                                |
+| Crate           | Usage                | Download                                                                                                                         | Docs                                                                                  | Coverage                                         |
+| --------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| cosmwasm-crypto | Internal only        | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto) | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto) | [![Coverage][cov-badge-crypto]][cov-link-crypto] |
+| cosmwasm-derive | Internal only        | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive) | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive) | [![Coverage][cov-badge-derive]][cov-link-derive] |
+| cosmwasm-schema | Contract development | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema) | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema) | [![Coverage][cov-badge-schema]][cov-link-schema] |
+| cosmwasm-std    | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)          | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)       | [![Coverage][cov-badge-std]][cov-link-std]       |
+| cosmwasm-vm     | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         | [![Coverage][cov-badge-vm]][cov-link-vm]         |
+| cosmwasm-check  | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)    | `cosmwasm-check -h`                                                                   | N/A                                              |
+
+[cosmwasm-storage](https://crates.io/crates/cosmwasm-storage) is no longer
+maintained and has been dropped in favor of
+[cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus).
 
 [cov-badge-crypto]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
@@ -26,8 +29,8 @@ The following packages are maintained here:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-schema
 [cov-badge-std]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-std
-[cov-badge-storage]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-storage
+[cov-badge-vm]:
+  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-vm
 [cov-link-crypto]:
   https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/crypto
 [cov-link-derive]:
@@ -35,9 +38,7 @@ The following packages are maintained here:
 [cov-link-schema]:
   https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/schema
 [cov-link-std]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/std
-[cov-link-storage]:
-  https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/storage
-[#1151]: https://github.com/CosmWasm/cosmwasm/issues/1151
+[cov-link-vm]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/vm
 
 ## Overview
 
@@ -51,17 +52,10 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 - [cosmwasm-std](https://github.com/CosmWasm/cosmwasm/tree/main/packages/std) -
   A crate in this workspace. Provides the bindings and all imports needed to
   build a smart contract.
-- [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage) -
-  A crate in this workspace. This optional addition to `cosmwasm-std` includes
-  convenience helpers for interacting with storage. **This is being deprecated
-  in favor of
-  [`cw-storage-plus`](https://github.com/CosmWasm/cw-storage-plus).** See
-  [issue #1457](https://github.com/CosmWasm/cosmwasm/issues/1457).
 - [cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus) - A crate which
-  fills the same role as `cosmwasm-storage`, but with much more powerful types
+  provides convenience helpers for interacting with storage with powerful types
   supporting composite primary keys, secondary indexes, automatic snapshotting,
-  and more. This is used in most modern contracts and likely going to be
-  stabilized (version `1.0.0`) soon.
+  and more. This is used in most modern contracts.
 
 **Building contracts:**
 

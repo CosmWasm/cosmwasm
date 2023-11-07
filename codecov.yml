@@ -30,6 +30,3 @@ flags:
   cosmwasm-std:
     paths:
       - packages/std/
-  cosmwasm-storage:
-    paths:
-      - packages/storage/
