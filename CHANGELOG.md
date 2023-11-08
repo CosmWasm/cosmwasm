@@ -44,6 +44,8 @@ and this project adheres to
   `ValidatorResponse` and `Validator` non-exhaustive. Add `Validator::create`
   and `FullDelegation::create` to allow creating them in a stable way. Use
   `Addr` type for `ContractInfoResponse::{creator, admin}`. ([#1883])
+- cosmwasm-std: Change `DistributionQuerier::new` to take `IntoIterator` instead
+  of `HashMap`. ([#1941])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -54,6 +56,7 @@ and this project adheres to
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
 [#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
 [#1940]: https://github.com/CosmWasm/cosmwasm/pull/1940
+[#1941]: https://github.com/CosmWasm/cosmwasm/pull/1941
 
 ### Removed
 
