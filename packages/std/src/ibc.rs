@@ -637,6 +637,16 @@ impl<T> Default for IbcReceiveResponse<T> {
 
 impl<T> IbcReceiveResponse<T> {
     /// Create a new response with the given acknowledgement.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{StdAck, IbcReceiveResponse};
+    ///
+    /// // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
+    /// let resp: IbcReceiveResponse = IbcReceiveResponse::new(StdAck::success(b"\x01"));
+    /// assert_eq!(resp.acknowledgement, b"{\"result\":\"AQ==\"}");
+    /// ```
     pub fn new(ack: impl Into<Binary>) -> Self {
         Self {
             acknowledgement: ack.into(),
