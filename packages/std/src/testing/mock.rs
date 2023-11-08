@@ -1,5 +1,6 @@
 use alloc::collections::BTreeMap;
 use bech32::{encode, ToBase32, Variant};
+use core::iter::IntoIterator;
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
@@ -998,9 +999,12 @@ pub struct DistributionQuerier {
 
 #[cfg(feature = "cosmwasm_1_3")]
 impl DistributionQuerier {
-    pub fn new(withdraw_addresses: HashMap<String, String>) -> Self {
+    pub fn new<T>(withdraw_addresses: T) -> Self
+    where
+        T: IntoIterator<Item = (String, String)>,
+    {
         DistributionQuerier {
-            withdraw_addresses,
+            withdraw_addresses: withdraw_addresses.into_iter().collect(),
             ..Default::default()
         }
     }
