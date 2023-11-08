@@ -87,8 +87,8 @@ impl StdAck {
     ///
     /// let ack = StdAck::success(b"\x01"); // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
     ///
-    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().set_ack(ack.to_binary());
-    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().set_ack(ack); // Does the same but consumes the instance
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new(ack.to_binary());
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new(ack); // Does the same but consumes the instance
     /// ```
     pub fn to_binary(&self) -> Binary {
         // We need a non-failing StdAck -> Binary conversion to allow using StdAck in

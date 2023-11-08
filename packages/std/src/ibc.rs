@@ -636,25 +636,24 @@ impl<T> Default for IbcReceiveResponse<T> {
 }
 
 impl<T> IbcReceiveResponse<T> {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the acknowledgement for this response.
+    /// Create a new response with the given acknowledgement.
     ///
     /// ## Examples
     ///
     /// ```
     /// use cosmwasm_std::{StdAck, IbcReceiveResponse};
     ///
-    /// fn make_response_with_ack() -> IbcReceiveResponse {
-    ///     let ack = StdAck::success(b"\x01"); // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
-    ///     IbcReceiveResponse::new().set_ack(ack)
-    /// }
+    /// // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
+    /// let resp: IbcReceiveResponse = IbcReceiveResponse::new(StdAck::success(b"\x01"));
+    /// assert_eq!(resp.acknowledgement, b"{\"result\":\"AQ==\"}");
     /// ```
-    pub fn set_ack(mut self, ack: impl Into<Binary>) -> Self {
-        self.acknowledgement = ack.into();
-        self
+    pub fn new(ack: impl Into<Binary>) -> Self {
+        Self {
+            acknowledgement: ack.into(),
+            messages: vec![],
+            attributes: vec![],
+            events: vec![],
+        }
     }
 
     /// Add an attribute included in the main `wasm` event.
@@ -695,14 +694,14 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{attr, IbcReceiveResponse};
+    /// use cosmwasm_std::{attr, IbcReceiveResponse, StdAck};
     ///
     /// let attrs = vec![
     ///     ("action", "reaction"),
     ///     ("answer", "42"),
     ///     ("another", "attribute"),
     /// ];
-    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().add_attributes(attrs.clone());
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new(StdAck::success(b"\x01")).add_attributes(attrs.clone());
     /// assert_eq!(res.attributes, attrs);
     /// ```
     pub fn add_attributes<A: Into<Attribute>>(
@@ -718,10 +717,10 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{CosmosMsg, IbcReceiveResponse};
+    /// use cosmwasm_std::{CosmosMsg, IbcReceiveResponse, StdAck};
     ///
     /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcReceiveResponse {
-    ///     IbcReceiveResponse::new().add_messages(msgs)
+    ///     IbcReceiveResponse::new(StdAck::success(b"\x01")).add_messages(msgs)
     /// }
     /// ```
     pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
@@ -733,10 +732,10 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{SubMsg, IbcReceiveResponse};
+    /// use cosmwasm_std::{SubMsg, StdAck, IbcReceiveResponse};
     ///
     /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcReceiveResponse {
-    ///     IbcReceiveResponse::new().add_submessages(msgs)
+    ///     IbcReceiveResponse::new(StdAck::success(b"\x01")).add_submessages(msgs)
     /// }
     /// ```
     pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {

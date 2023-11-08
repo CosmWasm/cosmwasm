@@ -101,9 +101,7 @@ pub fn ibc_packet_receive(
     _env: Env,
     _packet: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    Ok(IbcReceiveResponse::new()
-        .set_ack(b"{}")
-        .add_attribute("action", "ibc_packet_ack"))
+    Ok(IbcReceiveResponse::new(b"{}").add_attribute("action", "ibc_packet_ack"))
 }
 
 #[entry_point]

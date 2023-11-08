@@ -34,6 +34,8 @@ and this project adheres to
 - cosmwasm-std: Upgrade to `serde-json-wasm` 1.0. This means `u128` and `i128`
   are now serialized as numbers instead of strings. Use `Uint128` and `Int128`
   instead. ([#1939])
+- cosmwasm-std: Add `ack` parameter to `IbcReceiveResponse::new` and remove
+  `IbcReceiveResponse::set_ack` ([#1940])
 - cosmwasm-std: Make `BalanceResponse`, `AllBalanceResponse`,
   `DelegationRewardsResponse`, `DelegatorReward`, `DelegatorValidatorsResponse`,
   `PortIdResponse`, `ListChannelsResponse`, `ChannelResponse`,
@@ -51,6 +53,7 @@ and this project adheres to
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
 [#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
+[#1940]: https://github.com/CosmWasm/cosmwasm/pull/1940
 
 ### Removed
 
