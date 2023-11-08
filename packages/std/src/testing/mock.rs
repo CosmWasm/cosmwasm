@@ -990,7 +990,7 @@ impl StakingQuerier {
 #[cfg(feature = "cosmwasm_1_3")]
 #[derive(Clone, Default)]
 pub struct DistributionQuerier {
-    withdraw_addresses: HashMap<String, String>,
+    withdraw_addresses: BTreeMap<String, String>,
     /// Mock of accumulated rewards, indexed first by delegator and then validator address.
     rewards: BTreeMap<String, BTreeMap<String, Vec<DecCoin>>>,
     /// Mock of validators that a delegator has bonded to.
@@ -2362,5 +2362,27 @@ mod tests {
     #[should_panic(expected = "Generating address failed with reason: invalid length")]
     fn making_an_address_with_empty_prefix_should_panic() {
         MockApi::default().with_prefix("").addr_make("creator");
+    }
+
+    #[test]
+    fn distribution_querier_new_works() {
+        let addresses = [
+            ("addr0000".to_string(), "addr0001".to_string()),
+            ("addr0002".to_string(), "addr0001".to_string()),
+        ];
+        let btree_map = BTreeMap::from(addresses.clone());
+
+        // should still work with HashMap
+        let hashmap = HashMap::from(addresses.clone());
+        let querier = DistributionQuerier::new(hashmap);
+        assert_eq!(querier.withdraw_addresses, btree_map);
+
+        // should work with BTreeMap
+        let querier = DistributionQuerier::new(btree_map.clone());
+        assert_eq!(querier.withdraw_addresses, btree_map);
+
+        // should work with array
+        let querier = DistributionQuerier::new(addresses);
+        assert_eq!(querier.withdraw_addresses, btree_map);
     }
 }
