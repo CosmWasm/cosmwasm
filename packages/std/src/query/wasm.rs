@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Binary, HexBinary};
+use crate::{Addr, Binary, HexBinary};
 
 use super::query_response::QueryResponseType;
 
@@ -32,13 +32,13 @@ pub enum WasmQuery {
 }
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfoResponse {
     pub code_id: u64,
     /// address that instantiated this contract
-    pub creator: String,
+    pub creator: Addr,
     /// admin who can run migrations (if any)
-    pub admin: Option<String>,
+    pub admin: Option<Addr>,
     /// if set, the contract is pinned to the cache, and thus uses less gas when called
     pub pinned: bool,
     /// set if this contract has bound an IBC port
@@ -50,8 +50,8 @@ impl QueryResponseType for ContractInfoResponse {}
 impl_response_constructor!(
     ContractInfoResponse,
     code_id: u64,
-    creator: String,
-    admin: Option<String>,
+    creator: Addr,
+    admin: Option<Addr>,
     pinned: bool,
     ibc_port: Option<String>
 );
@@ -64,11 +64,11 @@ impl_response_constructor!(
 /// [CodeInfo]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/types.proto#L62-L72
 /// [CodeInfoResponse]: https://github.com/CosmWasm/wasmd/blob/v0.30.0/proto/cosmwasm/wasm/v1/query.proto#L184-L199
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct CodeInfoResponse {
     pub code_id: u64,
     /// The address that initially stored the code
-    pub creator: String,
+    pub creator: Addr,
     /// The hash of the Wasm blob
     pub checksum: HexBinary,
 }
@@ -76,7 +76,7 @@ pub struct CodeInfoResponse {
 impl_response_constructor!(
     CodeInfoResponse,
     code_id: u64,
-    creator: String,
+    creator: Addr,
     checksum: HexBinary
 );
 
@@ -114,8 +114,8 @@ mod tests {
     fn contract_info_response_serialization() {
         let response = ContractInfoResponse {
             code_id: 67,
-            creator: "jane".to_string(),
-            admin: Some("king".to_string()),
+            creator: Addr::unchecked("jane"),
+            admin: Some(Addr::unchecked("king")),
             pinned: true,
             ibc_port: Some("wasm.123".to_string()),
         };
@@ -133,7 +133,7 @@ mod tests {
 
         let response = CodeInfoResponse {
             code_id: 67,
-            creator: "jane".to_string(),
+            creator: Addr::unchecked("jane"),
             checksum: HexBinary::from_hex(
                 "f7bb7b18fb01bbf425cf4ed2cd4b7fb26a019a7fc75a4dc87e8a0b768c501f00",
             )

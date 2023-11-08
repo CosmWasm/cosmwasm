@@ -34,10 +34,19 @@ and this project adheres to
 - cosmwasm-std: Upgrade to `serde-json-wasm` 1.0. This means `u128` and `i128`
   are now serialized as numbers instead of strings. Use `Uint128` and `Int128`
   instead. ([#1939])
+- cosmwasm-std: Make `BalanceResponse`, `AllBalanceResponse`,
+  `DelegationRewardsResponse`, `DelegatorReward`, `DelegatorValidatorsResponse`,
+  `PortIdResponse`, `ListChannelsResponse`, `ChannelResponse`,
+  `BondedDenomResponse`, `AllDelegationsResponse`, `Delegation`,
+  `DelegationResponse`, `FullDelegation`, `AllValidatorsResponse`,
+  `ValidatorResponse` and `Validator` non-exhaustive. Add `Validator::create`
+  and `FullDelegation::create` to allow creating them in a stable way. Use
+  `Addr` type for `ContractInfoResponse::{creator, admin}`. ([#1883])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
 [#1879]: https://github.com/CosmWasm/cosmwasm/pull/1879
+[#1883]: https://github.com/CosmWasm/cosmwasm/pull/1883
 [#1884]: https://github.com/CosmWasm/cosmwasm/pull/1884
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902

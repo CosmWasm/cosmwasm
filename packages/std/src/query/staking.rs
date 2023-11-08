@@ -36,6 +36,7 @@ pub enum StakingQuery {
 /// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub struct BondedDenomResponse {
     pub denom: String,
 }
@@ -47,6 +48,7 @@ impl_response_constructor!(BondedDenomResponse, denom: String);
 /// DelegationsResponse is data format returned from StakingRequest::AllDelegations query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub struct AllDelegationsResponse {
     pub delegations: Vec<Delegation>,
 }
@@ -59,6 +61,7 @@ impl_response_constructor!(AllDelegationsResponse, delegations: Vec<Delegation>)
 ///
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct Delegation {
     pub delegator: Addr,
     /// A validator address (e.g. cosmosvaloper1...)
@@ -66,6 +69,8 @@ pub struct Delegation {
     /// How much we have locked in the delegation
     pub amount: Coin,
 }
+
+impl_response_constructor!(Delegation, delegator: Addr, validator: String, amount: Coin);
 
 impl From<FullDelegation> for Delegation {
     fn from(full: FullDelegation) -> Self {
@@ -80,6 +85,7 @@ impl From<FullDelegation> for Delegation {
 /// DelegationResponse is data format returned from StakingRequest::Delegation query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub struct DelegationResponse {
     pub delegation: Option<FullDelegation>,
 }
@@ -93,6 +99,7 @@ impl_response_constructor!(DelegationResponse, delegation: Option<FullDelegation
 ///
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct FullDelegation {
     pub delegator: Addr,
     /// A validator address (e.g. cosmosvaloper1...)
@@ -107,8 +114,40 @@ pub struct FullDelegation {
     pub accumulated_rewards: Vec<Coin>,
 }
 
+impl_response_constructor!(
+    FullDelegation,
+    delegator: Addr,
+    validator: String,
+    amount: Coin,
+    can_redelegate: Coin,
+    accumulated_rewards: Vec<Coin>
+);
+
+impl FullDelegation {
+    /// Creates a new delegation.
+    ///
+    /// If fields get added to the [`FullDelegation`] struct in the future, this constructor will
+    /// provide default values for them, but these default values may not be sensible.
+    pub fn create(
+        delegator: Addr,
+        validator: String,
+        amount: Coin,
+        can_redelegate: Coin,
+        accumulated_rewards: Vec<Coin>,
+    ) -> Self {
+        Self {
+            delegator,
+            validator,
+            amount,
+            can_redelegate,
+            accumulated_rewards,
+        }
+    }
+}
+
 /// The data format returned from StakingRequest::AllValidators query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct AllValidatorsResponse {
     pub validators: Vec<Validator>,
 }
@@ -119,6 +158,7 @@ impl_response_constructor!(AllValidatorsResponse, validators: Vec<Validator>);
 
 /// The data format returned from StakingRequest::Validator query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct ValidatorResponse {
     pub validator: Option<Validator>,
 }
@@ -129,6 +169,7 @@ impl_response_constructor!(ValidatorResponse, validator: Option<Validator>);
 
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct Validator {
     /// The operator address of the validator (e.g. cosmosvaloper1...).
     /// See https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/staking/v1beta1/staking.proto#L95-L96
@@ -141,4 +182,32 @@ pub struct Validator {
     pub max_commission: Decimal,
     /// The maximum daily increase of the commission
     pub max_change_rate: Decimal,
+}
+
+impl_response_constructor!(
+    Validator,
+    address: String,
+    commission: Decimal,
+    max_commission: Decimal,
+    max_change_rate: Decimal
+);
+
+impl Validator {
+    /// Creates a new validator.
+    ///
+    /// If fields get added to the [`Validator`] struct in the future, this constructor will
+    /// provide default values for them, but these default values may not be sensible.
+    pub fn create(
+        address: String,
+        commission: Decimal,
+        max_commission: Decimal,
+        max_change_rate: Decimal,
+    ) -> Self {
+        Self {
+            address,
+            commission,
+            max_commission,
+            max_change_rate,
+        }
+    }
 }

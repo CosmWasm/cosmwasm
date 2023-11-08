@@ -34,12 +34,12 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/st
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 fn sample_validator(addr: &str) -> Validator {
-    Validator {
-        address: addr.to_owned(),
-        commission: Decimal::percent(3),
-        max_commission: Decimal::percent(10),
-        max_change_rate: Decimal::percent(1),
-    }
+    Validator::create(
+        addr.to_owned(),
+        Decimal::percent(3),
+        Decimal::percent(10),
+        Decimal::percent(1),
+    )
 }
 
 #[test]

@@ -39,6 +39,7 @@ impl QueryResponseType for DelegatorWithdrawAddressResponse {}
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L169-L178>
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub struct DelegationRewardsResponse {
     pub rewards: Vec<DecCoin>,
 }
@@ -91,13 +92,20 @@ impl_response_constructor!(
 impl QueryResponseType for DelegationTotalRewardsResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct DelegatorReward {
     pub validator_address: String,
     pub reward: Vec<DecCoin>,
 }
+impl_response_constructor!(
+    DelegatorReward,
+    validator_address: String,
+    reward: Vec<DecCoin>
+);
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/b0acf60e6c39f7ab023841841fc0b751a12c13ff/proto/cosmos/distribution/v1beta1/query.proto#L212-L220>
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
 pub struct DelegatorValidatorsResponse {
     pub validators: Vec<String>,
 }
