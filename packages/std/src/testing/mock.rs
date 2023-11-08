@@ -2365,6 +2365,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "cosmwasm_1_3")]
     fn distribution_querier_new_works() {
         let addresses = [
             ("addr0000".to_string(), "addr0001".to_string()),
