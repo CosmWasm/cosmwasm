@@ -107,7 +107,8 @@ major releases of `cosmwasm`. Note that you can also view the
   +const item: Item<Uint128> = Item::new("item");
   ```
 
-- Replace all uses of `IbcReceiveResponse::set_ack` with calls to `IbcReceiveResponse::new`:
+- Replace all uses of `IbcReceiveResponse::set_ack` with calls to
+  `IbcReceiveResponse::new`:
 
   ```diff
   - Ok(IbcReceiveResponse::new().set_ack(b"{}"))
