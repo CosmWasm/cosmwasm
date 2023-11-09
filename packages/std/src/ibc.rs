@@ -623,18 +623,6 @@ pub struct IbcReceiveResponse<T = Empty> {
     pub events: Vec<Event>,
 }
 
-// Custom implementation in order to implement it for all `T`, even if `T` is not `Default`.
-impl<T> Default for IbcReceiveResponse<T> {
-    fn default() -> Self {
-        IbcReceiveResponse {
-            acknowledgement: Binary::default(),
-            messages: vec![],
-            attributes: vec![],
-            events: vec![],
-        }
-    }
-}
-
 impl<T> IbcReceiveResponse<T> {
     /// Create a new response with the given acknowledgement.
     ///
