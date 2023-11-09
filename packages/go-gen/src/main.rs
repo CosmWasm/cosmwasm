@@ -37,7 +37,7 @@ fn generate_go(root: RootSchema) -> Result<String> {
     for (name, additional_type) in &root.definitions {
         additional_type
             .object()
-            .map(|def| build_type(&replace_acronyms(name), def, &mut types))
+            .map(|def| build_type(name, def, &mut types))
             .and_then(|r| r)
             .context("failed to generate additional definitions")?;
     }
@@ -107,7 +107,7 @@ pub fn build_struct(
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
     Ok(GoStruct {
-        name: to_pascal_case(name),
+        name: replace_acronyms(to_pascal_case(name)),
         docs,
         fields,
     })
@@ -121,6 +121,7 @@ pub fn build_enum<'a>(
     variants: impl Iterator<Item = &'a Schema>,
     additional_structs: &mut Vec<GoStruct>,
 ) -> Result<GoStruct> {
+    let name = replace_acronyms(name);
     let docs = documentation(enm);
 
     // go through all fields
@@ -131,18 +132,14 @@ pub fn build_enum<'a>(
             .with_context(|| format!("expected schema object for enum variants of {name}"))?;
 
         // analyze the variant
-        let variant_field = build_enum_variant(v, name, additional_structs)
+        let variant_field = build_enum_variant(v, &name, additional_structs)
             .context("failed to extract enum variant")?;
 
         anyhow::Ok(variant_field)
     });
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
-    Ok(GoStruct {
-        name: name.to_string(),
-        docs,
-        fields,
-    })
+    Ok(GoStruct { name, docs, fields })
 }
 
 /// Tries to extract the name and type of the given enum variant and returns it as a `GoField`.
