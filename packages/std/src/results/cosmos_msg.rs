@@ -428,6 +428,33 @@ mod tests {
     }
 
     #[test]
+    fn from_any_msg_works() {
+        // should work with AnyMsg
+        let any = AnyMsg {
+            type_url: "/cosmos.foo.v1beta.MsgBar".to_string(),
+            value: Binary::from_base64("5yu/rQ+HrMcxH1zdga7P5hpGMLE=").unwrap(),
+        };
+        let msg: CosmosMsg = any.clone().into();
+        assert!(matches!(msg, CosmosMsg::Any(a) if a == any));
+
+        // should work with Into<AnyMsg>
+        struct IntoAny;
+        impl From<IntoAny> for AnyMsg {
+            fn from(_: IntoAny) -> Self {
+                AnyMsg {
+                    type_url: "/cosmos.foo.v1beta.MsgBar".to_string(),
+                    value: Binary::from_base64("5yu/rQ+HrMcxH1zdga7P5hpGMLE=").unwrap(),
+                }
+            }
+        }
+        let msg: CosmosMsg = IntoAny.into();
+        assert!(matches!(
+            msg,
+            CosmosMsg::Any(a) if a == any
+        ));
+    }
+
+    #[test]
     fn wasm_msg_serializes_to_correct_json() {
         // Instantiate with admin
         let msg = WasmMsg::Instantiate {
