@@ -47,6 +47,8 @@ and this project adheres to
 - cosmwasm-std: Change `DistributionQuerier::new` to take `IntoIterator` instead
   of `HashMap`. ([#1941])
 - cosmwasm-vm: Make `instantiate` entrypoint optional. ([#1933])
+- cosmwasm-std: Rename `CosmosMsg::Stargate` to `CosmosMsg::Any` and use a
+  nested msg struct like in other messages. ([#1926])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -55,6 +57,7 @@ and this project adheres to
 [#1884]: https://github.com/CosmWasm/cosmwasm/pull/1884
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
+[#1926]: https://github.com/CosmWasm/cosmwasm/pull/1926
 [#1933]: https://github.com/CosmWasm/cosmwasm/pull/1933
 [#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
 [#1940]: https://github.com/CosmWasm/cosmwasm/pull/1940
