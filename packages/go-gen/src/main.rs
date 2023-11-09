@@ -429,6 +429,16 @@ mod tests {
     }
 
     #[test]
+    fn messages_work() {
+        compare_codes!(cosmwasm_std::BankMsg);
+        compare_codes!(cosmwasm_std::StakingMsg);
+        compare_codes!(cosmwasm_std::DistributionMsg);
+        compare_codes!(cosmwasm_std::IbcMsg);
+        compare_codes!(cosmwasm_std::WasmMsg);
+        // compare_codes!(cosmwasm_std::GovMsg); // TODO: currently fails because of VoteOption
+    }
+
+    #[test]
     fn array_item_type_works() {
         #[cw_serde]
         struct A {
