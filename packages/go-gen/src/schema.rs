@@ -259,12 +259,14 @@ pub fn documentation(schema: &SchemaObject) -> Option<String> {
 /// If the given type is not a special type, returns `None`.
 pub fn custom_type_of(ty: &str) -> Option<&str> {
     match ty {
+        "Uint64" => Some("string"),
         "Uint128" => Some("string"),
         "Binary" => Some("[]byte"),
         "HexBinary" => Some("Checksum"),
         "Addr" => Some("string"),
         "Decimal" => Some("string"),
         "Decimal256" => Some("string"),
+        "Timestamp" => Some("uint64"),
         _ => None,
     }
 }
