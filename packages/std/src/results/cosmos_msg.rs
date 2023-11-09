@@ -33,13 +33,6 @@ pub enum CosmosMsg<T = Empty> {
     Staking(StakingMsg),
     #[cfg(feature = "staking")]
     Distribution(DistributionMsg),
-    /// A Stargate message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
-    /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
-    #[cfg(feature = "stargate")]
-    Stargate {
-        type_url: String,
-        value: Binary,
-    },
     Any(AnyMsg),
     #[cfg(feature = "stargate")]
     Ibc(IbcMsg),
@@ -121,6 +114,8 @@ pub enum DistributionMsg {
     },
 }
 
+/// A message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
+/// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct AnyMsg {
     pub type_url: String,
@@ -493,20 +488,6 @@ mod tests {
                 r#"{"instantiate2":{"admin":null,"code_id":7897,"label":"my instance","msg":"eyJjbGFpbSI6e319","funds":[{"denom":"stones","amount":"321"}],"salt":"UkOVazhiwoo="}}"#,
             );
         }
-    }
-
-    #[test]
-    #[cfg(feature = "stargate")]
-    fn stargate_msg_serializes_to_correct_json() {
-        let msg: CosmosMsg = CosmosMsg::Stargate {
-            type_url: "/cosmos.foo.v1beta.MsgBar".to_string(),
-            value: Binary::from_base64("5yu/rQ+HrMcxH1zdga7P5hpGMLE=").unwrap(),
-        };
-        let json = to_json_string(&msg).unwrap();
-        assert_eq!(
-            json,
-            r#"{"stargate":{"type_url":"/cosmos.foo.v1beta.MsgBar","value":"5yu/rQ+HrMcxH1zdga7P5hpGMLE="}}"#,
-        );
     }
 
     #[test]
