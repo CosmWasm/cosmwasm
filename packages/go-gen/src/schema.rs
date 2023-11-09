@@ -43,12 +43,12 @@ pub fn schema_object_type(
         replace_custom_type(title)
     } else if let Some(reference) = &schema.reference {
         // if it has a reference, strip the path and use that
-        replace_custom_type(
+        replace_custom_type(&replace_acronyms(
             reference
                 .split('/')
                 .last()
                 .expect("split should always return at least one item"),
-        )
+        ))
     } else if let Some(t) = &schema.instance_type {
         type_from_instance_type(schema, type_context, t, additional_structs)?
     } else if let Some(subschemas) = schema.subschemas.as_ref().and_then(|s| s.any_of.as_ref()) {
