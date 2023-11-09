@@ -67,12 +67,15 @@ and this project adheres to
   `ConversionOverflowError` and `DivideByZeroError`. ([#1896])
 - cosmwasm-std: Remove old IBC version and make v3 the default. ([#1875])
 - cosmwasm-storage: Removed, use [cw-storage-plus] instead. ([#1936])
+- cosmwasm-std: Remove `IbcReceiveResponse`'s `Default` implementation. Use
+  `IbcReceiveResponse::new` instead. ([#1942])
 
 [cw-storage-plus]: https://github.com/CosmWasm/cw-storage-plus
 [#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875
 [#1890]: https://github.com/CosmWasm/cosmwasm/pull/1890
 [#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
 [#1936]: https://github.com/CosmWasm/cosmwasm/pull/1936
+[#1942]: https://github.com/CosmWasm/cosmwasm/pull/1942
 
 ## [1.5.0] - 2023-10-31
 
