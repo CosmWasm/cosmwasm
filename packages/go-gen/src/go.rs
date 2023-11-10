@@ -50,6 +50,9 @@ impl Display for GoField {
             self.ty,
             self.rust_name
         )?;
+        if let Some(annotations) = &self.ty.json_annotations {
+            write!(f, ",{}", annotations)?;
+        }
         if self.ty.is_nullable {
             f.write_str(",omitempty")?;
         }
@@ -64,6 +67,8 @@ pub struct GoType {
     /// This will add `omitempty` to the json tag and use a pointer type if
     /// the type is not a basic type
     pub is_nullable: bool,
+    /// Additional json annotations, if any
+    pub json_annotations: Option<String>,
 }
 
 impl GoType {
@@ -123,10 +128,12 @@ mod tests {
         let ty = GoType {
             name: "string".to_string(),
             is_nullable: true,
+            json_annotations: None,
         };
         let ty2 = GoType {
             name: "string".to_string(),
             is_nullable: false,
+            json_annotations: None,
         };
         assert_eq!(format!("{}", ty), "string");
         assert_eq!(format!("{}", ty2), "string");
@@ -134,11 +141,13 @@ mod tests {
         let ty = GoType {
             name: "FooBar".to_string(),
             is_nullable: true,
+            json_annotations: None,
         };
         assert_eq!(format!("{}", ty), "*FooBar");
         let ty = GoType {
             name: "FooBar".to_string(),
             is_nullable: false,
+            json_annotations: None,
         };
         assert_eq!(format!("{}", ty), "FooBar");
     }
@@ -151,6 +160,7 @@ mod tests {
             ty: GoType {
                 name: "string".to_string(),
                 is_nullable: true,
+                json_annotations: None,
             },
         };
         assert_eq!(
@@ -164,6 +174,7 @@ mod tests {
             ty: GoType {
                 name: "string".to_string(),
                 is_nullable: false,
+                json_annotations: None,
             },
         };
         assert_eq!(format!("{}", field), "FooBar string `json:\"foo_bar\"`");
@@ -174,6 +185,7 @@ mod tests {
             ty: GoType {
                 name: "FooBar".to_string(),
                 is_nullable: true,
+                json_annotations: None,
             },
         };
         assert_eq!(
@@ -190,11 +202,27 @@ mod tests {
             ty: GoType {
                 name: "string".to_string(),
                 is_nullable: true,
+                json_annotations: None,
             },
         };
         assert_eq!(
             format!("{}", field),
             "// foo_bar is a test field\nFooBar string `json:\"foo_bar,omitempty\"`"
+        );
+
+        // now with additional json annotations
+        let field = GoField {
+            rust_name: "foo_bar".to_string(),
+            docs: None,
+            ty: GoType {
+                name: "uint64".to_string(),
+                is_nullable: true,
+                json_annotations: Some("string".to_string()),
+            },
+        };
+        assert_eq!(
+            format!("{}", field),
+            "FooBar uint64 `json:\"foo_bar,string,omitempty\"`"
         );
     }
 
@@ -209,6 +237,7 @@ mod tests {
                 ty: GoType {
                     name: "string".to_string(),
                     is_nullable: true,
+                    json_annotations: None,
                 },
             }],
         };
@@ -226,6 +255,7 @@ mod tests {
                 ty: GoType {
                     name: "string".to_string(),
                     is_nullable: true,
+                    json_annotations: None,
                 },
             }],
         };

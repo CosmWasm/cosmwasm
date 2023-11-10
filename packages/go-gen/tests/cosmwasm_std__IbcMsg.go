@@ -30,7 +30,7 @@ type Coin struct {
 type IBCTimeout struct {
 	Block *IBCTimeoutBlock `json:"block,omitempty"` // in wasmvm, this does not have "omitempty"
 	// Nanoseconds since UNIX epoch
-	Timestamp uint64 `json:"timestamp,omitempty"` // wasmvm has a "string" in here too
+	Timestamp uint64 `json:"timestamp,string,omitempty"` // wasmvm has a "string" in here too
 }
 
 // IBCTimeoutBlock Height is a monotonically increasing data type
