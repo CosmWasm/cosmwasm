@@ -21,16 +21,15 @@ fn main() -> Result<()> {
 
 /// Generates the Go code for the given schema
 fn generate_go(root: RootSchema) -> Result<String> {
-    let title = replace_acronyms(
-        root.schema
-            .metadata
-            .as_ref()
-            .and_then(|m| m.title.as_ref())
-            .context("failed to get type name")?,
-    );
+    let title = root
+        .schema
+        .metadata
+        .as_ref()
+        .and_then(|m| m.title.as_ref())
+        .context("failed to get type name")?;
 
     let mut types = vec![];
-    build_type(&title, &root.schema, &mut types)
+    build_type(title, &root.schema, &mut types)
         .with_context(|| format!("failed to generate {title}"))?;
 
     // go through additional definitions
