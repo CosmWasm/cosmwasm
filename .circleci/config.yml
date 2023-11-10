@@ -57,15 +57,15 @@ workflows:
       - contract_burner
       - contract_crypto_verify
       - contract_cyberpunk
+      - contract_empty
+      # - contract_floaty # This contract needs nightly Rust to compile
       - contract_hackatom
       - contract_ibc_reflect
       - contract_ibc_reflect_send
-      # - contract_floaty # This contract needs nightly Rust to compile
       - contract_queue
       - contract_reflect
       - contract_staking
       - contract_virus
-      - contract_empty
       - fmt
       - fmt_extra
       - clippy:
