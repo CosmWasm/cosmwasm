@@ -2234,13 +2234,13 @@ mod tests {
                 }
                 #[cfg(feature = "cosmwasm_1_2")]
                 WasmQuery::CodeInfo { code_id } => {
-                    use crate::{CodeInfoResponse, HexBinary};
+                    use crate::{Checksum, CodeInfoResponse};
                     let code_id = *code_id;
                     if code_id == 4 {
                         let response = CodeInfoResponse {
                             code_id,
                             creator: Addr::unchecked("lalala"),
-                            checksum: HexBinary::from_hex(
+                            checksum: Checksum::from_hex(
                                 "84cf20810fd429caf58898c3210fcb71759a27becddae08dbde8668ea2f4725d",
                             )
                             .unwrap(),

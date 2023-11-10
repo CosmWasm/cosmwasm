@@ -1,5 +1,7 @@
 use core::fmt;
 
+use schemars::JsonSchema;
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
@@ -10,8 +12,8 @@ use crate::{StdError, StdResult};
 ///
 /// This is often referred to as "code ID" in go-cosmwasm, even if code ID
 /// usually refers to an auto-incrementing number.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Checksum([u8; 32]);
+#[derive(JsonSchema, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct Checksum(#[schemars(with = "String")] [u8; 32]);
 
 impl Checksum {
     pub fn generate(wasm: &[u8]) -> Self {
@@ -47,6 +49,46 @@ impl fmt::Display for Checksum {
 impl From<[u8; 32]> for Checksum {
     fn from(data: [u8; 32]) -> Self {
         Checksum(data)
+    }
+}
+
+/// Serializes as a hex string
+impl Serialize for Checksum {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        serializer.serialize_str(&self.to_hex())
+    }
+}
+
+/// Deserializes as a hex string
+impl<'de> Deserialize<'de> for Checksum {
+    fn deserialize<D>(deserializer: D) -> Result<Checksum, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(ChecksumVisitor)
+    }
+}
+
+struct ChecksumVisitor;
+
+impl<'de> de::Visitor<'de> for ChecksumVisitor {
+    type Value = Checksum;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("valid hex encoded 32 byte checksum")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        match Checksum::from_hex(v) {
+            Ok(data) => Ok(data),
+            Err(_) => Err(E::custom(format!("invalid checksum: {v}"))),
+        }
     }
 }
 
