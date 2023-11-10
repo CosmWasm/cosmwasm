@@ -472,4 +472,56 @@ mod tests {
             }"#,
         );
     }
+
+    #[test]
+    fn accronym_replacement_works() {
+        #[cw_serde]
+        struct IbcStruct {
+            a: IbcSubStruct,
+            b: IbcSubEnum,
+        }
+        #[cw_serde]
+        enum IbcEnum {
+            A(IbcSubStruct),
+            B(IbcSubEnum),
+        }
+        #[cw_serde]
+        struct IbcSubStruct {}
+        #[cw_serde]
+        enum IbcSubEnum {
+            A(String),
+        }
+
+        let code = generate_go(cosmwasm_schema::schema_for!(IbcStruct)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type IBCStruct struct {
+                A IBCSubStruct `json:"a"`
+                B IBCSubEnum `json:"b"`
+            }
+            type IBCSubEnum struct {
+                A string `json:"a,omitempty"`
+            }
+            type IBCSubStruct struct {
+            }
+            "#,
+        );
+
+        let code = generate_go(cosmwasm_schema::schema_for!(IbcEnum)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type IBCEnum struct {
+                A *IBCSubStruct `json:"a,omitempty"`
+                B *IBCSubEnum `json:"b,omitempty"`
+            }
+            type IBCSubEnum struct {
+                A string `json:"a,omitempty"`
+            }
+            type IBCSubStruct struct {
+            }
+            "#,
+        );
+    }
 }
