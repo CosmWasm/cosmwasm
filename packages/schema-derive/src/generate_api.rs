@@ -226,6 +226,25 @@ mod tests {
     #[test]
     fn api_object_minimal() {
         assert_eq!(
+            generate_api_impl(&parse_quote! {}),
+            parse_quote! {
+                ::cosmwasm_schema::Api {
+                    contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
+                    contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
+                    instantiate: None,
+                    execute: None,
+                    query: None,
+                    migrate: None,
+                    sudo: None,
+                    responses: None,
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn api_object_instantiate_only() {
+        assert_eq!(
             generate_api_impl(&parse_quote! {
                 instantiate: InstantiateMsg,
             }),
@@ -245,7 +264,7 @@ mod tests {
     }
 
     #[test]
-    fn api_object_name_vesion_override() {
+    fn api_object_name_version_override() {
         assert_eq!(
             generate_api_impl(&parse_quote! {
                 name: "foo",
