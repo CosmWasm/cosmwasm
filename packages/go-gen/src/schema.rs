@@ -261,11 +261,15 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
     match ty {
         "Uint64" => Some("string"),
         "Uint128" => Some("string"),
+        "Int64" => Some("string"),
+        "Int128" => Some("string"),
         "Binary" => Some("[]byte"),
         "HexBinary" => Some("Checksum"),
         "Addr" => Some("string"),
         "Decimal" => Some("string"),
         "Decimal256" => Some("string"),
+        "SignedDecimal" => Some("string"),
+        "SignedDecimal256" => Some("string"),
         "Timestamp" => Some("uint64"),
         _ => None,
     }
