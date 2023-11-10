@@ -3,8 +3,10 @@ use std::collections::hash_map::RandomState;
 use std::num::NonZeroUsize;
 use wasmer::Module;
 
+use cosmwasm_std::Checksum;
+
 use super::cached_module::CachedModule;
-use crate::{Checksum, Size, VmError, VmResult};
+use crate::{Size, VmError, VmResult};
 
 // Minimum module size.
 // Based on `examples/module_size.sh`, and the cosmwasm-plus contracts.

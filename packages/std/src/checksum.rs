@@ -1,8 +1,7 @@
-use std::fmt;
+use core::fmt;
 
 use sha2::{Digest, Sha256};
-
-use crate::errors::VmError;
+use thiserror::Error;
 
 /// A SHA-256 checksum of a Wasm blob, used to identify a Wasm code.
 /// This must remain stable since this checksum is stored in the blockchain state.
@@ -40,12 +39,16 @@ impl From<[u8; 32]> for Checksum {
     }
 }
 
+#[derive(Error, Debug)]
+#[error("Checksum not of length 32")]
+pub struct ChecksumError;
+
 impl TryFrom<&[u8]> for Checksum {
-    type Error = VmError;
+    type Error = ChecksumError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         if value.len() != 32 {
-            return Err(VmError::cache_err("Checksum not of length 32"));
+            return Err(ChecksumError);
         }
         let mut data = [0u8; 32];
         data.copy_from_slice(value);
