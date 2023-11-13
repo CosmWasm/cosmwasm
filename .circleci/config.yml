@@ -57,10 +57,11 @@ workflows:
       - contract_burner
       - contract_crypto_verify
       - contract_cyberpunk
+      - contract_empty
+      # - contract_floaty # This contract needs nightly Rust to compile
       - contract_hackatom
       - contract_ibc_reflect
       - contract_ibc_reflect_send
-      # - contract_floaty # This contract needs nightly Rust to compile
       - contract_queue
       - contract_reflect
       - contract_staking
@@ -753,6 +754,33 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_virus-rust:1.70.0-{{ checksum "Cargo.lock" }}
+
+  contract_empty:
+    docker:
+      - image: rust:1.70.0
+    environment:
+      RUST_BACKTRACE: 1
+    working_directory: ~/cosmwasm/contracts/empty
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_empty-rust:1.70.0-{{ checksum "Cargo.lock" }}
+      - check_contract
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_empty-rust:1.70.0-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:

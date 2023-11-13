@@ -15,7 +15,7 @@ pub const IDL_VERSION: &str = "1.0.0";
 pub struct Api {
     pub contract_name: String,
     pub contract_version: String,
-    pub instantiate: RootSchema,
+    pub instantiate: Option<RootSchema>,
     pub execute: Option<RootSchema>,
     pub query: Option<RootSchema>,
     pub migrate: Option<RootSchema>,
@@ -38,8 +38,10 @@ impl Api {
             responses: self.responses,
         };
 
-        if let Some(metadata) = &mut json_api.instantiate.schema.metadata {
-            metadata.title = Some("InstantiateMsg".to_string());
+        if let Some(instantiate) = &mut json_api.instantiate {
+            if let Some(metadata) = &mut instantiate.schema.metadata {
+                metadata.title = Some("InstantiateMsg".to_string());
+            }
         }
         if let Some(execute) = &mut json_api.execute {
             if let Some(metadata) = &mut execute.schema.metadata {
@@ -72,7 +74,7 @@ pub struct JsonApi {
     contract_name: String,
     contract_version: String,
     idl_version: String,
-    instantiate: RootSchema,
+    instantiate: Option<RootSchema>,
     execute: Option<RootSchema>,
     query: Option<RootSchema>,
     migrate: Option<RootSchema>,
@@ -86,10 +88,14 @@ impl JsonApi {
     }
 
     pub fn to_schema_files(&self) -> Result<Vec<(String, String)>, EncodeError> {
-        let mut result = vec![(
-            "instantiate.json".to_string(),
-            serde_json::to_string_pretty(&self.instantiate)?,
-        )];
+        let mut result = Vec::new();
+
+        if let Some(instantiate) = &self.instantiate {
+            result.push((
+                "instantiate.json".to_string(),
+                serde_json::to_string_pretty(&instantiate)?,
+            ));
+        }
 
         if let Some(execute) = &self.execute {
             result.push((

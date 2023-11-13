@@ -15,6 +15,18 @@ fn valid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn empty_contract_check() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+
+    cmd.arg("../vm/testdata/empty.wasm");
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("pass"));
+
+    Ok(())
+}
+
+#[test]
 fn invalid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 

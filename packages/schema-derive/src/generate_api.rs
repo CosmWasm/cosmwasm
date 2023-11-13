@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_quote, Block, ExprStruct, Ident, Path, Token,
+    parse_quote, Block, ExprStruct, Ident, Token,
 };
 
 pub fn write_api_impl(input: Options) -> Block {
@@ -63,7 +63,7 @@ pub fn generate_api_impl(input: &Options) -> ExprStruct {
         ::cosmwasm_schema::Api {
             contract_name: #name.to_string(),
             contract_version: #version.to_string(),
-            instantiate: ::cosmwasm_schema::schema_for!(#instantiate),
+            instantiate: #instantiate,
             execute: #execute,
             query: #query,
             migrate: #migrate,
@@ -124,7 +124,7 @@ impl Parse for Pair {
 pub struct Options {
     name: TokenStream,
     version: TokenStream,
-    instantiate: Path,
+    instantiate: TokenStream,
     execute: TokenStream,
     query: TokenStream,
     migrate: TokenStream,
@@ -159,10 +159,13 @@ impl Parse for Options {
             }
         };
 
-        let instantiate = map
-            .remove(&parse_quote!(instantiate))
-            .unwrap()
-            .unwrap_type();
+        let instantiate = match map.remove(&parse_quote!(instantiate)) {
+            Some(ty) => {
+                let ty = ty.unwrap_type();
+                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+            }
+            None => quote! { None },
+        };
 
         let execute = match map.remove(&parse_quote!(execute)) {
             Some(ty) => {
@@ -223,14 +226,12 @@ mod tests {
     #[test]
     fn api_object_minimal() {
         assert_eq!(
-            generate_api_impl(&parse_quote! {
-                instantiate: InstantiateMsg,
-            }),
+            generate_api_impl(&parse_quote! {}),
             parse_quote! {
                 ::cosmwasm_schema::Api {
                     contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
                     contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
-                    instantiate: ::cosmwasm_schema::schema_for!(InstantiateMsg),
+                    instantiate: None,
                     execute: None,
                     query: None,
                     migrate: None,
@@ -242,7 +243,28 @@ mod tests {
     }
 
     #[test]
-    fn api_object_name_vesion_override() {
+    fn api_object_instantiate_only() {
+        assert_eq!(
+            generate_api_impl(&parse_quote! {
+                instantiate: InstantiateMsg,
+            }),
+            parse_quote! {
+                ::cosmwasm_schema::Api {
+                    contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
+                    contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
+                    instantiate: Some(::cosmwasm_schema::schema_for!(InstantiateMsg)),
+                    execute: None,
+                    query: None,
+                    migrate: None,
+                    sudo: None,
+                    responses: None,
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn api_object_name_version_override() {
         assert_eq!(
             generate_api_impl(&parse_quote! {
                 name: "foo",
@@ -253,7 +275,7 @@ mod tests {
                 ::cosmwasm_schema::Api {
                     contract_name: "foo".to_string(),
                     contract_version: "bar".to_string(),
-                    instantiate: ::cosmwasm_schema::schema_for!(InstantiateMsg),
+                    instantiate: Some(::cosmwasm_schema::schema_for!(InstantiateMsg)),
                     execute: None,
                     query: None,
                     migrate: None,
@@ -278,7 +300,7 @@ mod tests {
                 ::cosmwasm_schema::Api {
                     contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
                     contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
-                    instantiate: ::cosmwasm_schema::schema_for!(InstantiateMsg),
+                    instantiate: Some(::cosmwasm_schema::schema_for!(InstantiateMsg)),
                     execute: Some(::cosmwasm_schema::schema_for!(ExecuteMsg)),
                     query: Some(::cosmwasm_schema::schema_for!(QueryMsg)),
                     migrate: Some(::cosmwasm_schema::schema_for!(MigrateMsg)),
