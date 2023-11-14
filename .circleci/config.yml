@@ -1046,6 +1046,12 @@ jobs:
       - run:
           name: Publish artifacts on GitHub
           command: |
+            # This safety measure allows us to run the job until here for testing.
+            if [ -z "$CIRCLE_TAG" ]; then
+              echo "Not a tag build"
+              exit 1
+            fi
+
             TAG="$CIRCLE_TAG"
             TITLE="$TAG"
             BODY="The release notes are available in [CHANGELOG.md](https://github.com/CosmWasm/cosmwasm/blob/$TAG/CHANGELOG.md). For upgrading contracts also consult [MIGRATING.md](https://github.com/CosmWasm/cosmwasm/blob/$TAG/MIGRATING.md).\n\nAttached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
