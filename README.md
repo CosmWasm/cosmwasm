@@ -397,16 +397,16 @@ from the published rust code.
 
 For that, we have a separate repo,
 [rust-optimizer](https://github.com/CosmWasm/rust-optimizer) that provides a
-[docker image](https://hub.docker.com/r/CosmWasm/rust-optimizer/tags) for
-building. For more info, look at
+[docker image](https://hub.docker.com/r/CosmWasm/optimizer/tags) for building.
+For more info, look at
 [rust-optimizer README](https://github.com/CosmWasm/rust-optimizer/blob/master/README.md#usage),
 but the quickstart guide is:
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.13
+  cosmwasm/optimizer:0.15.0
 ```
 
 It will output a highly size-optimized build as `contract.wasm` in `$CODE`. With
