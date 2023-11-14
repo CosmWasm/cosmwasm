@@ -52,6 +52,8 @@ the CI for every release tag. In case you need to build them manually for some
 reason, use the following commands:
 
 ```sh
+# cd to the repo root first
+
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
