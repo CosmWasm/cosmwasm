@@ -157,8 +157,14 @@ and this project adheres to
 - cosmwasm-std: Add
   `DistributionQuery::{DelegationRewards, DelegationTotalRewards, DelegatorValidators}`.
   This requires the `cosmwasm_1_4` feature to be enabled. ([#1788])
+- cosmwasm-std: Export module `cosmwasm_std::storage_keys` with
+  `namespace_with_key`, `to_length_prefixed` and `to_length_prefixed_nested` to
+  make it easier to use the strandard storage key layout documented in
+  [STORAGE_KEYS.md](https://github.com/CosmWasm/cosmwasm/blob/v1.5.0/docs/STORAGE_KEYS.md)
+  in other libraries such as cw-storage-plus or indexers. ([#1676])
 
 [#1512]: https://github.com/CosmWasm/cosmwasm/issues/1512
+[#1676]: https://github.com/CosmWasm/cosmwasm/pull/1676
 [#1799]: https://github.com/CosmWasm/cosmwasm/pull/1799
 [#1806]: https://github.com/CosmWasm/cosmwasm/pull/1806
 [#1832]: https://github.com/CosmWasm/cosmwasm/pull/1832
