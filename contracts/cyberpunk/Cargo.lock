@@ -203,6 +203,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "795bc6e66a8e340f075fcf6227e417a2dc976b92b91f3cdc778bb858778b6747"
 
 [[package]]
+name = "const-str"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aca749d3d3f5b87a0d6100509879f9cf486ab510803a4a4e1001da1ff61c2bd6"
+
+[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -504,8 +510,9 @@ dependencies = [
 
 [[package]]
 name = "cyberpunk"
-version = "0.0.0"
+version = "0.12.345"
 dependencies = [
+ "const-str",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vm",

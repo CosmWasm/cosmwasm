@@ -5,6 +5,12 @@ use cosmwasm_std::{
 
 use crate::errors::ContractError;
 use crate::msg::{ExecuteMsg, QueryMsg};
+use crate::set_wasm_version;
+
+const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+set_wasm_version!(CONTRACT_NAME, CONTRACT_VERSION);
 
 #[entry_point]
 pub fn instantiate(

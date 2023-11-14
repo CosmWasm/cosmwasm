@@ -1,6 +1,6 @@
 [package]
 name = "cyberpunk"
-version = "0.0.0"
+version = "0.12.345"
 authors = ["Tomasz Kurcz <uint@users.noreply.github.com>"]
 edition = "2021"
 publish = false
@@ -33,6 +33,7 @@ cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort", "cosmwasm_1_3"] }
 rust-argon2 = "0.8"
 thiserror = "1.0.26"
+const-str = "0.5.6"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
