@@ -139,6 +139,8 @@ impl From<Checksum> for Vec<u8> {
 mod tests {
     use super::*;
 
+    use crate::to_json_string;
+
     #[test]
     fn generate_works() {
         let wasm = vec![0x68, 0x69, 0x6a];
@@ -217,5 +219,22 @@ mod tests {
         // as_slice
         let _: &[u8; 32] = checksum.as_ref();
         let _: &[u8] = checksum.as_ref();
+    }
+
+    #[test]
+    fn serde_works() {
+        // echo -n "hij" | sha256sum
+        let checksum =
+            Checksum::from_hex("722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104")
+                .unwrap();
+
+        let serialized = to_json_string(&checksum).unwrap();
+        assert_eq!(
+            serialized,
+            "\"722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104\""
+        );
+
+        let deserialized: Checksum = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, checksum);
     }
 }
