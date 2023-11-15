@@ -146,10 +146,55 @@ pub enum EncodeError {
 
 #[cfg(test)]
 mod tests {
+    use crate::schema_for;
+
     use super::*;
 
     #[test]
     fn version_is_semver() {
         semver::Version::parse(IDL_VERSION).unwrap();
+    }
+
+    #[test]
+    fn to_schema_files_works() {
+        let empty = Api {
+            contract_name: "my_contract".to_string(),
+            contract_version: "1.2.3".to_string(),
+            instantiate: None,
+            execute: None,
+            query: None,
+            migrate: None,
+            sudo: None,
+            responses: None,
+        };
+
+        let files = empty.render().to_schema_files().unwrap();
+        assert_eq!(files, []);
+
+        #[derive(schemars::JsonSchema)]
+        struct TestMsg {}
+
+        let full = Api {
+            contract_name: "my_contract".to_string(),
+            contract_version: "1.2.3".to_string(),
+            instantiate: Some(schema_for!(TestMsg)),
+            execute: Some(schema_for!(TestMsg)),
+            query: Some(schema_for!(TestMsg)),
+            migrate: Some(schema_for!(TestMsg)),
+            sudo: Some(schema_for!(TestMsg)),
+            responses: Some(BTreeMap::from([(
+                "TestMsg".to_string(),
+                schema_for!(TestMsg),
+            )])),
+        };
+
+        let files = full.render().to_schema_files().unwrap();
+        assert_eq!(files.len(), 6);
+        assert_eq!(files[0].0, "instantiate.json");
+        assert_eq!(files[1].0, "execute.json");
+        assert_eq!(files[2].0, "query.json");
+        assert_eq!(files[3].0, "migrate.json");
+        assert_eq!(files[4].0, "sudo.json");
+        assert_eq!(files[5].0, "response_to_TestMsg.json");
     }
 }
