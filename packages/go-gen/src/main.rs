@@ -359,7 +359,7 @@ mod tests {
         compare_codes!(cosmwasm_std::DelegatorValidatorsResponse);
         // wasm
         compare_codes!(cosmwasm_std::ContractInfoResponse);
-        // compare_codes!(cosmwasm_std::CodeInfoResponse); // TODO: Checksum type and "omitempty"
+        compare_codes!(cosmwasm_std::CodeInfoResponse);
     }
 
     #[test]
