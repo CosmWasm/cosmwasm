@@ -35,6 +35,12 @@ impl Checksum {
     pub fn to_hex(self) -> String {
         self.to_string()
     }
+
+    /// Returns a reference to the inner bytes of this checksum as a slice.
+    /// If you need a reference to the array, use [`AsRef::as_ref`].
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
 }
 
 impl fmt::Display for Checksum {
