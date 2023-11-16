@@ -16,7 +16,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
-use crate::static_analysis::has_ibc_entry_points;
+use crate::static_analysis::{ExportInfo, REQUIRED_IBC_EXPORTS};
 use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
 
 const STATE_DIR: &str = "state";
@@ -117,7 +117,16 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct AnalysisReport {
+    /// `true` if and only if all [`REQUIRED_IBC_EXPORTS`] exist as exported functions.
+    /// This does not guarantee they are functional or even have the correct signatures.
     pub has_ibc_entry_points: bool,
+    /// `true` if the module has an `instantiate` export.
+    /// This does not guarantee it is functional or even has the correct signature.
+    pub has_instantiate_entry_point: bool,
+    /// `true` if the module has a `migrate` export.
+    /// This does not guarantee it is functional or even has the correct signature.
+    pub has_migrate_entry_point: bool,
+    /// The set of capabilities the contract requires.
     pub required_capabilities: HashSet<String>,
 }
 
@@ -274,8 +283,14 @@ where
         // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
         let wasm = self.load_wasm(checksum)?;
         let module = ParsedWasm::parse(&wasm)?;
+        let exports = module.exported_function_names(None);
+
         Ok(AnalysisReport {
-            has_ibc_entry_points: has_ibc_entry_points(&module),
+            has_ibc_entry_points: REQUIRED_IBC_EXPORTS
+                .iter()
+                .all(|required| exports.contains(*required)),
+            has_instantiate_entry_point: exports.contains("instantiate"),
+            has_migrate_entry_point: exports.contains("migrate"),
             required_capabilities: required_capabilities_from_module(&module),
         })
     }
@@ -538,6 +553,7 @@ mod tests {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+    static EMPTY_CONTRACT: &[u8] = include_bytes!("../testdata/empty.wasm");
     // Invalid because it doesn't contain required memory and exports
     static INVALID_CONTRACT_WAT: &str = r#"(module
         (type $t0 (func (param i32) (result i32)))
@@ -1289,6 +1305,8 @@ mod tests {
             report1,
             AnalysisReport {
                 has_ibc_entry_points: false,
+                has_instantiate_entry_point: true,
+                has_migrate_entry_point: true,
                 required_capabilities: HashSet::new(),
             }
         );
@@ -1299,10 +1317,24 @@ mod tests {
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
+                has_instantiate_entry_point: true,
+                has_migrate_entry_point: true,
                 required_capabilities: HashSet::from_iter([
                     "iterator".to_string(),
                     "stargate".to_string()
                 ]),
+            }
+        );
+
+        let checksum3 = cache.save_wasm(EMPTY_CONTRACT).unwrap();
+        let report3 = cache.analyze(&checksum3).unwrap();
+        assert_eq!(
+            report3,
+            AnalysisReport {
+                has_ibc_entry_points: false,
+                has_instantiate_entry_point: false,
+                has_migrate_entry_point: false,
+                required_capabilities: HashSet::from(["iterator".to_string()]),
             }
         );
     }
