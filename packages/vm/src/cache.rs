@@ -3,6 +3,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Mutex;
 use wasmer::{Engine, Store};
 
@@ -16,7 +17,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
-use crate::static_analysis::{ExportInfo, REQUIRED_IBC_EXPORTS};
+use crate::static_analysis::{Entrypoint, ExportInfo, REQUIRED_IBC_EXPORTS};
 use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
 
 const STATE_DIR: &str = "state";
@@ -120,12 +121,8 @@ pub struct AnalysisReport {
     /// `true` if and only if all [`REQUIRED_IBC_EXPORTS`] exist as exported functions.
     /// This does not guarantee they are functional or even have the correct signatures.
     pub has_ibc_entry_points: bool,
-    /// `true` if the module has an `instantiate` export.
-    /// This does not guarantee it is functional or even has the correct signature.
-    pub has_instantiate_entry_point: bool,
-    /// `true` if the module has a `migrate` export.
-    /// This does not guarantee it is functional or even has the correct signature.
-    pub has_migrate_entry_point: bool,
+    /// A set of all entrypoints that are exported by the contract.
+    pub entrypoints: HashSet<Entrypoint>,
     /// The set of capabilities the contract requires.
     pub required_capabilities: HashSet<String>,
 }
@@ -285,12 +282,16 @@ where
         let module = ParsedWasm::parse(&wasm)?;
         let exports = module.exported_function_names(None);
 
+        let entrypoints = exports
+            .iter()
+            .filter_map(|export| Entrypoint::from_str(export).ok())
+            .collect();
+
         Ok(AnalysisReport {
             has_ibc_entry_points: REQUIRED_IBC_EXPORTS
                 .iter()
                 .all(|required| exports.contains(*required)),
-            has_instantiate_entry_point: exports.contains("instantiate"),
-            has_migrate_entry_point: exports.contains("migrate"),
+            entrypoints,
             required_capabilities: required_capabilities_from_module(&module),
         })
     }
@@ -1296,6 +1297,7 @@ mod tests {
 
     #[test]
     fn analyze_works() {
+        use Entrypoint as E;
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_stargate_testing_options()).unwrap() };
 
@@ -1305,8 +1307,13 @@ mod tests {
             report1,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                has_instantiate_entry_point: true,
-                has_migrate_entry_point: true,
+                entrypoints: HashSet::from([
+                    E::Instantiate,
+                    E::Migrate,
+                    E::Sudo,
+                    E::Execute,
+                    E::Query
+                ]),
                 required_capabilities: HashSet::new(),
             }
         );
@@ -1317,8 +1324,7 @@ mod tests {
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
-                has_instantiate_entry_point: true,
-                has_migrate_entry_point: true,
+                entrypoints: HashSet::from([E::Instantiate, E::Reply, E::Query]),
                 required_capabilities: HashSet::from_iter([
                     "iterator".to_string(),
                     "stargate".to_string()
@@ -1332,8 +1338,7 @@ mod tests {
             report3,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                has_instantiate_entry_point: false,
-                has_migrate_entry_point: false,
+                entrypoints: HashSet::new(),
                 required_capabilities: HashSet::from(["iterator".to_string()]),
             }
         );

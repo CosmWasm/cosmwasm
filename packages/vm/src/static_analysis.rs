@@ -1,8 +1,39 @@
 use std::collections::HashSet;
 
+use strum::{Display, EnumString};
 use wasmer::wasmparser::ExternalKind;
 
 use crate::parsed_wasm::ParsedWasm;
+
+/// An enum containing all available contract entrypoints.
+/// This also provides conversions to and from strings.
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash, EnumString, Display)]
+pub enum Entrypoint {
+    #[strum(serialize = "instantiate")]
+    Instantiate,
+    #[strum(serialize = "execute")]
+    Execute,
+    #[strum(serialize = "migrate")]
+    Migrate,
+    #[strum(serialize = "sudo")]
+    Sudo,
+    #[strum(serialize = "reply")]
+    Reply,
+    #[strum(serialize = "query")]
+    Query,
+    #[strum(serialize = "ibc_channel_open")]
+    IbcChannelOpen,
+    #[strum(serialize = "ibc_channel_connect")]
+    IbcChannelConnect,
+    #[strum(serialize = "ibc_channel_close")]
+    IbcChannelClose,
+    #[strum(serialize = "ibc_packet_receive")]
+    IbcPacketReceive,
+    #[strum(serialize = "ibc_packet_ack")]
+    IbcPacketAck,
+    #[strum(serialize = "ibc_packet_timeout")]
+    IbcPacketTimeout,
+}
 
 pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
     "ibc_channel_open",
@@ -62,6 +93,8 @@ impl ExportInfo for &wasmer::Module {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::VmError;
 
     use super::*;
@@ -213,6 +246,24 @@ mod tests {
         assert_eq!(
             exports,
             HashSet::from_iter(vec!["bar".to_string(), "baz".to_string()])
+        );
+    }
+
+    #[test]
+    fn entrypoint_from_string_works() {
+        assert_eq!(
+            Entrypoint::from_str("ibc_channel_open").unwrap(),
+            Entrypoint::IbcChannelOpen
+        );
+
+        assert!(Entrypoint::from_str("IbcChannelConnect").is_err());
+    }
+
+    #[test]
+    fn entrypoint_display_works() {
+        assert_eq!(
+            Entrypoint::IbcPacketTimeout.to_string(),
+            "ibc_packet_timeout".to_string()
         );
     }
 }
