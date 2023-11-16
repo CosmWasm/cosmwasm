@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
-use strum::{Display, EnumString, IntoStaticStr};
+use strum::{AsRefStr, Display, EnumString};
 use wasmer::wasmparser::ExternalKind;
 
 use crate::parsed_wasm::ParsedWasm;
 
 /// An enum containing all available contract entrypoints.
 /// This also provides conversions to and from strings.
-#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash, EnumString, Display, IntoStaticStr)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash, EnumString, Display, AsRefStr)]
 pub enum Entrypoint {
     #[strum(serialize = "instantiate")]
     Instantiate,
@@ -263,12 +263,10 @@ mod tests {
     fn entrypoint_to_string_works() {
         assert_eq!(
             Entrypoint::IbcPacketTimeout.to_string(),
-            "ibc_packet_timeout".to_string()
+            "ibc_packet_timeout"
         );
 
-        assert_eq!(
-            <&'static str>::from(Entrypoint::IbcPacketReceive),
-            "ibc_packet_receive"
-        );
+        let static_str: &'static str = Entrypoint::IbcPacketReceive.as_ref();
+        assert_eq!(static_str, "ibc_packet_receive");
     }
 }

@@ -290,7 +290,7 @@ where
         Ok(AnalysisReport {
             has_ibc_entry_points: REQUIRED_IBC_EXPORTS
                 .iter()
-                .all(|required| exports.contains(<&str>::from(required))),
+                .all(|required| exports.contains(required.as_ref())),
             entrypoints,
             required_capabilities: required_capabilities_from_module(&module),
         })
