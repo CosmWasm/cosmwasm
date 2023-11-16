@@ -290,7 +290,7 @@ where
         Ok(AnalysisReport {
             has_ibc_entry_points: REQUIRED_IBC_EXPORTS
                 .iter()
-                .all(|required| exports.contains(*required)),
+                .all(|required| exports.contains(<&str>::from(required))),
             entrypoints,
             required_capabilities: required_capabilities_from_module(&module),
         })
@@ -1320,11 +1320,14 @@ mod tests {
 
         let checksum2 = cache.save_wasm(IBC_CONTRACT).unwrap();
         let report2 = cache.analyze(&checksum2).unwrap();
+        let mut ibc_contract_entrypoints =
+            HashSet::from([E::Instantiate, E::Migrate, E::Reply, E::Query]);
+        ibc_contract_entrypoints.extend(REQUIRED_IBC_EXPORTS);
         assert_eq!(
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
-                entrypoints: HashSet::from([E::Instantiate, E::Reply, E::Query]),
+                entrypoints: ibc_contract_entrypoints,
                 required_capabilities: HashSet::from_iter([
                     "iterator".to_string(),
                     "stargate".to_string()

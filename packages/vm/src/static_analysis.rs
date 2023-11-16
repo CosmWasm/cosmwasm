@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
-use strum::{Display, EnumString};
+use strum::{Display, EnumString, IntoStaticStr};
 use wasmer::wasmparser::ExternalKind;
 
 use crate::parsed_wasm::ParsedWasm;
 
 /// An enum containing all available contract entrypoints.
 /// This also provides conversions to and from strings.
-#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash, EnumString, Display)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash, EnumString, Display, IntoStaticStr)]
 pub enum Entrypoint {
     #[strum(serialize = "instantiate")]
     Instantiate,
@@ -35,13 +35,13 @@ pub enum Entrypoint {
     IbcPacketTimeout,
 }
 
-pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
-    "ibc_channel_open",
-    "ibc_channel_connect",
-    "ibc_channel_close",
-    "ibc_packet_receive",
-    "ibc_packet_ack",
-    "ibc_packet_timeout",
+pub const REQUIRED_IBC_EXPORTS: &[Entrypoint] = &[
+    Entrypoint::IbcChannelOpen,
+    Entrypoint::IbcChannelConnect,
+    Entrypoint::IbcChannelClose,
+    Entrypoint::IbcPacketReceive,
+    Entrypoint::IbcPacketAck,
+    Entrypoint::IbcPacketTimeout,
 ];
 
 /// A trait that allows accessing shared functionality of `parity_wasm::elements::Module`
@@ -260,10 +260,15 @@ mod tests {
     }
 
     #[test]
-    fn entrypoint_display_works() {
+    fn entrypoint_to_string_works() {
         assert_eq!(
             Entrypoint::IbcPacketTimeout.to_string(),
             "ibc_packet_timeout".to_string()
+        );
+
+        assert_eq!(
+            <&'static str>::from(Entrypoint::IbcPacketReceive),
+            "ibc_packet_receive"
         );
     }
 }
