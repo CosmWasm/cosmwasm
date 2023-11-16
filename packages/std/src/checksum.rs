@@ -1,5 +1,4 @@
 use core::fmt;
-use core::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
@@ -50,19 +49,6 @@ impl fmt::Display for Checksum {
 impl From<[u8; 32]> for Checksum {
     fn from(data: [u8; 32]) -> Self {
         Checksum(data)
-    }
-}
-
-/// Just like Vec<u8>, Checksum is a smart pointer to [u8].
-/// This implements `*data` for us and allows us to
-/// do `&*data`, returning a `&[u8]` from a `&Checksum`.
-/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
-/// this allows us to use `&data` whenever a `&[u8]` is required.
-impl Deref for Checksum {
-    type Target = [u8; 32];
-
-    fn deref(&self) -> &Self::Target {
-        self.as_ref()
     }
 }
 
@@ -210,9 +196,6 @@ mod tests {
     #[test]
     fn ref_conversions_work() {
         let checksum = Checksum::generate(&[12u8; 17]);
-        // deref
-        let _: &[u8; 32] = &checksum;
-        let _: &[u8] = &*checksum;
         // as_ref
         let _: &[u8; 32] = checksum.as_ref();
         let _: &[u8] = checksum.as_ref();

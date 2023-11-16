@@ -60,11 +60,9 @@ pub fn execute_spread(
 
         attributes.push(Attribute::new(format!("path{i}"), path.clone()));
 
-        // clippy produces a false positive here, see https://github.com/rust-lang/rust-clippy/issues/9841
-        #[allow(clippy::explicit_auto_deref)]
-        let address = deps
-            .api
-            .addr_humanize(&instantiate2_address(&*checksum, &creator, &salt)?)?;
+        let address =
+            deps.api
+                .addr_humanize(&instantiate2_address(checksum.as_ref(), &creator, &salt)?)?;
         attributes.push(Attribute::new(
             format!("predicted_address{i}"),
             address.clone(),
