@@ -118,6 +118,13 @@ major releases of `cosmwasm`. Note that you can also view the
   +Ok(IbcReceiveResponse::new(b""))
   ```
 
+- Replace all uses of `CosmosMsg::Stargate` with `CosmosMsg::Any`:
+
+  ```diff
+  -CosmosMsg::Stargate { type_url, value }
+  +CosmosMsg::Any(AnyMsg { type_url, value })
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
