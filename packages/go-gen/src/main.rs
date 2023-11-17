@@ -11,7 +11,7 @@ mod schema;
 mod utils;
 
 fn main() -> Result<()> {
-    let root = cosmwasm_schema::schema_for!(cosmwasm_std::BankQuery);
+    let root = cosmwasm_schema::schema_for!(cosmwasm_std::Reply);
 
     let code = generate_go(root)?;
     println!("{}", code);
