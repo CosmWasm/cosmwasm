@@ -4,10 +4,17 @@
   "description": "The result object returned to `reply`. We always get the ID from the submessage back and then must handle success and error cases ourselves.",
   "type": "object",
   "required": [
+    "gas_used",
     "id",
     "result"
   ],
   "properties": {
+    "gas_used": {
+      "description": "The amount of gas used by the submessage, measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
     "id": {
       "description": "The ID that the contract set when emitting the `SubMsg`. Use this to identify which submessage triggered the `reply`.",
       "type": "integer",
