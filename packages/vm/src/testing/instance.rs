@@ -19,7 +19,6 @@ use super::storage::MockStorage;
 /// higher than the limit for a single execution that we have in the production setup.
 const DEFAULT_GAS_LIMIT: u64 = 500_000_000; // ~0.5ms
 const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
-const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
     wasm: &[u8],
@@ -90,7 +89,6 @@ pub struct MockInstanceOptions<'a> {
     pub available_capabilities: HashSet<String>,
     /// Gas limit measured in [CosmWasm gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     pub gas_limit: u64,
-    pub print_debug: bool,
     /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
     pub memory_limit: Option<Size>,
 }
@@ -118,7 +116,6 @@ impl Default for MockInstanceOptions<'_> {
             // instance
             available_capabilities: Self::default_capabilities(),
             gas_limit: DEFAULT_GAS_LIMIT,
-            print_debug: DEFAULT_PRINT_DEBUG,
             memory_limit: DEFAULT_MEMORY_LIMIT,
         }
     }
@@ -155,7 +152,6 @@ pub fn mock_instance_with_options(
     let memory_limit = options.memory_limit;
     let options = InstanceOptions {
         gas_limit: options.gas_limit,
-        print_debug: options.print_debug,
     };
     Instance::from_code(wasm, backend, options, memory_limit).unwrap()
 }
@@ -165,7 +161,6 @@ pub fn mock_instance_options() -> (InstanceOptions, Option<Size>) {
     (
         InstanceOptions {
             gas_limit: DEFAULT_GAS_LIMIT,
-            print_debug: DEFAULT_PRINT_DEBUG,
         },
         DEFAULT_MEMORY_LIMIT,
     )
