@@ -95,17 +95,7 @@ where
         extra_imports: Option<HashMap<&str, Exports>>,
         instantiation_lock: Option<&Mutex<()>>,
     ) -> VmResult<Self> {
-        let fe = FunctionEnv::new(&mut store, {
-            let e = Environment::new(backend.api, gas_limit);
-            if print_debug {
-                e.set_debug_handler(Some(Rc::new(RefCell::new(
-                    |msg: &str, _info: DebugInfo<'_>| {
-                        eprintln!("{msg}");
-                    },
-                ))))
-            }
-            e
-        });
+        let fe = FunctionEnv::new(&mut store, Environment::new(backend.api, gas_limit));
 
         let mut import_obj = Imports::new();
         let mut env_imports = Exports::new();
