@@ -55,57 +55,57 @@ reason, use the following commands:
 # cd to the repo root first
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
+  --mount type=volume,source="devcontract_cache_burner",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/burner
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_crypto_verify",target=/code/contracts/crypto-verify/target \
+  --mount type=volume,source="devcontract_cache_crypto_verify",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/crypto-verify
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
+  --mount type=volume,source="devcontract_cache_floaty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/floaty
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
+  --mount type=volume,source="devcontract_cache_hackatom",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/hackatom
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_ibc_reflect",target=/code/contracts/ibc-reflect/target \
+  --mount type=volume,source="devcontract_cache_ibc_reflect",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/ibc-reflect
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_ibc_reflect_send",target=/code/contracts/ibc-reflect-send/target \
+  --mount type=volume,source="devcontract_cache_ibc_reflect_send",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/ibc-reflect-send
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_queue",target=/code/contracts/queue/target \
+  --mount type=volume,source="devcontract_cache_queue",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/queue
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_reflect",target=/code/contracts/reflect/target \
+  --mount type=volume,source="devcontract_cache_reflect",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/reflect
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_staking",target=/code/contracts/staking/target \
+  --mount type=volume,source="devcontract_cache_staking",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/staking
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_virus",target=/code/contracts/virus/target \
+  --mount type=volume,source="devcontract_cache_virus",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/virus
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_empty",target=/code/contracts/empty/target \
+  --mount type=volume,source="devcontract_cache_empty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/empty
 ```
