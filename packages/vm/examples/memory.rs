@@ -13,17 +13,18 @@ use cosmwasm_vm::{
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;
 
+const END_AFTER: u64 = 2 * 60; // seconds
+const ROUNDS: usize = 1024;
+const ROUND_LEN: usize = 16;
+
 // Instance
-const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(128);
+const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
 const DEFAULT_GAS_LIMIT: u64 = u64::MAX;
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,
 };
 // Cache
-const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
-
-// static HACKATHON: &[u8] = ;
-// static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
+const MEMORY_CACHE_SIZE: Size = Size::mebi(5);
 
 struct Execute {
     pub msg: &'static [u8],
@@ -32,47 +33,58 @@ struct Execute {
 
 struct Contract {
     pub wasm: &'static [u8],
-    pub instantiate_msg: &'static [u8],
-    pub execute_msgs: [Option<Execute>; 3],
+    pub instantiate_msg: Option<&'static [u8]>,
+    pub execute_msgs: Vec<Execute>,
 }
 
-const CONTRACTS: [Contract; 2] = [
-    Contract {
-        wasm: include_bytes!("../testdata/cyberpunk.wasm"),
-        instantiate_msg: b"{}",
-        execute_msgs: [
-            Some(Execute {
-                msg: br#"{"unreachable":{}}"#,
-                expect_error: true,
-            }),
-            Some(Execute {
-                msg: br#"{"allocate_large_memory":{"pages":1000}}"#,
-                expect_error: false,
-            }),
-            Some(Execute {
-                // mem_cost in KiB
-                msg: br#"{"argon2":{"mem_cost":50000,"time_cost":1}}"#,
-                expect_error: false,
-            }),
-        ],
-    },
-    Contract {
-        wasm: include_bytes!("../testdata/hackatom.wasm"),
-        instantiate_msg: br#"{"verifier": "verifies", "beneficiary": "benefits"}"#,
-        execute_msgs: [
-            Some(Execute {
+fn contracts() -> Vec<Contract> {
+    vec![
+        Contract {
+            wasm: include_bytes!("../testdata/cyberpunk.wasm"),
+            instantiate_msg: Some(b"{}"),
+            execute_msgs: vec![
+                Execute {
+                    msg: br#"{"unreachable":{}}"#,
+                    expect_error: true,
+                },
+                Execute {
+                    msg: br#"{"allocate_large_memory":{"pages":1000}}"#,
+                    expect_error: false,
+                },
+                Execute {
+                    // mem_cost in KiB
+                    msg: br#"{"argon2":{"mem_cost":256,"time_cost":1}}"#,
+                    expect_error: false,
+                },
+                Execute {
+                    msg: br#"{"memory_loop":{}}"#,
+                    expect_error: true,
+                },
+            ],
+        },
+        Contract {
+            wasm: include_bytes!("../testdata/hackatom.wasm"),
+            instantiate_msg: Some(br#"{"verifier": "verifies", "beneficiary": "benefits"}"#),
+            execute_msgs: vec![Execute {
                 msg: br#"{"release":{}}"#,
                 expect_error: false,
-            }),
-            None,
-            None,
-        ],
-    },
-];
-
-const END_AFTER: u64 = 10 * 60; // seconds
-const ROUNDS: usize = 1024;
-const ROUND_LEN: usize = 16;
+            }],
+        },
+        Contract {
+            wasm: include_bytes!("../testdata/hackatom_1.0.wasm"),
+            instantiate_msg: Some(br#"{"verifier": "verifies", "beneficiary": "benefits"}"#),
+            execute_msgs: vec![Execute {
+                msg: br#"{"release":{}}"#,
+                expect_error: false,
+            }],
+        },
+        Contract {
+            wasm: include_bytes!("../testdata/ibc_reflect.wasm"),
+            instantiate_msg: None,
+            execute_msgs: vec![],
+        },
+    ]
+}
 
 #[allow(clippy::collapsible_else_if)]
 fn app() {
@@ -80,21 +92,26 @@ fn app() {
 
     let options = CacheOptions::new(
         TempDir::new().unwrap().into_path(),
-        capabilities_from_csv("iterator,staking"),
+        capabilities_from_csv("iterator,staking,stargate"),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
     );
+
+    let contracts = contracts();
 
     let checksums = {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
 
         let mut checksums = Vec::<Checksum>::new();
-        for contract in CONTRACTS {
+        for contract in &contracts {
             checksums.push(cache.save_wasm(contract.wasm).unwrap());
         }
         checksums
     };
+
+    let after = SystemTime::now().duration_since(start_time).unwrap();
+    eprintln!("Done compiling after {after:?}");
 
     let cache: Cache<MockApi, MockStorage, MockQuerier> =
         unsafe { Cache::new(options.clone()).unwrap() };
@@ -106,32 +123,34 @@ fn app() {
                 .as_secs()
                 > END_AFTER
             {
-                eprintln!("End time reached. Ending the process");
+                eprintln!("Round {round}. End time reached. Ending the process");
+
+                let metrics = cache.metrics();
+                eprintln!("Cache metrics: {metrics:?}");
+
                 return; // ends app()
             }
 
-            for idx in 0..=1 {
+            for idx in 0..contracts.len() {
                 let mut instance = cache
                     .get_instance(&checksums[idx], mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
                     .unwrap();
 
-                instance.set_debug_handler(|msg, info| {
-                    let t = now_rfc3339();
-                    let gas = info.gas_remaining;
-                    eprintln!("[{t}]: {msg} (gas remaining: {gas})");
+                instance.set_debug_handler(|_msg, info| {
+                    let _t = now_rfc3339();
+                    let _gas = info.gas_remaining;
+                    //eprintln!("[{t}]: {msg} (gas remaining: {gas})");
                 });
 
-                let info = mock_info("creator", &coins(1000, "earth"));
-                let msg = CONTRACTS[idx].instantiate_msg;
-                let contract_result =
-                    call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-                        .unwrap();
-                assert!(contract_result.into_result().is_ok());
+                if let Some(msg) = contracts[idx].instantiate_msg {
+                    let info = mock_info("creator", &coins(1000, "earth"));
+                    let contract_result =
+                        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                            .unwrap();
+                    assert!(contract_result.into_result().is_ok());
+                }
 
-                for (execution_idx, e) in CONTRACTS[idx].execute_msgs.iter().enumerate() {
-                    let Some(execute) = e else {
-                        continue;
-                    };
+                for (execution_idx, execute) in contracts[idx].execute_msgs.iter().enumerate() {
                     let info = mock_info("verifies", &coins(15, "earth"));
                     let msg = execute.msg;
                     let res =
