@@ -175,11 +175,7 @@ pub fn build_enum_variant(
     );
     // we can unwrap here, because we checked the length above
     let (name, schema) = properties.first_key_value().unwrap();
-    let GoType {
-        name: ty,
-        json_annotations,
-        ..
-    } = schema_object_type(
+    let GoType { name: ty, .. } = schema_object_type(
         schema.object()?,
         TypeContext::new(enum_name, name),
         additional_structs,
@@ -191,7 +187,6 @@ pub fn build_enum_variant(
         ty: GoType {
             name: ty,
             is_nullable: true, // always nullable
-            json_annotations,
         },
     })
 }
@@ -525,28 +520,6 @@ mod tests {
                 A string `json:"a,omitempty"`
             }
             type IBCSubStruct struct {
-            }
-            "#,
-        );
-    }
-
-    #[test]
-    fn timestamp_works() {
-        use cosmwasm_std::Timestamp;
-
-        #[cw_serde]
-        struct A {
-            a: Timestamp,
-            b: Option<Timestamp>,
-        }
-
-        let code = generate_go(cosmwasm_schema::schema_for!(A)).unwrap();
-        assert_code_eq(
-            code,
-            r#"
-            type A struct {
-                A uint64 `json:"a,string"`
-                B uint64 `json:"b,string,omitempty"`
             }
             "#,
         );

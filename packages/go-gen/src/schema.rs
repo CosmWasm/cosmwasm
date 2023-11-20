@@ -39,9 +39,7 @@ pub fn schema_object_type(
     let mut is_nullable = is_null(schema);
 
     // if it has a title, use that
-    let (ty, json_annotations) = if let Some(title) =
-        schema.metadata.as_ref().and_then(|m| m.title.as_ref())
-    {
+    let ty = if let Some(title) = schema.metadata.as_ref().and_then(|m| m.title.as_ref()) {
         replace_custom_type(title)
     } else if let Some(reference) = &schema.reference {
         // if it has a reference, strip the path and use that
@@ -52,25 +50,17 @@ pub fn schema_object_type(
                 .expect("split should always return at least one item"),
         ))
     } else if let Some(t) = &schema.instance_type {
-        (
-            type_from_instance_type(schema, type_context, t, additional_structs)?,
-            None,
-        )
+        type_from_instance_type(schema, type_context, t, additional_structs)?
     } else if let Some(subschemas) = schema.subschemas.as_ref().and_then(|s| s.any_of.as_ref()) {
         // check if one of them is null
-        let nullable: Option<&SchemaObject> = nullable_type(subschemas)?;
+        let nullable = nullable_type(subschemas)?;
         if let Some(non_null) = nullable {
             ensure!(subschemas.len() == 2, "multiple subschemas in anyOf");
             is_nullable = true;
             // extract non-null type
-            let GoType {
-                name,
-                json_annotations,
-                ..
-            } = schema_object_type(non_null, type_context, additional_structs)?;
-            // let (ty, annotations) = replace_custom_type(&name);
-            // (ty, annotations.or(json_annotations))
-            (name, json_annotations)
+            let GoType { name, .. } =
+                schema_object_type(non_null, type_context, additional_structs)?;
+            replace_custom_type(&name)
         } else {
             subschema_type(subschemas, type_context, additional_structs)
                 .context("failed to get type of anyOf subschemas")?
@@ -89,7 +79,6 @@ pub fn schema_object_type(
     Ok(GoType {
         name: ty,
         is_nullable,
-        json_annotations, // TODO: implement
     })
 }
 
@@ -208,11 +197,11 @@ pub fn type_from_instance_type(
         // for nullable array item types, we have to use a pointer type, even for basic types,
         // so we can pass null as elements
         // otherwise they would just be omitted from the array
-        if item_type.is_nullable {
+        replace_custom_type(&if item_type.is_nullable {
             format!("[]*{}", item_type.name)
         } else {
             format!("[]{}", item_type.name)
-        }
+        })
     } else {
         unreachable!("instance type should be one of the above")
     })
@@ -244,7 +233,7 @@ pub fn subschema_type(
     subschemas: &[Schema],
     type_context: TypeContext,
     additional_structs: &mut Vec<GoStruct>,
-) -> Result<(String, Option<String>)> {
+) -> Result<String> {
     ensure!(
         subschemas.len() == 1,
         "multiple subschemas are not supported"
@@ -268,27 +257,26 @@ pub fn documentation(schema: &SchemaObject) -> Option<String> {
 
 /// Maps special types to their Go equivalents.
 /// If the given type is not a special type, returns `None`.
-/// Otherwise, returns a tuple of the Go type name and additional json annotations.
-pub fn custom_type_of(ty: &str) -> Option<(&str, Option<&str>)> {
+pub fn custom_type_of(ty: &str) -> Option<&str> {
     match ty {
-        "Uint64" => Some(("string", None)),
-        "Uint128" => Some(("string", None)),
-        "Int64" => Some(("string", None)),
-        "Int128" => Some(("string", None)),
-        "Binary" => Some(("[]byte", None)),
-        "HexBinary" => Some(("Checksum", None)),
-        "Addr" => Some(("string", None)),
-        "Decimal" => Some(("string", None)),
-        "Decimal256" => Some(("string", None)),
-        "SignedDecimal" => Some(("string", None)),
-        "SignedDecimal256" => Some(("string", None)),
-        "Timestamp" => Some(("uint64", Some("string"))),
+        "Uint64" => Some("string"),
+        "Uint128" => Some("string"),
+        "Int64" => Some("string"),
+        "Int128" => Some("string"),
+        "Binary" => Some("[]byte"),
+        "HexBinary" => Some("Checksum"),
+        "Addr" => Some("string"),
+        "Decimal" => Some("string"),
+        "Decimal256" => Some("string"),
+        "SignedDecimal" => Some("string"),
+        "SignedDecimal256" => Some("string"),
+        "Timestamp" => Some("uint64"),
         _ => None,
     }
 }
 
-pub fn replace_custom_type(ty: &str) -> (String, Option<String>) {
+pub fn replace_custom_type(ty: &str) -> String {
     custom_type_of(ty)
-        .map(|(ty, json_annotations)| (ty.to_string(), json_annotations.map(String::from)))
-        .unwrap_or_else(|| (ty.to_string(), None))
+        .map(|ty| ty.to_string())
+        .unwrap_or_else(|| ty.to_string())
 }
