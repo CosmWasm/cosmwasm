@@ -78,6 +78,8 @@ and this project adheres to
   `IbcReceiveResponse::new` instead. ([#1942])
 - cosmwasm-vm: Remove `InstanceOptions::print_debug` flag. Set your own handler
   using `Instance::set_debug_handler`. ([#1953])
+- cosmwasm-vm: Remove `allow_interface_version_7` feature and all related
+  functionality. ([#1952])
 
 [cw-storage-plus]: https://github.com/CosmWasm/cw-storage-plus
 [#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875
@@ -85,6 +87,7 @@ and this project adheres to
 [#1896]: https://github.com/CosmWasm/cosmwasm/pull/1896
 [#1936]: https://github.com/CosmWasm/cosmwasm/pull/1936
 [#1942]: https://github.com/CosmWasm/cosmwasm/pull/1942
+[#1952]: https://github.com/CosmWasm/cosmwasm/pull/1952
 [#1953]: https://github.com/CosmWasm/cosmwasm/pull/1953
 
 ## [1.5.0] - 2023-10-31
