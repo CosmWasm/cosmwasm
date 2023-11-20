@@ -1,16 +1,59 @@
 use std::collections::HashSet;
 
+use strum::{AsRefStr, Display, EnumString};
 use wasmer::wasmparser::ExternalKind;
 
 use crate::parsed_wasm::ParsedWasm;
 
-pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
-    "ibc_channel_open",
-    "ibc_channel_connect",
-    "ibc_channel_close",
-    "ibc_packet_receive",
-    "ibc_packet_ack",
-    "ibc_packet_timeout",
+/// An enum containing all available contract entrypoints.
+/// This also provides conversions to and from strings.
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash, EnumString, Display, AsRefStr)]
+pub enum Entrypoint {
+    #[strum(serialize = "instantiate")]
+    Instantiate,
+    #[strum(serialize = "execute")]
+    Execute,
+    #[strum(serialize = "migrate")]
+    Migrate,
+    #[strum(serialize = "sudo")]
+    Sudo,
+    #[strum(serialize = "reply")]
+    Reply,
+    #[strum(serialize = "query")]
+    Query,
+    #[strum(serialize = "ibc_channel_open")]
+    IbcChannelOpen,
+    #[strum(serialize = "ibc_channel_connect")]
+    IbcChannelConnect,
+    #[strum(serialize = "ibc_channel_close")]
+    IbcChannelClose,
+    #[strum(serialize = "ibc_packet_receive")]
+    IbcPacketReceive,
+    #[strum(serialize = "ibc_packet_ack")]
+    IbcPacketAck,
+    #[strum(serialize = "ibc_packet_timeout")]
+    IbcPacketTimeout,
+}
+
+// sort entrypoints by their &str representation
+impl PartialOrd for Entrypoint {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for Entrypoint {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.as_ref().cmp(other.as_ref())
+    }
+}
+
+pub const REQUIRED_IBC_EXPORTS: &[Entrypoint] = &[
+    Entrypoint::IbcChannelOpen,
+    Entrypoint::IbcChannelConnect,
+    Entrypoint::IbcChannelClose,
+    Entrypoint::IbcPacketReceive,
+    Entrypoint::IbcPacketAck,
+    Entrypoint::IbcPacketTimeout,
 ];
 
 /// A trait that allows accessing shared functionality of `parity_wasm::elements::Module`
@@ -60,18 +103,10 @@ impl ExportInfo for &wasmer::Module {
     }
 }
 
-/// Returns true if and only if all IBC entry points ([`REQUIRED_IBC_EXPORTS`])
-/// exist as exported functions. This does not guarantee the entry points
-/// are functional and for simplicity does not even check their signatures.
-pub fn has_ibc_entry_points(module: impl ExportInfo) -> bool {
-    let available_exports = module.exported_function_names(None);
-    REQUIRED_IBC_EXPORTS
-        .iter()
-        .all(|required| available_exports.contains(*required))
-}
-
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::VmError;
 
     use super::*;
@@ -227,72 +262,23 @@ mod tests {
     }
 
     #[test]
-    fn has_ibc_entry_points_works() {
-        // Non-IBC contract
-        let wasm = wat::parse_str(
-            r#"(module
-                (memory 3)
-                (export "memory" (memory 0))
+    fn entrypoint_from_string_works() {
+        assert_eq!(
+            Entrypoint::from_str("ibc_channel_open").unwrap(),
+            Entrypoint::IbcChannelOpen
+        );
 
-                (type (func))
-                (func (type 0) nop)
-                (export "interface_version_8" (func 0))
-                (export "instantiate" (func 0))
-                (export "allocate" (func 0))
-                (export "deallocate" (func 0))
-            )"#,
-        )
-        .unwrap();
-        let module = ParsedWasm::parse(&wasm).unwrap();
-        assert!(!has_ibc_entry_points(&module));
+        assert!(Entrypoint::from_str("IbcChannelConnect").is_err());
+    }
 
-        // IBC contract
-        let wasm = wat::parse_str(
-            r#"(module
-                (memory 3)
-                (export "memory" (memory 0))
+    #[test]
+    fn entrypoint_to_string_works() {
+        assert_eq!(
+            Entrypoint::IbcPacketTimeout.to_string(),
+            "ibc_packet_timeout"
+        );
 
-                (type (func))
-                (func (type 0) nop)
-                (export "interface_version_8" (func 0))
-                (export "instantiate" (func 0))
-                (export "execute" (func 0))
-                (export "allocate" (func 0))
-                (export "deallocate" (func 0))
-                (export "ibc_channel_open" (func 0))
-                (export "ibc_channel_connect" (func 0))
-                (export "ibc_channel_close" (func 0))
-                (export "ibc_packet_receive" (func 0))
-                (export "ibc_packet_ack" (func 0))
-                (export "ibc_packet_timeout" (func 0))
-            )"#,
-        )
-        .unwrap();
-        let module = ParsedWasm::parse(&wasm).unwrap();
-        assert!(has_ibc_entry_points(&module));
-
-        // Missing packet ack
-        let wasm = wat::parse_str(
-            r#"(module
-                (memory 3)
-                (export "memory" (memory 0))
-
-                (type (func))
-                (func (type 0) nop)
-                (export "interface_version_8" (func 0))
-                (export "instantiate" (func 0))
-                (export "execute" (func 0))
-                (export "allocate" (func 0))
-                (export "deallocate" (func 0))
-                (export "ibc_channel_open" (func 0))
-                (export "ibc_channel_connect" (func 0))
-                (export "ibc_channel_close" (func 0))
-                (export "ibc_packet_receive" (func 0))
-                (export "ibc_packet_timeout" (func 0))
-            )"#,
-        )
-        .unwrap();
-        let module = ParsedWasm::parse(&wasm).unwrap();
-        assert!(!has_ibc_entry_points(&module));
+        let static_str: &'static str = Entrypoint::IbcPacketReceive.as_ref();
+        assert_eq!(static_str, "ibc_packet_receive");
     }
 }

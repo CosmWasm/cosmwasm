@@ -51,6 +51,8 @@ and this project adheres to
 - cosmwasm-vm: Make `instantiate` entrypoint optional. ([#1933])
 - cosmwasm-std: Rename `CosmosMsg::Stargate` to `CosmosMsg::Any` and use a
   nested msg struct like in other messages. ([#1926])
+- cosmwasm-vm: Add `AnalysisReport::entrypoints` and make
+  `AnalysisReport::required_capabilities` a `BTreeSet`. ([#1949])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -64,6 +66,7 @@ and this project adheres to
 [#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
 [#1940]: https://github.com/CosmWasm/cosmwasm/pull/1940
 [#1941]: https://github.com/CosmWasm/cosmwasm/pull/1941
+[#1949]: https://github.com/CosmWasm/cosmwasm/pull/1949
 
 ### Removed
 
