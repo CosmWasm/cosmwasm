@@ -18,6 +18,10 @@ and this project adheres to
   [--locked](https://doc.rust-lang.org/cargo/commands/cargo-install.html#dealing-with-the-lockfile)
   feature allows you use the versions locked when the release was created.
 
+### Added
+
+- cosmwasm-vm: Add constructor `CacheOptions::new`
+
 ## [1.3.3] - 2023-08-22
 
 ### Added
