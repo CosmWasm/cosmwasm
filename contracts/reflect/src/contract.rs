@@ -434,11 +434,16 @@ mod tests {
         let id = 123u64;
         let data = Binary::from(b"foobar");
         let events = vec![Event::new("message").add_attribute("signer", "caller-addr")];
+        let gas_used = 1234567u64;
         let result = SubMsgResult::Ok(SubMsgResponse {
             events: events.clone(),
             data: Some(data.clone()),
         });
-        let subcall = Reply { id, result };
+        let subcall = Reply {
+            id,
+            gas_used,
+            result,
+        };
         let res = reply(deps.as_mut(), mock_env(), subcall).unwrap();
         assert_eq!(0, res.messages.len());
 

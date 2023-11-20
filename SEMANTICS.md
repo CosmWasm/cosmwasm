@@ -286,11 +286,12 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
 
 pub struct Reply {
     pub id: u64,
-    /// ContractResult is just a nicely serializable version of `Result<SubcallResponse, String>`
-    pub result: ContractResult<SubcallResponse>,
+    pub gas_used: u64,
+    /// SubMsgResult is just a nicely serializable version of `Result<SubMsgResponse, String>`
+    pub result: SubMsgResult,
 }
 
-pub struct SubcallResponse {
+pub struct SubMsgResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
 }

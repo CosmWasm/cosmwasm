@@ -102,6 +102,9 @@ pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
     pub id: u64,
+    /// The amount of gas used by the submessage,
+    /// measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
+    pub gas_used: u64,
     pub result: SubMsgResult,
 }
 

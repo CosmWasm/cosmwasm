@@ -404,6 +404,7 @@ mod tests {
         // fake a reply and ensure this works
         let response = Reply {
             id,
+            gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(&account),
                 data: None,
@@ -481,6 +482,7 @@ mod tests {
         // fake a reply and ensure this works
         let response = Reply {
             id,
+            gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(REFLECT_ADDR),
                 data: None,

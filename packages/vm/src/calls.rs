@@ -900,6 +900,7 @@ mod tests {
             // which creates a reflect account. here we get the callback
             let response = Reply {
                 id,
+                gas_used: 1234567,
                 result: SubMsgResult::Ok(SubMsgResponse {
                     events: vec![event],
                     data: None,
