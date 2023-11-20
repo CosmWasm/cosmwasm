@@ -357,7 +357,6 @@ where
             &cached.module,
             backend,
             options.gas_limit,
-            options.print_debug,
             None,
             Some(&self.instantiation_lock),
         )?;
@@ -532,7 +531,6 @@ mod tests {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
-        print_debug: false,
     };
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
@@ -1180,10 +1178,7 @@ mod tests {
         let backend2 = mock_backend(&[]);
 
         // Init from module cache
-        let options = InstanceOptions {
-            gas_limit: 10,
-            print_debug: false,
-        };
+        let options = InstanceOptions { gas_limit: 10 };
         let mut instance1 = cache.get_instance(&checksum, backend1, options).unwrap();
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
@@ -1202,7 +1197,6 @@ mod tests {
         // Init from memory cache
         let options = InstanceOptions {
             gas_limit: TESTING_GAS_LIMIT,
-            print_debug: false,
         };
         let mut instance2 = cache.get_instance(&checksum, backend2, options).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
