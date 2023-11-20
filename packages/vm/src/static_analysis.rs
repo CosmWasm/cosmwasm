@@ -35,6 +35,18 @@ pub enum Entrypoint {
     IbcPacketTimeout,
 }
 
+// sort entrypoints by their &str representation
+impl PartialOrd for Entrypoint {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.as_ref().partial_cmp(other.as_ref())
+    }
+}
+impl Ord for Entrypoint {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.as_ref().cmp(other.as_ref())
+    }
+}
+
 pub const REQUIRED_IBC_EXPORTS: &[Entrypoint] = &[
     Entrypoint::IbcChannelOpen,
     Entrypoint::IbcChannelConnect,

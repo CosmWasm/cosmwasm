@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
@@ -122,9 +122,9 @@ pub struct AnalysisReport {
     /// This does not guarantee they are functional or even have the correct signatures.
     pub has_ibc_entry_points: bool,
     /// A set of all entrypoints that are exported by the contract.
-    pub entrypoints: HashSet<Entrypoint>,
+    pub entrypoints: BTreeSet<Entrypoint>,
     /// The set of capabilities the contract requires.
-    pub required_capabilities: HashSet<String>,
+    pub required_capabilities: BTreeSet<String>,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -292,7 +292,9 @@ where
                 .iter()
                 .all(|required| exports.contains(required.as_ref())),
             entrypoints,
-            required_capabilities: required_capabilities_from_module(&module),
+            required_capabilities: required_capabilities_from_module(&module)
+                .into_iter()
+                .collect(),
         })
     }
 
@@ -1307,28 +1309,28 @@ mod tests {
             report1,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                entrypoints: HashSet::from([
+                entrypoints: BTreeSet::from([
                     E::Instantiate,
                     E::Migrate,
                     E::Sudo,
                     E::Execute,
                     E::Query
                 ]),
-                required_capabilities: HashSet::new(),
+                required_capabilities: BTreeSet::new(),
             }
         );
 
         let checksum2 = cache.save_wasm(IBC_CONTRACT).unwrap();
         let report2 = cache.analyze(&checksum2).unwrap();
         let mut ibc_contract_entrypoints =
-            HashSet::from([E::Instantiate, E::Migrate, E::Reply, E::Query]);
+            BTreeSet::from([E::Instantiate, E::Migrate, E::Reply, E::Query]);
         ibc_contract_entrypoints.extend(REQUIRED_IBC_EXPORTS);
         assert_eq!(
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
                 entrypoints: ibc_contract_entrypoints,
-                required_capabilities: HashSet::from_iter([
+                required_capabilities: BTreeSet::from_iter([
                     "iterator".to_string(),
                     "stargate".to_string()
                 ]),
@@ -1341,8 +1343,8 @@ mod tests {
             report3,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                entrypoints: HashSet::new(),
-                required_capabilities: HashSet::from(["iterator".to_string()]),
+                entrypoints: BTreeSet::new(),
+                required_capabilities: BTreeSet::from(["iterator".to_string()]),
             }
         );
     }
