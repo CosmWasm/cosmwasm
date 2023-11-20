@@ -6,6 +6,18 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-check: Use "=" for pinning the versions of cosmwasm-vm and
+  cosmwasm-std dependencies. This ensures that you can use an older version of
+  cosmwasm-check together with the VM of the same version by doing
+  `cargo install cosmwasm-check@1.3.4`. A typical use case would be to check a
+  contract with CosmWasm 1.3, 1.4, 1.5 and 2.0. Note that other dependencies are
+  still upgraded when using `cargo install` which may lead to API, behavioural
+  or compiler incompatibilities. The
+  [--locked](https://doc.rust-lang.org/cargo/commands/cargo-install.html#dealing-with-the-lockfile)
+  feature allows you use the versions locked when the release was created.
+
 ## [1.3.3] - 2023-08-22
 
 ### Added
