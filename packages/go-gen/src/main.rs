@@ -524,4 +524,26 @@ mod tests {
             "#,
         );
     }
+
+    #[test]
+    fn timestamp_works() {
+        use cosmwasm_std::Timestamp;
+
+        #[cw_serde]
+        struct A {
+            a: Timestamp,
+            b: Option<Timestamp>,
+        }
+
+        let code = generate_go(cosmwasm_schema::schema_for!(A)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type A struct {
+                A Uint64 `json:"a"`
+                B *Uint64 `json:"b,omitempty"`
+            }
+            "#,
+        );
+    }
 }

@@ -259,9 +259,9 @@ pub fn documentation(schema: &SchemaObject) -> Option<String> {
 /// If the given type is not a special type, returns `None`.
 pub fn custom_type_of(ty: &str) -> Option<&str> {
     match ty {
-        "Uint64" => Some("string"),
+        "Uint64" => Some("Uint64"),
         "Uint128" => Some("string"),
-        "Int64" => Some("string"),
+        "Int64" => Some("Int64"),
         "Int128" => Some("string"),
         "Binary" => Some("[]byte"),
         "HexBinary" => Some("Checksum"),
@@ -270,7 +270,7 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
         "Decimal256" => Some("string"),
         "SignedDecimal" => Some("string"),
         "SignedDecimal256" => Some("string"),
-        "Timestamp" => Some("uint64"),
+        "Timestamp" => Some("Uint64"),
         _ => None,
     }
 }
