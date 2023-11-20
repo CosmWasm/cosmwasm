@@ -51,7 +51,6 @@ pub fn main() {
         let cache = Arc::clone(&cache);
 
         threads.push(thread::spawn(move || {
-            let checksum = checksum;
             let mut instance = cache
                 .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
