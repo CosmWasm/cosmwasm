@@ -65,6 +65,22 @@ pub struct CacheOptions {
     pub instance_memory_limit: Size,
 }
 
+impl CacheOptions {
+    pub fn new(
+        base_dir: impl Into<PathBuf>,
+        available_capabilities: impl Into<HashSet<String>>,
+        memory_cache_size: Size,
+        instance_memory_limit: Size,
+    ) -> Self {
+        Self {
+            base_dir: base_dir.into(),
+            available_capabilities: available_capabilities.into(),
+            memory_cache_size,
+            instance_memory_limit,
+        }
+    }
+}
+
 pub struct CacheInner {
     /// The directory in which the Wasm blobs are stored in the file system.
     wasm_path: PathBuf,
