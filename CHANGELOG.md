@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-vm: Add constructor `CacheOptions::new`
+
 ## [1.4.1] - 2023-10-09
 
 ## Fixed
