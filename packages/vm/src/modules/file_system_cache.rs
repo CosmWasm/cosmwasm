@@ -6,9 +6,9 @@ use thiserror::Error;
 
 use wasmer::{AsEngineRef, DeserializeError, Module, Target};
 
-use crate::checksum::Checksum;
-use crate::errors::{VmError, VmResult};
+use cosmwasm_std::Checksum;
 
+use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::modules::current_wasmer_module_version;
 

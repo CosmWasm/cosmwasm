@@ -7,9 +7,10 @@ use std::str::FromStr;
 use std::sync::Mutex;
 use wasmer::{Engine, Store};
 
+use cosmwasm_std::Checksum;
+
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
-use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;

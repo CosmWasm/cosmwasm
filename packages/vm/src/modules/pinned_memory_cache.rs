@@ -1,8 +1,9 @@
+use cosmwasm_std::Checksum;
 use std::collections::HashMap;
 use wasmer::Module;
 
 use super::cached_module::CachedModule;
-use crate::{Checksum, VmResult};
+use crate::VmResult;
 
 /// An pinned in memory module cache
 pub struct PinnedMemoryCache {

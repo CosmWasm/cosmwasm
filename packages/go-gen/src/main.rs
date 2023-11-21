@@ -198,7 +198,7 @@ pub fn build_enum_variant(
 #[cfg(test)]
 mod tests {
     use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::{Binary, Empty, HexBinary, Uint128};
+    use cosmwasm_std::{Binary, Checksum, Empty, HexBinary, Uint128};
 
     use super::*;
 
@@ -241,6 +241,7 @@ mod tests {
             binary: Binary,
             nested_binary: Vec<Option<Binary>>,
             hex_binary: HexBinary,
+            checksum: Checksum,
             uint128: Uint128,
         }
 
@@ -252,7 +253,8 @@ mod tests {
             r#"
             type SpecialTypes struct {
                 Binary []byte `json:"binary"`
-                HexBinary Checksum `json:"hex_binary"`
+                Checksum Checksum `json:"checksum"`
+                HexBinary string `json:"hex_binary"`
                 NestedBinary []*[]byte `json:"nested_binary"`
                 Uint128 string `json:"uint128"`
             }"#,
@@ -357,7 +359,7 @@ mod tests {
         compare_codes!(cosmwasm_std::DelegatorValidatorsResponse);
         // wasm
         compare_codes!(cosmwasm_std::ContractInfoResponse);
-        // compare_codes!(cosmwasm_std::CodeInfoResponse); // TODO: Checksum type and "omitempty"
+        compare_codes!(cosmwasm_std::CodeInfoResponse);
     }
 
     #[test]

@@ -60,9 +60,9 @@ pub fn execute_spread(
 
         attributes.push(Attribute::new(format!("path{i}"), path.clone()));
 
-        let address = deps
-            .api
-            .addr_humanize(&instantiate2_address(&checksum, &creator, &salt)?)?;
+        let address =
+            deps.api
+                .addr_humanize(&instantiate2_address(checksum.as_ref(), &creator, &salt)?)?;
         attributes.push(Attribute::new(
             format!("predicted_address{i}"),
             address.clone(),

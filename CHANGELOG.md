@@ -53,6 +53,8 @@ and this project adheres to
   nested msg struct like in other messages. ([#1926])
 - cosmwasm-vm: Add `AnalysisReport::entrypoints` and make
   `AnalysisReport::required_capabilities` a `BTreeSet`. ([#1949])
+- cosmwasm-std: Add `Checksum` type and change type of
+  `CodeInfoResponse::checksum` to that. ([#1944])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -66,6 +68,7 @@ and this project adheres to
 [#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
 [#1940]: https://github.com/CosmWasm/cosmwasm/pull/1940
 [#1941]: https://github.com/CosmWasm/cosmwasm/pull/1941
+[#1944]: https://github.com/CosmWasm/cosmwasm/pull/1944
 [#1949]: https://github.com/CosmWasm/cosmwasm/pull/1949
 
 ### Removed
@@ -83,6 +86,8 @@ and this project adheres to
   using `Instance::set_debug_handler`. ([#1953])
 - cosmwasm-vm: Remove `allow_interface_version_7` feature and all related
   functionality. ([#1952])
+- cosmwasm-vm: Remove `Checksum`. Use `cosmwasm_std::Checksum` instead.
+  ([#1944])
 
 [cw-storage-plus]: https://github.com/CosmWasm/cw-storage-plus
 [#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875

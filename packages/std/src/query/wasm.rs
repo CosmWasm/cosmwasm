@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, Binary, HexBinary};
+use crate::{Addr, Binary, Checksum};
 
 use super::query_response::QueryResponseType;
 
@@ -70,14 +70,14 @@ pub struct CodeInfoResponse {
     /// The address that initially stored the code
     pub creator: Addr,
     /// The hash of the Wasm blob
-    pub checksum: HexBinary,
+    pub checksum: Checksum,
 }
 
 impl_response_constructor!(
     CodeInfoResponse,
     code_id: u64,
     creator: Addr,
-    checksum: HexBinary
+    checksum: Checksum
 );
 
 impl QueryResponseType for CodeInfoResponse {}
@@ -129,12 +129,12 @@ mod tests {
     #[test]
     #[cfg(feature = "cosmwasm_1_2")]
     fn code_info_response_serialization() {
-        use crate::HexBinary;
+        use crate::Checksum;
 
         let response = CodeInfoResponse {
             code_id: 67,
             creator: Addr::unchecked("jane"),
-            checksum: HexBinary::from_hex(
+            checksum: Checksum::from_hex(
                 "f7bb7b18fb01bbf425cf4ed2cd4b7fb26a019a7fc75a4dc87e8a0b768c501f00",
             )
             .unwrap(),
