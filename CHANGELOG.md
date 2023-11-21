@@ -86,6 +86,8 @@ and this project adheres to
   using `Instance::set_debug_handler`. ([#1953])
 - cosmwasm-vm: Remove `allow_interface_version_7` feature and all related
   functionality. ([#1952])
+- cosmwasm-vm: Remove `Checksum`. Use `cosmwasm_std::Checksum` instead.
+  ([#1944])
 
 [cw-storage-plus]: https://github.com/CosmWasm/cw-storage-plus
 [#1875]: https://github.com/CosmWasm/cosmwasm/pull/1875
