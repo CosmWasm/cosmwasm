@@ -204,7 +204,7 @@ impl From<SubMsgResult> for Result<SubMsgResponse, String> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct SubMsgResponse {
     pub events: Vec<Event>,
-    #[deprecated = "deprecated in the cosmos-sdk in favor of msg_responses"]
+    #[deprecated = "Deprecated in the Cosmos SDK in favor of msg_responses. If your chain is running on CosmWasm 2.0 or higher, msg_responses will be filled. For older versions, the data field is still needed since msg_responses is empty in those cases."]
     pub data: Option<Binary>,
     #[serde(default)]
     pub msg_responses: Vec<MsgResponse>,
