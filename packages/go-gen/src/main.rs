@@ -21,23 +21,22 @@ fn main() -> Result<()> {
 
 /// Generates the Go code for the given schema
 fn generate_go(root: RootSchema) -> Result<String> {
-    let title = replace_acronyms(
-        root.schema
-            .metadata
-            .as_ref()
-            .and_then(|m| m.title.as_ref())
-            .context("failed to get type name")?,
-    );
+    let title = root
+        .schema
+        .metadata
+        .as_ref()
+        .and_then(|m| m.title.as_ref())
+        .context("failed to get type name")?;
 
     let mut types = vec![];
-    build_type(&title, &root.schema, &mut types)
+    build_type(title, &root.schema, &mut types)
         .with_context(|| format!("failed to generate {title}"))?;
 
     // go through additional definitions
     for (name, additional_type) in &root.definitions {
         additional_type
             .object()
-            .map(|def| build_type(&replace_acronyms(name), def, &mut types))
+            .map(|def| build_type(name, def, &mut types))
             .and_then(|r| r)
             .context("failed to generate additional definitions")?;
     }
@@ -107,7 +106,7 @@ pub fn build_struct(
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
     Ok(GoStruct {
-        name: to_pascal_case(name),
+        name: replace_acronyms(to_pascal_case(name)),
         docs,
         fields,
     })
@@ -121,6 +120,7 @@ pub fn build_enum<'a>(
     variants: impl Iterator<Item = &'a Schema>,
     additional_structs: &mut Vec<GoStruct>,
 ) -> Result<GoStruct> {
+    let name = replace_acronyms(name);
     let docs = documentation(enm);
 
     // go through all fields
@@ -131,18 +131,14 @@ pub fn build_enum<'a>(
             .with_context(|| format!("expected schema object for enum variants of {name}"))?;
 
         // analyze the variant
-        let variant_field = build_enum_variant(v, name, additional_structs)
+        let variant_field = build_enum_variant(v, &name, additional_structs)
             .context("failed to extract enum variant")?;
 
         anyhow::Ok(variant_field)
     });
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
-    Ok(GoStruct {
-        name: name.to_string(),
-        docs,
-        fields,
-    })
+    Ok(GoStruct { name, docs, fields })
 }
 
 /// Tries to extract the name and type of the given enum variant and returns it as a `GoField`.
@@ -434,6 +430,16 @@ mod tests {
     }
 
     #[test]
+    fn messages_work() {
+        compare_codes!(cosmwasm_std::BankMsg);
+        compare_codes!(cosmwasm_std::StakingMsg);
+        compare_codes!(cosmwasm_std::DistributionMsg);
+        compare_codes!(cosmwasm_std::IbcMsg);
+        compare_codes!(cosmwasm_std::WasmMsg);
+        // compare_codes!(cosmwasm_std::GovMsg); // TODO: currently fails because of VoteOption
+    }
+
+    #[test]
     fn array_item_type_works() {
         #[cw_serde]
         struct A {
@@ -466,6 +472,80 @@ mod tests {
             type C struct {
                 C [][][]*string `json:"c"`
             }"#,
+        );
+    }
+
+    #[test]
+    fn accronym_replacement_works() {
+        #[cw_serde]
+        struct IbcStruct {
+            a: IbcSubStruct,
+            b: IbcSubEnum,
+        }
+        #[cw_serde]
+        enum IbcEnum {
+            A(IbcSubStruct),
+            B(IbcSubEnum),
+        }
+        #[cw_serde]
+        struct IbcSubStruct {}
+        #[cw_serde]
+        enum IbcSubEnum {
+            A(String),
+        }
+
+        let code = generate_go(cosmwasm_schema::schema_for!(IbcStruct)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type IBCStruct struct {
+                A IBCSubStruct `json:"a"`
+                B IBCSubEnum `json:"b"`
+            }
+            type IBCSubEnum struct {
+                A string `json:"a,omitempty"`
+            }
+            type IBCSubStruct struct {
+            }
+            "#,
+        );
+
+        let code = generate_go(cosmwasm_schema::schema_for!(IbcEnum)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type IBCEnum struct {
+                A *IBCSubStruct `json:"a,omitempty"`
+                B *IBCSubEnum `json:"b,omitempty"`
+            }
+            type IBCSubEnum struct {
+                A string `json:"a,omitempty"`
+            }
+            type IBCSubStruct struct {
+            }
+            "#,
+        );
+    }
+
+    #[test]
+    fn timestamp_works() {
+        use cosmwasm_std::Timestamp;
+
+        #[cw_serde]
+        struct A {
+            a: Timestamp,
+            b: Option<Timestamp>,
+        }
+
+        let code = generate_go(cosmwasm_schema::schema_for!(A)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type A struct {
+                A Uint64 `json:"a"`
+                B *Uint64 `json:"b,omitempty"`
+            }
+            "#,
         );
     }
 }
