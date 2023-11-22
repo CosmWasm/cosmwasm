@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn sub_msg_result_deserialization_works() {
         // should work without `msg_responses`
-        let result: SubMsgResult = from_json(br#"{"ok":{"events":[],"data":null}}"#).unwrap();
+        let result: SubMsgResult = from_json(br#"{"ok":{"events":[]}}"#).unwrap();
         assert_eq!(
             result,
             SubMsgResult::Ok(SubMsgResponse {
