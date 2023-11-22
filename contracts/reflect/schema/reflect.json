@@ -1948,7 +1948,7 @@
             }
           }
         },
-        "MsgResponseValue": {
+        "MsgResponse": {
           "type": "object",
           "required": [
             "type_url",
@@ -1991,7 +1991,7 @@
               "default": [],
               "type": "array",
               "items": {
-                "$ref": "#/definitions/MsgResponseValue"
+                "$ref": "#/definitions/MsgResponse"
               }
             }
           }
