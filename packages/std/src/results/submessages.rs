@@ -207,11 +207,11 @@ pub struct SubMsgResponse {
     #[deprecated = "deprecated in the cosmos-sdk in favor of msg_responses"]
     pub data: Option<Binary>,
     #[serde(default)]
-    pub msg_responses: Vec<MsgResponseValue>,
+    pub msg_responses: Vec<MsgResponse>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct MsgResponseValue {
+pub struct MsgResponse {
     pub type_url: String,
     pub value: Binary,
 }
@@ -236,7 +236,7 @@ mod tests {
 
         let result = SubMsgResult::Ok(SubMsgResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-            msg_responses: vec![MsgResponseValue {
+            msg_responses: vec![MsgResponse {
                 type_url: "URL".to_string(),
                 value: Binary::from_base64("MTIzCg==").unwrap(),
             }],
@@ -272,7 +272,7 @@ mod tests {
             result,
             SubMsgResult::Ok(SubMsgResponse {
                 data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-                msg_responses: vec![MsgResponseValue {
+                msg_responses: vec![MsgResponse {
                     type_url: "URL".to_string(),
                     value: Binary::from_base64("MTIzCg==").unwrap(),
                 }],
@@ -300,7 +300,7 @@ mod tests {
     fn sub_msg_result_unwrap_works() {
         let response = SubMsgResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-            msg_responses: vec![MsgResponseValue {
+            msg_responses: vec![MsgResponse {
                 type_url: "URL".to_string(),
                 value: Binary::from_base64("MTIzCg==").unwrap(),
             }],
