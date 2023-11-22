@@ -265,6 +265,18 @@ mod tests {
             })
         );
 
+        // should work with `data` and no `msg_responses`
+        // this is the case for pre-2.0 CosmWasm chains
+        let result: SubMsgResult = from_json(br#"{"ok":{"events":[],"data":"aGk="}}"#).unwrap();
+        assert_eq!(
+            result,
+            SubMsgResult::Ok(SubMsgResponse {
+                events: vec![],
+                data: Some(Binary::from_base64("aGk=").unwrap()),
+                msg_responses: vec![]
+            })
+        );
+
         let result: SubMsgResult = from_json(
             br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg==",
             "msg_responses":[{"type_url":"URL","value":"MTIzCg=="}]}}"#).unwrap();
