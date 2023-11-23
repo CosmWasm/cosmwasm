@@ -67,6 +67,21 @@
         }
       }
     },
+    "MsgResponse": {
+      "type": "object",
+      "required": [
+        "type_url",
+        "value"
+      ],
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/Binary"
+        }
+      }
+    },
     "SubMsgResponse": {
       "description": "The information we get back from a successful sub message execution, with full Cosmos SDK events.",
       "type": "object",
@@ -75,6 +90,7 @@
       ],
       "properties": {
         "data": {
+          "deprecated": true,
           "anyOf": [
             {
               "$ref": "#/definitions/Binary"
@@ -89,11 +105,18 @@
           "items": {
             "$ref": "#/definitions/Event"
           }
+        },
+        "msg_responses": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MsgResponse"
+          }
         }
       }
     },
     "SubMsgResult": {
-      "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to define the serialization, which is a public interface. Every language that compiles to Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead of this type. Once serialized, the two types are the same. However, in the Rust type system we want different types for clarity and documenation reasons.\n\n# Examples\n\nSuccess:\n\n``` # use cosmwasm_std::{to_vec, Binary, Event, SubMsgResponse, SubMsgResult}; let response = SubMsgResponse { data: Some(Binary::from_base64(\"MTIzCg==\").unwrap()), events: vec![Event::new(\"wasm\").add_attribute(\"fo\", \"ba\")], }; let result: SubMsgResult = SubMsgResult::Ok(response); assert_eq!(to_vec(&result).unwrap(), br#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"fo\",\"value\":\"ba\"}]}],\"data\":\"MTIzCg==\"}}\"#); ```\n\nFailure:\n\n``` # use cosmwasm_std::{to_vec, SubMsgResult, Response}; let error_msg = String::from(\"Something went wrong\"); let result = SubMsgResult::Err(error_msg); assert_eq!(to_vec(&result).unwrap(), br#\"{\"error\":\"Something went wrong\"}\"#); ```",
+      "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to define the serialization, which is a public interface. Every language that compiles to Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead of this type. Once serialized, the two types are the same. However, in the Rust type system we want different types for clarity and documenation reasons.\n\n# Examples\n\nSuccess:\n\n``` # use cosmwasm_std::{to_json_string, Binary, Event, SubMsgResponse, SubMsgResult}; #[allow(deprecated)] let response = SubMsgResponse { data: Some(Binary::from_base64(\"MTIzCg==\").unwrap()), events: vec![Event::new(\"wasm\").add_attribute(\"fo\", \"ba\")], msg_responses: vec![], }; let result: SubMsgResult = SubMsgResult::Ok(response); assert_eq!( to_json_string(&result).unwrap(), r#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"fo\",\"value\":\"ba\"}]}],\"data\":\"MTIzCg==\",\"msg_responses\":[]}}\"#, ); ```\n\nFailure:\n\n``` # use cosmwasm_std::{to_json_string, SubMsgResult, Response}; let error_msg = String::from(\"Something went wrong\"); let result = SubMsgResult::Err(error_msg); assert_eq!(to_json_string(&result).unwrap(), r#\"{\"error\":\"Something went wrong\"}\"#); ```",
       "oneOf": [
         {
           "type": "object",

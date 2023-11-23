@@ -23,5 +23,5 @@ pub use empty::Empty;
 pub use events::{attr, Attribute, Event};
 pub use query::QueryResponse;
 pub use response::Response;
-pub use submessages::{Reply, ReplyOn, SubMsg, SubMsgResponse, SubMsgResult};
+pub use submessages::{MsgResponse, Reply, ReplyOn, SubMsg, SubMsgResponse, SubMsgResult};
 pub use system_result::SystemResult;

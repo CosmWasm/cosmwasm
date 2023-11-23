@@ -402,11 +402,13 @@ mod tests {
         let id = res.messages[0].id;
 
         // fake a reply and ensure this works
+        #[allow(deprecated)]
         let response = Reply {
             id,
             gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(&account),
+                msg_responses: vec![],
                 data: None,
             }),
         };
@@ -480,11 +482,13 @@ mod tests {
         assert_eq!(0, res.accounts.len());
 
         // fake a reply and ensure this works
+        #[allow(deprecated)]
         let response = Reply {
             id,
             gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(REFLECT_ADDR),
+                msg_responses: vec![],
                 data: None,
             }),
         };

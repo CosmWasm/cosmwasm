@@ -11,8 +11,11 @@ and this project adheres to
 - cosmwasm-std: Add `SubMsg:reply_never` constructor ([#1929])
 - cosmwasm-std: Add optional memo field to `IbcMsg::Transfer`. ([#1878])
 - cosmwasm-std: Add `Reply::gas_used`. ([#1954])
+- cosmwasm-std: Add `SubMsgResponse::msg_responses` and deprecate
+  `SubMsgResponse::data`. ([#1903])
 
 [#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
+[#1903]: https://github.com/CosmWasm/cosmwasm/pull/1903
 [#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
 [#1954]: https://github.com/CosmWasm/cosmwasm/pull/1954
 
