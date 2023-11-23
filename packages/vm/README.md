@@ -51,27 +51,27 @@ To rebuild the test contracts, go to the repo root and do
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_cyberpunk",target=/code/contracts/cyberpunk/target \
+  --mount type=volume,source="devcontract_cache_cyberpunk",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.13 ./contracts/cyberpunk \
+  cosmwasm/optimizer:0.15.0 ./contracts/cyberpunk \
   && cp artifacts/cyberpunk.wasm packages/vm/testdata/cyberpunk.wasm
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
+  --mount type=volume,source="devcontract_cache_hackatom",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.13 ./contracts/hackatom \
+  cosmwasm/optimizer:0.15.0 ./contracts/hackatom \
   && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_1.2.wasm
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_ibc_reflect",target=/code/contracts/ibc-reflect/target \
+  --mount type=volume,source="devcontract_cache_ibc_reflect",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.13 ./contracts/ibc-reflect \
+  cosmwasm/optimizer:0.15.0 ./contracts/ibc-reflect \
   && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_1.2.wasm
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_empty",target=/code/contracts/empty/target \
+  --mount type=volume,source="devcontract_cache_empty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.12.13 ./contracts/empty \
+  cosmwasm/optimizer:0.15.0 ./contracts/empty \
   && cp artifacts/empty.wasm packages/vm/testdata/empty.wasm
 ```
 

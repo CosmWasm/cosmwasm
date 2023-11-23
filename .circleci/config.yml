@@ -1020,18 +1020,38 @@ jobs:
           name: Build development contracts
           command: |
             echo "Building all contracts under ./contracts"
-            export GLOBIGNORE="./contracts/floaty/"
-            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.12.13 ./contracts/*/
+            export GLOBIGNORE="contracts/floaty"
+            for contract_dir in contracts/*; do
+              if [ -d "$contract_dir" ]; then
+                echo "Building '$contract_dir' ..."
+                docker run --volumes-from with_code cosmwasm/optimizer:0.15.0 "$contract_dir"
+              fi
+            done
       - run:
           name: Check development contracts
           command: |
             echo "Checking all contracts under ./artifacts"
             docker run --volumes-from with_code rust:1.70.0 \
               /bin/bash -e -c 'cd ./code; cargo run --bin cosmwasm-check artifacts/*.wasm'
+      - run:
+          name: Export development contracts
+          command: |
+            # copy into host
             docker cp with_code:/code/artifacts .
+            cd ./artifacts
+            ls -lA .
+            # Check checksums
+            cat checksums.txt
+            sha256sum -c checksums.txt
       - run:
           name: Publish artifacts on GitHub
           command: |
+            # This safety measure allows us to run the job until here for testing.
+            if [ -z "$CIRCLE_TAG" ]; then
+              echo "Not a tag build"
+              exit 1
+            fi
+
             TAG="$CIRCLE_TAG"
             TITLE="$TAG"
             BODY="The release notes are available in [CHANGELOG.md](https://github.com/CosmWasm/cosmwasm/blob/$TAG/CHANGELOG.md). For upgrading contracts also consult [MIGRATING.md](https://github.com/CosmWasm/cosmwasm/blob/$TAG/MIGRATING.md).\n\nAttached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
