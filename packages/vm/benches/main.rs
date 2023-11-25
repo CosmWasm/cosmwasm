@@ -345,7 +345,8 @@ pub fn bench_instance_threads(c: &mut Criterion) {
 fn make_config() -> Criterion {
     Criterion::default()
         .without_plots()
-        .measurement_time(Duration::new(10, 0))
+        .warm_up_time(Duration::new(2, 0))
+        .measurement_time(Duration::new(8, 0))
         .sample_size(12)
         .configure_from_args()
 }
