@@ -111,6 +111,7 @@ fn make_config() -> Criterion {
         // Increase for higher precision results
         // .warm_up_time(Duration::new(4, 0))
         // .measurement_time(Duration::new(10, 0))
+        .sample_size(10)
         .configure_from_args()
 }
 
