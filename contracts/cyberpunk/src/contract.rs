@@ -42,7 +42,7 @@ pub fn execute(
     }
 }
 
-fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
+pub fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractError> {
     let password = b"password";
     let salt = b"othersalt";
     let config = argon2::Config {
