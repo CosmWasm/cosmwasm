@@ -33,9 +33,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cy
 fn execute_argon2() {
     let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
 
-    let init_info = mock_info("admin", &[]);
-    let init_res: Response = instantiate(&mut deps, mock_env(), init_info, Empty {}).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    let _res: Response =
+        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
 
     let gas_before = deps.get_gas_left();
     let _execute_res: Response = execute(

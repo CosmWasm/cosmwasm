@@ -241,6 +241,17 @@ mod tests {
     }
 
     #[test]
+    fn argon2_works() {
+        let mut deps = setup();
+
+        let msg = ExecuteMsg::Argon2 {
+            mem_cost: 128,
+            time_cost: 1,
+        };
+        execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
+    }
+
+    #[test]
     fn debug_works() {
         let mut deps = setup();
 
