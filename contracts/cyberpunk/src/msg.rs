@@ -9,6 +9,12 @@ pub enum ExecuteMsg {
         /// The number of passes.
         time_cost: u32,
     },
+    /// Performs a BLS12-381 signature verification.
+    /// Here the pubkey is in G1 (48 bytes) and the signature is in G2 (96 bytes)
+    DrandVerifyG1 {},
+    /// Performs a BLS12-381 signature verification.
+    /// Here the pubkey is in G2 (96 bytes) and the signature is in G1 (48 bytes)
+    DrandVerifyG2 {},
     /// Infinite loop to burn cpu cycles (only run when metering is enabled)
     CpuLoop {},
     /// Infinite loop making storage calls (to test when their limit hits)

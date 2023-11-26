@@ -55,6 +55,36 @@ fn execute_argon2() {
     assert!(gas_used < expected * 120 / 100, "Gas used: {gas_used}");
 }
 
+#[test]
+fn execute_drand_verify_g1() {
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
+
+    let _res: Response =
+        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+
+    let env = mock_env();
+    let info = mock_info("admin", &[]);
+    let gas_before = deps.get_gas_left();
+    let _execute_res: Response =
+        execute(&mut deps, env, info, ExecuteMsg::DrandVerifyG1 {}).unwrap();
+    let _gas_used = gas_before - deps.get_gas_left();
+}
+
+#[test]
+fn execute_drand_verify_g2() {
+    let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
+
+    let _res: Response =
+        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+
+    let env = mock_env();
+    let info = mock_info("admin", &[]);
+    let gas_before = deps.get_gas_left();
+    let _execute_res: Response =
+        execute(&mut deps, env, info, ExecuteMsg::DrandVerifyG2 {}).unwrap();
+    let _gas_used = gas_before - deps.get_gas_left();
+}
+
 // Test with
 // cargo integration-test debug_works -- --nocapture
 #[test]

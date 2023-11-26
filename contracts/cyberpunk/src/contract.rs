@@ -2,6 +2,8 @@ use cosmwasm_std::{
     entry_point, to_json_binary, Api, DenomMetadata, Deps, DepsMut, Empty, Env, MessageInfo,
     PageRequest, QueryResponse, Response, StdError, StdResult, WasmMsg,
 };
+use drand_verify::{G1Pubkey, G2Pubkey, Pubkey};
+use hex_literal::hex;
 
 use crate::errors::ContractError;
 use crate::msg::{ExecuteMsg, QueryMsg};
@@ -30,6 +32,8 @@ pub fn execute(
             mem_cost,
             time_cost,
         } => execute_argon2(mem_cost, time_cost),
+        DrandVerifyG1 {} => execute_drand_verify_g1(),
+        DrandVerifyG2 {} => execute_drand_verify_g2(),
         CpuLoop {} => execute_cpu_loop(),
         StorageLoop {} => execute_storage_loop(deps),
         MemoryLoop {} => execute_memory_loop(),
@@ -61,6 +65,42 @@ pub fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, Contrac
     // assert!(matches);
     Ok(Response::new().set_data(hash.into_bytes()))
     //Ok(Response::new())
+}
+
+/// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
+const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
+
+/// Quicknet (curl -sS https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/info)
+/// See https://drand.love/blog/2023/10/16/quicknet-is-live/
+const PK_QUICKNET: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
+
+pub fn execute_drand_verify_g1() -> Result<Response, ContractError> {
+    let pk = G1Pubkey::from_fixed(PK_LEO_MAINNET).unwrap();
+
+    // curl -sS https://drand.cloudflare.com/public/72785
+    let previous_signature = hex!("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747");
+    let signature = hex!("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42");
+    let round: u64 = 72785;
+
+    let valid = pk.verify(round, &previous_signature, &signature).unwrap();
+    if !valid {
+        return Err(ContractError::InvalidDrandSignature);
+    }
+    Ok(Response::new().set_data([u8::from(valid)]))
+}
+
+pub fn execute_drand_verify_g2() -> Result<Response, ContractError> {
+    let pk = G2Pubkey::from_fixed(PK_QUICKNET).unwrap();
+
+    // curl -sS https://drand.cloudflare.com/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1122
+    let signature = hex!("96e373e6a505d11e86bf61d035ae2410cff6b19504aad0fbf129eb0040b28c19eba5883098cd6172e740319192c641b9");
+    let round: u64 = 1122;
+
+    let valid = pk.verify(round, b"", &signature).unwrap();
+    if !valid {
+        return Err(ContractError::InvalidDrandSignature);
+    }
+    Ok(Response::new().set_data([u8::from(valid)]))
 }
 
 fn execute_cpu_loop() -> Result<Response, ContractError> {
@@ -248,6 +288,22 @@ mod tests {
             mem_cost: 128,
             time_cost: 1,
         };
+        execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
+    }
+
+    #[test]
+    fn drand_verify_g1_works() {
+        let mut deps = setup();
+
+        let msg = ExecuteMsg::DrandVerifyG1 {};
+        execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
+    }
+
+    #[test]
+    fn drand_verify_g2_works() {
+        let mut deps = setup();
+
+        let msg = ExecuteMsg::DrandVerifyG2 {};
         execute(deps.as_mut(), mock_env(), mock_info("caller", &[]), msg).unwrap();
     }
 

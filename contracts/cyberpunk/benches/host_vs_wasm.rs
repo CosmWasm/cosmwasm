@@ -5,10 +5,10 @@ use cosmwasm_std::{coins, to_json_binary, Empty};
 use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info};
 use cosmwasm_vm::{call_execute, call_instantiate, Instance, InstanceOptions, Size};
 
-use cyberpunk::contract::execute_argon2;
+use cyberpunk::contract::{execute_argon2, execute_drand_verify_g1, execute_drand_verify_g2};
 use cyberpunk::msg::ExecuteMsg;
 
-// Compile with `RUSTFLAGS='-C link-arg=-s' cargo wasm` which should be something like 240KB large
+// Compile with `RUSTFLAGS='-C link-arg=-s' cargo wasm` which should be something like 500KB large
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cyberpunk.wasm");
 
 /* Compile with:
@@ -102,6 +102,76 @@ fn bench_argon2(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_drand_verify(c: &mut Criterion) {
+    let mut group = c.benchmark_group("drand_verify");
+
+    group.bench_function(BenchmarkId::new("host", "g1"), |b| {
+        b.iter(|| {
+            let response = execute_drand_verify_g1().unwrap();
+            assert_eq!(response.data.unwrap_or_default(), [0x01]);
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("host", "g2"), |b| {
+        b.iter(|| {
+            let response = execute_drand_verify_g2().unwrap();
+            assert_eq!(response.data.unwrap_or_default(), [0x01]);
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("wasm", "g1"), |b| {
+        let backend = mock_backend(&[]);
+        let much_gas: InstanceOptions = InstanceOptions {
+            gas_limit: HIGH_GAS_LIMIT,
+        };
+        let mut instance =
+            Instance::from_code(WASM, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
+
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let contract_result =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, b"{}").unwrap();
+        assert!(contract_result.into_result().is_ok());
+
+        let msg = to_json_binary(&ExecuteMsg::DrandVerifyG1 {}).unwrap();
+
+        let env = mock_env();
+        let info = mock_info("hasher", &[]);
+        b.iter(|| {
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &env, &info, &msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.data.unwrap_or_default(), [0x01]);
+        });
+    });
+
+    group.bench_function(BenchmarkId::new("wasm", "g2"), |b| {
+        let backend = mock_backend(&[]);
+        let much_gas: InstanceOptions = InstanceOptions {
+            gas_limit: HIGH_GAS_LIMIT,
+        };
+        let mut instance =
+            Instance::from_code(WASM, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
+
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let contract_result =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, b"{}").unwrap();
+        assert!(contract_result.into_result().is_ok());
+
+        let msg = to_json_binary(&ExecuteMsg::DrandVerifyG1 {}).unwrap();
+
+        let env = mock_env();
+        let info = mock_info("hasher", &[]);
+        b.iter(|| {
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &env, &info, &msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.data.unwrap_or_default(), [0x01]);
+        });
+    });
+
+    group.finish();
+}
+
 fn make_config() -> Criterion {
     Criterion::default()
         .plotting_backend(PlottingBackend::Plotters)
@@ -120,4 +190,9 @@ criterion_group!(
     config = make_config();
     targets = bench_argon2
 );
-criterion_main!(argon2);
+criterion_group!(
+    name = drand_verify;
+    config = make_config();
+    targets = bench_drand_verify
+);
+criterion_main!(argon2, drand_verify);

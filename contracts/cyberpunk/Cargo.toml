@@ -33,6 +33,8 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort", "cosmwasm_1_3"] }
+drand-verify = "0.6.1"
+hex-literal = "0.4.1"
 rust-argon2 = "2.0"
 thiserror = "1.0.26"
 
@@ -40,11 +42,6 @@ thiserror = "1.0.26"
 criterion = "0.5.1"
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
 tempfile = "3.1.0"
-
-[[bin]]
-name = "schema"
-test = false
-bench = false
 
 [[bench]]
 name = "host_vs_wasm"
