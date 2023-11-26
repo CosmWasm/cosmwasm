@@ -11,6 +11,14 @@ use cyberpunk::msg::ExecuteMsg;
 // Compile with `RUSTFLAGS='-C link-arg=-s' cargo wasm` which should be something like 240KB large
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cyberpunk.wasm");
 
+/* Compile with:
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_cyberpunk",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer-arm64:0.15.0 ./contracts/cyberpunk
+ */
+//static WASM: &[u8] = include_bytes!("../../../artifacts/cyberpunk-aarch64.wasm");
+
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(128);
 const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000; // ~20s
 
