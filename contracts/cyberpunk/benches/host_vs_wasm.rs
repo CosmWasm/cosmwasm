@@ -157,7 +157,7 @@ fn bench_drand_verify(c: &mut Criterion) {
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, b"{}").unwrap();
         assert!(contract_result.into_result().is_ok());
 
-        let msg = to_json_binary(&ExecuteMsg::DrandVerifyG1 {}).unwrap();
+        let msg = to_json_binary(&ExecuteMsg::DrandVerifyG2 {}).unwrap();
 
         let env = mock_env();
         let info = mock_info("hasher", &[]);
