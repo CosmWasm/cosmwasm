@@ -1,6 +1,5 @@
 use alloc::collections::BTreeMap;
 use bech32::{decode, encode, FromBase32, ToBase32, Variant};
-use core::iter::IntoIterator;
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
@@ -1151,7 +1150,7 @@ mod tests {
         // valid
         let humanized = "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp";
         let addr = api.addr_validate(humanized).unwrap();
-        assert_eq!(addr, humanized);
+        assert_eq!(addr.as_str(), humanized);
 
         // invalid: too short
         api.addr_validate("").unwrap_err();
@@ -1194,7 +1193,7 @@ mod tests {
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
         assert_eq!(
-            recovered,
+            recovered.as_str(),
             "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp"
         );
 
@@ -2123,11 +2122,10 @@ mod tests {
         }
 
         querier.update_handler(|request| {
-            let constract1 = Addr::unchecked("contract1");
+            let api = MockApi::default();
+            let contract1 = api.addr_make("contract1");
             let mut storage1 = HashMap::<Binary, Binary>::default();
             storage1.insert(b"the key".into(), b"the value".into());
-
-            let api = MockApi::default();
 
             match request {
                 WasmQuery::Raw { contract_addr, key } => {
@@ -2136,7 +2134,7 @@ mod tests {
                             addr: contract_addr.clone(),
                         });
                     };
-                    if addr == constract1 {
+                    if addr == contract1 {
                         if let Some(value) = storage1.get(key) {
                             SystemResult::Ok(ContractResult::Ok(value.clone()))
                         } else {
@@ -2154,7 +2152,7 @@ mod tests {
                             addr: contract_addr.clone(),
                         });
                     };
-                    if addr == constract1 {
+                    if addr == contract1 {
                         #[derive(Deserialize)]
                         struct MyMsg {}
                         let _msg: MyMsg = match from_json(msg) {
@@ -2177,7 +2175,7 @@ mod tests {
                             addr: contract_addr.clone(),
                         });
                     };
-                    if addr == constract1 {
+                    if addr == contract1 {
                         let response = ContractInfoResponse {
                             code_id: 4,
                             creator: Addr::unchecked("lalala"),
@@ -2213,17 +2211,20 @@ mod tests {
             }
         });
 
+        let contract_addr = MockApi::default().addr_make("contract1");
+
         // WasmQuery::Raw
         let result = querier.query(&WasmQuery::Raw {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             key: b"the key".into(),
         });
+
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(value, b"the value" as &[u8]),
             res => panic!("Unexpected result: {res:?}"),
         }
         let result = querier.query(&WasmQuery::Raw {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             key: b"other key".into(),
         });
         match result {
@@ -2233,7 +2234,7 @@ mod tests {
 
         // WasmQuery::Smart
         let result = querier.query(&WasmQuery::Smart {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             msg: b"{}".into(),
         });
         match result {
@@ -2244,7 +2245,7 @@ mod tests {
             res => panic!("Unexpected result: {res:?}"),
         }
         let result = querier.query(&WasmQuery::Smart {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             msg: b"a broken request".into(),
         });
         match result {
@@ -2256,7 +2257,7 @@ mod tests {
 
         // WasmQuery::ContractInfo
         let result = querier.query(&WasmQuery::ContractInfo {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.into(),
         });
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
