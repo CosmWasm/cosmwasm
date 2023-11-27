@@ -11,6 +11,9 @@ use cyberpunk::msg::ExecuteMsg;
 // Compile with `RUSTFLAGS='-C link-arg=-s' cargo wasm` which should be something like 500KB large
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cyberpunk.wasm");
 
+// Compile with `RUSTFLAGS='-C link-arg=-s' cargo wasm && wasm-opt -O4 target/wasm32-unknown-unknown/release/cyberpunk.wasm -o optimized.wasm`
+// static WASM: &[u8] = include_bytes!("../optimized.wasm");
+
 /* Compile with:
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_cyberpunk",target=/target \
