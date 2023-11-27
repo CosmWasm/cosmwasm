@@ -23,10 +23,6 @@ iterator = []
 # CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
 # that require these types, so other contracts can be used on systems with eg. PoA consensus
 staking = []
-# backtraces provides much better context at runtime errors (in non-wasm code)
-# at the cost of a bit of code size and performance.
-# This feature requires Rust nightly because it depends on the unstable backtrace feature.
-backtraces = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
 stargate = []
@@ -54,10 +50,7 @@ forward_ref = "1"
 hex = "0.4"
 schemars = "0.8.3"
 sha2 = "0.10.3"
-serde = { version = "1.0.103", default-features = false, features = [
-  "derive",
-  "alloc",
-] }
+serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde-json-wasm = { version = "1.0.0" }
 thiserror = "1.0.26"
 bnum = "0.8.0"
@@ -70,10 +63,7 @@ cosmwasm-crypto = { path = "../crypto", version = "1.5.0" }
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
-chrono = { version = "0.4", default-features = false, features = [
-  "alloc",
-  "std",
-] }
+chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
 crc32fast = "1.3.2"
 hex-literal = "0.3.1"
 serde_json = "1.0.81"
