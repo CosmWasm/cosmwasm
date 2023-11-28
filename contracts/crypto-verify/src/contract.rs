@@ -317,12 +317,13 @@ mod tests {
 
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
-        assert_eq!(
+        assert!(matches!(
             res.unwrap_err(),
             StdError::VerificationErr {
-                source: VerificationError::InvalidPubkeyFormat
+                source: VerificationError::InvalidPubkeyFormat,
+                ..
             }
-        )
+        ))
     }
 
     #[test]
@@ -605,12 +606,13 @@ mod tests {
         };
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
-        assert_eq!(
+        assert!(matches!(
             res.unwrap_err(),
             StdError::VerificationErr {
                 source: VerificationError::InvalidPubkeyFormat,
+                ..
             }
-        )
+        ))
     }
 
     #[test]
@@ -670,12 +672,13 @@ mod tests {
         };
         let res = query(deps.as_ref(), mock_env(), verify_msg);
         assert!(res.is_err());
-        assert_eq!(
+        assert!(matches!(
             res.unwrap_err(),
             StdError::VerificationErr {
-                source: VerificationError::InvalidPubkeyFormat
+                source: VerificationError::InvalidPubkeyFormat,
+                ..
             }
-        )
+        ))
     }
 
     #[test]
