@@ -1,5 +1,4 @@
-#[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
+use crate::BT;
 use std::fmt::Debug;
 use thiserror::Error;
 
@@ -8,81 +7,55 @@ pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 #[derive(Error, Debug)]
 pub enum CryptoError {
     #[error("Batch verify error: {msg}")]
-    BatchErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    BatchErr { msg: String, backtrace: BT },
     #[error("Crypto error: {msg}")]
-    GenericErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    GenericErr { msg: String, backtrace: BT },
     #[error("Invalid hash format")]
-    InvalidHashFormat {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidHashFormat { backtrace: BT },
     #[error("Invalid public key format")]
-    InvalidPubkeyFormat {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidPubkeyFormat { backtrace: BT },
     #[error("Invalid signature format")]
-    InvalidSignatureFormat {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidSignatureFormat { backtrace: BT },
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
-    InvalidRecoveryParam {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidRecoveryParam { backtrace: BT },
 }
 
 impl CryptoError {
     pub fn batch_err(msg: impl Into<String>) -> Self {
         CryptoError::BatchErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn generic_err(msg: impl Into<String>) -> Self {
         CryptoError::GenericErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_hash_format() -> Self {
         CryptoError::InvalidHashFormat {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_pubkey_format() -> Self {
         CryptoError::InvalidPubkeyFormat {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_signature_format() -> Self {
         CryptoError::InvalidSignatureFormat {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_recovery_param() -> Self {
         CryptoError::InvalidRecoveryParam {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
