@@ -195,8 +195,18 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         }
     }
 
-    let too_long =
-        "bn9hhssomeltvhzgvuqkwjkpwxojfuigltwedayzxljucefikuieillowaticksoistqoynmgcnj219aewfwefwwegwg";
+    let invalid = "bn9hhssomeltvhzgvuqkwjkpwxoj";
+    match api.addr_canonicalize(invalid).unwrap_err() {
+        StdError::GenericErr { .. } => {}
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
+            ))
+            .into())
+        }
+    }
+
+    let too_long = "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
     match api.addr_canonicalize(too_long).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
@@ -208,31 +218,8 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     }
 
     // Humanize
-
     let empty: CanonicalAddr = vec![].into();
     match api.addr_humanize(&empty).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
-            ))
-            .into())
-        }
-    }
-
-    let too_short: CanonicalAddr = vec![0xAA, 0xBB, 0xCC].into();
-    match api.addr_humanize(&too_short).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {err:?}"
-            ))
-            .into())
-        }
-    }
-
-    let wrong_length: CanonicalAddr = vec![0xA6; 17].into();
-    match api.addr_humanize(&wrong_length).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(

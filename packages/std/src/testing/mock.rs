@@ -129,6 +129,7 @@ impl Api for MockApi {
         if let Ok((prefix, decoded, Variant::Bech32)) = decode(input) {
             if prefix == self.bech32_prefix {
                 if let Ok(bytes) = Vec::<u8>::from_base32(&decoded) {
+                    validate_length(&bytes)?;
                     return Ok(bytes.into());
                 }
             }
@@ -137,6 +138,7 @@ impl Api for MockApi {
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
+        validate_length(canonical.as_ref())?;
         let Ok(encoded) = encode(
             self.bech32_prefix,
             canonical.as_slice().to_base32(),
@@ -247,6 +249,14 @@ impl MockApi {
             Err(reason) => panic!("Generating address failed with reason: {reason}"),
         }
     }
+}
+
+/// Does basic validation of the number of bytes in a canonical address
+fn validate_length(bytes: &[u8]) -> StdResult<()> {
+    if !(1..=255).contains(&bytes.len()) {
+        return Err(StdError::generic_err("Invalid canonical address length"));
+    }
+    Ok(())
 }
 
 /// Returns a default enviroment with height, time, chain_id, and contract address
@@ -1225,13 +1235,11 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Invalid canonical address length")]
     fn addr_humanize_input_length() {
         let api = MockApi::default();
         let input = CanonicalAddr::from(vec![]);
-        assert_eq!(
-            api.addr_humanize(&input).unwrap(),
-            Addr::unchecked("cosmwasm1pj90vm")
-        );
+        api.addr_humanize(&input).unwrap();
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
