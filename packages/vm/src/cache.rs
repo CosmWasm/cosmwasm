@@ -1287,7 +1287,7 @@ mod tests {
         // removing again fails
 
         match remove_wasm_from_disk(path, &checksum).unwrap_err() {
-            VmError::CacheErr { msg } => assert_eq!(msg, "Wasm file does not exist"),
+            VmError::CacheErr { msg, .. } => assert_eq!(msg, "Wasm file does not exist"),
             err => panic!("Unexpected error: {err:?}"),
         }
     }
