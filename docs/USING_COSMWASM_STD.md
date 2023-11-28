@@ -32,7 +32,7 @@ in the dependency tree. Otherwise conflicting C exports are created.
 
 ## cosmwasm-std features
 
-The libarary comes with the following features:
+The library comes with the following features:
 
 | Feature      | Enabled by default | Description                                                               |
 | ------------ | ------------------ | ------------------------------------------------------------------------- |
@@ -40,7 +40,6 @@ The libarary comes with the following features:
 | abort        | x                  | A panic handler that aborts the contract execution with a helpful message |
 | stargate     |                    | Cosmos SDK 0.40+ features and IBC                                         |
 | staking      |                    | Access to the staking module                                              |
-| backtraces   |                    | Add backtraces to errors (for unit testing)                               |
 | cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                          |
 | cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                          |
 | cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                          |
