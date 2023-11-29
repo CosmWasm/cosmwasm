@@ -139,14 +139,14 @@ impl Api for MockApi {
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
         validate_length(canonical.as_ref())?;
-        let Ok(encoded) = encode(
+
+        encode(
             self.bech32_prefix,
             canonical.as_slice().to_base32(),
             Variant::Bech32,
-        ) else {
-            return Err(StdError::generic_err("Invalid canonical address"));
-        };
-        Ok(Addr::unchecked(encoded))
+        )
+        .map(Addr::unchecked)
+        .map_err(|_| StdError::generic_err("Invalid canonical address"))
     }
 
     fn secp256k1_verify(
