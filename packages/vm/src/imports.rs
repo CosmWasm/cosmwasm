@@ -1140,23 +1140,23 @@ mod tests {
         }
     }
 
+    const CANONICAL_ADDRESS_BUFFER_LENGTH: u32 = 64;
+
     #[test]
     fn do_addr_canonicalize_works() {
         let api = MockApi::default();
         let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let api = MockApi::default();
 
         let source_ptr = write_data(&mut fe_mut, b"foo");
-        let dest_ptr = create_empty(&instance, &mut fe_mut, api.canonical_length() as u32);
+        let dest_ptr = create_empty(&instance, &mut fe_mut, CANONICAL_ADDRESS_BUFFER_LENGTH);
 
         leave_default_data(&mut fe_mut);
 
-        let api = MockApi::default();
         let res = do_addr_canonicalize(fe_mut.as_mut(), source_ptr, dest_ptr).unwrap();
         assert_eq!(res, 0);
         let data = force_read(&mut fe_mut, dest_ptr);
-        assert_eq!(data.len(), api.canonical_length());
+        assert_eq!(data.len(), CANONICAL_ADDRESS_BUFFER_LENGTH as usize);
     }
 
     #[test]
@@ -1257,7 +1257,7 @@ mod tests {
                 ..
             } => {
                 assert_eq!(size, 7);
-                assert_eq!(required, api.canonical_length());
+                assert_eq!(required, CANONICAL_ADDRESS_BUFFER_LENGTH as usize);
             }
             err => panic!("Incorrect error returned: {err:?}"),
         }
@@ -1268,9 +1268,8 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let api = MockApi::default();
 
-        let source_data = vec![0x22; api.canonical_length()];
+        let source_data = vec![0x22; CANONICAL_ADDRESS_BUFFER_LENGTH as usize];
         let source_ptr = write_data(&mut fe_mut, &source_data);
         let dest_ptr = create_empty(&instance, &mut fe_mut, 70);
 
@@ -1351,9 +1350,8 @@ mod tests {
         let api = MockApi::default();
         let (fe, mut store, instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
-        let api = MockApi::default();
 
-        let source_data = vec![0x22; api.canonical_length()];
+        let source_data = vec![0x22; CANONICAL_ADDRESS_BUFFER_LENGTH as usize];
         let source_ptr = write_data(&mut fe_mut, &source_data);
         let dest_ptr = create_empty(&instance, &mut fe_mut, 2);
 
@@ -1366,7 +1364,7 @@ mod tests {
                 ..
             } => {
                 assert_eq!(size, 2);
-                assert_eq!(required, api.canonical_length());
+                assert_eq!(required, CANONICAL_ADDRESS_BUFFER_LENGTH as usize);
             }
             err => panic!("Incorrect error returned: {err:?}"),
         }
