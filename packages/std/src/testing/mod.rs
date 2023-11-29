@@ -15,9 +15,9 @@ pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
 pub use mock::StakingQuerier;
 pub use mock::{
-    digit_sum, mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances,
-    mock_env, mock_info, mock_wasmd_attr, BankQuerier, MockApi, MockQuerier,
-    MockQuerierCustomHandlerResult, MockStorage, MOCK_CONTRACT_ADDR,
+    mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances, mock_env,
+    mock_info, mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
+    MockStorage, MOCK_CONTRACT_ADDR,
 };
 #[cfg(feature = "stargate")]
 pub use mock::{

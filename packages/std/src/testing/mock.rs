@@ -1103,10 +1103,6 @@ impl DistributionQuerier {
     }
 }
 
-pub fn digit_sum(input: &[u8]) -> usize {
-    input.iter().fold(0, |sum, val| sum + (*val as usize))
-}
-
 /// Only for test code. This bypasses assertions in new, allowing us to create _*
 /// Attributes to simulate responses from the blockchain
 pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
@@ -2288,22 +2284,6 @@ mod tests {
                 res => panic!("Unexpected result: {res:?}"),
             }
         }
-    }
-
-    #[test]
-    fn digit_sum_works() {
-        assert_eq!(digit_sum(&[]), 0);
-        assert_eq!(digit_sum(&[0]), 0);
-        assert_eq!(digit_sum(&[0, 0]), 0);
-        assert_eq!(digit_sum(&[0, 0, 0]), 0);
-
-        assert_eq!(digit_sum(&[1, 0, 0]), 1);
-        assert_eq!(digit_sum(&[0, 1, 0]), 1);
-        assert_eq!(digit_sum(&[0, 0, 1]), 1);
-
-        assert_eq!(digit_sum(&[1, 2, 3]), 6);
-
-        assert_eq!(digit_sum(&[255, 1]), 256);
     }
 
     #[test]
