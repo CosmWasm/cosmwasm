@@ -10,7 +10,10 @@ pub struct BT(Box<dyn Printable>);
 impl BT {
     #[track_caller]
     pub fn capture() -> Self {
-        BT(Box::new(std::backtrace::Backtrace::capture()))
+        #[cfg(target_arch = "wasm32")]
+        return BT(Box::new(std::backtrace::Backtrace::disabled()));
+        #[cfg(not(target_arch = "wasm32"))]
+        return BT(Box::new(std::backtrace::Backtrace::capture()));
     }
 }
 
