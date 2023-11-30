@@ -1217,8 +1217,18 @@ mod tests {
     #[test]
     fn addr_canonicalize_short_input() {
         let api = MockApi::default();
-        let human = String::from("cosmwasm1pj90vm");
-        assert_eq!(api.addr_canonicalize(&human).unwrap().to_string(), "");
+
+        // empty address should fail
+        let empty = "cosmwasm1pj90vm";
+        assert!(api
+            .addr_canonicalize(empty)
+            .unwrap_err()
+            .to_string()
+            .contains("Invalid canonical address length"));
+
+        // one byte address should work
+        let human = "cosmwasm1qqvk2mde";
+        assert_eq!(api.addr_canonicalize(human).unwrap().as_ref(), [0u8]);
     }
 
     #[test]
