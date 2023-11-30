@@ -125,6 +125,14 @@ major releases of `cosmwasm`. Note that you can also view the
   +CosmosMsg::Any(AnyMsg { type_url, value })
   ```
 
+- Replace all direct construction of `StdError` with use of the corresponding
+  constructor:
+
+  ```diff
+  -StdError::GenericErr { msg }
+  +StdError::generic_err(msg)
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
