@@ -2,6 +2,7 @@ use bech32::{decode, encode, FromBase32, ToBase32, Variant};
 use cosmwasm_std::{
     Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo,
 };
+use sha2::{Digest, Sha256};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -218,31 +219,39 @@ mod tests {
 
     #[test]
     fn canonical_address_works() {
-        let api = MockApi::default();
+        let api = MockApi::default().with_prefix("osmo");
 
-        api.canonical_address("foobar123").0.unwrap();
+        api.canonical_address("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
+            .0
+            .unwrap();
 
         // is case insensitive
-        let data1 = api.canonical_address("foo123").0.unwrap();
-        let data2 = api.canonical_address("FOO123").0.unwrap();
+        let data1 = api
+            .canonical_address("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
+            .0
+            .unwrap();
+        let data2 = api
+            .canonical_address("OSMO186KH7C0K0GH4WW0WH4JQC4YHZU7N7DHSWE845D")
+            .0
+            .unwrap();
         assert_eq!(data1, data2);
     }
 
     #[test]
     fn canonicalize_and_humanize_restores_original() {
-        let api = MockApi::default();
+        let api = MockApi::default().with_prefix("juno");
 
         // simple
-        let original = "shorty";
-        let canonical = api.canonical_address(original).0.unwrap();
+        let original = api.addr_make("shorty");
+        let canonical = api.canonical_address(&original).0.unwrap();
         let (recovered, _gas_cost) = api.human_address(&canonical);
         assert_eq!(recovered.unwrap(), original);
 
         // normalizes input
-        let original = String::from("CosmWasmChef");
+        let original = "JUNO1MEPRU9FUQ4E65856ARD6068MFSFRWPGEMD0C3R";
         let canonical = api.canonical_address(&original).0.unwrap();
         let recovered = api.human_address(&canonical).0.unwrap();
-        assert_eq!(recovered, "cosmwasmchef");
+        assert_eq!(recovered, original.to_lowercase());
 
         // Long input (Juno contract address)
         let original =
@@ -255,7 +264,7 @@ mod tests {
     #[test]
     fn human_address_input_length() {
         let api = MockApi::default();
-        let input = vec![61; 11];
+        let input = vec![61; 256]; // too long
         let (result, _gas_info) = api.human_address(&input);
         match result.unwrap_err() {
             BackendError::UserErr { .. } => {}
@@ -266,9 +275,11 @@ mod tests {
     #[test]
     fn canonical_address_min_input_length() {
         let api = MockApi::default();
-        let human = "1";
+        let human = "cosmwasm1pj90vm";
         match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { msg } => assert!(msg.contains("too short")),
+            BackendError::UserErr { msg } => {
+                assert!(msg.contains("address length"))
+            }
             err => panic!("Unexpected error: {err:?}"),
         }
     }
@@ -278,7 +289,9 @@ mod tests {
         let api = MockApi::default();
         let human = "longer-than-the-address-length-supported-by-this-api-longer-than-54";
         match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { msg } => assert!(msg.contains("too long")),
+            BackendError::UserErr { msg } => {
+                assert!(msg.contains("address length"))
+            }
             err => panic!("Unexpected error: {err:?}"),
         }
     }
