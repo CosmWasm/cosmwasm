@@ -56,6 +56,60 @@ impl MockApi {
     pub fn new_failing(backend_error: &'static str) -> Self {
         MockApi::Error(backend_error)
     }
+
+    /// Returns [MockApi] with Bech32 prefix set to provided value.
+    ///
+    /// Bech32 prefix must not be empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use cosmwasm_std::Addr;
+    /// # use cosmwasm_std::testing::MockApi;
+    /// #
+    /// let mock_api = MockApi::default().with_prefix("juno");
+    /// let addr = mock_api.addr_make("creator");
+    ///
+    /// assert_eq!(addr, "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
+    /// ```
+    pub fn with_prefix(self, prefix: &'static str) -> Self {
+        Self::Bech32 {
+            bech32_prefix: prefix,
+        }
+    }
+
+    /// Returns an address built from provided input string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use cosmwasm_std::Addr;
+    /// # use cosmwasm_std::testing::MockApi;
+    /// #
+    /// let mock_api = MockApi::default();
+    /// let addr = mock_api.addr_make("creator");
+    ///
+    /// assert_eq!(addr, "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp");
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// This function panics when generating a valid address is not possible,
+    /// especially when Bech32 prefix set in function [with_prefix](Self::with_prefix) is empty.
+    ///
+    pub fn addr_make(&self, input: &str) -> String {
+        // handle error case
+        let bech32_prefix = match self {
+            MockApi::Error(e) => panic!("Generating address failed: {e}"),
+            MockApi::Bech32 { bech32_prefix } => *bech32_prefix,
+        };
+
+        let digest = Sha256::digest(input).to_vec();
+        match encode(bech32_prefix, digest.to_base32(), Variant::Bech32) {
+            Ok(address) => address,
+            Err(reason) => panic!("Generating address failed with reason: {reason}"),
+        }
+    }
 }
 
 impl Default for MockApi {
