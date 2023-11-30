@@ -1,10 +1,8 @@
 use core::fmt::{Debug, Display, Formatter, Result};
-use thiserror::Error;
 
 /// This wraps an actual backtrace to achieve two things:
 /// - being able to fill this with a stub implementation in `no_std` environments
 /// - being able to use this in conjunction with [`thiserror::Error`]
-#[derive(Error)]
 pub struct BT(Box<dyn Printable>);
 
 impl BT {
