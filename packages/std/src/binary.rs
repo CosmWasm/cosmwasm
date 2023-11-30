@@ -335,7 +335,7 @@ mod tests {
             ("cmFuZ", "Encoded text cannot have a 6-bit remainder."),
         ] {
             match Binary::from_base64(invalid_base64) {
-                Err(StdError::InvalidBase64 { msg }) => assert_eq!(want, msg),
+                Err(StdError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
                 result => panic!("Unexpected result: {result:?}"),
             }
         }

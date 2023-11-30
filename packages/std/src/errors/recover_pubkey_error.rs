@@ -1,8 +1,8 @@
 use core::fmt::Debug;
 #[cfg(not(target_arch = "wasm32"))]
 use cosmwasm_crypto::CryptoError;
-#[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
+
+use super::BT;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -14,19 +14,15 @@ pub enum RecoverPubkeyError {
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
-    UnknownErr {
-        error_code: u32,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    UnknownErr { error_code: u32, backtrace: BT },
 }
 
 impl RecoverPubkeyError {
     pub fn unknown_err(error_code: u32) -> Self {
         RecoverPubkeyError::UnknownErr {
             error_code,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+
+            backtrace: BT::capture(),
         }
     }
 }

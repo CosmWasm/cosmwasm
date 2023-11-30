@@ -21,7 +21,9 @@ major releases of `cosmwasm`. Note that you can also view the
 
   If you were using cosmwasm-std's `ibc3` feature, you can remove it, as it is
   the default now. Depending on your usage, you might have to enable the
-  `stargate` feature instead, since it was previously implied by `ibc3`.
+  `stargate` feature instead, since it was previously implied by `ibc3`. Also
+  remove any uses of the `backtraces` feature. You can use a `RUST_BACKTRACE=1`
+  env variable for this now.
 
 - `ContractInfoResponse::new` now takes all fields of the response as
   parameters:
@@ -123,6 +125,14 @@ major releases of `cosmwasm`. Note that you can also view the
   ```diff
   -CosmosMsg::Stargate { type_url, value }
   +CosmosMsg::Any(AnyMsg { type_url, value })
+  ```
+
+- Replace all direct construction of `StdError` with use of the corresponding
+  constructor:
+
+  ```diff
+  -StdError::GenericErr { msg }
+  +StdError::generic_err(msg)
   ```
 
 ## 1.4.x -> 1.5.0

@@ -669,7 +669,7 @@ mod tests {
         let msg = br#"{"cpu_loop":{}}"#;
         let err =
             call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
-        assert!(matches!(err, VmError::GasDepletion {}));
+        assert!(matches!(err, VmError::GasDepletion { .. }));
     }
 
     #[test]
@@ -687,7 +687,7 @@ mod tests {
         let err =
             call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
         match err {
-            VmError::RuntimeErr { msg } => {
+            VmError::RuntimeErr { msg, .. } => {
                 assert!(msg.contains(
                     "RuntimeError: Aborted: panicked at 'This page intentionally faulted'"
                 ))
@@ -711,7 +711,7 @@ mod tests {
         let err =
             call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
         match err {
-            VmError::RuntimeErr { msg } => {
+            VmError::RuntimeErr { msg, .. } => {
                 assert!(msg.contains("RuntimeError: unreachable"))
             }
             err => panic!("Unexpected error: {err:?}"),

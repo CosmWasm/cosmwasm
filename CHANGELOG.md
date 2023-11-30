@@ -58,6 +58,12 @@ and this project adheres to
   `AnalysisReport::required_capabilities` a `BTreeSet`. ([#1949])
 - cosmwasm-std: Add `Checksum` type and change type of
   `CodeInfoResponse::checksum` to that. ([#1944])
+- cosmwasm-std: Removed `backtraces` feature, use the `RUST_BACKTRACE=1` env
+  variable instead. Error variants that previously only contained a `backtrace`
+  field with the feature enabled now always contain it. ([#1967])
+- cosmwasm-vm: Removed `backtraces` feature, use the `RUST_BACKTRACE=1` env
+  variable instead. All `VmError` variants now have a `backtrace` field.
+  ([#1967])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -73,6 +79,7 @@ and this project adheres to
 [#1941]: https://github.com/CosmWasm/cosmwasm/pull/1941
 [#1944]: https://github.com/CosmWasm/cosmwasm/pull/1944
 [#1949]: https://github.com/CosmWasm/cosmwasm/pull/1949
+[#1967]: https://github.com/CosmWasm/cosmwasm/pull/1967
 
 ### Removed
 

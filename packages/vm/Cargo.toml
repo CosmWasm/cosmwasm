@@ -9,10 +9,6 @@ license = "Apache-2.0"
 
 [features]
 default = ["staking", "iterator"]
-# backtraces provides much better context at runtime errors (in non-wasm code)
-# at the cost of a bit of code size and performance.
-# This feature requires Rust nightly because it depends on the unstable backtrace feature.
-backtraces = []
 # iterator allows us to iterate over all DB items in a given range
 # this must be enabled to support cosmwasm contracts compiled with the 'iterator' feature
 # optional as some merkle stores (like tries) don't support this

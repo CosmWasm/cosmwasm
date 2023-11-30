@@ -1,6 +1,6 @@
 use core::fmt::Debug;
-#[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
+
+use super::BT;
 use thiserror::Error;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -21,19 +21,15 @@ pub enum VerificationError {
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
-    UnknownErr {
-        error_code: u32,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    UnknownErr { error_code: u32, backtrace: BT },
 }
 
 impl VerificationError {
     pub fn unknown_err(error_code: u32) -> Self {
         VerificationError::UnknownErr {
             error_code,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+
+            backtrace: BT::capture(),
         }
     }
 }

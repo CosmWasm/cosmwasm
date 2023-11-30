@@ -1,6 +1,6 @@
 use core::fmt;
-#[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
+
+use super::{impl_from_err, BT};
 use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
@@ -25,121 +25,94 @@ pub enum StdError {
     #[error("Verification error: {source}")]
     VerificationErr {
         source: VerificationError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Recover pubkey error: {source}")]
     RecoverPubkeyErr {
         source: RecoverPubkeyError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     /// Whenever there is no specific error type available
     #[error("Generic error: {msg}")]
-    GenericErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    GenericErr { msg: String, backtrace: BT },
     #[error("Invalid Base64 string: {msg}")]
-    InvalidBase64 {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidBase64 { msg: String, backtrace: BT },
     #[error("Invalid data size: expected={expected} actual={actual}")]
     InvalidDataSize {
         expected: u64,
         actual: u64,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Invalid hex string: {msg}")]
-    InvalidHex {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidHex { msg: String, backtrace: BT },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[error("Cannot decode UTF8 bytes into string: {msg}")]
-    InvalidUtf8 {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InvalidUtf8 { msg: String, backtrace: BT },
     #[error("{kind} not found")]
-    NotFound {
-        kind: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    NotFound { kind: String, backtrace: BT },
     #[error("Error parsing into type {target_type}: {msg}")]
     ParseErr {
         /// the target type that was attempted
         target_type: String,
         msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Error serializing type {source_type}: {msg}")]
     SerializeErr {
         /// the source type that was attempted
         source_type: String,
         msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Overflow: {source}")]
     Overflow {
         source: OverflowError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Divide by zero: {source}")]
     DivideByZero {
         source: DivideByZeroError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Conversion error: ")]
     ConversionOverflow {
-        #[from]
         source: ConversionOverflowError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
 }
+
+impl_from_err!(
+    ConversionOverflowError,
+    StdError,
+    StdError::ConversionOverflow
+);
 
 impl StdError {
     pub fn verification_err(source: VerificationError) -> Self {
         StdError::VerificationErr {
             source,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn recover_pubkey_err(source: RecoverPubkeyError) -> Self {
         StdError::RecoverPubkeyErr {
             source,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn generic_err(msg: impl Into<String>) -> Self {
         StdError::GenericErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_base64(msg: impl ToString) -> Self {
         StdError::InvalidBase64 {
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -148,32 +121,28 @@ impl StdError {
             // Cast is safe because usize is 32 or 64 bit large in all environments we support
             expected: expected as u64,
             actual: actual as u64,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_hex(msg: impl ToString) -> Self {
         StdError::InvalidHex {
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_utf8(msg: impl ToString) -> Self {
         StdError::InvalidUtf8 {
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn not_found(kind: impl Into<String>) -> Self {
         StdError::NotFound {
             kind: kind.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -181,8 +150,7 @@ impl StdError {
         StdError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -190,24 +158,21 @@ impl StdError {
         StdError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn overflow(source: OverflowError) -> Self {
         StdError::Overflow {
             source,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub fn divide_by_zero(source: DivideByZeroError) -> Self {
         StdError::DivideByZero {
             source,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 }
@@ -217,13 +182,11 @@ impl PartialEq<StdError> for StdError {
         match self {
             StdError::VerificationErr {
                 source,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::VerificationErr {
                     source: rhs_source,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     source == rhs_source
@@ -233,13 +196,11 @@ impl PartialEq<StdError> for StdError {
             }
             StdError::RecoverPubkeyErr {
                 source,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::RecoverPubkeyErr {
                     source: rhs_source,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     source == rhs_source
@@ -247,15 +208,10 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
-            StdError::GenericErr {
-                msg,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
-            } => {
+            StdError::GenericErr { msg, backtrace: _ } => {
                 if let StdError::GenericErr {
                     msg: rhs_msg,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     msg == rhs_msg
@@ -263,15 +219,10 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
-            StdError::InvalidBase64 {
-                msg,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
-            } => {
+            StdError::InvalidBase64 { msg, backtrace: _ } => {
                 if let StdError::InvalidBase64 {
                     msg: rhs_msg,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     msg == rhs_msg
@@ -282,14 +233,12 @@ impl PartialEq<StdError> for StdError {
             StdError::InvalidDataSize {
                 expected,
                 actual,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::InvalidDataSize {
                     expected: rhs_expected,
                     actual: rhs_actual,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     expected == rhs_expected && actual == rhs_actual
@@ -297,15 +246,10 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
-            StdError::InvalidHex {
-                msg,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
-            } => {
+            StdError::InvalidHex { msg, backtrace: _ } => {
                 if let StdError::InvalidHex {
                     msg: rhs_msg,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     msg == rhs_msg
@@ -313,15 +257,10 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
-            StdError::InvalidUtf8 {
-                msg,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
-            } => {
+            StdError::InvalidUtf8 { msg, backtrace: _ } => {
                 if let StdError::InvalidUtf8 {
                     msg: rhs_msg,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     msg == rhs_msg
@@ -329,15 +268,10 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
-            StdError::NotFound {
-                kind,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
-            } => {
+            StdError::NotFound { kind, backtrace: _ } => {
                 if let StdError::NotFound {
                     kind: rhs_kind,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     kind == rhs_kind
@@ -348,14 +282,12 @@ impl PartialEq<StdError> for StdError {
             StdError::ParseErr {
                 target_type,
                 msg,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::ParseErr {
                     target_type: rhs_target_type,
                     msg: rhs_msg,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     target_type == rhs_target_type && msg == rhs_msg
@@ -366,14 +298,12 @@ impl PartialEq<StdError> for StdError {
             StdError::SerializeErr {
                 source_type,
                 msg,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::SerializeErr {
                     source_type: rhs_source_type,
                     msg: rhs_msg,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     source_type == rhs_source_type && msg == rhs_msg
@@ -383,13 +313,11 @@ impl PartialEq<StdError> for StdError {
             }
             StdError::Overflow {
                 source,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::Overflow {
                     source: rhs_source,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     source == rhs_source
@@ -399,13 +327,11 @@ impl PartialEq<StdError> for StdError {
             }
             StdError::DivideByZero {
                 source,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::DivideByZero {
                     source: rhs_source,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     source == rhs_source
@@ -415,13 +341,11 @@ impl PartialEq<StdError> for StdError {
             }
             StdError::ConversionOverflow {
                 source,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
+                backtrace: _,
             } => {
                 if let StdError::ConversionOverflow {
                     source: rhs_source,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
+                    backtrace: _,
                 } = rhs
                 {
                     source == rhs_source
@@ -811,9 +735,6 @@ mod tests {
     fn implements_debug() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Debug: {error:?}");
-        #[cfg(not(feature = "backtraces"))]
-        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub } }"#;
-        #[cfg(feature = "backtraces")]
         let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub }, backtrace: <disabled> }"#;
         assert_eq!(embedded, expected);
     }

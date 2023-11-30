@@ -1,5 +1,4 @@
-#[cfg(feature = "backtraces")]
-use std::backtrace::Backtrace;
+use super::{impl_from_err, BT};
 use std::fmt::{Debug, Display};
 use thiserror::Error;
 
@@ -12,103 +11,59 @@ use crate::backend::BackendError;
 #[non_exhaustive]
 pub enum VmError {
     #[error("Aborted: {}", msg)]
-    Aborted {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    Aborted { msg: String, backtrace: BT },
     #[error("Error calling into the VM's backend: {}", source)]
-    BackendErr {
-        source: BackendError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    BackendErr { source: BackendError, backtrace: BT },
     #[error("Cache error: {msg}")]
-    CacheErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    CacheErr { msg: String, backtrace: BT },
     #[error("Error in guest/host communication: {source}")]
     CommunicationErr {
-        #[from]
         source: CommunicationError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Error compiling Wasm: {msg}")]
-    CompileErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    CompileErr { msg: String, backtrace: BT },
     #[error("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input)]
     ConversionErr {
         from_type: String,
         to_type: String,
         input: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Crypto error: {}", source)]
-    CryptoErr {
-        source: CryptoError,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    CryptoErr { source: CryptoError, backtrace: BT },
     #[error("Ran out of gas during contract execution")]
-    GasDepletion {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    GasDepletion { backtrace: BT },
     /// Whenever there is no specific error type available
     #[error("Generic error: {msg}")]
-    GenericErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    GenericErr { msg: String, backtrace: BT },
     #[error("Error instantiating a Wasm module: {msg}")]
-    InstantiationErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    InstantiationErr { msg: String, backtrace: BT },
     #[error("Hash doesn't match stored data")]
-    IntegrityErr {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    IntegrityErr { backtrace: BT },
     #[error("Error parsing into type {target_type}: {msg}")]
     ParseErr {
         /// the target type that was attempted
         target_type: String,
         msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Data too long for deserialization. Got: {length} bytes; limit: {max_length} bytes")]
     DeserializationLimitExceeded {
         /// the target type that was attempted
         length: usize,
         max_length: usize,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Error serializing type {source_type}: {msg}")]
     SerializeErr {
         /// the source type that was attempted
         source_type: String,
         msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Error resolving Wasm function: {}", msg)]
-    ResolveErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    ResolveErr { msg: String, backtrace: BT },
     #[error(
         "Unexpected number of result values when calling '{}'. Expected: {}, actual: {}.",
         function_name,
@@ -119,69 +74,46 @@ pub enum VmError {
         function_name: String,
         expected: usize,
         actual: usize,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
+        backtrace: BT,
     },
     #[error("Error executing Wasm: {}", msg)]
-    RuntimeErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    RuntimeErr { msg: String, backtrace: BT },
     #[error("Error during static Wasm validation: {}", msg)]
-    StaticValidationErr {
-        msg: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    StaticValidationErr { msg: String, backtrace: BT },
     #[error("Uninitialized Context Data: {}", kind)]
-    UninitializedContextData {
-        kind: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    UninitializedContextData { kind: String, backtrace: BT },
     #[error("Must not call a writing storage function in this context.")]
-    WriteAccessDenied {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    WriteAccessDenied { backtrace: BT },
     #[error("Maximum call depth exceeded.")]
-    MaxCallDepthExceeded {
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
+    MaxCallDepthExceeded { backtrace: BT },
 }
 
 impl VmError {
     pub(crate) fn aborted(msg: impl Into<String>) -> Self {
         VmError::Aborted {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn backend_err(original: BackendError) -> Self {
         VmError::BackendErr {
             source: original,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn cache_err(msg: impl Into<String>) -> Self {
         VmError::CacheErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn compile_err(msg: impl Into<String>) -> Self {
         VmError::CompileErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -194,46 +126,40 @@ impl VmError {
             from_type: from_type.into(),
             to_type: to_type.into(),
             input: input.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn crypto_err(original: CryptoError) -> Self {
         VmError::CryptoErr {
             source: original,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn gas_depletion() -> Self {
         VmError::GasDepletion {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn generic_err(msg: impl Into<String>) -> Self {
         VmError::GenericErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn instantiation_err(msg: impl Into<String>) -> Self {
         VmError::InstantiationErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn integrity_err() -> Self {
         VmError::IntegrityErr {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -241,8 +167,7 @@ impl VmError {
         VmError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -250,8 +175,7 @@ impl VmError {
         VmError::DeserializationLimitExceeded {
             length,
             max_length,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -259,16 +183,14 @@ impl VmError {
         VmError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn resolve_err(msg: impl Into<String>) -> Self {
         VmError::ResolveErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -281,8 +203,7 @@ impl VmError {
             function_name: function_name.into(),
             expected,
             actual,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
@@ -292,41 +213,38 @@ impl VmError {
     fn runtime_err(msg: impl Into<String>) -> Self {
         VmError::RuntimeErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn static_validation_err(msg: impl Into<String>) -> Self {
         VmError::StaticValidationErr {
             msg: msg.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn uninitialized_context_data(kind: impl Into<String>) -> Self {
         VmError::UninitializedContextData {
             kind: kind.into(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn write_access_denied() -> Self {
         VmError::WriteAccessDenied {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 
     pub(crate) fn max_call_depth_exceeded() -> Self {
         VmError::MaxCallDepthExceeded {
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
+            backtrace: BT::capture(),
         }
     }
 }
+
+impl_from_err!(CommunicationError, VmError, VmError::CommunicationErr);
 
 impl From<BackendError> for VmError {
     fn from(original: BackendError) -> Self {
