@@ -8,6 +8,7 @@ pub struct BT(Box<dyn Printable>);
 impl BT {
     #[track_caller]
     pub fn capture() -> Self {
+        // in case of no_std, we can fill with a stub here
         #[cfg(target_arch = "wasm32")]
         return BT(Box::new(std::backtrace::Backtrace::disabled()));
         #[cfg(not(target_arch = "wasm32"))]
@@ -47,3 +48,22 @@ macro_rules! impl_from_err {
     };
 }
 pub(crate) use impl_from_err;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bt_works_without_std() {
+        #[derive(Debug)]
+        struct BacktraceStub;
+
+        impl Display for BacktraceStub {
+            fn fmt(&self, _f: &mut Formatter<'_>) -> Result {
+                Ok(())
+            }
+        }
+
+        _ = BT(Box::new(BacktraceStub));
+    }
+}
