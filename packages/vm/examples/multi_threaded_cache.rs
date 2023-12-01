@@ -55,13 +55,20 @@ pub fn main() {
                 .unwrap();
             println!("Done instantiating contract {i}");
 
-            let info = mock_info("creator", &coins(1000, "earth"));
-            let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let contract_result =
-                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+            let verifier = instance.api().addr_make("verifies");
+            let beneficiary = instance.api().addr_make("benefits");
+            let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+            let contract_result = call_instantiate::<_, _, _, Empty>(
+                &mut instance,
+                &mock_env(),
+                &info,
+                msg.as_bytes(),
+            )
+            .unwrap();
             assert!(contract_result.into_result().is_ok());
 
-            let info = mock_info("verifies", &coins(15, "earth"));
+            let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();

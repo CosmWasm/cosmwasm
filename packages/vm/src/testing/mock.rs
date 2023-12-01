@@ -71,7 +71,7 @@ impl MockApi {
     /// let mock_api = MockApi::default().with_prefix("juno");
     /// let addr = mock_api.addr_make("creator");
     ///
-    /// assert_eq!(addr, "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
+    /// assert_eq!(addr.as_str(), "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
     /// ```
     pub fn with_prefix(self, prefix: &'static str) -> Self {
         Self::Bech32 {
@@ -90,7 +90,7 @@ impl MockApi {
     /// let mock_api = MockApi::default();
     /// let addr = mock_api.addr_make("creator");
     ///
-    /// assert_eq!(addr, "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp");
+    /// assert_eq!(addr.as_str(), "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp");
     /// ```
     ///
     /// # Panics
@@ -275,24 +275,26 @@ mod tests {
     #[test]
     fn canonical_address_min_input_length() {
         let api = MockApi::default();
-        let human = "cosmwasm1pj90vm";
-        match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { msg } => {
-                assert!(msg.contains("address length"))
-            }
-            err => panic!("Unexpected error: {err:?}"),
-        }
+
+        // empty address should fail
+        let empty = "cosmwasm1pj90vm";
+        assert!(matches!(api
+            .canonical_address(empty)
+            .0
+            .unwrap_err(),
+            BackendError::UserErr { msg } if msg.contains("address length")));
     }
 
     #[test]
     fn canonical_address_max_input_length() {
         let api = MockApi::default();
-        let human = "longer-than-the-address-length-supported-by-this-api-longer-than-54";
-        match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { msg } => {
-                assert!(msg.contains("address length"))
-            }
-            err => panic!("Unexpected error: {err:?}"),
-        }
+
+        let too_long = "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
+
+        assert!(matches!(api
+            .canonical_address(too_long)
+            .0
+            .unwrap_err(),
+            BackendError::UserErr { msg } if msg.contains("address length")));
     }
 }
