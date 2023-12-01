@@ -469,7 +469,7 @@ mod tests {
         deps.querier
             .update_staking("ustake", &[sample_validator("john")], &[]);
 
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator").to_string();
         let msg = InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
@@ -503,7 +503,7 @@ mod tests {
             &[],
         );
 
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator").to_string();
         let msg = InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
@@ -546,7 +546,7 @@ mod tests {
         let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator").to_string();
         let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
@@ -555,7 +555,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = String::from("bob");
+        let bob = deps.api.addr_make("bob").to_string();
         let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
 
@@ -586,18 +586,18 @@ mod tests {
         let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator").to_string();
         let instantiate_msg = default_init(2, 50);
-        let info = mock_info(&creator, &[]);
+        let info = mock_info(creator.as_str(), &[]);
 
         // make sure we can instantiate with this
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = String::from("bob");
+        let bob = deps.api.addr_make("bob").to_string();
         let bond_msg = ExecuteMsg::Bond {};
-        let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
+        let info = mock_info(bob.as_str(), &[coin(10, "random"), coin(1000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
@@ -622,9 +622,9 @@ mod tests {
         assert_eq!(invest.nominal_value, ratio);
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
-        let alice = String::from("alice");
+        let alice = deps.api.addr_make("alice").to_string();
         let bond_msg = ExecuteMsg::Bond {};
-        let info = mock_info(&alice, &[coin(3000, "ustake")]);
+        let info = mock_info(alice.as_str(), &[coin(3000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
@@ -632,7 +632,10 @@ mod tests {
         set_delegation(&mut deps.querier, 3000, "ustake");
 
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
-        assert_eq!(get_balance(deps.as_ref(), &alice), Uint128::new(2000));
+        assert_eq!(
+            get_balance(deps.as_ref(), alice.as_str()),
+            Uint128::new(2000)
+        );
 
         let invest = query_investment(deps.as_ref()).unwrap();
         assert_eq!(invest.token_supply, Uint128::new(3000));
@@ -645,18 +648,18 @@ mod tests {
         let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator").to_string();
         let instantiate_msg = default_init(2, 50);
-        let info = mock_info(&creator, &[]);
+        let info = mock_info(creator.as_str(), &[]);
 
         // make sure we can instantiate with this
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = String::from("bob");
+        let bob = deps.api.addr_make("bob").to_string();
         let bond_msg = ExecuteMsg::Bond {};
-        let info = mock_info(&bob, &[coin(500, "photon")]);
+        let info = mock_info(bob.as_str(), &[coin(500, "photon")]);
 
         // try to bond and make sure we trigger delegation
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg);
@@ -673,18 +676,18 @@ mod tests {
         let mut deps = mock_dependencies();
         set_validator(&mut deps.querier);
 
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator").to_string();
         let instantiate_msg = default_init(10, 50);
-        let info = mock_info(&creator, &[]);
+        let info = mock_info(creator.as_str(), &[]);
 
         // make sure we can instantiate with this
         let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = String::from("bob");
+        let bob = deps.api.addr_make("bob").to_string();
         let bond_msg = ExecuteMsg::Bond {};
-        let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
+        let info = mock_info(bob.as_str(), &[coin(10, "random"), coin(1000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
@@ -707,7 +710,7 @@ mod tests {
         let unbond_msg = ExecuteMsg::Unbond {
             amount: Uint128::new(600),
         };
-        let info = mock_info(&creator, &[]);
+        let info = mock_info(creator.as_str(), &[]);
         let res = execute(deps.as_mut(), mock_env(), info, unbond_msg);
         match res.unwrap_err() {
             StakingError::Std {
@@ -725,7 +728,7 @@ mod tests {
         let owner_cut = Uint128::new(60);
         let bobs_claim = Uint128::new(810);
         let bobs_balance = Uint128::new(400);
-        let info = mock_info(&bob, &[]);
+        let info = mock_info(bob.as_str(), &[]);
         let res = execute(deps.as_mut(), mock_env(), info, unbond_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let delegate = &res.messages[0].msg;
@@ -741,10 +744,10 @@ mod tests {
         set_delegation(&mut deps.querier, 690, "ustake");
 
         // check balances
-        assert_eq!(get_balance(deps.as_ref(), &bob), bobs_balance);
-        assert_eq!(get_balance(deps.as_ref(), &creator), owner_cut);
+        assert_eq!(get_balance(deps.as_ref(), bob.as_str()), bobs_balance);
+        assert_eq!(get_balance(deps.as_ref(), creator.as_str()), owner_cut);
         // proper claims
-        assert_eq!(get_claims(deps.as_ref(), &bob), bobs_claim);
+        assert_eq!(get_claims(deps.as_ref(), bob.as_str()), bobs_claim);
 
         // supplies updated, ratio the same (1.5)
         let ratio = Decimal::from_str("1.5").unwrap();

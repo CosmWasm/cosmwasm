@@ -139,6 +139,7 @@ fn enforce_version_in_handshake() {
 fn proper_handshake_flow() {
     let mut deps = setup();
     let channel_id = "channel-432";
+    let reflect_addr = deps.api().addr_make(REFLECT_ADDR);
 
     // first we try to open with a valid handshake
     let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_APP_VERSION);
@@ -179,7 +180,7 @@ fn proper_handshake_flow() {
         id,
         gas_used: 1234567,
         result: SubMsgResult::Ok(SubMsgResponse {
-            events: fake_events(REFLECT_ADDR),
+            events: fake_events(reflect_addr.as_str()),
             msg_responses: vec![],
             data: None,
         }),
@@ -194,7 +195,7 @@ fn proper_handshake_flow() {
     assert_eq!(
         &res.accounts[0],
         &AccountInfo {
-            account: REFLECT_ADDR.into(),
+            account: reflect_addr.to_string(),
             channel_id: channel_id.to_string(),
         }
     );
@@ -209,7 +210,7 @@ fn proper_handshake_flow() {
     )
     .unwrap();
     let res: AccountResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
-    assert_eq!(res.account.unwrap(), REFLECT_ADDR);
+    assert_eq!(res.account.unwrap(), reflect_addr.as_str());
 }
 
 #[test]
@@ -217,7 +218,7 @@ fn handle_dispatch_packet() {
     let mut deps = setup();
 
     let channel_id = "channel-123";
-    let account = "acct-123";
+    let account = deps.api().addr_make("acct-123");
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
     let msgs_to_dispatch = vec![BankMsg::Send {
@@ -246,7 +247,7 @@ fn handle_dispatch_packet() {
     );
 
     // register the channel
-    connect(&mut deps, channel_id, account);
+    connect(&mut deps, channel_id, &account);
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
     let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();

@@ -152,15 +152,17 @@ fn transfer() {
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
-    let new_owner = String::from("friend");
-    let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
+    let new_owner = deps.api().addr_make("friend");
+    let msg = ExecuteMsg::ChangeOwner {
+        owner: new_owner.to_string(),
+    };
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
     let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
     let value: OwnerResponse = from_json(res).unwrap();
-    assert_eq!("friend", value.owner.as_str());
+    assert_eq!(value.owner, new_owner.as_str());
 }
 
 #[test]

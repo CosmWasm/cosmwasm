@@ -25,9 +25,9 @@ use cosmwasm_vm::{
     call_execute, from_slice,
     testing::{
         execute, instantiate, migrate, mock_env, mock_info, mock_instance,
-        mock_instance_with_balances, query, sudo, test_io, MOCK_CONTRACT_ADDR,
+        mock_instance_with_balances, query, sudo, test_io, MockApi, MOCK_CONTRACT_ADDR,
     },
-    Storage, VmError,
+    Instance, Querier, Storage, VmError,
 };
 
 use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
@@ -37,10 +37,12 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/ha
 
 const DESERIALIZATION_LIMIT: usize = 20_000;
 
-fn make_init_msg() -> (InstantiateMsg, String) {
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
-    let creator = String::from("creator");
+fn make_init_msg<S: Storage + 'static, Q: Querier + 'static>(
+    deps: &Instance<MockApi, S, Q>,
+) -> (InstantiateMsg, String) {
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator").to_string();
     (
         InstantiateMsg {
             verifier,
@@ -55,9 +57,9 @@ fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
     assert_eq!(deps.required_capabilities().len(), 0);
 
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
-    let creator = String::from("creator");
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator").to_string();
     let expected_state = State {
         verifier: Addr::unchecked(&verifier),
         beneficiary: Addr::unchecked(&beneficiary),
@@ -91,11 +93,11 @@ fn proper_initialization() {
 fn instantiate_and_query() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
-    let creator = String::from("creator");
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator").to_string();
     let msg = InstantiateMsg {
-        verifier,
+        verifier: verifier.clone(),
         beneficiary,
     };
     let info = mock_info(&creator, &coins(1000, "earth"));
@@ -104,7 +106,10 @@ fn instantiate_and_query() {
 
     // now let's query
     let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
-    assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    assert_eq!(
+        query_response,
+        format!("{{\"verifier\":\"{verifier}\"}}").as_bytes()
+    );
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, mock_env(), ExecuteMsg::Release {});
@@ -116,11 +121,11 @@ fn instantiate_and_query() {
 fn migrate_verifier() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
-    let creator = String::from("creator");
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator").to_string();
     let msg = InstantiateMsg {
-        verifier,
+        verifier: verifier.clone(),
         beneficiary,
     };
     let info = mock_info(&creator, &[]);
@@ -129,11 +134,15 @@ fn migrate_verifier() {
 
     // check it is 'verifies'
     let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
-    assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    assert_eq!(
+        query_response,
+        format!("{{\"verifier\":\"{verifier}\"}}").as_bytes()
+    );
 
     // change the verifier via migrate
+    let someone_else = deps.api().addr_make("someone else").to_string();
     let msg = MigrateMsg {
-        verifier: String::from("someone else"),
+        verifier: someone_else.clone(),
     };
     let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
     assert_eq!(0, res.messages.len());
@@ -141,8 +150,8 @@ fn migrate_verifier() {
     // check it is 'someone else'
     let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
     assert_eq!(
-        query_response.as_slice(),
-        b"{\"verifier\":\"someone else\"}"
+        query_response,
+        format!("{{\"verifier\":\"{someone_else}\"}}").as_bytes()
     );
 }
 
@@ -150,9 +159,9 @@ fn migrate_verifier() {
 fn sudo_can_steal_tokens() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
-    let creator = String::from("creator");
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator").to_string();
     let msg = InstantiateMsg {
         verifier,
         beneficiary,
@@ -162,7 +171,7 @@ fn sudo_can_steal_tokens() {
     assert_eq!(0, res.messages.len());
 
     // sudo takes any tax it wants
-    let to_address = String::from("community-pool");
+    let to_address = deps.api().addr_make("community-pool").to_string();
     let amount = coins(700, "gold");
     let sys_msg = SudoMsg::StealFunds {
         recipient: to_address.clone(),
@@ -176,7 +185,7 @@ fn sudo_can_steal_tokens() {
 
 #[test]
 fn querier_callbacks_work() {
-    let rich_addr = String::from("foobar");
+    let rich_addr = String::from("cosmwasm1qqvk2mde");
     let rich_balance = coins(10000, "gold");
     let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr, &rich_balance)]);
 
@@ -211,9 +220,9 @@ fn execute_release_works() {
     let mut deps = mock_instance(WASM, &[]);
 
     // initialize the store
-    let creator = String::from("creator");
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
+    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
 
     let instantiate_msg = InstantiateMsg {
         verifier: verifier.clone(),
@@ -241,13 +250,13 @@ fn execute_release_works() {
     assert_eq!(
         msg,
         &SubMsg::new(BankMsg::Send {
-            to_address: beneficiary,
+            to_address: beneficiary.clone(),
             amount: coins(1000, "earth"),
         }),
     );
     assert_eq!(
         execute_res.attributes,
-        vec![("action", "release"), ("destination", "benefits")],
+        vec![("action", "release"), ("destination", beneficiary.as_str())],
     );
     assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
 }
@@ -257,9 +266,9 @@ fn execute_release_fails_for_wrong_sender() {
     let mut deps = mock_instance(WASM, &[]);
 
     // initialize the store
-    let creator = String::from("creator");
-    let verifier = String::from("verifies");
-    let beneficiary = String::from("benefits");
+    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies").to_string();
+    let beneficiary = deps.api().addr_make("benefits").to_string();
 
     let instantiate_msg = InstantiateMsg {
         verifier: verifier.clone(),
@@ -310,7 +319,7 @@ fn execute_release_fails_for_wrong_sender() {
 fn execute_cpu_loop() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let (instantiate_msg, creator) = make_init_msg();
+    let (instantiate_msg, creator) = make_init_msg(&deps);
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
@@ -332,7 +341,7 @@ fn execute_cpu_loop() {
 fn execute_storage_loop() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let (instantiate_msg, creator) = make_init_msg();
+    let (instantiate_msg, creator) = make_init_msg(&deps);
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
@@ -354,7 +363,7 @@ fn execute_storage_loop() {
 fn execute_memory_loop() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let (instantiate_msg, creator) = make_init_msg();
+    let (instantiate_msg, creator) = make_init_msg(&deps);
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
@@ -379,7 +388,7 @@ fn execute_memory_loop() {
 fn execute_allocate_large_memory() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let (instantiate_msg, creator) = make_init_msg();
+    let (instantiate_msg, creator) = make_init_msg(&deps);
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
@@ -435,7 +444,7 @@ fn execute_allocate_large_memory() {
 fn execute_panic() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let (instantiate_msg, creator) = make_init_msg();
+    let (instantiate_msg, creator) = make_init_msg(&deps);
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
@@ -466,7 +475,7 @@ fn execute_panic() {
 fn execute_user_errors_in_api_calls() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let (instantiate_msg, creator) = make_init_msg();
+    let (instantiate_msg, creator) = make_init_msg(&deps);
     let init_info = mock_info(creator.as_str(), &[]);
     let _init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
