@@ -40,9 +40,9 @@ const DESERIALIZATION_LIMIT: usize = 20_000;
 fn make_init_msg<S: Storage + 'static, Q: Querier + 'static>(
     deps: &Instance<MockApi, S, Q>,
 ) -> (InstantiateMsg, String) {
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
-    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
+    let creator = deps.api().addr_make("creator");
     (
         InstantiateMsg {
             verifier,
@@ -57,9 +57,9 @@ fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
     assert_eq!(deps.required_capabilities().len(), 0);
 
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
-    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
+    let creator = deps.api().addr_make("creator");
     let expected_state = State {
         verifier: Addr::unchecked(&verifier),
         beneficiary: Addr::unchecked(&beneficiary),
@@ -93,9 +93,9 @@ fn proper_initialization() {
 fn instantiate_and_query() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
-    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
+    let creator = deps.api().addr_make("creator");
     let msg = InstantiateMsg {
         verifier: verifier.clone(),
         beneficiary,
@@ -121,9 +121,9 @@ fn instantiate_and_query() {
 fn migrate_verifier() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
-    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
+    let creator = deps.api().addr_make("creator");
     let msg = InstantiateMsg {
         verifier: verifier.clone(),
         beneficiary,
@@ -140,7 +140,7 @@ fn migrate_verifier() {
     );
 
     // change the verifier via migrate
-    let someone_else = deps.api().addr_make("someone else").to_string();
+    let someone_else = deps.api().addr_make("someone else");
     let msg = MigrateMsg {
         verifier: someone_else.clone(),
     };
@@ -159,9 +159,9 @@ fn migrate_verifier() {
 fn sudo_can_steal_tokens() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
-    let creator = deps.api().addr_make("creator").to_string();
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
+    let creator = deps.api().addr_make("creator");
     let msg = InstantiateMsg {
         verifier,
         beneficiary,
@@ -171,7 +171,7 @@ fn sudo_can_steal_tokens() {
     assert_eq!(0, res.messages.len());
 
     // sudo takes any tax it wants
-    let to_address = deps.api().addr_make("community-pool").to_string();
+    let to_address = deps.api().addr_make("community-pool");
     let amount = coins(700, "gold");
     let sys_msg = SudoMsg::StealFunds {
         recipient: to_address.clone(),
@@ -220,9 +220,9 @@ fn execute_release_works() {
     let mut deps = mock_instance(WASM, &[]);
 
     // initialize the store
-    let creator = deps.api().addr_make("creator").to_string();
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator");
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
 
     let instantiate_msg = InstantiateMsg {
         verifier: verifier.clone(),
@@ -266,9 +266,9 @@ fn execute_release_fails_for_wrong_sender() {
     let mut deps = mock_instance(WASM, &[]);
 
     // initialize the store
-    let creator = deps.api().addr_make("creator").to_string();
-    let verifier = deps.api().addr_make("verifies").to_string();
-    let beneficiary = deps.api().addr_make("benefits").to_string();
+    let creator = deps.api().addr_make("creator");
+    let verifier = deps.api().addr_make("verifies");
+    let beneficiary = deps.api().addr_make("benefits");
 
     let instantiate_msg = InstantiateMsg {
         verifier: verifier.clone(),
