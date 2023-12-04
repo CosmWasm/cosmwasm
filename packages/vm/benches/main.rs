@@ -58,8 +58,13 @@ fn bench_instance(c: &mut Criterion) {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let contract_result =
-                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let contract_result = call_instantiate::<_, _, _, Empty>(
+                &mut instance,
+                &mock_env(),
+                &info,
+                msg.as_bytes(),
+            )
+            .unwrap();
             assert!(contract_result.into_result().is_ok());
         });
     });
@@ -77,7 +82,8 @@ fn bench_instance(c: &mut Criterion) {
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
         let contract_result =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+                .unwrap();
         assert!(contract_result.into_result().is_ok());
 
         b.iter(|| {

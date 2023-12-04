@@ -934,7 +934,8 @@ mod tests {
         #[test]
         fn call_ibc_channel_close_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
-            setup(&mut instance, CHANNEL_ID, ACCOUNT);
+            let account = instance.api().addr_make(ACCOUNT);
+            setup(&mut instance, CHANNEL_ID, &account);
             let handshake_close =
                 mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
             call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)

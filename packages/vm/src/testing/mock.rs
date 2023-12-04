@@ -151,7 +151,7 @@ impl BackendApi for MockApi {
             MockApi::Bech32 { bech32_prefix } => *bech32_prefix,
         };
 
-        try_br!((validate_length(canonical.as_ref()), gas_info));
+        try_br!((validate_length(canonical), gas_info));
 
         let result = encode(bech32_prefix, canonical.to_base32(), Variant::Bech32)
             .map_err(|_| BackendError::user_err("Invalid canonical address"));
@@ -249,7 +249,7 @@ mod tests {
 
         // normalizes input
         let original = "JUNO1MEPRU9FUQ4E65856ARD6068MFSFRWPGEMD0C3R";
-        let canonical = api.canonical_address(&original).0.unwrap();
+        let canonical = api.canonical_address(original).0.unwrap();
         let recovered = api.human_address(&canonical).0.unwrap();
         assert_eq!(recovered, original.to_lowercase());
 
