@@ -2318,6 +2318,19 @@ mod tests {
     }
 
     #[test]
+    fn colon_in_prefix_is_valid() {
+        let mock_api = MockApi::default().with_prefix("did:com:");
+        let addr = mock_api
+            .addr_validate("did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu")
+            .unwrap();
+
+        assert_eq!(
+            addr.as_str(),
+            "did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu"
+        );
+    }
+
+    #[test]
     #[should_panic(expected = "Generating address failed with reason: invalid length")]
     fn making_an_address_with_empty_prefix_should_panic() {
         MockApi::default().with_prefix("").addr_make("creator");

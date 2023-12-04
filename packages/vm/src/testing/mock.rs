@@ -297,4 +297,19 @@ mod tests {
             .unwrap_err(),
             BackendError::UserErr { msg } if msg.contains("address length")));
     }
+
+    #[test]
+    fn colon_in_prefix_is_valid() {
+        let mock_api = MockApi::default().with_prefix("did:com:");
+        let bytes = mock_api
+            .canonical_address("did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu")
+            .0
+            .unwrap();
+        let humanized = mock_api.human_address(&bytes).0.unwrap();
+
+        assert_eq!(
+            humanized.as_str(),
+            "did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu"
+        );
+    }
 }
