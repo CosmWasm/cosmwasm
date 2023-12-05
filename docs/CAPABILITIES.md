@@ -1,27 +1,19 @@
-# Capabilities
+# Overview
+**Capabilities** in CosmosWasm are a fundamental concept, designed to facilitate the interaction between a smart contract and its operational environment (i.e., the blockchain implementing the cosmwasm-vm or [wasmvm]). This mechanism operates by matching the capabilities required by a contract with those offered by the environment.
 
-Capabilities are a mechanism to negotiate functionality between a contract and
-an environment (i.e. the chain that embeds cosmwasm-vm/[wasmvm]) in a very
-primitive way. The contract defines required capabilities. The environment
-defines it's capabilities. If the required capabilities are all available, the
-contract can be used. Doing this check when the contract is first stored ensures
-missing capabilities are detected early and not when a user tries to execute a
-certain code path.
+# The Essence of Capabilities
+**Purpose:** They serve as a negotiation tool, ensuring that a contract only operates in an environment where all its necessary functionalities are present.
+**Early Detection:** By verifying capabilities when a contract is first stored, any discrepancies or missing capabilities are identified early. This preemptive approach prevents potential runtime failures during execution.
 
-## Origin and Disambiguation
+# Historical Context: Origin and Disambiguation
+**Prior to August 2022:** The term "features" was used ambiguously to describe both app-level features in the CosmWasm VM and features in Cargo's build system.
++**Redefinition:** To mitigate this confusion, app-level features in the CosmWasm VM were renamed to "capabilities," distinguishing them from Cargo's build system features.
++**Language Independence:** Unlike Rust-specific features, capabilities can be implemented in any language that compiles to Wasm, broadening their applicability.
 
-Before August 2022, we had two types of "features": app level features in the
-CosmWasm VM and Cargo's build system features. In order to avoid the confusion,
-the former have been renamed to capabilities.
-
-Capabilities can be implemented in any language that compiles to Wasm whereas
-features are Rust build system specific.
-
-## Required capabilities
-
-The contract defines required capabilities using marker export functions that
-take no arguments and return no value. The name of the export needs to start
-with "requires\_" followed by the name of the capability.
+# Defining Required Capabilities
+## Implementation
+**Marker Export Functions:** Contracts specify required capabilities using these functions, which have no arguments and return no value.
+**Naming Convention:** The export name begins with "requires\_" followed by the capability name, establishing a clear and standardized method for declaration.
 
 An example of such markers in cosmwasm-std are those:
 
