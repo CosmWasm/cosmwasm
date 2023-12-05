@@ -1,17 +1,21 @@
 # Storage keys
 
-CosmWasm provides a generic key value store to contract developers via the
-`Storage` trait. This is powerful but the nature of low level byte operations
-makes it hard to use for high level storage types. In this document we discuss
-the foundations of storage key composition all the way up to cw-storage-plus.
+CosmWasm introduces a versatile key-value store accessible to contract developers
+through the `Storage` trait. This low-level byte operation-based system, while powerful, 
+can be challenging for managing high-level storage types. This documentation explores 
+the evolution of storage key composition in CosmWasm, leading up to the current 
+implementation in cw-storage-plus.
 
-In a simple world, all you need is a `&[u8]` key which you can get e.g. using
-`&17u64.to_be_bytes()`. This is an 8 bytes key with an encoded integer. But if
-you have multiple data types in your contract, you want to prefix those keys in
-order to avoid collisions. A simple concatenation is not sufficient because you
-want to avoid collisions when part of the prefixes and part of the key overlap.
-E.g. `b"keya" | b"x"` and `b"key" | b"ax"` (`|` denotes concatenation) must not
-have the same binary representation.
+# The Challenge of Key Composition
+
+The fundamental requirement for storage keys in CosmWasm is a `&[u8]` key, which
+can be derived from basic types like integers (e.g., `&17u64.to_be_bytes()`). 
+However, when handling various data types within a contract, it's crucial to 
+use prefixed keys to prevent data collisions. 
+Simple concatenation of keys is insufficient due to potential overlap issues. 
+For instance, `b"keya" | b"x"` and `b"key" | b"ax"` should not yield the same binary representation, where | denotes concatenation.
+
+# Evolution of Key Namespacing
 
 In the early days, multiple approaches of key namespacing were discussed and
 were documented here: https://github.com/webmaster128/key-namespacing. The "0x00
@@ -39,12 +43,11 @@ pub fn to_length_prefixed_nested(namespaces: &[&[u8]]) -> Vec<u8>
 fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8>
 ```
 
-With the emerging cw-storage-plus we see two additions to that approach:
+# Transition to `cw-storage-plus`
+With the introduction of cw-storage-plus, there were significant enhancements:
 
-1. Manually creating the namespace and concatenating it with `concat` makes no
-   sense anymore. Instead `namespace` and `key` are always provided and a
-   composed database key is created.
-2. Using a multi component namespace becomes the norm.
+1. **Simplified Key Composition:** The manual creation of namespaces followed by concatenation using concat was replaced by a more integrated approach, where namespace and key are provided together to create a composed database key.
+2. **Multi-component Namespaces:** Using multiple components in a namespace became commonplace.
 
 This led to the following addition in cw-storage-plus:
 
@@ -68,14 +71,10 @@ With the deprecation if cosmwasm-storage and the adoption of the system in
 cw-storage-plus, it is time to do a few changes to the Length-prefixed keys
 standard, without breaking existing users.
 
-1. Remove the single component `to_length_prefixed` implementation and fully
-   commit to the multi-component version. This shifts focus from the recursive
-   implementation to the compatible iterative implementation.
-2. Rename "namespaces" to just "namespace" and let one namespace have multiple
-   components.
-3. Adopt the combined namespace + key encoder `namespaces_with_key` from
-   cw-storage-plus.
-4. Add a decomposition implementation
+1. **Removal of Single Component Implementation:** The `to_length_prefixed` single-component version will be deprecated in favor of the multi-component `to_length_prefixed_nested` approach.
+2. **Terminology Adjustment:** The term "namespaces" will be simplified to "namespace", encompassing multiple components.
+3. **Adoption of Combined Encoder:** The `namespaces_with_key` function from `cw-storage-plus` will be the standard for key encoding.
+4. **Decomposition Feature:** Introduction of a feature to decompose keys for enhanced flexibility.
 
 Given the importance of Length-prefixed keys for the entire CosmWasm ecosystem,
 those implementations should be maintained in cosmwasm-std. The generic approach
