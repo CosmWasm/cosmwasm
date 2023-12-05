@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::addresses::Addr;
 use crate::coin::Coin;
 use crate::timestamp::Timestamp;
-
+///Holds the environmental information of the contract's execution context, like block info and transaction details.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
     pub block: BlockInfo,
@@ -14,7 +14,7 @@ pub struct Env {
     pub transaction: Option<TransactionInfo>,
     pub contract: ContractInfo,
 }
-
+/// Contains information about a transaction, like its ID and other relevant data.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
@@ -25,7 +25,7 @@ pub struct TransactionInfo {
     ///
     pub index: u32,
 }
-
+/// Represents information about a specific blockchain block, such as its height, timestamp, and other relevant data.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
@@ -104,7 +104,7 @@ pub struct MessageInfo {
     /// is executed such that the new balance is visible during contract execution.
     pub funds: Vec<Coin>,
 }
-
+///Stores information about a smart contract, like its creator, admin, and other relevant details.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfo {
     pub address: Addr,

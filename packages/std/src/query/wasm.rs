@@ -30,7 +30,7 @@ pub enum WasmQuery {
     #[cfg(feature = "cosmwasm_1_2")]
     CodeInfo { code_id: u64 },
 }
-
+/// A response format that provides detailed information about a contract.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct ContractInfoResponse {

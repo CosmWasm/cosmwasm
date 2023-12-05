@@ -50,7 +50,7 @@ pub enum IbcMsg {
     /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
 }
-
+///Details about an IBC endpoint, including its port and channel information.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcEndpoint {
     pub port_id: String,
@@ -192,7 +192,7 @@ impl Ord for IbcTimeoutBlock {
         }
     }
 }
-
+///Struct representing an IBC packet, which contains data transferred across different blockchains.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcPacket {
@@ -225,7 +225,7 @@ impl IbcPacket {
         }
     }
 }
-
+///Represents an acknowledgement message in the IBC protocol.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcAcknowledgement {
@@ -304,6 +304,7 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///A response format for IBC channel open queries, providing details about the channel's status.
 pub struct Ibc3ChannelOpenResponse {
     /// We can set the channel version to a different one than we were called with
     pub version: String,
@@ -411,7 +412,7 @@ impl IbcPacketReceiveMsg {
     }
 }
 
-/// The message that is passed into `ibc_packet_ack`
+///  Message format used when acknowledging the receipt of an IBC packet.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcPacketAckMsg {
@@ -456,6 +457,7 @@ impl IbcPacketTimeoutMsg {
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///A general response structure for IBC handler operations, used when a specific response format isn't required.
 #[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.

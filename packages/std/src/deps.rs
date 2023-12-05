@@ -15,13 +15,13 @@ pub struct OwnedDeps<S: Storage, A: Api, Q: Querier, C: CustomQuery = Empty> {
     pub querier: Q,
     pub custom_query_type: PhantomData<C>,
 }
-
+/// A mutable version of `Deps` that allows changes to the dependencies.
 pub struct DepsMut<'a, C: CustomQuery = Empty> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,
     pub querier: QuerierWrapper<'a, C>,
 }
-
+/// Represents dependencies required by a contract for execution, like storage and API access.
 #[derive(Clone)]
 pub struct Deps<'a, C: CustomQuery = Empty> {
     pub storage: &'a dyn Storage,

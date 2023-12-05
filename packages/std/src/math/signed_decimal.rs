@@ -26,7 +26,7 @@ use super::Int128;
 pub struct SignedDecimal(#[schemars(with = "String")] Int128);
 
 forward_ref_partial_eq!(SignedDecimal, SignedDecimal);
-
+///Similar to `SignedDecimal256RangeExceeded`, but for standard `SignedDecimal` operations.
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("SignedDecimal range exceeded")]
 pub struct SignedDecimalRangeExceeded;

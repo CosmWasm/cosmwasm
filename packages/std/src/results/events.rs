@@ -13,6 +13,7 @@ use crate::forward_ref_partial_eq;
 /// [*Cosmos SDK* StringEvent]: https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
+///Represents a full event in the Cosmos SDK, used for logging and tracking contract activities.
 pub struct Event {
     /// The event type. This is renamed to "ty" because "type" is reserved in Rust. This sucks, we know.
     #[serde(rename = "type")]

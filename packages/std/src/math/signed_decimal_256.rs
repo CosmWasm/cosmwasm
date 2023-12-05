@@ -31,7 +31,7 @@ use super::Int256;
 pub struct SignedDecimal256(#[schemars(with = "String")] Int256);
 
 forward_ref_partial_eq!(SignedDecimal256, SignedDecimal256);
-
+/// Indicates an error when a SignedDecimal256 operation exceeds its range.
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("SignedDecimal256 range exceeded")]
 pub struct SignedDecimal256RangeExceeded;

@@ -12,6 +12,7 @@ use crate::{Binary, StdError, StdResult};
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+///A wrapper around a vector (Vec) for hex-encoded binary data, supporting encoding and decoding operations.
 pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
 
 impl HexBinary {

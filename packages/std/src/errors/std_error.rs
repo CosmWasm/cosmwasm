@@ -415,7 +415,7 @@ impl fmt::Display for OverflowOperation {
         write!(f, "{self:?}")
     }
 }
-
+///An error struct used when a numeric operation results in an overflow.
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Cannot {operation} with given operands")]
 pub struct OverflowError {
@@ -449,7 +449,7 @@ impl ConversionOverflowError {
         }
     }
 }
-
+///An error struct used when a division operation in a contract attempts to divide by zero.
 #[derive(Error, Debug, Default, PartialEq, Eq)]
 #[error("Cannot divide by zero")]
 pub struct DivideByZeroError;

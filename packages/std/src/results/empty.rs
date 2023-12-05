@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
+///An error struct used when a division operation in a contract attempts to divide by zero.
 pub struct Empty {}
 
 #[cfg(test)]

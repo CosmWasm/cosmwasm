@@ -194,7 +194,7 @@ pub trait Querier {
     /// helper methods
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 }
-
+/// A wrapper struct that enables querying blockchain state from within a contract.
 #[derive(Clone)]
 pub struct QuerierWrapper<'a, C: CustomQuery = Empty> {
     querier: &'a dyn Querier,
