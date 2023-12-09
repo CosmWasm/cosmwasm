@@ -64,7 +64,7 @@ impl QueryResponseType for BalanceResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-///A response structure that contains all balances for a query, 
+///A response structure that contains all balances for a query,
 ///typically used in balance-related requests.
 #[non_exhaustive]
 pub struct AllBalanceResponse {

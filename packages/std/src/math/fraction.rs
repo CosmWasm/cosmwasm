@@ -31,7 +31,7 @@ impl<T: Copy + From<u8> + PartialEq> Fraction<T> for (T, T) {
         }
     }
 }
-//Adds a function to a type that allows you to multiply instances of that type by a fraction. 
+//Adds a function to a type that allows you to multiply instances of that type by a fraction.
 //It's useful for calculations involving fractional multiplication.
 #[macro_export]
 macro_rules! impl_mul_fraction {
