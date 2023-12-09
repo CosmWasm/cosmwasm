@@ -8,7 +8,8 @@ use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
 
 use super::query_response::QueryResponseType;
-
+///Defines the types of queries that can be made to the bank module.
+///This includes queries for account balances, transaction history, etc.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

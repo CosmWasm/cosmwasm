@@ -29,6 +29,8 @@ use serde::{Deserialize, Serialize};
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
+/// The final result type for contract calls (init/execute/migrate).
+/// Used by the VM to differentiate between successful and failed executions.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {

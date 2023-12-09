@@ -19,7 +19,8 @@ use super::Empty;
 pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema {}
 
 impl CustomMsg for Empty {}
-
+/// Enumerates the various message types within the Cosmos ecosystem.
+/// Covers a range of transaction and operation types.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -41,7 +42,8 @@ pub enum CosmosMsg<T = Empty> {
     Gov(GovMsg),
 }
 
-/// The message types of the bank module.
+/// Represents the different types of messages processed by the bank module.
+/// These messages could include actions like transfers and account updates.
 ///
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto
 #[non_exhaustive]
@@ -62,7 +64,7 @@ pub enum BankMsg {
     Burn { amount: Vec<Coin> },
 }
 
-/// The message types of the staking module.
+/// Message types for the staking module, covering actions like delegation and reward collection.
 ///
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto
 #[cfg(feature = "staking")]
@@ -85,7 +87,8 @@ pub enum StakingMsg {
     },
 }
 
-/// The message types of the distribution module.
+/// Defines the message types used within the distribution module.
+/// These messages typically involve operations like reward distribution.
 ///
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto
 #[cfg(feature = "staking")]
@@ -291,6 +294,8 @@ pub enum WasmMsg {
 ///     }))
 /// }
 /// ```
+/// Message types for interacting with the governance module.
+/// Allows contracts to cast votes and participate in governance processes.
 #[cfg(feature = "stargate")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

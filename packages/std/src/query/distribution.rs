@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::{Addr, Decimal256};
 
 use super::query_response::QueryResponseType;
-
+/// Query types for interacting with the distribution module.
+/// Queries might include requests for reward information or distribution parameters.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

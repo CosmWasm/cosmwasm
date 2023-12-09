@@ -5,9 +5,8 @@ use crate::Binary;
 
 use super::{CosmosMsg, Empty, Event};
 
-/// Use this to define when the contract gets a response callback.
-/// If you only need it for errors or success you can select just those in order
-/// to save gas.
+/// Specifies when a contract receives a callback response.
+/// Useful for optimizing gas usage and tailoring response handling.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ReplyOn {

@@ -393,13 +393,13 @@ impl From<DivideByZeroError> for StdError {
     }
 }
 
-/// The return type for init, execute and query. Since the error type cannot be serialized to JSON,
-/// this is only available within the contract and its unit tests.
-///
-/// The prefix "Std" means "the standard result within the standard library". This is not the only
-/// result/error type in cosmwasm-std.
+/// `StdResult` is typically used in scenarios where a function within the contract needs to return a result or indicate an error
+/// that is specific to the contract's internal operations. Since the error component of `StdResult` is not meant for JSON serialization,
+/// it should be used with caution when designing functions that interact with external systems or data formats.
 pub type StdResult<T> = core::result::Result<T, StdError>;
-
+/// Indicates operations that are prone to overflow.
+/// Used to mark numerical operations where overflow checks are necessary.
+enum OverflowOperation {
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum OverflowOperation {
     Add,
@@ -468,7 +468,8 @@ pub enum DivisionError {
     #[error("Overflow in division")]
     Overflow,
 }
-
+/// Errors that occur when multiplying a value by a ratio in a checked manner.
+/// Ensures precision and overflow safety in the operation.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyFractionError {
     #[error("{0}")]
@@ -480,7 +481,8 @@ pub enum CheckedMultiplyFractionError {
     #[error("{0}")]
     Overflow(#[from] OverflowError),
 }
-
+/// Represents errors during safe multiplication of a number by a fraction.
+/// Ensures accuracy and overflow prevention in calculations.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyRatioError {
     #[error("Denominator must not be zero")]
@@ -489,7 +491,8 @@ pub enum CheckedMultiplyRatioError {
     #[error("Multiplication overflow")]
     Overflow,
 }
-
+/// Errors that occur when safely converting from a ratio type.
+/// Ensures mathematical accuracy and prevents potential overflow issues.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedFromRatioError {
     #[error("Denominator must not be zero")]
@@ -506,7 +509,8 @@ pub struct RoundUpOverflowError;
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Round down operation failed because of overflow")]
 pub struct RoundDownOverflowError;
-
+/// General errors related to operations with coins,
+/// such as invalid amounts or unsupported denominations.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CoinsError {
     #[error("Duplicate denom")]
@@ -518,7 +522,8 @@ impl From<CoinsError> for StdError {
         Self::generic_err(format!("Creating Coins: {value}"))
     }
 }
-
+/// Errors encountered when parsing coin values from strings.
+/// Ensures that coin strings are in the correct format and valid.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CoinFromStrError {
     #[error("Missing denominator")]

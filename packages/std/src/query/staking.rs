@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::{Addr, Coin, Decimal};
 
 use super::query_response::QueryResponseType;
-
+/// Query types for interacting with the staking module.
+/// Includes queries for delegation status and staking rewards.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

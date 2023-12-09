@@ -36,7 +36,9 @@ pub use distribution::*;
 pub use ibc::*;
 pub use staking::*;
 pub use wasm::*;
-
+/// Enumerates different types of query requests.
+/// Facilitates data retrieval from various modules or contracts in a structured manner.
+enum QueryRequest {
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

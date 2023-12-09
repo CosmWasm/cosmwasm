@@ -1,17 +1,15 @@
-/// Never can never be instantiated. This can be used in places
-/// where we want to ensure that no error is returned, such as
-/// the `ibc_packet_receive` entry point.
+/// `Never` represents a type that can never be instantiated.
+/// It's primarily used in contexts where it's important to signify that an error cannot occur.
+/// For example, it can be used in the `ibc_packet_receive` entry point to indicate
+/// that no error is expected to be returned.
 ///
-/// In contrast to `Empty`, this does not have a JSON schema
-/// and cannot be used for message and query types.
+/// Unlike the `Empty` type, `Never` is distinct in that it doesn't have an associated JSON schema.
+/// Consequently, it's not suitable for use in message or query types where JSON representation is required.
 ///
-/// Once the ! type is stable, this is not needed anymore.
-/// See <https://github.com/rust-lang/rust/issues/35121>.
-///
-/// ## Examples
-///
-/// When using `Never` in a `Result`, we can unwrap in a type-safe way:
-///
+/// The existence of `Never` is a temporary necessity. It is anticipated to be deprecated
+/// once the Rust `!` type, which represents a never type in the Rust language, becomes stable.
+/// The stabilization of the `!` type is an ongoing discussion, which you can follow here:
+/// <https://github.com/rust-lang/rust/issues/35121>.
 /// ```
 /// use cosmwasm_std::Never;
 ///

@@ -249,7 +249,8 @@ impl fmt::Display for CanonicalAddr {
         Ok(())
     }
 }
-
+/// Errors related to the instantiation of contracts and generation of addresses.
+/// Ensures the integrity and validity of newly created contracts.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum Instantiate2AddressError {
     /// Checksum must be 32 bytes
