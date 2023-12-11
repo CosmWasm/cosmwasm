@@ -8,6 +8,8 @@ license = "Apache-2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false
 
 [profile.release]
 opt-level = 3
@@ -29,9 +31,17 @@ cranelift = ["cosmwasm-vm/cranelift"]
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort", "cosmwasm_1_3"] }
-rust-argon2 = "0.8"
+drand-verify = "0.6.1"
+# drand-verify = { git = "https://github.com/noislabs/drand-verify", branch = "arkworks", default-features = false, features = ["arkworks"] }
+hex-literal = "0.4.1"
+rust-argon2 = "2.0"
 thiserror = "1.0.26"
 
 [dev-dependencies]
+criterion = "0.5.1"
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
 tempfile = "3.1.0"
+
+[[bench]]
+name = "host_vs_wasm"
+harness = false
