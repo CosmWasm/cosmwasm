@@ -1241,11 +1241,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Invalid canonical address length")]
     fn addr_humanize_input_length() {
         let api = MockApi::default();
         let input = CanonicalAddr::from(vec![]);
-        api.addr_humanize(&input).unwrap();
+        assert_eq!(
+            api.addr_humanize(&input).unwrap_err(),
+            StdError::generic_err("Invalid canonical address length")
+        );
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
