@@ -75,6 +75,11 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   some given source code, allowing a
   [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945)
   as Etherscan.
+
+  Building locally instead of using the docker image can
+  [leak some information about the directory structure of your system](https://github.com/CosmWasm/cosmwasm/issues/1918)
+  and makes the build non-reproducible.
+
 - [serde-json-wasm](https://github.com/CosmWasm/serde-json-wasm) - A custom json
   library, forked from `serde-json-core`. This provides an interface similar to
   `serde-json`, but without any floating-point instructions (non-deterministic)
