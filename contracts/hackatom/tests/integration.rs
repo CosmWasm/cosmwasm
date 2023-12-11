@@ -453,7 +453,8 @@ fn execute_panic() {
     match execute_res.unwrap_err() {
         VmError::RuntimeErr { msg, .. } => {
             assert!(
-                msg.contains("Aborted: panicked at 'This page intentionally faulted'"),
+                msg.contains("Aborted: panicked")
+                    && msg.contains("This page intentionally faulted"),
                 "Must contain panic message"
             );
             assert!(msg.contains("contract.rs:"), "Must contain file and line");
