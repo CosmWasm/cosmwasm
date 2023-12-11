@@ -162,10 +162,10 @@ impl BackendApi for MockApi {
 
 /// Does basic validation of the number of bytes in a canonical address
 fn validate_length(bytes: &[u8]) -> Result<(), BackendError> {
-    if !(1..=255).contains(&bytes.len()) {
-        return Err(BackendError::user_err("Invalid canonical address length"));
+    match bytes.len() {
+        1..=255 => Ok(()),
+        _ => Err(BackendError::user_err("Invalid canonical address length")),
     }
-    Ok(())
 }
 
 /// Returns a default enviroment with height, time, chain_id, and contract address

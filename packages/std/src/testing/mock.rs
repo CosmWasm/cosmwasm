@@ -253,10 +253,10 @@ impl MockApi {
 
 /// Does basic validation of the number of bytes in a canonical address
 fn validate_length(bytes: &[u8]) -> StdResult<()> {
-    if !(1..=255).contains(&bytes.len()) {
-        return Err(StdError::generic_err("Invalid canonical address length"));
+    match bytes.len() {
+        1..=255 => Ok(()),
+        _ => Err(StdError::generic_err("Invalid canonical address length")),
     }
-    Ok(())
 }
 
 /// Returns a default enviroment with height, time, chain_id, and contract address
