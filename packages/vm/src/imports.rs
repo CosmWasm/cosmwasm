@@ -1085,7 +1085,7 @@ mod tests {
         let res = do_addr_validate(fe_mut.as_mut(), source_ptr3).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&mut fe_mut, res)).unwrap();
-        assert_eq!(err, "Invalid input");
+        assert_eq!(err, "Error decoding bech32");
     }
 
     #[test]
