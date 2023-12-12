@@ -2342,4 +2342,27 @@ mod tests {
     fn making_an_address_with_empty_prefix_should_panic() {
         MockApi::default().with_prefix("").addr_make("creator");
     }
+
+    #[test]
+    #[cfg(feature = "cosmwasm_1_3")]
+    fn distribution_querier_new_works() {
+        let addresses = [
+            ("addr0000".to_string(), "addr0001".to_string()),
+            ("addr0002".to_string(), "addr0001".to_string()),
+        ];
+        let btree_map = BTreeMap::from(addresses.clone());
+
+        // should still work with HashMap
+        let hashmap = HashMap::from(addresses.clone());
+        let querier = DistributionQuerier::new(hashmap);
+        assert_eq!(querier.withdraw_addresses, btree_map);
+
+        // should work with BTreeMap
+        let querier = DistributionQuerier::new(btree_map.clone());
+        assert_eq!(querier.withdraw_addresses, btree_map);
+
+        // should work with array
+        let querier = DistributionQuerier::new(addresses);
+        assert_eq!(querier.withdraw_addresses, btree_map);
+    }
 }
