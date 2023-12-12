@@ -42,7 +42,10 @@ pub fn mock_backend_with_balances(
 /// trims off zeros for the reverse operation.
 /// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
 #[derive(Copy, Clone)]
-pub enum MockApi {
+pub struct MockApi(MockApiImpl);
+
+#[derive(Copy, Clone)]
+enum MockApiImpl {
     /// With this variant, all calls to the API fail with BackendError::Unknown
     /// containing the given message
     Error(&'static str),
@@ -55,7 +58,7 @@ pub enum MockApi {
 
 impl MockApi {
     pub fn new_failing(backend_error: &'static str) -> Self {
-        MockApi::Error(backend_error)
+        Self(MockApiImpl::Error(backend_error))
     }
 
     /// Returns [MockApi] with Bech32 prefix set to provided value.
@@ -74,9 +77,9 @@ impl MockApi {
     /// assert_eq!(addr.as_str(), "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
     /// ```
     pub fn with_prefix(self, prefix: &'static str) -> Self {
-        Self::Bech32 {
+        Self(MockApiImpl::Bech32 {
             bech32_prefix: prefix,
-        }
+        })
     }
 
     /// Returns an address built from provided input string.
@@ -100,9 +103,9 @@ impl MockApi {
     ///
     pub fn addr_make(&self, input: &str) -> String {
         // handle error case
-        let bech32_prefix = match self {
-            MockApi::Error(e) => panic!("Generating address failed: {e}"),
-            MockApi::Bech32 { bech32_prefix } => *bech32_prefix,
+        let bech32_prefix = match self.0 {
+            MockApiImpl::Error(e) => panic!("Generating address failed: {e}"),
+            MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
         let digest = Sha256::digest(input).to_vec();
@@ -115,9 +118,9 @@ impl MockApi {
 
 impl Default for MockApi {
     fn default() -> Self {
-        MockApi::Bech32 {
+        Self(MockApiImpl::Bech32 {
             bech32_prefix: BECH32_PREFIX,
-        }
+        })
     }
 }
 
@@ -126,9 +129,9 @@ impl BackendApi for MockApi {
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         // handle error case
-        let bech32_prefix = match self {
-            MockApi::Error(e) => return (Err(BackendError::unknown(*e)), gas_info),
-            MockApi::Bech32 { bech32_prefix } => *bech32_prefix,
+        let bech32_prefix = match self.0 {
+            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_info),
+            MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
         match decode(input) {
@@ -157,9 +160,9 @@ impl BackendApi for MockApi {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         // handle error case
-        let bech32_prefix = match self {
-            MockApi::Error(e) => return (Err(BackendError::unknown(*e)), gas_info),
-            MockApi::Bech32 { bech32_prefix } => *bech32_prefix,
+        let bech32_prefix = match self.0 {
+            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_info),
+            MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
         try_br!((validate_length(canonical), gas_info));
