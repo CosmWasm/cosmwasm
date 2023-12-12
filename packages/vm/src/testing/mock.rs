@@ -165,7 +165,7 @@ impl BackendApi for MockApi {
         try_br!((validate_length(canonical), gas_info));
 
         let result = encode(bech32_prefix, canonical.to_base32(), Variant::Bech32)
-            .map_err(|_| BackendError::user_err("Invalid canonical address"));
+            .map_err(|_| BackendError::user_err("Invalid bech32 prefix"));
 
         (result, gas_info)
     }

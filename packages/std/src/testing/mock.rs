@@ -151,7 +151,7 @@ impl Api for MockApi {
             Variant::Bech32,
         )
         .map(Addr::unchecked)
-        .map_err(|_| StdError::generic_err("Invalid canonical address"))
+        .map_err(|_| StdError::generic_err("Invalid bech32 prefix"))
     }
 
     fn secp256k1_verify(
