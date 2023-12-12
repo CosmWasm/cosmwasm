@@ -131,15 +131,26 @@ impl BackendApi for MockApi {
             MockApi::Bech32 { bech32_prefix } => *bech32_prefix,
         };
 
-        if let Ok((prefix, decoded, Variant::Bech32)) = decode(input) {
-            if prefix == bech32_prefix {
-                if let Ok(bytes) = Vec::<u8>::from_base32(&decoded) {
-                    try_br!((validate_length(&bytes), gas_info));
-                    return (Ok(bytes), gas_info);
-                }
+        match decode(input) {
+            Ok((prefix, _, _)) if prefix != bech32_prefix => {
+                (Err(BackendError::user_err("Wrong bech32 prefix")), gas_info)
             }
+            Ok((_, _, Variant::Bech32m)) => (
+                Err(BackendError::user_err("Wrong bech32 variant")),
+                gas_info,
+            ),
+            Err(_) => (
+                Err(BackendError::user_err("Error decoding bech32")),
+                gas_info,
+            ),
+            Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
+                Ok(bytes) => {
+                    try_br!((validate_length(&bytes), gas_info));
+                    (Ok(bytes), gas_info)
+                }
+                Err(_) => (Err(BackendError::user_err("Invalid bech32 data")), gas_info),
+            },
         }
-        (Err(BackendError::user_err("Invalid input")), gas_info)
     }
 
     fn human_address(&self, canonical: &[u8]) -> BackendResult<String> {

@@ -126,15 +126,20 @@ impl Api for MockApi {
     }
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
-        if let Ok((prefix, decoded, Variant::Bech32)) = decode(input) {
-            if prefix == self.bech32_prefix {
-                if let Ok(bytes) = Vec::<u8>::from_base32(&decoded) {
-                    validate_length(&bytes)?;
-                    return Ok(bytes.into());
-                }
+        match decode(input) {
+            Ok((prefix, _, _)) if prefix != self.bech32_prefix => {
+                Err(StdError::generic_err("Wrong bech32 prefix"))
             }
+            Ok((_, _, Variant::Bech32m)) => Err(StdError::generic_err("Wrong bech32 variant")),
+            Err(_) => Err(StdError::generic_err("Error decoding bech32")),
+            Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
+                Ok(bytes) => {
+                    validate_length(&bytes)?;
+                    Ok(bytes.into())
+                }
+                Err(_) => Err(StdError::generic_err("Invalid bech32 data")),
+            },
         }
-        Err(StdError::generic_err("Invalid input"))
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
@@ -1235,9 +1240,9 @@ mod tests {
     fn addr_canonicalize_long_input() {
         let api = MockApi::default();
         let human =
-            "some-extremely-long-address-some-extremely-long-address-some-extremely-long-address-some-extremely-long-address";
+            "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
         let err = api.addr_canonicalize(human).unwrap_err();
-        assert!(err.to_string().contains("Invalid input"));
+        assert!(err.to_string().contains("Invalid canonical address length"));
     }
 
     #[test]

@@ -353,7 +353,7 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         match err {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
-                assert!(msg.contains("Invalid input"))
+                assert!(msg.contains("Error decoding bech32"))
             }
             e => panic!("Unexpected error: {e:?}"),
         }
