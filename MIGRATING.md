@@ -135,6 +135,39 @@ major releases of `cosmwasm`. Note that you can also view the
   +StdError::generic_err(msg)
   ```
 
+- Replace addresses in unit tests with valid bech32 addresses. This has to be
+  done for all addresses that are validated or canonicalized during the test or
+  within the contract. The easiest way to do this is by using
+  `MockApi::addr_make`. It generates a bech32 address from any string:
+
+  ```diff
+  -let msg = InstantiateMsg {
+  -    verifier: "verifier".to_string(),
+  -    beneficiary: "beneficiary".to_string(),
+  -};
+  +let msg = InstantiateMsg {
+  +    verifier: deps.api.addr_make("verifier").to_string(),
+  +    beneficiary: deps.api.addr_make("beneficiary").to_string(),
+  +};
+  ```
+
+- Replace addresses in integration tests using `cosmwasm-vm` with valid bech32
+  addresses. This has to be done for all addresses that are validated or
+  canonicalized during the test or within the contract. The easiest way to do
+  this is by using `MockApi::addr_make`. It generates a bech32 address from any
+  string:
+
+  ```diff
+  -let msg = InstantiateMsg {
+  -    verifier: "verifier".to_string(),
+  -    beneficiary: "beneficiary".to_string(),
+  -};
+  +let msg = InstantiateMsg {
+  +    verifier: instance.api().addr_make("verifier").to_string(),
+  +    beneficiary: instance.api().addr_make("beneficiary").to_string(),
+  +};
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
