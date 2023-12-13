@@ -2,6 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::binary::Binary;
+use crate::prelude::*;
 use crate::to_json_binary;
 
 /// This is a standard IBC acknowledgement type. IBC application are free

@@ -1,4 +1,7 @@
+use crate::prelude::*;
 use alloc::collections::BTreeMap;
+#[cfg(feature = "cosmwasm_1_3")]
+use alloc::collections::BTreeSet;
 use bech32::{decode, encode, FromBase32, ToBase32, Variant};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
@@ -7,9 +10,6 @@ use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
 use sha2::{Digest, Sha256};
-#[cfg(feature = "cosmwasm_1_3")]
-use std::collections::BTreeSet;
-use std::collections::HashMap;
 
 use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
@@ -202,9 +202,12 @@ impl Api for MockApi {
         )?)
     }
 
+    #[cfg(feature = "std")]
     fn debug(&self, message: &str) {
         println!("{message}");
     }
+    #[cfg(not(feature = "std"))]
+    fn debug(&self, _message: &str) {}
 }
 
 impl MockApi {
@@ -662,17 +665,17 @@ impl Default for WasmQuerier {
 #[derive(Clone, Default)]
 pub struct BankQuerier {
     #[allow(dead_code)]
-    /// HashMap<denom, amount>
-    supplies: HashMap<String, Uint128>,
-    /// HashMap<address, coins>
-    balances: HashMap<String, Vec<Coin>>,
+    /// BTreeMap<denom, amount>
+    supplies: BTreeMap<String, Uint128>,
+    /// BTreeMap<address, coins>
+    balances: BTreeMap<String, Vec<Coin>>,
     /// Vec<Metadata>
     denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
 }
 
 impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
-        let balances: HashMap<_, _> = balances
+        let balances: BTreeMap<_, _> = balances
             .iter()
             .map(|(s, c)| (s.to_string(), c.to_vec()))
             .collect();
@@ -702,8 +705,8 @@ impl BankQuerier {
             .collect();
     }
 
-    fn calculate_supplies(balances: &HashMap<String, Vec<Coin>>) -> HashMap<String, Uint128> {
-        let mut supplies = HashMap::new();
+    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
+        let mut supplies = BTreeMap::new();
 
         let all_coins = balances.iter().flat_map(|(_, coins)| coins);
 
@@ -2148,7 +2151,7 @@ mod tests {
         querier.update_handler(|request| {
             let api = MockApi::default();
             let contract1 = api.addr_make("contract1");
-            let mut storage1 = HashMap::<Binary, Binary>::default();
+            let mut storage1 = BTreeMap::<Binary, Binary>::default();
             storage1.insert(b"the key".into(), b"the value".into());
 
             match request {
@@ -2347,7 +2350,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "cosmwasm_1_3")]
+    #[cfg(all(feature = "cosmwasm_1_3", feature = "std"))]
     fn distribution_querier_new_works() {
         let addresses = [
             ("addr0000".to_string(), "addr0001".to_string()),
@@ -2356,7 +2359,7 @@ mod tests {
         let btree_map = BTreeMap::from(addresses.clone());
 
         // should still work with HashMap
-        let hashmap = HashMap::from(addresses.clone());
+        let hashmap = std::collections::HashMap::from(addresses.clone());
         let querier = DistributionQuerier::new(hashmap);
         assert_eq!(querier.withdraw_addresses, btree_map);
 

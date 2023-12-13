@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
 #[cfg(feature = "stargate")]
 use crate::Binary;
 use crate::Empty;

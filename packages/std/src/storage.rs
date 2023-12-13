@@ -7,6 +7,7 @@ use core::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+use crate::prelude::*;
 use crate::traits::Storage;
 
 #[derive(Default)]

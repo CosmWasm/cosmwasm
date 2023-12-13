@@ -13,6 +13,7 @@ use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
+use crate::prelude::*;
 use crate::{forward_ref_partial_eq, Decimal, Decimal256, Int512, SignedDecimal};
 
 use super::Fraction;

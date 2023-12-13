@@ -1,4 +1,5 @@
 use crate::conversion::force_to_u32;
+use crate::prelude::*;
 
 /// A sections decoder for the special case of two elements
 #[allow(dead_code)] // used in Wasm and tests only

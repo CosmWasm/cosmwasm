@@ -4,6 +4,7 @@ use super::{impl_from_err, BT};
 use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
+use crate::prelude::*;
 
 /// Structured error type for init, execute and query.
 ///

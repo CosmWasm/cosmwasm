@@ -9,6 +9,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
+use crate::prelude::*;
 use crate::{
     forward_ref_partial_eq, CheckedMultiplyRatioError, Int256, Int512, Int64, Uint128, Uint256,
     Uint512, Uint64,

@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use super::super::errors::SystemError;
 
+use crate::prelude::*;
+
 /// This is the outer result type returned by a querier to the contract.
 ///
 /// We use a custom type here instead of Rust's Result because we want to be able to

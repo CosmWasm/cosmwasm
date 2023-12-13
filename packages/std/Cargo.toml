@@ -14,11 +14,11 @@ features = ["abort", "stargate", "staking", "cosmwasm_1_4"]
 [features]
 default = ["iterator", "abort", "std"]
 abort = []
-# This feature is currently unused, but might be used in the future to replace internal
-# implementation details with no_std compatible ones or feature-gate functionality
-# that is only available in std environments.
-# You probably want to keep this enabled for now to avoid breaking changes later.
-std = []
+# This feature can be used in the future to provide support for no_std environments,
+# but disabling it will not provide any benefit at the moment. Even with this feature disabled,
+# we currently require an std environment.
+# You probably want to keep this enabled for now to avoid possible breaking changes later.
+std = ["serde/std", "serde-json-wasm/std"]
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
@@ -50,13 +50,13 @@ cosmwasm_1_4 = ["cosmwasm_1_3"]
 [dependencies]
 base64 = "0.21.0"
 cosmwasm-derive = { path = "../derive", version = "1.5.0" }
-derivative = "2"
+derivative = { version = "2", features = ["use_core"] }
 forward_ref = "1"
 hex = "0.4"
 schemars = "0.8.3"
 sha2 = "0.10.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
-serde-json-wasm = { version = "1.0.0" }
+serde-json-wasm = { version = "1.0.0", default-features = false }
 thiserror = "1.0.26"
 bnum = "0.8.0"
 static_assertions = "1.1.0"
