@@ -1122,7 +1122,10 @@ mod tests {
     use super::*;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{coin, coins, from_json, to_json_binary, ContractInfoResponse, Response};
+    use crate::{
+        coin, coins, from_json, instantiate2_address, to_json_binary, ContractInfoResponse,
+        HexBinary, Response,
+    };
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use hex_literal::hex;
@@ -2364,5 +2367,21 @@ mod tests {
         // should work with array
         let querier = DistributionQuerier::new(addresses);
         assert_eq!(querier.withdraw_addresses, btree_map);
+    }
+
+    #[test]
+    fn instantiate2_address_can_be_humanized() {
+        let mock_api = MockApi::default();
+
+        let contract_addr = mock_api
+            .addr_canonicalize(mock_api.addr_make("contract").as_str())
+            .unwrap();
+        let checksum =
+            HexBinary::from_hex("9af782a3a1bcbcd22dbb6a45c751551d9af782a3a1bcbcd22dbb6a45c751551d")
+                .unwrap();
+        let salt = b"instance 1231";
+        let canonical_addr = instantiate2_address(&checksum, &contract_addr, salt).unwrap();
+        // we are not interested in the exact humanization, just that it works
+        mock_api.addr_humanize(&canonical_addr).unwrap();
     }
 }
