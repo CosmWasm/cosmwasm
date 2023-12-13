@@ -1,6 +1,5 @@
 use alloc::collections::BTreeMap;
-use bech32::{encode, ToBase32, Variant};
-use core::iter::IntoIterator;
+use bech32::{decode, encode, FromBase32, ToBase32, Variant};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
@@ -53,8 +52,6 @@ use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 
-use super::riffle_shuffle;
-
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// Creates all external requirements that can be injected for unit tests.
@@ -96,19 +93,6 @@ pub fn mock_dependencies_with_balances(
 // We can later make simplifications here if needed
 pub type MockStorage = MemoryStorage;
 
-/// Length of canonical addresses created with this API. Contracts should not make any assumptions
-/// what this value is.
-///
-/// The mock API can only canonicalize and humanize addresses up to this length. So it must be
-/// long enough to store common bech32 addresses.
-///
-/// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-/// See <https://oeis.org/A002326/list> for a table of those values.
-const CANONICAL_LENGTH: usize = 90; // n = 45
-
-const SHUFFLES_ENCODE: usize = 10;
-const SHUFFLES_DECODE: usize = 2;
-
 /// Default prefix used when creating Bech32 encoded address.
 const BECH32_PREFIX: &str = "cosmwasm";
 
@@ -117,9 +101,6 @@ const BECH32_PREFIX: &str = "cosmwasm";
 // not really smart, but allows us to see a difference (and consistent length for canonical addresses)
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    /// Length of canonical addresses created with this API. Contracts should not make any assumptions
-    /// what this value is.
-    canonical_length: usize,
     /// Prefix used for creating addresses in Bech32 encoding.
     bech32_prefix: &'static str,
 }
@@ -127,7 +108,6 @@ pub struct MockApi {
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
-            canonical_length: CANONICAL_LENGTH,
             bech32_prefix: BECH32_PREFIX,
         }
     }
@@ -142,62 +122,36 @@ impl Api for MockApi {
                 "Invalid input: address not normalized",
             ));
         }
-
         Ok(Addr::unchecked(input))
     }
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
-        // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        let min_length = 3;
-        let max_length = self.canonical_length;
-        if input.len() < min_length {
-            return Err(StdError::generic_err(
-                format!("Invalid input: human address too short for this mock implementation (must be >= {min_length})."),
-            ));
+        match decode(input) {
+            Ok((prefix, _, _)) if prefix != self.bech32_prefix => {
+                Err(StdError::generic_err("Wrong bech32 prefix"))
+            }
+            Ok((_, _, Variant::Bech32m)) => Err(StdError::generic_err("Wrong bech32 variant")),
+            Err(_) => Err(StdError::generic_err("Error decoding bech32")),
+            Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
+                Ok(bytes) => {
+                    validate_length(&bytes)?;
+                    Ok(bytes.into())
+                }
+                Err(_) => Err(StdError::generic_err("Invalid bech32 data")),
+            },
         }
-        if input.len() > max_length {
-            return Err(StdError::generic_err(
-                format!("Invalid input: human address too long for this mock implementation (must be <= {max_length})."),
-            ));
-        }
-
-        // mimics formats like hex or bech32 where different casings are valid for one address
-        let normalized = input.to_lowercase();
-
-        let mut out = Vec::from(normalized);
-
-        // pad to canonical length with NULL bytes
-        out.resize(self.canonical_length, 0x00);
-        // content-dependent rotate followed by shuffle to destroy
-        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
-        let rotate_by = digit_sum(&out) % self.canonical_length;
-        out.rotate_left(rotate_by);
-        for _ in 0..SHUFFLES_ENCODE {
-            out = riffle_shuffle(&out);
-        }
-        Ok(out.into())
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
-        if canonical.len() != self.canonical_length {
-            return Err(StdError::generic_err(
-                "Invalid input: canonical address length not correct",
-            ));
-        }
+        validate_length(canonical.as_ref())?;
 
-        let mut tmp: Vec<u8> = canonical.clone().into();
-        // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..SHUFFLES_DECODE {
-            tmp = riffle_shuffle(&tmp);
-        }
-        // Rotate back
-        let rotate_by = digit_sum(&tmp) % self.canonical_length;
-        tmp.rotate_right(rotate_by);
-        // Remove NULL bytes (i.e. the padding)
-        let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
-        // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed)?;
-        Ok(Addr::unchecked(human))
+        encode(
+            self.bech32_prefix,
+            canonical.as_slice().to_base32(),
+            Variant::Bech32,
+        )
+        .map(Addr::unchecked)
+        .map_err(|_| StdError::generic_err("Invalid bech32 prefix"))
     }
 
     fn secp256k1_verify(
@@ -299,6 +253,14 @@ impl MockApi {
             Ok(address) => Addr::unchecked(address),
             Err(reason) => panic!("Generating address failed with reason: {reason}"),
         }
+    }
+}
+
+/// Does basic validation of the number of bytes in a canonical address
+fn validate_length(bytes: &[u8]) -> StdResult<()> {
+    match bytes.len() {
+        1..=255 => Ok(()),
+        _ => Err(StdError::generic_err("Invalid canonical address length")),
     }
 }
 
@@ -1146,10 +1108,6 @@ impl DistributionQuerier {
     }
 }
 
-pub fn digit_sum(input: &[u8]) -> usize {
-    input.iter().fold(0, |sum, val| sum + (*val as usize))
-}
-
 /// Only for test code. This bypasses assertions in new, allowing us to create _*
 /// Attributes to simulate responses from the blockchain
 pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
@@ -1164,7 +1122,10 @@ mod tests {
     use super::*;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{coin, coins, from_json, to_json_binary, ContractInfoResponse, Response};
+    use crate::{
+        coin, coins, from_json, instantiate2_address, to_json_binary, ContractInfoResponse,
+        HexBinary, Response,
+    };
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use hex_literal::hex;
@@ -1197,11 +1158,13 @@ mod tests {
 
     #[test]
     fn addr_validate_works() {
+        // default prefix is 'cosmwasm'
         let api = MockApi::default();
 
         // valid
-        let addr = api.addr_validate("foobar123").unwrap();
-        assert_eq!(addr.as_str(), "foobar123");
+        let humanized = "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp";
+        let addr = api.addr_validate(humanized).unwrap();
+        assert_eq!(addr.as_str(), humanized);
 
         // invalid: too short
         api.addr_validate("").unwrap_err();
@@ -1214,31 +1177,44 @@ mod tests {
     fn addr_canonicalize_works() {
         let api = MockApi::default();
 
-        api.addr_canonicalize("foobar123").unwrap();
+        api.addr_canonicalize(
+            "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
+        )
+        .unwrap();
 
         // is case insensitive
-        let data1 = api.addr_canonicalize("foo123").unwrap();
-        let data2 = api.addr_canonicalize("FOO123").unwrap();
+        let data1 = api
+            .addr_canonicalize(
+                "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp",
+            )
+            .unwrap();
+        let data2 = api
+            .addr_canonicalize(
+                "COSMWASM1H34LMPYWH4UPNJDG90CJF4J70AEE6Z8QQFSPUGAMJP42E4Q28KQS8S7VCP",
+            )
+            .unwrap();
         assert_eq!(data1, data2);
     }
 
     #[test]
     fn canonicalize_and_humanize_restores_original() {
+        // create api with 'cosmwasm' prefix
         let api = MockApi::default();
 
-        // simple
-        let original = String::from("shorty");
-        let canonical = api.addr_canonicalize(&original).unwrap();
-        let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered.as_str(), original);
-
         // normalizes input
-        let original = String::from("CosmWasmChef");
+        let original =
+            String::from("COSMWASM1H34LMPYWH4UPNJDG90CJF4J70AEE6Z8QQFSPUGAMJP42E4Q28KQS8S7VCP");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
-        assert_eq!(recovered.as_str(), "cosmwasmchef");
+        assert_eq!(
+            recovered.as_str(),
+            "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp"
+        );
 
-        // Long input (Juno contract address)
+        // create api with 'juno' prefix
+        let api = MockApi::default().with_prefix("juno");
+
+        // long input (Juno contract address)
         let original =
             String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
         let canonical = api.addr_canonicalize(&original).unwrap();
@@ -1247,32 +1223,39 @@ mod tests {
     }
 
     #[test]
-    fn addr_canonicalize_min_input_length() {
+    fn addr_canonicalize_short_input() {
         let api = MockApi::default();
-        let human = String::from("1");
-        let err = api.addr_canonicalize(&human).unwrap_err();
-        assert!(err
+
+        // empty address should fail
+        let empty = "cosmwasm1pj90vm";
+        assert!(api
+            .addr_canonicalize(empty)
+            .unwrap_err()
             .to_string()
-            .contains("human address too short for this mock implementation (must be >= 3)"));
+            .contains("Invalid canonical address length"));
+
+        // one byte address should work
+        let human = "cosmwasm1qqvk2mde";
+        assert_eq!(api.addr_canonicalize(human).unwrap().as_ref(), [0u8]);
     }
 
     #[test]
-    fn addr_canonicalize_max_input_length() {
+    fn addr_canonicalize_long_input() {
         let api = MockApi::default();
         let human =
-            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-supported------------------------");
-        let err = api.addr_canonicalize(&human).unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("human address too long for this mock implementation (must be <= 90)"));
+            "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
+        let err = api.addr_canonicalize(human).unwrap_err();
+        assert!(err.to_string().contains("Invalid canonical address length"));
     }
 
     #[test]
-    #[should_panic(expected = "length not correct")]
     fn addr_humanize_input_length() {
         let api = MockApi::default();
-        let input = CanonicalAddr::from(vec![61; 11]);
-        api.addr_humanize(&input).unwrap();
+        let input = CanonicalAddr::from(vec![]);
+        assert_eq!(
+            api.addr_humanize(&input).unwrap_err(),
+            StdError::generic_err("Invalid canonical address length")
+        );
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
@@ -2163,11 +2146,10 @@ mod tests {
         }
 
         querier.update_handler(|request| {
-            let constract1 = Addr::unchecked("contract1");
+            let api = MockApi::default();
+            let contract1 = api.addr_make("contract1");
             let mut storage1 = HashMap::<Binary, Binary>::default();
             storage1.insert(b"the key".into(), b"the value".into());
-
-            let api = MockApi::default();
 
             match request {
                 WasmQuery::Raw { contract_addr, key } => {
@@ -2176,7 +2158,7 @@ mod tests {
                             addr: contract_addr.clone(),
                         });
                     };
-                    if addr == constract1 {
+                    if addr == contract1 {
                         if let Some(value) = storage1.get(key) {
                             SystemResult::Ok(ContractResult::Ok(value.clone()))
                         } else {
@@ -2194,7 +2176,7 @@ mod tests {
                             addr: contract_addr.clone(),
                         });
                     };
-                    if addr == constract1 {
+                    if addr == contract1 {
                         #[derive(Deserialize)]
                         struct MyMsg {}
                         let _msg: MyMsg = match from_json(msg) {
@@ -2217,7 +2199,7 @@ mod tests {
                             addr: contract_addr.clone(),
                         });
                     };
-                    if addr == constract1 {
+                    if addr == contract1 {
                         let response = ContractInfoResponse {
                             code_id: 4,
                             creator: Addr::unchecked("lalala"),
@@ -2253,17 +2235,20 @@ mod tests {
             }
         });
 
+        let contract_addr = MockApi::default().addr_make("contract1");
+
         // WasmQuery::Raw
         let result = querier.query(&WasmQuery::Raw {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             key: b"the key".into(),
         });
+
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(value, b"the value" as &[u8]),
             res => panic!("Unexpected result: {res:?}"),
         }
         let result = querier.query(&WasmQuery::Raw {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             key: b"other key".into(),
         });
         match result {
@@ -2273,7 +2258,7 @@ mod tests {
 
         // WasmQuery::Smart
         let result = querier.query(&WasmQuery::Smart {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             msg: b"{}".into(),
         });
         match result {
@@ -2284,7 +2269,7 @@ mod tests {
             res => panic!("Unexpected result: {res:?}"),
         }
         let result = querier.query(&WasmQuery::Smart {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.clone().into(),
             msg: b"a broken request".into(),
         });
         match result {
@@ -2296,7 +2281,7 @@ mod tests {
 
         // WasmQuery::ContractInfo
         let result = querier.query(&WasmQuery::ContractInfo {
-            contract_addr: "contract1".into(),
+            contract_addr: contract_addr.into(),
         });
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
@@ -2322,22 +2307,6 @@ mod tests {
     }
 
     #[test]
-    fn digit_sum_works() {
-        assert_eq!(digit_sum(&[]), 0);
-        assert_eq!(digit_sum(&[0]), 0);
-        assert_eq!(digit_sum(&[0, 0]), 0);
-        assert_eq!(digit_sum(&[0, 0, 0]), 0);
-
-        assert_eq!(digit_sum(&[1, 0, 0]), 1);
-        assert_eq!(digit_sum(&[0, 1, 0]), 1);
-        assert_eq!(digit_sum(&[0, 0, 1]), 1);
-
-        assert_eq!(digit_sum(&[1, 2, 3]), 6);
-
-        assert_eq!(digit_sum(&[255, 1]), 256);
-    }
-
-    #[test]
     fn making_an_address_works() {
         let mock_api = MockApi::default();
 
@@ -2355,6 +2324,19 @@ mod tests {
         assert_eq!(
             mock_api.addr_make("creator").to_string(),
             "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp",
+        );
+    }
+
+    #[test]
+    fn colon_in_prefix_is_valid() {
+        let mock_api = MockApi::default().with_prefix("did:com:");
+        let addr = mock_api
+            .addr_validate("did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu")
+            .unwrap();
+
+        assert_eq!(
+            addr.as_str(),
+            "did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu"
         );
     }
 
@@ -2385,5 +2367,21 @@ mod tests {
         // should work with array
         let querier = DistributionQuerier::new(addresses);
         assert_eq!(querier.withdraw_addresses, btree_map);
+    }
+
+    #[test]
+    fn instantiate2_address_can_be_humanized() {
+        let mock_api = MockApi::default();
+
+        let contract_addr = mock_api
+            .addr_canonicalize(mock_api.addr_make("contract").as_str())
+            .unwrap();
+        let checksum =
+            HexBinary::from_hex("9af782a3a1bcbcd22dbb6a45c751551d9af782a3a1bcbcd22dbb6a45c751551d")
+                .unwrap();
+        let salt = b"instance 1231";
+        let canonical_addr = instantiate2_address(&checksum, &contract_addr, salt).unwrap();
+        // we are not interested in the exact humanization, just that it works
+        mock_api.addr_humanize(&canonical_addr).unwrap();
     }
 }

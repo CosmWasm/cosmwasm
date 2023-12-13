@@ -197,6 +197,19 @@ pub trait Querier {
 /// must always have gas information attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 
+/// The equivalent of the `?` operator, but for a [`BackendResult`]
+macro_rules! try_br {
+    ($res: expr $(,)?) => {
+        let (result, gas) = $res;
+
+        match result {
+            Ok(v) => v,
+            Err(e) => return (Err(e), gas),
+        }
+    };
+}
+pub(crate) use try_br;
+
 #[derive(Error, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum BackendError {

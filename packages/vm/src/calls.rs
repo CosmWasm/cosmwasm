@@ -606,9 +606,11 @@ mod tests {
         let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
     }
@@ -640,14 +642,16 @@ mod tests {
         let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // execute
-        let info = mock_info("verifies", &coins(15, "earth"));
+        let info = mock_info(&verifier, &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
@@ -723,23 +727,28 @@ mod tests {
         let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // change the verifier via migrate
-        let msg = br#"{"verifier": "someone else"}"#;
-        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg);
+        let someone_else = instance.api().addr_make("someone else");
+        let msg = format!(r#"{{"verifier": "{someone_else}"}}"#);
+        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg.as_bytes())
+            .unwrap()
+            .unwrap();
 
         // query the new_verifier with verifier
         let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(
-            query_response.as_slice(),
-            b"{\"verifier\":\"someone else\"}"
+            query_response,
+            format!(r#"{{"verifier":"{}"}}"#, someone_else).as_bytes(),
         );
     }
 
@@ -748,9 +757,11 @@ mod tests {
         let mut instance = mock_instance(CONTRACT, &[]);
 
         // init
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
@@ -758,7 +769,10 @@ mod tests {
         let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
-        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+        assert_eq!(
+            query_response,
+            format!("{{\"verifier\":\"{verifier}\"}}").as_bytes()
+        );
     }
 
     #[test]
@@ -920,7 +934,8 @@ mod tests {
         #[test]
         fn call_ibc_channel_close_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
-            setup(&mut instance, CHANNEL_ID, ACCOUNT);
+            let account = instance.api().addr_make(ACCOUNT);
+            setup(&mut instance, CHANNEL_ID, &account);
             let handshake_close =
                 mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
             call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)

@@ -51,7 +51,7 @@ fn initialization_with_missing_validator() {
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
 
-    let creator = String::from("creator");
+    let creator = deps.api().addr_make("creator");
     let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
@@ -89,7 +89,7 @@ fn proper_initialization() {
     assert_eq!(deps.required_capabilities().len(), 1);
     assert!(deps.required_capabilities().contains("staking"));
 
-    let creator = String::from("creator");
+    let creator = deps.api().addr_make("creator");
     let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),

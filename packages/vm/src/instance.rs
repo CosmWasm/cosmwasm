@@ -848,15 +848,17 @@ mod tests {
         assert_eq!(report1.remaining, LIMIT);
 
         // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         let report2 = instance.create_gas_report();
-        assert_eq!(report2.used_externally, 73);
-        assert_eq!(report2.used_internally, 5765148);
+        assert_eq!(report2.used_externally, 251);
+        assert_eq!(report2.used_internally, 8461548);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1038,14 +1040,16 @@ mod tests {
         let orig_gas = instance.get_gas_left();
 
         // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 5765221);
+        assert_eq!(init_used, 8461799);
     }
 
     #[test]
@@ -1053,22 +1057,24 @@ mod tests {
         let mut instance = mock_instance(CONTRACT, &[]);
 
         // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_execute = instance.get_gas_left();
-        let info = mock_info("verifies", &coins(15, "earth"));
+        let info = mock_info(&verifier, &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 8652406);
+        assert_eq!(execute_used, 11181706);
     }
 
     #[test]
@@ -1076,9 +1082,12 @@ mod tests {
         let mut instance = mock_instance_with_gas_limit(CONTRACT, 20_000);
 
         // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        let res =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes());
         assert!(res.is_err());
     }
 
@@ -1087,11 +1096,14 @@ mod tests {
         let mut instance = mock_instance(CONTRACT, &[]);
 
         // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        let _res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        let _res =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+                .unwrap()
+                .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_query = instance.get_gas_left();
@@ -1099,9 +1111,12 @@ mod tests {
         let msg = br#"{"verifier":{}}"#;
         let res = call_query(&mut instance, &mock_env(), msg).unwrap();
         let answer = res.unwrap();
-        assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
+        assert_eq!(
+            answer.as_slice(),
+            format!("{{\"verifier\":\"{verifier}\"}}").as_bytes()
+        );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 4493706);
+        assert_eq!(query_used, 7142556);
     }
 }

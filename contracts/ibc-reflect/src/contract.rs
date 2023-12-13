@@ -447,6 +447,7 @@ mod tests {
     fn proper_handshake_flow() {
         let mut deps = setup();
         let channel_id = "channel-1234";
+        let reflect_addr = deps.api.addr_make(REFLECT_ADDR);
 
         // first we try to open with a valid handshake
         let handshake_open =
@@ -487,7 +488,7 @@ mod tests {
             id,
             gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
-                events: fake_events(REFLECT_ADDR),
+                events: fake_events(reflect_addr.as_str()),
                 msg_responses: vec![],
                 data: None,
             }),
@@ -501,7 +502,7 @@ mod tests {
         assert_eq!(
             &res.accounts[0],
             &AccountInfo {
-                account: REFLECT_ADDR.into(),
+                account: reflect_addr.to_string(),
                 channel_id: channel_id.to_string(),
             }
         );
@@ -516,7 +517,7 @@ mod tests {
         )
         .unwrap();
         let res: AccountResponse = from_json(raw).unwrap();
-        assert_eq!(res.account.unwrap(), REFLECT_ADDR);
+        assert_eq!(res.account.unwrap(), reflect_addr.as_str());
     }
 
     #[test]
@@ -524,7 +525,7 @@ mod tests {
         let mut deps = setup();
 
         let channel_id = "channel-123";
-        let account = "acct-123";
+        let account = deps.api.addr_make("acct-123");
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
         let msgs_to_dispatch = vec![BankMsg::Send {
@@ -552,7 +553,7 @@ mod tests {
         );
 
         // register the channel
-        connect(deps.as_mut(), channel_id, account);
+        connect(deps.as_mut(), channel_id, &account);
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
         let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
@@ -573,7 +574,7 @@ mod tests {
             funds,
         }) = &res.messages[0].msg
         {
-            assert_eq!(account, contract_addr.as_str());
+            assert_eq!(account.as_str(), contract_addr);
             assert_eq!(0, funds.len());
             // parse the message - should callback with proper channel_id
             let rmsg: ReflectExecuteMsg = from_json(msg).unwrap();
@@ -605,19 +606,19 @@ mod tests {
         let mut deps = setup();
 
         let channel_id = "channel-123";
-        let account = "acct-123";
+        let account = deps.api.addr_make("acct-123");
 
         // register the channel
-        connect(deps.as_mut(), channel_id, account);
+        connect(deps.as_mut(), channel_id, &account);
         // assign it some funds
         let funds = vec![coin(123456, "uatom"), coin(7654321, "tgrd")];
-        deps.querier.update_balance(account, funds.clone());
+        deps.querier.update_balance(&account, funds.clone());
 
         // channel should be listed and have balance
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
         let res: ListAccountsResponse = from_json(raw).unwrap();
         assert_eq!(1, res.accounts.len());
-        let balance = deps.as_ref().querier.query_all_balances(account).unwrap();
+        let balance = deps.as_ref().querier.query_all_balances(&account).unwrap();
         assert_eq!(funds, balance);
 
         // close the channel
@@ -630,7 +631,7 @@ mod tests {
             contract_addr, msg, ..
         }) = &res.messages[0].msg
         {
-            assert_eq!(contract_addr.as_str(), account);
+            assert_eq!(contract_addr, account.as_str());
             let reflect: ReflectExecuteMsg = from_json(msg).unwrap();
             match reflect {
                 ReflectExecuteMsg::ReflectMsg { msgs } => {

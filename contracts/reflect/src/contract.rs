@@ -301,14 +301,16 @@ mod tests {
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let info = mock_info("creator", &[]);
-        let new_owner = String::from("friend");
-        let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
+        let new_owner = deps.api.addr_make("friend");
+        let msg = ExecuteMsg::ChangeOwner {
+            owner: new_owner.to_string(),
+        };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // should change state
         assert_eq!(0, res.messages.len());
         let value = query_owner(deps.as_ref()).unwrap();
-        assert_eq!("friend", value.owner.as_str());
+        assert_eq!(value.owner, new_owner.as_str());
     }
 
     #[test]
@@ -351,7 +353,7 @@ mod tests {
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         match err {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
-                assert!(msg.contains("human address too short"))
+                assert!(msg.contains("Error decoding bech32"))
             }
             e => panic!("Unexpected error: {e:?}"),
         }

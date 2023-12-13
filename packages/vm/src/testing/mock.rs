@@ -1,15 +1,20 @@
-use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
+use bech32::{decode, encode, FromBase32, ToBase32, Variant};
 use cosmwasm_std::{
     Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo,
 };
+use sha2::{Digest, Sha256};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
+use crate::backend::try_br;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
-pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
+pub const MOCK_CONTRACT_ADDR: &str = "cosmwasmcontract"; // TODO: use correct address
 const GAS_COST_HUMANIZE: u64 = 44; // TODO: these seem very low
 const GAS_COST_CANONICALIZE: u64 = 55;
+
+/// Default prefix used when creating Bech32 encoded address.
+const BECH32_PREFIX: &str = "cosmwasm";
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -33,127 +38,147 @@ pub fn mock_backend_with_balances(
     }
 }
 
-/// Length of canonical addresses created with this API. Contracts should not make any assumptions
-/// what this value is.
-///
-/// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-/// See <https://oeis.org/A002326/list> for a table of those values.
-const CANONICAL_LENGTH: usize = 64; // n = 32
-
-const SHUFFLES_ENCODE: usize = 10;
-const SHUFFLES_DECODE: usize = 2;
-
 /// Zero-pads all human addresses to make them fit the canonical_length and
 /// trims off zeros for the reverse operation.
 /// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
 #[derive(Copy, Clone)]
-pub struct MockApi {
-    /// Length of canonical addresses created with this API. Contracts should not make any assumptions
-    /// what this value is.
-    canonical_length: usize,
-    /// When set, all calls to the API fail with BackendError::Unknown containing this message
-    backend_error: Option<&'static str>,
+pub struct MockApi(MockApiImpl);
+
+#[derive(Copy, Clone)]
+enum MockApiImpl {
+    /// With this variant, all calls to the API fail with BackendError::Unknown
+    /// containing the given message
+    Error(&'static str),
+    /// This variant implements Bech32 addresses.
+    Bech32 {
+        /// Prefix used for creating addresses in Bech32 encoding.
+        bech32_prefix: &'static str,
+    },
 }
 
 impl MockApi {
-    /// Read-only getter for `canonical_length`, which must not be changed by the caller.
-    pub fn canonical_length(&self) -> usize {
-        self.canonical_length
+    pub fn new_failing(backend_error: &'static str) -> Self {
+        Self(MockApiImpl::Error(backend_error))
     }
 
-    pub fn new_failing(backend_error: &'static str) -> Self {
-        MockApi {
-            backend_error: Some(backend_error),
-            ..MockApi::default()
+    /// Returns [MockApi] with Bech32 prefix set to provided value.
+    ///
+    /// Bech32 prefix must not be empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use cosmwasm_std::Addr;
+    /// # use cosmwasm_std::testing::MockApi;
+    /// #
+    /// let mock_api = MockApi::default().with_prefix("juno");
+    /// let addr = mock_api.addr_make("creator");
+    ///
+    /// assert_eq!(addr.as_str(), "juno1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqsksmtyp");
+    /// ```
+    pub fn with_prefix(self, prefix: &'static str) -> Self {
+        Self(MockApiImpl::Bech32 {
+            bech32_prefix: prefix,
+        })
+    }
+
+    /// Returns an address built from provided input string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use cosmwasm_std::Addr;
+    /// # use cosmwasm_std::testing::MockApi;
+    /// #
+    /// let mock_api = MockApi::default();
+    /// let addr = mock_api.addr_make("creator");
+    ///
+    /// assert_eq!(addr.as_str(), "cosmwasm1h34lmpywh4upnjdg90cjf4j70aee6z8qqfspugamjp42e4q28kqs8s7vcp");
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// This function panics when generating a valid address is not possible,
+    /// especially when Bech32 prefix set in function [with_prefix](Self::with_prefix) is empty.
+    ///
+    pub fn addr_make(&self, input: &str) -> String {
+        // handle error case
+        let bech32_prefix = match self.0 {
+            MockApiImpl::Error(e) => panic!("Generating address failed: {e}"),
+            MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
+        };
+
+        let digest = Sha256::digest(input).to_vec();
+        match encode(bech32_prefix, digest.to_base32(), Variant::Bech32) {
+            Ok(address) => address,
+            Err(reason) => panic!("Generating address failed with reason: {reason}"),
         }
     }
 }
 
 impl Default for MockApi {
     fn default() -> Self {
-        MockApi {
-            canonical_length: CANONICAL_LENGTH,
-            backend_error: None,
-        }
+        Self(MockApiImpl::Bech32 {
+            bech32_prefix: BECH32_PREFIX,
+        })
     }
 }
 
 impl BackendApi for MockApi {
     fn canonical_address(&self, input: &str) -> BackendResult<Vec<u8>> {
-        // mimicks formats like hex or bech32 where different casings are valid for one address
-        let normalized = input.to_lowercase();
-
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
-        if let Some(backend_error) = self.backend_error {
-            return (Err(BackendError::unknown(backend_error)), gas_info);
-        }
+        // handle error case
+        let bech32_prefix = match self.0 {
+            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_info),
+            MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
+        };
 
-        // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
-        let min_length = 3;
-        let max_length = self.canonical_length;
-        if normalized.len() < min_length {
-            return (
-                Err(BackendError::user_err(
-                    format!("Invalid input: human address too short for this mock implementation (must be >= {min_length})."),
-                )),
+        match decode(input) {
+            Ok((prefix, _, _)) if prefix != bech32_prefix => {
+                (Err(BackendError::user_err("Wrong bech32 prefix")), gas_info)
+            }
+            Ok((_, _, Variant::Bech32m)) => (
+                Err(BackendError::user_err("Wrong bech32 variant")),
                 gas_info,
-            );
-        }
-        if normalized.len() > max_length {
-            return (
-                Err(BackendError::user_err(
-                    format!("Invalid input: human address too long for this mock implementation (must be <= {max_length})."),
-                )),
+            ),
+            Err(_) => (
+                Err(BackendError::user_err("Error decoding bech32")),
                 gas_info,
-            );
+            ),
+            Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
+                Ok(bytes) => {
+                    try_br!((validate_length(&bytes), gas_info));
+                    (Ok(bytes), gas_info)
+                }
+                Err(_) => (Err(BackendError::user_err("Invalid bech32 data")), gas_info),
+            },
         }
-
-        let mut out = Vec::from(normalized);
-        // pad to canonical length with NULL bytes
-        out.resize(self.canonical_length, 0x00);
-        // content-dependent rotate followed by shuffle to destroy
-        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
-        let rotate_by = digit_sum(&out) % self.canonical_length;
-        out.rotate_left(rotate_by);
-        for _ in 0..SHUFFLES_ENCODE {
-            out = riffle_shuffle(&out);
-        }
-        (Ok(out), gas_info)
     }
 
     fn human_address(&self, canonical: &[u8]) -> BackendResult<String> {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
-        if let Some(backend_error) = self.backend_error {
-            return (Err(BackendError::unknown(backend_error)), gas_info);
-        }
-
-        if canonical.len() != self.canonical_length {
-            return (
-                Err(BackendError::user_err(
-                    "Invalid input: canonical address length not correct",
-                )),
-                gas_info,
-            );
-        }
-
-        let mut tmp: Vec<u8> = canonical.into();
-        // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..SHUFFLES_DECODE {
-            tmp = riffle_shuffle(&tmp);
-        }
-        // Rotate back
-        let rotate_by = digit_sum(&tmp) % self.canonical_length;
-        tmp.rotate_right(rotate_by);
-        // Remove NULL bytes (i.e. the padding)
-        let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
-
-        let result = match String::from_utf8(trimmed) {
-            Ok(human) => Ok(human),
-            Err(err) => Err(err.into()),
+        // handle error case
+        let bech32_prefix = match self.0 {
+            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_info),
+            MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
+
+        try_br!((validate_length(canonical), gas_info));
+
+        let result = encode(bech32_prefix, canonical.to_base32(), Variant::Bech32)
+            .map_err(|_| BackendError::user_err("Invalid bech32 prefix"));
+
         (result, gas_info)
+    }
+}
+
+/// Does basic validation of the number of bytes in a canonical address
+fn validate_length(bytes: &[u8]) -> Result<(), BackendError> {
+    match bytes.len() {
+        1..=255 => Ok(()),
+        _ => Err(BackendError::user_err("Invalid canonical address length")),
     }
 }
 
@@ -208,31 +233,39 @@ mod tests {
 
     #[test]
     fn canonical_address_works() {
-        let api = MockApi::default();
+        let api = MockApi::default().with_prefix("osmo");
 
-        api.canonical_address("foobar123").0.unwrap();
+        api.canonical_address("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
+            .0
+            .unwrap();
 
         // is case insensitive
-        let data1 = api.canonical_address("foo123").0.unwrap();
-        let data2 = api.canonical_address("FOO123").0.unwrap();
+        let data1 = api
+            .canonical_address("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
+            .0
+            .unwrap();
+        let data2 = api
+            .canonical_address("OSMO186KH7C0K0GH4WW0WH4JQC4YHZU7N7DHSWE845D")
+            .0
+            .unwrap();
         assert_eq!(data1, data2);
     }
 
     #[test]
     fn canonicalize_and_humanize_restores_original() {
-        let api = MockApi::default();
+        let api = MockApi::default().with_prefix("juno");
 
         // simple
-        let original = "shorty";
-        let canonical = api.canonical_address(original).0.unwrap();
+        let original = api.addr_make("shorty");
+        let canonical = api.canonical_address(&original).0.unwrap();
         let (recovered, _gas_cost) = api.human_address(&canonical);
         assert_eq!(recovered.unwrap(), original);
 
         // normalizes input
-        let original = String::from("CosmWasmChef");
-        let canonical = api.canonical_address(&original).0.unwrap();
+        let original = "JUNO1MEPRU9FUQ4E65856ARD6068MFSFRWPGEMD0C3R";
+        let canonical = api.canonical_address(original).0.unwrap();
         let recovered = api.human_address(&canonical).0.unwrap();
-        assert_eq!(recovered, "cosmwasmchef");
+        assert_eq!(recovered, original.to_lowercase());
 
         // Long input (Juno contract address)
         let original =
@@ -245,7 +278,7 @@ mod tests {
     #[test]
     fn human_address_input_length() {
         let api = MockApi::default();
-        let input = vec![61; 11];
+        let input = vec![61; 256]; // too long
         let (result, _gas_info) = api.human_address(&input);
         match result.unwrap_err() {
             BackendError::UserErr { .. } => {}
@@ -256,20 +289,41 @@ mod tests {
     #[test]
     fn canonical_address_min_input_length() {
         let api = MockApi::default();
-        let human = "1";
-        match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { msg } => assert!(msg.contains("too short")),
-            err => panic!("Unexpected error: {err:?}"),
-        }
+
+        // empty address should fail
+        let empty = "cosmwasm1pj90vm";
+        assert!(matches!(api
+            .canonical_address(empty)
+            .0
+            .unwrap_err(),
+            BackendError::UserErr { msg } if msg.contains("address length")));
     }
 
     #[test]
     fn canonical_address_max_input_length() {
         let api = MockApi::default();
-        let human = "longer-than-the-address-length-supported-by-this-api-longer-than-54";
-        match api.canonical_address(human).0.unwrap_err() {
-            BackendError::UserErr { msg } => assert!(msg.contains("too long")),
-            err => panic!("Unexpected error: {err:?}"),
-        }
+
+        let too_long = "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
+
+        assert!(matches!(api
+            .canonical_address(too_long)
+            .0
+            .unwrap_err(),
+            BackendError::UserErr { msg } if msg.contains("address length")));
+    }
+
+    #[test]
+    fn colon_in_prefix_is_valid() {
+        let mock_api = MockApi::default().with_prefix("did:com:");
+        let bytes = mock_api
+            .canonical_address("did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu")
+            .0
+            .unwrap();
+        let humanized = mock_api.human_address(&bytes).0.unwrap();
+
+        assert_eq!(
+            humanized.as_str(),
+            "did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu"
+        );
     }
 }
