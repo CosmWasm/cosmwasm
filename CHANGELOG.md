@@ -64,6 +64,8 @@ and this project adheres to
 - cosmwasm-vm: Removed `backtraces` feature, use the `RUST_BACKTRACE=1` env
   variable instead. All `VmError` variants now have a `backtrace` field.
   ([#1967])
+- cosmwasm-std: Replace `MockApi` with bech32 implementation. ([#1914])
+- cosmwasm-vm: Replace `MockApi` with bech32 implementation. ([#1914])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -72,6 +74,7 @@ and this project adheres to
 [#1884]: https://github.com/CosmWasm/cosmwasm/pull/1884
 [#1898]: https://github.com/CosmWasm/cosmwasm/pull/1898
 [#1902]: https://github.com/CosmWasm/cosmwasm/pull/1902
+[#1914]: https://github.com/CosmWasm/cosmwasm/pull/1914
 [#1926]: https://github.com/CosmWasm/cosmwasm/pull/1926
 [#1933]: https://github.com/CosmWasm/cosmwasm/pull/1933
 [#1939]: https://github.com/CosmWasm/cosmwasm/pull/1939
