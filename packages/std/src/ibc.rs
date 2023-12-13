@@ -601,8 +601,9 @@ impl<T> IbcBasicResponse<T> {
 #[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty> {
     /// The bytes we return to the contract that sent the packet.
-    /// This may represent a success or error of execution
-    pub acknowledgement: Binary,
+    /// This may represent a success or error of execution.
+    /// In case of `None`, no acknowledgement is written.
+    pub acknowledgement: Option<Binary>,
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
@@ -633,11 +634,24 @@ impl<T> IbcReceiveResponse<T> {
     ///
     /// // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
     /// let resp: IbcReceiveResponse = IbcReceiveResponse::new(StdAck::success(b"\x01"));
-    /// assert_eq!(resp.acknowledgement, b"{\"result\":\"AQ==\"}");
+    /// assert_eq!(resp.acknowledgement.unwrap(), b"{\"result\":\"AQ==\"}");
     /// ```
     pub fn new(ack: impl Into<Binary>) -> Self {
         Self {
-            acknowledgement: ack.into(),
+            acknowledgement: Some(ack.into()),
+            messages: vec![],
+            attributes: vec![],
+            events: vec![],
+        }
+    }
+
+    /// Creates a new response without an acknowledgement.
+    ///
+    /// This allows you to send the acknowledgement asynchronously later using [`IbcMsg::WriteAcknowledgement`].
+    /// If you want to send the acknowledgement immediately, use [`IbcReceiveResponse::new`].
+    pub fn without_ack() -> Self {
+        Self {
+            acknowledgement: None,
             messages: vec![],
             attributes: vec![],
             events: vec![],
