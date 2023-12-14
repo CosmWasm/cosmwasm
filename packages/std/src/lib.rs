@@ -1,5 +1,3 @@
-// #![cfg_attr(not(feature = "std"), no_std)]
-
 extern crate alloc;
 
 // Exposed on all platforms
