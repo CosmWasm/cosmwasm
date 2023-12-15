@@ -68,6 +68,7 @@ and this project adheres to
 - cosmwasm-vm: Replace `MockApi` with bech32 implementation. ([#1914])
 - cosmwasm-std: Make `IbcReceiveResponse::acknowledgement` optional and add
   `IbcReceiveResponse::without_ack` constructor. ([#1892])
+- cosmwasm-std: Add `std` feature and make it a default feature. ([#1971])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -86,6 +87,7 @@ and this project adheres to
 [#1944]: https://github.com/CosmWasm/cosmwasm/pull/1944
 [#1949]: https://github.com/CosmWasm/cosmwasm/pull/1949
 [#1967]: https://github.com/CosmWasm/cosmwasm/pull/1967
+[#1971]: https://github.com/CosmWasm/cosmwasm/pull/1971
 
 ### Removed
 
