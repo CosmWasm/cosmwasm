@@ -202,12 +202,10 @@ impl Api for MockApi {
         )?)
     }
 
-    #[cfg(feature = "std")]
-    fn debug(&self, message: &str) {
+    fn debug(&self, #[allow(unused)] message: &str) {
+        #[cfg(feature = "std")]
         println!("{message}");
     }
-    #[cfg(not(feature = "std"))]
-    fn debug(&self, _message: &str) {}
 }
 
 impl MockApi {
