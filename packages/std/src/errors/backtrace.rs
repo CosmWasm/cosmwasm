@@ -40,17 +40,15 @@ impl Display for BT {
     }
 }
 
-#[cfg(not(feature = "std"))]
+#[allow(unused)]
 struct Stub;
 
-#[cfg(not(feature = "std"))]
 impl Debug for Stub {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "<disabled>")
     }
 }
 
-#[cfg(not(feature = "std"))]
 impl Display for Stub {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "<disabled>")
