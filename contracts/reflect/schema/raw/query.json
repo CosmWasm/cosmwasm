@@ -324,6 +324,28 @@
         }
       ]
     },
+    "GrpcQuery": {
+      "description": "Queries the chain using a grpc query. This allows to query information that is not exposed in our API. The chain needs to whitelist the supported queries. The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.\n\nThe returned data is protobuf encoded. The protobuf type depends on the query.",
+      "type": "object",
+      "required": [
+        "data",
+        "path"
+      ],
+      "properties": {
+        "data": {
+          "description": "The expected protobuf message type (not any), binary encoded",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            }
+          ]
+        },
+        "path": {
+          "description": "The fully qualified service path used for routing, eg. \"custom/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
+          "type": "string"
+        }
+      }
+    },
     "IbcQuery": {
       "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
       "oneOf": [
@@ -519,6 +541,18 @@
           "properties": {
             "wasm": {
               "$ref": "#/definitions/WasmQuery"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "grpc"
+          ],
+          "properties": {
+            "grpc": {
+              "$ref": "#/definitions/GrpcQuery"
             }
           },
           "additionalProperties": false
