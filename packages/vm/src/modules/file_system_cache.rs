@@ -1,6 +1,8 @@
 use std::fs;
 use std::hash::Hash;
 use std::io;
+use std::panic::catch_unwind;
+use std::panic::AssertUnwindSafe;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -131,9 +133,13 @@ impl FileSystemCache {
 
         let filename = checksum.to_hex();
         let path = self.modules_path.join(filename);
-        module
-            .serialize_to_file(path)
-            .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
+
+        catch_unwind(AssertUnwindSafe(|| {
+            module
+                .serialize_to_file(&path)
+                .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {e}")))
+        }))
+        .map_err(|_| VmError::cache_err("Could not write module to disk"))??;
         Ok(())
     }
 
