@@ -2,7 +2,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
-#[cfg(feature = "stargate")]
 use crate::Binary;
 use crate::Empty;
 
@@ -63,6 +62,22 @@ pub enum QueryRequest<C> {
     #[cfg(feature = "stargate")]
     Ibc(IbcQuery),
     Wasm(WasmQuery),
+    Grpc(GrpcQuery),
+}
+
+/// Queries the chain using a grpc query.
+/// This allows to query information that is not exposed in our API.
+/// The chain needs to whitelist the supported queries.
+/// The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.
+///
+/// The returned data is protobuf encoded. The protobuf type depends on the query.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct GrpcQuery {
+    /// The fully qualified service path used for routing,
+    /// eg. "custom/cosmos_sdk.x.bank.v1.Query/QueryBalance"
+    path: String,
+    /// The expected protobuf message type (not any), binary encoded
+    data: Binary,
 }
 
 /// A trait that is required to avoid conflicts with other query types like BankQuery and WasmQuery
