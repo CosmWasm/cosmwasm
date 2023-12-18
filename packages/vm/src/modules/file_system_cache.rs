@@ -1,6 +1,7 @@
 use std::fs;
 use std::hash::Hash;
 use std::io;
+use std::panic::catch_unwind;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
@@ -179,9 +180,12 @@ impl FileSystemCache {
             .map_err(|_e| VmError::cache_err("Error creating modules directory"))?;
 
         let path = self.module_file(checksum);
-        module
-            .serialize_to_file(&path)
-            .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {e}")))?;
+        catch_unwind(|| {
+            module
+                .serialize_to_file(&path)
+                .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {e}")))
+        })
+        .map_err(|_| VmError::cache_err("Could not write module to disk"))??;
         let module_size = module_size(&path)?;
         Ok(module_size)
     }
