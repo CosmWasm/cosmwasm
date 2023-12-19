@@ -76,7 +76,7 @@ pub struct GrpcQuery {
     /// The fully qualified service path used for routing,
     /// eg. "custom/cosmos_sdk.x.bank.v1.Query/QueryBalance"
     path: String,
-    /// The expected protobuf message type (not any), binary encoded
+    /// The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded
     data: Binary,
 }
 
