@@ -131,6 +131,12 @@ impl<C: CustomQuery> From<WasmQuery> for QueryRequest<C> {
     }
 }
 
+impl<C: CustomQuery> From<GrpcQuery> for QueryRequest<C> {
+    fn from(msg: GrpcQuery) -> Self {
+        QueryRequest::Grpc(msg)
+    }
+}
+
 #[cfg(feature = "stargate")]
 impl<C: CustomQuery> From<IbcQuery> for QueryRequest<C> {
     fn from(msg: IbcQuery) -> Self {
