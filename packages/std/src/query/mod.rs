@@ -67,7 +67,7 @@ pub enum QueryRequest<C> {
 
 /// Queries the chain using a grpc query.
 /// This allows to query information that is not exposed in our API.
-/// The chain needs to whitelist the supported queries.
+/// The chain needs to allowlist the supported queries.
 /// The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.
 ///
 /// The returned data is protobuf encoded. The protobuf type depends on the query.
