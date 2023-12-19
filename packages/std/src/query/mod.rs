@@ -72,10 +72,14 @@ pub enum QueryRequest<C> {
 /// The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.
 ///
 /// The returned data is protobuf encoded. The protobuf type depends on the query.
+///
+/// To find the path, as well as the request and response types,
+/// you can query the chain's gRPC endpoint using a tool like
+/// [grpcurl](https://github.com/fullstorydev/grpcurl).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct GrpcQuery {
-    /// The fully qualified service path used for routing,
-    /// eg. "custom/cosmos_sdk.x.bank.v1.Query/QueryBalance"
+    /// The fully qualified endpoint path used for routing,
+    /// eg. "cosmos.authz.v1beta1.Query.Grants"
     path: String,
     /// The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded
     data: Binary,
