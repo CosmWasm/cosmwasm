@@ -4,6 +4,7 @@ use core::ops::Deref;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
+use crate::prelude::*;
 use crate::{Binary, StdError, StdResult};
 
 /// This is a wrapper around Vec<u8> to add hex de/serialization

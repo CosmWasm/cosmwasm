@@ -2,6 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::forward_ref_partial_eq;
+use crate::prelude::*;
 
 /// A full [*Cosmos SDK* event].
 ///

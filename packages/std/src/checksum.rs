@@ -5,6 +5,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
+use crate::prelude::*;
 use crate::{StdError, StdResult};
 
 /// A SHA-256 checksum of a Wasm blob, used to identify a Wasm code.

@@ -9,6 +9,7 @@ use sha2::{
 };
 use thiserror::Error;
 
+use crate::prelude::*;
 use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
 
 /// A human readable address.

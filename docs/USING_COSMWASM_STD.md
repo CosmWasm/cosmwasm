@@ -74,7 +74,8 @@ there it becomes impossible to use the contract in chains with lower CosmWasm
 versions. If you add `abort`, it becomes impossible for the contract developer
 to opt out of the abort feature due to your library. Since this affects the
 default features `abort` and `iterator`, you should always disable default
-features.
+features. However, you should make sure to keep the `std` feature enabled, as we
+might move certain existing functionality to that feature in the future.
 
 Also libraries should define a loose version range that allows the contract
 developer to control which cosmwasm-std version they want to use in the final
@@ -85,5 +86,6 @@ A typical dependency then looks like this:
 
 ```toml
 # We really need `stargate` here as this is an IBC related library. `abort` and `iterator` are not needed.
-cosmwasm-std = { version = "1.0.1", default-features = false, features = ["stargate"] }
+# `std` should always stay enabled.
+cosmwasm-std = { version = "1.0.1", default-features = false, features = ["std", "stargate"] }
 ```

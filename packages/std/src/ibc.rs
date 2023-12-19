@@ -9,6 +9,7 @@ use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::errors::StdResult;
+use crate::prelude::*;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::serde::to_json_binary;
 use crate::timestamp::Timestamp;

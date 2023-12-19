@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
 use crate::Binary;
 
 /// Simplified version of the PageRequest type for pagination from the cosmos-sdk

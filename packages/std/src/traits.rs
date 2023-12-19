@@ -8,6 +8,7 @@ use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
+use crate::prelude::*;
 #[cfg(feature = "cosmwasm_1_2")]
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]

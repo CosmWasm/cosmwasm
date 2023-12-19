@@ -2,6 +2,7 @@ use alloc::collections::BTreeMap;
 use core::fmt;
 use core::str::FromStr;
 
+use crate::prelude::*;
 use crate::{
     errors::CoinsError, Coin, OverflowError, OverflowOperation, StdError, StdResult, Uint128,
 };

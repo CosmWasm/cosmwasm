@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
 use crate::{Addr, Coin, Decimal};
 
 use super::query_response::QueryResponseType;

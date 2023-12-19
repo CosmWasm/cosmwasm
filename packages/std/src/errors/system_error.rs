@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
 use crate::Binary;
 
 /// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
@@ -39,6 +40,7 @@ pub enum SystemError {
     },
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for SystemError {}
 
 impl core::fmt::Display for SystemError {

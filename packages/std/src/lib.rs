@@ -32,6 +32,9 @@ mod timestamp;
 mod traits;
 mod types;
 
+/// This module is to simplify no_std imports
+pub(crate) mod prelude;
+
 /// This modules is very advanced and will not be used directly by the vast majority of users.
 /// We want to offer it to ensure a stable storage key composition system but don't encourage
 /// contract devs to use it directly.

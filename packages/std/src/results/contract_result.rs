@@ -2,6 +2,8 @@ use core::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
+
 /// This is the final result type that is created and serialized in a contract for
 /// every init/execute/migrate call. The VM then deserializes this type to distinguish
 /// between successful and failed executions.

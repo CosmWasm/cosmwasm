@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Coin;
 
+use crate::prelude::*;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::PageRequest;
 use crate::{Binary, DenomMetadata};

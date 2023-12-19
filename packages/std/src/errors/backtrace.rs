@@ -1,5 +1,7 @@
 use core::fmt::{Debug, Display, Formatter, Result};
 
+use crate::prelude::*;
+
 /// This wraps an actual backtrace to achieve two things:
 /// - being able to fill this with a stub implementation in `no_std` environments
 /// - being able to use this in conjunction with [`thiserror::Error`]
@@ -9,10 +11,17 @@ impl BT {
     #[track_caller]
     pub fn capture() -> Self {
         // in case of no_std, we can fill with a stub here
-        #[cfg(target_arch = "wasm32")]
-        return BT(Box::new(std::backtrace::Backtrace::disabled()));
-        #[cfg(not(target_arch = "wasm32"))]
-        return BT(Box::new(std::backtrace::Backtrace::capture()));
+        #[cfg(feature = "std")]
+        {
+            #[cfg(target_arch = "wasm32")]
+            return BT(Box::new(std::backtrace::Backtrace::disabled()));
+            #[cfg(not(target_arch = "wasm32"))]
+            return BT(Box::new(std::backtrace::Backtrace::capture()));
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            BT(Box::new(Stub))
+        }
     }
 }
 
@@ -28,6 +37,21 @@ impl Debug for BT {
 impl Display for BT {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         Display::fmt(&self.0, f)
+    }
+}
+
+#[allow(unused)]
+struct Stub;
+
+impl Debug for Stub {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "<disabled>")
+    }
+}
+
+impl Display for Stub {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "<disabled>")
     }
 }
 
