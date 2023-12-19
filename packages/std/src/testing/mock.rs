@@ -602,6 +602,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             }
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
             #[cfg(feature = "stargate")]
+            #[allow(deprecated)]
             QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
                 kind: "Stargate".to_string(),
             }),

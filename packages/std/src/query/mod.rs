@@ -1,3 +1,6 @@
+// needed because the derive macros on QueryRequest use the deprecated `Stargate` variant
+#![allow(deprecated)]
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
