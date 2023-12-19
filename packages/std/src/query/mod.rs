@@ -52,6 +52,7 @@ pub enum QueryRequest<C> {
     /// The response is protobuf encoded data directly without a JSON response wrapper.
     /// The caller is responsible for compiling the proper protobuf definitions for both requests and responses.
     #[cfg(feature = "stargate")]
+    #[deprecated = "Please use the GrpcQuery instead"]
     Stargate {
         /// this is the fully qualified service path used for routing,
         /// eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance
