@@ -30,8 +30,9 @@ major releases of `cosmwasm`. Note that you can also view the
   want to enable the `std` feature now, as we might move certain existing
   functionality to that feature in the future to support no_std environments:
 
-  ```toml
-  cosmwasm-std = { version = "2.0.0", default-features = false, features = ["std", ...] }
+  ```diff
+  -cosmwasm-std = { version = "2.0.0", default-features = false, features = [...] }
+  +cosmwasm-std = { version = "2.0.0", default-features = false, features = ["std", ...] }
   ```
 
 - `ContractInfoResponse::new` now takes all fields of the response as
