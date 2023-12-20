@@ -85,9 +85,9 @@ pub struct GrpcQuery {
     /// The fully qualified endpoint path used for routing.
     /// It follows the format `/service_path/method_name`,
     /// eg. "/cosmos.authz.v1beta1.Query/Grants"
-    path: String,
+    pub path: String,
     /// The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded
-    data: Binary,
+    pub data: Binary,
 }
 
 /// A trait that is required to avoid conflicts with other query types like BankQuery and WasmQuery
