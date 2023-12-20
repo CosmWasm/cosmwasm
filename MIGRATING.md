@@ -189,6 +189,23 @@ major releases of `cosmwasm`. Note that you can also view the
   +};
   ```
 
+- If you were using `QueryRequest::Stargate`, you might want to enable the
+  `cosmwasm_2_0` cargo feature and migrate to `QueryRequest::Grpc` instead.
+  While the stargate query sometimes returns protobuf encoded data and sometimes
+  JSON encoded data, depending on the chain, the gRPC query always returns
+  protobuf encoded data.
+
+  ```diff
+  -deps.querier.query(&QueryRequest::Stargate {
+  -    path: "/service.Path/ServiceMethod".to_string(),
+  -    data: Binary::new(b"DATA"),
+  -})?;
+  +deps.querier.query(&QueryRequest::Grpc(GrpcQuery {
+  +    path: "/service.Path/ServiceMethod".to_string(),
+  +    data: Binary::new(b"DATA"),
+  +}))?;
+  ```
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
