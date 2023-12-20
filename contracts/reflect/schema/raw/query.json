@@ -325,7 +325,7 @@
       ]
     },
     "GrpcQuery": {
-      "description": "Queries the chain using a grpc query. This allows to query information that is not exposed in our API. The chain needs to whitelist the supported queries. The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.\n\nThe returned data is protobuf encoded. The protobuf type depends on the query.",
+      "description": "Queries the chain using a grpc query. This allows to query information that is not exposed in our API. The chain needs to allowlist the supported queries. The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.\n\nThe returned data is protobuf encoded. The protobuf type depends on the query.\n\nTo find the path, as well as the request and response types, you can query the chain's gRPC endpoint using a tool like [grpcurl](https://github.com/fullstorydev/grpcurl).",
       "type": "object",
       "required": [
         "data",
@@ -333,7 +333,7 @@
       ],
       "properties": {
         "data": {
-          "description": "The expected protobuf message type (not any), binary encoded",
+          "description": "The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded",
           "allOf": [
             {
               "$ref": "#/definitions/Binary"
@@ -341,7 +341,7 @@
           ]
         },
         "path": {
-          "description": "The fully qualified service path used for routing, eg. \"custom/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
+          "description": "The fully qualified endpoint path used for routing. It follows the format `/service_path/method_name`, eg. \"/cosmos.authz.v1beta1.Query/Grants\"",
           "type": "string"
         }
       }
@@ -492,6 +492,7 @@
         },
         {
           "description": "A Stargate query is encoded the same way as abci_query, with path and protobuf encoded request data. The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md). The response is protobuf encoded data directly without a JSON response wrapper. The caller is responsible for compiling the proper protobuf definitions for both requests and responses.",
+          "deprecated": true,
           "type": "object",
           "required": [
             "stargate"
@@ -513,7 +514,7 @@
                   ]
                 },
                 "path": {
-                  "description": "this is the fully qualified service path used for routing, eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance",
+                  "description": "this is the fully qualified service path used for routing, eg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
                   "type": "string"
                 }
               }
