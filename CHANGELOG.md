@@ -13,11 +13,14 @@ and this project adheres to
 - cosmwasm-std: Add `Reply::gas_used`. ([#1954])
 - cosmwasm-std: Add `SubMsgResponse::msg_responses` and deprecate
   `SubMsgResponse::data`. ([#1903])
+- cosmwasm-std: Add `cosmwasm_2_0` feature to enable 2.0 specific functionality.
+  ([#1974])
 
 [#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
 [#1903]: https://github.com/CosmWasm/cosmwasm/pull/1903
 [#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
 [#1954]: https://github.com/CosmWasm/cosmwasm/pull/1954
+[#1974]: https://github.com/CosmWasm/cosmwasm/pull/1974
 
 ### Changed
 

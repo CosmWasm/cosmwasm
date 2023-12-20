@@ -29,6 +29,9 @@ use crate::serde::{from_json, to_json_vec};
 use crate::types::Env;
 use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
 
+// These functions are used as markers for the chain to know which features this contract requires.
+// If the chain does not support all the required features, it will reject storing the contract.
+// See `docs/CAPABILITIES.md` for more details.
 #[cfg(feature = "iterator")]
 #[no_mangle]
 extern "C" fn requires_iterator() -> () {}
@@ -56,6 +59,10 @@ extern "C" fn requires_cosmwasm_1_3() -> () {}
 #[cfg(feature = "cosmwasm_1_4")]
 #[no_mangle]
 extern "C" fn requires_cosmwasm_1_4() -> () {}
+
+#[cfg(feature = "cosmwasm_2_0")]
+#[no_mangle]
+extern "C" fn requires_cosmwasm_2_0() -> () {}
 
 /// interface_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
