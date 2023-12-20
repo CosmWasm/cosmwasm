@@ -344,15 +344,15 @@ jobs:
       - run:
           name: Build library for native target (no features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --no-default-features
+          command: cargo build --locked --no-default-features --features std
       - run:
           name: Build library for wasm target (no features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --no-default-features
+          command: cargo wasm --locked --no-default-features --features std
       - run:
           name: Run unit tests (no features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --no-default-features
+          command: cargo test --locked --no-default-features --features std
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std

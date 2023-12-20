@@ -9,11 +9,11 @@ cargo fmt
   cd packages/std
   # default, min, all
   cargo check
-  cargo check --no-default-features
-  cargo check --features abort,iterator,staking,stargate,cosmwasm_1_2
+  cargo check --no-default-features --features std
+  cargo check --features std,abort,iterator,staking,stargate,cosmwasm_1_2
   cargo wasm-debug
-  cargo wasm-debug --features iterator,staking,stargate
-  cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
+  cargo wasm-debug --features std,iterator,staking,stargate
+  cargo clippy --all-targets --features std,iterator,staking,stargate -- -D warnings
 )
 (cd packages/schema && cargo build && cargo clippy --all-targets -- -D warnings)
 (cd packages/schema-derive && cargo build && cargo clippy --all-targets -- -D warnings)
