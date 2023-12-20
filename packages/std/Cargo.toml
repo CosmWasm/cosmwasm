@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "stargate", "staking", "cosmwasm_1_4"]
+features = ["abort", "stargate", "staking", "cosmwasm_2_0"]
 
 [features]
 default = ["iterator", "abort", "std"]
@@ -46,6 +46,9 @@ cosmwasm_1_3 = ["cosmwasm_1_2"]
 # available for the contract to call.
 # It requires the host blockchain to run CosmWasm `1.4.0` or higher.
 cosmwasm_1_4 = ["cosmwasm_1_3"]
+# This enables functionality that is only available on 2.0 chains.
+# It adds `CosmosMsg::Any`, replacing `CosmosMsg::Stargate`.
+cosmwasm_2_0 = ["cosmwasm_1_4"]
 
 [dependencies]
 base64 = "0.21.0"

@@ -34,6 +34,7 @@ pub enum CosmosMsg<T = Empty> {
     Staking(StakingMsg),
     #[cfg(feature = "staking")]
     Distribution(DistributionMsg),
+    #[cfg(feature = "cosmwasm_2_0")]
     Any(AnyMsg),
     #[cfg(feature = "stargate")]
     Ibc(IbcMsg),
@@ -385,6 +386,7 @@ impl<T> From<DistributionMsg> for CosmosMsg<T> {
 
 // By implementing `From<MyType> for cosmwasm_std::AnyMsg`,
 // you automatically get a MyType -> CosmosMsg conversion.
+#[cfg(feature = "cosmwasm_2_0")]
 impl<S: Into<AnyMsg>, T> From<S> for CosmosMsg<T> {
     fn from(source: S) -> Self {
         CosmosMsg::<T>::Any(source.into())
@@ -414,7 +416,7 @@ impl<T> From<GovMsg> for CosmosMsg<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coin, coins, to_json_string};
+    use crate::{coin, coins};
 
     #[test]
     fn from_bank_msg_works() {
@@ -429,6 +431,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "cosmwasm_2_0")]
     fn from_any_msg_works() {
         // should work with AnyMsg
         let any = AnyMsg {
@@ -519,13 +522,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "cosmwasm_2_0")]
     fn any_msg_serializes_to_correct_json() {
         // Same serialization as CosmosMsg::Stargate (see above), except the top level key
         let msg: CosmosMsg = CosmosMsg::Any(AnyMsg {
             type_url: "/cosmos.foo.v1beta.MsgBar".to_string(),
             value: Binary::from_base64("5yu/rQ+HrMcxH1zdga7P5hpGMLE=").unwrap(),
         });
-        let json = to_json_string(&msg).unwrap();
+        let json = crate::to_json_string(&msg).unwrap();
         assert_eq!(
             json,
             r#"{"any":{"type_url":"/cosmos.foo.v1beta.MsgBar","value":"5yu/rQ+HrMcxH1zdga7P5hpGMLE="}}"#,
