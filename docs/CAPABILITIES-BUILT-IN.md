@@ -23,5 +23,5 @@ might define others.
   `DistributionQuery::DelegationTotalRewards` and
   `DistributionQuery::DelegatorValidators` queries. Only chains running CosmWasm
   `1.4.0` or higher support this.
-- `cosmwasm_2_0` enables `CosmosMsg::Any`. Only chains running CosmWasm `2.0.0`
-  or higher support this.
+- `cosmwasm_2_0` enables `CosmosMsg::Any` and `QueryRequest::Grpc`. Only chains
+  running CosmWasm `2.0.0` or higher support this.

@@ -606,6 +606,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
                 kind: "Stargate".to_string(),
             }),
+            #[cfg(feature = "cosmwasm_2_0")]
             QueryRequest::Grpc(_) => SystemResult::Err(SystemError::UnsupportedRequest {
                 kind: "GRPC".to_string(),
             }),

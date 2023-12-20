@@ -66,6 +66,7 @@ pub enum QueryRequest<C> {
     #[cfg(feature = "stargate")]
     Ibc(IbcQuery),
     Wasm(WasmQuery),
+    #[cfg(feature = "cosmwasm_2_0")]
     Grpc(GrpcQuery),
 }
 
@@ -139,6 +140,7 @@ impl<C: CustomQuery> From<WasmQuery> for QueryRequest<C> {
     }
 }
 
+#[cfg(feature = "cosmwasm_2_0")]
 impl<C: CustomQuery> From<GrpcQuery> for QueryRequest<C> {
     fn from(msg: GrpcQuery) -> Self {
         QueryRequest::Grpc(msg)

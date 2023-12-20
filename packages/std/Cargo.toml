@@ -47,7 +47,7 @@ cosmwasm_1_3 = ["cosmwasm_1_2"]
 # It requires the host blockchain to run CosmWasm `1.4.0` or higher.
 cosmwasm_1_4 = ["cosmwasm_1_3"]
 # This enables functionality that is only available on 2.0 chains.
-# It adds `CosmosMsg::Any`, replacing `CosmosMsg::Stargate`.
+# It adds `CosmosMsg::Any`, replacing `CosmosMsg::Stargate`. It also adds `QueryRequest::Grpc`.
 cosmwasm_2_0 = ["cosmwasm_1_4"]
 
 [dependencies]
