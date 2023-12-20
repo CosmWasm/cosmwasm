@@ -58,7 +58,7 @@ pub enum QueryRequest<C> {
     #[deprecated = "Please use the GrpcQuery instead"]
     Stargate {
         /// this is the fully qualified service path used for routing,
-        /// eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance
+        /// eg. "/cosmos_sdk.x.bank.v1.Query/QueryBalance"
         path: String,
         /// this is the expected protobuf message type (not any), binary encoded
         data: Binary,
@@ -81,8 +81,9 @@ pub enum QueryRequest<C> {
 /// [grpcurl](https://github.com/fullstorydev/grpcurl).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct GrpcQuery {
-    /// The fully qualified endpoint path used for routing,
-    /// eg. "cosmos.authz.v1beta1.Query.Grants"
+    /// The fully qualified endpoint path used for routing.
+    /// It follows the format `/service_path/method_name`,
+    /// eg. "/cosmos.authz.v1beta1.Query/Grants"
     path: String,
     /// The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded
     data: Binary,
