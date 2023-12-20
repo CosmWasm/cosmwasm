@@ -28,7 +28,7 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["abort", "cosmwasm_1_3"] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["std", "abort", "cosmwasm_1_3"] }
 rust-argon2 = "0.8"
 thiserror = "1.0.26"
 

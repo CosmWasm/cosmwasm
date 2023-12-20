@@ -31,7 +31,7 @@ clru = "0.6.1"
 crc32fast = "1.3.2"
 bech32 = "0.9.1"
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "1.5.0", default-features = false }
+cosmwasm-std = { path = "../std", version = "1.5.0", default-features = false, features = ["std"] }
 cosmwasm-crypto = { path = "../crypto", version = "1.5.0" }
 derivative = "2"
 hex = "0.4"
