@@ -1,8 +1,10 @@
+// needed because the derive macros on QueryRequest use the deprecated `Stargate` variant
+#![allow(deprecated)]
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
-#[cfg(feature = "stargate")]
 use crate::Binary;
 use crate::Empty;
 
@@ -53,9 +55,10 @@ pub enum QueryRequest<C> {
     /// The response is protobuf encoded data directly without a JSON response wrapper.
     /// The caller is responsible for compiling the proper protobuf definitions for both requests and responses.
     #[cfg(feature = "stargate")]
+    #[deprecated = "Please use the GrpcQuery instead"]
     Stargate {
         /// this is the fully qualified service path used for routing,
-        /// eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance
+        /// eg. "/cosmos_sdk.x.bank.v1.Query/QueryBalance"
         path: String,
         /// this is the expected protobuf message type (not any), binary encoded
         data: Binary,
@@ -63,6 +66,28 @@ pub enum QueryRequest<C> {
     #[cfg(feature = "stargate")]
     Ibc(IbcQuery),
     Wasm(WasmQuery),
+    #[cfg(feature = "cosmwasm_2_0")]
+    Grpc(GrpcQuery),
+}
+
+/// Queries the chain using a grpc query.
+/// This allows to query information that is not exposed in our API.
+/// The chain needs to allowlist the supported queries.
+/// The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.
+///
+/// The returned data is protobuf encoded. The protobuf type depends on the query.
+///
+/// To find the path, as well as the request and response types,
+/// you can query the chain's gRPC endpoint using a tool like
+/// [grpcurl](https://github.com/fullstorydev/grpcurl).
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct GrpcQuery {
+    /// The fully qualified endpoint path used for routing.
+    /// It follows the format `/service_path/method_name`,
+    /// eg. "/cosmos.authz.v1beta1.Query/Grants"
+    pub path: String,
+    /// The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded
+    pub data: Binary,
 }
 
 /// A trait that is required to avoid conflicts with other query types like BankQuery and WasmQuery
@@ -112,6 +137,13 @@ impl<C: CustomQuery> From<StakingQuery> for QueryRequest<C> {
 impl<C: CustomQuery> From<WasmQuery> for QueryRequest<C> {
     fn from(msg: WasmQuery) -> Self {
         QueryRequest::Wasm(msg)
+    }
+}
+
+#[cfg(feature = "cosmwasm_2_0")]
+impl<C: CustomQuery> From<GrpcQuery> for QueryRequest<C> {
+    fn from(msg: GrpcQuery) -> Self {
+        QueryRequest::Grpc(msg)
     }
 }
 

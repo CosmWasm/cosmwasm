@@ -602,8 +602,13 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             }
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
             #[cfg(feature = "stargate")]
+            #[allow(deprecated)]
             QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
                 kind: "Stargate".to_string(),
+            }),
+            #[cfg(feature = "cosmwasm_2_0")]
+            QueryRequest::Grpc(_) => SystemResult::Err(SystemError::UnsupportedRequest {
+                kind: "GRPC".to_string(),
             }),
             #[cfg(feature = "stargate")]
             QueryRequest::Ibc(msg) => self.ibc.query(msg),

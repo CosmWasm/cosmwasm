@@ -72,6 +72,8 @@ and this project adheres to
 - cosmwasm-std: Make `IbcReceiveResponse::acknowledgement` optional and add
   `IbcReceiveResponse::without_ack` constructor. ([#1892])
 - cosmwasm-std: Add `std` feature and make it a default feature. ([#1971])
+- cosmwasm-std: Add `QueryRequest::Grpc` and deprecate `QueryRequest::Stargate`.
+  ([#1973])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -91,6 +93,7 @@ and this project adheres to
 [#1949]: https://github.com/CosmWasm/cosmwasm/pull/1949
 [#1967]: https://github.com/CosmWasm/cosmwasm/pull/1967
 [#1971]: https://github.com/CosmWasm/cosmwasm/pull/1971
+[#1973]: https://github.com/CosmWasm/cosmwasm/pull/1973
 
 ### Removed
 

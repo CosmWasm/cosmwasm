@@ -1473,6 +1473,7 @@
           },
           {
             "description": "A Stargate query is encoded the same way as abci_query, with path and protobuf encoded request data. The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md). The response is protobuf encoded data directly without a JSON response wrapper. The caller is responsible for compiling the proper protobuf definitions for both requests and responses.",
+            "deprecated": true,
             "type": "object",
             "required": [
               "stargate"
@@ -1494,7 +1495,7 @@
                     ]
                   },
                   "path": {
-                    "description": "this is the fully qualified service path used for routing, eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance",
+                    "description": "this is the fully qualified service path used for routing, eg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
                     "type": "string"
                   }
                 }
