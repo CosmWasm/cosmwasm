@@ -608,6 +608,7 @@ mod tests {
         let rebond_msg = ExecuteMsg::_BondAllTokens {};
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
+            .bank
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
         let _ = execute(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
 
@@ -699,12 +700,13 @@ mod tests {
         let rebond_msg = ExecuteMsg::_BondAllTokens {};
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
+            .bank
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
         let _ = execute(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
 
         // update the querier with new bond, lower balance
         set_delegation(&mut deps.querier, 1500, "ustake");
-        deps.querier.update_balance(MOCK_CONTRACT_ADDR, vec![]);
+        deps.querier.bank.update_balance(MOCK_CONTRACT_ADDR, vec![]);
 
         // creator now tries to unbond these tokens - this must fail
         let unbond_msg = ExecuteMsg::Unbond {

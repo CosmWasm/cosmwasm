@@ -462,11 +462,11 @@ pub type MockQuerierCustomHandlerResult = SystemResult<ContractResult<Binary>>;
 /// MockQuerier holds an immutable table of bank balances
 /// and configurable handlers for Wasm queries and custom queries.
 pub struct MockQuerier<C: DeserializeOwned = Empty> {
-    bank: BankQuerier,
+    pub bank: BankQuerier,
     #[cfg(feature = "staking")]
     staking: StakingQuerier,
     #[cfg(feature = "cosmwasm_1_3")]
-    distribution: DistributionQuerier,
+    pub distribution: DistributionQuerier,
     wasm: WasmQuerier,
     #[cfg(feature = "stargate")]
     ibc: IbcQuerier,
@@ -495,46 +495,6 @@ impl<C: DeserializeOwned> MockQuerier<C> {
                 })
             }),
         }
-    }
-
-    // set a new balance for the given address and return the old balance
-    pub fn update_balance(
-        &mut self,
-        addr: impl Into<String>,
-        balance: Vec<Coin>,
-    ) -> Option<Vec<Coin>> {
-        self.bank.update_balance(addr, balance)
-    }
-
-    pub fn set_denom_metadata(&mut self, denom_metadata: &[DenomMetadata]) {
-        self.bank.set_denom_metadata(denom_metadata);
-    }
-
-    #[cfg(feature = "cosmwasm_1_3")]
-    pub fn set_withdraw_address(
-        &mut self,
-        delegator_address: impl Into<String>,
-        withdraw_address: impl Into<String>,
-    ) {
-        self.distribution
-            .set_withdraw_address(delegator_address, withdraw_address);
-    }
-
-    /// Sets multiple withdraw addresses.
-    ///
-    /// This allows passing multiple tuples of `(delegator_address, withdraw_address)`.
-    /// It does not overwrite existing entries.
-    #[cfg(feature = "cosmwasm_1_3")]
-    pub fn set_withdraw_addresses(
-        &mut self,
-        withdraw_addresses: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
-    ) {
-        self.distribution.set_withdraw_addresses(withdraw_addresses);
-    }
-
-    #[cfg(feature = "cosmwasm_1_3")]
-    pub fn clear_withdraw_addresses(&mut self) {
-        self.distribution.clear_withdraw_addresses();
     }
 
     #[cfg(feature = "staking")]
@@ -690,6 +650,7 @@ impl BankQuerier {
         }
     }
 
+    /// set a new balance for the given address and return the old balance
     pub fn update_balance(
         &mut self,
         addr: impl Into<String>,

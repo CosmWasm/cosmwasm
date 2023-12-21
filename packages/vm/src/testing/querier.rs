@@ -32,7 +32,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         addr: impl Into<String>,
         balance: Vec<Coin>,
     ) -> Option<Vec<Coin>> {
-        self.querier.update_balance(addr, balance)
+        self.querier.bank.update_balance(addr, balance)
     }
 
     #[cfg(feature = "staking")]

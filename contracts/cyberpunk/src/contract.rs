@@ -254,7 +254,7 @@ mod tests {
     fn query_denoms_works() {
         let mut deps = setup();
 
-        deps.querier.set_denom_metadata(
+        deps.querier.bank.set_denom_metadata(
             &(0..98)
                 .map(|i| DenomMetadata {
                     symbol: format!("FOO{i}"),

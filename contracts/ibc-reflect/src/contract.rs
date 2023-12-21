@@ -614,7 +614,7 @@ mod tests {
         connect(deps.as_mut(), channel_id, &account);
         // assign it some funds
         let funds = vec![coin(123456, "uatom"), coin(7654321, "tgrd")];
-        deps.querier.update_balance(&account, funds.clone());
+        deps.querier.bank.update_balance(&account, funds.clone());
 
         // channel should be listed and have balance
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
