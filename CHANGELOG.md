@@ -74,6 +74,10 @@ and this project adheres to
 - cosmwasm-std: Add `std` feature and make it a default feature. ([#1971])
 - cosmwasm-std: Add `QueryRequest::Grpc` and deprecate `QueryRequest::Stargate`.
   ([#1973])
+- cosmwasm-std: Remove `update_balance`, `set_denom_metadata`,
+  `set_withdraw_address`, `set_withdraw_addresses`, `clear_withdraw_addresses`,
+  `update_ibc` and `update_staking` from `MockQuerier` and expose the underlying
+  queriers directly. ([#1977])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -94,6 +98,7 @@ and this project adheres to
 [#1967]: https://github.com/CosmWasm/cosmwasm/pull/1967
 [#1971]: https://github.com/CosmWasm/cosmwasm/pull/1971
 [#1973]: https://github.com/CosmWasm/cosmwasm/pull/1973
+[#1977]: https://github.com/CosmWasm/cosmwasm/pull/1977
 
 ### Removed
 

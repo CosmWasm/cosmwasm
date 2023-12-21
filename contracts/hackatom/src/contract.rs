@@ -444,7 +444,9 @@ mod tests {
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
-        deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
+        deps.querier
+            .bank
+            .update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary can release it
         let execute_info = mock_info(verifier.as_str(), &[]);
@@ -490,7 +492,9 @@ mod tests {
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
-        deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
+        deps.querier
+            .bank
+            .update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary cannot release it
         let execute_info = mock_info(beneficiary.as_str(), &[]);

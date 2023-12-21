@@ -406,7 +406,7 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_env, mock_info, MockQuerier, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coins, Addr, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
@@ -431,11 +431,12 @@ mod tests {
     }
 
     fn set_validator(querier: &mut MockQuerier) {
-        querier.update_staking("ustake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+        querier.staking =
+            StakingQuerier::new("ustake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
     }
 
     fn set_delegation(querier: &mut MockQuerier, amount: u128, denom: &str) {
-        querier.update_staking(
+        querier.staking.update(
             "ustake",
             &[sample_validator(DEFAULT_VALIDATOR)],
             &[sample_delegation(DEFAULT_VALIDATOR, coin(amount, denom))],
@@ -467,7 +468,8 @@ mod tests {
     fn initialization_with_missing_validator() {
         let mut deps = mock_dependencies();
         deps.querier
-            .update_staking("ustake", &[sample_validator("john")], &[]);
+            .staking
+            .update("ustake", &[sample_validator("john")], &[]);
 
         let creator = deps.api.addr_make("creator").to_string();
         let msg = InstantiateMsg {
@@ -493,7 +495,7 @@ mod tests {
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
-        deps.querier.update_staking(
+        deps.querier.staking.update(
             "ustake",
             &[
                 sample_validator("john"),
@@ -608,6 +610,7 @@ mod tests {
         let rebond_msg = ExecuteMsg::_BondAllTokens {};
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
+            .bank
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
         let _ = execute(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
 
@@ -699,12 +702,13 @@ mod tests {
         let rebond_msg = ExecuteMsg::_BondAllTokens {};
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
+            .bank
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
         let _ = execute(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
 
         // update the querier with new bond, lower balance
         set_delegation(&mut deps.querier, 1500, "ustake");
-        deps.querier.update_balance(MOCK_CONTRACT_ADDR, vec![]);
+        deps.querier.bank.update_balance(MOCK_CONTRACT_ADDR, vec![]);
 
         // creator now tries to unbond these tokens - this must fail
         let unbond_msg = ExecuteMsg::Unbond {

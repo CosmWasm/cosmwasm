@@ -32,7 +32,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         addr: impl Into<String>,
         balance: Vec<Coin>,
     ) -> Option<Vec<Coin>> {
-        self.querier.update_balance(addr, balance)
+        self.querier.bank.update_balance(addr, balance)
     }
 
     #[cfg(feature = "staking")]
@@ -42,7 +42,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         validators: &[cosmwasm_std::Validator],
         delegations: &[cosmwasm_std::FullDelegation],
     ) {
-        self.querier.update_staking(denom, validators, delegations);
+        self.querier.staking.update(denom, validators, delegations);
     }
 
     pub fn update_wasm<WH: 'static>(&mut self, handler: WH)
