@@ -189,6 +189,17 @@ major releases of `cosmwasm`. Note that you can also view the
   +};
   ```
 
+- The `update_balance`, `set_denom_metadata`, `set_withdraw_address`,
+  `set_withdraw_addresses` and `clear_withdraw_addresses` functions were removed
+  from the `MockQuerier`. Use the newly exposed modules to access them directly:
+
+  ```diff
+  -querier.update_balance("addr", coins(1000, "ATOM"));
+  +querier.bank.update_balance("addr", coins(1000, "ATOM"));
+  -querier.set_withdraw_address("delegator", "withdrawer");
+  +querier.distribution.set_withdraw_address("delegator", "withdrawer");
+  ```
+
 - If you were using `QueryRequest::Stargate`, you might want to enable the
   `cosmwasm_2_0` cargo feature and migrate to `QueryRequest::Grpc` instead.
   While the stargate query sometimes returns protobuf encoded data and sometimes
