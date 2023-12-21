@@ -75,8 +75,9 @@ and this project adheres to
 - cosmwasm-std: Add `QueryRequest::Grpc` and deprecate `QueryRequest::Stargate`.
   ([#1973])
 - cosmwasm-std: Remove `update_balance`, `set_denom_metadata`,
-  `set_withdraw_address`, `set_withdraw_addresses`, `clear_withdraw_addresses`
-  from `MockQuerier` and expose the underlying queriers directly. ([#1977])
+  `set_withdraw_address`, `set_withdraw_addresses`, `clear_withdraw_addresses`,
+  `update_ibc` and `update_staking` from `MockQuerier` and expose the underlying
+  queriers directly. ([#1977])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876

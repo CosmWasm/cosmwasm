@@ -42,7 +42,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         validators: &[cosmwasm_std::Validator],
         delegations: &[cosmwasm_std::FullDelegation],
     ) {
-        self.querier.update_staking(denom, validators, delegations);
+        self.querier.staking.update(denom, validators, delegations);
     }
 
     pub fn update_wasm<WH: 'static>(&mut self, handler: WH)

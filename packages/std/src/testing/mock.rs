@@ -464,12 +464,12 @@ pub type MockQuerierCustomHandlerResult = SystemResult<ContractResult<Binary>>;
 pub struct MockQuerier<C: DeserializeOwned = Empty> {
     pub bank: BankQuerier,
     #[cfg(feature = "staking")]
-    staking: StakingQuerier,
+    pub staking: StakingQuerier,
     #[cfg(feature = "cosmwasm_1_3")]
     pub distribution: DistributionQuerier,
     wasm: WasmQuerier,
     #[cfg(feature = "stargate")]
-    ibc: IbcQuerier,
+    pub ibc: IbcQuerier,
     /// A handler to handle custom queries. This is set to a dummy handler that
     /// always errors by default. Update it via `with_custom_handler`.
     ///
@@ -495,21 +495,6 @@ impl<C: DeserializeOwned> MockQuerier<C> {
                 })
             }),
         }
-    }
-
-    #[cfg(feature = "staking")]
-    pub fn update_staking(
-        &mut self,
-        denom: &str,
-        validators: &[crate::query::Validator],
-        delegations: &[crate::query::FullDelegation],
-    ) {
-        self.staking = StakingQuerier::new(denom, validators, delegations);
-    }
-
-    #[cfg(feature = "stargate")]
-    pub fn update_ibc(&mut self, port_id: &str, channels: &[IbcChannel]) {
-        self.ibc = IbcQuerier::new(port_id, channels);
     }
 
     pub fn update_wasm<WH: 'static>(&mut self, handler: WH)
@@ -800,6 +785,12 @@ impl IbcQuerier {
         }
     }
 
+    /// Update the querier's configuration
+    pub fn update(&mut self, port_id: impl Into<String>, channels: &[IbcChannel]) {
+        self.port_id = port_id.into();
+        self.channels = channels.to_vec();
+    }
+
     pub fn query(&self, request: &IbcQuery) -> QuerierResult {
         let contract_result: ContractResult<Binary> = match request {
             IbcQuery::Channel {
@@ -861,6 +852,18 @@ impl StakingQuerier {
             validators: validators.to_vec(),
             delegations: delegations.to_vec(),
         }
+    }
+
+    /// Update the querier's configuration
+    pub fn update(
+        &mut self,
+        denom: impl Into<String>,
+        validators: &[Validator],
+        delegations: &[FullDelegation],
+    ) {
+        self.denom = denom.into();
+        self.validators = validators.to_vec();
+        self.delegations = delegations.to_vec();
     }
 
     pub fn query(&self, request: &StakingQuery) -> QuerierResult {

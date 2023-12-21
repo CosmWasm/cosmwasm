@@ -198,6 +198,10 @@ major releases of `cosmwasm`. Note that you can also view the
   +querier.bank.update_balance("addr", coins(1000, "ATOM"));
   -querier.set_withdraw_address("delegator", "withdrawer");
   +querier.distribution.set_withdraw_address("delegator", "withdrawer");
+  -querier.update_staking(denom, &[], &[]);
+  +querier.staking.update(denom, &[], &[]);
+  -querier.update_ibc(port_id, &[]);
+  +querier.ibc.update(port_id, &[]);
   ```
 
 - If you were using `QueryRequest::Stargate`, you might want to enable the
