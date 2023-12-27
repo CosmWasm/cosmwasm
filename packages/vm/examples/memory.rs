@@ -1,3 +1,6 @@
+// Run with
+// cargo run --features dhat-heap --example memory --release
+
 use std::time::SystemTime;
 use tempfile::TempDir;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
@@ -13,6 +16,7 @@ use cosmwasm_vm::{
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;
 
+/// Number of seconds after which the test stops
 const END_AFTER: u64 = 2 * 60; // seconds
 const ROUNDS: usize = 1024;
 const ROUND_LEN: usize = 16;
