@@ -125,6 +125,36 @@ impl Default for MockApi {
 }
 
 impl BackendApi for MockApi {
+    fn addr_validate(&self, input: &str) -> BackendResult<()> {
+        let mut gas = GasInfo {
+            cost: 0,
+            externally_used: 0,
+        };
+
+        let (result, gas_info) = self.addr_canonicalize(input);
+        gas += gas_info;
+        let canonical = match result {
+            Ok(canonical) => canonical,
+            Err(err) => return (Err(err), gas),
+        };
+
+        let (result, gas_info) = self.addr_humanize(&canonical);
+        gas += gas_info;
+        let normalized = match result {
+            Ok(norm) => norm,
+            Err(err) => return (Err(err), gas),
+        };
+        if input != normalized.as_str() {
+            return (
+                Err(BackendError::user_err(
+                    "Invalid input: address not normalized",
+                )),
+                gas,
+            );
+        }
+        (Ok(()), gas)
+    }
+
     fn addr_canonicalize(&self, input: &str) -> BackendResult<Vec<u8>> {
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 

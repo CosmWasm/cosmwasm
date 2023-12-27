@@ -166,6 +166,7 @@ pub trait Storage {
 /// These should all be pure (stateless) functions. If you need state, you probably want
 /// to use the Querier.
 pub trait BackendApi: Copy + Clone + Send {
+    fn addr_validate(&self, input: &str) -> BackendResult<()>;
     fn addr_canonicalize(&self, human: &str) -> BackendResult<Vec<u8>>;
     fn addr_humanize(&self, canonical: &[u8]) -> BackendResult<String>;
 }

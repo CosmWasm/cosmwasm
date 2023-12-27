@@ -162,31 +162,15 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
         Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
     };
 
-    let (result, gas_info) = data.api.addr_canonicalize(&source_string);
+    let (result, gas_info) = data.api.addr_validate(&source_string);
     process_gas_info(data, &mut store, gas_info)?;
-    let canonical = match result {
-        Ok(data) => data,
+    match result {
+        Ok(()) => Ok(0),
         Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract(data, &mut store, msg.as_bytes())
+            write_to_contract(data, &mut store, msg.as_bytes())
         }
-        Err(err) => return Err(VmError::from(err)),
-    };
-
-    let (result, gas_info) = data.api.addr_humanize(&canonical);
-    process_gas_info(data, &mut store, gas_info)?;
-    let normalized = match result {
-        Ok(addr) => addr,
-        Err(BackendError::UserErr { msg, .. }) => {
-            return write_to_contract(data, &mut store, msg.as_bytes())
-        }
-        Err(err) => return Err(VmError::from(err)),
-    };
-
-    if normalized != source_string {
-        return write_to_contract(data, &mut store, b"Address is not normalized");
+        Err(err) => Err(VmError::from(err)),
     }
-
-    Ok(0)
 }
 
 pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
