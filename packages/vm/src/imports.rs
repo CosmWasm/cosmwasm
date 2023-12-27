@@ -162,7 +162,7 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
         Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
     };
 
-    let (result, gas_info) = data.api.canonical_address(&source_string);
+    let (result, gas_info) = data.api.addr_canonicalize(&source_string);
     process_gas_info(data, &mut store, gas_info)?;
     let canonical = match result {
         Ok(data) => data,
@@ -172,7 +172,7 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
         Err(err) => return Err(VmError::from(err)),
     };
 
-    let (result, gas_info) = data.api.human_address(&canonical);
+    let (result, gas_info) = data.api.addr_humanize(&canonical);
     process_gas_info(data, &mut store, gas_info)?;
     let normalized = match result {
         Ok(addr) => addr,
@@ -206,7 +206,7 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
         Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
     };
 
-    let (result, gas_info) = data.api.canonical_address(&source_string);
+    let (result, gas_info) = data.api.addr_canonicalize(&source_string);
     process_gas_info(data, &mut store, gas_info)?;
     match result {
         Ok(canonical) => {
@@ -233,7 +233,7 @@ pub fn do_addr_humanize<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
         MAX_LENGTH_CANONICAL_ADDRESS,
     )?;
 
-    let (result, gas_info) = data.api.human_address(&canonical);
+    let (result, gas_info) = data.api.addr_humanize(&canonical);
     process_gas_info(data, &mut store, gas_info)?;
     match result {
         Ok(human) => {
