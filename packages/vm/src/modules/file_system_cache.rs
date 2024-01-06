@@ -4,13 +4,18 @@ use std::io;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-use wasmer::{AsEngineRef, DeserializeError, Module, Target};
+use wasmer::{DeserializeError, Module, Target};
 
 use cosmwasm_std::Checksum;
 
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::modules::current_wasmer_module_version;
+use crate::wasm_backend::make_runtime_engine;
+use crate::Size;
+
+use super::cached_module::engine_size_estimate;
+use super::CachedModule;
 
 /// Bump this version whenever the module system changes in a way
 /// that old stored modules would be corrupt when loaded in the new system.
@@ -129,24 +134,29 @@ impl FileSystemCache {
         path
     }
 
-    /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
-    /// along with the size of the serialized module.
+    /// Loads a serialized module from the file system and returns a Module + Engine,
+    /// along with a size estimation for the pair.
     pub fn load(
         &self,
         checksum: &Checksum,
-        engine: &impl AsEngineRef,
-    ) -> VmResult<Option<(Module, usize)>> {
+        memory_limit: Option<Size>,
+    ) -> VmResult<Option<CachedModule>> {
         let file_path = self.module_file(checksum);
 
+        let engine = make_runtime_engine(memory_limit);
         let result = if self.unchecked_modules {
-            unsafe { Module::deserialize_from_file_unchecked(engine, &file_path) }
+            unsafe { Module::deserialize_from_file_unchecked(&engine, &file_path) }
         } else {
-            unsafe { Module::deserialize_from_file(engine, &file_path) }
+            unsafe { Module::deserialize_from_file(&engine, &file_path) }
         };
         match result {
             Ok(module) => {
                 let module_size = module_size(&file_path)?;
-                Ok(Some((module, module_size)))
+                Ok(Some(CachedModule {
+                    module,
+                    engine,
+                    size_estimate: module_size + engine_size_estimate(),
+                }))
             }
             Err(DeserializeError::Io(err)) => match err.kind() {
                 io::ErrorKind::NotFound => Ok(None),
@@ -225,7 +235,7 @@ mod tests {
     use super::*;
     use crate::{
         size::Size,
-        wasm_backend::{compile, make_compiling_engine, make_runtime_engine},
+        wasm_backend::{compile, make_compiling_engine},
     };
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance, Store};
@@ -252,8 +262,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
-        let runtime_engine = make_runtime_engine(TESTING_MEMORY_LIMIT);
-        let cached = cache.load(&checksum, &runtime_engine).unwrap();
+        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_none());
 
         // Store module
@@ -262,14 +271,21 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum, &runtime_engine).unwrap();
+        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_some());
 
         // Check the returned module is functional.
         // This is not really testing the cache API but better safe than sorry.
         {
-            let (cached_module, module_size) = cached.unwrap();
-            assert_eq!(module_size, module.serialize().unwrap().len());
+            let CachedModule {
+                module: cached_module,
+                engine: runtime_engine,
+                size_estimate,
+            } = cached.unwrap();
+            assert_eq!(
+                size_estimate,
+                module.serialize().unwrap().len() + 10240 /* engine size estimate */
+            );
             let import_object = imports! {};
             let mut store = Store::new(runtime_engine);
             let instance = WasmerInstance::new(&mut store, &cached_module, &import_object).unwrap();
@@ -314,20 +330,25 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Store module
-        let engine1 = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = compile(&engine1, &wasm).unwrap();
+        let compiling_engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let module = compile(&compiling_engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // It's there
-        let engine2 = make_runtime_engine(TESTING_MEMORY_LIMIT);
-        assert!(cache.load(&checksum, &engine2).unwrap().is_some());
+        assert!(cache
+            .load(&checksum, TESTING_MEMORY_LIMIT)
+            .unwrap()
+            .is_some());
 
         // Remove module
         let existed = cache.remove(&checksum).unwrap();
         assert!(existed);
 
         // it's gone now
-        assert!(cache.load(&checksum, &engine2).unwrap().is_none());
+        assert!(cache
+            .load(&checksum, TESTING_MEMORY_LIMIT)
+            .unwrap()
+            .is_none());
 
         // Remove again
         let existed = cache.remove(&checksum).unwrap();

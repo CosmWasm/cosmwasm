@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Mutex;
-use wasmer::{Engine, Store};
+use wasmer::{Module, Store};
 
 use cosmwasm_std::Checksum;
 
@@ -19,7 +19,7 @@ use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryC
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
 use crate::static_analysis::{Entrypoint, ExportInfo, REQUIRED_IBC_EXPORTS};
-use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
+use crate::wasm_backend::{compile, make_compiling_engine};
 
 const STATE_DIR: &str = "state";
 // Things related to the state of the blockchain.
@@ -91,17 +91,6 @@ pub struct CacheInner {
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
-    /// A single engine to execute all contracts in this cache instance (usually
-    /// this means all contracts in the process).
-    ///
-    /// This engine is headless, i.e. does not contain a Singlepass compiler.
-    /// It only executes modules compiled with other engines.
-    ///
-    /// The engine has one memory limit set which is the same for all contracts
-    /// running with it. If different memory limits would be needed for different
-    /// contracts at some point, we'd need multiple engines. This is because the tunables
-    /// that control the limit are attached to the engine.
-    runtime_engine: Engine,
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
@@ -109,6 +98,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     /// i.e. any number of read-only references is allowed to access it concurrently.
     available_capabilities: HashSet<String>,
     inner: Mutex<CacheInner>,
+    instance_memory_limit: Size,
     // Those two don't store data but only fix type information
     type_api: PhantomData<A>,
     type_storage: PhantomData<S>,
@@ -169,8 +159,8 @@ where
                 memory_cache: InMemoryCache::new(memory_cache_size),
                 fs_cache,
                 stats: Stats::default(),
-                runtime_engine: make_runtime_engine(Some(instance_memory_limit)),
             }),
+            instance_memory_limit,
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
@@ -318,11 +308,12 @@ where
         // for a not-so-relevant use case.
 
         // Try to get module from file system cache
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)? {
+        if let Some(cached_module) = cache
+            .fs_cache
+            .load(checksum, Some(self.instance_memory_limit))?
+        {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
-            return cache
-                .pinned_memory_cache
-                .store(checksum, module, module_size);
+            return cache.pinned_memory_cache.store(checksum, cached_module);
         }
 
         // Re-compile from original Wasm bytecode
@@ -337,16 +328,16 @@ where
         }
 
         // This time we'll hit the file-system cache.
-        let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)?
+        let Some(cached_module) = cache
+            .fs_cache
+            .load(checksum, Some(self.instance_memory_limit))?
         else {
             return Err(VmError::generic_err(
                 "Can't load module from file system cache after storing it to file system cache (pin)",
             ));
         };
 
-        cache
-            .pinned_memory_cache
-            .store(checksum, module, module_size)
+        cache.pinned_memory_cache.store(checksum, cached_module)
     }
 
     /// Unpins a Module, i.e. removes it from the pinned memory cache.
@@ -370,10 +361,10 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let (cached, store) = self.get_module(checksum)?;
+        let (module, store) = self.get_module(checksum)?;
         let instance = Instance::from_module(
             store,
-            &cached.module,
+            &module,
             backend,
             options.gas_limit,
             None,
@@ -385,36 +376,49 @@ where
     /// Returns a module tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a memory cache, file system cache or Wasm code.
     /// This is part of `get_instance` but pulled out to reduce the locking time.
-    fn get_module(&self, checksum: &Checksum) -> VmResult<(CachedModule, Store)> {
+    fn get_module(&self, checksum: &Checksum) -> VmResult<(Module, Store)> {
         let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
         if let Some(element) = cache.pinned_memory_cache.load(checksum)? {
             cache.stats.hits_pinned_memory_cache =
                 cache.stats.hits_pinned_memory_cache.saturating_add(1);
-            let store = Store::new(cache.runtime_engine.clone());
-            return Ok((element, store));
+            let CachedModule {
+                module,
+                engine,
+                size_estimate: _,
+            } = element;
+            let store = Store::new(engine);
+            return Ok((module, store));
         }
 
         // Get module from memory cache
         if let Some(element) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache = cache.stats.hits_memory_cache.saturating_add(1);
-            let store = Store::new(cache.runtime_engine.clone());
-            return Ok((element, store));
+            let CachedModule {
+                module,
+                engine,
+                size_estimate: _,
+            } = element;
+            let store = Store::new(engine);
+            return Ok((module, store));
         }
 
         // Get module from file system cache
-        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)? {
+        if let Some(cached_module) = cache
+            .fs_cache
+            .load(checksum, Some(self.instance_memory_limit))?
+        {
             cache.stats.hits_fs_cache = cache.stats.hits_fs_cache.saturating_add(1);
 
-            cache
-                .memory_cache
-                .store(checksum, module.clone(), module_size)?;
-            let cached = CachedModule {
+            cache.memory_cache.store(checksum, cached_module.clone())?;
+
+            let CachedModule {
                 module,
-                size_estimate: module_size,
-            };
-            let store = Store::new(cache.runtime_engine.clone());
-            return Ok((cached, store));
+                engine,
+                size_estimate: _,
+            } = cached_module;
+            let store = Store::new(engine);
+            return Ok((module, store));
         }
 
         // Re-compile module from wasm
@@ -433,21 +437,23 @@ where
         }
 
         // This time we'll hit the file-system cache.
-        let Some((module, module_size)) = cache.fs_cache.load(checksum, &cache.runtime_engine)?
+        let Some(cached_module) = cache
+            .fs_cache
+            .load(checksum, Some(self.instance_memory_limit))?
         else {
             return Err(VmError::generic_err(
                 "Can't load module from file system cache after storing it to file system cache (get_module)",
             ));
         };
-        cache
-            .memory_cache
-            .store(checksum, module.clone(), module_size)?;
-        let cached = CachedModule {
+        cache.memory_cache.store(checksum, cached_module.clone())?;
+
+        let CachedModule {
             module,
-            size_estimate: module_size,
-        };
-        let store = Store::new(cache.runtime_engine.clone());
-        Ok((cached, store))
+            engine,
+            size_estimate: _,
+        } = cached_module;
+        let store = Store::new(engine);
+        Ok((module, store))
     }
 }
 
