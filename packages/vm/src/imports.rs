@@ -327,9 +327,9 @@ pub fn do_secp256r1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let hash = read_region(&data.memory(&mut store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&data.memory(&mut store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-    let pubkey = read_region(&data.memory(&mut store), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+    let hash = read_region(&data.memory(&store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&data.memory(&store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(&data.memory(&store), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let gas_info = GasInfo::with_cost(data.gas_config.secp256r1_verify_cost);
     process_gas_info(data, &mut store, gas_info)?;
