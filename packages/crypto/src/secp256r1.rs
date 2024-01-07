@@ -120,16 +120,19 @@ mod tests {
 
     // Cosmos secp256r1 signature verification
     // tendermint/PubKeySecp256r1 pubkey
+    // ECDSA/P-256 test vectors adapted from the FIPS 186-4 ECDSA test vectors.
+    // (P-256, SHA-256, from `SigGen.txt` in `186-4ecdsatestvectors.zip`)
+    // <https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/digital-signatures>
     const COSMOS_SECP256R1_PUBKEY_HEX: &str =
-        "049a2c7b27b132246e170dfb9167db5c5bd302033dbece2bc3f2541a6cd11851821a775f1fc6c4f89e0d019888057f0d574f1c4eb1f90a7a41c4ea9b99b538d932";
+        "041ccbe91c075fc7f4f033bfa248db8fccd3565de94bbfb12f3c59ff46c271bf83ce4014c68811f9a21a1fdb2c0e6113e06db7ca93b7404e78dc7ccd5ca89a4ca9";
 
-    const COSMOS_SECP256R1_MSG_HEX1: &str = "6265206b696e64";
-    // const COSMOS_SECP256R1_MSG_HEX2: &str = "6265206b696e64";
-    // const COSMOS_SECP256R1_MSG_HEX3: &str = "6265206b696e64";
+    const COSMOS_SECP256R1_MSG_HEX1: &str = "5905238877c77421f73e43ee3da6f2d9e2ccad5fc942dcec0cbd25482935faaf416983fe165b1a045ee2bcd2e6dca3bdf46c4310a7461f9a37960ca672d3feb5473e253605fb1ddfd28065b53cb5858a8ad28175bf9bd386a5e471ea7a65c17cc934a9d791e91491eb3754d03799790fe2d308d16146d5c9b0d0debd97d79ce8";
+    // const COSMOS_SECP256R1_MSG_HEX2: &str = "";
+    // const COSMOS_SECP256R1_MSG_HEX3: &str = "";
 
-    const COSMOS_SECP256R1_SIGNATURE_HEX1: &str = "453020029250fb9eb22b21b881319a123244e463a329356b75ce804fc2dda174e715104621028d009abee7d523894b425d974bc38cfae5d05cdf5a550c8eceae1f20f0c9913f0038";
-    // const COSMOS_SECP256R1_SIGNATURE_HEX2: &str = "30450220658fc9271b09bd53edf3a5bd31b7bd99bd3c3de7859cd8dd1133e76ed44fcb580221009e43d091911de0fc90d22960517211f5cf6c624b326759e219326f3af807ac31";
-    // const COSMOS_SECP256R1_SIGNATURE_HEX3: &str = "30450220658fc9271b09bd53edf3a5bd31b7bd99bd3c3de7859cd8dd1133e76ed44fcb580221009e43d091911de0fc90d22960517211f5cf6c624b326759e219326f3af807ac31";
+    const COSMOS_SECP256R1_SIGNATURE_HEX1: &str = "f3ac8061b514795b8843e3d6629527ed2afd6b1f6a555a7acabb5e6f79c8c2ac8bf77819ca05a6b2786c76262bf7371cef97b218e96f175a3ccdda2acc058903";
+    // const COSMOS_SECP256R1_SIGNATURE_HEX2: &str = "";
+    // const COSMOS_SECP256R1_SIGNATURE_HEX3: &str = "";
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
     const COSMOS_SECP256R1_TESTS_JSON: &str = "./testdata/secp256r1_tests.json";
