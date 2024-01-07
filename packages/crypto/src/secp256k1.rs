@@ -10,6 +10,7 @@ use crate::identity_digest::Identity256;
 /// Max length of a message hash for secp256k1 verification in bytes.
 /// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
 /// are possible but currently not supported by the implementation. Let us know when you need them.
+// TODO: Move these to their own module for generality
 pub const MESSAGE_HASH_MAX_LEN: usize = 32;
 
 /// ECDSA (secp256k1) parameters
@@ -191,8 +192,7 @@ mod tests {
     // For generic signature verification
     const MSG: &str = "Hello World!";
 
-    // Cosmos secp256k1 signature verification
-    // tendermint/PubKeySecp256k1 pubkey
+    // "Cosmos" secp256k1 signature verification. Matches tendermint/PubKeySecp256k1 pubkey.
     const COSMOS_SECP256K1_PUBKEY_HEX: &str =
         "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
 

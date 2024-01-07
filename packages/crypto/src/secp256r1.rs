@@ -118,7 +118,7 @@ mod tests {
     // For generic signature verification
     const MSG: &str = "Hello World!";
 
-    // Cosmos secp256r1 signature verification. Matches tendermint/PubKeySecp256r1 pubkey format.
+    // "Cosmos" secp256r1 signature verification. Matches tendermint/PubKeySecp256r1 pubkey format.
     // ECDSA/P-256 test vectors adapted from the FIPS 186-4 ECDSA test vectors (P-256, SHA-256, from
     // `SigGen.txt` in `186-4ecdsatestvectors.zip`).
     // <https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/digital-signatures>
