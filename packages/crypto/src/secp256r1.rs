@@ -5,13 +5,9 @@ use p256::{
 };
 use std::convert::TryInto;
 
+use crate::ecdsa::{ECDSA_COMPRESSED_PUBKEY_LEN, ECDSA_UNCOMPRESSED_PUBKEY_LEN};
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
-
-/// Length of a serialized compressed public key
-const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
-/// Length of a serialized uncompressed public key
-const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 
 /// ECDSA secp256r1 implementation.
 ///
