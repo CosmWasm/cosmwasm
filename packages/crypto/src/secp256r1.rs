@@ -224,7 +224,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_cosmos_extra_secp256r1_verify() {
         use std::fs::File;
         use std::io::BufReader;
@@ -234,7 +233,6 @@ mod tests {
         #[derive(Deserialize, Debug)]
         struct Encoded {
             message: String,
-            message_hash: String,
             signature: String,
             #[serde(rename = "pubkey")]
             public_key: String,
@@ -248,10 +246,7 @@ mod tests {
 
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
-
-            let hash = hex::decode(&encoded.message_hash).unwrap();
             let message_hash = Sha256::digest(&message);
-            assert_eq!(hash.as_slice(), message_hash.as_slice());
 
             let signature = hex::decode(&encoded.signature).unwrap();
 
