@@ -673,9 +673,12 @@ mod tests {
     const TESTING_GAS_LIMIT: u64 = 500_000_000; // ~0.5ms
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
-    const ECDSA_HASH_HEX: &str = "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
-    const ECDSA_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
-    const ECDSA_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+    const ECDSA_P256K1_HASH_HEX: &str = "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
+    const ECDSA_P256K1_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
+    const ECDSA_P256K1_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+    const ECDSA_P256R1_HASH_HEX: &str = "b804cf88af0c2eff8bbbfb3660ebb3294138e9d3ebd458884e19818061dacff0";
+    const ECDSA_P256R1_SIG_HEX: &str = "35fb60f5ca0f3ca08542fb3cc641c8263a2cab7a90ee6a5e1583fac2bb6f6bd1ee59d81bc9db1055cc0ed97b159d8784af04e98511d0a9a407b99bb292572e96";
+    const ECDSA_P256R1_PUBKEY_HEX: &str = "0474ccd8a62fba0e667c50929a53f78c21b8ff0c3c737b0b40b1750b2302b0bde829074e21f3a0ef88b9efdf10d06aa4c295cc1671f758ca0e4cd108803d0f2614";
 
     const EDDSA_MSG_HEX: &str = "";
     const EDDSA_SIG_HEX: &str = "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
@@ -1392,11 +1395,11 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
@@ -1411,13 +1414,13 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let mut hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         // alter hash
         hash[0] ^= 0x01;
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
@@ -1432,13 +1435,13 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let mut hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         // extend / break hash
         hash.push(0x00);
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1457,13 +1460,13 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let mut hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         // reduce / break hash
         hash.pop();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
@@ -1478,13 +1481,13 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let mut sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         // alter sig
         sig[0] ^= 0x01;
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
@@ -1499,13 +1502,13 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let mut sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         // extend / break sig
         sig.push(0x00);
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1524,13 +1527,13 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let mut sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         // reduce / break sig
         sig.pop();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
@@ -1545,11 +1548,11 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         // alter pubkey format
         pubkey[0] ^= 0x01;
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
@@ -1566,11 +1569,11 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         // alter pubkey
         pubkey[1] ^= 0x01;
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
@@ -1587,11 +1590,11 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         // extend / break pubkey
         pubkey.push(0x00);
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
@@ -1612,11 +1615,11 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256K1_PUBKEY_HEX).unwrap();
         // reduce / break pubkey
         pubkey.pop();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
@@ -1633,9 +1636,9 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256K1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256K1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = vec![];
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
@@ -1694,11 +1697,11 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
@@ -1713,17 +1716,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let mut hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         // alter hash
         hash[0] ^= 0x01;
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             1
         );
     }
@@ -1734,16 +1737,16 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let mut hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         // extend / break hash
         hash.push(0x00);
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
-        let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
+        let result = do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1759,17 +1762,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let mut hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         // reduce / break hash
         hash.pop();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             3 // mapped InvalidHashFormat
         );
     }
@@ -1780,17 +1783,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let mut sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         // alter sig
         sig[0] ^= 0x01;
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             1
         );
     }
@@ -1801,16 +1804,16 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let mut sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         // extend / break sig
         sig.push(0x00);
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
-        let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
+        let result = do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1826,17 +1829,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let mut sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         // reduce / break sig
         sig.pop();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             4 // mapped InvalidSignatureFormat
         )
     }
@@ -1847,17 +1850,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         // alter pubkey format
         pubkey[0] ^= 0x01;
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1868,17 +1871,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         // alter pubkey
         pubkey[1] ^= 0x01;
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             10 // mapped GenericErr
         )
     }
@@ -1889,16 +1892,16 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         // extend / break pubkey
         pubkey.push(0x00);
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
-        let result = do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
+        let result = do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -1914,17 +1917,17 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
-        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
+        let mut pubkey = hex::decode(ECDSA_P256R1_PUBKEY_HEX).unwrap();
         // reduce / break pubkey
         pubkey.pop();
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1935,15 +1938,15 @@ mod tests {
         let (fe, mut store, mut _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
+        let hash = hex::decode(ECDSA_P256R1_HASH_HEX).unwrap();
         let hash_ptr = write_data(&mut fe_mut, &hash);
-        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
+        let sig = hex::decode(ECDSA_P256R1_SIG_HEX).unwrap();
         let sig_ptr = write_data(&mut fe_mut, &sig);
         let pubkey = vec![];
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             5 // mapped InvalidPubkeyFormat
         )
     }
@@ -1962,7 +1965,7 @@ mod tests {
         let pubkey_ptr = write_data(&mut fe_mut, &pubkey);
 
         assert_eq!(
-            do_secp256k1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             10 // mapped GenericErr
         )
     }
