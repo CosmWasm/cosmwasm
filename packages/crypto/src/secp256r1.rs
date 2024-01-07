@@ -198,7 +198,7 @@ mod tests {
                 COSMOS_SECP256R1_PUBKEY_HEX1,
                 COSMOS_SECP256R1_PUBKEY_HEX2,
                 COSMOS_SECP256R1_PUBKEY_HEX3,
-             ])
+            ])
             .zip(&[
                 COSMOS_SECP256R1_MSG_HEX1,
                 COSMOS_SECP256R1_MSG_HEX2,
