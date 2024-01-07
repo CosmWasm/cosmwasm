@@ -118,8 +118,7 @@ mod tests {
     // ECDSA/P-256 test vectors adapted from the FIPS 186-4 ECDSA test vectors (P-256, SHA-256, from
     // `SigGen.txt` in `186-4ecdsatestvectors.zip`).
     // <https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/digital-signatures>
-    const COSMOS_SECP256R1_PUBKEY_HEX1: &str =
-        "041ccbe91c075fc7f4f033bfa248db8fccd3565de94bbfb12f3c59ff46c271bf83ce4014c68811f9a21a1fdb2c0e6113e06db7ca93b7404e78dc7ccd5ca89a4ca9";
+    const COSMOS_SECP256R1_PUBKEY_HEX1: &str = "041ccbe91c075fc7f4f033bfa248db8fccd3565de94bbfb12f3c59ff46c271bf83ce4014c68811f9a21a1fdb2c0e6113e06db7ca93b7404e78dc7ccd5ca89a4ca9";
     const COSMOS_SECP256R1_PUBKEY_HEX2: &str = "04e266ddfdc12668db30d4ca3e8f7749432c416044f2d2b8c10bf3d4012aeffa8abfa86404a2e9ffe67d47c587ef7a97a7f456b863b4d02cfc6928973ab5b1cb39";
     const COSMOS_SECP256R1_PUBKEY_HEX3: &str = "0474ccd8a62fba0e667c50929a53f78c21b8ff0c3c737b0b40b1750b2302b0bde829074e21f3a0ef88b9efdf10d06aa4c295cc1671f758ca0e4cd108803d0f2614";
 
