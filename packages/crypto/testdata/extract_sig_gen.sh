@@ -7,9 +7,9 @@ CURVE="$2"
 HASH="$3"
 [ -z "$HASH" ] && HASH="SHA-256"
 
-cat $SIGGEN | sed 's///' | \
-sed -n -E "/^\[$CURVE,$HASH\]/,/^\[/{s/\[$CURVE,$HASH\]/\[/;s/^Msg = *([^ ]*)/  {\n    \"message\": \"\1\",/;/^Qx =/{N;s/^Qx = *([^ ]*)\nQy = *([^ ]*)/    \"pubkey\": \"04\1\2\",/};/^R =/{N;s/^R = *([^ ]*)\nS = *([^ ]*)/    \"signature\": \"\1\2\"\n\  },/};s/^\[.*\]/\]/;p}" | \
-grep -E '[[{}"]|]' | \
-tac | \
-sed '2s/},/}/' | \
-tac
+cat $SIGGEN | sed 's///' |
+  sed -n -E "/^\[$CURVE,$HASH\]/,/^\[/{s/\[$CURVE,$HASH\]/\[/;s/^Msg = *([^ ]*)/  {\n    \"message\": \"\1\",/;/^Qx =/{N;s/^Qx = *([^ ]*)\nQy = *([^ ]*)/    \"pubkey\": \"04\1\2\",/};/^R =/{N;s/^R = *([^ ]*)\nS = *([^ ]*)/    \"signature\": \"\1\2\"\n\  },/};s/^\[.*\]/\]/;p}" |
+  grep -E '[[{}"]|]' |
+  tac |
+  sed '2s/},/}/' |
+  tac
