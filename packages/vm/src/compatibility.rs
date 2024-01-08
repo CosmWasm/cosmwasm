@@ -739,7 +739,6 @@ mod tests {
             (import "env" "spam89" (func (param i32 i32) (result i32)))
             (import "env" "spam90" (func (param i32 i32) (result i32)))
             (import "env" "spam91" (func (param i32 i32) (result i32)))
-            (import "env" "spam92" (func (param i32 i32) (result i32)))
         )"#,
         )
         .unwrap();
