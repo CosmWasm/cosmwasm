@@ -1,4 +1,4 @@
-use parity_wasm::elements::{External, ImportEntry, Module, TableType};
+use parity_wasm::elements::{External, ImportEntry, Module, TableType, Type};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
@@ -70,6 +70,12 @@ const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 /// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
 const MAX_IMPORTS: usize = 100;
 
+const MAX_FUNCTIONS: usize = 10000;
+
+const MAX_FUNCTION_PARAMS: usize = 50;
+
+const MAX_FUNCTION_RESULTS: usize = 1;
+
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
     let module = deserialize_wasm(wasm_code)?;
@@ -79,6 +85,8 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
     check_wasm_exports(&module)?;
     check_wasm_imports(&module, SUPPORTED_IMPORTS)?;
     check_wasm_capabilities(&module, available_capabilities)?;
+    check_wasm_functions(&module)?;
+
     Ok(())
 }
 
@@ -248,6 +256,51 @@ fn check_wasm_capabilities(
         return Err(VmError::static_validation_err(format!(
             "Wasm contract requires unavailable capabilities: {}",
             unavailable.to_string_limited(200)
+        )));
+    }
+    Ok(())
+}
+
+fn check_wasm_functions(module: &Module) -> VmResult<()> {
+    let functions = module
+        .function_section()
+        .map(|fs| fs.entries())
+        .unwrap_or_default();
+
+    if functions.len() > MAX_FUNCTIONS {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains more than {MAX_FUNCTIONS} functions"
+        )));
+    }
+
+    let types = module
+        .type_section()
+        .map(|ts| ts.types())
+        .unwrap_or_default();
+
+    let max_func_params = types
+        .iter()
+        .map(|t| match t {
+            Type::Function(f) => f.params().len(),
+        })
+        .max()
+        .unwrap_or_default();
+    let max_func_results = types
+        .iter()
+        .map(|t| match t {
+            Type::Function(f) => f.results().len(),
+        })
+        .max()
+        .unwrap_or_default();
+
+    if max_func_params > MAX_FUNCTION_PARAMS {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains function with more than {MAX_FUNCTION_PARAMS} parameters"
+        )));
+    }
+    if max_func_results > MAX_FUNCTION_RESULTS {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains function with more than {MAX_FUNCTION_RESULTS} results"
         )));
     }
     Ok(())
