@@ -20,8 +20,8 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
-dhat-heap = []    # if you are doing heap profiling
-dhat-ad-hoc = []  # if you are doing ad hoc profiling
+# For heap profiling. Used in examples.
+dhat-heap = []
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
