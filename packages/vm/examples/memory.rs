@@ -37,15 +37,18 @@ struct Execute {
 
 struct Contract {
     pub wasm: &'static [u8],
-    pub instantiate_msg: Option<&'static [u8]>,
+    pub instantiate_msg: Option<Vec<u8>>,
     pub execute_msgs: Vec<Execute>,
 }
 
 fn contracts() -> Vec<Contract> {
+    let api = MockApi::default();
+    let verifier = api.addr_make("verifies");
+    let beneficiary = api.addr_make("benefits");
     vec![
         Contract {
             wasm: include_bytes!("../testdata/cyberpunk.wasm"),
-            instantiate_msg: Some(b"{}"),
+            instantiate_msg: Some(b"{}".to_vec()),
             execute_msgs: vec![
                 Execute {
                     msg: br#"{"unreachable":{}}"#,
@@ -68,7 +71,10 @@ fn contracts() -> Vec<Contract> {
         },
         Contract {
             wasm: include_bytes!("../testdata/hackatom.wasm"),
-            instantiate_msg: Some(br#"{"verifier": "verifies", "beneficiary": "benefits"}"#),
+            instantiate_msg: Some(
+                format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#)
+                    .into_bytes(),
+            ),
             execute_msgs: vec![Execute {
                 msg: br#"{"release":{}}"#,
                 expect_error: false,
@@ -76,7 +82,10 @@ fn contracts() -> Vec<Contract> {
         },
         Contract {
             wasm: include_bytes!("../testdata/hackatom_1.0.wasm"),
-            instantiate_msg: Some(br#"{"verifier": "verifies", "beneficiary": "benefits"}"#),
+            instantiate_msg: Some(
+                format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#)
+                    .into_bytes(),
+            ),
             execute_msgs: vec![Execute {
                 msg: br#"{"release":{}}"#,
                 expect_error: false,
@@ -146,7 +155,7 @@ fn app() {
                     //eprintln!("[{t}]: {msg} (gas remaining: {gas})");
                 });
 
-                if let Some(msg) = contracts[idx].instantiate_msg {
+                if let Some(msg) = &contracts[idx].instantiate_msg {
                     let info = mock_info("creator", &coins(1000, "earth"));
                     let contract_result =
                         call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
