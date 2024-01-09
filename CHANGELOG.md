@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.4.2] - 2024-01-10
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2023-004.
+
 ### Added
 
 - cosmwasm-vm: Add constructor `CacheOptions::new`
@@ -1883,7 +1889,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...1.4.2
 [1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
 [1.3.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.2...v1.3.3
