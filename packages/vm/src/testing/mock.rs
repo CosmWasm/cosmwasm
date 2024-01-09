@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
-use crate::backend::try_br;
+use crate::backend::try_with_gas;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmwasmcontract"; // TODO: use correct address
@@ -178,7 +178,7 @@ impl BackendApi for MockApi {
             ),
             Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
                 Ok(bytes) => {
-                    try_br!((validate_length(&bytes), gas_info));
+                    try_with_gas!(validate_length(&bytes), gas_info);
                     (Ok(bytes), gas_info)
                 }
                 Err(_) => (Err(BackendError::user_err("Invalid bech32 data")), gas_info),
@@ -195,7 +195,7 @@ impl BackendApi for MockApi {
             MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
-        try_br!((validate_length(canonical), gas_info));
+        try_with_gas!(validate_length(canonical), gas_info);
 
         let result = encode(bech32_prefix, canonical.to_base32(), Variant::Bech32)
             .map_err(|_| BackendError::user_err("Invalid bech32 prefix"));
