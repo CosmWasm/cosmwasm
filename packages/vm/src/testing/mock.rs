@@ -125,7 +125,37 @@ impl Default for MockApi {
 }
 
 impl BackendApi for MockApi {
-    fn canonical_address(&self, input: &str) -> BackendResult<Vec<u8>> {
+    fn addr_validate(&self, input: &str) -> BackendResult<()> {
+        let mut gas_total = GasInfo {
+            cost: 0,
+            externally_used: 0,
+        };
+
+        let (result, gas_info) = self.addr_canonicalize(input);
+        gas_total += gas_info;
+        let canonical = match result {
+            Ok(canonical) => canonical,
+            Err(err) => return (Err(err), gas_total),
+        };
+
+        let (result, gas_info) = self.addr_humanize(&canonical);
+        gas_total += gas_info;
+        let normalized = match result {
+            Ok(norm) => norm,
+            Err(err) => return (Err(err), gas_total),
+        };
+        if input != normalized.as_str() {
+            return (
+                Err(BackendError::user_err(
+                    "Invalid input: address not normalized",
+                )),
+                gas_total,
+            );
+        }
+        (Ok(()), gas_total)
+    }
+
+    fn addr_canonicalize(&self, input: &str) -> BackendResult<Vec<u8>> {
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         // handle error case
@@ -156,7 +186,7 @@ impl BackendApi for MockApi {
         }
     }
 
-    fn human_address(&self, canonical: &[u8]) -> BackendResult<String> {
+    fn addr_humanize(&self, canonical: &[u8]) -> BackendResult<String> {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         // handle error case
@@ -232,20 +262,20 @@ mod tests {
     }
 
     #[test]
-    fn canonical_address_works() {
+    fn addr_canonicalize_works() {
         let api = MockApi::default().with_prefix("osmo");
 
-        api.canonical_address("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
+        api.addr_canonicalize("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
             .0
             .unwrap();
 
         // is case insensitive
         let data1 = api
-            .canonical_address("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
+            .addr_canonicalize("osmo186kh7c0k0gh4ww0wh4jqc4yhzu7n7dhswe845d")
             .0
             .unwrap();
         let data2 = api
-            .canonical_address("OSMO186KH7C0K0GH4WW0WH4JQC4YHZU7N7DHSWE845D")
+            .addr_canonicalize("OSMO186KH7C0K0GH4WW0WH4JQC4YHZU7N7DHSWE845D")
             .0
             .unwrap();
         assert_eq!(data1, data2);
@@ -257,29 +287,29 @@ mod tests {
 
         // simple
         let original = api.addr_make("shorty");
-        let canonical = api.canonical_address(&original).0.unwrap();
-        let (recovered, _gas_cost) = api.human_address(&canonical);
+        let canonical = api.addr_canonicalize(&original).0.unwrap();
+        let (recovered, _gas_cost) = api.addr_humanize(&canonical);
         assert_eq!(recovered.unwrap(), original);
 
         // normalizes input
         let original = "JUNO1MEPRU9FUQ4E65856ARD6068MFSFRWPGEMD0C3R";
-        let canonical = api.canonical_address(original).0.unwrap();
-        let recovered = api.human_address(&canonical).0.unwrap();
+        let canonical = api.addr_canonicalize(original).0.unwrap();
+        let recovered = api.addr_humanize(&canonical).0.unwrap();
         assert_eq!(recovered, original.to_lowercase());
 
         // Long input (Juno contract address)
         let original =
             String::from("juno1v82su97skv6ucfqvuvswe0t5fph7pfsrtraxf0x33d8ylj5qnrysdvkc95");
-        let canonical = api.canonical_address(&original).0.unwrap();
-        let recovered = api.human_address(&canonical).0.unwrap();
+        let canonical = api.addr_canonicalize(&original).0.unwrap();
+        let recovered = api.addr_humanize(&canonical).0.unwrap();
         assert_eq!(recovered, original);
     }
 
     #[test]
-    fn human_address_input_length() {
+    fn addr_humanize_input_length() {
         let api = MockApi::default();
         let input = vec![61; 256]; // too long
-        let (result, _gas_info) = api.human_address(&input);
+        let (result, _gas_info) = api.addr_humanize(&input);
         match result.unwrap_err() {
             BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
@@ -287,26 +317,26 @@ mod tests {
     }
 
     #[test]
-    fn canonical_address_min_input_length() {
+    fn addr_canonicalize_min_input_length() {
         let api = MockApi::default();
 
         // empty address should fail
         let empty = "cosmwasm1pj90vm";
         assert!(matches!(api
-            .canonical_address(empty)
+            .addr_canonicalize(empty)
             .0
             .unwrap_err(),
             BackendError::UserErr { msg } if msg.contains("address length")));
     }
 
     #[test]
-    fn canonical_address_max_input_length() {
+    fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
 
         let too_long = "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
 
         assert!(matches!(api
-            .canonical_address(too_long)
+            .addr_canonicalize(too_long)
             .0
             .unwrap_err(),
             BackendError::UserErr { msg } if msg.contains("address length")));
@@ -316,10 +346,10 @@ mod tests {
     fn colon_in_prefix_is_valid() {
         let mock_api = MockApi::default().with_prefix("did:com:");
         let bytes = mock_api
-            .canonical_address("did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu")
+            .addr_canonicalize("did:com:1jkf0kmeyefvyzpwf56m7sne2000ay53r6upttu")
             .0
             .unwrap();
-        let humanized = mock_api.human_address(&bytes).0.unwrap();
+        let humanized = mock_api.addr_humanize(&bytes).0.unwrap();
 
         assert_eq!(
             humanized.as_str(),

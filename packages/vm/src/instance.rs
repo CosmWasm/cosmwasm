@@ -294,7 +294,7 @@ where
 
         let env = fe.as_ref(&store);
         if let (Some(storage), Some(querier)) = env.move_out() {
-            let api = env.api;
+            let api = env.api.clone();
             Some(Backend {
                 api,
                 storage,

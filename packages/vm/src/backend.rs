@@ -165,12 +165,10 @@ pub trait Storage {
 /// Currently it just supports address conversion, we could add eg. crypto functions here.
 /// These should all be pure (stateless) functions. If you need state, you probably want
 /// to use the Querier.
-///
-/// We can use feature flags to opt-in to non-essential methods
-/// for backwards compatibility in systems that don't have them all.
-pub trait BackendApi: Copy + Clone + Send {
-    fn canonical_address(&self, human: &str) -> BackendResult<Vec<u8>>;
-    fn human_address(&self, canonical: &[u8]) -> BackendResult<String>;
+pub trait BackendApi: Clone + Send {
+    fn addr_validate(&self, input: &str) -> BackendResult<()>;
+    fn addr_canonicalize(&self, human: &str) -> BackendResult<Vec<u8>>;
+    fn addr_humanize(&self, canonical: &[u8]) -> BackendResult<String>;
 }
 
 pub trait Querier {

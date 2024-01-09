@@ -78,6 +78,10 @@ and this project adheres to
   `set_withdraw_address`, `set_withdraw_addresses`, `clear_withdraw_addresses`,
   `update_ibc` and `update_staking` from `MockQuerier` and expose the underlying
   queriers directly. ([#1977])
+- cosmwasm-vm: Rename `BackendApi::canonical_address`/`::human_address` to
+  `::addr_canonicalize`/`::addr_humanize` for consistency.
+- cosmwasm-vm: Add `BackendApi::addr_validate` to avoid having to do two calls
+  from Rust into Go.
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
