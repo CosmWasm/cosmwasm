@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.2.8] - 2024-01-10
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2023-004.
+
 ### Changed
 
 - cosmwasm-check: Use "=" for pinning the versions of cosmwasm-vm and
@@ -1728,7 +1734,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.8...HEAD
+[1.2.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.6...v1.2.7
 [1.2.6]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.5...v1.2.6
 [1.2.5]: https://github.com/CosmWasm/cosmwasm/compare/v1.2.4...v1.2.5
