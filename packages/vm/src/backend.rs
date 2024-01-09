@@ -202,17 +202,17 @@ pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 ///
 /// The second argument is the gas value that will be used in the error case.
 /// It should be the sum of all gas used in the calling function.
-macro_rules! try_with_gas {
-    ($result: expr $(,)?, $gas_total: expr $(,)?) => {
+macro_rules! unwrap_or_return_with_gas {
+    ($result: expr $(,)?, $gas_total: expr $(,)?) => {{
         let result: core::result::Result<_, _> = $result; // just a type check
         let gas: GasInfo = $gas_total; // just a type check
         match result {
             Ok(v) => v,
             Err(e) => return (Err(e), gas),
         }
-    };
+    }};
 }
-pub(crate) use try_with_gas;
+pub(crate) use unwrap_or_return_with_gas;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 #[non_exhaustive]
