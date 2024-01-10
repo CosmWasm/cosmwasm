@@ -130,7 +130,7 @@ mod tests {
     const COSMOS_SECP256R1_SIGNATURE_HEX2: &str = "976d3a4e9d23326dc0baa9fa560b7c4e53f42864f508483a6473b6a11079b2db1b766e9ceb71ba6c01dcd46e0af462cd4cfa652ae5017d4555b8eeefe36e1932";
     const COSMOS_SECP256R1_SIGNATURE_HEX3: &str = "35fb60f5ca0f3ca08542fb3cc641c8263a2cab7a90ee6a5e1583fac2bb6f6bd1ee59d81bc9db1055cc0ed97b159d8784af04e98511d0a9a407b99bb292572e96";
 
-    // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
+    // Test data extracted from https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/digital-signatures
     const COSMOS_SECP256R1_TESTS_JSON: &str = "./testdata/secp256r1_tests.json";
 
     #[test]
