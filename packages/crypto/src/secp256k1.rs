@@ -192,7 +192,7 @@ mod tests {
     const COSMOS_SECP256K1_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
 
     #[derive(Deserialize, Debug)]
-    struct Encoded {
+    struct TestVector {
         message: String,
         message_hash: String,
         signature: String,
@@ -286,7 +286,7 @@ mod tests {
         let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
 
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<TestVector> = serde_json::from_reader(reader).unwrap();
 
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
@@ -353,7 +353,7 @@ mod tests {
 
         let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<TestVector> = serde_json::from_reader(reader).unwrap();
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
             let signature = hex::decode(&encoded.signature).unwrap();
