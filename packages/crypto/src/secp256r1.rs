@@ -1,4 +1,5 @@
 use digest::{Digest, Update}; // trait
+use ecdsa::RecoveryId;
 use p256::{
     ecdsa::signature::DigestVerifier, // traits
     ecdsa::{Signature, VerifyingKey}, // type aliases
@@ -48,6 +49,60 @@ pub fn secp256r1_verify(
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
+}
+
+/// Recovers a public key from a message hash and a signature.
+///
+/// This is required when working with Ethereum where public keys
+/// are not stored on chain directly.
+///
+/// `recovery_param` must be 0 or 1. The values 2 and 3 are unsupported by this implementation,
+/// which is the same restriction as Ethereum has (https://github.com/ethereum/go-ethereum/blob/v1.9.25/internal/ethapi/api.go#L466-L469).
+/// All other values are invalid.
+///
+/// Returns the recovered pubkey in compressed form, which can be used
+/// in secp256r1_verify directly.
+///
+/// This implementation accepts both high-S and low-S signatures. This is the
+/// same behavior as Ethereum's `ecrecover`. The reason is that high-S signatures
+/// may be perfectly valid if the application protocol does not disallow them.
+/// Or as [EIP-2] put it "The ECDSA recover precompiled contract remains unchanged
+/// and will keep accepting high s-values; this is useful e.g. if a contract
+/// recovers old Bitcoin signatures.".
+///
+/// See also OpenZeppelin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
+/// which adds further restrictions to avoid potential signature malleability.
+/// Please note that restricting signatures to low-S does not make signatures unique
+/// in the sense that for each (pubkey, message) there is only one signature. The
+/// signer can generate an arbitrary amount of valid signatures.
+/// <https://medium.com/@simonwarta/signature-determinism-for-blockchain-developers-dbd84865a93e>
+///
+/// [EIP-2]: https://eips.ethereum.org/EIPS/eip-2
+pub fn secp256r1_recover_pubkey(
+    message_hash: &[u8],
+    signature: &[u8],
+    recovery_param: u8,
+) -> Result<Vec<u8>, CryptoError> {
+    let message_hash = read_hash(message_hash)?;
+    let signature = read_signature(signature)?;
+
+    // params other than 0 and 1 are explicitly not supported
+    let id = match recovery_param {
+        0 => RecoveryId::new(false, false),
+        1 => RecoveryId::new(true, false),
+        _ => return Err(CryptoError::invalid_recovery_param()),
+    };
+
+    // Compose extended signature
+    let signature = p256::ecdsa::Signature::from_bytes(&signature.into())
+        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
+
+    // Recover
+    let message_digest = Identity256::new().chain(message_hash);
+    let pubkey = p256::ecdsa::VerifyingKey::recover_from_digest(message_digest, &signature, id)
+        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
+    let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
+    Ok(encoded)
 }
 
 /// Error raised when hash is not 32 bytes long
