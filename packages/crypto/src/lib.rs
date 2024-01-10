@@ -21,5 +21,5 @@ pub use crate::errors::{CryptoError, CryptoResult};
 #[doc(hidden)]
 pub use crate::secp256k1::{secp256k1_recover_pubkey, secp256k1_verify};
 #[doc(hidden)]
-pub use crate::secp256r1::secp256r1_verify;
+pub use crate::secp256r1::{secp256r1_recover_pubkey, secp256r1_verify};
 pub(crate) use backtrace::BT;

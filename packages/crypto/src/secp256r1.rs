@@ -158,7 +158,10 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256r1PubkeyFormat> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::BufReader;
 
+    use crate::secp256r1_recover_pubkey;
     use ecdsa::RecoveryId;
     use p256::{
         ecdsa::signature::DigestSigner, ecdsa::SigningKey, elliptic_curve::rand_core::OsRng,
@@ -187,6 +190,15 @@ mod tests {
 
     // Test data extracted from https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/digital-signatures
     const COSMOS_SECP256R1_TESTS_JSON: &str = "./testdata/secp256r1_tests.json";
+
+    #[derive(Deserialize, Debug)]
+    struct Encoded {
+        message: String,
+        // message_hash: String,
+        signature: String,
+        #[serde(rename = "pubkey")]
+        public_key: String,
+    }
 
     #[test]
     fn test_secp256r1_verify() {
@@ -308,6 +320,62 @@ mod tests {
                 valid,
                 "secp256r1_verify failed (test case {i} in {COSMOS_SECP256R1_TESTS_JSON})"
             );
+        }
+    }
+
+    #[test]
+    fn secp256r1_recover_pubkey_works() {
+        let file = File::open(crate::secp256r1::tests::COSMOS_SECP256R1_TESTS_JSON).unwrap();
+        let reader = BufReader::new(file);
+        let codes: Vec<crate::secp256r1::tests::Encoded> = serde_json::from_reader(reader).unwrap();
+        for (i, encoded) in (1..).zip(codes) {
+            let message = hex::decode(&encoded.message).unwrap();
+            let signature = hex::decode(&encoded.signature).unwrap();
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+            let message_hash = Sha256::digest(message);
+
+            // Since the recovery param is missing in the test vectors, we try both 0 and 1
+            let try0 = secp256r1_recover_pubkey(&message_hash, &signature, 0);
+            let try1 = secp256r1_recover_pubkey(&message_hash, &signature, 1);
+            match (try0, try1) {
+                (Ok(recovered0), Ok(recovered1)) => {
+                    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
+                    assert!(recovered0 == public_key || recovered1 == public_key)
+                },
+                (Ok(recovered), Err(_)) => assert_eq!(recovered, public_key),
+                (Err(_), Ok(recovered)) => assert_eq!(recovered, public_key),
+                (Err(_), Err(_)) => panic!("secp256r1_recover_pubkey failed (test case {i} in {COSMOS_SECP256R1_TESTS_JSON})"),
+            }
+        }
+    }
+
+    #[test]
+    fn secp256r1_recover_pubkey_fails_for_invalid_recovery_param() {
+        let r_s = hex::decode(COSMOS_SECP256R1_SIGNATURE_HEX1).unwrap();
+        let message_hash = Sha256::digest(hex::decode(COSMOS_SECP256R1_MSG_HEX1).unwrap());
+
+        // 2 and 3 are explicitly unsupported
+        let recovery_param: u8 = 2;
+        match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {err}"),
+        }
+        let recovery_param: u8 = 3;
+        match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {err}"),
+        }
+
+        // Other values are garbage
+        let recovery_param: u8 = 4;
+        match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {err}"),
+        }
+        let recovery_param: u8 = 255;
+        match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {err}"),
         }
     }
 }
