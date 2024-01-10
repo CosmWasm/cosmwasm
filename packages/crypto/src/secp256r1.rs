@@ -316,7 +316,8 @@ mod tests {
     fn secp256r1_recover_pubkey_works() {
         let file = File::open(crate::secp256r1::tests::COSMOS_SECP256R1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
-        let codes: Vec<crate::secp256r1::tests::TestVector> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<crate::secp256r1::tests::TestVector> =
+            serde_json::from_reader(reader).unwrap();
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
             let signature = hex::decode(&encoded.signature).unwrap();
