@@ -192,9 +192,8 @@ mod tests {
     const COSMOS_SECP256R1_TESTS_JSON: &str = "./testdata/secp256r1_tests.json";
 
     #[derive(Deserialize, Debug)]
-    struct Encoded {
+    struct TestVector {
         message: String,
-        // message_hash: String,
         signature: String,
         #[serde(rename = "pubkey")]
         public_key: String,
@@ -290,21 +289,11 @@ mod tests {
         use std::fs::File;
         use std::io::BufReader;
 
-        use serde::Deserialize;
-
-        #[derive(Deserialize, Debug)]
-        struct Encoded {
-            message: String,
-            signature: String,
-            #[serde(rename = "pubkey")]
-            public_key: String,
-        }
-
         // Open the file in read-only mode with buffer.
         let file = File::open(COSMOS_SECP256R1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
 
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<TestVector> = serde_json::from_reader(reader).unwrap();
 
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
@@ -327,7 +316,7 @@ mod tests {
     fn secp256r1_recover_pubkey_works() {
         let file = File::open(crate::secp256r1::tests::COSMOS_SECP256R1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
-        let codes: Vec<crate::secp256r1::tests::Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<crate::secp256r1::tests::TestVector> = serde_json::from_reader(reader).unwrap();
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
             let signature = hex::decode(&encoded.signature).unwrap();
