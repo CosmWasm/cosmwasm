@@ -9,7 +9,7 @@ implementation in cw-storage-plus.
 # The Challenge of Key Composition
 
 The fundamental requirement for storage keys in CosmWasm is a `&[u8]` key, which
-can be derived from basic types like integers (e.g., `&17u64.to_be_bytes()`). 
+can be obtained from basic types like integers (e.g., `&17u64.to_be_bytes()`). 
 However, when handling various data types within a contract, it's crucial to 
 use prefixed keys to prevent data collisions. 
 Simple concatenation of keys is insufficient due to potential overlap issues. 
