@@ -468,7 +468,7 @@ pub enum DivisionError {
     #[error("Overflow in division")]
     Overflow,
 }
-/// Errors that occur when multiplying a value by a ratio in a checked manner.
+/// Errors that occur when multiplying a value by a [Fraction](crate::Fraction) in a checked manner.
 /// Ensures precision and overflow safety in the operation.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyFractionError {
