@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
-use crate::backend::try_br;
+use crate::backend::unwrap_or_return_with_gas;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmwasmcontract"; // TODO: use correct address
@@ -131,19 +131,13 @@ impl BackendApi for MockApi {
             externally_used: 0,
         };
 
-        let (result, gas_info) = self.addr_canonicalize(input);
+        let (canonicalize_res, gas_info) = self.addr_canonicalize(input);
         gas_total += gas_info;
-        let canonical = match result {
-            Ok(canonical) => canonical,
-            Err(err) => return (Err(err), gas_total),
-        };
+        let canonical = unwrap_or_return_with_gas!(canonicalize_res, gas_total);
 
-        let (result, gas_info) = self.addr_humanize(&canonical);
+        let (humanize_res, gas_info) = self.addr_humanize(&canonical);
         gas_total += gas_info;
-        let normalized = match result {
-            Ok(norm) => norm,
-            Err(err) => return (Err(err), gas_total),
-        };
+        let normalized = unwrap_or_return_with_gas!(humanize_res, gas_total);
         if input != normalized.as_str() {
             return (
                 Err(BackendError::user_err(
@@ -156,51 +150,55 @@ impl BackendApi for MockApi {
     }
 
     fn addr_canonicalize(&self, input: &str) -> BackendResult<Vec<u8>> {
-        let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
+        let gas_total = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         // handle error case
         let bech32_prefix = match self.0 {
-            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_info),
+            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_total),
             MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
         match decode(input) {
-            Ok((prefix, _, _)) if prefix != bech32_prefix => {
-                (Err(BackendError::user_err("Wrong bech32 prefix")), gas_info)
-            }
+            Ok((prefix, _, _)) if prefix != bech32_prefix => (
+                Err(BackendError::user_err("Wrong bech32 prefix")),
+                gas_total,
+            ),
             Ok((_, _, Variant::Bech32m)) => (
                 Err(BackendError::user_err("Wrong bech32 variant")),
-                gas_info,
+                gas_total,
             ),
             Err(_) => (
                 Err(BackendError::user_err("Error decoding bech32")),
-                gas_info,
+                gas_total,
             ),
             Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
                 Ok(bytes) => {
-                    try_br!((validate_length(&bytes), gas_info));
-                    (Ok(bytes), gas_info)
+                    unwrap_or_return_with_gas!(validate_length(&bytes), gas_total);
+                    (Ok(bytes), gas_total)
                 }
-                Err(_) => (Err(BackendError::user_err("Invalid bech32 data")), gas_info),
+                Err(_) => (
+                    Err(BackendError::user_err("Invalid bech32 data")),
+                    gas_total,
+                ),
             },
         }
     }
 
     fn addr_humanize(&self, canonical: &[u8]) -> BackendResult<String> {
-        let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
+        let gas_total = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         // handle error case
         let bech32_prefix = match self.0 {
-            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_info),
+            MockApiImpl::Error(e) => return (Err(BackendError::unknown(e)), gas_total),
             MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
-        try_br!((validate_length(canonical), gas_info));
+        unwrap_or_return_with_gas!(validate_length(canonical), gas_total);
 
         let result = encode(bech32_prefix, canonical.to_base32(), Variant::Bech32)
             .map_err(|_| BackendError::user_err("Invalid bech32 prefix"));
 
-        (result, gas_info)
+        (result, gas_total)
     }
 }
 

@@ -195,18 +195,24 @@ pub trait Querier {
 /// must always have gas information attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 
-/// The equivalent of the `?` operator, but for a [`BackendResult`]
-macro_rules! try_br {
-    ($res: expr $(,)?) => {
-        let (result, gas) = $res;
-
+/// This aims to be similar to the `?` operator, but for a [`BackendResult`].
+///
+/// The first argument is a result. If it is Ok, return the value.
+/// If it is Err, end the current function with a `return BackendResult::Err`.
+///
+/// The second argument is the gas value that will be used in the error case.
+/// It should be the sum of all gas used in the calling function.
+macro_rules! unwrap_or_return_with_gas {
+    ($result: expr $(,)?, $gas_total: expr $(,)?) => {{
+        let result: core::result::Result<_, _> = $result; // just a type check
+        let gas: GasInfo = $gas_total; // just a type check
         match result {
             Ok(v) => v,
             Err(e) => return (Err(e), gas),
         }
-    };
+    }};
 }
-pub(crate) use try_br;
+pub(crate) use unwrap_or_return_with_gas;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 #[non_exhaustive]
