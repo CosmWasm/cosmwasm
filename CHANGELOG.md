@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [2.0.0-beta.0] - 2023-12-21
 
+### Fixed
+
+- cosmwasm-vm: Fix memory increase issue (1.3 -> 1.4 regression) by avoiding the
+  use of a long running Wasmer Engine. ([#1978])
+
+[#1978]: https://github.com/CosmWasm/cosmwasm/issues/1978
+
 ### Added
 
 - cosmwasm-std: Add `SubMsg:reply_never` constructor ([#1929])
