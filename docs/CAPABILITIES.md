@@ -7,7 +7,7 @@
 
 # Historical Context: Origin and Disambiguation
 **Prior to August 2022:** The term "features" was used ambiguously to describe both app-level features in the CosmWasm VM and features in Cargo's build system.
-+**Redefinition:** To mitigate this confusion, app-level features in the CosmWasm VM were renamed to "capabilities," distinguishing them from Cargo's build system features.
++**Redefinition:** To mitigate this confusion, app-level features in the CosmWasm VM were renamed to "capabilities", distinguishing them from Cargo's build system features.
 +**Language Independence:** Unlike Rust-specific features, capabilities can be implemented in any language that compiles to Wasm, broadening their applicability.
 
 # Defining Required Capabilities
