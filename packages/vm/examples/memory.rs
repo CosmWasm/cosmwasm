@@ -126,8 +126,7 @@ fn app() {
     let after = SystemTime::now().duration_since(start_time).unwrap();
     eprintln!("Done compiling after {after:?}");
 
-    let cache: Cache<MockApi, MockStorage, MockQuerier> =
-        unsafe { Cache::new(options.clone()).unwrap() };
+    let cache: Cache<MockApi, MockStorage, MockQuerier> = unsafe { Cache::new(options).unwrap() };
     for round in 0..ROUNDS {
         for _ in 0..ROUND_LEN {
             if SystemTime::now()
@@ -182,38 +181,7 @@ fn app() {
                     }
                 }
             }
-
-            /*
-                let mut instance = cache
-                    .get_instance(&checksums[1], mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
-                    .unwrap();
-                //        println!("Done instantiating contract {i}");
-
-                instance.set_debug_handler(|msg, info| {
-                    let t = now_rfc3339();
-                    let gas = info.gas_remaining;
-                    eprintln!("[{t}]: {msg} (gas remaining: {gas})");
-                });
-
-                let info = mock_info("creator", &coins(1000, "earth"));
-                let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-                let contract_result =
-                    call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-                assert!(contract_result.into_result().is_ok());
-
-                let info = mock_info("verifies", &coins(15, "earth"));
-                let msg = br#"{"release":{}}"#;
-                let contract_result =
-                    call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-                assert!(contract_result.into_result().is_ok());
-            */
         }
-
-        // let stats = cache.stats();
-        // // eprintln!("Stats: {stats:?}");
-        // assert_eq!(stats.misses, 0);
-        // assert_eq!(stats.hits_fs_cache, 2);
-        // assert_eq!(stats.hits_memory_cache as usize, 2 * (ROUND_LEN - 1));
     }
 }
 
