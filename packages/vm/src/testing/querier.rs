@@ -19,6 +19,14 @@ pub struct MockQuerier<C: CustomQuery + DeserializeOwned = Empty> {
     querier: StdMockQuerier<C>,
 }
 
+// SAFETY: The only thing in `MockQuerier` that is not `Send + Sync` are
+// the custom handler and wasm handler.
+// The default custom handler does not use the reference it gets,
+// so it should be safe to assume it is `Send + Sync`.
+// When setting these in `update_wasm` or `with_custom_handler`, we require them to be `Send + Sync`.
+unsafe impl<C: CustomQuery + DeserializeOwned> Send for MockQuerier<C> {}
+unsafe impl<C: CustomQuery + DeserializeOwned> Sync for MockQuerier<C> {}
+
 impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         MockQuerier {
@@ -47,14 +55,16 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
 
     pub fn update_wasm<WH: 'static>(&mut self, handler: WH)
     where
-        WH: Fn(&cosmwasm_std::WasmQuery) -> cosmwasm_std::QuerierResult,
+        WH: Fn(&cosmwasm_std::WasmQuery) -> cosmwasm_std::QuerierResult + Sync + Send,
+        // see above for Sync + Send bound explanation
     {
         self.querier.update_wasm(handler)
     }
 
     pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
     where
-        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult + Sync + Send,
+        // see above for Sync + Send bound explanation
     {
         self.querier = self.querier.with_custom_handler(handler);
         self

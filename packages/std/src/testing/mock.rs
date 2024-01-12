@@ -606,6 +606,12 @@ impl Default for WasmQuerier {
             };
             SystemResult::Err(err)
         });
+
+        // check that this handler is Send + Sync
+        // see `cosmwasm_vm::MockQuerier`'s `Send` and `Sync` impls for more details
+        fn assert_send_sync(_: &(impl Send + Sync)) {}
+        assert_send_sync(&handler);
+
         Self::new(handler)
     }
 }

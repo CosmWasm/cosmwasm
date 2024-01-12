@@ -1,8 +1,6 @@
-use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ptr::NonNull;
-use std::rc::Rc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use wasmer::{
     Exports, Function, FunctionEnv, Imports, Instance as WasmerInstance, Module, Store, Value,
@@ -307,11 +305,11 @@ where
 
     pub fn set_debug_handler<H>(&mut self, debug_handler: H)
     where
-        H: for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>) + 'static,
+        H: for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>) + 'static + Send + Sync,
     {
         self.fe
             .as_ref(&self.store)
-            .set_debug_handler(Some(Rc::new(RefCell::new(debug_handler))));
+            .set_debug_handler(Some(Arc::new(Mutex::new(debug_handler))));
     }
 
     pub fn unset_debug_handler(&mut self) {

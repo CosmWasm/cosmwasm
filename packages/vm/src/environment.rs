@@ -1,10 +1,8 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::BorrowMut;
-use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
-use std::rc::Rc;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use derivative::Derivative;
 use wasmer::{AsStoreMut, Instance as WasmerInstance, Memory, MemoryView, Value};
@@ -106,7 +104,7 @@ pub struct DebugInfo<'a> {
 //                            /- BEGIN TRAIT                          END TRAIT \
 //                            |                                                 |
 //                            v                                                 v
-pub type DebugHandlerFn = dyn for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>);
+pub type DebugHandlerFn = dyn for<'a, 'b> FnMut(/* msg */ &'a str, DebugInfo<'b>) + Send + Sync;
 
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
@@ -116,10 +114,6 @@ pub struct Environment<A, S, Q> {
     pub gas_config: GasConfig,
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
-
-unsafe impl<A: BackendApi, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}
-
-unsafe impl<A: BackendApi, S: Storage, Q: Querier> Sync for Environment<A, S, Q> {}
 
 impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     fn clone(&self) -> Self {
@@ -142,15 +136,15 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         }
     }
 
-    pub fn set_debug_handler(&self, debug_handler: Option<Rc<RefCell<DebugHandlerFn>>>) {
+    pub fn set_debug_handler(&self, debug_handler: Option<Arc<Mutex<DebugHandlerFn>>>) {
         self.with_context_data_mut(|context_data| {
             context_data.debug_handler = debug_handler;
         })
     }
 
-    pub fn debug_handler(&self) -> Option<Rc<RefCell<DebugHandlerFn>>> {
+    pub fn debug_handler(&self) -> Option<Arc<Mutex<DebugHandlerFn>>> {
         self.with_context_data(|context_data| {
-            // This clone here requires us to wrap the function in Rc instead of Box
+            // This clone here requires us to wrap the function in Arc instead of Box
             context_data.debug_handler.clone()
         })
     }
@@ -282,7 +276,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     /// Creates a back reference from a contact to its partent instance
     pub fn set_wasmer_instance(&self, wasmer_instance: Option<NonNull<WasmerInstance>>) {
         self.with_context_data_mut(|context_data| {
-            context_data.wasmer_instance = wasmer_instance;
+            context_data.wasmer_instance = wasmer_instance.map(WasmerRef);
         });
     }
 
@@ -399,9 +393,42 @@ pub struct ContextData<S, Q> {
     storage_readonly: bool,
     call_depth: usize,
     querier: Option<Q>,
-    debug_handler: Option<Rc<RefCell<DebugHandlerFn>>>,
+    debug_handler: Option<Arc<Mutex<DebugHandlerFn>>>,
     /// A non-owning link to the wasmer instance
-    wasmer_instance: Option<NonNull<WasmerInstance>>,
+    wasmer_instance: Option<WasmerRef>,
+}
+
+/// A non-owning link to the wasmer instance
+///
+/// This wrapper type allows us to implement `Send` and `Sync`.
+#[derive(Clone, Copy)]
+struct WasmerRef(NonNull<WasmerInstance>);
+
+impl WasmerRef {
+    pub unsafe fn as_ref<'a>(&self) -> &'a WasmerInstance {
+        self.0.as_ref()
+    }
+}
+
+//
+unsafe impl Send for WasmerRef {}
+unsafe impl Sync for WasmerRef {}
+
+/// TODO: SAFETY
+// unsafe impl<S: Sync, Q: Sync> Sync for ContextData<S, Q> {}
+
+/// Implementing `Send` is safe here as long as `WasmerInstance` is Send.
+/// This is guaranteed by the function definition below.
+// unsafe impl<S: Send, Q: Send> Send for ContextData<S, Q> {}
+
+#[allow(dead_code)]
+fn assert_is_send<T: Send>(_: PhantomData<T>) {}
+#[allow(dead_code)]
+fn assert_is_sync<T: Sync>(_: PhantomData<T>) {}
+#[allow(dead_code)]
+fn assert_wasmer_instance() {
+    assert_is_send(PhantomData::<WasmerInstance>);
+    assert_is_sync(PhantomData::<WasmerInstance>);
 }
 
 impl<S: Storage, Q: Querier> ContextData<S, Q> {

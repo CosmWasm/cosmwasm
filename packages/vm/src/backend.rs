@@ -85,7 +85,7 @@ pub struct Backend<A: BackendApi, S: Storage, Q: Querier> {
 }
 
 /// Access to the VM's backend storage, i.e. the chain
-pub trait Storage {
+pub trait Storage: Send + Sync {
     /// Returns Err on error.
     /// Returns Ok(None) when key does not exist.
     /// Returns Ok(Some(Vec<u8>)) when key exists.
@@ -171,7 +171,7 @@ pub trait BackendApi: Clone + Send {
     fn addr_humanize(&self, canonical: &[u8]) -> BackendResult<String>;
 }
 
-pub trait Querier {
+pub trait Querier: Send + Sync {
     /// This is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
