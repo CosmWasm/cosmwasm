@@ -508,7 +508,6 @@ dependencies = [
  "crc32fast",
  "criterion",
  "derivative",
- "enumset",
  "glob",
  "hex",
  "hex-literal",

@@ -47,7 +47,6 @@ strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
 bytecheck = "0.6.3" # With this version the simdutf8 dependency became optional
-enumset = "1.0.2"   # Fixes https://github.com/Lymia/enumset/issues/17 (https://github.com/Lymia/enumset/commit/a430550cd6a3c9b1ef636d37f75dede7616f5b62)
 bitflags = "1.1.0"  # https://github.com/CensoredUsername/dynasm-rs/pull/74
 
 # Wasmer git/local (used for quick local debugging or patching)

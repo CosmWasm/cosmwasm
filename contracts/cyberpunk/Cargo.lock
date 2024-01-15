@@ -293,7 +293,6 @@ dependencies = [
  "cosmwasm-std",
  "crc32fast",
  "derivative",
- "enumset",
  "hex",
  "schemars",
  "serde",
