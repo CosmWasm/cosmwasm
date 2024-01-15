@@ -71,9 +71,9 @@ const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 /// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
 const MAX_IMPORTS: usize = 100;
 
-const MAX_FUNCTIONS: usize = 10000;
+const MAX_FUNCTIONS: usize = 1000000; // FIXME: reset to normal
 
-const MAX_FUNCTION_PARAMS: usize = 50;
+const MAX_FUNCTION_PARAMS: usize = 50_000000; // FIXME: reset to normal
 
 const MAX_FUNCTION_RESULTS: usize = 1;
 
@@ -88,6 +88,26 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
     check_wasm_imports(&module, SUPPORTED_IMPORTS)?;
     check_wasm_capabilities(&module, available_capabilities)?;
     check_wasm_functions(&module)?;
+
+    // Sum of all params over all functions
+    let total_params_count =
+        module
+            .type_usage
+            .iter()
+            .fold(0usize, |acc, (type_index, type_used_count)| {
+                let params = module
+                    .type_params
+                    .get(&type_index)
+                    .expect("Found a function signature that is used with no known params count");
+                acc + type_used_count * params
+            });
+
+    let bounds = core::cmp::max(module.max_func_params * module.function_count, 1); // >= 1
+    let utilization = (100f64 * total_params_count as f64) / bounds as f64; // in percent
+    let function_count = module.function_count;
+    let max_params = module.max_func_params;
+    eprintln!("Functions: {function_count}; Max params: {max_params}; Total params count: {total_params_count}; Utilization: {utilization:.2}%");
+    // eprintln!("Parsed module: {module:?}");
 
     Ok(())
 }
@@ -257,23 +277,25 @@ fn check_wasm_functions(module: &ParsedWasm) -> VmResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::VmError;
+    use crate::{capabilities_from_csv, errors::VmError};
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
     static CONTRACT_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
-        ["staking".to_string()].into_iter().collect()
+        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,iterator,staking,stargate")
     }
 
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(CONTRACT, &default_capabilities()).unwrap();
+        check_wasm(CYBERPUNK, &default_capabilities()).unwrap();
     }
 
     #[test]

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use wasmer::wasmparser::{
     Export, Import, MemoryType, Parser, Payload, TableType, Type, ValidPayload, Validator,
     WasmFeatures,
@@ -16,6 +18,10 @@ pub struct ParsedWasm<'a> {
     pub memories: Vec<MemoryType>,
     pub function_count: usize,
     pub type_count: u32,
+    /// Counts how often each function signature is used by a function
+    pub type_usage: HashMap<usize, usize>,
+    /// How many parameters a type has
+    pub type_params: HashMap<usize, usize>,
     pub max_func_params: usize,
     pub max_func_results: usize,
 }
@@ -41,6 +47,8 @@ impl<'a> ParsedWasm<'a> {
             memories: vec![],
             function_count: 0,
             type_count: 0,
+            type_usage: HashMap::default(),
+            type_params: HashMap::default(),
             max_func_params: 0,
             max_func_results: 0,
         };
@@ -61,15 +69,27 @@ impl<'a> ParsedWasm<'a> {
             match p {
                 Payload::TypeSection(t) => {
                     this.type_count = t.get_count();
-                    for t_res in t {
+                    for (type_index, t_res) in t.into_iter().enumerate() {
                         let ty: Type = t_res?;
                         match ty {
                             Type::Func(ft) => {
+                                this.type_params.insert(type_index, ft.params().len());
+
                                 this.max_func_params =
                                     core::cmp::max(ft.params().len(), this.max_func_params);
                                 this.max_func_results =
                                     core::cmp::max(ft.results().len(), this.max_func_results);
                             }
+                        }
+                    }
+                }
+                Payload::FunctionSection(section) => {
+                    for a in section {
+                        let type_index = a? as usize;
+                        if let Some(value) = this.type_usage.get_mut(&(type_index)) {
+                            *value += 1;
+                        } else {
+                            this.type_usage.insert(type_index, 1);
                         }
                     }
                 }
