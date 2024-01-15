@@ -89,6 +89,7 @@ and this project adheres to
   `::addr_canonicalize`/`::addr_humanize` for consistency.
 - cosmwasm-vm: Add `BackendApi::addr_validate` to avoid having to do two calls
   from Rust into Go.
+- cosmwasm-vm: Upgrade Wasmer to 4.2.5
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
