@@ -19,7 +19,7 @@ and this project adheres to
 - cosmwasm-std: Add optional memo field to `IbcMsg::Transfer`. ([#1878])
 - cosmwasm-std: Add `Reply::gas_used`. ([#1954])
 - cosmwasm-std: Add `SubMsgResponse::msg_responses` and deprecate
-  `SubMsgResponse::data`. ([#1903])
+  `SubMsgResponse::data`. Add new type `MsgResponse`. ([#1903])
 - cosmwasm-std: Add `cosmwasm_2_0` feature to enable 2.0 specific functionality.
   ([#1974])
 
