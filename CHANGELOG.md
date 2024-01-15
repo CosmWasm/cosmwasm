@@ -90,7 +90,7 @@ and this project adheres to
 - cosmwasm-vm: Add `BackendApi::addr_validate` to avoid having to do two calls
   from Rust into Go.
 - cosmwasm-vm: Upgrade Wasmer to 4.2.5; Bump `MODULE_SERIALIZATION_VERSION` to
-  "v9".
+  "v9". ([#1992])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -112,6 +112,7 @@ and this project adheres to
 [#1971]: https://github.com/CosmWasm/cosmwasm/pull/1971
 [#1973]: https://github.com/CosmWasm/cosmwasm/pull/1973
 [#1977]: https://github.com/CosmWasm/cosmwasm/pull/1977
+[#1992]: https://github.com/CosmWasm/cosmwasm/pull/1992
 
 ### Removed
 
