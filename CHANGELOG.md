@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Fix memory increase issue (1.3 -> 1.4 regression) by avoiding the
+  use of a long running Wasmer Engine. ([#1978])
+
+[#1978]: https://github.com/CosmWasm/cosmwasm/issues/1978
+
 ## [1.4.2] - 2024-01-10
 
 ### Fixed
