@@ -79,7 +79,6 @@ harness = false
 [[example]]
 name = "memory"
 path = "examples/memory.rs"
-required-features = ["dhat-heap"]
 
 [profile.release]
 debug = 1

@@ -12,6 +12,7 @@ use cosmwasm_vm::{
     Size,
 };
 
+#[cfg(feature = "dhat-heap")]
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;
 
