@@ -20,6 +20,8 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
+# For heap profiling. Only used in "memory" example.
+dhat-heap = ["dep:dhat"]
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
@@ -43,6 +45,9 @@ thiserror = "1.0.26"
 wasmer = { version = "=4.2.5", default-features = false, features = ["cranelift", "singlepass"] }
 wasmer-middlewares = "=4.2.5"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
+# For heap profiling. Only used in "memory" example. This has to be a non-dev dependency
+# because cargo currently does not support optional dev-dependencies.
+dhat = { version = "0.3.2", optional = true }
 
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
@@ -65,7 +70,15 @@ clap = "4"
 rand = "0.8"
 leb128 = "0.2"
 target-lexicon = "0.12"
+time = { version = "0.3.28", features = ["formatting"] }
 
 [[bench]]
 name = "main"
 harness = false
+
+[[example]]
+name = "memory"
+path = "examples/memory.rs"
+
+[profile.release]
+debug = 1
