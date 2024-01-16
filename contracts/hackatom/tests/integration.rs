@@ -177,7 +177,7 @@ fn sudo_can_steal_tokens() {
     };
     let res: Response = sudo(&mut deps, mock_env(), sys_msg).unwrap();
     assert_eq!(1, res.messages.len());
-    let msg = res.messages.get(0).expect("no message");
+    let msg = res.messages.first().expect("no message");
     assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
 }
 
@@ -244,7 +244,7 @@ fn execute_release_works() {
     let execute_res: Response =
         execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {}).unwrap();
     assert_eq!(execute_res.messages.len(), 1);
-    let msg = execute_res.messages.get(0).expect("no message");
+    let msg = execute_res.messages.first().expect("no message");
     assert_eq!(
         msg,
         &SubMsg::new(BankMsg::Send {

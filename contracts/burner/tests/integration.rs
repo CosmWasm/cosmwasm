@@ -67,7 +67,7 @@ fn migrate_sends_funds() {
     let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
-    let msg = res.messages.get(0).expect("no message");
+    let msg = res.messages.first().expect("no message");
     assert_eq!(
         msg,
         &SubMsg::new(BankMsg::Send {

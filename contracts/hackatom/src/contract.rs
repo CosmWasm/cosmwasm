@@ -406,7 +406,7 @@ mod tests {
         };
         let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
-        let msg = res.messages.get(0).expect("no message");
+        let msg = res.messages.first().expect("no message");
         assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
     }
 
@@ -458,7 +458,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(execute_res.messages.len(), 1);
-        let msg = execute_res.messages.get(0).expect("no message");
+        let msg = execute_res.messages.first().expect("no message");
         assert_eq!(
             msg,
             &SubMsg::new(BankMsg::Send {
