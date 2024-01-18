@@ -5,7 +5,7 @@ use wasmer::wasmparser::{
     WasmFeatures,
 };
 
-use crate::VmResult;
+use crate::{VmError, VmResult};
 
 /// A parsed and validated wasm module.
 /// It keeps track of the parts that are important for our static analysis and compatibility checks.
@@ -18,12 +18,14 @@ pub struct ParsedWasm<'a> {
     pub memories: Vec<MemoryType>,
     pub function_count: usize,
     pub type_count: u32,
-    /// Counts how often each function signature is used by a function
-    pub type_usage: HashMap<usize, usize>,
     /// How many parameters a type has
     pub type_params: HashMap<usize, usize>,
+    /// How many parameters the function with the most parameters has
     pub max_func_params: usize,
+    /// How many results the function with the most results has
     pub max_func_results: usize,
+    /// How many function parameters are used in the module
+    pub total_func_params: usize,
 }
 
 impl<'a> ParsedWasm<'a> {
@@ -47,10 +49,10 @@ impl<'a> ParsedWasm<'a> {
             memories: vec![],
             function_count: 0,
             type_count: 0,
-            type_usage: HashMap::default(),
             type_params: HashMap::default(),
             max_func_params: 0,
             max_func_results: 0,
+            total_func_params: 0,
         };
 
         let mut fun_allocations = Default::default();
@@ -84,13 +86,19 @@ impl<'a> ParsedWasm<'a> {
                     }
                 }
                 Payload::FunctionSection(section) => {
+                    // in valid wasm, the function section always has to come after the type section
+                    // (see https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#modules%E2%91%A0%E2%93%AA),
+                    // so we can assume that the type_params map is already filled at this point
+
                     for a in section {
                         let type_index = a? as usize;
-                        if let Some(value) = this.type_usage.get_mut(&(type_index)) {
-                            *value += 1;
-                        } else {
-                            this.type_usage.insert(type_index, 1);
-                        }
+                        this.total_func_params +=
+                            this.type_params.get(&type_index).ok_or_else(|| {
+                                // this will also be thrown if the wasm section order is invalid
+                                VmError::static_validation_err(
+                                    "Wasm bytecode error: function uses unknown type index",
+                                )
+                            })?
                     }
                 }
                 Payload::Version { num, .. } => this.version = num,
