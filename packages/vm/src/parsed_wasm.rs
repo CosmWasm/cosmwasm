@@ -1,5 +1,6 @@
 use wasmer::wasmparser::{
-    Export, Import, MemoryType, Parser, TableType, ValidPayload, Validator, WasmFeatures,
+    Export, Import, MemoryType, Parser, Payload, TableType, Type, ValidPayload, Validator,
+    WasmFeatures,
 };
 
 use crate::VmResult;
@@ -13,6 +14,10 @@ pub struct ParsedWasm<'a> {
     pub imports: Vec<Import<'a>>,
     pub tables: Vec<TableType>,
     pub memories: Vec<MemoryType>,
+    pub function_count: usize,
+    pub type_count: u32,
+    pub max_func_params: usize,
+    pub max_func_results: usize,
 }
 
 impl<'a> ParsedWasm<'a> {
@@ -34,6 +39,10 @@ impl<'a> ParsedWasm<'a> {
             imports: vec![],
             tables: vec![],
             memories: vec![],
+            function_count: 0,
+            type_count: 0,
+            max_func_params: 0,
+            max_func_results: 0,
         };
 
         let mut fun_allocations = Default::default();
@@ -45,20 +54,36 @@ impl<'a> ParsedWasm<'a> {
                 let mut fun_validator = fv.into_validator(fun_allocations);
                 fun_validator.validate(&body)?;
                 fun_allocations = fun_validator.into_allocations();
+
+                this.function_count += 1;
             }
 
             match p {
-                wasmer::wasmparser::Payload::Version { num, .. } => this.version = num,
-                wasmer::wasmparser::Payload::ImportSection(i) => {
+                Payload::TypeSection(t) => {
+                    this.type_count = t.get_count();
+                    for t_res in t {
+                        let ty: Type = t_res?;
+                        match ty {
+                            Type::Func(ft) => {
+                                this.max_func_params =
+                                    core::cmp::max(ft.params().len(), this.max_func_params);
+                                this.max_func_results =
+                                    core::cmp::max(ft.results().len(), this.max_func_results);
+                            }
+                        }
+                    }
+                }
+                Payload::Version { num, .. } => this.version = num,
+                Payload::ImportSection(i) => {
                     this.imports = i.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
-                wasmer::wasmparser::Payload::TableSection(t) => {
+                Payload::TableSection(t) => {
                     this.tables = t.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
-                wasmer::wasmparser::Payload::MemorySection(m) => {
+                Payload::MemorySection(m) => {
                     this.memories = m.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
-                wasmer::wasmparser::Payload::ExportSection(e) => {
+                Payload::ExportSection(e) => {
                     this.exports = e.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
                 _ => {} // ignore everything else
