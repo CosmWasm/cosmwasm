@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.4.3] - 2024-01-18
+
 ### Fixed
 
 - cosmwasm-vm: Fix memory increase issue (1.3 -> 1.4 regression) by avoiding the
@@ -1896,7 +1898,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.2...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.3...HEAD
+[1.4.3]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...1.4.2
 [1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
