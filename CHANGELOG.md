@@ -10,8 +10,10 @@ and this project adheres to
 
 - cosmwasm-vm: Fix memory increase issue (1.3 -> 1.4 regression) by avoiding the
   use of a long running Wasmer Engine. ([#1978])
+- cosmwasm-vm: Fix CWA-2023-004. ([#1996])
 
 [#1978]: https://github.com/CosmWasm/cosmwasm/issues/1978
+[#1996]: https://github.com/CosmWasm/cosmwasm/issues/1996
 
 ### Added
 
