@@ -227,6 +227,18 @@ extern "C" {
         recovery_param: u32,
     ) -> u64;
 
+    /// Verifies message hashes against a signature with a public key, using the
+    /// secp256r1 ECDSA parametrization.
+    /// Returns 0 on verification success, 1 on verification failure, and values
+    /// greater than 1 in case of error.
+    fn secp256r1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
+    fn secp256r1_recover_pubkey(
+      message_hash_ptr: u32,
+      signature_ptr: u32,
+      recovery_param: u32,
+    ) -> u64;
+
     /// Verifies a message against a signature with a public key, using the
     /// ed25519 EdDSA scheme.
     /// Returns 0 on verification success, 1 on verification failure, and values

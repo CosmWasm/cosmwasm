@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_verify, CryptoError,
+    secp256r1_recover_pubkey, secp256r1_verify, CryptoError,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -353,6 +353,45 @@ pub fn do_secp256r1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
         },
     };
     Ok(code)
+}
+
+pub fn do_secp256r1_recover_pubkey<
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    recover_param: u32,
+) -> VmResult<u64> {
+    let (data, mut store) = env.data_and_store_mut();
+
+    let hash = read_region(&data.memory(&store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&data.memory(&store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let recover_param: u8 = match recover_param.try_into() {
+        Ok(rp) => rp,
+        Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
+    };
+
+    let gas_info = GasInfo::with_cost(data.gas_config.secp256r1_recover_pubkey_cost);
+    process_gas_info(data, &mut store, gas_info)?;
+    let result = secp256r1_recover_pubkey(&hash, &signature, recover_param);
+    match result {
+        Ok(pubkey) => {
+            let pubkey_ptr = write_to_contract(data, &mut store, pubkey.as_ref())?;
+            Ok(to_low_half(pubkey_ptr))
+        }
+        Err(err) => match err {
+            CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    }
 }
 
 /// Return code (error code) for a valid signature
@@ -720,6 +759,7 @@ mod tests {
                 "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "secp256r1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "secp256r1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_typed(&mut store, |_a: u32| {}),
@@ -1970,6 +2010,28 @@ mod tests {
             do_secp256r1_verify(fe_mut, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             10 // mapped GenericErr
         )
+    }
+
+    #[test]
+    fn do_secp256r1_recover_pubkey_works() {
+        let api = MockApi::default();
+        let (fe, mut store, _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let hash = hex!("12135386c09e0bf6fd5c454a95bcfe9b3edb25c71e455c73a212405694b29002");
+        let sig = hex!("b53ce4da1aa7c0dc77a1896ab716b921499aed78df725b1504aba1597ba0c64bd7c246dc7ad0e67700c373edcfdd1c0a0495fc954549ad579df6ed1438840851");
+        let recovery_param = 0;
+        let expected = hex!("040a7dbb8bf50cb605eb2268b081f26d6b08e012f952c4b70a5a1e6e7d46af98bbf26dd7d799930062480849962ccf5004edcfd307c044f4e8f667c9baa834eeae");
+
+        let hash_ptr = write_data(&mut fe_mut, &hash);
+        let sig_ptr = write_data(&mut fe_mut, &sig);
+        let result =
+            do_secp256r1_recover_pubkey(fe_mut.as_mut(), hash_ptr, sig_ptr, recovery_param)
+                .unwrap();
+        let error = result >> 32;
+        let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&mut fe_mut, pubkey_ptr), expected);
     }
 
     #[test]

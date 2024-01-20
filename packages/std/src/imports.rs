@@ -64,6 +64,12 @@ extern "C" {
     /// greater than 1 in case of error.
     fn secp256r1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
+    fn secp256r1_recover_pubkey(
+        message_hash_ptr: u32,
+        signature_ptr: u32,
+        recovery_param: u32,
+    ) -> u64;
+
     /// Verifies a message against a signature with a public key, using the
     /// ed25519 EdDSA scheme.
     /// Returns 0 on verification success, 1 on verification failure, and values
@@ -436,6 +442,34 @@ impl Api for ExternalApi {
             5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    fn secp256r1_recover_pubkey(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        recover_param: u8,
+    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+        let hash_send = build_region(message_hash);
+        let hash_send_ptr = &*hash_send as *const Region as u32;
+        let sig_send = build_region(signature);
+        let sig_send_ptr = &*sig_send as *const Region as u32;
+
+        let result =
+            unsafe { secp256r1_recover_pubkey(hash_send_ptr, sig_send_ptr, recover_param.into()) };
+        let error_code = from_high_half(result);
+        let pubkey_ptr = from_low_half(result);
+        match error_code {
+            0 => {
+                let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
+                Ok(pubkey)
+            }
+            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
+            3 => Err(RecoverPubkeyError::InvalidHashFormat),
+            4 => Err(RecoverPubkeyError::InvalidSignatureFormat),
+            6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
+            error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
         }
     }
 
