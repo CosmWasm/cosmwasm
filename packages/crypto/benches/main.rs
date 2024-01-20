@@ -12,7 +12,7 @@ use sha2::Sha256;
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_verify,
+    secp256r1_recover_pubkey, secp256r1_verify,
 };
 use std::cmp::min;
 
@@ -119,6 +119,20 @@ fn bench_crypto(c: &mut Criterion) {
         let public_key = hex::decode(COSMOS_SECP256R1_PUBKEY_HEX).unwrap();
         b.iter(|| {
             assert!(secp256r1_verify(&message_hash, &signature, &public_key).unwrap());
+        });
+    });
+
+    group.bench_function("secp256r1_recover_pubkey", |b| {
+        let message_hash =
+            hex!("aea3e069e03c0ff4d6b3fa2235e0053bbedc4c7e40efbc686d4dfb5efba4cfed");
+        let expected  =
+            hex!("04105d22d9c626520faca13e7ced382dcbe93498315f00cc0ac39c4821d0d737376c47f3cbbfa97dfcebe16270b8c7d5d3a5900b888c42520d751e8faf3b401ef4");
+        let r_s = hex!("542c40a18140a6266d6f0286e24e9a7bad7650e72ef0e2131e629c076d9626634f7f65305e24a6bbb5cff714ba8f5a2cee5bdc89ba8d75dcbf21966ce38eb66f");
+        let recovery_param: u8 = 1;
+
+        b.iter(|| {
+            let pubkey = secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
+            assert_eq!(pubkey, expected);
         });
     });
 
