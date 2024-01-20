@@ -53,13 +53,13 @@ impl Default for GasConfig {
         const GAS_PER_US: u64 = 1_000_000;
         Self {
             // ~154 us in crypto benchmarks
-            secp256k1_verify_cost: 154 * GAS_PER_US,
+            secp256k1_verify_cost: 119 * GAS_PER_US,
             // ~162 us in crypto benchmarks
-            secp256k1_recover_pubkey_cost: 162 * GAS_PER_US,
-            // ~154 us in crypto benchmarks
-            secp256r1_verify_cost: 154 * GAS_PER_US,
-            // ~162 us in crypto benchmarks
-            secp256r1_recover_pubkey_cost: 162 * GAS_PER_US,
+            secp256k1_recover_pubkey_cost: 233 * GAS_PER_US,
+            // ~525 us in crypto benchmarks
+            secp256r1_verify_cost: 374 * GAS_PER_US,
+            // ~582 us in crypto benchmarks
+            secp256r1_recover_pubkey_cost: 834 * GAS_PER_US,
             // ~63 us in crypto benchmarks
             ed25519_verify_cost: 63 * GAS_PER_US,
             // Gas cost factors, relative to ed25519_verify cost
