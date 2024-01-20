@@ -766,6 +766,8 @@ mod tests {
     #[test]
     fn from_std_str_utf8error_works() {
         let broken = b"Hello \xF0\x90\x80World";
+        #[allow(unknown_lints)]
+        #[allow(invalid_from_utf8)]
         let error: StdError = str::from_utf8(broken).unwrap_err().into();
         match error {
             StdError::InvalidUtf8 { msg, .. } => {
