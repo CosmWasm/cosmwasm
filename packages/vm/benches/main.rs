@@ -353,22 +353,22 @@ fn bench_instance_threads(c: &mut Criterion) {
     });
 }
 
-fn make_config() -> Criterion {
+fn make_config(measurement_time_s: u64) -> Criterion {
     Criterion::default()
         .without_plots()
-        .measurement_time(Duration::new(10, 0))
+        .measurement_time(Duration::new(measurement_time_s, 0))
         .sample_size(12)
         .configure_from_args()
 }
 
 criterion_group!(
     name = instance;
-    config = make_config();
+    config = make_config(8);
     targets = bench_instance
 );
 criterion_group!(
     name = cache;
-    config = make_config();
+    config = make_config(8);
     targets = bench_cache
 );
 criterion_group!(
