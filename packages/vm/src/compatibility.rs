@@ -277,7 +277,7 @@ mod tests {
     static CONTRACT_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
-        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,iterator,staking,stargate")
+        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking,stargate")
     }
 
     #[test]

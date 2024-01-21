@@ -30,6 +30,7 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
+const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking";
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
@@ -129,7 +130,7 @@ fn bench_cache(c: &mut Criterion) {
 
     let options = CacheOptions::new(
         TempDir::new().unwrap().into_path(),
-        capabilities_from_csv("iterator,staking"),
+        capabilities_from_csv(DEFAULT_CAPABILITIES),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
     );
@@ -182,7 +183,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("instantiate from fs", |b| {
         let non_memcache = CacheOptions::new(
             TempDir::new().unwrap().into_path(),
-            capabilities_from_csv("iterator,staking"),
+            capabilities_from_csv(DEFAULT_CAPABILITIES),
             Size::new(0),
             DEFAULT_MEMORY_LIMIT,
         );
@@ -204,7 +205,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("instantiate from fs unchecked", |b| {
         let non_memcache = CacheOptions::new(
             TempDir::new().unwrap().into_path(),
-            capabilities_from_csv("iterator,staking"),
+            capabilities_from_csv(DEFAULT_CAPABILITIES),
             Size::new(0),
             DEFAULT_MEMORY_LIMIT,
         );
@@ -267,11 +268,11 @@ fn bench_cache(c: &mut Criterion) {
     group.finish();
 }
 
-pub fn bench_instance_threads(c: &mut Criterion) {
+fn bench_instance_threads(c: &mut Criterion) {
     c.bench_function("multi-threaded get_instance", |b| {
         let options = CacheOptions::new(
             TempDir::new().unwrap().into_path(),
-            capabilities_from_csv("iterator,staking"),
+            capabilities_from_csv(DEFAULT_CAPABILITIES),
             MEMORY_CACHE_SIZE,
             DEFAULT_MEMORY_LIMIT,
         );
