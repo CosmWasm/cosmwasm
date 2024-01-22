@@ -252,7 +252,7 @@ pub enum WasmMsg {
 ///     // ...
 ///     Ok(Response::new().add_message(GovMsg::Vote {
 ///         proposal_id: 4,
-///         vote: VoteOption::Yes,
+///         option: VoteOption::Yes,
 ///     }))
 /// }
 /// ```
@@ -302,9 +302,8 @@ pub enum GovMsg {
         proposal_id: u64,
         /// The vote option.
         ///
-        /// This should be called "option" for consistency with Cosmos SDK. Sorry for that.
-        /// See <https://github.com/CosmWasm/cosmwasm/issues/1571>.
-        vote: VoteOption,
+        /// This used to be called "vote", but was changed for consistency with Cosmos SDK.
+        option: VoteOption,
     },
     /// This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.
     #[cfg(feature = "cosmwasm_1_2")]
@@ -611,12 +610,12 @@ mod tests {
         // Vote
         let msg = GovMsg::Vote {
             proposal_id: 4,
-            vote: VoteOption::NoWithVeto,
+            option: VoteOption::NoWithVeto,
         };
         let json = to_json_binary(&msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
-            r#"{"vote":{"proposal_id":4,"vote":"no_with_veto"}}"#,
+            r#"{"vote":{"proposal_id":4,"option":"no_with_veto"}}"#,
         );
 
         // VoteWeighted
