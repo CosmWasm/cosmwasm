@@ -406,7 +406,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-check"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -419,7 +419,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "criterion",
  "digest 0.10.6",
@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "cosmwasm-std",
  "syn 1.0.109",
@@ -446,7 +446,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
@@ -461,7 +461,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -470,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "base64",
  "bech32",
@@ -495,7 +495,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.0.0-beta.0"
+version = "2.0.0-beta.1"
 dependencies = [
  "bech32",
  "bitflags",
