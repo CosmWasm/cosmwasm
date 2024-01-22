@@ -615,7 +615,7 @@ mod tests {
         let json = to_json_binary(&msg).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
-            r#"{"vote":{"proposal_id":4,"vote":"no_with_veto"}}"#,
+            r#"{"vote":{"proposal_id":4,"option":"no_with_veto"}}"#,
         );
 
         // VoteWeighted
