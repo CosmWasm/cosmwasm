@@ -399,7 +399,7 @@ impl From<DivideByZeroError> for StdError {
 pub type StdResult<T> = core::result::Result<T, StdError>;
 /// Indicates operations that are prone to overflow.
 /// Used to mark numerical operations where overflow checks are necessary.
-enum OverflowOperation {
+
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum OverflowOperation {
     Add,
@@ -415,7 +415,7 @@ impl fmt::Display for OverflowOperation {
         write!(f, "{self:?}")
     }
 }
-///An error struct used when a numeric operation results in an overflow.
+/// An error struct used when a numeric operation results in an overflow.
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("Cannot {operation} with given operands")]
 pub struct OverflowError {
@@ -469,7 +469,7 @@ pub enum DivisionError {
     Overflow,
 }
 /// Errors that occur when multiplying a value by a ratio in a checked manner.
-/// Ensures precision and overflow safety in the operation.
+/// Ensures overflow safety in the operation.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum CheckedMultiplyFractionError {
     #[error("{0}")]

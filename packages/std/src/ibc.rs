@@ -15,7 +15,6 @@ use crate::timestamp::Timestamp;
 
 /// Messages pertaining to the IBC lifecycle, specifically for contracts with IBC capabilities.
 /// Manages cross-chain communications and other IBC protocol interactions.
-enum IbcMsg {
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -414,8 +413,7 @@ impl IbcPacketReceiveMsg {
         Self { packet, relayer }
     }
 }
-
-///  Message format used when acknowledging the receipt of an IBC packet.
+/// Message format used when acknowledging the receipt of an IBC packet.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcPacketAckMsg {
@@ -458,9 +456,9 @@ impl IbcPacketTimeoutMsg {
 ///
 /// Callbacks that have return values (like receive_packet)
 /// or that cannot redispatch messages (like the handshake callbacks)
-/// will use other Response types
+/// will use other Response types.
+/// A general response structure for IBC handler operations, used when a specific response format isn't required.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-///A general response structure for IBC handler operations, used when a specific response format isn't required.
 #[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.

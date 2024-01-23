@@ -38,7 +38,6 @@ pub use staking::*;
 pub use wasm::*;
 /// Enumerates different types of query requests.
 /// Facilitates data retrieval from various modules or contracts in a structured manner.
-enum QueryRequest {
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -65,7 +64,6 @@ pub enum QueryRequest<C> {
     Ibc(IbcQuery),
     Wasm(WasmQuery),
 }
-
 /// A trait that is required to avoid conflicts with other query types like BankQuery and WasmQuery
 /// in generic implementations.
 /// You need to implement it in your custom query type.
