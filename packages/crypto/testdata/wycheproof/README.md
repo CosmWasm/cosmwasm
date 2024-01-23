@@ -16,5 +16,6 @@ from the repo root:
   && curl -sSL https://github.com/google/wycheproof/raw/master/testvectors_v1/ecdsa_secp256k1_sha256_test.json > ecdsa_secp256k1_sha256_test.json \
   && curl -sSL https://github.com/google/wycheproof/raw/master/testvectors_v1/ecdsa_secp256k1_sha512_test.json > ecdsa_secp256k1_sha512_test.json \
   && curl -sSL https://github.com/google/wycheproof/raw/master/testvectors_v1/ecdsa_secp256k1_sha3_256_test.json > ecdsa_secp256k1_sha3_256_test.json \
+  && curl -sSL https://github.com/google/wycheproof/raw/master/testvectors_v1/ecdsa_secp256k1_sha3_512_test.json > ecdsa_secp256k1_sha3_512_test.json \
   )
 ```
