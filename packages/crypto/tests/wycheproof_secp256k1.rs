@@ -4,10 +4,7 @@ use cosmwasm_crypto::secp256k1_verify;
 use serde::Deserialize;
 use sha2::{Digest, Sha256, Sha512};
 
-// In repo root
-// curl -sS -L https://github.com/google/wycheproof/raw/master/testvectors_v1/ecdsa_secp256k1_sha256_test.json > packages/crypto/testdata/wycheproof/ecdsa_secp256k1_sha256_test.json
-// curl -sS -L https://github.com/google/wycheproof/raw/master/testvectors_v1/ecdsa_secp256k1_sha512_test.json > packages/crypto/testdata/wycheproof/ecdsa_secp256k1_sha512_test.json
-
+// See ./testdata/wycheproof/README.md for how to get/update those files
 const SECP256K1_SHA256: &str = "./testdata/wycheproof/ecdsa_secp256k1_sha256_test.json";
 const SECP256K1_SHA512: &str = "./testdata/wycheproof/ecdsa_secp256k1_sha512_test.json";
 
