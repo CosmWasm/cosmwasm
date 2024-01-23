@@ -52,13 +52,13 @@ impl Default for GasConfig {
         // Target is 10^12 per second (see GAS.md), i.e. 10^6 gas per µ second.
         const GAS_PER_US: u64 = 1_000_000;
         Self {
-            // ~154 us in crypto benchmarks
+            // ~119 us in crypto benchmarks
             secp256k1_verify_cost: 119 * GAS_PER_US,
-            // ~162 us in crypto benchmarks
+            // ~233 us in crypto benchmarks
             secp256k1_recover_pubkey_cost: 233 * GAS_PER_US,
-            // ~525 us in crypto benchmarks
+            // ~374 us in crypto benchmarks
             secp256r1_verify_cost: 374 * GAS_PER_US,
-            // ~582 us in crypto benchmarks
+            // ~834 us in crypto benchmarks
             secp256r1_recover_pubkey_cost: 834 * GAS_PER_US,
             // ~63 us in crypto benchmarks
             ed25519_verify_cost: 63 * GAS_PER_US,
