@@ -3,10 +3,12 @@
 use cosmwasm_crypto::secp256k1_verify;
 use serde::Deserialize;
 use sha2::{Digest, Sha256, Sha512};
+use sha3::Sha3_256;
 
 // See ./testdata/wycheproof/README.md for how to get/update those files
 const SECP256K1_SHA256: &str = "./testdata/wycheproof/ecdsa_secp256k1_sha256_test.json";
 const SECP256K1_SHA512: &str = "./testdata/wycheproof/ecdsa_secp256k1_sha512_test.json";
+const SECP256K1_SHA3_256: &str = "./testdata/wycheproof/ecdsa_secp256k1_sha3_256_test.json";
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -129,6 +131,55 @@ fn ecdsa_secp256k1_sha512() {
                 "invalid" => {
                     let message = hex::decode(tc.msg).unwrap();
                     let message_hash = Sha512::digest(message);
+                    let der_signature = hex::decode(tc.sig).unwrap();
+
+                    if let Ok(signature) = from_der(&der_signature) {
+                        match secp256k1_verify(&message_hash, &signature, &public_key) {
+                            Ok(valid) => assert!(!valid),
+                            Err(_) => { /* this is expected for "invalid", all good */ }
+                        }
+                    } else {
+                        // invalid DER encoding, okay
+                    }
+                }
+                _ => panic!("Found unexpected result value"),
+            }
+            if tc.result == "valid" {}
+        }
+    }
+    assert_eq!(tested, number_of_tests);
+}
+
+#[test]
+fn ecdsa_secp256k1_sha3_256() {
+    let mut tested: usize = 0;
+    let File {
+        number_of_tests,
+        test_groups,
+    } = read_file(SECP256K1_SHA3_256);
+    assert_eq!(number_of_tests, 471, "Got unexpected number of tests");
+
+    for group in test_groups {
+        let public_key = hex::decode(group.public_key.uncompressed).unwrap();
+        assert_eq!(public_key.len(), 65);
+
+        for tc in group.tests {
+            tested += 1;
+            assert_eq!(tc.tc_id as usize, tested);
+            // eprintln!("Test case ID: {}", tc.tc_id);
+
+            match tc.result.as_str() {
+                "valid" | "acceptable" => {
+                    let message = hex::decode(tc.msg).unwrap();
+                    let message_hash: [u8; 32] = Sha3_256::digest(message).into();
+                    let der_signature = hex::decode(tc.sig).unwrap();
+                    let signature = from_der(&der_signature).unwrap();
+                    let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
+                    assert!(valid);
+                }
+                "invalid" => {
+                    let message = hex::decode(tc.msg).unwrap();
+                    let message_hash = Sha3_256::digest(message);
                     let der_signature = hex::decode(tc.sig).unwrap();
 
                     if let Ok(signature) = from_der(&der_signature) {
