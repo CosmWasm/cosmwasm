@@ -150,135 +150,116 @@ fn test_ecdsa_secp256k1_sha512() {
     assert_eq!(tested, number_of_tests);
 }
 
-fn from_der(data: &[u8]) -> Result<[u8; 64], &str> {
+fn from_der(data: &[u8]) -> Result<[u8; 64], String> {
     const DER_TAG_INTEGER: u8 = 0x02;
 
     let mut pos = 0;
 
     let Some(prefix) = data.get(pos) else {
-        return Err("Could not read prefix");
+        return Err("Could not read prefix".to_string());
     };
     pos += 1;
     if *prefix != 0x30 {
-        return Err("Prefix 0x30 expected");
+        return Err("Prefix 0x30 expected".to_string());
     }
 
     let Some(body_length) = data.get(pos) else {
-        return Err("Could not read body length");
+        return Err("Could not read body length".to_string());
     };
     pos += 1;
     if data.len() - pos != *body_length as usize {
-        return Err("Data length mismatch detected");
+        return Err("Data length mismatch detected".to_string());
     }
 
     // r
     let Some(r_tag) = data.get(pos) else {
-        return Err("Could not read r_tag");
+        return Err("Could not read r_tag".to_string());
     };
     pos += 1;
     if *r_tag != DER_TAG_INTEGER {
-        return Err("INTEGER tag expected");
+        return Err("INTEGER tag expected".to_string());
     }
     let Some(r_length) = data.get(pos).map(|rl: &u8| *rl as usize) else {
-        return Err("Could not read r_length");
+        return Err("Could not read r_length".to_string());
     };
     pos += 1;
     if r_length >= 0x80 {
-        return Err("Decoding length values above 127 not supported");
+        return Err("Decoding length values above 127 not supported".to_string());
     }
     if pos + r_length > data.len() {
-        return Err("R lengths exceeds end of data");
+        return Err("R length exceeds end of data".to_string());
     }
-    let mut r_data = &data[pos..pos + r_length];
+    let r_data = &data[pos..pos + r_length];
     pos += r_length;
 
     // s
     let Some(s_tag) = data.get(pos) else {
-        return Err("Could not read s_tag");
+        return Err("Could not read s_tag".to_string());
     };
     pos += 1;
     if *s_tag != DER_TAG_INTEGER {
-        return Err("INTEGER tag expected");
+        return Err("INTEGER tag expected".to_string());
     }
     let Some(s_length) = data.get(pos).map(|sl| *sl as usize) else {
-        return Err("Could not read s_length");
+        return Err("Could not read s_length".to_string());
     };
     pos += 1;
     if s_length >= 0x80 {
-        return Err("Decoding length values above 127 not supported");
+        return Err("Decoding length values above 127 not supported".to_string());
     }
     if pos + s_length > data.len() {
-        return Err("S lengths exceeds end of data");
+        return Err("S length exceeds end of data".to_string());
     }
-    let mut s_data = &data[pos..pos + s_length];
+    let s_data = &data[pos..pos + s_length];
     pos += s_length;
 
     if pos != data.len() {
-        return Err("Extra bytes in data input");
+        return Err("Extra bytes in data input".to_string());
     }
 
-    if r_data.is_empty() {
-        return Err("r_data is empty");
-    }
-
-    if (r_data[0] & 0x80) != 0 {
-        return Err("r_data missing leading zero");
-    }
-
-    if r_data.len() > 1 && r_data[0] == 0 {
-        r_data = &r_data[1..];
-        if (r_data[0] & 0x80) == 0 {
-            return Err("r_data has invalid leading zero");
-        }
-    }
-
-    // if r_data.len() > 1 && r_data[0] == 0xff && r_data[1] & 0x80 != 0 {
-    //     return Err("r_data missing leading zero");
-    // }
-
-    if r_data.len() > 32 {
-        return Err("r_data exceeded 32 bytes");
-    }
-
-    if s_data.is_empty() {
-        return Err("s_data is empty");
-    }
-
-    if (s_data[0] & 0x80) != 0 {
-        return Err("s_data missing leading zero");
-    }
-
-    if s_data.len() > 1 && s_data[0] == 0 {
-        s_data = &s_data[1..];
-        if (s_data[0] & 0x80) == 0 {
-            return Err("s_data has invalid leading zero");
-        }
-    }
-
-    // if s_data.len() > 1 && s_data[0] == 0xff && s_data[1] & 0x80 != 0 {
-    //     return Err("s_data missing leading zero");
-    // }
-
-    if s_data.len() > 32 {
-        return Err("s_data exceeded 32 bytes");
-    }
+    let r = decode_unsigned_integer(r_data, "r")?;
+    let s = decode_unsigned_integer(s_data, "s")?;
 
     let mut out = [0u8; 64];
-    // r/s data can contain leading 0 bytes to express integers being non-negative in DER
-    out[0..32].copy_from_slice(&pad_to_32(r_data));
-    out[32..].copy_from_slice(&pad_to_32(s_data));
+    out[0..32].copy_from_slice(&r);
+    out[32..].copy_from_slice(&s);
     Ok(out)
 }
 
-//fn trim_leading_null_bytes(input: &[u8]) -> &[u8] {
-//    let mut data = input;
-//    loop {
-//        match data.first() {
-//            Some(0x00) => data = &data[1..],
-//            Some(_) | None => return data,
-//        }
-//    }
-//}
+fn decode_unsigned_integer(mut data: &[u8], name: &str) -> Result<[u8; 32], String> {
+    if data.is_empty() {
+        return Err(format!("{name} data is empty"));
+    }
+
+    // If high bit of first byte is set, this is interpreted as a negative integer.
+    // A leading zero is needed to prevent this.
+    if (data[0] & 0x80) != 0 {
+        return Err(format!("{name} data missing leading zero"));
+    }
+
+    // "Leading octets of all 0's (or all 1's) are not allowed. In other words, the leftmost
+    // nine bits of an encoded INTEGER value may not be all 0's or all 1's. This ensures that
+    // an INTEGER value is encoded in the smallest possible number of octets."
+    // https://www.oss.com/asn1/resources/asn1-made-simple/asn1-quick-reference/basic-encoding-rules.html
+
+    // If leading byte is 0 and there is more than 1 byte, trim it.
+    // If the high bit of the following byte is zero as well, the leading 0x00 was invalid.
+    if data.len() > 1 && data[0] == 0 {
+        data = &data[1..];
+        if (data[0] & 0x80) == 0 {
+            return Err(format!("{name} data has invalid leading zero"));
+        }
+    }
+
+    // The other requirement (first 9 bits being all 1) is not yet checked
+
+    // Do we need a better value range check here?
+    if data.len() > 32 {
+        return Err(format!("{name} data exceeded 32 bytes"));
+    }
+
+    Ok(pad_to_32(data))
+}
 
 fn pad_to_32(input: &[u8]) -> [u8; 32] {
     let shift = 32 - input.len();
