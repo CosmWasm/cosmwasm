@@ -50,13 +50,13 @@ fn read_file(path: &str) -> File {
 }
 
 #[test]
-fn test_ecdsa_secp256k1_sha256() {
+fn ecdsa_secp256k1_sha256() {
     let mut tested: usize = 0;
     let File {
         number_of_tests,
         test_groups,
     } = read_file(SECP256K1_SHA256);
-    assert_eq!(number_of_tests, 463);
+    assert_eq!(number_of_tests, 463, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -99,13 +99,14 @@ fn test_ecdsa_secp256k1_sha256() {
 }
 
 #[test]
-fn test_ecdsa_secp256k1_sha512() {
+#[should_panic] // message hast size other than 256bits currently not supported
+fn ecdsa_secp256k1_sha512() {
     let mut tested: usize = 0;
     let File {
         number_of_tests,
         test_groups,
     } = read_file(SECP256K1_SHA512);
-    assert_eq!(number_of_tests, 533);
+    assert_eq!(number_of_tests, 533, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
