@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use wasmer::wasmparser::{
     Export, Import, MemoryType, Parser, Payload, TableType, Type, ValidPayload, Validator,
     WasmFeatures,
@@ -18,8 +16,9 @@ pub struct ParsedWasm<'a> {
     pub memories: Vec<MemoryType>,
     pub function_count: usize,
     pub type_count: u32,
-    /// How many parameters a type has
-    pub type_params: HashMap<usize, usize>,
+    /// How many parameters a type has.
+    /// The index is the type id
+    pub type_params: Vec<usize>,
     /// How many parameters the function with the most parameters has
     pub max_func_params: usize,
     /// How many results the function with the most results has
@@ -49,7 +48,7 @@ impl<'a> ParsedWasm<'a> {
             memories: vec![],
             function_count: 0,
             type_count: 0,
-            type_params: HashMap::default(),
+            type_params: Vec::new(),
             max_func_params: 0,
             max_func_results: 0,
             total_func_params: 0,
@@ -71,11 +70,12 @@ impl<'a> ParsedWasm<'a> {
             match p {
                 Payload::TypeSection(t) => {
                     this.type_count = t.get_count();
-                    for (type_index, t_res) in t.into_iter().enumerate() {
+                    this.type_params = Vec::with_capacity(t.get_count() as usize);
+                    for t_res in t.into_iter() {
                         let ty: Type = t_res?;
                         match ty {
                             Type::Func(ft) => {
-                                this.type_params.insert(type_index, ft.params().len());
+                                this.type_params.push(ft.params().len());
 
                                 this.max_func_params =
                                     core::cmp::max(ft.params().len(), this.max_func_params);
@@ -93,7 +93,7 @@ impl<'a> ParsedWasm<'a> {
                     for a in section {
                         let type_index = a? as usize;
                         this.total_func_params +=
-                            this.type_params.get(&type_index).ok_or_else(|| {
+                            this.type_params.get(type_index).ok_or_else(|| {
                                 // this will also be thrown if the wasm section order is invalid
                                 VmError::static_validation_err(
                                     "Wasm bytecode error: function uses unknown type index",
