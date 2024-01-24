@@ -71,11 +71,11 @@ const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 /// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
 const MAX_IMPORTS: usize = 100;
 
-const MAX_FUNCTIONS: usize = 30000;
+const MAX_FUNCTIONS: usize = 20_000;
 
-const MAX_FUNCTION_PARAMS: usize = 150;
+const MAX_FUNCTION_PARAMS: usize = 100;
 
-const MAX_TOTAL_FUNCTION_PARAMS: usize = 7_000;
+const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 
 const MAX_FUNCTION_RESULTS: usize = 1;
 
