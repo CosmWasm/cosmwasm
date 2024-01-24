@@ -6,6 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Limit total number of function parameters in
+  `check_wasm_functions` and increase max function count and max parameter
+  count. ([#1991])
+
+[#1991]: https://github.com/CosmWasm/cosmwasm/pull/1991
+
 ## [2.0.0-beta.1] - 2023-01-22
 
 ### Fixed
