@@ -86,7 +86,7 @@ impl<'a> ParsedWasm<'a> {
                     }
                 }
                 Payload::FunctionSection(section) => {
-                    // in valid wasm, the function section always has to come after the type section
+                    // In valid Wasm, the function section always has to come after the type section
                     // (see https://www.w3.org/TR/2019/REC-wasm-core-1-20191205/#modules%E2%91%A0%E2%93%AA),
                     // so we can assume that the type_params map is already filled at this point
 
