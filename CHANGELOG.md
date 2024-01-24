@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+- cosmwasm-vm: Read `Region` from Wasm memory as bytes and convert to `Region`
+  afterwards ([#2005])
+
+[#2005]: https://github.com/CosmWasm/cosmwasm/pull/2005
+
 ## [1.4.3] - 2024-01-18
 
 ### Fixed
