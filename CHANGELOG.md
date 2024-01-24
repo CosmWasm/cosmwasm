@@ -96,6 +96,8 @@ and this project adheres to
 - cosmwasm-vm: Upgrade Wasmer to 4.2.5; Bump `MODULE_SERIALIZATION_VERSION` to
   "v9". ([#1992])
 - cosmwasm-std: Rename `GovMsg::vote` to `GovMsg::option` ([#1999])
+- cosmwasm-vm: Read `Region` from Wasm memory as bytes and convert to `Region`
+  afterwards ([#2005])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -119,6 +121,7 @@ and this project adheres to
 [#1977]: https://github.com/CosmWasm/cosmwasm/pull/1977
 [#1992]: https://github.com/CosmWasm/cosmwasm/pull/1992
 [#1999]: https://github.com/CosmWasm/cosmwasm/pull/1999
+[#2005]: https://github.com/CosmWasm/cosmwasm/pull/2005
 
 ### Removed
 
