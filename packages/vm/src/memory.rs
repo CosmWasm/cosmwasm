@@ -65,6 +65,14 @@ unsafe impl ValueType for Region {
     }
 }
 
+// Wasm is little endian, and we want to be able to just reinterpret slices of
+// wasm memory as a Region struct, so we only support little endian systems.
+// If we ever need to support big endian systems, we can use more fine-grained checks
+// in the places where we read/write the Region struct
+// (and possibly other interactions between Wasm and host).
+#[cfg(target_endian = "big")]
+compile_error!("big endian systems are not supported");
+
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
