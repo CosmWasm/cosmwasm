@@ -25,6 +25,8 @@ pub struct Region {
     /// The number of bytes used in this region
     pub length: u32,
 }
+
+/// Byte representation of a [Region] struct in Wasm memory.
 type RegionBytes = [u8; size_of::<Region>()];
 
 impl Region {
