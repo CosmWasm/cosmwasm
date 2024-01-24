@@ -71,9 +71,11 @@ const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 /// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
 const MAX_IMPORTS: usize = 100;
 
-const MAX_FUNCTIONS: usize = 10000;
+const MAX_FUNCTIONS: usize = 20_000;
 
-const MAX_FUNCTION_PARAMS: usize = 50;
+const MAX_FUNCTION_PARAMS: usize = 100;
+
+const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 
 const MAX_FUNCTION_RESULTS: usize = 1;
 
@@ -251,29 +253,38 @@ fn check_wasm_functions(module: &ParsedWasm) -> VmResult<()> {
             "Wasm contract contains function with more than {MAX_FUNCTION_RESULTS} results"
         )));
     }
+
+    if module.total_func_params > MAX_TOTAL_FUNCTION_PARAMS {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains more than {MAX_TOTAL_FUNCTION_PARAMS} function parameters in total"
+        )));
+    }
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::VmError;
+    use crate::{capabilities_from_csv, errors::VmError};
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
     static CONTRACT_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
-        ["staking".to_string()].into_iter().collect()
+        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,iterator,staking,stargate")
     }
 
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(CONTRACT, &default_capabilities()).unwrap();
+        check_wasm(CYBERPUNK, &default_capabilities()).unwrap();
     }
 
     #[test]
