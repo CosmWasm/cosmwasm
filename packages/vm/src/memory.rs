@@ -31,9 +31,9 @@ type RegionBytes = [u8; size_of::<Region>()];
 
 impl Region {
     fn from_wasm_bytes(bytes: RegionBytes) -> Self {
-        let offset = u32::from_le_bytes(bytes[0..4].try_into().unwrap());
-        let capacity = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
-        let length = u32::from_le_bytes(bytes[8..12].try_into().unwrap());
+        let offset = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
+        let capacity = u32::from_le_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
+        let length = u32::from_le_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]);
         Region {
             offset,
             capacity,
