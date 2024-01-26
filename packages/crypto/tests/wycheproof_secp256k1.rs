@@ -60,10 +60,8 @@ mod hashers {
 
     // ecdsa_secp256k1_sha512 requires truncating to 32 bytes
     pub fn sha512(data: &[u8]) -> [u8; 32] {
-        let mut out = [0u8; 32];
         let hash = Sha512::digest(data).to_vec();
-        out.copy_from_slice(&hash[0..32]);
-        out
+        hash[..32].try_into().unwrap()
     }
 
     pub fn sha3_256(data: &[u8]) -> [u8; 32] {
@@ -72,10 +70,8 @@ mod hashers {
 
     // ecdsa_secp256k1_sha3_512 requires truncating to 32 bytes
     pub fn sha3_512(data: &[u8]) -> [u8; 32] {
-        let mut out = [0u8; 32];
         let hash = Sha3_512::digest(data).to_vec();
-        out.copy_from_slice(&hash[0..32]);
-        out
+        hash[..32].try_into().unwrap()
     }
 }
 
