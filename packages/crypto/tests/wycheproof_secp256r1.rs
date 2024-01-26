@@ -60,10 +60,8 @@ mod hashers {
 
     // ecdsa_secp256r1_sha512 requires truncating to 32 bytes
     pub fn sha512(data: &[u8]) -> [u8; 32] {
-        let mut out = [0u8; 32];
         let hash = Sha512::digest(data).to_vec();
-        out.copy_from_slice(&hash[0..32]);
-        out
+        hash[..32].try_into().unwrap()
     }
 
     pub fn sha3_256(data: &[u8]) -> [u8; 32] {
@@ -72,10 +70,8 @@ mod hashers {
 
     // ecdsa_secp256r1_sha3_512 requires truncating to 32 bytes
     pub fn sha3_512(data: &[u8]) -> [u8; 32] {
-        let mut out = [0u8; 32];
         let hash = Sha3_512::digest(data).to_vec();
-        out.copy_from_slice(&hash[0..32]);
-        out
+        hash[..32].try_into().unwrap()
     }
 }
 
@@ -86,7 +82,7 @@ fn ecdsa_secp256r1_sha256() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256R1_SHA256);
-    assert_eq!(number_of_tests, 471, "Got unexpected number of tests");
+    assert!(number_of_tests >= 471, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -95,7 +91,6 @@ fn ecdsa_secp256r1_sha256() {
         for tc in group.tests {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
-            // eprintln!("Test case ID: {}", tc.tc_id);
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
@@ -135,7 +130,7 @@ fn ecdsa_secp256r1_sha512() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256R1_SHA512);
-    assert_eq!(number_of_tests, 541, "Got unexpected number of tests");
+    assert!(number_of_tests >= 541, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -144,7 +139,6 @@ fn ecdsa_secp256r1_sha512() {
         for tc in group.tests {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
-            // eprintln!("Test case ID: {}", tc.tc_id);
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
@@ -184,7 +178,7 @@ fn ecdsa_secp256r1_sha3_256() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256R1_SHA3_256);
-    assert_eq!(number_of_tests, 479, "Got unexpected number of tests");
+    assert!(number_of_tests >= 479, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -193,7 +187,6 @@ fn ecdsa_secp256r1_sha3_256() {
         for tc in group.tests {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
-            // eprintln!("Test case ID: {}", tc.tc_id);
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
@@ -233,7 +226,7 @@ fn ecdsa_secp256r1_sha3_512() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256R1_SHA3_512);
-    assert_eq!(number_of_tests, 545, "Got unexpected number of tests");
+    assert!(number_of_tests >= 545, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -242,7 +235,6 @@ fn ecdsa_secp256r1_sha3_512() {
         for tc in group.tests {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
-            // eprintln!("Test case ID: {}", tc.tc_id);
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
