@@ -8,7 +8,7 @@ This test data is used by integration tests in `test/wycheproof_*.rs`.
 
 ## Update
 
-To ensure integrety if the files and update them to the latest version, run this
+To ensure integrity of the files and update them to the latest version, run this
 from the repo root:
 
 ```sh
