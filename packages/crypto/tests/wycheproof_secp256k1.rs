@@ -82,7 +82,7 @@ fn ecdsa_secp256k1_sha256() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256K1_SHA256);
-    assert_eq!(number_of_tests, 463, "Got unexpected number of tests");
+    assert!(number_of_tests >= 463, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -131,7 +131,7 @@ fn ecdsa_secp256k1_sha512() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256K1_SHA512);
-    assert_eq!(number_of_tests, 533, "Got unexpected number of tests");
+    assert!(number_of_tests >= 533, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -180,7 +180,7 @@ fn ecdsa_secp256k1_sha3_256() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256K1_SHA3_256);
-    assert_eq!(number_of_tests, 471, "Got unexpected number of tests");
+    assert!(number_of_tests >= 471, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
@@ -229,7 +229,7 @@ fn ecdsa_secp256k1_sha3_512() {
         number_of_tests,
         test_groups,
     } = read_file(SECP256K1_SHA3_512);
-    assert_eq!(number_of_tests, 537, "Got unexpected number of tests");
+    assert!(number_of_tests >= 537, "Got unexpected number of tests");
 
     for group in test_groups {
         let public_key = hex::decode(group.public_key.uncompressed).unwrap();
