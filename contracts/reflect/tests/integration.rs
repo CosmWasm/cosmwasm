@@ -268,6 +268,7 @@ fn reply_and_query() {
     let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let id = 123u64;
+    let payload = Binary::from(b"my dear");
     let data = Binary::from(b"foobar");
     let events = vec![Event::new("message").add_attribute("signer", "caller-addr")];
     let gas_used = 1234567u64;
@@ -277,12 +278,13 @@ fn reply_and_query() {
         data: Some(data.clone()),
         msg_responses: vec![],
     });
-    let subcall = Reply {
+    let the_reply = Reply {
         id,
+        payload,
         gas_used,
         result,
     };
-    let res: Response = reply(&mut deps, mock_env(), subcall).unwrap();
+    let res: Response = reply(&mut deps, mock_env(), the_reply).unwrap();
     assert_eq!(0, res.messages.len());
 
     // query for a non-existant id

@@ -21,6 +21,15 @@
       "format": "uint64",
       "minimum": 0.0
     },
+    "payload": {
+      "description": "Some arbirary data that the contract set when emitting the `SubMsg`. This is just passed into the `reply` entry point and is not stored to state.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field is never filled.",
+      "default": "",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        }
+      ]
+    },
     "result": {
       "$ref": "#/definitions/SubMsgResult"
     }

@@ -400,11 +400,13 @@ mod tests {
             res.events[0]
         );
         let id = res.messages[0].id;
+        let payload = res.messages[0].payload.clone();
 
         // fake a reply and ensure this works
         #[allow(deprecated)]
         let response = Reply {
             id,
+            payload,
             gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(&account),
@@ -461,6 +463,7 @@ mod tests {
         // and set up a reflect account
         assert_eq!(1, res.messages.len());
         let id = res.messages[0].id;
+        let payload = res.messages[0].payload.clone();
         if let CosmosMsg::Wasm(WasmMsg::Instantiate {
             admin,
             code_id,
@@ -486,6 +489,7 @@ mod tests {
         #[allow(deprecated)]
         let response = Reply {
             id,
+            payload,
             gas_used: 1234567,
             result: SubMsgResult::Ok(SubMsgResponse {
                 events: fake_events(reflect_addr.as_str()),
