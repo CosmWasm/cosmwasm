@@ -33,6 +33,20 @@ pub struct SubMsg<T = Empty> {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
     pub id: u64,
+    /// Some arbirary data that the contract can set in an application specific way.
+    /// This is just passed into the `reply` entry point and is not stored to state.
+    /// Any encoding can be used. If `id` is used to identify a particular action,
+    /// the encoding can also be different for each of those actions since you can match `id`
+    /// first and then start processing the `payload`.
+    ///
+    /// The environment restricts the length of this field in order to avoid abuse. The limit
+    /// is environment specific and can change over time. The initial default is 128 KiB.
+    ///
+    /// Unset/nil/null cannot be differentiated from empty data.
+    ///
+    /// On chains running CosmWasm 1.x this field will be ignored.
+    #[serde(default)]
+    pub payload: Binary,
     pub msg: CosmosMsg<T>,
     /// Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     pub gas_limit: Option<u64>,
@@ -89,6 +103,7 @@ impl<T> SubMsg<T> {
     fn reply_on(msg: CosmosMsg<T>, id: u64, reply_on: ReplyOn) -> Self {
         SubMsg {
             id,
+            payload: Default::default(),
             msg,
             reply_on,
             gas_limit: None,
@@ -103,6 +118,14 @@ pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
     pub id: u64,
+    /// Some arbirary data that the contract set when emitting the `SubMsg`.
+    /// This is just passed into the `reply` entry point and is not stored to state.
+    ///
+    /// Unset/nil/null cannot be differentiated from empty data.
+    ///
+    /// On chains running CosmWasm 1.x this field is never filled.
+    #[serde(default)]
+    pub payload: Binary,
     /// The amount of gas used by the submessage,
     /// measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     pub gas_used: u64,
@@ -221,7 +244,7 @@ pub struct MsgResponse {
 #[allow(deprecated)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec, StdError, StdResult};
+    use crate::{from_json, to_json_vec, Attribute, StdError, StdResult};
 
     #[test]
     fn sub_msg_result_serialization_works() {
@@ -417,5 +440,52 @@ mod tests {
         let original = SubMsgResult::Err("went wrong".to_string());
         let converted: Result<SubMsgResponse, String> = original.into();
         assert_eq!(converted, Err("went wrong".to_string()));
+    }
+
+    #[test]
+    fn reply_deserialization_works() {
+        // 1.x reply without payload (from https://github.com/CosmWasm/cosmwasm/issues/1909)
+        let reply: Reply = from_json(r#"{"gas_used":4312324,"id":75,"result":{"ok":{"events":[{"type":"hi","attributes":[{"key":"si","value":"claro"}]}],"data":"PwCqXKs="}}}"#).unwrap();
+        assert_eq!(
+            reply,
+            Reply {
+                id: 75,
+                payload: Binary::default(),
+                gas_used: 4312324,
+                result: SubMsgResult::Ok(SubMsgResponse {
+                    data: Some(Binary::from_base64("PwCqXKs=").unwrap()),
+                    events: vec![Event {
+                        ty: "hi".to_string(),
+                        attributes: vec![Attribute {
+                            key: "si".to_string(),
+                            value: "claro".to_string(),
+                        }]
+                    }],
+                    msg_responses: vec![],
+                })
+            }
+        );
+
+        // with payload (manually added to the above test)
+        let reply: Reply = from_json(r#"{"gas_used":4312324,"id":75,"payload":"3NxjC5U=","result":{"ok":{"events":[{"type":"hi","attributes":[{"key":"si","value":"claro"}]}],"data":"PwCqXKs="}}}"#).unwrap();
+        assert_eq!(
+            reply,
+            Reply {
+                id: 75,
+                payload: Binary::from_base64("3NxjC5U=").unwrap(),
+                gas_used: 4312324,
+                result: SubMsgResult::Ok(SubMsgResponse {
+                    data: Some(Binary::from_base64("PwCqXKs=").unwrap()),
+                    events: vec![Event {
+                        ty: "hi".to_string(),
+                        attributes: vec![Attribute {
+                            key: "si".to_string(),
+                            value: "claro".to_string(),
+                        }]
+                    }],
+                    msg_responses: vec![],
+                })
+            }
+        );
     }
 }

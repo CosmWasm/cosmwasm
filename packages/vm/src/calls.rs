@@ -907,6 +907,7 @@ mod tests {
             );
             assert_eq!(ReplyOn::Success, res.messages[0].reply_on);
             let id = res.messages[0].id;
+            let payload = res.messages[0].payload.clone();
             let event = Event::new("instantiate").add_attributes(vec![
                 // We have to force this one to avoid the debug assertion against _
                 mock_wasmd_attr("_contract_address", account),
@@ -915,6 +916,7 @@ mod tests {
             #[allow(deprecated)]
             let response = Reply {
                 id,
+                payload,
                 gas_used: 1234567,
                 result: SubMsgResult::Ok(SubMsgResponse {
                     events: vec![event],
