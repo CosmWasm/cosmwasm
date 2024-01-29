@@ -49,6 +49,9 @@ pub struct SubMsg<T = Empty> {
     pub payload: Binary,
     pub msg: CosmosMsg<T>,
     /// Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
+    ///
+    /// Setting this to `None` means unlimited. Then the submessage execution can consume all gas of the
+    /// current execution context.
     pub gas_limit: Option<u64>,
     pub reply_on: ReplyOn,
 }
