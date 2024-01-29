@@ -10,7 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: Add new field `payload` to `SubMsg` and `Reply`. This is binary
   data the contract can set in a contract specific format and get back then the
-  `reply` entry point is called. ([#2008])
+  `reply` entry point is called. `SubMsg::with_payload` allows setting the
+  payload on an existing `SubMsg`. ([#2008])
 
 [#2008]: https://github.com/CosmWasm/cosmwasm/pull/2008
 

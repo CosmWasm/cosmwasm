@@ -57,32 +57,50 @@ pub struct SubMsg<T = Empty> {
 pub const UNUSED_MSG_ID: u64 = 0;
 
 impl<T> SubMsg<T> {
-    /// new creates a "fire and forget" message with the pre-0.14 semantics
+    /// Creates a "fire and forget" message with the pre-0.14 semantics.
+    /// Since this is just an alias for [`SubMsg::reply_never`] it is somewhat recommended
+    /// to use the latter in order to make the behaviour more explicit in the caller code.
+    /// But that's up to you for now.
+    ///
+    /// By default, the submessage's gas limit will be unlimited. Use [`SubMsg::with_gas_limit`] to change it.
+    /// Setting `payload` is not advised as this will never be used.
     pub fn new(msg: impl Into<CosmosMsg<T>>) -> Self {
         Self::reply_never(msg)
     }
 
-    /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Ok`
+    /// Creates a `SubMsg` that will provide a `reply` with the given `id` if the message returns `Ok`.
+    ///
+    /// By default, the submessage's `payload` will be empty and the gas limit will be unlimited. Use
+    /// [`SubMsg::with_payload`] and [`SubMsg::with_gas_limit`] to change those.
     pub fn reply_on_success(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Success)
     }
 
-    /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Err`
+    /// Creates a `SubMsg` that will provide a `reply` with the given `id` if the message returns `Err`.
+    ///
+    /// By default, the submessage's `payload` will be empty and the gas limit will be unlimited. Use
+    /// [`SubMsg::with_payload`] and [`SubMsg::with_gas_limit`] to change those.
     pub fn reply_on_error(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Error)
     }
 
-    /// create a `SubMsg` that will always provide a `reply` with the given id
+    /// Create a `SubMsg` that will always provide a `reply` with the given `id`.
+    ///
+    /// By default, the submessage's `payload` will be empty and the gas limit will be unlimited. Use
+    /// [`SubMsg::with_payload`] and [`SubMsg::with_gas_limit`] to change those.
     pub fn reply_always(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Always)
     }
 
-    /// create a `SubMsg` that will never `reply`. This is equivalent to standard message semantics.
+    /// Create a `SubMsg` that will never `reply`. This is equivalent to standard message semantics.
+    ///
+    /// By default, the submessage's gas limit will be unlimited. Use [`SubMsg::with_gas_limit`] to change it.
+    /// Setting `payload` is not advised as this will never be used.
     pub fn reply_never(msg: impl Into<CosmosMsg<T>>) -> Self {
         Self::reply_on(msg.into(), UNUSED_MSG_ID, ReplyOn::Never)
     }
 
-    /// Add a gas limit to the message.
+    /// Add a gas limit to the submessage.
     /// This gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     ///
     /// ## Examples
@@ -97,6 +115,24 @@ impl<T> SubMsg<T> {
     /// ```
     pub fn with_gas_limit(mut self, limit: u64) -> Self {
         self.gas_limit = Some(limit);
+        self
+    }
+
+    /// Add a payload to the submessage.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{coins, BankMsg, Binary, ReplyOn, SubMsg};
+    /// # let msg = BankMsg::Send { to_address: String::from("you"), amount: coins(1015, "earth") };
+    /// let sub_msg: SubMsg = SubMsg::reply_always(msg, 1234)
+    ///     .with_payload(vec![1, 2, 3, 4]);
+    /// assert_eq!(sub_msg.id, 1234);
+    /// assert_eq!(sub_msg.payload, Binary::new(vec![1, 2, 3, 4]));
+    /// assert_eq!(sub_msg.reply_on, ReplyOn::Always);
+    /// ```
+    pub fn with_payload(mut self, payload: impl Into<Binary>) -> Self {
+        self.payload = payload.into();
         self
     }
 
