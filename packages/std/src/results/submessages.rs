@@ -283,7 +283,71 @@ pub struct MsgResponse {
 #[allow(deprecated)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec, Attribute, StdError, StdResult};
+    use crate::{coins, from_json, to_json_vec, Attribute, BankMsg, StdError, StdResult};
+
+    #[test]
+    fn sub_msg_new_works() {
+        let msg = BankMsg::Send {
+            to_address: String::from("you"),
+            amount: coins(1015, "earth"),
+        };
+        let sub_msg: SubMsg = SubMsg::new(msg.clone());
+        // id and payload don't matter since there is no reply
+        assert_eq!(sub_msg.reply_on, ReplyOn::Never);
+        assert_eq!(sub_msg.gas_limit, None);
+        assert_eq!(sub_msg.msg, CosmosMsg::from(msg));
+    }
+
+    #[test]
+    fn sub_msg_reply_never_works() {
+        let msg = BankMsg::Send {
+            to_address: String::from("you"),
+            amount: coins(1015, "earth"),
+        };
+        let sub_msg: SubMsg = SubMsg::reply_never(msg.clone());
+        // id and payload don't matter since there is no reply
+        assert_eq!(sub_msg.reply_on, ReplyOn::Never);
+        assert_eq!(sub_msg.gas_limit, None);
+        assert_eq!(sub_msg.msg, CosmosMsg::from(msg));
+    }
+
+    #[test]
+    fn sub_msg_reply_always_works() {
+        let msg = BankMsg::Send {
+            to_address: String::from("you"),
+            amount: coins(1015, "earth"),
+        };
+        let sub_msg: SubMsg = SubMsg::reply_always(msg.clone(), 54);
+        assert_eq!(sub_msg.id, 54);
+        assert_eq!(sub_msg.payload, Binary::default());
+        assert_eq!(sub_msg.reply_on, ReplyOn::Always);
+        assert_eq!(sub_msg.gas_limit, None);
+        assert_eq!(sub_msg.msg, CosmosMsg::from(msg));
+    }
+
+    #[test]
+    fn sub_msg_with_gas_limit_works() {
+        let msg = BankMsg::Send {
+            to_address: String::from("you"),
+            amount: coins(1015, "earth"),
+        };
+        let sub_msg: SubMsg = SubMsg::reply_never(msg);
+        assert_eq!(sub_msg.gas_limit, None);
+        let sub_msg = sub_msg.with_gas_limit(20);
+        assert_eq!(sub_msg.gas_limit, Some(20));
+    }
+
+    #[test]
+    fn sub_msg_with_payload_works() {
+        let msg = BankMsg::Send {
+            to_address: String::from("you"),
+            amount: coins(1015, "earth"),
+        };
+        let sub_msg: SubMsg = SubMsg::reply_never(msg);
+        assert_eq!(sub_msg.payload, Binary::default());
+        let sub_msg = sub_msg.with_payload(vec![0xAA, 3, 5, 1, 2]);
+        assert_eq!(sub_msg.payload, Binary::new(vec![0xAA, 3, 5, 1, 2]));
+    }
 
     #[test]
     fn sub_msg_result_serialization_works() {
