@@ -101,13 +101,13 @@ pub enum DistributionMsg {
         /// The `withdraw_address`
         address: String,
     },
-    /// This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
+    /// This is translated to a [MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
     /// `delegator_address` is automatically filled with the current contract's address.
     WithdrawDelegatorReward {
         /// The `validator_address`
         validator: String,
     },
-    /// This is translated to a [[MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
+    /// This is translated to a [MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).
     /// `depositor` is automatically filled with the current contract's address.
     #[cfg(feature = "cosmwasm_1_3")]
     FundCommunityPool {
