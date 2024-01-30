@@ -221,6 +221,47 @@ major releases of `cosmwasm`. Note that you can also view the
   +}))?;
   ```
 
+- A new `payload` field allows you to send arbitrary data from the original
+  contract into the `reply`. If you construct `SubMsg` manually, add the
+  `payload` field:
+
+  ```diff
+   SubMsg {
+       id: 12,
+  +    payload: Binary::default(),
+       msg: my_bank_send,
+       gas_limit: Some(12345u64),
+       reply_on: ReplyOn::Always,
+   },
+  ```
+
+  or with data:
+
+  ```diff
+   SubMsg {
+       id: 12,
+  +    payload: Binary::new(vec![9, 8, 7, 6, 5]),
+       msg: my_bank_send,
+       gas_limit: Some(12345u64),
+       reply_on: ReplyOn::Always,
+   },
+  ```
+
+  If you use a constructor function, you can set the payload as follows:
+
+  ```diff
+   SubMsg::new(BankMsg::Send {
+     to_address: payout,
+     amount: coins(123456u128,"gold")
+   })
+  +.with_payload(vec![9, 8, 7, 6, 5])
+  ```
+
+  The payload data will then be available in the new field `Reply.payload` in
+  the `reply` entry point. This functionality is an optional addition introduced
+  in 2.0. To keep the CosmWasm 1.x behaviour, just set payload to
+  `Binary::default()`.
+
 ## 1.4.x -> 1.5.0
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):

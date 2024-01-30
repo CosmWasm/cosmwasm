@@ -283,6 +283,7 @@ mod tests {
             messages: vec![
                 SubMsg {
                     id: 12,
+                    payload: Binary::new(vec![9, 8, 7, 6, 5]),
                     msg: BankMsg::Send {
                         to_address: String::from("checker"),
                         amount: coins(888, "moon"),
@@ -293,6 +294,7 @@ mod tests {
                 },
                 SubMsg {
                     id: UNUSED_MSG_ID,
+                    payload: Binary::default(),
                     msg: BankMsg::Send {
                         to_address: String::from("you"),
                         amount: coins(1015, "earth"),
