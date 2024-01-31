@@ -1,11 +1,9 @@
-use digest::{Digest, Update}; // trait
 use k256::{
-    ecdsa::signature::DigestVerifier,             // traits
+    ecdsa::signature::hazmat::PrehashVerifier,    // traits
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
 
 use crate::errors::{CryptoError, CryptoResult};
-use crate::identity_digest::Identity256;
 
 /// Max length of a message hash for secp256k1 verification in bytes.
 /// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
@@ -47,9 +45,6 @@ pub fn secp256k1_verify(
     let signature = read_signature(signature)?;
     check_pubkey(public_key)?;
 
-    // Already hashed, just build Digest container
-    let message_digest = Identity256::new().chain(message_hash);
-
     let mut signature = Signature::from_bytes(&signature.into())
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
@@ -63,7 +58,7 @@ pub fn secp256k1_verify(
     let public_key = VerifyingKey::from_sec1_bytes(public_key)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
-    match public_key.verify_digest(message_digest, &signature) {
+    match public_key.verify_prehash(&message_hash, &signature) {
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
@@ -116,8 +111,7 @@ pub fn secp256k1_recover_pubkey(
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     // Recover
-    let message_digest = Identity256::new().chain(message_hash);
-    let pubkey = VerifyingKey::recover_from_digest(message_digest, &signature, id)
+    let pubkey = VerifyingKey::recover_from_prehash(&message_hash, &signature, id)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
     Ok(encoded)
@@ -177,6 +171,7 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
 mod tests {
     use super::*;
 
+    use digest::{Digest, Update}; // trait
     use hex_literal::hex;
     use k256::{
         ecdsa::signature::DigestSigner, // trait
