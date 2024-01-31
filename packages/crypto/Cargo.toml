@@ -15,8 +15,7 @@ default = []
 bench = false
 
 [dependencies]
-# Version pinned due to https://github.com/CosmWasm/cosmwasm/issues/2010
-k256 = { version = "=0.13.1", features = ["ecdsa"] }
+k256 = { version = "0.13.3", features = ["ecdsa"] }
 ed25519-zebra = "3"
 digest = "0.10"
 rand_core = { version = "0.6", features = ["getrandom"] }
