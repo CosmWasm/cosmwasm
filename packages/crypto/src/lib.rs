@@ -5,7 +5,6 @@
 mod backtrace;
 mod ed25519;
 mod errors;
-mod identity_digest;
 mod secp256k1;
 
 #[doc(hidden)]
