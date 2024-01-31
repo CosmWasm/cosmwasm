@@ -423,7 +423,6 @@ version = "2.0.0-beta.1"
 dependencies = [
  "criterion",
  "digest 0.10.7",
- "ecdsa",
  "ed25519-zebra",
  "english-numbers",
  "hex",

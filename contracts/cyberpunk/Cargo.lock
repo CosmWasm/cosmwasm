@@ -226,7 +226,6 @@ name = "cosmwasm-crypto"
 version = "2.0.0-beta.1"
 dependencies = [
  "digest 0.10.7",
- "ecdsa",
  "ed25519-zebra",
  "k256",
  "rand_core 0.6.4",
