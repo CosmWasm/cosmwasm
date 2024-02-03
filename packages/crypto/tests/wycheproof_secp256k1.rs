@@ -286,15 +286,11 @@ fn ecdsa_secp256k1_sha3_512() {
 
 fn test_secp256k1_recover_pubkey(message_hash: &[u8], signature: &[u8], public_key: &[u8]) {
     // Since the recovery param is missing in the test vectors, we try both 0 and 1
-    for recovery_param in 0..=1 {
-        if let Ok(recovered) = secp256k1_recover_pubkey(message_hash, signature, recovery_param) {
-            if recovered == public_key {
-                // success, found working recovery param
-                return;
-            }
-        }
-    }
-    panic!("secp256k1_recover_pubkey failed for all recovery params");
+    let recovered0 = secp256k1_recover_pubkey(message_hash, signature, 0).unwrap();
+    let recovered1 = secp256k1_recover_pubkey(message_hash, signature, 1).unwrap();
+    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
+    assert_ne!(recovered0, recovered1);
+    assert!(recovered0 == public_key || recovered1 == public_key);
 }
 
 fn from_der(data: &[u8]) -> Result<[u8; 64], String> {

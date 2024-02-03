@@ -380,17 +380,14 @@ mod tests {
             assert_eq!(hash.as_slice(), message_hash.as_slice());
 
             // Since the recovery param is missing in the test vectors, we try both 0 and 1
-            let try0 = secp256k1_recover_pubkey(&message_hash, &signature, 0);
-            let try1 = secp256k1_recover_pubkey(&message_hash, &signature, 1);
-            match (try0, try1) {
-                (Ok(recovered0), Ok(recovered1)) => {
-                    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
-                    assert!(recovered0 == public_key || recovered1 == public_key)
-                },
-                (Ok(recovered), Err(_)) => assert_eq!(recovered, public_key),
-                (Err(_), Ok(recovered)) => assert_eq!(recovered, public_key),
-                (Err(_), Err(_)) => panic!("secp256k1_recover_pubkey failed (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"),
-            }
+            let recovered0 = secp256k1_recover_pubkey(&message_hash, &signature, 0).unwrap();
+            let recovered1 = secp256k1_recover_pubkey(&message_hash, &signature, 1).unwrap();
+            // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
+            assert_ne!(recovered0, recovered1);
+            assert!(
+                recovered0 == public_key || recovered1 == public_key,
+                "Did not find correct pubkey (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"
+            );
         }
     }
 
