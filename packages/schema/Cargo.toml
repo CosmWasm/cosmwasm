@@ -21,4 +21,4 @@ semver = "1"
 tempfile = "3"
 
 [features]
-allow-unknown-fields = []
+allow-unknown-fields = ["cosmwasm-schema-derive/allow-unknown-fields"]
