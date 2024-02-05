@@ -692,9 +692,10 @@ mod tests {
             call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
         match err {
             VmError::RuntimeErr { msg, .. } => {
-                assert!(msg.contains(
-                    "RuntimeError: Aborted: panicked at 'This page intentionally faulted'"
-                ))
+                assert!(
+                    msg.contains("RuntimeError: Aborted: panicked at src/contract.rs:"),
+                    "Unexpected error msg: {msg}"
+                )
             }
             err => panic!("Unexpected error: {err:?}"),
         }

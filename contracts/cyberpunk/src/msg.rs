@@ -30,6 +30,8 @@ pub enum ExecuteMsg {
     MirrorEnv {},
     /// Does a bit of work and calls debug
     Debug {},
+    /// Does nothing. This can be used for baseline contract execution performance measurements.
+    Noop {},
 }
 
 #[cw_serde]

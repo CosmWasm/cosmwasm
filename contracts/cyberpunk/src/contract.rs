@@ -39,6 +39,7 @@ pub fn execute(
         Unreachable {} => execute_unreachable(),
         MirrorEnv {} => execute_mirror_env(env),
         Debug {} => execute_debug(deps.api),
+        Noop {} => execute_noop(),
     }
 }
 
@@ -176,6 +177,10 @@ fn execute_debug(api: &dyn Api) -> Result<Response, ContractError> {
 
     api.debug("Work completed, bye");
     Ok(Response::default())
+}
+
+fn execute_noop() -> Result<Response, ContractError> {
+    Ok(Response::new())
 }
 
 #[entry_point]

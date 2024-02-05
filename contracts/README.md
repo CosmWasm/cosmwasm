@@ -65,6 +65,11 @@ docker run --rm -v "$(pwd)":/code \
   cosmwasm/optimizer:0.15.0 ./contracts/crypto-verify
 
 docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_cyberpunk",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer:0.15.0 ./contracts/cyberpunk
+
+docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_floaty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/floaty
