@@ -1,11 +1,11 @@
 use syn::{parse_quote, DeriveInput};
 
-#[cfg(not(feature = "allow-unknown-fields"))]
+#[cfg(feature = "deny-unknown-fields")]
 pub(crate) fn serde_unknown_fields() -> proc_macro2::TokenStream {
     quote::quote!(#[serde(deny_unknown_fields)])
 }
 
-#[cfg(feature = "allow-unknown-fields")]
+#[cfg(not(feature = "deny-unknown-fields"))]
 pub(crate) fn serde_unknown_fields() -> proc_macro2::TokenStream {
     quote::quote!()
 }

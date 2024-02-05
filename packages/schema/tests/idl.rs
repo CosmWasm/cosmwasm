@@ -286,7 +286,7 @@ fn nested_name_collision_caught() {
 }
 
 #[test]
-#[cfg(feature = "allow-unknown-fields")]
+#[cfg(not(feature = "deny-unknown-fields"))]
 fn test_allow_unknown_fields() {
     #[cw_serde]
     struct Expanded {

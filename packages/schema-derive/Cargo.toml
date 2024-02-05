@@ -16,4 +16,5 @@ syn = { version = "1", features = ["full", "printing", "extra-traits"] }
 proc-macro = true
 
 [features]
-allow-unknown-fields = []
+default = ["deny-unknown-fields"]
+deny-unknown-fields = []
