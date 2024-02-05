@@ -1,7 +1,8 @@
-use digest::{Digest, Update}; // trait
+use digest::{Digest, Update};
 use k256::{
-    ecdsa::signature::DigestVerifier,             // traits
-    ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
+    ecdsa::signature::DigestVerifier,
+    ecdsa::{RecoveryId, Signature, VerifyingKey},
+    elliptic_curve::scalar::IsHigh, // type aliases
 };
 
 use crate::errors::{CryptoError, CryptoResult};
@@ -56,8 +57,8 @@ pub fn secp256k1_verify(
     // High-S signatures require normalization since our verification implementation
     // rejects them by default. If we had a verifier that does not restrict to
     // low-S only, this step was not needed.
-    if let Some(normalized) = signature.normalize_s() {
-        signature = normalized;
+    if signature.s().is_high().into() {
+        signature = signature.normalize_s();
     }
 
     let public_key = VerifyingKey::from_sec1_bytes(public_key)
@@ -105,23 +106,18 @@ pub fn secp256k1_recover_pubkey(
     let signature = read_signature(signature)?;
 
     // params other than 0 and 1 are explicitly not supported
-    let mut id = match recovery_param {
+    let id = match recovery_param {
         0 => RecoveryId::new(false, false),
         1 => RecoveryId::new(true, false),
         _ => return Err(CryptoError::invalid_recovery_param()),
     };
 
     // Compose extended signature
-    let mut signature = Signature::from_bytes(&signature.into())
+    let signature = Signature::from_bytes(&signature.into())
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     // Recover
     let message_digest = Identity256::new().chain(message_hash);
-
-    if let Some(normalized) = signature.normalize_s() {
-        signature = normalized;
-        id = RecoveryId::new(!id.is_y_odd(), id.is_x_reduced());
-    }
 
     let pubkey = VerifyingKey::recover_from_digest(message_digest, &signature, id)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
@@ -183,14 +179,15 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
 mod tests {
     use super::*;
 
+    use digest::Digest;
     use hex_literal::hex;
+    use k256::sha2::Sha256;
     use k256::{
         ecdsa::signature::DigestSigner, // trait
         ecdsa::SigningKey,              // type alias
         elliptic_curve::rand_core::OsRng,
     };
     use serde::Deserialize;
-    use sha2::Sha256;
     use std::fs::File;
     use std::io::BufReader;
 

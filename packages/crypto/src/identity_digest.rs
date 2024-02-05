@@ -4,19 +4,18 @@
 //!
 //! Adapted from `sha2` [sha256.rs](https://github.com/RustCrypto/hashes/blob/master/sha2/src/sha256.rs)
 use digest::consts::U32;
-use digest::generic_array::GenericArray;
 use digest::{FixedOutput, HashMarker, Output, OutputSizeUser, Reset, Update};
 
 /// The 256-bits identity container
 #[derive(Clone, Default)]
 pub struct Identity256 {
-    array: GenericArray<u8, U32>,
+    array: [u8; 32],
 }
 
 impl Update for Identity256 {
     fn update(&mut self, hash: &[u8]) {
-        assert_eq!(hash.as_ref().len(), 32);
-        self.array = *GenericArray::from_slice(hash);
+        // copy_from_slice panicks if input is not 32 bytes long
+        self.array.copy_from_slice(hash);
     }
 }
 
@@ -26,7 +25,7 @@ impl OutputSizeUser for Identity256 {
 
 impl FixedOutput for Identity256 {
     fn finalize_into(self, out: &mut Output<Self>) {
-        *out = self.array;
+        *out = self.array.into();
     }
 }
 
