@@ -73,6 +73,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(crate = "::cosmwasm_schema::serde")]
             #unknown_fields
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {
@@ -102,6 +103,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(crate = "::cosmwasm_schema::serde")]
             #unknown_fields
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {}
