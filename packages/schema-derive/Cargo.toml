@@ -14,3 +14,6 @@ syn = { version = "1", features = ["full", "printing", "extra-traits"] }
 
 [lib]
 proc-macro = true
+
+[features]
+allow-unknown-fields = []
