@@ -15,14 +15,11 @@ default = []
 bench = false
 
 [dependencies]
-# Version pinned due to https://github.com/CosmWasm/cosmwasm/issues/2010
-k256 = { version = "=0.13.1", features = ["ecdsa"] }
+k256 = { version = "0.13.3", features = ["ecdsa"] }
 ed25519-zebra = "3"
 digest = "0.10"
 rand_core = { version = "0.6", features = ["getrandom"] }
 thiserror = "1.0.38"
-# Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
-ecdsa = "0.16.2"
 
 [dev-dependencies]
 criterion = "0.5.1"
