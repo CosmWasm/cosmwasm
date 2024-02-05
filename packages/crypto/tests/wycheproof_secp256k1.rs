@@ -93,12 +93,12 @@ fn ecdsa_secp256k1_sha256() {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
             // eprintln!("Test case ID: {}", tc.tc_id);
+            let message = hex::decode(tc.msg).unwrap();
+            let message_hash = hashers::sha256(&message);
+            let der_signature = hex::decode(tc.sig).unwrap();
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha256(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
@@ -107,10 +107,6 @@ fn ecdsa_secp256k1_sha256() {
                     }
                 }
                 "invalid" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha256(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
-
                     if let Ok(signature) = from_der(&der_signature) {
                         match secp256k1_verify(&message_hash, &signature, &public_key) {
                             Ok(valid) => assert!(!valid),
@@ -145,12 +141,12 @@ fn ecdsa_secp256k1_sha512() {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
             // eprintln!("Test case ID: {}", tc.tc_id);
+            let message = hex::decode(tc.msg).unwrap();
+            let message_hash = hashers::sha512(&message);
+            let der_signature = hex::decode(tc.sig).unwrap();
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha512(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
@@ -159,10 +155,6 @@ fn ecdsa_secp256k1_sha512() {
                     }
                 }
                 "invalid" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha512(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
-
                     if let Ok(signature) = from_der(&der_signature) {
                         match secp256k1_verify(&message_hash, &signature, &public_key) {
                             Ok(valid) => assert!(!valid),
@@ -197,12 +189,12 @@ fn ecdsa_secp256k1_sha3_256() {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
             // eprintln!("Test case ID: {}", tc.tc_id);
+            let message = hex::decode(tc.msg).unwrap();
+            let message_hash = hashers::sha3_256(&message);
+            let der_signature = hex::decode(tc.sig).unwrap();
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha3_256(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
@@ -211,10 +203,6 @@ fn ecdsa_secp256k1_sha3_256() {
                     }
                 }
                 "invalid" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha3_256(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
-
                     if let Ok(signature) = from_der(&der_signature) {
                         match secp256k1_verify(&message_hash, &signature, &public_key) {
                             Ok(valid) => assert!(!valid),
@@ -249,12 +237,12 @@ fn ecdsa_secp256k1_sha3_512() {
             tested += 1;
             assert_eq!(tc.tc_id as usize, tested);
             // eprintln!("Test case ID: {}", tc.tc_id);
+            let message = hex::decode(tc.msg).unwrap();
+            let message_hash = hashers::sha3_512(&message);
+            let der_signature = hex::decode(tc.sig).unwrap();
 
             match tc.result.as_str() {
                 "valid" | "acceptable" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha3_512(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
@@ -263,10 +251,6 @@ fn ecdsa_secp256k1_sha3_512() {
                     }
                 }
                 "invalid" => {
-                    let message = hex::decode(tc.msg).unwrap();
-                    let message_hash = hashers::sha3_512(&message);
-                    let der_signature = hex::decode(tc.sig).unwrap();
-
                     if let Ok(signature) = from_der(&der_signature) {
                         match secp256k1_verify(&message_hash, &signature, &public_key) {
                             Ok(valid) => assert!(!valid),
