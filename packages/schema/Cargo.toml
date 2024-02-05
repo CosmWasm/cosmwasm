@@ -19,3 +19,6 @@ anyhow = "1.0.57"
 cosmwasm-std = { version = "2.0.0-beta.1", path = "../std" }
 semver = "1"
 tempfile = "3"
+
+[features]
+allow-unknown-fields = []

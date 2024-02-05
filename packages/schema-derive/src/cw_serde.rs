@@ -12,7 +12,7 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+            #[cfg_attr(not(feature = "allow-unknown-fields"), serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde"))]
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             #input
         },
@@ -26,7 +26,8 @@ pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
-            #[serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[serde(rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[cfg_attr(not(feature = "allow-unknown-fields"), serde(deny_unknown_fields))]
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             #input
         },
@@ -57,7 +58,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+            #[cfg_attr(not(feature = "allow-unknown-fields"), serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde"))]
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {
                 pub verifier: String,
@@ -84,7 +85,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+            #[cfg_attr(not(feature = "allow-unknown-fields"), serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde"))]
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {}
         };
@@ -113,7 +114,8 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[serde(rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[cfg_attr(not(feature = "allow-unknown-fields"), serde(deny_unknown_fields))]
             #[schemars(crate = "::cosmwasm_schema::schemars")]
             pub enum SudoMsg {
                 StealFunds {
