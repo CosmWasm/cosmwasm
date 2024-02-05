@@ -2262,7 +2262,7 @@ mod tests {
             res => panic!("Unexpected result: {res:?}"),
         }
 
-        // WasmQuery::ContractInfo
+        // WasmQuery::CodeInfo
         #[cfg(feature = "cosmwasm_1_2")]
         {
             let result = querier.query(&WasmQuery::CodeInfo { code_id: 4 });
