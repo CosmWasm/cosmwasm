@@ -6,24 +6,7 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Added
-
-- cosmwasm-std: Add new field `payload` to `SubMsg` and `Reply`. This is binary
-  data the contract can set in a contract specific format and get back then the
-  `reply` entry point is called. `SubMsg::with_payload` allows setting the
-  payload on an existing `SubMsg`. ([#2008])
-
-[#2008]: https://github.com/CosmWasm/cosmwasm/pull/2008
-
-### Changed
-
-- cosmwasm-vm: Limit total number of function parameters in
-  `check_wasm_functions` and increase max function count and max parameter
-  count. ([#1991])
-
-[#1991]: https://github.com/CosmWasm/cosmwasm/pull/1991
-
-## [2.0.0-beta.1] - 2023-01-22
+## [2.0.0-rc.0] - 2023-02-06
 
 ### Fixed
 
@@ -43,12 +26,17 @@ and this project adheres to
   `SubMsgResponse::data`. Add new type `MsgResponse`. ([#1903])
 - cosmwasm-std: Add `cosmwasm_2_0` feature to enable 2.0 specific functionality.
   ([#1974])
+- cosmwasm-std: Add new field `payload` to `SubMsg` and `Reply`. This is binary
+  data the contract can set in a contract specific format and get back then the
+  `reply` entry point is called. `SubMsg::with_payload` allows setting the
+  payload on an existing `SubMsg`. ([#2008])
 
 [#1878]: https://github.com/CosmWasm/cosmwasm/pull/1878
 [#1903]: https://github.com/CosmWasm/cosmwasm/pull/1903
 [#1929]: https://github.com/CosmWasm/cosmwasm/pull/1929
 [#1954]: https://github.com/CosmWasm/cosmwasm/pull/1954
 [#1974]: https://github.com/CosmWasm/cosmwasm/pull/1974
+[#2008]: https://github.com/CosmWasm/cosmwasm/pull/2008
 
 ### Changed
 
@@ -115,6 +103,9 @@ and this project adheres to
 - cosmwasm-std: Rename `GovMsg::vote` to `GovMsg::option` ([#1999])
 - cosmwasm-vm: Read `Region` from Wasm memory as bytes and convert to `Region`
   afterwards ([#2005])
+- cosmwasm-vm: Limit total number of function parameters in
+  `check_wasm_functions` and increase max function count and max parameter
+  count. ([#1991])
 
 [#1874]: https://github.com/CosmWasm/cosmwasm/pull/1874
 [#1876]: https://github.com/CosmWasm/cosmwasm/pull/1876
@@ -136,6 +127,7 @@ and this project adheres to
 [#1971]: https://github.com/CosmWasm/cosmwasm/pull/1971
 [#1973]: https://github.com/CosmWasm/cosmwasm/pull/1973
 [#1977]: https://github.com/CosmWasm/cosmwasm/pull/1977
+[#1991]: https://github.com/CosmWasm/cosmwasm/pull/1991
 [#1992]: https://github.com/CosmWasm/cosmwasm/pull/1992
 [#1999]: https://github.com/CosmWasm/cosmwasm/pull/1999
 [#2005]: https://github.com/CosmWasm/cosmwasm/pull/2005
@@ -760,9 +752,8 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0-beta.1...HEAD
-[2.0.0-beta.1]:
-  https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0-beta.1
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0-rc.0...HEAD
+[2.0.0-rc.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0-rc.0
 [1.5.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
