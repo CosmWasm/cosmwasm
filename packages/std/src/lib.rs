@@ -83,7 +83,7 @@ pub use crate::query::{
     ContractInfoResponse, CustomQuery, DecCoin, Delegation, DelegationResponse,
     DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
     DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
-    DistributionQuery, FullDelegation, IbcQuery, ListChannelsResponse, PortIdResponse,
+    DistributionQuery, FullDelegation, GrpcQuery, IbcQuery, ListChannelsResponse, PortIdResponse,
     QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
