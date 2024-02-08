@@ -30,7 +30,7 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["iterator", "stargate"] }
+cosmwasm-std = { path = "../../packages/std", features = ["iterator", "stargate", "cosmwasm_2_0"] }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 

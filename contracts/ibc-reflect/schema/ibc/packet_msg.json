@@ -112,6 +112,22 @@
     }
   ],
   "definitions": {
+    "AnyMsg": {
+      "description": "A message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto). This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)",
+      "type": "object",
+      "required": [
+        "type_url",
+        "value"
+      ],
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/Binary"
+        }
+      }
+    },
     "BankMsg": {
       "description": "The message types of the bank module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto",
       "oneOf": [
@@ -217,6 +233,18 @@
         {
           "type": "object",
           "required": [
+            "any"
+          ],
+          "properties": {
+            "any": {
+              "$ref": "#/definitions/AnyMsg"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
             "ibc"
           ],
           "properties": {
@@ -252,6 +280,10 @@
         }
       ]
     },
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
+    },
     "Empty": {
       "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
       "type": "object"
@@ -280,6 +312,36 @@
                       "$ref": "#/definitions/VoteOption"
                     }
                   ]
+                },
+                "proposal_id": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.",
+          "type": "object",
+          "required": [
+            "vote_weighted"
+          ],
+          "properties": {
+            "vote_weighted": {
+              "type": "object",
+              "required": [
+                "options",
+                "proposal_id"
+              ],
+              "properties": {
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/WeightedVoteOption"
+                  }
                 },
                 "proposal_id": {
                   "type": "integer",
@@ -569,6 +631,60 @@
           "additionalProperties": false
         },
         {
+          "description": "Instantiates a new contracts from previously uploaded Wasm code using a predictable address derivation algorithm implemented in [`cosmwasm_std::instantiate2_address`].\n\nThis is translated to a [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L73-L96). `sender` is automatically filled with the current contract's address. `fix_msg` is automatically set to false.",
+          "type": "object",
+          "required": [
+            "instantiate2"
+          ],
+          "properties": {
+            "instantiate2": {
+              "type": "object",
+              "required": [
+                "code_id",
+                "funds",
+                "label",
+                "msg",
+                "salt"
+              ],
+              "properties": {
+                "admin": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "code_id": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                },
+                "funds": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
+                },
+                "label": {
+                  "description": "A human-readable label for the contract.\n\nValid values should: - not be empty - not be bigger than 128 bytes (or some chain-specific limit) - not start / end with whitespace",
+                  "type": "string"
+                },
+                "msg": {
+                  "description": "msg is the JSON-encoded InstantiateMsg struct (as raw Binary)",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                },
+                "salt": {
+                  "$ref": "#/definitions/Binary"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
           "description": "Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to customize behavior.\n\nOnly the contract admin (as defined in wasmd), if any, is able to make this call.\n\nThis is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96). `sender` is automatically filled with the current contract's address.",
           "type": "object",
           "required": [
@@ -652,6 +768,21 @@
           "additionalProperties": false
         }
       ]
+    },
+    "WeightedVoteOption": {
+      "type": "object",
+      "required": [
+        "option",
+        "weight"
+      ],
+      "properties": {
+        "option": {
+          "$ref": "#/definitions/VoteOption"
+        },
+        "weight": {
+          "$ref": "#/definitions/Decimal"
+        }
+      }
     }
   }
 }

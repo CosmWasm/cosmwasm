@@ -324,6 +324,28 @@
         }
       ]
     },
+    "GrpcQuery": {
+      "description": "Queries the chain using a grpc query. This allows to query information that is not exposed in our API. The chain needs to allowlist the supported queries. The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.\n\nThe returned data is protobuf encoded. The protobuf type depends on the query.\n\nTo find the path, as well as the request and response types, you can query the chain's gRPC endpoint using a tool like [grpcurl](https://github.com/fullstorydev/grpcurl).",
+      "type": "object",
+      "required": [
+        "data",
+        "path"
+      ],
+      "properties": {
+        "data": {
+          "description": "The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            }
+          ]
+        },
+        "path": {
+          "description": "The fully qualified endpoint path used for routing. It follows the format `/service_path/method_name`, eg. \"/cosmos.authz.v1beta1.Query/Grants\"",
+          "type": "string"
+        }
+      }
+    },
     "IbcQuery": {
       "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
       "oneOf": [
@@ -520,6 +542,18 @@
           "properties": {
             "wasm": {
               "$ref": "#/definitions/WasmQuery"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "grpc"
+          ],
+          "properties": {
+            "grpc": {
+              "$ref": "#/definitions/GrpcQuery"
             }
           },
           "additionalProperties": false
