@@ -6,7 +6,7 @@ and this project adheres to
 
 ## [Unreleased]
 
-## [2.0.0-rc.0] - 2023-02-06
+## [2.0.0-rc.1] - 2023-02-09
 
 ### Fixed
 
@@ -752,8 +752,8 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0-rc.0...HEAD
-[2.0.0-rc.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0-rc.0
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0-rc.1...HEAD
+[2.0.0-rc.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0-rc.1
 [1.5.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.3.3...v1.4.0
