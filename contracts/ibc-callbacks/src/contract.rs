@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, to_json_string, Addr, Binary, Deps, DepsMut, Empty, Env,
     IbcBasicResponse, IbcMsg, IbcPacketAckMsg, IbcPacketTimeoutMsg, IbcTimeout, MessageInfo,
-    Response, StdError, StdResult,
+    Response, StdError, StdResult, Uint64,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -138,7 +138,8 @@ pub struct IbcSrcCallback {
     /// You probably want to put `env.contract.address` here.
     pub address: Addr,
     /// Optional gas limit for the callback (in Cosmos SDK gas units)
-    pub gas_limit: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_limit: Option<Uint64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -146,7 +147,8 @@ pub struct IbcDstCallback {
     /// The destination chain address that should receive the callback.
     pub address: String,
     /// Optional gas limit for the callback (in Cosmos SDK gas units)
-    pub gas_limit: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_limit: Option<Uint64>,
 }
 
 /// The type of IBC callback that is being called.
