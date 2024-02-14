@@ -16,7 +16,7 @@ use crate::deps::OwnedDeps;
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcSourceChainCallbackMsg,
 };
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
@@ -406,6 +406,28 @@ where
     release_buffer(v) as u32
 }
 
+pub fn do_ibc_source_chain_callback<Q, C, E>(
+    contract_fn: &dyn Fn(
+        DepsMut<Q>,
+        Env,
+        IbcSourceChainCallbackMsg,
+    ) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    #[cfg(feature = "abort")]
+    install_panic_handler();
+    let res =
+        _do_ibc_source_chain_callback(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let v = to_json_vec(&res).unwrap();
+    release_buffer(v) as u32
+}
+
 fn _do_instantiate<Q, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
@@ -655,6 +677,30 @@ where
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json(msg));
+
+    let mut deps = make_dependencies();
+    contract_fn(deps.as_mut(), env, msg).into()
+}
+
+fn _do_ibc_source_chain_callback<Q, C, E>(
+    contract_fn: &dyn Fn(
+        DepsMut<Q>,
+        Env,
+        IbcSourceChainCallbackMsg,
+    ) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: *mut Region,
+    msg_ptr: *mut Region,
+) -> ContractResult<IbcBasicResponse<C>>
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+
+    let env: Env = try_into_contract_result!(from_json(env));
+    let msg: IbcSourceChainCallbackMsg = try_into_contract_result!(from_json(msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

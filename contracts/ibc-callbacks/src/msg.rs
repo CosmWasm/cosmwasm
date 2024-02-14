@@ -1,4 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Uint64;
 
 use crate::state::CallbackStats;
 
@@ -16,4 +17,6 @@ pub struct ExecuteMsg {
     pub to_address: String,
     /// The channel to send the packet through
     pub channel_id: String,
+    /// The amount of seconds from now the transfer should timeout at
+    pub timeout_seconds: Uint64,
 }
