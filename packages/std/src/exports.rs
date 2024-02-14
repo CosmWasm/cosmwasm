@@ -13,10 +13,11 @@ use core::marker::PhantomData;
 use serde::de::DeserializeOwned;
 
 use crate::deps::OwnedDeps;
+use crate::ibc::{IbcBasicResponse, IbcSourceChainCallbackMsg};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcSourceChainCallbackMsg,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};

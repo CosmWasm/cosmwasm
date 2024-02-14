@@ -1,13 +1,11 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Uint64;
 
-use crate::state::CallbackStats;
-
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// Returns stats about what callbacks have been received
-    #[returns(CallbackStats)]
+    #[returns(crate::state::CallbackStats)]
     CallbackStats {},
 }
 
