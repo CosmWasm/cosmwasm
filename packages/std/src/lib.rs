@@ -40,10 +40,10 @@ pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
-    Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
-    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, IbcTimeout,
-    IbcTimeoutBlock,
+    Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcCallbackData, IbcChannel,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcDstCallback, IbcEndpoint,
+    IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
@@ -90,7 +90,10 @@ mod imports;
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
 #[cfg(target_arch = "wasm32")]
-pub use crate::exports::{do_execute, do_instantiate, do_migrate, do_query, do_reply, do_sudo};
+pub use crate::exports::{
+    do_execute, do_ibc_source_chain_callback, do_instantiate, do_migrate, do_query, do_reply,
+    do_sudo,
+};
 #[cfg(all(feature = "stargate", target_arch = "wasm32"))]
 pub use crate::exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
