@@ -151,7 +151,7 @@ pub fn build_enum_variant(
     // we are not interested in that case, so we error out
     if let Some(values) = &schema.enum_values {
         bail!(
-            "enum variants {} without inner data not supported",
+            "enum variant {} without inner data not supported",
             values
                 .iter()
                 .map(|v| v.to_string())
@@ -436,7 +436,7 @@ mod tests {
         compare_codes!(cosmwasm_std::DistributionMsg);
         compare_codes!(cosmwasm_std::IbcMsg);
         compare_codes!(cosmwasm_std::WasmMsg);
-        // compare_codes!(cosmwasm_std::GovMsg); // TODO: currently fails because of VoteOption
+        compare_codes!(cosmwasm_std::GovMsg);
     }
 
     #[test]

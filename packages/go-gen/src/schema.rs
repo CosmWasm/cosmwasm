@@ -265,6 +265,8 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
         "Int128" => Some("string"),
         "Binary" => Some("[]byte"),
         "HexBinary" => Some("string"),
+        "ReplyOn" => Some("replyOn"),
+        "VoteOption" => Some("voteOption"),
         "Checksum" => Some("Checksum"),
         "Addr" => Some("string"),
         "Decimal" => Some("string"),
