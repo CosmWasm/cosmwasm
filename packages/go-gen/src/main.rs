@@ -473,6 +473,21 @@ mod tests {
                 C Array[Array[Array[*string]]] `json:"c"`
             }"#,
         );
+
+        #[cw_serde]
+        struct D {
+            d: Option<Vec<String>>,
+            nested: Vec<Option<Vec<String>>>,
+        }
+        let code = generate_go(cosmwasm_schema::schema_for!(D)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type D struct {
+                D *[]string `json:"d,omitempty"`
+                Nested Array[*[]string] `json:"nested"`
+            }"#,
+        );
     }
 
     #[test]

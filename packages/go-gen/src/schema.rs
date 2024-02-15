@@ -209,11 +209,20 @@ pub fn type_from_instance_type(
         // for nullable array item types, we have to use a pointer type, even for basic types,
         // so we can pass null as elements
         // otherwise they would just be omitted from the array
-        replace_custom_type(&if item_type.nullability == Nullability::Nullable {
-            format!("Array[*{}]", item_type.name)
+        let maybe_ptr = if item_type.nullability == Nullability::Nullable {
+            "*"
         } else {
-            format!("Array[{}]", item_type.name)
-        })
+            ""
+        };
+        let ty = if t.contains(&InstanceType::Null) {
+            // if the array itself is nullable, we can use a native Go slice
+            format!("[]{maybe_ptr}{}", item_type.name)
+        } else {
+            // if it is not nullable, we enforce empty slices instead of nil using our own type
+            format!("Array[{maybe_ptr}{}]", item_type.name)
+        };
+
+        replace_custom_type(&ty)
     } else {
         unreachable!("instance type should be one of the above")
     })
