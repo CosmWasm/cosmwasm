@@ -44,7 +44,7 @@ Introducing the development contracts in the order they were created.
 ## Optimized builds
 
 Those development contracts are used for testing in other repos, e.g. in
-[wasmvm](https://github.com/CosmWasm/wasmvm/tree/master/api/testdata) or
+[wasmvm](https://github.com/CosmWasm/wasmvm/tree/main/testdata) or
 [cosmjs](https://github.com/cosmos/cosmjs/tree/main/scripts/wasmd/contracts).
 
 They are [built and deployed](https://github.com/CosmWasm/cosmwasm/releases) by
