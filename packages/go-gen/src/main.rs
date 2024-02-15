@@ -251,7 +251,7 @@ mod tests {
                 Binary []byte `json:"binary"`
                 Checksum Checksum `json:"checksum"`
                 HexBinary string `json:"hex_binary"`
-                NestedBinary []*[]byte `json:"nested_binary"`
+                NestedBinary Array[*[]byte] `json:"nested_binary"`
                 Uint128 string `json:"uint128"`
             }"#,
         );
@@ -456,7 +456,7 @@ mod tests {
             code,
             r#"
             type A struct {
-                A [][][]*B `json:"a"`
+                A Array[Array[Array[*B]]] `json:"a"`
             }
             type B struct { }"#,
         );
@@ -470,7 +470,7 @@ mod tests {
             code,
             r#"
             type C struct {
-                C [][][]*string `json:"c"`
+                C Array[Array[Array[*string]]] `json:"c"`
             }"#,
         );
     }

@@ -8,8 +8,8 @@ type VoteMsg struct {
 }
 
 type VoteWeightedMsg struct {
-	Options    []WeightedVoteOption `json:"options"`
-	ProposalID uint64               `json:"proposal_id"` // in wasmvm, this is `ProposalId`
+	Options    Array[WeightedVoteOption] `json:"options"`     // in wasmvm, this has type `[]WeightedVoteOption`
+	ProposalID uint64                    `json:"proposal_id"` // in wasmvm, this is `ProposalId`
 }
 
 type GovMsg struct {

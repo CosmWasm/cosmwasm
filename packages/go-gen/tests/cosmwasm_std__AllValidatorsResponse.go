@@ -1,6 +1,6 @@
 // AllValidatorsResponse is the expected response to AllValidatorsQuery
 type AllValidatorsResponse struct {
-	Validators []Validator `json:"validators"` // in wasmvm, there is an alias for `[]Validator`
+	Validators Array[Validator] `json:"validators"`
 }
 
 type Validator struct {

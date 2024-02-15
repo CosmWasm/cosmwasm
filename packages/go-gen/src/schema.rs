@@ -210,9 +210,9 @@ pub fn type_from_instance_type(
         // so we can pass null as elements
         // otherwise they would just be omitted from the array
         replace_custom_type(&if item_type.nullability == Nullability::Nullable {
-            format!("[]*{}", item_type.name)
+            format!("Array[*{}]", item_type.name)
         } else {
-            format!("[]{}", item_type.name)
+            format!("Array[{}]", item_type.name)
         })
     } else {
         unreachable!("instance type should be one of the above")
