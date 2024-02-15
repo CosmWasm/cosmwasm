@@ -186,7 +186,7 @@ pub fn build_enum_variant(
         docs,
         ty: GoType {
             name: ty,
-            is_nullable: true, // always nullable
+            nullability: Nullability::Nullable, // always nullable
         },
     })
 }
@@ -544,6 +544,42 @@ mod tests {
             type A struct {
                 A Uint64 `json:"a"`
                 B *Uint64 `json:"b,omitempty"`
+            }
+            "#,
+        );
+    }
+
+    #[test]
+    fn serde_default_works() {
+        fn default_u32() -> u32 {
+            42
+        }
+        #[cw_serde]
+        #[derive(Default)]
+        struct Nested {
+            a: u32,
+        }
+        #[cw_serde]
+        struct A {
+            #[serde(default)]
+            payload: Binary,
+            #[serde(default = "default_u32")]
+            int: u32,
+            #[serde(default)]
+            nested: Nested,
+        }
+
+        let code = generate_go(cosmwasm_schema::schema_for!(A)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type A struct {
+                Int uint32 `json:"int,omitempty"`
+                Nested Nested `json:"nested,omitempty"`
+                Payload []byte `json:"payload,omitempty"`
+            }
+            type Nested struct {
+                A uint32 `json:"a"`
             }
             "#,
         );
