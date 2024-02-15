@@ -24,7 +24,7 @@ use crate::{Addr, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 /// # use cosmwasm_std::testing::mock_env;
 /// # let env = mock_env();
 ///
-/// let transfer = IbcMsg::Transfer {
+/// let _transfer = IbcMsg::Transfer {
 ///     to_address: "cosmos1example".to_string(),
 ///     channel_id: "channel-0".to_string(),
 ///     amount: Coin::new(10u32, "ucoin"),
@@ -34,8 +34,6 @@ use crate::{Addr, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 ///         gas_limit: None,
 ///     })).unwrap()),
 /// };
-///
-/// Response::new().add_message(transfer);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcCallbackData {
