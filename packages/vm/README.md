@@ -42,10 +42,8 @@ compatibility list:
 
 There are demo files in `testdata/*.wasm`. Those are compiled and optimized
 versions of
-[contracts/hackatom](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/hackatom)
-and
-[contracts/staking](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/staking)
-run through [rust-optimizer](https://github.com/CosmWasm/rust-optimizer).
+[contracts/\*](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/) run
+through [rust-optimizer](https://github.com/CosmWasm/rust-optimizer).
 
 To rebuild the test contracts, go to the repo root and do
 
@@ -73,6 +71,12 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/empty \
   && cp artifacts/empty.wasm packages/vm/testdata/empty.wasm
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_ibc_callback",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer:0.15.0 ./contracts/ibc-callbacks \
+  && cp artifacts/ibc_callbacks.wasm packages/vm/testdata/ibc_callbacks.wasm
 ```
 
 The `cyberpunk_rust170.wasm` for
