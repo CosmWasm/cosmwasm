@@ -1,7 +1,10 @@
 use serde::de::DeserializeOwned;
 use wasmer::Value;
 
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
+use cosmwasm_std::{
+    ContractResult, CustomMsg, Env, IbcSourceChainCallbackMsg, MessageInfo, QueryResponse, Reply,
+    Response,
+};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
@@ -54,6 +57,8 @@ mod read_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
+    /// Max length (in bytes) of the result data from a ibc_source_chain_callback call.
+    pub const RESULT_IBC_SOURCE_CHAIN_CALLBACK: usize = 64 * MI;
 }
 
 /// The limits for the JSON deserialization.
@@ -93,6 +98,8 @@ mod deserialization_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_source_chain_callback call.
+    pub const RESULT_IBC_SOURCE_CHAIN_CALLBACK: usize = 256 * KI;
 }
 
 pub fn call_instantiate<A, S, Q, U>(
@@ -327,6 +334,27 @@ where
     Ok(result)
 }
 
+pub fn call_ibc_source_chain_callback<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &IbcSourceChainCallbackMsg,
+) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_source_chain_callback_raw(instance, &env, &msg)?;
+    let result = from_slice(
+        &data,
+        deserialization_limits::RESULT_IBC_SOURCE_CHAIN_CALLBACK,
+    )?;
+    Ok(result)
+}
+
 /// Calls Wasm export "instantiate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_instantiate_raw<A, S, Q>(
@@ -557,6 +585,25 @@ where
         "ibc_packet_timeout",
         &[env, msg],
         read_limits::RESULT_IBC_PACKET_TIMEOUT,
+    )
+}
+
+pub fn call_ibc_source_chain_callback_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "ibc_source_chain_callback",
+        &[env, msg],
+        read_limits::RESULT_IBC_SOURCE_CHAIN_CALLBACK,
     )
 }
 
