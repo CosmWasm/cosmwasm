@@ -42,6 +42,10 @@ pub fn schema_object_type(
         Nullability::NonNullable
     };
 
+    // Check for a default value.
+    // This is the case if the field was annotated with `#[serde(default)]` or variations of it.
+    // A `null` value is not necessarily allowed in this case,
+    // so we want to omit the field on the Go side.
     if schema
         .metadata
         .as_ref()
