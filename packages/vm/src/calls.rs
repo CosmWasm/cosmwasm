@@ -915,7 +915,8 @@ mod tests {
         use cosmwasm_std::{
             Event, IbcAcknowledgement, IbcOrder, ReplyOn, SubMsgResponse, SubMsgResult,
         };
-        static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        const CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        const IBC_CALLBACKS: &[u8] = include_bytes!("../testdata/ibc_callbacks.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
         fn setup(
             instance: &mut Instance<MockApi, MockStorage, MockQuerier>,
@@ -1016,6 +1017,59 @@ mod tests {
             call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
+        }
+        #[test]
+        fn call_ibc_source_chain_callback_works() {
+            let mut instance = mock_instance(IBC_CALLBACKS, &[]);
+
+            // init
+            let creator = instance.api().addr_make("creator");
+            let info = mock_info(&creator, &[]);
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+                .unwrap()
+                .unwrap();
+
+            /// Response type for the `callback_stats` query
+            #[derive(serde::Serialize, serde::Deserialize)]
+            struct CallbackStats {
+                pub ibc_ack_callbacks: Vec<IbcPacketAckMsg>,
+                pub ibc_timeout_callbacks: Vec<IbcPacketTimeoutMsg>,
+            }
+
+            // send ack callback
+            let ack = IbcAcknowledgement::new(br#"{}"#);
+            let msg = IbcSourceChainCallbackMsg::Acknowledgement(
+                mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap(),
+            );
+            call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+                .unwrap()
+                .unwrap();
+            // query the CallbackStats
+            let stats: CallbackStats = serde_json::from_slice(
+                &call_query::<_, _, _>(&mut instance, &mock_env(), br#"{"callback_stats":{}}"#)
+                    .unwrap()
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(1, stats.ibc_ack_callbacks.len());
+            assert_eq!(0, stats.ibc_timeout_callbacks.len());
+
+            // send timeout callback
+            let msg = IbcSourceChainCallbackMsg::Timeout(
+                mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap(),
+            );
+            call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+                .unwrap()
+                .unwrap();
+            // query the CallbackStats
+            let stats: CallbackStats = serde_json::from_slice(
+                &call_query::<_, _, _>(&mut instance, &mock_env(), br#"{"callback_stats":{}}"#)
+                    .unwrap()
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(1, stats.ibc_ack_callbacks.len());
+            assert_eq!(1, stats.ibc_timeout_callbacks.len());
         }
     }
 }
