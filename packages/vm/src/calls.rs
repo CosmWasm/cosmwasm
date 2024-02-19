@@ -2,14 +2,13 @@ use serde::de::DeserializeOwned;
 use wasmer::Value;
 
 use cosmwasm_std::{
-    ContractResult, CustomMsg, Env, IbcSourceChainCallbackMsg, MessageInfo, QueryResponse, Reply,
-    Response,
+    ContractResult, CustomMsg, Env, IbcBasicResponse, IbcSourceChainCallbackMsg, MessageInfo,
+    QueryResponse, Reply, Response,
 };
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+    Ibc3ChannelOpenResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
