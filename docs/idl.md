@@ -2,9 +2,8 @@
 
 The CosmWasm IDL (Interface Description Language) is a format for describing the
 interface of a smart contract, meant to be consumed by generic clients. This
-allows those clients to interact with CosmWasm contracts without prior contract,
-much like a web browser is able to interact with any website without prior
-knowledge of it.
+allows those clients to interact with CosmWasm contracts without having any
+prior information about API endpoints.
 
 If you have a smart contract generated from the usual
 [template](https://github.com/CosmWasm/cw-template), you should be able to get
