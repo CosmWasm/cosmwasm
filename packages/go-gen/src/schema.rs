@@ -4,7 +4,7 @@ use inflector::Inflector;
 use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
 
 use crate::{
-    go::{GoField, GoStruct, GoType},
+    go::{GoField, GoStruct, GoType, Nullability},
     utils::{replace_acronyms, suffixes},
 };
 
@@ -36,9 +36,25 @@ pub fn schema_object_type(
     type_context: TypeContext,
     additional_structs: &mut Vec<GoStruct>,
 ) -> Result<GoType> {
-    let mut is_nullable = is_null(schema);
+    let mut nullability = if is_null(schema) {
+        Nullability::Nullable
+    } else {
+        Nullability::NonNullable
+    };
 
-    // if it has a title, use that
+    // Check for a default value.
+    // This is the case if the field was annotated with `#[serde(default)]` or variations of it.
+    // A `null` value is not necessarily allowed in this case,
+    // so we want to omit the field on the Go side.
+    if schema
+        .metadata
+        .as_ref()
+        .and_then(|m| m.default.as_ref())
+        .is_some()
+    {
+        nullability = Nullability::OmitEmpty;
+    }
+
     let ty = if let Some(title) = schema.metadata.as_ref().and_then(|m| m.title.as_ref()) {
         replace_custom_type(title)
     } else if let Some(reference) = &schema.reference {
@@ -56,7 +72,7 @@ pub fn schema_object_type(
         let nullable = nullable_type(subschemas)?;
         if let Some(non_null) = nullable {
             ensure!(subschemas.len() == 2, "multiple subschemas in anyOf");
-            is_nullable = true;
+            nullability = Nullability::Nullable;
             // extract non-null type
             let GoType { name, .. } =
                 schema_object_type(non_null, type_context, additional_structs)?;
@@ -78,7 +94,7 @@ pub fn schema_object_type(
 
     Ok(GoType {
         name: ty,
-        is_nullable,
+        nullability,
     })
 }
 
@@ -197,11 +213,20 @@ pub fn type_from_instance_type(
         // for nullable array item types, we have to use a pointer type, even for basic types,
         // so we can pass null as elements
         // otherwise they would just be omitted from the array
-        replace_custom_type(&if item_type.is_nullable {
-            format!("[]*{}", item_type.name)
+        let maybe_ptr = if item_type.nullability == Nullability::Nullable {
+            "*"
         } else {
-            format!("[]{}", item_type.name)
-        })
+            ""
+        };
+        let ty = if t.contains(&InstanceType::Null) {
+            // if the array itself is nullable, we can use a native Go slice
+            format!("[]{maybe_ptr}{}", item_type.name)
+        } else {
+            // if it is not nullable, we enforce empty slices instead of nil using our own type
+            format!("Array[{maybe_ptr}{}]", item_type.name)
+        };
+
+        replace_custom_type(&ty)
     } else {
         unreachable!("instance type should be one of the above")
     })
@@ -265,6 +290,8 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
         "Int128" => Some("string"),
         "Binary" => Some("[]byte"),
         "HexBinary" => Some("string"),
+        "ReplyOn" => Some("replyOn"),
+        "VoteOption" => Some("voteOption"),
         "Checksum" => Some("Checksum"),
         "Addr" => Some("string"),
         "Decimal" => Some("string"),

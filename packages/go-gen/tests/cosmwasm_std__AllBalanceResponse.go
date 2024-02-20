@@ -1,6 +1,6 @@
 // AllBalancesResponse is the expected response to AllBalancesQuery
 type AllBalancesResponse struct {
-	Amount []Coin `json:"amount"` // in wasmvm, there is an alias for `[]Coin`
+	Amount Array[Coin] `json:"amount"`
 }
 
 // Coin is a string representation of the sdk.Coin type (more portable than sdk.Int)
