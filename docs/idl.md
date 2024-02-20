@@ -23,7 +23,7 @@ structure to tie them together.
 
 The following is an overview with the JSON schemas removed. The full file can be
 found
-[here](https://github.com/CosmWasm/cosmwasm/blob/ef5e8558ef047b25544d794a302f181809d79195/contracts/hackatom/schema/hackatom.json).
+[here](https://github.com/CosmWasm/cosmwasm/blob/v1.5.3/contracts/hackatom/schema/hackatom.json).
 
 ```json
 {
@@ -38,7 +38,7 @@ found
   "responses": {
     "get_int": *JSON_SCHEMA_FOR_RESPONSE_TO_GET_INT_QUERY*,
     "other_balance": *JSON_SCHEMA_FOR_RESPONSE_TO_OTHER_BALANCE_QUERY*,
-  },
+  }
 }
 ```
 
