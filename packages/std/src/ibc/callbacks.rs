@@ -38,7 +38,9 @@ use crate::{Addr, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcCallbackData {
     // using private fields to force use of the constructors
+    #[serde(skip_serializing_if = "Option::is_none")]
     src_callback: Option<IbcSrcCallback>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     dst_callback: Option<IbcDstCallback>,
 }
 
@@ -110,4 +112,45 @@ pub struct IbcDstCallback {
 pub enum IbcSourceChainCallbackMsg {
     Acknowledgement(IbcPacketAckMsg),
     Timeout(IbcPacketTimeoutMsg),
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::to_json_string;
+
+    use super::*;
+
+    #[test]
+    fn ibc_callback_data_serialization() {
+        let mut data = IbcCallbackData::both(
+            IbcSrcCallback {
+                address: Addr::unchecked("src_address"),
+                gas_limit: Some(123u64.into()),
+            },
+            IbcDstCallback {
+                address: "dst_address".to_string(),
+                gas_limit: Some(1234u64.into()),
+            },
+        );
+
+        // both
+        let json = to_json_string(&data).unwrap();
+        assert_eq!(
+            json,
+            r#"{"src_callback":{"address":"src_address","gas_limit":"123"},"dst_callback":{"address":"dst_address","gas_limit":"1234"}}"#
+        );
+
+        // dst only, without gas limit
+        let mut src = data.src_callback.take().unwrap();
+        data.dst_callback.as_mut().unwrap().gas_limit = None;
+        let json = to_json_string(&data).unwrap();
+        assert_eq!(json, r#"{"dst_callback":{"address":"dst_address"}}"#);
+
+        // source only, without gas limit
+        src.gas_limit = None;
+        data.src_callback = Some(src);
+        data.dst_callback = None;
+        let json = to_json_string(&data).unwrap();
+        assert_eq!(json, r#"{"src_callback":{"address":"src_address"}}"#);
+    }
 }
