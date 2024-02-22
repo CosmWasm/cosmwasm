@@ -35,10 +35,10 @@ pub fn execute(
             timeout: IbcTimeout::with_timestamp(
                 env.block.time.plus_seconds(msg.timeout_seconds.u64()),
             ),
-            channel_id: msg.channel_id.clone(),
+            channel_id: msg.channel_id,
             amount: coin.clone(),
             memo: Some(to_json_string(&IbcCallbackData::source(IbcSrcCallback {
-                address: env.contract.address.clone(),
+                address: env.contract.address,
                 gas_limit: None,
             }))?),
         },
