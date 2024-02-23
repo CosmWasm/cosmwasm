@@ -347,17 +347,17 @@ impl Decimal {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub fn sqrt(&self) -> Self {
         // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
-        // We start with the highest precision possible and lower it until
-        // there's no overflow.
-        //
-        // TODO: This could be made more efficient once log10 is in:
-        // https://github.com/rust-lang/rust/issues/70887
-        // The max precision is something like `9 - log10(self.0) / 2`.
-        (0..=Self::DECIMAL_PLACES / 2)
-            .rev()
-            .find_map(|i| self.sqrt_with_precision(i))
-            // The last step (i = 0) is guaranteed to succeed because `isqrt(u128::MAX) * 10^9` does not overflow
-            .unwrap()
+        self.sqrt_with_precision(self.max_sqrt_precision()).unwrap()
+    }
+
+    /// Calculates the maximum precision before overflow when calculating
+    /// the square root of this Decimal.
+    fn max_sqrt_precision(&self) -> u32 {
+        if self.is_zero() {
+            0
+        } else {
+            ((u128::MAX / self.0.u128()).ilog10() / 2).min(9)
+        }
     }
 
     /// Lower precision means more aggressive rounding, but less risk of overflow.
@@ -1670,6 +1670,10 @@ mod tests {
 
         assert!(Decimal::percent(316) < Decimal::percent(1000).sqrt());
         assert!(Decimal::percent(1000).sqrt() < Decimal::percent(317));
+
+        assert_eq!(Decimal::MAX.sqrt(), dec("18446744073.709551615"));
+        assert_eq!(Decimal::zero().sqrt(), Decimal::zero());
+        assert_eq!(Decimal::one().sqrt(), Decimal::one());
     }
 
     /// sqrt(2) is an irrational number, i.e. all 18 decimal places should be used.
@@ -2193,6 +2197,37 @@ mod tests {
             let decimal = Decimal::from_str(s).unwrap();
             let expected = format!("Decimal({s})");
             assert_eq!(format!("{decimal:?}"), expected);
+        }
+    }
+
+    #[test]
+    fn sqrt_is_exact() {
+        /// These are the boundaries `(x, p)` where the max precision jumps from `p` to `p-1`.
+        /// The maximum precision for `x` is `p`. For `x+1` it is `p-1`.
+        const PRECISION_BOUNDARIES: [(u128, u32); 9] = [
+            (3402823669209384634633746074317682114, 1),
+            (34028236692093846346337460743176821, 2),
+            (340282366920938463463374607431768, 3),
+            (3402823669209384634633746074317, 4),
+            (34028236692093846346337460743, 5),
+            (340282366920938463463374607, 6),
+            (3402823669209384634633746, 7),
+            (34028236692093846346337, 8),
+            (340282366920938463463, 9),
+        ];
+
+        for (boundary, precision) in PRECISION_BOUNDARIES {
+            let d = Decimal::raw(boundary);
+            let d1 = Decimal::raw(boundary + 1);
+            // make sure the boundary is correct
+            assert_eq!(d.max_sqrt_precision(), precision);
+            assert_eq!(d1.max_sqrt_precision(), precision - 1);
+            // make sure the sqrt works with this precision
+            _ = d.sqrt_with_precision(precision).unwrap();
+            _ = d1.sqrt_with_precision(precision - 1).unwrap();
+            // make sure the sqrt is as exact as possible (i.e. higher precision fails)
+            assert_eq!(d.sqrt_with_precision(precision + 1), None);
+            assert_eq!(d1.sqrt_with_precision(precision), None);
         }
     }
 }
