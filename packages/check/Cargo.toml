@@ -10,7 +10,7 @@ license = "Apache-2.0"
 [dependencies]
 anyhow = "1.0.57"
 clap = "4"
-colored = "2"
+colored = "2.1.0"
 cosmwasm-vm = { path = "../vm", version = "=2.0.0-rc.1" }
 cosmwasm-std = { path = "../std", version = "=2.0.0-rc.1" }
 
