@@ -269,6 +269,13 @@ pub struct SubMsgResponse {
     pub events: Vec<Event>,
     #[deprecated = "Deprecated in the Cosmos SDK in favor of msg_responses. If your chain is running on CosmWasm 2.0 or higher, msg_responses will be filled. For older versions, the data field is still needed since msg_responses is empty in those cases."]
     pub data: Option<Binary>,
+    /// The responses from the messages emitted by the submessage.
+    /// In most cases, this is equivalent to the Cosmos SDK's [MsgResponses], which usually contains a [single message].
+    /// However, wasmd allows chains to translate a single contract message into multiple SDK messages.
+    /// In that case all the MsgResponses from each are concatenated into this flattened `Vec`.
+    ///
+    /// [MsgResponses]: https://github.com/cosmos/cosmos-sdk/blob/316750cc8cd8b3296fa233f4da2e39cbcdc34517/proto/cosmos/base/abci/v1beta1/abci.proto#L106-L109
+    /// [single message]: https://github.com/cosmos/cosmos-sdk/blob/v0.50.4/baseapp/baseapp.go#L1020-L1023
     #[serde(default)]
     pub msg_responses: Vec<MsgResponse>,
 }
