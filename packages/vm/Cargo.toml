@@ -20,7 +20,7 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
-# For heap profiling. Only used in "memory" example.
+# For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
 
 [lib]
@@ -45,7 +45,7 @@ thiserror = "1.0.26"
 wasmer = { version = "=4.2.5", default-features = false, features = ["cranelift", "singlepass"] }
 wasmer-middlewares = "=4.2.5"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
-# For heap profiling. Only used in "memory" example. This has to be a non-dev dependency
+# For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
 dhat = { version = "0.3.2", optional = true }
 
@@ -77,8 +77,8 @@ name = "main"
 harness = false
 
 [[example]]
-name = "memory"
-path = "examples/memory.rs"
+name = "heap_profiling"
+path = "examples/heap_profiling.rs"
 
 [profile.release]
 debug = 1

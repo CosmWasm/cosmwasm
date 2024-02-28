@@ -1,5 +1,5 @@
 // Run with
-// cargo run --features dhat-heap --example memory --release
+// cargo run --features dhat-heap --example heap_profiling --release
 
 use std::time::SystemTime;
 use tempfile::TempDir;
