@@ -194,8 +194,8 @@ pub fn main() {
             Arg::new("runtime")
                 .long("runtime")
                 .help("Time in seconds how long the tests should be running")
-                .value_parser(clap::value_parser!(u64).range(1..3600))
-                .default_value("60"),
+                .value_parser(clap::value_parser!(u64).range(1..10_000))
+                .default_value("30"),
         )
         .get_matches();
     let runtime = matches
