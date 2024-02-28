@@ -47,7 +47,7 @@ wasmer-middlewares = "=4.2.5"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
-dhat = { version = "0.3.2", optional = true }
+dhat = { version = "0.3.3", optional = true }
 
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
