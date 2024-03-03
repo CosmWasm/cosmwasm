@@ -1,6 +1,7 @@
 use core::fmt;
 use core::ops::Deref;
 
+use bytemuck::TransparentWrapper;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -12,7 +13,24 @@ use crate::{Binary, StdError, StdResult};
 ///
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[derive(
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    JsonSchema,
+    derive_more::AsRef,
+    derive_more::AsMut,
+    derive_more::From,
+    derive_more::Into,
+    bytemuck::TransparentWrapper,
+)]
+#[as_ref(forward)]
+#[into(owned, ref, ref_mut)]
+#[repr(transparent)]
 pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
 
 impl HexBinary {
@@ -51,13 +69,10 @@ impl HexBinary {
     /// assert_eq!(num, 10045108015024774967);
     /// ```
     pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
-        if self.len() != LENGTH {
-            return Err(StdError::invalid_data_size(LENGTH, self.len()));
-        }
-
-        let mut out: [u8; LENGTH] = [0; LENGTH];
-        out.copy_from_slice(&self.0);
-        Ok(out)
+        self.0
+            .as_slice()
+            .try_into()
+            .map_err(|_| StdError::invalid_data_size(LENGTH, self.len()))
     }
 }
 
@@ -80,6 +95,18 @@ impl fmt::Debug for HexBinary {
     }
 }
 
+impl<'a> From<&'a Vec<u8>> for &'a HexBinary {
+    fn from(vec: &'a Vec<u8>) -> Self {
+        HexBinary::wrap_ref(vec)
+    }
+}
+
+impl<'a> From<&'a mut Vec<u8>> for &'a mut HexBinary {
+    fn from(vec: &'a mut Vec<u8>) -> Self {
+        HexBinary::wrap_mut(vec)
+    }
+}
+
 /// Just like Vec<u8>, HexBinary is a smart pointer to [u8].
 /// This implements `*data` for us and allows us to
 /// do `&*data`, returning a `&[u8]` from a `&HexBinary`.
@@ -89,12 +116,6 @@ impl Deref for HexBinary {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        self.as_slice()
-    }
-}
-
-impl AsRef<[u8]> for HexBinary {
-    fn as_ref(&self) -> &[u8] {
         self.as_slice()
     }
 }
@@ -117,18 +138,6 @@ impl<const LENGTH: usize> From<&[u8; LENGTH]> for HexBinary {
 impl<const LENGTH: usize> From<[u8; LENGTH]> for HexBinary {
     fn from(source: [u8; LENGTH]) -> Self {
         Self(source.into())
-    }
-}
-
-impl From<Vec<u8>> for HexBinary {
-    fn from(vec: Vec<u8>) -> Self {
-        Self(vec)
-    }
-}
-
-impl From<HexBinary> for Vec<u8> {
-    fn from(original: HexBinary) -> Vec<u8> {
-        original.0
     }
 }
 

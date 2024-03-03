@@ -2,6 +2,7 @@ use core::fmt;
 use core::ops::Deref;
 
 use base64::engine::{Engine, GeneralPurpose};
+use bytemuck::TransparentWrapper;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
@@ -13,7 +14,24 @@ use crate::prelude::*;
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[derive(
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    JsonSchema,
+    derive_more::AsRef,
+    derive_more::AsMut,
+    derive_more::From,
+    derive_more::Into,
+    bytemuck::TransparentWrapper,
+)]
+#[as_ref(forward)]
+#[into(owned, ref, ref_mut)]
+#[repr(transparent)]
 pub struct Binary(#[schemars(with = "String")] Vec<u8>);
 
 impl Binary {
@@ -73,13 +91,10 @@ impl Binary {
     /// assert_eq!(num, 10045108015024774967);
     /// ```
     pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
-        if self.len() != LENGTH {
-            return Err(StdError::invalid_data_size(LENGTH, self.len()));
-        }
-
-        let mut out: [u8; LENGTH] = [0; LENGTH];
-        out.copy_from_slice(&self.0);
-        Ok(out)
+        self.0
+            .as_slice()
+            .try_into()
+            .map_err(|_| StdError::invalid_data_size(LENGTH, self.len()))
     }
 }
 
@@ -102,6 +117,18 @@ impl fmt::Debug for Binary {
     }
 }
 
+impl<'a> From<&'a Vec<u8>> for &'a Binary {
+    fn from(vec: &'a Vec<u8>) -> Self {
+        Binary::wrap_ref(vec)
+    }
+}
+
+impl<'a> From<&'a mut Vec<u8>> for &'a mut Binary {
+    fn from(vec: &'a mut Vec<u8>) -> Self {
+        Binary::wrap_mut(vec)
+    }
+}
+
 /// Just like Vec<u8>, Binary is a smart pointer to [u8].
 /// This implements `*binary` for us and allows us to
 /// do `&*binary`, returning a `&[u8]` from a `&Binary`.
@@ -111,12 +138,6 @@ impl Deref for Binary {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        self.as_slice()
-    }
-}
-
-impl AsRef<[u8]> for Binary {
-    fn as_ref(&self) -> &[u8] {
         self.as_slice()
     }
 }
@@ -139,18 +160,6 @@ impl<const LENGTH: usize> From<&[u8; LENGTH]> for Binary {
 impl<const LENGTH: usize> From<[u8; LENGTH]> for Binary {
     fn from(source: [u8; LENGTH]) -> Self {
         Self(source.into())
-    }
-}
-
-impl From<Vec<u8>> for Binary {
-    fn from(vec: Vec<u8>) -> Self {
-        Self(vec)
-    }
-}
-
-impl From<Binary> for Vec<u8> {
-    fn from(original: Binary) -> Vec<u8> {
-        original.0
     }
 }
 

@@ -52,8 +52,10 @@ cosmwasm_2_0 = ["cosmwasm_1_4"]
 
 [dependencies]
 base64 = "0.21.0"
+bytemuck = { version = "1.14.3", default-features = false, features = ["derive"] }
 cosmwasm-derive = { path = "../derive", version = "2.0.0-rc.1" }
 derivative = { version = "2", features = ["use_core"] }
+derive_more = { version = "0.99.17" }
 forward_ref = "1"
 hex = "0.4"
 schemars = "0.8.3"
