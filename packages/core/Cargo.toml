@@ -1,0 +1,12 @@
+[package]
+name = "cosmwasm-core"
+version = "0.0.1"
+edition = "2021"
+description = "Components of cosmwasm-std that can be used in no_std environments"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/core"
+license = "Apache-2.0"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
