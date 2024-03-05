@@ -406,6 +406,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-core"
+version = "0.0.1"
+
+[[package]]
 name = "cosmwasm-crypto"
 version = "2.0.0-rc.1"
 dependencies = [
