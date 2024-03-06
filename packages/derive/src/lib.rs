@@ -109,12 +109,12 @@ pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
 /// Output AST:
 ///
 /// ```no_test
-/// impl Into<cosmwasm::Event> for `StructName` {
-///     fn into(self) -> Event {
-///         Event::new("struct_name")
-///             .add_attribute("field_name_1", self.field_value_1)
-///             .add_attribute("field_name_2", self.field_value_2.to_string())
-///             .add_attribute("field_name_3", casting_fn(self.field_value_3))
+/// impl Into<cosmwasm_std::Event> for StructName {
+///     fn into(self) -> cosmwasm_std::Event {
+///         cosmwasm_std::Event::new("struct_name")
+///             .add_attribute("field_name_1", self.field_name_1)
+///             .add_attribute("field_name_2", self.field_name_2.to_string())
+///             .add_attribute("field_name_3", cast_fn_3(self.field_name_3))
 ///     }
 /// }
 /// ```
