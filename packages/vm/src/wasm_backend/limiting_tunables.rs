@@ -128,7 +128,7 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasmer::{BaseTunables, Target};
+    use wasmer::{sys::BaseTunables, Target};
 
     #[test]
     fn adjust_memory_works() {
