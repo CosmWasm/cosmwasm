@@ -30,15 +30,28 @@ pub struct ParsedWasm<'a> {
 impl<'a> ParsedWasm<'a> {
     pub fn parse(wasm: &'a [u8]) -> VmResult<Self> {
         let mut validator = Validator::new_with_features(WasmFeatures {
-            component_model: false,
+            mutable_global: true,
+            saturating_float_to_int: true,
+            sign_extension: true,
+            multi_value: true,
+            floats: true,
+
+            reference_types: false,
+            bulk_memory: false,
             simd: false,
             relaxed_simd: false,
             threads: false,
+            tail_call: false,
             multi_memory: false,
+            exceptions: false,
             memory64: false,
-            gc: false,
+            extended_const: false,
+            component_model: false,
+            function_references: false,
             memory_control: false,
-            ..Default::default()
+            gc: false,
+            component_model_values: false,
+            component_model_nested_names: false,
         });
 
         let mut this = Self {
