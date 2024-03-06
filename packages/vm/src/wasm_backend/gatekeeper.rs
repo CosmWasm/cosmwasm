@@ -218,10 +218,16 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::ReturnCall { .. }
             | Operator::ReturnCallIndirect { .. }
             | Operator::TypedSelect { .. }
+            | Operator::TableFill { .. }
             | Operator::TableGet { .. }
             | Operator::TableSet { .. }
             | Operator::TableGrow { .. }
-            | Operator::TableSize { .. } => {
+            | Operator::TableSize { .. }
+            | Operator::CallRef { .. }
+            | Operator::ReturnCallRef { .. }
+            | Operator::RefAsNonNull
+            | Operator::BrOnNull { .. }
+            | Operator::BrOnNonNull { .. } => {
                 if self.config.allow_feature_reference_types {
                     state.push_operator(operator);
                     Ok(())
@@ -233,7 +239,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             Operator::MemoryAtomicNotify { .. }
             | Operator::MemoryAtomicWait32 { .. }
             | Operator::MemoryAtomicWait64 { .. }
-            | Operator::AtomicFence { .. }
+            | Operator::AtomicFence
             | Operator::I32AtomicLoad { .. }
             | Operator::I64AtomicLoad { .. }
             | Operator::I32AtomicLoad8U { .. }
@@ -306,22 +312,50 @@ impl FunctionMiddleware for FunctionGatekeeper {
                 }
             }
             Operator::V128Load { .. }
+            | Operator::V128Load8x8S { .. }
+            | Operator::V128Load8x8U { .. }
+            | Operator::V128Load16x4S { .. }
+            | Operator::V128Load16x4U { .. }
+            | Operator::V128Load32x2S { .. }
+            | Operator::V128Load32x2U { .. }
+            | Operator::V128Load8Splat { .. }
+            | Operator::V128Load16Splat { .. }
+            | Operator::V128Load32Splat { .. }
+            | Operator::V128Load64Splat { .. }
+            | Operator::V128Load32Zero { .. }
+            | Operator::V128Load64Zero { .. }
             | Operator::V128Store { .. }
+            | Operator::V128Load8Lane { .. }
+            | Operator::V128Load16Lane { .. }
+            | Operator::V128Load32Lane { .. }
+            | Operator::V128Load64Lane { .. }
+            | Operator::V128Store8Lane { .. }
+            | Operator::V128Store16Lane { .. }
+            | Operator::V128Store32Lane { .. }
+            | Operator::V128Store64Lane { .. }
             | Operator::V128Const { .. }
-            | Operator::I8x16Splat
+            | Operator::I8x16Shuffle { .. }
             | Operator::I8x16ExtractLaneS { .. }
             | Operator::I8x16ExtractLaneU { .. }
             | Operator::I8x16ReplaceLane { .. }
-            | Operator::I16x8Splat
             | Operator::I16x8ExtractLaneS { .. }
             | Operator::I16x8ExtractLaneU { .. }
             | Operator::I16x8ReplaceLane { .. }
-            | Operator::I32x4Splat
             | Operator::I32x4ExtractLane { .. }
             | Operator::I32x4ReplaceLane { .. }
-            | Operator::I64x2Splat
             | Operator::I64x2ExtractLane { .. }
             | Operator::I64x2ReplaceLane { .. }
+            | Operator::F32x4ExtractLane { .. }
+            | Operator::F32x4ReplaceLane { .. }
+            | Operator::F64x2ExtractLane { .. }
+            | Operator::F64x2ReplaceLane { .. }
+            | Operator::I8x16Swizzle
+            | Operator::I8x16Splat
+            | Operator::I16x8Splat
+            | Operator::I32x4Splat
+            | Operator::I64x2Splat
+            | Operator::F32x4Splat
+            | Operator::F64x2Splat
             | Operator::I8x16Eq
             | Operator::I8x16Ne
             | Operator::I8x16LtS
@@ -352,17 +386,38 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4LeU
             | Operator::I32x4GeS
             | Operator::I32x4GeU
+            | Operator::I64x2Eq
+            | Operator::I64x2Ne
+            | Operator::I64x2LtS
+            | Operator::I64x2GtS
+            | Operator::I64x2LeS
+            | Operator::I64x2GeS
+            | Operator::F32x4Eq
+            | Operator::F32x4Ne
+            | Operator::F32x4Lt
+            | Operator::F32x4Gt
+            | Operator::F32x4Le
+            | Operator::F32x4Ge
+            | Operator::F64x2Eq
+            | Operator::F64x2Ne
+            | Operator::F64x2Lt
+            | Operator::F64x2Gt
+            | Operator::F64x2Le
+            | Operator::F64x2Ge
             | Operator::V128Not
             | Operator::V128And
             | Operator::V128AndNot
             | Operator::V128Or
             | Operator::V128Xor
             | Operator::V128Bitselect
+            | Operator::V128AnyTrue
             | Operator::I8x16Abs
             | Operator::I8x16Neg
-            | Operator::V128AnyTrue
+            | Operator::I8x16Popcnt
             | Operator::I8x16AllTrue
             | Operator::I8x16Bitmask
+            | Operator::I8x16NarrowI16x8S
+            | Operator::I8x16NarrowI16x8U
             | Operator::I8x16Shl
             | Operator::I8x16ShrS
             | Operator::I8x16ShrU
@@ -376,10 +431,20 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I8x16MinU
             | Operator::I8x16MaxS
             | Operator::I8x16MaxU
+            | Operator::I8x16AvgrU
+            | Operator::I16x8ExtAddPairwiseI8x16S
+            | Operator::I16x8ExtAddPairwiseI8x16U
             | Operator::I16x8Abs
             | Operator::I16x8Neg
+            | Operator::I16x8Q15MulrSatS
             | Operator::I16x8AllTrue
             | Operator::I16x8Bitmask
+            | Operator::I16x8NarrowI32x4S
+            | Operator::I16x8NarrowI32x4U
+            | Operator::I16x8ExtendLowI8x16S
+            | Operator::I16x8ExtendHighI8x16S
+            | Operator::I16x8ExtendLowI8x16U
+            | Operator::I16x8ExtendHighI8x16U
             | Operator::I16x8Shl
             | Operator::I16x8ShrS
             | Operator::I16x8ShrU
@@ -394,10 +459,21 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I16x8MinU
             | Operator::I16x8MaxS
             | Operator::I16x8MaxU
+            | Operator::I16x8AvgrU
+            | Operator::I16x8ExtMulLowI8x16S
+            | Operator::I16x8ExtMulHighI8x16S
+            | Operator::I16x8ExtMulLowI8x16U
+            | Operator::I16x8ExtMulHighI8x16U
+            | Operator::I32x4ExtAddPairwiseI16x8S
+            | Operator::I32x4ExtAddPairwiseI16x8U
             | Operator::I32x4Abs
             | Operator::I32x4Neg
             | Operator::I32x4AllTrue
             | Operator::I32x4Bitmask
+            | Operator::I32x4ExtendLowI16x8S
+            | Operator::I32x4ExtendHighI16x8S
+            | Operator::I32x4ExtendLowI16x8U
+            | Operator::I32x4ExtendHighI16x8U
             | Operator::I32x4Shl
             | Operator::I32x4ShrS
             | Operator::I32x4ShrU
@@ -409,86 +485,68 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I32x4MaxS
             | Operator::I32x4MaxU
             | Operator::I32x4DotI16x8S
-            | Operator::I64x2Neg
-            | Operator::I64x2Shl
-            | Operator::I64x2ShrS
-            | Operator::I64x2ShrU
-            | Operator::I64x2Add
-            | Operator::I64x2Sub
-            | Operator::I64x2Mul
-            | Operator::I8x16Swizzle
-            | Operator::I8x16Shuffle { .. }
-            | Operator::V128Load8Splat { .. }
-            | Operator::V128Load16Splat { .. }
-            | Operator::V128Load32Splat { .. }
-            | Operator::V128Load32Zero { .. }
-            | Operator::V128Load64Splat { .. }
-            | Operator::V128Load64Zero { .. }
-            | Operator::I8x16NarrowI16x8S
-            | Operator::I8x16NarrowI16x8U
-            | Operator::I16x8NarrowI32x4S
-            | Operator::I16x8NarrowI32x4U
-            | Operator::I16x8ExtendLowI8x16S
-            | Operator::I16x8ExtendHighI8x16S
-            | Operator::I16x8ExtendLowI8x16U
-            | Operator::I16x8ExtendHighI8x16U
-            | Operator::I32x4ExtendLowI16x8S
-            | Operator::I32x4ExtendHighI16x8S
-            | Operator::I32x4ExtendLowI16x8U
-            | Operator::I32x4ExtendHighI16x8U
-            | Operator::V128Load8x8S { .. }
-            | Operator::V128Load8x8U { .. }
-            | Operator::V128Load16x4S { .. }
-            | Operator::V128Load16x4U { .. }
-            | Operator::V128Load32x2S { .. }
-            | Operator::V128Load32x2U { .. }
-            | Operator::V128Load8Lane { .. }
-            | Operator::V128Load16Lane { .. }
-            | Operator::V128Load32Lane { .. }
-            | Operator::V128Load64Lane { .. }
-            | Operator::V128Store8Lane { .. }
-            | Operator::V128Store16Lane { .. }
-            | Operator::V128Store32Lane { .. }
-            | Operator::V128Store64Lane { .. }
-            | Operator::I64x2Eq
-            | Operator::I64x2Ne
-            | Operator::I64x2LtS
-            | Operator::I64x2GtS
-            | Operator::I64x2LeS
-            | Operator::I64x2GeS
-            | Operator::I8x16Popcnt
-            | Operator::I16x8AvgrU
-            | Operator::I16x8ExtAddPairwiseI8x16S
-            | Operator::I16x8ExtAddPairwiseI8x16U
-            | Operator::I16x8Q15MulrSatS
-            | Operator::I16x8ExtMulLowI8x16S
-            | Operator::I16x8ExtMulHighI8x16S
-            | Operator::I16x8ExtMulLowI8x16U
-            | Operator::I16x8ExtMulHighI8x16U
-            | Operator::I32x4ExtAddPairwiseI16x8S
-            | Operator::I32x4ExtAddPairwiseI16x8U
             | Operator::I32x4ExtMulLowI16x8S
             | Operator::I32x4ExtMulHighI16x8S
             | Operator::I32x4ExtMulLowI16x8U
             | Operator::I32x4ExtMulHighI16x8U
             | Operator::I64x2Abs
+            | Operator::I64x2Neg
             | Operator::I64x2AllTrue
             | Operator::I64x2Bitmask
             | Operator::I64x2ExtendLowI32x4S
             | Operator::I64x2ExtendHighI32x4S
             | Operator::I64x2ExtendLowI32x4U
             | Operator::I64x2ExtendHighI32x4U
+            | Operator::I64x2Shl
+            | Operator::I64x2ShrS
+            | Operator::I64x2ShrU
+            | Operator::I64x2Add
+            | Operator::I64x2Sub
+            | Operator::I64x2Mul
             | Operator::I64x2ExtMulLowI32x4S
             | Operator::I64x2ExtMulHighI32x4S
             | Operator::I64x2ExtMulLowI32x4U
             | Operator::I64x2ExtMulHighI32x4U
+            | Operator::F32x4Ceil
+            | Operator::F32x4Floor
+            | Operator::F32x4Trunc
+            | Operator::F32x4Nearest
+            | Operator::F32x4Abs
+            | Operator::F32x4Neg
+            | Operator::F32x4Sqrt
+            | Operator::F32x4Add
+            | Operator::F32x4Sub
+            | Operator::F32x4Mul
+            | Operator::F32x4Div
+            | Operator::F32x4Min
+            | Operator::F32x4Max
+            | Operator::F32x4PMin
+            | Operator::F32x4PMax
+            | Operator::F64x2Ceil
+            | Operator::F64x2Floor
+            | Operator::F64x2Trunc
+            | Operator::F64x2Nearest
+            | Operator::F64x2Abs
+            | Operator::F64x2Neg
+            | Operator::F64x2Sqrt
+            | Operator::F64x2Add
+            | Operator::F64x2Sub
+            | Operator::F64x2Mul
+            | Operator::F64x2Div
+            | Operator::F64x2Min
+            | Operator::F64x2Max
+            | Operator::F64x2PMin
+            | Operator::F64x2PMax
+            | Operator::I32x4TruncSatF32x4S
+            | Operator::I32x4TruncSatF32x4U
+            | Operator::F32x4ConvertI32x4S
+            | Operator::F32x4ConvertI32x4U
             | Operator::I32x4TruncSatF64x2SZero
             | Operator::I32x4TruncSatF64x2UZero
             | Operator::F64x2ConvertLowI32x4S
             | Operator::F64x2ConvertLowI32x4U
             | Operator::F32x4DemoteF64x2Zero
-            | Operator::F64x2PromoteLowF32x4
-            | Operator::I8x16AvgrU => {
+            | Operator::F64x2PromoteLowF32x4 => {
                 if self.config.allow_feature_simd {
                     state.push_operator(operator);
                     Ok(())
@@ -501,14 +559,14 @@ impl FunctionMiddleware for FunctionGatekeeper {
             }
             // Relaxed SIMD operators
             Operator::I8x16RelaxedSwizzle
-            | Operator::I32x4RelaxedTruncSatF32x4S
-            | Operator::I32x4RelaxedTruncSatF32x4U
-            | Operator::I32x4RelaxedTruncSatF64x2SZero
-            | Operator::I32x4RelaxedTruncSatF64x2UZero
-            | Operator::F32x4RelaxedFma
-            | Operator::F32x4RelaxedFnma
-            | Operator::F64x2RelaxedFma
-            | Operator::F64x2RelaxedFnma
+            | Operator::I32x4RelaxedTruncF32x4S
+            | Operator::I32x4RelaxedTruncF32x4U
+            | Operator::I32x4RelaxedTruncF64x2SZero
+            | Operator::I32x4RelaxedTruncF64x2UZero
+            | Operator::F32x4RelaxedMadd
+            | Operator::F32x4RelaxedNmadd
+            | Operator::F64x2RelaxedMadd
+            | Operator::F64x2RelaxedNmadd
             | Operator::I8x16RelaxedLaneselect
             | Operator::I16x8RelaxedLaneselect
             | Operator::I32x4RelaxedLaneselect
@@ -518,9 +576,8 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::F64x2RelaxedMin
             | Operator::F64x2RelaxedMax
             | Operator::I16x8RelaxedQ15mulrS
-            | Operator::I16x8DotI8x16I7x16S
-            | Operator::I32x4DotI8x16I7x16AddS
-            | Operator::F32x4RelaxedDotBf16x8AddF32x4 => {
+            | Operator::I16x8RelaxedDotI8x16I7x16S
+            | Operator::I32x4RelaxedDotI8x16I7x16AddS => {
                 let msg = format!(
                     "Relaxed SIMD operator detected: {operator:?}. The Wasm Relaxed SIMD extension is not supported."
                 );
@@ -601,59 +658,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::I64TruncSatF32S
             | Operator::I64TruncSatF32U
             | Operator::I64TruncSatF64S
-            | Operator::I64TruncSatF64U
-            | Operator::F32x4Splat
-            | Operator::F32x4ExtractLane { .. }
-            | Operator::F32x4ReplaceLane { .. }
-            | Operator::F64x2Splat
-            | Operator::F64x2ExtractLane { .. }
-            | Operator::F64x2ReplaceLane { .. }
-            | Operator::F32x4Eq
-            | Operator::F32x4Ne
-            | Operator::F32x4Lt
-            | Operator::F32x4Gt
-            | Operator::F32x4Le
-            | Operator::F32x4Ge
-            | Operator::F64x2Eq
-            | Operator::F64x2Ne
-            | Operator::F64x2Lt
-            | Operator::F64x2Gt
-            | Operator::F64x2Le
-            | Operator::F64x2Ge
-            | Operator::F32x4Ceil
-            | Operator::F32x4Floor
-            | Operator::F32x4Trunc
-            | Operator::F32x4Nearest
-            | Operator::F64x2Ceil
-            | Operator::F64x2Floor
-            | Operator::F64x2Trunc
-            | Operator::F64x2Nearest
-            | Operator::F32x4Abs
-            | Operator::F32x4Neg
-            | Operator::F32x4Sqrt
-            | Operator::F32x4Add
-            | Operator::F32x4Sub
-            | Operator::F32x4Mul
-            | Operator::F32x4Div
-            | Operator::F32x4Min
-            | Operator::F32x4Max
-            | Operator::F32x4PMin
-            | Operator::F32x4PMax
-            | Operator::F64x2Abs
-            | Operator::F64x2Neg
-            | Operator::F64x2Sqrt
-            | Operator::F64x2Add
-            | Operator::F64x2Sub
-            | Operator::F64x2Mul
-            | Operator::F64x2Div
-            | Operator::F64x2Min
-            | Operator::F64x2Max
-            | Operator::F64x2PMin
-            | Operator::F64x2PMax
-            | Operator::I32x4TruncSatF32x4S
-            | Operator::I32x4TruncSatF32x4U
-            | Operator::F32x4ConvertI32x4S
-            | Operator::F32x4ConvertI32x4U => {
+            | Operator::I64TruncSatF64U => {
                 if self.config.allow_floats {
                     state.push_operator(operator);
                     Ok(())
@@ -670,8 +675,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
             | Operator::MemoryFill { .. }
             | Operator::TableInit { .. }
             | Operator::ElemDrop { .. }
-            | Operator::TableCopy { .. }
-            | Operator::TableFill { .. } => {
+            | Operator::TableCopy { .. } => {
                 if self.config.allow_feature_bulk_memory_operations {
                     state.push_operator(operator);
                     Ok(())
@@ -681,8 +685,10 @@ impl FunctionMiddleware for FunctionGatekeeper {
                 }
             }
             Operator::Try { .. }
+            | Operator::TryTable { .. }
             | Operator::Catch { .. }
             | Operator::Throw { .. }
+            | Operator::ThrowRef { .. }
             | Operator::Rethrow { .. }
             | Operator::Delegate { .. }
             | Operator::CatchAll => {
@@ -693,6 +699,45 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     let msg = format!("Exception handling operation detected: {operator:?}. Exception handling is not supported.");
                     Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
                 }
+            }
+            Operator::RefEq { .. } |
+            Operator::StructNew { .. } |
+            Operator::StructNewDefault { .. } |
+            Operator::StructGet { .. } |
+            Operator::StructGetS { .. } |
+            Operator::StructGetU { .. } |
+            Operator::StructSet { .. } |
+            Operator::ArrayNew { .. } |
+            Operator::ArrayNewDefault { .. } |
+            Operator::ArrayNewFixed { .. } |
+            Operator::ArrayNewData { .. } |
+            Operator::ArrayNewElem { .. } |
+            Operator::ArrayGet { .. } |
+            Operator::ArrayGetS { .. } |
+            Operator::ArrayGetU { .. } |
+            Operator::ArraySet { .. } |
+            Operator::ArrayLen |
+            Operator::ArrayFill { .. } |
+            Operator::ArrayCopy { .. } |
+            Operator::ArrayInitData { .. } |
+            Operator::ArrayInitElem { .. } |
+            Operator::RefTestNonNull { .. } |
+            Operator::RefTestNullable { .. } |
+            Operator::RefCastNonNull { .. } |
+            Operator::RefCastNullable { .. } |
+            Operator::BrOnCast { .. } |
+            Operator::BrOnCastFail { .. } |
+            Operator::AnyConvertExtern |
+            Operator::ExternConvertAny |
+            Operator::RefI31 |
+            Operator::I31GetS |
+            Operator::I31GetU => {
+                let msg = format!("GC operation detected: {operator:?}. GC Proposal is not supported.");
+                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+            },
+            Operator::MemoryDiscard { .. } => {
+                let msg = format!("Memory control operation detected: {operator:?}. Memory control is not supported.");
+                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
             }
         }
     }
