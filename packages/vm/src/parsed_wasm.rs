@@ -1,5 +1,5 @@
 use wasmer::wasmparser::{
-    Export, Import, MemoryType, Parser, Payload, TableType, Type, ValidPayload, Validator,
+    CompositeType, Export, Import, MemoryType, Parser, Payload, TableType, ValidPayload, Validator,
     WasmFeatures,
 };
 
@@ -9,7 +9,7 @@ use crate::{VmError, VmResult};
 /// It keeps track of the parts that are important for our static analysis and compatibility checks.
 #[derive(Debug)]
 pub struct ParsedWasm<'a> {
-    pub version: u32,
+    pub version: u16,
     pub exports: Vec<Export<'a>>,
     pub imports: Vec<Import<'a>>,
     pub tables: Vec<TableType>,
@@ -30,14 +30,28 @@ pub struct ParsedWasm<'a> {
 impl<'a> ParsedWasm<'a> {
     pub fn parse(wasm: &'a [u8]) -> VmResult<Self> {
         let mut validator = Validator::new_with_features(WasmFeatures {
-            deterministic_only: true,
-            component_model: false,
+            mutable_global: true,
+            saturating_float_to_int: true,
+            sign_extension: true,
+            multi_value: true,
+            floats: true,
+
+            reference_types: false,
+            bulk_memory: false,
             simd: false,
             relaxed_simd: false,
             threads: false,
+            tail_call: false,
             multi_memory: false,
+            exceptions: false,
             memory64: false,
-            ..Default::default()
+            extended_const: false,
+            component_model: false,
+            function_references: false,
+            memory_control: false,
+            gc: false,
+            component_model_values: false,
+            component_model_nested_names: false,
         });
 
         let mut this = Self {
@@ -69,18 +83,28 @@ impl<'a> ParsedWasm<'a> {
 
             match p {
                 Payload::TypeSection(t) => {
-                    this.type_count = t.get_count();
-                    this.type_params = Vec::with_capacity(t.get_count() as usize);
-                    for t_res in t.into_iter() {
-                        let ty: Type = t_res?;
-                        match ty {
-                            Type::Func(ft) => {
-                                this.type_params.push(ft.params().len());
+                    this.type_count = 0;
+                    // t.count() is a lower bound
+                    this.type_params = Vec::with_capacity(t.count() as usize);
+                    for group in t.into_iter() {
+                        let types = group?.into_types();
+                        // update count
+                        this.type_count += types.len() as u32;
 
-                                this.max_func_params =
-                                    core::cmp::max(ft.params().len(), this.max_func_params);
-                                this.max_func_results =
-                                    core::cmp::max(ft.results().len(), this.max_func_results);
+                        for ty in types {
+                            match ty.composite_type {
+                                CompositeType::Func(ft) => {
+                                    this.type_params.push(ft.params().len());
+
+                                    this.max_func_params =
+                                        core::cmp::max(ft.params().len(), this.max_func_params);
+                                    this.max_func_results =
+                                        core::cmp::max(ft.results().len(), this.max_func_results);
+                                }
+                                CompositeType::Array(_) | CompositeType::Struct(_) => {
+                                    // ignoring these for now, as they are only available with the GC
+                                    // proposal and we explicitly disabled that above
+                                }
                             }
                         }
                     }
@@ -106,7 +130,10 @@ impl<'a> ParsedWasm<'a> {
                     this.imports = i.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
                 Payload::TableSection(t) => {
-                    this.tables = t.into_iter().collect::<Result<Vec<_>, _>>()?;
+                    this.tables = t
+                        .into_iter()
+                        .map(|r| r.map(|t| t.ty))
+                        .collect::<Result<Vec<_>, _>>()?;
                 }
                 Payload::MemorySection(m) => {
                     this.memories = m.into_iter().collect::<Result<Vec<_>, _>>()?;

@@ -23,7 +23,7 @@ use super::CachedModule;
 /// This needs to be done e.g. when switching between the jit/native engine.
 ///
 /// The string is used as a folder and should be named in a way that is
-/// easy to interprete for system admins. It should allow easy clearing
+/// easy to interpret for system admins. It should allow easy clearing
 /// of old versions.
 ///
 /// See https://github.com/wasmerio/wasmer/issues/2781 for more information
@@ -59,7 +59,7 @@ use super::CachedModule;
 ///   New version because of Wasmer 4.1.2 -> 4.2.2 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed.
 /// - **v9**:<br>
-///   New version because of Wasmer 4.2.2 -> 4.2.5 upgrade.
+///   New version because of Wasmer 4.2.2 -> 4.2.6 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed.
 const MODULE_SERIALIZATION_VERSION: &str = "v9";
 
@@ -318,7 +318,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v9-wasmer5/**/{}.module",
+            "{}/v9-wasmer6/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
