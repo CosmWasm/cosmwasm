@@ -23,34 +23,33 @@ include e.g.
 
 ## Error handling
 
-In wasmvm those two error types are merged into one and handled as one thing in
-the caller (wasmd):
-
-- [Instantiate](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L144-L151)
-- [Execute](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L192-L199)
-- [Migtate](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L275-L282)
-- [Sudo](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L318-L325)
-- [Reply](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L363-L370)
-- [IBCChannelOpen](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L406-L413)
-- [IBCChannelConnect](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L449-L456)
-- [IBCChannelClose](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L492-L499)
-- [IBCPacketAck](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L576-L583)
-- [IBCPacketTimeout](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L620-L627)
-
-However, there is one exception:
-
-- [IBCPacketReceive](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L535-L539)
-
+Before version 2.0 those two error types were merged into one in wasmvm and
+handled as one thing in the caller (wasmd). See for example
+[Instantiate](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L144-L151).
+However, there was one exception to this:
+[IBCPacketReceive](https://github.com/CosmWasm/wasmvm/blob/v1.2.0/lib.go#L535-L539).
 Instead of returning only the contents of the `Ok` case, the whole
 `IBCReceiveResult` is returned. This allows the caller to handle the two layers
 of errors differently.
 
 As pointed out by our auditors from Oak Security, this
-[is inconsistent](https://github.com/CosmWasm/wasmvm/issues/398). Historically
+[was inconsistent](https://github.com/CosmWasm/wasmvm/issues/398). Historically
 merging the two error types was the desired behaviour. When `IBCPacketReceive`
 came in, we needed the differentiation to be available in wasmd, which is why
-the API is different than the others. Ideally we always return the contract
-Result and let wasmd handle it.
+the API was different than the others.
+
+In wasmvm >= 2.0 (wasmd >= 0.51), we
+[always return the contract result](https://github.com/CosmWasm/wasmvm/blob/v2.0.0-rc.2/lib.go#L132)
+and let wasmd handle it. Apart from making everything more consistent, this also
+allows wasmd to handle contract errors differently from VM errors.
+
+Most errors returned by sub-messages are
+[redacted](https://github.com/CosmWasm/wasmd/blob/v0.51.0-rc.1/x/wasm/keeper/msg_dispatcher.go#L205)
+by wasmd before passing them back into the contract. The reason for this is the
+possible non-determinism of error messages. However, as contract errors come
+from the contract, they have to be deterministic. With the new separation, wasmd
+now passes the full contract error message back into the calling contract,
+massively improving the debugging experience.
 
 ## Handing ibc_packet_receive errors
 
