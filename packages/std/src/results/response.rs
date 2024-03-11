@@ -341,6 +341,8 @@ mod tests {
         msg: String,
     }
 
+    // allow define `into` rathan than `from` to define `into` clearly
+    #[allow(clippy::from_over_into)]
     impl Into<Event> for OurEvent {
         fn into(self) -> Event {
             Event::new("our_event").add_attribute("msg", self.msg)
