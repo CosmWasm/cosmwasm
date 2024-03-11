@@ -338,7 +338,7 @@
                   "type": "string"
                 },
                 "memo": {
-                  "description": "optional memo",
+                  "description": "optional memo This is only supported on CosmWasm 2.0 chains and ignored on older chains.",
                   "type": [
                     "string",
                     "null"

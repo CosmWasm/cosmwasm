@@ -36,6 +36,7 @@ pub enum IbcMsg {
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
         /// optional memo
+        /// This is only supported on CosmWasm 2.0 chains and ignored on older chains.
         memo: Option<String>,
     },
     /// Sends an IBC packet with given data over the existing channel.
