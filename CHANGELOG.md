@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Enable `add_event` and `add_events` functions to process types
+  implementing `Into<Event>` ([#2044])
+
+[#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
+
 ## [2.0.0-rc.1] - 2023-02-09
 
 ### Fixed
