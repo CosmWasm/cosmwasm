@@ -335,13 +335,13 @@ mod tests {
         assert!(!success.is_err());
     }
 
-    // struct implements `into<Event>`
+    // struct implements `Into<Event>`
     #[derive(Clone)]
     struct OurEvent {
         msg: String,
     }
 
-    // allow define `into` rathan than `from` to define `into` clearly
+    // allow define `into` rather than `from` to define `into` clearly
     #[allow(clippy::from_over_into)]
     impl Into<Event> for OurEvent {
         fn into(self) -> Event {
