@@ -8,7 +8,8 @@ and this project adheres to
 
 ### Changed
 
-- cosmwasm-std: Enable `add_event` and `add_events` functions to process types implemented `into<Event>` ([#2044])
+- cosmwasm-std: Enable `add_event` and `add_events` functions to process types
+  implemented `into<Event>` ([#2044])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 
