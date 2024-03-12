@@ -512,7 +512,6 @@ dependencies = [
  "hex-literal",
  "leb128",
  "rand",
- "rayon",
  "schemars",
  "serde",
  "serde_json",

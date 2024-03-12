@@ -264,7 +264,6 @@ dependencies = [
  "crc32fast",
  "derivative",
  "hex",
- "rayon",
  "schemars",
  "serde",
  "serde_json",

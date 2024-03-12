@@ -1,6 +1,5 @@
 use std::{fmt, mem};
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use wasmer::wasmparser::{
     BinaryReaderError, CompositeType, Export, FuncToValidate, FunctionBody, Import, MemoryType,
     Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources, WasmFeatures,
@@ -193,16 +192,15 @@ impl<'a> ParsedWasm<'a> {
     pub fn validate_funcs(&mut self) -> VmResult<()> {
         match self.func_validator {
             FunctionValidator::Pending(OpaqueDebug(ref mut funcs)) => {
-                let result = mem::take(funcs) // This is fine since `Vec::default()` doesn't allocate
-                    .into_par_iter()
-                    .try_for_each(|(func, body)| {
-                        // Reusing the allocations between validations only results in an ~6% performance improvement
-                        // The parallelization is blowing this out of the water by a magnitude of 5x
-                        // Especially when combining this with a high-performance allocator, the missing buffer reuse will be pretty much irrelevant
-                        let mut validator = func.into_validator(Default::default());
+                let result = (|| {
+                    let mut allocations = <_>::default();
+                    for (func, body) in mem::take(funcs) {
+                        let mut validator = func.into_validator(allocations);
                         validator.validate(&body)?;
-                        Ok(())
-                    });
+                        allocations = validator.into_allocations();
+                    }
+                    Ok(())
+                })();
 
                 self.func_validator = match result {
                     Ok(()) => FunctionValidator::Success,
