@@ -189,7 +189,7 @@ impl<'a> ParsedWasm<'a> {
 
     /// Perform the expensive operation of validating each function body
     ///
-    /// Note: This function caches the output of this function into the field `funcs_to_validate` so repeated invocations are cheap.
+    /// Note: This function caches the output of this function into the field `func_validator` so repeated invocations are cheap.
     pub fn validate_funcs(&mut self) -> VmResult<()> {
         match self.func_validator {
             FunctionValidator::Pending(OpaqueDebug(ref mut funcs)) => {
