@@ -2,8 +2,8 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use rand::Rng;
 use std::sync::Arc;
-use std::thread;
 use std::time::{Duration, SystemTime};
+use std::{fs, thread};
 use tempfile::TempDir;
 
 use cosmwasm_std::{coins, Checksum, Empty};
@@ -33,6 +33,17 @@ const CONTRACTS: u64 = 10;
 const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking";
 static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
+
+static BENCH_CONTRACTS: &[&str] = &[
+    "cyberpunk_rust170.wasm",
+    "cyberpunk.wasm",
+    "floaty_1.0.wasm",
+    "floaty_1.2.wasm",
+    "floaty_2.0.wasm",
+    "hackatom_1.0.wasm",
+    "hackatom_1.2.wasm",
+    "hackatom.wasm",
+];
 
 fn bench_instance(c: &mut Criterion) {
     let mut group = c.benchmark_group("Instance");
@@ -169,16 +180,25 @@ fn bench_cache(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("analyze", |b| {
+    let path_iter = glob::glob("testdata/*.wasm").unwrap().flat_map(Result::ok);
+    for contract_path in path_iter {
+        let contract_name = contract_path.file_name().unwrap().to_str().unwrap();
+        if !BENCH_CONTRACTS.contains(&contract_name) {
+            continue;
+        }
+
+        let contract_wasm = fs::read(&contract_path).unwrap();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(HACKATOM).unwrap();
+        let checksum = cache.save_wasm(&contract_wasm).unwrap();
 
-        b.iter(|| {
-            let result = cache.analyze(&checksum);
-            assert!(result.is_ok());
+        group.bench_function(format!("analyze_{contract_name}"), |b| {
+            b.iter(|| {
+                let result = cache.analyze(&checksum);
+                assert!(result.is_ok());
+            });
         });
-    });
+    }
 
     group.bench_function("instantiate from fs", |b| {
         let non_memcache = CacheOptions::new(
