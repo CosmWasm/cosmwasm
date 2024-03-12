@@ -8,6 +8,16 @@ use wasmer::wasmparser::{
 
 use crate::{VmError, VmResult};
 
+/// Opaque wrapper type implementing `Debug`
+///
+/// The purpose of this type is to wrap types that do not implement `Debug` themselves.
+/// For example, you have a large struct and derive `Debug` on it but one member does not implement the trait, that's where this type comes in.
+///
+/// Instead of printing a full debug representation of the underlying data, it simply prints something akin to this:
+///
+/// ```
+/// WrappedType { ... }
+/// ```
 #[derive(Default)]
 pub struct OpaqueDebug<T>(pub T);
 
