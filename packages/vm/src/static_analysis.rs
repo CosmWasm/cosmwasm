@@ -135,7 +135,10 @@ mod tests {
 
     #[test]
     fn deserialize_wasm_corrupted_data() {
-        match ParsedWasm::parse(CORRUPTED).unwrap_err() {
+        match ParsedWasm::parse(CORRUPTED)
+            .and_then(|mut parsed| parsed.validate_funcs())
+            .unwrap_err()
+        {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
             }

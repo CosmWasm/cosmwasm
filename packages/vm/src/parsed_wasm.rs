@@ -8,6 +8,7 @@ use wasmer::wasmparser::{
 
 use crate::{VmError, VmResult};
 
+#[derive(Default)]
 pub struct OpaqueDebug<T>(pub T);
 
 impl<T> fmt::Debug for OpaqueDebug<T> {
@@ -19,18 +20,18 @@ impl<T> fmt::Debug for OpaqueDebug<T> {
 
 #[derive(Debug)]
 pub enum FunctionValidator<'a> {
-    Pending(Vec<OpaqueDebug<(FuncToValidate<ValidatorResources>, FunctionBody<'a>)>>),
+    Pending(OpaqueDebug<Vec<(FuncToValidate<ValidatorResources>, FunctionBody<'a>)>>),
     Success,
     Error(BinaryReaderError),
 }
 
 impl<'a> FunctionValidator<'a> {
     fn push(&mut self, item: (FuncToValidate<ValidatorResources>, FunctionBody<'a>)) {
-        let Self::Pending(ref mut funcs) = self else {
+        let Self::Pending(OpaqueDebug(ref mut funcs)) = self else {
             panic!("attempted to push function into non-pending validator");
         };
 
-        funcs.push(OpaqueDebug(item));
+        funcs.push(item);
     }
 }
 
@@ -97,7 +98,7 @@ impl<'a> ParsedWasm<'a> {
             max_func_params: 0,
             max_func_results: 0,
             total_func_params: 0,
-            func_validator: FunctionValidator::Pending(Vec::new()),
+            func_validator: FunctionValidator::Pending(OpaqueDebug::default()),
         };
 
         for p in Parser::new(0).parse_all(wasm) {
@@ -181,10 +182,10 @@ impl<'a> ParsedWasm<'a> {
     /// Note: This function caches the output of this function into the field `funcs_to_validate` so repeated invocations are cheap.
     pub fn validate_funcs(&mut self) -> VmResult<()> {
         match self.func_validator {
-            FunctionValidator::Pending(ref mut funcs) => {
+            FunctionValidator::Pending(OpaqueDebug(ref mut funcs)) => {
                 let result = mem::take(funcs) // This is fine since `Vec::default()` doesn't allocate
                     .into_par_iter()
-                    .try_for_each(|OpaqueDebug((func, body))| {
+                    .try_for_each(|(func, body)| {
                         // Reusing the allocations between validations only results in an ~6% performance improvement
                         // The parallelization is blowing this out of the water by a magnitude of 5x
                         // Especially when combining this with a high-performance allocator, the missing buffer reuse will be pretty much irrelevant
