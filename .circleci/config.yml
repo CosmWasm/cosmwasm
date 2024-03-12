@@ -109,7 +109,7 @@ workflows:
 jobs:
   arm64:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2204:2024.01.1
     resource_class: arm.large
     steps:
       - checkout
@@ -848,7 +848,7 @@ jobs:
           command: apt update && apt install -y python3-pip
       - run:
           name: Install dependencies
-          command: pip3 install requests bs4
+          command: pip3 install requests bs4 --break-system-packages
       - run:
           name: Check dead links
           command: devtools/deadlinks.py
