@@ -6,6 +6,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-vm: Add `secp256r1_verify` and `secp256r1_recover_pubkey` imports for
+  ECDSA signature verification over secp256r1. ([#1983])
+
+[#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
+
+### Changed
+
+- cosmwasm-std: Enable `add_event` and `add_events` functions to process types
+  implementing `Into<Event>` ([#2044])
+
+[#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
+
 ## [2.0.0] - 2024-03-12
 
 ### Fixed

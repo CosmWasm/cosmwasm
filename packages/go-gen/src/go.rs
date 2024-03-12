@@ -50,7 +50,7 @@ impl Display for GoField {
             self.ty,
             self.rust_name
         )?;
-        if self.ty.is_nullable {
+        if let Nullability::OmitEmpty | Nullability::Nullable = self.ty.nullability {
             f.write_str(",omitempty")?;
         }
         f.write_str("\"`")
@@ -60,10 +60,19 @@ impl Display for GoField {
 pub struct GoType {
     /// The name of the type in Go
     pub name: String,
-    /// Whether the type should be nullable
-    /// This will add `omitempty` to the json tag and use a pointer type if
-    /// the type is not a basic type
-    pub is_nullable: bool,
+    /// Whether the type should be nullable / omitempty / etc.
+    pub nullability: Nullability,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Nullability {
+    /// The type should be nullable
+    /// In Go, this will use a pointer type and add `omitempty` to the json tag
+    Nullable,
+    /// The type should not be nullable, use the type as is
+    NonNullable,
+    /// The type should be nullable by omitting it from the json object if it is empty
+    OmitEmpty,
 }
 
 impl GoType {
@@ -95,7 +104,7 @@ impl GoType {
 
 impl Display for GoType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.is_nullable && !self.is_basic_type() {
+        if self.nullability == Nullability::Nullable && !self.is_basic_type() {
             // if the type is nullable and not a basic type, use a pointer
             f.write_char('*')?;
         }
@@ -122,23 +131,23 @@ mod tests {
     fn go_type_display_works() {
         let ty = GoType {
             name: "string".to_string(),
-            is_nullable: true,
+            nullability: Nullability::Nullable,
         };
         let ty2 = GoType {
             name: "string".to_string(),
-            is_nullable: false,
+            nullability: Nullability::NonNullable,
         };
         assert_eq!(format!("{}", ty), "string");
         assert_eq!(format!("{}", ty2), "string");
 
         let ty = GoType {
             name: "FooBar".to_string(),
-            is_nullable: true,
+            nullability: Nullability::Nullable,
         };
         assert_eq!(format!("{}", ty), "*FooBar");
         let ty = GoType {
             name: "FooBar".to_string(),
-            is_nullable: false,
+            nullability: Nullability::NonNullable,
         };
         assert_eq!(format!("{}", ty), "FooBar");
     }
@@ -150,7 +159,7 @@ mod tests {
             docs: None,
             ty: GoType {
                 name: "string".to_string(),
-                is_nullable: true,
+                nullability: Nullability::Nullable,
             },
         };
         assert_eq!(
@@ -163,7 +172,7 @@ mod tests {
             docs: None,
             ty: GoType {
                 name: "string".to_string(),
-                is_nullable: false,
+                nullability: Nullability::NonNullable,
             },
         };
         assert_eq!(format!("{}", field), "FooBar string `json:\"foo_bar\"`");
@@ -173,7 +182,7 @@ mod tests {
             docs: None,
             ty: GoType {
                 name: "FooBar".to_string(),
-                is_nullable: true,
+                nullability: Nullability::Nullable,
             },
         };
         assert_eq!(
@@ -189,7 +198,7 @@ mod tests {
             docs: Some("foo_bar is a test field".to_string()),
             ty: GoType {
                 name: "string".to_string(),
-                is_nullable: true,
+                nullability: Nullability::Nullable,
             },
         };
         assert_eq!(
@@ -208,7 +217,7 @@ mod tests {
                 docs: None,
                 ty: GoType {
                     name: "string".to_string(),
-                    is_nullable: true,
+                    nullability: Nullability::Nullable,
                 },
             }],
         };
@@ -225,7 +234,7 @@ mod tests {
                 docs: None,
                 ty: GoType {
                     name: "string".to_string(),
-                    is_nullable: true,
+                    nullability: Nullability::Nullable,
                 },
             }],
         };

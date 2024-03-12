@@ -165,6 +165,20 @@ pub trait Api {
         recovery_param: u8,
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
+    fn secp256r1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError>;
+
+    fn secp256r1_recover_pubkey(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        recovery_param: u8,
+    ) -> Result<Vec<u8>, RecoverPubkeyError>;
+
     fn ed25519_verify(
         &self,
         message: &[u8],

@@ -129,8 +129,8 @@ impl<T> Response<T> {
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided type
     /// of event.
-    pub fn add_event(mut self, event: Event) -> Self {
-        self.events.push(event);
+    pub fn add_event(mut self, event: impl Into<Event>) -> Self {
+        self.events.push(event.into());
         self
     }
 
@@ -219,8 +219,11 @@ impl<T> Response<T> {
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided types
     /// of events.
-    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
-        self.events.extend(events);
+    pub fn add_events<E>(mut self, events: impl IntoIterator<Item = E>) -> Self
+    where
+        E: Into<Event>,
+    {
+        self.events.extend(events.into_iter().map(|e| e.into()));
         self
     }
 
@@ -330,5 +333,41 @@ mod tests {
         let failure = ContractResult::<()>::Err("broken".to_string());
         assert!(failure.is_err());
         assert!(!success.is_err());
+    }
+
+    // struct implements `Into<Event>`
+    #[derive(Clone)]
+    struct OurEvent {
+        msg: String,
+    }
+
+    // allow define `into` rather than `from` to define `into` clearly
+    #[allow(clippy::from_over_into)]
+    impl Into<Event> for OurEvent {
+        fn into(self) -> Event {
+            Event::new("our_event").add_attribute("msg", self.msg)
+        }
+    }
+
+    #[test]
+    fn add_event_takes_into_event() {
+        let msg = "message".to_string();
+        let our_event = OurEvent { msg };
+        let event: Event = our_event.clone().into();
+        let actual = Response::<Empty>::new().add_event(our_event);
+        let expected = Response::<Empty>::new().add_event(event);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn add_events_takes_into_event() {
+        let msg1 = "foo".to_string();
+        let msg2 = "bare".to_string();
+        let our_event1 = OurEvent { msg: msg1 };
+        let our_event2 = OurEvent { msg: msg2 };
+        let events: Vec<Event> = vec![our_event1.clone().into(), our_event2.clone().into()];
+        let actual = Response::<Empty>::new().add_events([our_event1, our_event2]);
+        let expected = Response::<Empty>::new().add_events(events);
+        assert_eq!(expected, actual);
     }
 }

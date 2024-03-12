@@ -12,6 +12,7 @@ use sha2::Sha256;
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
+    secp256r1_recover_pubkey, secp256r1_verify,
 };
 use std::cmp::min;
 
@@ -19,6 +20,10 @@ const COSMOS_SECP256K1_MSG_HEX: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b
 const COSMOS_SECP256K1_SIGNATURE_HEX: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
 const COSMOS_SECP256K1_PUBKEY_HEX: &str =
     "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
+
+const COSMOS_SECP256R1_MSG_HEX: &str = "5905238877c77421f73e43ee3da6f2d9e2ccad5fc942dcec0cbd25482935faaf416983fe165b1a045ee2bcd2e6dca3bdf46c4310a7461f9a37960ca672d3feb5473e253605fb1ddfd28065b53cb5858a8ad28175bf9bd386a5e471ea7a65c17cc934a9d791e91491eb3754d03799790fe2d308d16146d5c9b0d0debd97d79ce8";
+const COSMOS_SECP256R1_SIGNATURE_HEX: &str = "f3ac8061b514795b8843e3d6629527ed2afd6b1f6a555a7acabb5e6f79c8c2ac8bf77819ca05a6b2786c76262bf7371cef97b218e96f175a3ccdda2acc058903";
+const COSMOS_SECP256R1_PUBKEY_HEX: &str = "041ccbe91c075fc7f4f033bfa248db8fccd3565de94bbfb12f3c59ff46c271bf83ce4014c68811f9a21a1fdb2c0e6113e06db7ca93b7404e78dc7ccd5ca89a4ca9";
 
 // TEST 3 test vector from https://tools.ietf.org/html/rfc8032#section-7.1
 const COSMOS_ED25519_MSG_HEX: &str = "af82";
@@ -103,6 +108,30 @@ fn bench_crypto(c: &mut Criterion) {
 
         b.iter(|| {
             let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
+            assert_eq!(pubkey, expected);
+        });
+    });
+
+    group.bench_function("secp256r1_verify", |b| {
+        let message = hex::decode(COSMOS_SECP256R1_MSG_HEX).unwrap();
+        let message_hash = Sha256::digest(message);
+        let signature = hex::decode(COSMOS_SECP256R1_SIGNATURE_HEX).unwrap();
+        let public_key = hex::decode(COSMOS_SECP256R1_PUBKEY_HEX).unwrap();
+        b.iter(|| {
+            assert!(secp256r1_verify(&message_hash, &signature, &public_key).unwrap());
+        });
+    });
+
+    group.bench_function("secp256r1_recover_pubkey", |b| {
+        let message_hash =
+            hex!("aea3e069e03c0ff4d6b3fa2235e0053bbedc4c7e40efbc686d4dfb5efba4cfed");
+        let expected  =
+            hex!("04105d22d9c626520faca13e7ced382dcbe93498315f00cc0ac39c4821d0d737376c47f3cbbfa97dfcebe16270b8c7d5d3a5900b888c42520d751e8faf3b401ef4");
+        let r_s = hex!("542c40a18140a6266d6f0286e24e9a7bad7650e72ef0e2131e629c076d9626634f7f65305e24a6bbb5cff714ba8f5a2cee5bdc89ba8d75dcbf21966ce38eb66f");
+        let recovery_param: u8 = 1;
+
+        b.iter(|| {
+            let pubkey = secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
             assert_eq!(pubkey, expected);
         });
     });

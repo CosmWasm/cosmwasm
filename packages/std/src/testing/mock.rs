@@ -178,6 +178,30 @@ impl Api for MockApi {
         Ok(pubkey.to_vec())
     }
 
+    fn secp256r1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError> {
+        Ok(cosmwasm_crypto::secp256r1_verify(
+            message_hash,
+            signature,
+            public_key,
+        )?)
+    }
+
+    fn secp256r1_recover_pubkey(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        recovery_param: u8,
+    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+        let pubkey =
+            cosmwasm_crypto::secp256r1_recover_pubkey(message_hash, signature, recovery_param)?;
+        Ok(pubkey.to_vec())
+    }
+
     fn ed25519_verify(
         &self,
         message: &[u8],
@@ -1106,6 +1130,11 @@ mod tests {
     const SECP256K1_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
     const SECP256K1_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
 
+    const SECP256R1_MSG_HASH_HEX: &str =
+        "5eb28029ebf3c7025ff2fc2f6de6f62aecf6a72139e1cba5f20d11bbef036a7f";
+    const SECP256R1_SIG_HEX: &str = "e67a9717ccf96841489d6541f4f6adb12d17b59a6bef847b6183b8fcf16a32eb9ae6ba6d637706849a6a9fc388cf0232d85c26ea0d1fe7437adb48de58364333";
+    const SECP256R1_PUBKEY_HEX: &str = "0468229b48c2fe19d3db034e4c15077eb7471a66031f28a980821873915298ba76303e8ee3742a893f78b810991da697083dd8f11128c47651c27a56740a80c24c";
+
     const ED25519_MSG_HEX: &str = "72";
     const ED25519_SIG_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
     const ED25519_PUBKEY_HEX: &str =
@@ -1333,6 +1362,113 @@ mod tests {
         let mut malformed_hash = hash.to_vec();
         malformed_hash.push(0x8a);
         let result = api.secp256k1_recover_pubkey(&malformed_hash, &signature, recovery_param);
+        match result.unwrap_err() {
+            RecoverPubkeyError::InvalidHashFormat => {}
+            err => panic!("Unexpected error: {err:?}"),
+        }
+    }
+
+    // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn secp256r1_verify_works() {
+        let api = MockApi::default();
+
+        let hash = hex::decode(SECP256R1_MSG_HASH_HEX).unwrap();
+        let signature = hex::decode(SECP256R1_SIG_HEX).unwrap();
+        let public_key = hex::decode(SECP256R1_PUBKEY_HEX).unwrap();
+
+        assert!(api
+            .secp256r1_verify(&hash, &signature, &public_key)
+            .unwrap());
+    }
+
+    // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn secp256r1_verify_fails() {
+        let api = MockApi::default();
+
+        let mut hash = hex::decode(SECP256R1_MSG_HASH_HEX).unwrap();
+        // alter hash
+        hash[0] ^= 0x01;
+        let signature = hex::decode(SECP256R1_SIG_HEX).unwrap();
+        let public_key = hex::decode(SECP256R1_PUBKEY_HEX).unwrap();
+
+        assert!(!api
+            .secp256r1_verify(&hash, &signature, &public_key)
+            .unwrap());
+    }
+
+    // Basic "errors" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn secp256r1_verify_errs() {
+        let api = MockApi::default();
+
+        let hash = hex::decode(SECP256R1_MSG_HASH_HEX).unwrap();
+        let signature = hex::decode(SECP256R1_SIG_HEX).unwrap();
+        let public_key = vec![];
+
+        let res = api.secp256r1_verify(&hash, &signature, &public_key);
+        assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
+    }
+
+    #[test]
+    fn secp256r1_recover_pubkey_works() {
+        let api = MockApi::default();
+
+        let hash = hex!("17b03f9f00f6692ccdde485fc63c4530751ef35da6f71336610944b0894fcfb8");
+        let signature = hex!("9886ae46c1415c3bc959e82b760ad760aab66885a84e620aa339fdf102465c422bf3a80bc04faa35ebecc0f4864ac02d349f6f126e0f988501b8d3075409a26c");
+        let recovery_param = 0;
+        let expected = hex!("0451f99d2d52d4a6e734484a018b7ca2f895c2929b6754a3a03224d07ae61166ce4737da963c6ef7247fb88d19f9b0c667cac7fe12837fdab88c66f10d3c14cad1");
+
+        let pubkey = api
+            .secp256r1_recover_pubkey(&hash, &signature, recovery_param)
+            .unwrap();
+        assert_eq!(pubkey, expected);
+    }
+
+    #[test]
+    fn secp256r1_recover_pubkey_fails_for_wrong_recovery_param() {
+        let api = MockApi::default();
+
+        let hash = hex!("17b03f9f00f6692ccdde485fc63c4530751ef35da6f71336610944b0894fcfb8");
+        let signature = hex!("9886ae46c1415c3bc959e82b760ad760aab66885a84e620aa339fdf102465c422bf3a80bc04faa35ebecc0f4864ac02d349f6f126e0f988501b8d3075409a26c");
+        let expected = hex!("0451f99d2d52d4a6e734484a018b7ca2f895c2929b6754a3a03224d07ae61166ce4737da963c6ef7247fb88d19f9b0c667cac7fe12837fdab88c66f10d3c14cad1");
+
+        // Wrong recovery param leads to different pubkey
+        let pubkey = api.secp256r1_recover_pubkey(&hash, &signature, 1).unwrap();
+        assert_eq!(pubkey.len(), 65);
+        assert_ne!(pubkey, expected);
+
+        // Invalid recovery param leads to error
+        let result = api.secp256r1_recover_pubkey(&hash, &signature, 42);
+        match result.unwrap_err() {
+            RecoverPubkeyError::InvalidRecoveryParam => {}
+            err => panic!("Unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn secp256r1_recover_pubkey_fails_for_wrong_hash() {
+        let api = MockApi::default();
+
+        let hash = hex!("17b03f9f00f6692ccdde485fc63c4530751ef35da6f71336610944b0894fcfb8");
+        let signature = hex!("9886ae46c1415c3bc959e82b760ad760aab66885a84e620aa339fdf102465c422bf3a80bc04faa35ebecc0f4864ac02d349f6f126e0f988501b8d3075409a26c");
+        let recovery_param = 0;
+        let expected = hex!("0451f99d2d52d4a6e734484a018b7ca2f895c2929b6754a3a03224d07ae61166ce4737da963c6ef7247fb88d19f9b0c667cac7fe12837fdab88c66f10d3c14cad1");
+
+        // Wrong hash
+        let mut corrupted_hash = hash;
+        corrupted_hash[0] ^= 0x01;
+        let pubkey = api
+            .secp256r1_recover_pubkey(&corrupted_hash, &signature, recovery_param)
+            .unwrap();
+        assert_eq!(pubkey.len(), 65);
+        assert_ne!(pubkey, expected);
+
+        // Malformed hash
+        let mut malformed_hash = hash.to_vec();
+        malformed_hash.push(0x8a);
+        let result = api.secp256r1_recover_pubkey(&malformed_hash, &signature, recovery_param);
         match result.unwrap_err() {
             RecoverPubkeyError::InvalidHashFormat => {}
             err => panic!("Unexpected error: {err:?}"),
