@@ -59,7 +59,52 @@
         "additionalProperties": false
       },
       {
-        "description": "Ethereum text verification (compatible to the eth_sign RPC/web3 enpoint). This cannot be used to verify transaction.\n\nSee https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign",
+        "description": "Cosmos format (secp256r1 verification scheme).",
+        "type": "object",
+        "required": [
+          "verify_secp256_r1_signature"
+        ],
+        "properties": {
+          "verify_secp256_r1_signature": {
+            "type": "object",
+            "required": [
+              "message",
+              "public_key",
+              "signature"
+            ],
+            "properties": {
+              "message": {
+                "description": "Message to verify.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Binary"
+                  }
+                ]
+              },
+              "public_key": {
+                "description": "Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Binary"
+                  }
+                ]
+              },
+              "signature": {
+                "description": "Serialized signature. Cosmos format (64 bytes).",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Binary"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Ethereum text verification (compatible to the eth_sign RPC/web3 endpoint). This cannot be used to verify transaction.\n\nSee https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign",
         "type": "object",
         "required": [
           "verify_ethereum_text"
@@ -86,7 +131,7 @@
                 ]
               },
               "signer_address": {
-                "description": "Signer address. This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.",
+                "description": "Signer address. This is matched case insensitive, so you can provide check-summed and non-check-summed addresses. Checksums are not validated.",
                 "type": "string"
               }
             },
@@ -326,6 +371,20 @@
       "additionalProperties": false
     },
     "verify_ethereum_transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "VerifyResponse",
+      "type": "object",
+      "required": [
+        "verifies"
+      ],
+      "properties": {
+        "verifies": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "verify_secp256_r1_signature": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "VerifyResponse",
       "type": "object",

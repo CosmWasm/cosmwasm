@@ -17,7 +17,17 @@ pub enum QueryMsg {
         /// Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.
         public_key: Binary,
     },
-    /// Ethereum text verification (compatible to the eth_sign RPC/web3 enpoint).
+    /// Cosmos format (secp256r1 verification scheme).
+    #[returns(VerifyResponse)]
+    VerifySecp256R1Signature {
+        /// Message to verify.
+        message: Binary,
+        /// Serialized signature. Cosmos format (64 bytes).
+        signature: Binary,
+        /// Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.
+        public_key: Binary,
+    },
+    /// Ethereum text verification (compatible to the eth_sign RPC/web3 endpoint).
     /// This cannot be used to verify transaction.
     ///
     /// See https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign
@@ -29,7 +39,7 @@ pub enum QueryMsg {
         /// Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).
         signature: Binary,
         /// Signer address.
-        /// This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.
+        /// This is matched case insensitive, so you can provide check-summed and non-check-summed addresses. Checksums are not validated.
         signer_address: String,
     },
     #[returns(VerifyResponse)]
@@ -85,5 +95,10 @@ pub struct ListVerificationsResponse {
 }
 
 pub(crate) fn list_verifications(_deps: Deps) -> Vec<String> {
-    vec!["secp256k1".into(), "ed25519".into(), "ed25519_batch".into()]
+    vec![
+        "secp256k1".into(),
+        "secp256r1".into(),
+        "ed25519".into(),
+        "ed25519_batch".into(),
+    ]
 }

@@ -4,24 +4,9 @@ use k256::{
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
 
+use crate::ecdsa::{ECDSA_COMPRESSED_PUBKEY_LEN, ECDSA_UNCOMPRESSED_PUBKEY_LEN};
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
-
-/// Max length of a message hash for secp256k1 verification in bytes.
-/// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
-/// are possible but currently not supported by the implementation. Let us know when you need them.
-pub const MESSAGE_HASH_MAX_LEN: usize = 32;
-
-/// ECDSA (secp256k1) parameters
-/// Length of a serialized signature
-pub const ECDSA_SIGNATURE_LEN: usize = 64;
-
-/// Length of a serialized compressed public key
-const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
-/// Length of a serialized uncompressed public key
-const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
-/// Max length of a serialized public key
-pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
 
 /// ECDSA secp256k1 implementation.
 ///
@@ -197,8 +182,7 @@ mod tests {
     // For generic signature verification
     const MSG: &str = "Hello World!";
 
-    // Cosmos secp256k1 signature verification
-    // tendermint/PubKeySecp256k1 pubkey
+    // "Cosmos" secp256k1 signature verification. Matches tendermint/PubKeySecp256k1 pubkey.
     const COSMOS_SECP256K1_PUBKEY_HEX: &str =
         "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
 
@@ -214,7 +198,7 @@ mod tests {
     const COSMOS_SECP256K1_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
 
     #[derive(Deserialize, Debug)]
-    struct Encoded {
+    struct TestVector {
         message: String,
         message_hash: String,
         signature: String,
@@ -308,7 +292,7 @@ mod tests {
         let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
 
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<TestVector> = serde_json::from_reader(reader).unwrap();
 
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
@@ -375,7 +359,7 @@ mod tests {
 
         let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes: Vec<TestVector> = serde_json::from_reader(reader).unwrap();
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
             let signature = hex::decode(&encoded.signature).unwrap();

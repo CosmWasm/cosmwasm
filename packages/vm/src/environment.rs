@@ -35,6 +35,10 @@ pub struct GasConfig {
     pub secp256k1_verify_cost: u64,
     /// secp256k1 public key recovery cost
     pub secp256k1_recover_pubkey_cost: u64,
+    /// secp256r1 signature verification cost
+    pub secp256r1_verify_cost: u64,
+    /// secp256r1 public key recovery cost
+    pub secp256r1_recover_pubkey_cost: u64,
     /// ed25519 signature verification cost
     pub ed25519_verify_cost: u64,
     /// ed25519 batch signature verification cost
@@ -48,10 +52,14 @@ impl Default for GasConfig {
         // Target is 10^12 per second (see GAS.md), i.e. 10^6 gas per µ second.
         const GAS_PER_US: u64 = 1_000_000;
         Self {
-            // ~154 us in crypto benchmarks
-            secp256k1_verify_cost: 154 * GAS_PER_US,
-            // ~162 us in crypto benchmarks
-            secp256k1_recover_pubkey_cost: 162 * GAS_PER_US,
+            // ~119 us in crypto benchmarks
+            secp256k1_verify_cost: 119 * GAS_PER_US,
+            // ~233 us in crypto benchmarks
+            secp256k1_recover_pubkey_cost: 233 * GAS_PER_US,
+            // ~374 us in crypto benchmarks
+            secp256r1_verify_cost: 374 * GAS_PER_US,
+            // ~834 us in crypto benchmarks
+            secp256r1_recover_pubkey_cost: 834 * GAS_PER_US,
             // ~63 us in crypto benchmarks
             ed25519_verify_cost: 63 * GAS_PER_US,
             // Gas cost factors, relative to ed25519_verify cost
@@ -501,6 +509,8 @@ mod tests {
                 "addr_humanize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
+                "secp256r1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "secp256r1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_typed(&mut store, |_a: u32| {}),

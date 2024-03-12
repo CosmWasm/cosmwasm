@@ -8,7 +8,9 @@ and [cosmwasm-std](`https://crates.io/crates/cosmwasm-std`) crates.
 
 ## Implementations
 
-- `secp256k1_verify()`: Digital signature verification using the ECDSA sepc256k1
+- `secp256k1_verify()`: Digital signature verification using the ECDSA secp256k1
+  scheme, for Cosmos signature / public key formats.
+- `secp256r1_verify()`: Digital signature verification using the ECDSA secp256r1
   scheme, for Cosmos signature / public key formats.
 - `ed25519_verify()`: Digital signature verification using the EdDSA ed25519
   scheme, for Tendermint signature / public key formats.

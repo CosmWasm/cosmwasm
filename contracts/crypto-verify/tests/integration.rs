@@ -37,6 +37,11 @@ const SECP256K1_MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d1044
 const SECP256K1_SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
 const SECP256K1_PUBLIC_KEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
 
+const SECP256R1_MESSAGE_HEX: &str =
+    "4d55c99ef6bd54621662c3d110c3cb627c03d6311393b264ab97b90a4b15214a5593ba2510a53d63fb34be251facb697c973e11b665cb7920f1684b0031b4dd370cb927ca7168b0bf8ad285e05e9e31e34bc24024739fdc10b78586f29eff94412034e3b606ed850ec2c1900e8e68151fc4aee5adebb066eb6da4eaa5681378e";
+const SECP256R1_SIGNATURE_HEX: &str = "1cc628533d0004b2b20e7f4baad0b8bb5e0673db159bbccf92491aef61fc9620880e0bbf82a8cf818ed46ba03cf0fc6c898e36fca36cc7fdb1d2db7503634430";
+const SECP256R1_PUBLIC_KEY_HEX: &str = "04b8188bd68701fc396dab53125d4d28ea33a91daf6d21485f4770f6ea8c565dde423f058810f277f8fe076f6db56e9285a1bf2c2a1dae145095edd9c04970bc4a";
+
 // TEST 3 test vector from https://tools.ietf.org/html/rfc8032#section-7.1
 const ED25519_MESSAGE_HEX: &str = "af82";
 const ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
@@ -121,6 +126,68 @@ fn cosmos_signature_verify_errors() {
     let public_key = vec![];
 
     let verify_msg = QueryMsg::VerifyCosmosSignature {
+        message: Binary::new(message),
+        signature: Binary::new(signature),
+        public_key: Binary::new(public_key),
+    };
+    let res = query(&mut deps, mock_env(), verify_msg);
+    assert_eq!(
+        res.unwrap_err(),
+        "Verification error: Invalid public key format"
+    )
+}
+
+#[test]
+fn secp256r1_signature_verify_works() {
+    let mut deps = setup();
+
+    let message = hex::decode(SECP256R1_MESSAGE_HEX).unwrap();
+    let signature = hex::decode(SECP256R1_SIGNATURE_HEX).unwrap();
+    let public_key = hex::decode(SECP256R1_PUBLIC_KEY_HEX).unwrap();
+
+    let verify_msg = QueryMsg::VerifySecp256R1Signature {
+        message: Binary::new(message),
+        signature: Binary::new(signature),
+        public_key: Binary::new(public_key),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: true });
+}
+
+#[test]
+fn secp256r1_signature_verify_fails() {
+    let mut deps = setup();
+
+    let mut message = hex::decode(SECP256R1_MESSAGE_HEX).unwrap();
+    // alter hash
+    message[0] ^= 0x01;
+    let signature = hex::decode(SECP256R1_SIGNATURE_HEX).unwrap();
+    let public_key = hex::decode(SECP256R1_PUBLIC_KEY_HEX).unwrap();
+
+    let verify_msg = QueryMsg::VerifySecp256R1Signature {
+        message: Binary::new(message),
+        signature: Binary::new(signature),
+        public_key: Binary::new(public_key),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: false });
+}
+
+#[test]
+fn secp256r1_signature_verify_errors() {
+    let mut deps = setup();
+
+    let message = hex::decode(SECP256R1_MESSAGE_HEX).unwrap();
+    let signature = hex::decode(SECP256R1_SIGNATURE_HEX).unwrap();
+    let public_key = vec![];
+
+    let verify_msg = QueryMsg::VerifySecp256R1Signature {
         message: Binary::new(message),
         signature: Binary::new(signature),
         public_key: Binary::new(public_key),
@@ -488,6 +555,7 @@ fn query_works() {
         ListVerificationsResponse {
             verification_schemes: vec![
                 "secp256k1".into(),
+                "secp256r1".into(),
                 "ed25519".into(),
                 "ed25519_batch".into()
             ]
