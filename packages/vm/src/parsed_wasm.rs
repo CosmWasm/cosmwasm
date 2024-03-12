@@ -15,7 +15,7 @@ use crate::{VmError, VmResult};
 ///
 /// Instead of printing a full debug representation of the underlying data, it simply prints something akin to this:
 ///
-/// ```
+/// ```ignore
 /// WrappedType { ... }
 /// ```
 #[derive(Default)]
