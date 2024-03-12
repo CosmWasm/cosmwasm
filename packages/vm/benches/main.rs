@@ -180,14 +180,8 @@ fn bench_cache(c: &mut Criterion) {
         });
     });
 
-    let path_iter = glob::glob("testdata/*.wasm").unwrap().flat_map(Result::ok);
-    for contract_path in path_iter {
-        let contract_name = contract_path.file_name().unwrap().to_str().unwrap();
-        if !BENCH_CONTRACTS.contains(&contract_name) {
-            continue;
-        }
-
-        let contract_wasm = fs::read(&contract_path).unwrap();
+    for contract_name in BENCH_CONTRACTS {
+        let contract_wasm = fs::read(format!("testdata/{contract_name}")).unwrap();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
         let checksum = cache.save_wasm(&contract_wasm).unwrap();
