@@ -1,9 +1,38 @@
+use std::{fmt, mem};
+
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use wasmer::wasmparser::{
-    CompositeType, Export, Import, MemoryType, Parser, Payload, TableType, ValidPayload, Validator,
-    WasmFeatures,
+    BinaryReaderError, CompositeType, Export, FuncToValidate, FunctionBody, Import, MemoryType,
+    Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources, WasmFeatures,
 };
 
 use crate::{VmError, VmResult};
+
+pub struct OpaqueDebug<T>(pub T);
+
+impl<T> fmt::Debug for OpaqueDebug<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct(std::any::type_name::<T>())
+            .finish_non_exhaustive()
+    }
+}
+
+#[derive(Debug)]
+pub enum FunctionValidator<'a> {
+    Pending(Vec<OpaqueDebug<(FuncToValidate<ValidatorResources>, FunctionBody<'a>)>>),
+    Success,
+    Error(BinaryReaderError),
+}
+
+impl<'a> FunctionValidator<'a> {
+    fn push(&mut self, item: (FuncToValidate<ValidatorResources>, FunctionBody<'a>)) {
+        let Self::Pending(ref mut funcs) = self else {
+            panic!("attempted to push function into non-pending validator");
+        };
+
+        funcs.push(OpaqueDebug(item));
+    }
+}
 
 /// A parsed and validated wasm module.
 /// It keeps track of the parts that are important for our static analysis and compatibility checks.
@@ -25,6 +54,8 @@ pub struct ParsedWasm<'a> {
     pub max_func_results: usize,
     /// How many function parameters are used in the module
     pub total_func_params: usize,
+    /// Collections of functions that are potentially pending validation
+    pub func_validator: FunctionValidator<'a>,
 }
 
 impl<'a> ParsedWasm<'a> {
@@ -66,18 +97,15 @@ impl<'a> ParsedWasm<'a> {
             max_func_params: 0,
             max_func_results: 0,
             total_func_params: 0,
+            func_validator: FunctionValidator::Pending(Vec::new()),
         };
 
-        let mut fun_allocations = Default::default();
         for p in Parser::new(0).parse_all(wasm) {
             let p = p?;
             // validate the payload
             if let ValidPayload::Func(fv, body) = validator.payload(&p)? {
                 // also validate function bodies
-                let mut fun_validator = fv.into_validator(fun_allocations);
-                fun_validator.validate(&body)?;
-                fun_allocations = fun_validator.into_allocations();
-
+                this.func_validator.push((fv, body));
                 this.function_count += 1;
             }
 
@@ -146,5 +174,34 @@ impl<'a> ParsedWasm<'a> {
         }
 
         Ok(this)
+    }
+
+    /// Perform the expensive operation of validating each function body
+    ///
+    /// Note: This function caches the output of this function into the field `funcs_to_validate` so repeated invocations are cheap.
+    pub fn validate_funcs(&mut self) -> VmResult<()> {
+        match self.func_validator {
+            FunctionValidator::Pending(ref mut funcs) => {
+                let result = mem::take(funcs) // This is fine since `Vec::default()` doesn't allocate
+                    .into_par_iter()
+                    .try_for_each(|OpaqueDebug((func, body))| {
+                        // Reusing the allocations between validations only results in an ~6% performance improvement
+                        // The parallelization is blowing this out of the water by a magnitude of 5x
+                        // Especially when combining this with a high-performance allocator, the missing buffer reuse will be pretty much irrelevant
+                        let mut validator = func.into_validator(Default::default());
+                        validator.validate(&body)?;
+                        Ok(())
+                    });
+
+                self.func_validator = match result {
+                    Ok(()) => FunctionValidator::Success,
+                    Err(err) => FunctionValidator::Error(err),
+                };
+
+                self.validate_funcs()
+            }
+            FunctionValidator::Success => Ok(()),
+            FunctionValidator::Error(ref err) => Err(err.clone().into()),
+        }
     }
 }
