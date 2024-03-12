@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "2.0.0-beta.1"
+version = "2.0.0-rc.1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "VM bindings to run cosmwams contracts"
@@ -20,7 +20,7 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
-# For heap profiling. Only used in "memory" example.
+# For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
 
 [lib]
@@ -33,8 +33,8 @@ clru = "0.6.1"
 crc32fast = "1.3.2"
 bech32 = "0.9.1"
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "2.0.0-beta.1", default-features = false, features = ["std"] }
-cosmwasm-crypto = { path = "../crypto", version = "2.0.0-beta.1" }
+cosmwasm-std = { path = "../std", version = "2.0.0-rc.1", default-features = false, features = ["std"] }
+cosmwasm-crypto = { path = "../crypto", version = "2.0.0-rc.1" }
 derivative = "2"
 hex = "0.4"
 schemars = "0.8.3"
@@ -42,12 +42,12 @@ serde = { version = "1.0.103", default-features = false, features = ["derive", "
 serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
-wasmer = { version = "=4.2.5", default-features = false, features = ["cranelift", "singlepass"] }
-wasmer-middlewares = "=4.2.5"
+wasmer = { version = "=4.2.6", default-features = false, features = ["cranelift", "singlepass"] }
+wasmer-middlewares = "=4.2.6"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
-# For heap profiling. Only used in "memory" example. This has to be a non-dev dependency
+# For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
-dhat = { version = "0.3.2", optional = true }
+dhat = { version = "0.3.3", optional = true }
 
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
@@ -77,8 +77,8 @@ name = "main"
 harness = false
 
 [[example]]
-name = "memory"
-path = "examples/memory.rs"
+name = "heap_profiling"
+path = "examples/heap_profiling.rs"
 
 [profile.release]
 debug = 1

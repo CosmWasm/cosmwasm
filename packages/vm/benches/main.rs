@@ -30,7 +30,8 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
-static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking";
+static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
 fn bench_instance(c: &mut Criterion) {
@@ -41,7 +42,7 @@ fn bench_instance(c: &mut Criterion) {
             let backend = mock_backend(&[]);
             let (instance_options, memory_limit) = mock_instance_options();
             let _instance =
-                Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
+                Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
         });
     });
 
@@ -51,7 +52,7 @@ fn bench_instance(c: &mut Criterion) {
             gas_limit: HIGH_GAS_LIMIT,
         };
         let mut instance =
-            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
+            Instance::from_code(HACKATOM, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
 
         b.iter(|| {
             let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -75,7 +76,7 @@ fn bench_instance(c: &mut Criterion) {
             gas_limit: HIGH_GAS_LIMIT,
         };
         let mut instance =
-            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
+            Instance::from_code(HACKATOM, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
 
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
         let verifier = instance.api().addr_make("verifies");
@@ -129,7 +130,7 @@ fn bench_cache(c: &mut Criterion) {
 
     let options = CacheOptions::new(
         TempDir::new().unwrap().into_path(),
-        capabilities_from_csv("iterator,staking"),
+        capabilities_from_csv(DEFAULT_CAPABILITIES),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
     );
@@ -139,7 +140,7 @@ fn bench_cache(c: &mut Criterion) {
             unsafe { Cache::new(options.clone()).unwrap() };
 
         b.iter(|| {
-            let result = cache.save_wasm(CONTRACT);
+            let result = cache.save_wasm(HACKATOM);
             assert!(result.is_ok());
         });
     });
@@ -147,7 +148,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("load wasm", |b| {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.save_wasm(HACKATOM).unwrap();
 
         b.iter(|| {
             let result = cache.load_wasm(&checksum);
@@ -160,7 +161,7 @@ fn bench_cache(c: &mut Criterion) {
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
         cache.set_module_unchecked(true);
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.save_wasm(HACKATOM).unwrap();
 
         b.iter(|| {
             let result = cache.load_wasm(&checksum);
@@ -171,7 +172,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("analyze", |b| {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.save_wasm(HACKATOM).unwrap();
 
         b.iter(|| {
             let result = cache.analyze(&checksum);
@@ -182,13 +183,13 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("instantiate from fs", |b| {
         let non_memcache = CacheOptions::new(
             TempDir::new().unwrap().into_path(),
-            capabilities_from_csv("iterator,staking"),
+            capabilities_from_csv(DEFAULT_CAPABILITIES),
             Size::new(0),
             DEFAULT_MEMORY_LIMIT,
         );
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.save_wasm(HACKATOM).unwrap();
 
         b.iter(|| {
             let _ = cache
@@ -204,14 +205,14 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("instantiate from fs unchecked", |b| {
         let non_memcache = CacheOptions::new(
             TempDir::new().unwrap().into_path(),
-            capabilities_from_csv("iterator,staking"),
+            capabilities_from_csv(DEFAULT_CAPABILITIES),
             Size::new(0),
             DEFAULT_MEMORY_LIMIT,
         );
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
         cache.set_module_unchecked(true);
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.save_wasm(HACKATOM).unwrap();
 
         b.iter(|| {
             let _ = cache
@@ -225,7 +226,7 @@ fn bench_cache(c: &mut Criterion) {
     });
 
     group.bench_function("instantiate from memory", |b| {
-        let checksum = Checksum::generate(CONTRACT);
+        let checksum = Checksum::generate(HACKATOM);
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
         // Load into memory
@@ -246,7 +247,7 @@ fn bench_cache(c: &mut Criterion) {
     });
 
     group.bench_function("instantiate from pinned memory", |b| {
-        let checksum = Checksum::generate(CONTRACT);
+        let checksum = Checksum::generate(HACKATOM);
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
         // Load into pinned memory
@@ -267,11 +268,11 @@ fn bench_cache(c: &mut Criterion) {
     group.finish();
 }
 
-pub fn bench_instance_threads(c: &mut Criterion) {
+fn bench_instance_threads(c: &mut Criterion) {
     c.bench_function("multi-threaded get_instance", |b| {
         let options = CacheOptions::new(
             TempDir::new().unwrap().into_path(),
-            capabilities_from_csv("iterator,staking"),
+            capabilities_from_csv(DEFAULT_CAPABILITIES),
             MEMORY_CACHE_SIZE,
             DEFAULT_MEMORY_LIMIT,
         );
@@ -290,10 +291,10 @@ pub fn bench_instance_threads(c: &mut Criterion) {
         // Offset to the i32.const (0x41) 15731626 (0xf00baa) (unsigned leb128 encoded) instruction
         // data we want to replace
         let query_int_data = b"\x41\xaa\x97\xc0\x07";
-        let offset = find_subsequence(CONTRACT, query_int_data).unwrap() + 1;
+        let offset = find_subsequence(HACKATOM, query_int_data).unwrap() + 1;
 
         let mut leb128_buf = [0; 4];
-        let mut contract = CONTRACT.to_vec();
+        let mut contract = HACKATOM.to_vec();
 
         let mut random_checksum = || {
             let mut writable = &mut leb128_buf[..];
@@ -352,23 +353,126 @@ pub fn bench_instance_threads(c: &mut Criterion) {
     });
 }
 
-fn make_config() -> Criterion {
+fn bench_combined(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Combined");
+
+    let options = CacheOptions::new(
+        TempDir::new().unwrap().into_path(),
+        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking"),
+        MEMORY_CACHE_SIZE,
+        DEFAULT_MEMORY_LIMIT,
+    );
+
+    // Store contracts for all benchmarks in this group
+    let checksum: Checksum = {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
+        cache.save_wasm(CYBERPUNK).unwrap()
+    };
+
+    group.bench_function("get instance from fs cache and execute", |b| {
+        let mut non_memcache = options.clone();
+        non_memcache.memory_cache_size = Size::kibi(0);
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(non_memcache).unwrap() };
+
+        b.iter(|| {
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+            assert_eq!(cache.stats().hits_memory_cache, 0);
+            assert!(cache.stats().hits_fs_cache >= 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            let info = mock_info("guest", &[]);
+            let msg = br#"{"noop":{}}"#;
+            let contract_result =
+                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            contract_result.into_result().unwrap();
+        });
+    });
+
+    group.bench_function("get instance from memory cache and execute", |b| {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
+
+        // Load into memory
+        cache
+            .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
+            .unwrap();
+
+        b.iter(|| {
+            let backend = mock_backend(&[]);
+            let mut instance = cache
+                .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+            assert!(cache.stats().hits_memory_cache >= 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            let info = mock_info("guest", &[]);
+            let msg = br#"{"noop":{}}"#;
+            let contract_result =
+                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            contract_result.into_result().unwrap();
+        });
+    });
+
+    group.bench_function("get instance from pinned memory and execute", |b| {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
+
+        // Load into pinned memory
+        cache.pin(&checksum).unwrap();
+
+        b.iter(|| {
+            let backend = mock_backend(&[]);
+            let mut instance = cache
+                .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_memory_cache, 0);
+            assert!(cache.stats().hits_pinned_memory_cache >= 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            let info = mock_info("guest", &[]);
+            let msg = br#"{"noop":{}}"#;
+            let contract_result =
+                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            contract_result.into_result().unwrap();
+        });
+    });
+
+    group.finish();
+}
+
+fn make_config(measurement_time_s: u64) -> Criterion {
     Criterion::default()
         .without_plots()
-        .measurement_time(Duration::new(10, 0))
+        .measurement_time(Duration::new(measurement_time_s, 0))
         .sample_size(12)
         .configure_from_args()
 }
 
 criterion_group!(
     name = instance;
-    config = make_config();
+    config = make_config(8);
     targets = bench_instance
 );
 criterion_group!(
     name = cache;
-    config = make_config();
+    config = make_config(8);
     targets = bench_cache
+);
+// Combines loading module from cache, instantiating it and executing the instance.
+// This is what every call in libwasmvm does.
+criterion_group!(
+    name = combined;
+    config = make_config(5);
+    targets = bench_combined
 );
 criterion_group!(
     name = multi_threaded_instance;
@@ -379,4 +483,4 @@ criterion_group!(
         .configure_from_args();
     targets = bench_instance_threads
 );
-criterion_main!(instance, cache, multi_threaded_instance);
+criterion_main!(instance, cache, combined, multi_threaded_instance);

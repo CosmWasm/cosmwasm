@@ -44,7 +44,7 @@ Introducing the development contracts in the order they were created.
 ## Optimized builds
 
 Those development contracts are used for testing in other repos, e.g. in
-[wasmvm](https://github.com/CosmWasm/wasmvm/tree/master/api/testdata) or
+[wasmvm](https://github.com/CosmWasm/wasmvm/tree/main/testdata) or
 [cosmjs](https://github.com/cosmos/cosmjs/tree/main/scripts/wasmd/contracts).
 
 They are [built and deployed](https://github.com/CosmWasm/cosmwasm/releases) by
@@ -63,6 +63,11 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_crypto_verify",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/crypto-verify
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_cyberpunk",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer:0.15.0 ./contracts/cyberpunk
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_floaty",target=/target \

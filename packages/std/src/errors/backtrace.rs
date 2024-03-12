@@ -5,7 +5,7 @@ use crate::prelude::*;
 /// This wraps an actual backtrace to achieve two things:
 /// - being able to fill this with a stub implementation in `no_std` environments
 /// - being able to use this in conjunction with [`thiserror::Error`]
-pub struct BT(Box<dyn Printable>);
+pub struct BT(Box<dyn Printable + Sync + Send>);
 
 impl BT {
     #[track_caller]

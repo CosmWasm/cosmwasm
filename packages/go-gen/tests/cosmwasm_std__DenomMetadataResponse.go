@@ -7,8 +7,8 @@ type DenomMetadata struct {
 	// Base represents the base denom (should be the DenomUnit with exponent = 0).
 	Base string `json:"base"`
 	// DenomUnits represents the list of DenomUnits for a given coin
-	DenomUnits  []DenomUnit `json:"denom_units"`
-	Description string      `json:"description"`
+	DenomUnits  Array[DenomUnit] `json:"denom_units"` // in wasmvm, this has type `[]DenomUnit`
+	Description string           `json:"description"`
 	// Display indicates the suggested denom that should be
 	// displayed in clients.
 	Display string `json:"display"`
@@ -35,7 +35,7 @@ type DenomMetadata struct {
 // Replicating the cosmos-sdk bank module DenomUnit type
 type DenomUnit struct {
 	// Aliases is a list of string aliases for the given denom
-	Aliases []string `json:"aliases"`
+	Aliases Array[string] `json:"aliases"` // in wasmvm, this has type `[]string`
 	// Denom represents the string name of the given denom unit (e.g uatom).
 	Denom string `json:"denom"`
 	// Exponent represents power of 10 exponent that one must

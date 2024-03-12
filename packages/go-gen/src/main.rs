@@ -151,7 +151,7 @@ pub fn build_enum_variant(
     // we are not interested in that case, so we error out
     if let Some(values) = &schema.enum_values {
         bail!(
-            "enum variants {} without inner data not supported",
+            "enum variant {} without inner data not supported",
             values
                 .iter()
                 .map(|v| v.to_string())
@@ -186,7 +186,7 @@ pub fn build_enum_variant(
         docs,
         ty: GoType {
             name: ty,
-            is_nullable: true, // always nullable
+            nullability: Nullability::Nullable, // always nullable
         },
     })
 }
@@ -251,7 +251,7 @@ mod tests {
                 Binary []byte `json:"binary"`
                 Checksum Checksum `json:"checksum"`
                 HexBinary string `json:"hex_binary"`
-                NestedBinary []*[]byte `json:"nested_binary"`
+                NestedBinary Array[*[]byte] `json:"nested_binary"`
                 Uint128 string `json:"uint128"`
             }"#,
         );
@@ -436,7 +436,7 @@ mod tests {
         compare_codes!(cosmwasm_std::DistributionMsg);
         compare_codes!(cosmwasm_std::IbcMsg);
         compare_codes!(cosmwasm_std::WasmMsg);
-        // compare_codes!(cosmwasm_std::GovMsg); // TODO: currently fails because of VoteOption
+        compare_codes!(cosmwasm_std::GovMsg);
     }
 
     #[test]
@@ -456,7 +456,7 @@ mod tests {
             code,
             r#"
             type A struct {
-                A [][][]*B `json:"a"`
+                A Array[Array[Array[*B]]] `json:"a"`
             }
             type B struct { }"#,
         );
@@ -470,7 +470,22 @@ mod tests {
             code,
             r#"
             type C struct {
-                C [][][]*string `json:"c"`
+                C Array[Array[Array[*string]]] `json:"c"`
+            }"#,
+        );
+
+        #[cw_serde]
+        struct D {
+            d: Option<Vec<String>>,
+            nested: Vec<Option<Vec<String>>>,
+        }
+        let code = generate_go(cosmwasm_schema::schema_for!(D)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type D struct {
+                D *[]string `json:"d,omitempty"`
+                Nested Array[*[]string] `json:"nested"`
             }"#,
         );
     }
@@ -544,6 +559,42 @@ mod tests {
             type A struct {
                 A Uint64 `json:"a"`
                 B *Uint64 `json:"b,omitempty"`
+            }
+            "#,
+        );
+    }
+
+    #[test]
+    fn serde_default_works() {
+        fn default_u32() -> u32 {
+            42
+        }
+        #[cw_serde]
+        #[derive(Default)]
+        struct Nested {
+            a: u32,
+        }
+        #[cw_serde]
+        struct A {
+            #[serde(default)]
+            payload: Binary,
+            #[serde(default = "default_u32")]
+            int: u32,
+            #[serde(default)]
+            nested: Nested,
+        }
+
+        let code = generate_go(cosmwasm_schema::schema_for!(A)).unwrap();
+        assert_code_eq(
+            code,
+            r#"
+            type A struct {
+                Int uint32 `json:"int,omitempty"`
+                Nested Nested `json:"nested,omitempty"`
+                Payload []byte `json:"payload,omitempty"`
+            }
+            type Nested struct {
+                A uint32 `json:"a"`
             }
             "#,
         );

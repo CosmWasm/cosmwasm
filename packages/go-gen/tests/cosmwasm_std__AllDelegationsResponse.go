@@ -1,6 +1,6 @@
 // AllDelegationsResponse is the expected response to AllDelegationsQuery
 type AllDelegationsResponse struct {
-	Delegations []Delegation `json:"delegations"` // in wasmvm, there is an alias for `[]Delegation`
+	Delegations Array[Delegation] `json:"delegations"`
 }
 
 // Coin is a string representation of the sdk.Coin type (more portable than sdk.Int)

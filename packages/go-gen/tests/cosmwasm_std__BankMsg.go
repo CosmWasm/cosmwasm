@@ -1,15 +1,15 @@
 // SendMsg contains instructions for a Cosmos-SDK/SendMsg
 // It has a fixed interface here and should be converted into the proper SDK format before dispatching
 type SendMsg struct {
-	Amount    []Coin `json:"amount"`
-	ToAddress string `json:"to_address"`
+	Amount    Array[Coin] `json:"amount"`
+	ToAddress string      `json:"to_address"`
 }
 
 // BurnMsg will burn the given coins from the contract's account.
 // There is no Cosmos SDK message that performs this, but it can be done by calling the bank keeper.
 // Important if a contract controls significant token supply that must be retired.
 type BurnMsg struct {
-	Amount []Coin `json:"amount"`
+	Amount Array[Coin] `json:"amount"`
 }
 
 type BankMsg struct {

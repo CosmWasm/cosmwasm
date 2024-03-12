@@ -5,7 +5,7 @@ use wasmer::NativeEngineExt;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
 use wasmer::{
-    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
+    sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::Metering;
 

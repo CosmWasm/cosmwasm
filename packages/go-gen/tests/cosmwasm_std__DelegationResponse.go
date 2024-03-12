@@ -10,9 +10,9 @@ type Coin struct {
 }
 
 type FullDelegation struct {
-	AccumulatedRewards []Coin `json:"accumulated_rewards"` // in wasmvm, there is an alias for `[]Coin`
-	Amount             Coin   `json:"amount"`
-	CanRedelegate      Coin   `json:"can_redelegate"`
-	Delegator          string `json:"delegator"`
-	Validator          string `json:"validator"`
+	AccumulatedRewards Array[Coin] `json:"accumulated_rewards"`
+	Amount             Coin        `json:"amount"`
+	CanRedelegate      Coin        `json:"can_redelegate"`
+	Delegator          string      `json:"delegator"`
+	Validator          string      `json:"validator"`
 }

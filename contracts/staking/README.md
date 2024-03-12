@@ -28,5 +28,5 @@ transferred to the owners account. (The ownership can also be transferred).
 
 You should check out [Developing](./Developing.md) to explain more on how to run
 tests and develop code. Or go through the
-[online tutorial](https://www.cosmwasm.com/docs/getting-started/intro) to get a
-better feel of how to develop.
+[online tutorial](https://book.cosmwasm.com/index.html) to get a better feel of
+how to develop.

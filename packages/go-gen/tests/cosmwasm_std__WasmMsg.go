@@ -10,7 +10,7 @@ type ExecuteMsg struct {
 	// the contract ID and instance ID. The sdk module should maintain a reverse lookup table.
 	ContractAddr string `json:"contract_addr"`
 	// Send is an optional amount of coins this contract sends to the called contract
-	Funds []Coin `json:"funds"`
+	Funds Array[Coin] `json:"funds"`
 	// Msg is assumed to be a json-encoded message, which will be passed directly
 	// as `userMsg` when calling `Handle` on the above-defined contract
 	Msg []byte `json:"msg"`
@@ -24,7 +24,7 @@ type InstantiateMsg struct {
 	// CodeID is the reference to the wasm byte code as used by the Cosmos-SDK
 	CodeID uint64 `json:"code_id"`
 	// Send is an optional amount of coins this contract sends to the called contract
-	Funds []Coin `json:"funds"`
+	Funds Array[Coin] `json:"funds"`
 	// Label is optional metadata to be stored with a contract instance.
 	Label string `json:"label"`
 	// Msg is assumed to be a json-encoded message, which will be passed directly
@@ -40,7 +40,7 @@ type Instantiate2Msg struct {
 	// CodeID is the reference to the wasm byte code as used by the Cosmos-SDK
 	CodeID uint64 `json:"code_id"`
 	// Send is an optional amount of coins this contract sends to the called contract
-	Funds []Coin `json:"funds"`
+	Funds Array[Coin] `json:"funds"`
 	// Label is optional metadata to be stored with a contract instance.
 	Label string `json:"label"`
 	// Msg is assumed to be a json-encoded message, which will be passed directly

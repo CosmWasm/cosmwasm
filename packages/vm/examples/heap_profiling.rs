@@ -1,7 +1,7 @@
 // Run with
-// cargo run --features dhat-heap --example memory --release
+// cargo run --features dhat-heap --example heap_profiling --release
 
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use tempfile::TempDir;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
@@ -12,12 +12,13 @@ use cosmwasm_vm::{
     Size,
 };
 
+use clap::{Arg, Command};
+
 #[cfg(feature = "dhat-heap")]
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;
 
 /// Number of seconds after which the test stops
-const END_AFTER: u64 = 2 * 60; // seconds
 const ROUNDS: usize = 1024;
 const ROUND_LEN: usize = 16;
 
@@ -100,12 +101,12 @@ fn contracts() -> Vec<Contract> {
 }
 
 #[allow(clippy::collapsible_else_if)]
-fn app() {
+fn app(runtime: u64) {
     let start_time = SystemTime::now();
 
     let options = CacheOptions::new(
         TempDir::new().unwrap().into_path(),
-        capabilities_from_csv("iterator,staking,stargate"),
+        capabilities_from_csv("iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0"),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
     );
@@ -129,11 +130,7 @@ fn app() {
     let cache: Cache<MockApi, MockStorage, MockQuerier> = unsafe { Cache::new(options).unwrap() };
     for round in 0..ROUNDS {
         for _ in 0..ROUND_LEN {
-            if SystemTime::now()
-                .duration_since(start_time)
-                .unwrap()
-                .as_secs()
-                > END_AFTER
+            if SystemTime::now().duration_since(start_time).unwrap() > Duration::from_secs(runtime)
             {
                 eprintln!("Round {round}. End time reached. Ending the process");
 
@@ -191,8 +188,22 @@ fn now_rfc3339() -> String {
 }
 
 pub fn main() {
+    let matches = Command::new("Heap profiling")
+        .version("0.0.0")
+        .arg(
+            Arg::new("runtime")
+                .long("runtime")
+                .help("Time in seconds how long the tests should be running")
+                .value_parser(clap::value_parser!(u64).range(1..10_000))
+                .default_value("30"),
+        )
+        .get_matches();
+    let runtime = matches
+        .get_one::<u64>("runtime")
+        .expect("Error parsing time argument");
+
     #[cfg(feature = "dhat-heap")]
     let _profiler = dhat::Profiler::new_heap();
 
-    app();
+    app(*runtime);
 }

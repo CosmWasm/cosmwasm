@@ -179,6 +179,20 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "description": "Does nothing. This can be used for baseline contract execution performance measurements.",
+        "type": "object",
+        "required": [
+          "noop"
+        ],
+        "properties": {
+          "noop": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ]
   },

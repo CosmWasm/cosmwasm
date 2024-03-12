@@ -73,6 +73,22 @@
     }
   ],
   "definitions": {
+    "AnyMsg": {
+      "description": "A message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto). This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)",
+      "type": "object",
+      "required": [
+        "type_url",
+        "value"
+      ],
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/Binary"
+        }
+      }
+    },
     "BankMsg": {
       "description": "The message types of the bank module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto",
       "oneOf": [
@@ -195,6 +211,18 @@
           "properties": {
             "distribution": {
               "$ref": "#/definitions/DistributionMsg"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "any"
+          ],
+          "properties": {
+            "any": {
+              "$ref": "#/definitions/AnyMsg"
             }
           },
           "additionalProperties": false
@@ -443,7 +471,7 @@
                   "type": "string"
                 },
                 "memo": {
-                  "description": "optional memo",
+                  "description": "optional memo This is only supported on CosmWasm 2.0 chains and ignored on older chains.",
                   "type": [
                     "string",
                     "null"
@@ -698,7 +726,7 @@
       ],
       "properties": {
         "gas_limit": {
-          "description": "Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).",
+          "description": "Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).\n\nSetting this to `None` means unlimited. Then the submessage execution can consume all gas of the current execution context.",
           "type": [
             "integer",
             "null"
@@ -714,6 +742,15 @@
         },
         "msg": {
           "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
+        },
+        "payload": {
+          "description": "Some arbirary data that the contract can set in an application specific way. This is just passed into the `reply` entry point and is not stored to state. Any encoding can be used. If `id` is used to identify a particular action, the encoding can also be different for each of those actions since you can match `id` first and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit is environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
+          "default": "",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            }
+          ]
         },
         "reply_on": {
           "$ref": "#/definitions/ReplyOn"

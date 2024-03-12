@@ -1,4 +1,4 @@
-use std::mem::MaybeUninit;
+use std::mem::{size_of, MaybeUninit};
 
 use wasmer::{ValueType, WasmPtr};
 
@@ -26,6 +26,37 @@ pub struct Region {
     pub length: u32,
 }
 
+/// Byte representation of a [Region] struct in Wasm memory.
+type RegionBytes = [u8; size_of::<Region>()];
+
+impl Region {
+    fn from_wasm_bytes(bytes: RegionBytes) -> Self {
+        let offset = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
+        let capacity = u32::from_le_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
+        let length = u32::from_le_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]);
+        Region {
+            offset,
+            capacity,
+            length,
+        }
+    }
+
+    fn into_wasm_bytes(self) -> RegionBytes {
+        let Region {
+            offset,
+            capacity,
+            length,
+        } = self;
+
+        let mut bytes = [0u8; 12];
+        // wasm is little endian
+        bytes[0..4].copy_from_slice(&offset.to_le_bytes());
+        bytes[4..8].copy_from_slice(&capacity.to_le_bytes());
+        bytes[8..12].copy_from_slice(&length.to_le_bytes());
+        bytes
+    }
+}
+
 unsafe impl ValueType for Region {
     fn zero_padding_bytes(&self, _bytes: &mut [MaybeUninit<u8>]) {
         // The size of Region is exactly 3x4=12 bytes with no padding.
@@ -33,6 +64,14 @@ unsafe impl ValueType for Region {
         // So we do not need to zero any bytes here.
     }
 }
+
+// Wasm is little endian, and we want to be able to just reinterpret slices of
+// wasm memory as a Region struct, so we only support little endian systems.
+// If we ever need to support big endian systems, we can use more fine-grained checks
+// in the places where we read/write the Region struct
+// (and possibly other interactions between Wasm and host).
+#[cfg(target_endian = "big")]
+compile_error!("big endian systems are not supported");
 
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
@@ -91,10 +130,10 @@ pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmRes
 
 /// Reads in a Region at offset in Wasm memory and returns a copy of it
 fn get_region(memory: &wasmer::MemoryView, offset: u32) -> CommunicationResult<Region> {
-    let wptr = WasmPtr::<Region>::new(offset);
-    let region = wptr.deref(memory).read().map_err(|_err| {
+    let wptr = WasmPtr::<RegionBytes>::new(offset);
+    let region = Region::from_wasm_bytes(wptr.deref(memory).read().map_err(|_err| {
         CommunicationError::deref_err(offset, "Could not dereference this pointer to a Region")
-    })?;
+    })?);
     validate_region(&region)?;
     Ok(region)
 }
@@ -122,10 +161,12 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
 
 /// Overrides a Region at offset in Wasm memory
 fn set_region(memory: &wasmer::MemoryView, offset: u32, data: Region) -> CommunicationResult<()> {
-    let wptr = WasmPtr::<Region>::new(offset);
-    wptr.deref(memory).write(data).map_err(|_err| {
-        CommunicationError::deref_err(offset, "Could not dereference this pointer to a Region")
-    })?;
+    let wptr = WasmPtr::<RegionBytes>::new(offset);
+    wptr.deref(memory)
+        .write(data.into_wasm_bytes())
+        .map_err(|_err| {
+            CommunicationError::deref_err(offset, "Could not dereference this pointer to a Region")
+        })?;
     Ok(())
 }
 
