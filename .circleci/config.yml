@@ -936,7 +936,7 @@ jobs:
       - run:
           name: Run vm benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
-          command: cargo bench --no-default-features -- --color never --save-baseline singlepass
+          command: cargo bench -- --color never --save-baseline singlepass
       - run:
           name: Run crypto benchmarks
           working_directory: ~/project/packages/crypto
