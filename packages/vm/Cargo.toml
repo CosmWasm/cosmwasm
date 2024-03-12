@@ -37,8 +37,8 @@ cosmwasm-std = { path = "../std", version = "2.0.0", default-features = false, f
 cosmwasm-crypto = { path = "../crypto", version = "2.0.0" }
 derivative = "2"
 hex = "0.4"
-schemars = "0.8.3"
-serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+schemars = { workspace = true }
+serde = { workspace = true }
 serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
@@ -53,6 +53,7 @@ dhat = { version = "0.3.3", optional = true }
 # to bump the min version of them.
 bytecheck = "0.6.3" # With this version the simdutf8 dependency became optional
 bitflags = "1.1.0"  # https://github.com/CensoredUsername/dynasm-rs/pull/74
+tracing = "0.1.32"
 
 # Wasmer git/local (used for quick local debugging or patching)
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["cranelift", "singlepass"] }

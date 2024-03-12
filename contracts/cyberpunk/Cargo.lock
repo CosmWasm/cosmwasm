@@ -307,6 +307,7 @@ dependencies = [
  "sha2 0.10.3",
  "strum",
  "thiserror",
+ "tracing",
  "wasmer",
  "wasmer-middlewares",
 ]
