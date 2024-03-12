@@ -257,7 +257,6 @@ name = "cosmwasm-vm"
 version = "2.0.0"
 dependencies = [
  "bech32",
- "bitflags 1.2.1",
  "bytes",
  "clru",
  "cosmwasm-crypto",

@@ -51,7 +51,6 @@ dhat = { version = "0.3.3", optional = true }
 
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
-bitflags = "1.1.0"  # https://github.com/CensoredUsername/dynasm-rs/pull/74
 tracing = "0.1.32"
 
 # Wasmer git/local (used for quick local debugging or patching)
