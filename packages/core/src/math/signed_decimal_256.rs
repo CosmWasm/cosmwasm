@@ -912,8 +912,9 @@ impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec};
+
     use alloc::vec::Vec;
+    use cosmwasm_std::{from_json, to_json_vec};
 
     fn dec(input: &str) -> SignedDecimal256 {
         SignedDecimal256::from_str(input).unwrap()

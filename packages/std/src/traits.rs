@@ -1,6 +1,5 @@
 use core::marker::PhantomData;
 use core::ops::Deref;
-use cosmwasm_core::{from_json, to_json_binary, to_json_vec, Binary};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::addresses::{Addr, CanonicalAddr};
@@ -28,6 +27,7 @@ use crate::query::{
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
+use crate::{from_json, to_json_binary, to_json_vec, Binary};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
 

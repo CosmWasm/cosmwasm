@@ -610,7 +610,9 @@ where
 mod tests {
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
     use crate::math::conversion::test_try_from_int_to_uint;
-    use crate::{from_json, to_json_vec, ConversionOverflowError, Decimal};
+    use crate::{ConversionOverflowError, Decimal};
+
+    use cosmwasm_std::{from_json, to_json_vec};
 
     use super::*;
 

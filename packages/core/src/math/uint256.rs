@@ -675,7 +675,9 @@ mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
     use crate::math::conversion::test_try_from_int_to_uint;
-    use crate::{from_json, to_json_vec, Decimal, Decimal256};
+    use crate::{Decimal, Decimal256};
+
+    use cosmwasm_std::{from_json, to_json_vec};
 
     #[test]
     fn size_of_works() {

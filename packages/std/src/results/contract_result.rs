@@ -89,10 +89,8 @@ impl<S> From<ContractResult<S>> for Result<S, String> {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_core::{CoreError, CoreResult};
-
     use super::*;
-    use crate::{from_json, to_json_vec, Response, StdError};
+    use crate::{from_json, to_json_vec, Response, StdError, StdResult};
 
     #[test]
     fn contract_result_serialization_works() {
@@ -133,20 +131,20 @@ mod tests {
         assert_eq!(result, ContractResult::Ok(5898));
 
         // fails for additional attributes
-        let parse: CoreResult<ContractResult<u64>> = from_json(br#"{"unrelated":321,"ok":4554}"#);
+        let parse: StdResult<ContractResult<u64>> = from_json(br#"{"unrelated":321,"ok":4554}"#);
         match parse.unwrap_err() {
-            CoreError::ParseErr { .. } => {}
+            StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
         }
-        let parse: CoreResult<ContractResult<u64>> = from_json(br#"{"ok":4554,"unrelated":321}"#);
+        let parse: StdResult<ContractResult<u64>> = from_json(br#"{"ok":4554,"unrelated":321}"#);
         match parse.unwrap_err() {
-            CoreError::ParseErr { .. } => {}
+            StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
         }
-        let parse: CoreResult<ContractResult<u64>> =
+        let parse: StdResult<ContractResult<u64>> =
             from_json(br#"{"ok":4554,"error":"What's up now?"}"#);
         match parse.unwrap_err() {
-            CoreError::ParseErr { .. } => {}
+            StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
         }
     }

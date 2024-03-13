@@ -648,7 +648,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, math::conversion::test_try_from_uint_to_int, to_json_vec};
+    use crate::math::conversion::test_try_from_uint_to_int;
+
+    use cosmwasm_std::{from_json, to_json_vec};
 
     #[test]
     fn size_of_works() {

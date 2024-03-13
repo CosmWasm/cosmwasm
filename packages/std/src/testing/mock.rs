@@ -7,7 +7,6 @@ use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
-use cosmwasm_core::{from_json, to_json_binary, Binary, Uint128};
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
@@ -40,6 +39,7 @@ use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
+use crate::{from_json, to_json_binary, Binary, Uint128};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
     query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},

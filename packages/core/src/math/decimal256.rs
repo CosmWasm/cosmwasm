@@ -787,8 +787,9 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
 mod tests {
     use super::*;
     use crate::errors::CoreError;
-    use crate::{from_json, to_json_vec};
+
     use alloc::vec::Vec;
+    use cosmwasm_std::{from_json, to_json_vec};
 
     fn dec(input: &str) -> Decimal256 {
         Decimal256::from_str(input).unwrap()
