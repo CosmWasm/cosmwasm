@@ -5,11 +5,11 @@ use core::ops::{
 };
 use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::prelude::*;
+use crate::errors::{
+    CoreError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
+};
 use crate::{forward_ref_partial_eq, Int128, Int256, Int64, Uint128, Uint256, Uint512, Uint64};
 
 /// Used internally - we don't want to leak this type since we might change
@@ -43,8 +43,9 @@ use super::num_consts::NumConsts;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int512(#[schemars(with = "String")] pub(crate) I512);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Int512(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) I512);
 
 forward_ref_partial_eq!(Int512, Int512);
 
@@ -428,7 +429,7 @@ impl From<Int256> for Int512 {
 }
 
 impl TryFrom<&str> for Int512 {
-    type Error = StdError;
+    type Error = CoreError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -436,12 +437,12 @@ impl TryFrom<&str> for Int512 {
 }
 
 impl FromStr for Int512 {
-    type Err = StdError;
+    type Err = CoreError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match I512::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int512: {e}"))),
+            Err(e) => Err(CoreError::generic_err(format!("Parsing Int512: {e}"))),
         }
     }
 }

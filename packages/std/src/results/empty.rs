@@ -16,7 +16,7 @@ pub struct Empty {}
 mod tests {
     use super::*;
 
-    use crate::serde::{from_json, to_json_vec};
+    use cosmwasm_core::{from_json, to_json_vec};
 
     #[test]
     fn empty_can_be_instantiated() {

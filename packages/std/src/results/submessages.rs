@@ -289,8 +289,10 @@ pub struct MsgResponse {
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
+    use cosmwasm_core::{CoreError, CoreResult};
+
     use super::*;
-    use crate::{coins, from_json, to_json_vec, Attribute, BankMsg, StdError, StdResult};
+    use crate::{coins, from_json, to_json_vec, Attribute, BankMsg, StdError};
 
     #[test]
     fn sub_msg_new_works() {
@@ -430,14 +432,14 @@ mod tests {
         assert_eq!(result, SubMsgResult::Err("broken".to_string()));
 
         // fails for additional attributes
-        let parse: StdResult<SubMsgResult> = from_json(br#"{"unrelated":321,"error":"broken"}"#);
+        let parse: CoreResult<SubMsgResult> = from_json(br#"{"unrelated":321,"error":"broken"}"#);
         match parse.unwrap_err() {
-            StdError::ParseErr { .. } => {}
+            CoreError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
         }
-        let parse: StdResult<SubMsgResult> = from_json(br#"{"error":"broken","unrelated":321}"#);
+        let parse: CoreResult<SubMsgResult> = from_json(br#"{"error":"broken","unrelated":321}"#);
         match parse.unwrap_err() {
-            StdError::ParseErr { .. } => {}
+            CoreError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
         }
     }

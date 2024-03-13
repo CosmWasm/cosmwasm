@@ -11,20 +11,17 @@ Builds without the std feature are currently not expected to work. If you need n
 
 mod addresses;
 mod assertions;
-mod binary;
 mod checksum;
 mod coin;
 mod coins;
 mod conversion;
 mod deps;
 mod errors;
-mod forward_ref;
 mod hex_binary;
 mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
-mod math;
 mod metadata;
 mod never;
 mod pagination;
@@ -32,7 +29,6 @@ mod panic;
 mod query;
 mod results;
 mod sections;
-mod serde;
 mod stdack;
 mod storage;
 mod timestamp;
@@ -48,7 +44,6 @@ pub(crate) mod prelude;
 pub mod storage_keys;
 
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
-pub use crate::binary::Binary;
 pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::coins::Coins;
@@ -69,11 +64,6 @@ pub use crate::ibc::{
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
-pub use crate::math::{
-    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
-    Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
-    SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
-};
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
@@ -97,11 +87,6 @@ pub use crate::results::{
 pub use crate::results::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use crate::results::{GovMsg, VoteOption};
-#[allow(deprecated)]
-pub use crate::serde::{
-    from_binary, from_json, from_slice, to_binary, to_json_binary, to_json_string, to_json_vec,
-    to_vec,
-};
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
@@ -134,4 +119,5 @@ pub mod testing;
 
 // Re-exports
 
+pub use cosmwasm_core::*;
 pub use cosmwasm_derive::entry_point;

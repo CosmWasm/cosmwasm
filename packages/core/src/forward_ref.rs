@@ -1,8 +1,11 @@
+/// # ⚠ THIS IS AN INTERNAL IMPLEMENTATION DETAIL. DO NOT USE.
+///
 /// Given an implementation of `T == U`, implements:
 /// - `&T == U`
 /// - `T == &U`
 ///
 /// We don't need to add `&T == &U` here because this is implemented automatically.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! forward_ref_partial_eq {
     ($t:ty, $u:ty) => {

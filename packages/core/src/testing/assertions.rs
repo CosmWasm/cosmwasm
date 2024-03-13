@@ -1,6 +1,6 @@
-use crate::prelude::*;
 use crate::{Decimal, Uint128};
-#[cfg(test)]
+
+#[cfg(any(test, feature = "testing"))]
 use core::hash::{Hash, Hasher};
 use core::str::FromStr as _;
 
@@ -33,7 +33,7 @@ macro_rules! assert_approx_eq {
 /// so once working pair is identified, the test’s going to continue
 /// passing.
 #[macro_export]
-#[cfg(test)]
+#[cfg(any(test, feature = "testing"))]
 macro_rules! assert_hash_works {
     ($left:expr, $right:expr $(,)?) => {{
         $crate::testing::assert_hash_works_impl($left, $right, None);
@@ -74,7 +74,7 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
 /// pair is identified, the test’s going to continue passing.
 #[track_caller]
 #[doc(hidden)]
-#[cfg(test)]
+#[cfg(any(test, feature = "testing"))]
 pub fn assert_hash_works_impl<T: Clone + Eq + Hash>(left: T, right: T, panic_msg: Option<String>) {
     fn hash(value: &impl Hash) -> u64 {
         let mut hasher = crc32fast::Hasher::default();

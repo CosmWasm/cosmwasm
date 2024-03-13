@@ -1,9 +1,10 @@
 use core::{fmt, str::FromStr};
+use cosmwasm_core::Uint128;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::errors::CoinFromStrError;
 use crate::prelude::*;
-use crate::{errors::CoinFromStrError, math::Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {

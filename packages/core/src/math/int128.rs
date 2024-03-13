@@ -5,11 +5,11 @@ use core::ops::{
 };
 use core::str::FromStr;
 use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::prelude::*;
+use crate::errors::{
+    CoreError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
+};
 use crate::{
     forward_ref_partial_eq, CheckedMultiplyRatioError, Int256, Int512, Int64, Uint128, Uint256,
     Uint512, Uint64,
@@ -31,8 +31,9 @@ use super::num_consts::NumConsts;
 /// let a = Int128::from(258i128);
 /// assert_eq!(a.i128(), 258);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int128(#[schemars(with = "String")] pub(crate) i128);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Int128(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) i128);
 
 forward_ref_partial_eq!(Int128, Int128);
 
@@ -356,7 +357,7 @@ impl From<i8> for Int128 {
 }
 
 impl TryFrom<&str> for Int128 {
-    type Error = StdError;
+    type Error = CoreError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -364,12 +365,12 @@ impl TryFrom<&str> for Int128 {
 }
 
 impl FromStr for Int128 {
-    type Err = StdError;
+    type Err = CoreError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<i128>() {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int128: {e}"))),
+            Err(e) => Err(CoreError::generic_err(format!("Parsing Int128: {e}"))),
         }
     }
 }
@@ -555,7 +556,7 @@ impl<'de> de::Visitor<'de> for Int128Visitor {
     where
         E: de::Error,
     {
-        Int128::try_from(v).map_err(|e| E::custom(format!("invalid Int128 '{v}' - {e}")))
+        Int128::try_from(v).map_err(|e| E::custom(format_args!("invalid Int128 '{v}' - {e}")))
     }
 }
 

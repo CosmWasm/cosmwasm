@@ -1,15 +1,14 @@
 use core::fmt;
+use cosmwasm_core::{to_json_binary, Binary};
 use derivative::Derivative;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
 use crate::prelude::*;
-use crate::serde::to_json_binary;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 use crate::Decimal;
 
