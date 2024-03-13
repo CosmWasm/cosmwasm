@@ -83,7 +83,6 @@ pub enum StdError {
     },
 }
 
-// Needs complex conversion to not break user expectations.. AAAAAAAAAAAAAAAAAAAAAAAAAAAA
 impl From<CoreError> for StdError {
     fn from(value: CoreError) -> Self {
         match value {
