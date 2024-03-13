@@ -176,12 +176,6 @@ checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
 
 [[package]]
 name = "base64"
-version = "0.21.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
-
-[[package]]
-name = "base64"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
@@ -233,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "bnum"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56953345e39537a3e18bdaeba4cb0c58a78c1f61f361dc0fa7c5c7340ae87c5f"
+checksum = "3e31ea183f6ee62ac8b8a8cf7feddd766317adfb13ff469de57ce033efd6a790"
 
 [[package]]
 name = "bstr"
@@ -430,7 +424,7 @@ dependencies = [
 name = "cosmwasm-core"
 version = "2.0.1"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "bnum",
  "crc32fast",
  "derive_more",
@@ -500,7 +494,7 @@ dependencies = [
 name = "cosmwasm-std"
 version = "2.0.1"
 dependencies = [
- "base64 0.22.0",
+ "base64",
  "bech32",
  "chrono",
  "cosmwasm-core",
