@@ -1,3 +1,4 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -29,7 +30,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `u128` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_std::Uint128;
+/// # use cosmwasm_core::Uint128;
 /// let a = Uint128::from(123u128);
 /// assert_eq!(a.u128(), 123);
 ///
@@ -140,7 +141,7 @@ impl Uint128 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Uint128;
+    /// use cosmwasm_core::Uint128;
     ///
     /// let a = Uint128::MAX;
     /// let result = a.full_mul(2u32);

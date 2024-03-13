@@ -1,3 +1,4 @@
+use alloc::string::{String, ToString};
 use derive_more::{Display, From};
 
 use super::backtrace::{impl_from_err, BT};

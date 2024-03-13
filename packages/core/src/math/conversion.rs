@@ -1,3 +1,6 @@
+#[allow(unused_imports)]
+use alloc::string::String;
+
 /// Grows a big endian signed integer to a bigger size.
 /// See <https://en.wikipedia.org/wiki/Sign_extension>
 pub const fn grow_be_int<const INPUT_SIZE: usize, const OUTPUT_SIZE: usize>(
@@ -195,7 +198,7 @@ where
         + core::cmp::PartialEq
         + core::fmt::Debug,
     String: From<I>,
-    <I as std::convert::TryFrom<O>>::Error: std::fmt::Debug,
+    <I as core::convert::TryFrom<O>>::Error: core::fmt::Debug,
 {
     if core::mem::size_of::<I>() <= core::mem::size_of::<O>() {
         // if the input type is smaller than the output type, then `I::MAX` should fit into `O`

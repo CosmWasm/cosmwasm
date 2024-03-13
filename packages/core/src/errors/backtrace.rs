@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use core::fmt::{Debug, Display, Formatter, Result};
 
 /// This wraps an actual backtrace to achieve two things:

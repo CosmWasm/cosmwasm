@@ -1,3 +1,4 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -26,7 +27,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `u64` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_std::Uint64;
+/// # use cosmwasm_core::Uint64;
 /// let a = Uint64::from(42u64);
 /// assert_eq!(a.u64(), 42);
 ///
@@ -134,7 +135,7 @@ impl Uint64 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Uint64;
+    /// use cosmwasm_core::Uint64;
     ///
     /// let a = Uint64::MAX;
     /// let result = a.full_mul(2u32);
@@ -576,6 +577,7 @@ mod tests {
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
     use crate::math::conversion::test_try_from_int_to_uint;
     use crate::{from_json, to_json_vec, ConversionOverflowError};
+    use alloc::string::ToString;
 
     #[test]
     fn size_of_works() {

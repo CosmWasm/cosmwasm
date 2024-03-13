@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
@@ -75,7 +76,7 @@ impl Decimal {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_std::Decimal;
+    /// # use cosmwasm_core::Decimal;
     /// const HALF: Decimal = Decimal::percent(50);
     ///
     /// assert_eq!(HALF, Decimal::from_str("0.5").unwrap());
@@ -92,7 +93,7 @@ impl Decimal {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_std::Decimal;
+    /// # use cosmwasm_core::Decimal;
     /// const HALF: Decimal = Decimal::permille(500);
     ///
     /// assert_eq!(HALF, Decimal::from_str("0.5").unwrap());
@@ -109,7 +110,7 @@ impl Decimal {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_std::Decimal;
+    /// # use cosmwasm_core::Decimal;
     /// const TWO_BPS: Decimal = Decimal::bps(2);
     /// const HALF: Decimal = Decimal::bps(5000);
     ///
@@ -133,7 +134,7 @@ impl Decimal {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Decimal, Uint128};
+    /// # use cosmwasm_core::{Decimal, Uint128};
     /// let a = Decimal::from_atomics(Uint128::new(1234), 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
@@ -215,7 +216,7 @@ impl Decimal {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Decimal, Uint128};
+    /// # use cosmwasm_core::{Decimal, Uint128};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = Decimal::from_str("1.234").unwrap();
@@ -419,7 +420,7 @@ impl Decimal {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{Decimal, Uint128};
+    /// use cosmwasm_core::{Decimal, Uint128};
     ///
     /// let d = Decimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint128::new(12));
@@ -442,7 +443,7 @@ impl Decimal {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{Decimal, Uint128};
+    /// use cosmwasm_core::{Decimal, Uint128};
     ///
     /// let d = Decimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint128::new(13));
@@ -786,6 +787,7 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
 mod tests {
     use super::*;
     use crate::{from_json, to_json_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal {
         Decimal::from_str(input).unwrap()

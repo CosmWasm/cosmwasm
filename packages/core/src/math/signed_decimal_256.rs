@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{
@@ -54,7 +55,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// assert_eq!(
     ///     SignedDecimal256::MAX.to_string(),
     ///     "57896044618658097711785492504343953926634992332820282019728.792003956564819967"
@@ -67,7 +68,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// assert_eq!(
     ///     SignedDecimal256::MIN.to_string(),
     ///     "-57896044618658097711785492504343953926634992332820282019728.792003956564819968"
@@ -81,7 +82,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{SignedDecimal256, Int256};
+    /// # use cosmwasm_core::{SignedDecimal256, Int256};
     /// assert_eq!(SignedDecimal256::new(Int256::one()).to_string(), "0.000000000000000001");
     /// ```
     pub const fn new(value: Int256) -> Self {
@@ -94,7 +95,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// assert_eq!(SignedDecimal256::raw(1234i128).to_string(), "0.000000000000001234");
     /// ```
     pub const fn raw(value: i128) -> Self {
@@ -146,7 +147,7 @@ impl SignedDecimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{SignedDecimal256, Int256};
+    /// # use cosmwasm_core::{SignedDecimal256, Int256};
     /// let a = SignedDecimal256::from_atomics(Int256::from(1234), 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
@@ -195,7 +196,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// assert_eq!(
     ///     SignedDecimal256::from_ratio(1, 3).to_string(),
     ///     "0.333333333333333333"
@@ -216,7 +217,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{SignedDecimal256, CheckedFromRatioError};
+    /// # use cosmwasm_core::{SignedDecimal256, CheckedFromRatioError};
     /// assert_eq!(
     ///     SignedDecimal256::checked_from_ratio(1, 3).unwrap().to_string(),
     ///     "0.333333333333333333"
@@ -262,7 +263,7 @@ impl SignedDecimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{SignedDecimal256, Int256};
+    /// # use cosmwasm_core::{SignedDecimal256, Int256};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = SignedDecimal256::from_str("1.234").unwrap();
@@ -295,7 +296,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// # use core::str::FromStr;
     /// assert!(SignedDecimal256::from_str("0.6").unwrap().trunc().is_zero());
     /// assert_eq!(SignedDecimal256::from_str("-5.8").unwrap().trunc().to_string(), "-5");
@@ -310,7 +311,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// # use core::str::FromStr;
     /// assert!(SignedDecimal256::from_str("0.6").unwrap().floor().is_zero());
     /// assert_eq!(SignedDecimal256::from_str("-5.2").unwrap().floor().to_string(), "-6");
@@ -345,7 +346,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::SignedDecimal256;
+    /// # use cosmwasm_core::SignedDecimal256;
     /// # use core::str::FromStr;
     /// assert_eq!(SignedDecimal256::from_str("0.2").unwrap().ceil(), SignedDecimal256::one());
     /// assert_eq!(SignedDecimal256::from_str("-5.8").unwrap().ceil().to_string(), "-5");
@@ -499,7 +500,7 @@ impl SignedDecimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{SignedDecimal256, Int256};
+    /// use cosmwasm_core::{SignedDecimal256, Int256};
     ///
     /// let d = SignedDecimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_floor(), Int256::from(12));
@@ -531,7 +532,7 @@ impl SignedDecimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{SignedDecimal256, Int256};
+    /// use cosmwasm_core::{SignedDecimal256, Int256};
     ///
     /// let d = SignedDecimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_trunc(), Int256::from(12));
@@ -554,7 +555,7 @@ impl SignedDecimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{SignedDecimal256, Int256};
+    /// use cosmwasm_core::{SignedDecimal256, Int256};
     ///
     /// let d = SignedDecimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int256::from(13));
@@ -912,6 +913,7 @@ impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
 mod tests {
     use super::*;
     use crate::{from_json, to_json_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> SignedDecimal256 {
         SignedDecimal256::from_str(input).unwrap()
@@ -3247,7 +3249,7 @@ mod tests {
 
         // invalid: not a string encoded decimal
         assert_eq!(
-            "invalid type: integer `123`, expected string-encoded decimal at line 1 column 3",
+            "Invalid type",
             serde_json_wasm::from_str::<SignedDecimal256>("123")
                 .err()
                 .unwrap()
@@ -3256,7 +3258,7 @@ mod tests {
 
         // invalid: not properly defined signed decimal value
         assert_eq!(
-            "Error parsing decimal '1.e': Generic error: Error parsing fractional at line 1 column 5",
+            "Error parsing decimal '1.e': Generic error: Error parsing fractional",
             serde_json_wasm::from_str::<SignedDecimal256>(r#""1.e""#)
                 .err()
                 .unwrap()

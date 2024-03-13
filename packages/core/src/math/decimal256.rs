@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
@@ -78,7 +79,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_std::Decimal256;
+    /// # use cosmwasm_core::Decimal256;
     /// const HALF: Decimal256 = Decimal256::percent(50);
     ///
     /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
@@ -95,7 +96,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_std::Decimal256;
+    /// # use cosmwasm_core::Decimal256;
     /// const HALF: Decimal256 = Decimal256::permille(500);
     ///
     /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
@@ -112,7 +113,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_std::Decimal256;
+    /// # use cosmwasm_core::Decimal256;
     /// const TWO_BPS: Decimal256 = Decimal256::bps(2);
     /// const HALF: Decimal256 = Decimal256::bps(5000);
     ///
@@ -136,7 +137,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Decimal256, Uint256};
+    /// # use cosmwasm_core::{Decimal256, Uint256};
     /// let a = Decimal256::from_atomics(1234u64, 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
@@ -224,7 +225,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Decimal256, Uint256};
+    /// # use cosmwasm_core::{Decimal256, Uint256};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = Decimal256::from_str("1.234").unwrap();
@@ -432,7 +433,7 @@ impl Decimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{Decimal256, Uint256};
+    /// use cosmwasm_core::{Decimal256, Uint256};
     ///
     /// let d = Decimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint256::from(12u64));
@@ -455,7 +456,7 @@ impl Decimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_std::{Decimal256, Uint256};
+    /// use cosmwasm_core::{Decimal256, Uint256};
     ///
     /// let d = Decimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint256::from(13u64));
@@ -787,6 +788,7 @@ mod tests {
     use super::*;
     use crate::errors::CoreError;
     use crate::{from_json, to_json_vec};
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal256 {
         Decimal256::from_str(input).unwrap()
