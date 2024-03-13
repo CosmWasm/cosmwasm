@@ -1,3 +1,4 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -33,7 +34,7 @@ use super::num_consts::NumConsts;
 /// endian bytes:
 ///
 /// ```
-/// # use cosmwasm_std::Uint256;
+/// # use cosmwasm_core::Uint256;
 /// let a = Uint256::from(258u128);
 /// let b = Uint256::new([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -212,7 +213,7 @@ impl Uint256 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Uint256;
+    /// use cosmwasm_core::Uint256;
     ///
     /// let a = Uint256::MAX;
     /// let result = a.full_mul(2u32);

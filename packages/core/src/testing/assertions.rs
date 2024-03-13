@@ -1,5 +1,6 @@
 use crate::{Decimal, Uint128};
 
+use alloc::string::String;
 #[cfg(any(test, feature = "testing"))]
 use core::hash::{Hash, Hasher};
 use core::str::FromStr as _;
@@ -43,7 +44,7 @@ macro_rules! assert_hash_works {
     }};
 }
 
-/// Implementation for the [`cosmwasm_std::assert_approx_eq`] macro. This does not provide any
+/// Implementation for the [`cosmwasm_core::assert_approx_eq`] macro. This does not provide any
 /// stability guarantees and may change any time.
 #[track_caller]
 #[doc(hidden)]

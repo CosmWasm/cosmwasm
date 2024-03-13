@@ -1,3 +1,4 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -32,7 +33,7 @@ use super::num_consts::NumConsts;
 /// endian bytes:
 ///
 /// ```
-/// # use cosmwasm_std::Int256;
+/// # use cosmwasm_core::Int256;
 /// let a = Int256::from(258u128);
 /// let b = Int256::new([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -184,7 +185,7 @@ impl Int256 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Int256;
+    /// use cosmwasm_core::Int256;
     ///
     /// let a = Int256::MAX;
     /// let result = a.full_mul(2i32);

@@ -1,3 +1,4 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
@@ -27,7 +28,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `i64` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_std::Int64;
+/// # use cosmwasm_core::Int64;
 /// let a = Int64::from(258i64);
 /// assert_eq!(a.i64(), 258);
 /// ```
@@ -129,7 +130,7 @@ impl Int64 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_std::Int64;
+    /// use cosmwasm_core::Int64;
     ///
     /// let a = Int64::MAX;
     /// let result = a.full_mul(2i32);

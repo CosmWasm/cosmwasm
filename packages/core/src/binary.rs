@@ -1,3 +1,4 @@
+use alloc::{string::String, vec::Vec};
 use core::fmt;
 use core::ops::Deref;
 
@@ -57,7 +58,7 @@ impl Binary {
     /// Copy to array of explicit length
     ///
     /// ```
-    /// # use cosmwasm_std::Binary;
+    /// # use cosmwasm_core::Binary;
     /// let binary = Binary::from(&[0xfb, 0x1f, 0x37]);
     /// let array: [u8; 3] = binary.to_array().unwrap();
     /// assert_eq!(array, [0xfb, 0x1f, 0x37]);
@@ -66,7 +67,7 @@ impl Binary {
     /// Copy to integer
     ///
     /// ```
-    /// # use cosmwasm_std::Binary;
+    /// # use cosmwasm_core::Binary;
     /// let binary = Binary::from(&[0x8b, 0x67, 0x64, 0x84, 0xb5, 0xfb, 0x1f, 0x37]);
     /// let num = u64::from_be_bytes(binary.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
