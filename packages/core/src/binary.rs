@@ -259,7 +259,8 @@ mod tests {
     use super::*;
     use crate::assert_hash_works;
     use crate::errors::CoreError;
-    use crate::serde::{from_json, to_json_vec};
+
+    use cosmwasm_std::{from_json, to_json_vec};
 
     #[test]
     fn to_array_works() {

@@ -11,7 +11,6 @@ mod binary;
 mod errors;
 mod forward_ref;
 mod math;
-mod serde;
 
 #[doc(hidden)]
 pub mod __internal;
@@ -26,11 +25,6 @@ pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
     Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
     SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
-};
-#[allow(deprecated)]
-pub use crate::serde::{
-    from_binary, from_json, from_slice, to_binary, to_json_binary, to_json_string, to_json_vec,
-    to_vec,
 };
 
 /// Exposed for testing only

@@ -29,6 +29,7 @@ mod panic;
 mod query;
 mod results;
 mod sections;
+mod serde;
 mod stdack;
 mod storage;
 mod timestamp;
@@ -87,6 +88,11 @@ pub use crate::results::{
 pub use crate::results::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use crate::results::{GovMsg, VoteOption};
+#[allow(deprecated)]
+pub use crate::serde::{
+    from_binary, from_json, from_slice, to_binary, to_json_binary, to_json_string, to_json_vec,
+    to_vec,
+};
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;

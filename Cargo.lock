@@ -417,6 +417,7 @@ version = "2.0.0"
 dependencies = [
  "base64",
  "bnum",
+ "cosmwasm-std",
  "crc32fast",
  "derive_more",
  "forward_ref",

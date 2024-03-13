@@ -7,29 +7,29 @@ use alloc::{string::String, vec::Vec};
 use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::binary::Binary;
-use crate::errors::{CoreError, CoreResult};
+use crate::errors::{StdError, StdResult};
+use crate::Binary;
 
 #[deprecated = "use from_json instead"]
-pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> CoreResult<T> {
+pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
     from_json(value)
 }
 
 #[deprecated = "use from_json instead"]
-pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> CoreResult<T> {
+pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
     from_json(value)
 }
 
 /// Deserializes the given JSON bytes to a data structure.
 ///
 /// Errors if the input is not valid JSON or cannot be deserialized to the given type.
-pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> CoreResult<T> {
+pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> StdResult<T> {
     serde_json_wasm::from_slice(value.as_ref())
-        .map_err(|e| CoreError::parse_err(type_name::<T>(), e))
+        .map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
 #[deprecated = "use to_json_vec instead"]
-pub fn to_vec<T>(data: &T) -> CoreResult<Vec<u8>>
+pub fn to_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
@@ -37,7 +37,7 @@ where
 }
 
 #[deprecated = "use to_json_binary instead"]
-pub fn to_binary<T>(data: &T) -> CoreResult<Binary>
+pub fn to_binary<T>(data: &T) -> StdResult<Binary>
 where
     T: Serialize + ?Sized,
 {
@@ -45,23 +45,23 @@ where
 }
 
 /// Serializes the given data structure as a JSON byte vector.
-pub fn to_json_vec<T>(data: &T) -> CoreResult<Vec<u8>>
+pub fn to_json_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_vec(data).map_err(|e| CoreError::serialize_err(type_name::<T>(), e))
+    serde_json_wasm::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as a JSON string.
-pub fn to_json_string<T>(data: &T) -> CoreResult<String>
+pub fn to_json_string<T>(data: &T) -> StdResult<String>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_string(data).map_err(|e| CoreError::serialize_err(type_name::<T>(), e))
+    serde_json_wasm::to_string(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as JSON bytes.
-pub fn to_json_binary<T>(data: &T) -> CoreResult<Binary>
+pub fn to_json_binary<T>(data: &T) -> StdResult<Binary>
 where
     T: Serialize + ?Sized,
 {
