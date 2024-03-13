@@ -3,7 +3,6 @@
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
 
-use alloc::{string::String, vec::Vec};
 use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -71,7 +70,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloc::string::ToString;
     use serde::Deserialize;
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
