@@ -1,7 +1,5 @@
 use core::fmt::{Debug, Display, Formatter, Result};
 
-use crate::prelude::*;
-
 /// This wraps an actual backtrace to achieve two things:
 /// - being able to fill this with a stub implementation in `no_std` environments
 /// - being able to use this in conjunction with [`thiserror::Error`]
@@ -59,19 +57,21 @@ impl Display for Stub {
 /// the target error has a `backtrace` field.
 /// This is meant as a replacement for `thiserror`'s `#[from]` attribute, which does not
 /// work with our custom backtrace wrapper.
-macro_rules! impl_from_err {
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __internal__impl_from_err {
     ($from:ty, $to:ty, $map:path) => {
         impl From<$from> for $to {
             fn from(err: $from) -> Self {
                 $map {
                     source: err,
-                    backtrace: $crate::errors::backtrace::BT::capture(),
+                    backtrace: $crate::__internal::backtrace::BT::capture(),
                 }
             }
         }
     };
 }
-pub(crate) use impl_from_err;
+pub use __internal__impl_from_err as impl_from_err;
 
 #[cfg(test)]
 mod tests {

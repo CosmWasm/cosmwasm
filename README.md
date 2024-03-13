@@ -13,6 +13,7 @@ The following packages are maintained here:
 | cosmwasm-crypto | Internal only        | [![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto) | [![Docs](https://docs.rs/cosmwasm-crypto/badge.svg)](https://docs.rs/cosmwasm-crypto) | [![Coverage][cov-badge-crypto]][cov-link-crypto] |
 | cosmwasm-derive | Internal only        | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive) | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive) | [![Coverage][cov-badge-derive]][cov-link-derive] |
 | cosmwasm-schema | Contract development | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema) | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema) | [![Coverage][cov-badge-schema]][cov-link-schema] |
+| cosmwasm-core   | Contract development | [![cosmwasm-core on crates.io](https://img.shields.io/crates/v/cosmwasm-core.svg)](https://crates.io/crates/cosmwasm-core)       | [![Docs](https://docs.rs/cosmwasm-core/badge.svg)](https://docs.rs/cosmwasm-core)       | [![Coverage][cov-badge-core]][cov-link-core]       |
 | cosmwasm-std    | Contract development | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)          | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)       | [![Coverage][cov-badge-std]][cov-link-std]       |
 | cosmwasm-vm     | Host environments    | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)             | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)         | [![Coverage][cov-badge-vm]][cov-link-vm]         |
 | cosmwasm-check  | Contract development | [![cosmwasm-check on crates.io](https://img.shields.io/crates/v/cosmwasm-check.svg)](https://crates.io/crates/cosmwasm-check)    | `cosmwasm-check -h`                                                                   | N/A                                              |
@@ -27,6 +28,8 @@ maintained and has been dropped in favor of
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-derive
 [cov-badge-schema]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-schema
+[cov-badge-core]:
+  https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-core
 [cov-badge-std]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-std
 [cov-badge-vm]:
@@ -37,6 +40,7 @@ maintained and has been dropped in favor of
   https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/derive
 [cov-link-schema]:
   https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/schema
+[cov-link-core]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/core
 [cov-link-std]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/std
 [cov-link-vm]: https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/vm
 

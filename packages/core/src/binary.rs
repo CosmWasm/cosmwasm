@@ -2,19 +2,18 @@ use core::fmt;
 use core::ops::Deref;
 
 use base64::engine::{Engine, GeneralPurpose};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{StdError, StdResult};
-use crate::prelude::*;
+use crate::errors::{CoreError, CoreResult};
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
-pub struct Binary(#[schemars(with = "String")] Vec<u8>);
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Binary(#[cfg_attr(feature = "std", schemars(with = "String"))] Vec<u8>);
 
 impl Binary {
     /// Base64 encoding engine used in conversion to/from base64.
@@ -34,11 +33,11 @@ impl Binary {
 
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
-    pub fn from_base64(encoded: &str) -> StdResult<Self> {
+    pub fn from_base64(encoded: &str) -> CoreResult<Self> {
         Self::B64_ENGINE
             .decode(encoded.as_bytes())
             .map(Binary::from)
-            .map_err(StdError::invalid_base64)
+            .map_err(CoreError::invalid_base64)
     }
 
     /// encode to base64 string (guaranteed to be success as we control the data inside).
@@ -72,9 +71,9 @@ impl Binary {
     /// let num = u64::from_be_bytes(binary.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
     /// ```
-    pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
+    pub fn to_array<const LENGTH: usize>(&self) -> CoreResult<[u8; LENGTH]> {
         if self.len() != LENGTH {
-            return Err(StdError::invalid_data_size(LENGTH, self.len()));
+            return Err(CoreError::invalid_data_size(LENGTH, self.len()));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];
@@ -249,7 +248,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     {
         match Binary::from_base64(v) {
             Ok(binary) => Ok(binary),
-            Err(_) => Err(E::custom(format!("invalid base64: {v}"))),
+            Err(_) => Err(E::custom(format_args!("invalid base64: {v}"))),
         }
     }
 }
@@ -258,6 +257,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 mod tests {
     use super::*;
     use crate::assert_hash_works;
+    use crate::errors::CoreError;
     use crate::serde::{from_json, to_json_vec};
 
     #[test]
@@ -276,7 +276,7 @@ mod tests {
         let binary = Binary::from(&[1, 2, 3]);
         let error = binary.to_array::<8>().unwrap_err();
         match error {
-            StdError::InvalidDataSize {
+            CoreError::InvalidDataSize {
                 expected, actual, ..
             } => {
                 assert_eq!(expected, 8);
@@ -331,11 +331,11 @@ mod tests {
     #[test]
     fn test_base64_encoding_error() {
         for (invalid_base64, want) in [
-            ("cm%uZG9taVo", "Invalid symbol 37, offset 2."),
-            ("cmFuZ", "Invalid input length: 5"),
+            ("cm%uZG9taVo", "Invalid byte 37, offset 2."),
+            ("cmFuZ", "Encoded text cannot have a 6-bit remainder."),
         ] {
             match Binary::from_base64(invalid_base64) {
-                Err(StdError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
+                Err(CoreError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
                 result => panic!("Unexpected result: {result:?}"),
             }
         }

@@ -7,13 +7,13 @@ use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
+use cosmwasm_core::{from_json, to_json_binary, Binary, Uint128};
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::addresses::{Addr, CanonicalAddr};
-use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::deps::OwnedDeps;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
@@ -23,7 +23,6 @@ use crate::ibc::{
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
-use crate::math::Uint128;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -37,7 +36,6 @@ use crate::query::{
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::serde::{from_json, to_json_binary};
 use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};

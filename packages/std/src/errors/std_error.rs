@@ -1,6 +1,5 @@
-use core::fmt;
-
 use super::{impl_from_err, BT};
+use cosmwasm_core::{ConversionOverflowError, CoreError, DivideByZeroError, OverflowError};
 use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
@@ -23,6 +22,8 @@ use crate::prelude::*;
 /// - Add creator function in std_error_helpers.rs
 #[derive(Error, Debug)]
 pub enum StdError {
+    #[error("Core error: {source}")]
+    CoreErr { source: CoreError, backtrace: BT },
     #[error("Verification error: {source}")]
     VerificationErr {
         source: VerificationError,
@@ -80,6 +81,51 @@ pub enum StdError {
         source: ConversionOverflowError,
         backtrace: BT,
     },
+}
+
+// Needs complex conversion to not break user expectations.. AAAAAAAAAAAAAAAAAAAAAAAAAAAA
+impl From<CoreError> for StdError {
+    fn from(value: CoreError) -> Self {
+        match value {
+            CoreError::ConversionOverflow { source, backtrace } => {
+                Self::ConversionOverflow { source, backtrace }
+            }
+            CoreError::GenericErr { msg, backtrace } => Self::GenericErr { msg, backtrace },
+            CoreError::InvalidBase64 { msg, backtrace } => Self::InvalidBase64 { msg, backtrace },
+            CoreError::InvalidDataSize {
+                expected,
+                actual,
+                backtrace,
+            } => Self::InvalidDataSize {
+                expected,
+                actual,
+                backtrace,
+            },
+            CoreError::ParseErr {
+                target_type,
+                msg,
+                backtrace,
+            } => Self::ParseErr {
+                target_type,
+                msg,
+                backtrace,
+            },
+            CoreError::SerializeErr {
+                source_type,
+                msg,
+                backtrace,
+            } => Self::SerializeErr {
+                source_type,
+                msg,
+                backtrace,
+            },
+            CoreError::Overflow { source, backtrace } => Self::Overflow { source, backtrace },
+            CoreError::DivideByZero { source, backtrace } => {
+                Self::DivideByZero { source, backtrace }
+            }
+            _ => todo!(),
+        }
+    }
 }
 
 impl_from_err!(
@@ -181,6 +227,20 @@ impl StdError {
 impl PartialEq<StdError> for StdError {
     fn eq(&self, rhs: &StdError) -> bool {
         match self {
+            StdError::CoreErr {
+                source,
+                backtrace: _,
+            } => {
+                if let StdError::CoreErr {
+                    source: rhs_source,
+                    backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
             StdError::VerificationErr {
                 source,
                 backtrace: _,
@@ -402,113 +462,6 @@ impl From<DivideByZeroError> for StdError {
 pub type StdResult<T> = core::result::Result<T, StdError>;
 
 #[derive(Error, Debug, PartialEq, Eq)]
-pub enum OverflowOperation {
-    Add,
-    Sub,
-    Mul,
-    Pow,
-    Shr,
-    Shl,
-}
-
-impl fmt::Display for OverflowOperation {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Cannot {operation} with given operands")]
-pub struct OverflowError {
-    pub operation: OverflowOperation,
-}
-
-impl OverflowError {
-    pub fn new(operation: OverflowOperation) -> Self {
-        Self { operation }
-    }
-}
-
-/// The error returned by [`TryFrom`] conversions that overflow, for example
-/// when converting from [`Uint256`] to [`Uint128`].
-///
-/// [`TryFrom`]: core::convert::TryFrom
-/// [`Uint256`]: crate::Uint256
-/// [`Uint128`]: crate::Uint128
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Error converting {source_type} to {target_type}")]
-pub struct ConversionOverflowError {
-    pub source_type: &'static str,
-    pub target_type: &'static str,
-}
-
-impl ConversionOverflowError {
-    pub fn new(source_type: &'static str, target_type: &'static str) -> Self {
-        Self {
-            source_type,
-            target_type,
-        }
-    }
-}
-
-#[derive(Error, Debug, Default, PartialEq, Eq)]
-#[error("Cannot divide by zero")]
-pub struct DivideByZeroError;
-
-impl DivideByZeroError {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-#[derive(Error, Debug, PartialEq, Eq)]
-pub enum DivisionError {
-    #[error("Divide by zero")]
-    DivideByZero,
-
-    #[error("Overflow in division")]
-    Overflow,
-}
-
-#[derive(Error, Debug, PartialEq, Eq)]
-pub enum CheckedMultiplyFractionError {
-    #[error("{0}")]
-    DivideByZero(#[from] DivideByZeroError),
-
-    #[error("{0}")]
-    ConversionOverflow(#[from] ConversionOverflowError),
-
-    #[error("{0}")]
-    Overflow(#[from] OverflowError),
-}
-
-#[derive(Error, Debug, PartialEq, Eq)]
-pub enum CheckedMultiplyRatioError {
-    #[error("Denominator must not be zero")]
-    DivideByZero,
-
-    #[error("Multiplication overflow")]
-    Overflow,
-}
-
-#[derive(Error, Debug, PartialEq, Eq)]
-pub enum CheckedFromRatioError {
-    #[error("Denominator must not be zero")]
-    DivideByZero,
-
-    #[error("Overflow")]
-    Overflow,
-}
-
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Round up operation failed because of overflow")]
-pub struct RoundUpOverflowError;
-
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Round down operation failed because of overflow")]
-pub struct RoundDownOverflowError;
-
-#[derive(Error, Debug, PartialEq, Eq)]
 pub enum CoinsError {
     #[error("Duplicate denom")]
     DuplicateDenom,
@@ -546,6 +499,7 @@ impl From<CoinFromStrError> for StdError {
 mod tests {
     use super::*;
     use core::str;
+    use cosmwasm_core::OverflowOperation;
 
     // constructors
 

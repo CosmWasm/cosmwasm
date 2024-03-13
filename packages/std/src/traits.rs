@@ -1,9 +1,9 @@
 use core::marker::PhantomData;
 use core::ops::Deref;
+use cosmwasm_core::{from_json, to_json_binary, to_json_vec, Binary};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::addresses::{Addr, CanonicalAddr};
-use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
@@ -27,7 +27,6 @@ use crate::query::{
     DistributionQuery,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::serde::{from_json, to_json_binary, to_json_vec};
 use crate::ContractInfoResponse;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
@@ -279,7 +278,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
                 format!("Querier contract error: {contract_err}"),
             )),
-            SystemResult::Ok(ContractResult::Ok(value)) => from_json(value),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_json(value).map_err(Into::into),
         }
     }
 

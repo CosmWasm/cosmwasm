@@ -1,6 +1,7 @@
 use alloc::borrow::Cow;
 use core::fmt;
 use core::ops::Deref;
+use cosmwasm_core::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{
@@ -10,7 +11,7 @@ use sha2::{
 use thiserror::Error;
 
 use crate::prelude::*;
-use crate::{binary::Binary, forward_ref_partial_eq, HexBinary};
+use crate::{forward_ref_partial_eq, HexBinary};
 
 /// A human readable address.
 ///
@@ -360,7 +361,8 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::assert_hash_works;
+    use crate::HexBinary;
+    use cosmwasm_core::assert_hash_works;
     use hex_literal::hex;
 
     #[test]
