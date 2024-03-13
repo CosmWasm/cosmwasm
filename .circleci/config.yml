@@ -305,6 +305,9 @@ jobs:
           keys:
             - cargocache-v2-package_core-rust:1.73-{{ checksum "Cargo.lock" }}
       - run:
+          name: Add thumbv7em-none-eabi target
+          command: rustup target add thumbv7em-none-eabi && rustup target list --installed
+      - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
@@ -315,6 +318,10 @@ jobs:
           name: Build library for wasm target (no features)
           working_directory: ~/project/packages/core
           command: cargo wasm --locked --no-default-features
+      - run:
+          name: Build library for no_std target (no features)
+          working_directory: ~/project/packages/core
+          command: cargo no-std --locked --no-default-features
       - run:
           name: Run unit tests (no features)
           working_directory: ~/project/packages/core
