@@ -746,8 +746,9 @@ impl FunctionMiddleware for FunctionGatekeeper {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::wasm_backend::make_compiler_config;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Cranelift, Module, Store};
+    use wasmer::{CompilerConfig, Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {
@@ -764,7 +765,7 @@ mod tests {
         .unwrap();
 
         let deterministic = Arc::new(Gatekeeper::default());
-        let mut compiler = Cranelift::default();
+        let mut compiler = make_compiler_config();
         compiler.push_middleware(deterministic);
         let store = Store::new(compiler);
         let result = Module::new(&store, wasm);
@@ -785,7 +786,7 @@ mod tests {
         .unwrap();
 
         let deterministic = Arc::new(Gatekeeper::default());
-        let mut compiler = Cranelift::default();
+        let mut compiler = make_compiler_config();
         compiler.push_middleware(deterministic);
         let store = Store::new(compiler);
         let result = Module::new(&store, wasm);
@@ -809,7 +810,7 @@ mod tests {
         .unwrap();
 
         let deterministic = Arc::new(Gatekeeper::default());
-        let mut compiler = Cranelift::default();
+        let mut compiler = make_compiler_config();
         compiler.push_middleware(deterministic);
         let store = Store::new(compiler);
         let result = Module::new(&store, wasm);

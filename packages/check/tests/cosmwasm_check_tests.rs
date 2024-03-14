@@ -33,7 +33,7 @@ fn invalid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("../vm/testdata/corrupted.wasm");
     cmd.assert()
         .failure()
-        .stdout(predicate::str::contains("Deserialization error"));
+        .stdout(predicate::str::contains("missing a required marker export"));
 
     Ok(())
 }
@@ -59,7 +59,7 @@ fn several_contracts_check() -> Result<(), Box<dyn std::error::Error>> {
     cmd.assert()
         .failure()
         .stdout(predicate::str::contains("failure"))
-        .stdout(predicate::str::contains("Deserialization error"))
+        .stdout(predicate::str::contains("missing a required marker export"))
         .stdout(predicate::str::contains("Passes: 1, failures: 1"));
 
     Ok(())

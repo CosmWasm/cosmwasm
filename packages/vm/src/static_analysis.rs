@@ -107,10 +107,11 @@ impl ExportInfo for &wasmer::Module {
 mod tests {
     use std::str::FromStr;
 
+    use crate::wasm_backend::make_compiler_config;
     use crate::VmError;
 
     use super::*;
-    use wasmer::{Cranelift, Store};
+    use wasmer::Store;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
@@ -135,7 +136,10 @@ mod tests {
 
     #[test]
     fn deserialize_wasm_corrupted_data() {
-        match ParsedWasm::parse(CORRUPTED).unwrap_err() {
+        match ParsedWasm::parse(CORRUPTED)
+            .and_then(|mut parsed| parsed.validate_funcs())
+            .unwrap_err()
+        {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
             }
@@ -201,7 +205,7 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_wasmer_with_no_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let compiler = Cranelift::default();
+        let compiler = make_compiler_config();
         let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(None);
@@ -219,7 +223,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let compiler = Cranelift::default();
+        let compiler = make_compiler_config();
         let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(None);
@@ -232,7 +236,7 @@ mod tests {
     #[test]
     fn exported_function_names_works_for_wasmer_with_prefix() {
         let wasm = wat::parse_str(r#"(module)"#).unwrap();
-        let compiler = Cranelift::default();
+        let compiler = make_compiler_config();
         let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
@@ -251,7 +255,7 @@ mod tests {
             )"#,
         )
         .unwrap();
-        let compiler = Cranelift::default();
+        let compiler = make_compiler_config();
         let store = Store::new(compiler);
         let module = wasmer::Module::new(&store, wasm).unwrap();
         let exports = module.exported_function_names(Some("b"));
