@@ -18,10 +18,7 @@ iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
 # this enables all stargate-related functionality, including the ibc entry points
 stargate = ["cosmwasm-std/stargate"]
-# Use cranelift backend instead of singlepass. This is required for development on Windows.
-#
-# Note: This feature is automatically enabled on Windows, you don't have to toggle it manually anymore.
-# This is just to be able to debug issues with Cranelift on non-Windows platforms.
+# Use cranelift backend instead of singlepass
 cranelift = ["wasmer/cranelift"]
 # For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
@@ -61,9 +58,6 @@ tracing = "0.1.32"
 # wasmer-middlewares = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c" }
 # wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["cranelift", "singlepass"] }
 # wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
-
-[target.'cfg(target_family = "windows")'.dependencies]
-wasmer = { version = "=4.2.6", default-features = false, features = ["cranelift"] }
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
