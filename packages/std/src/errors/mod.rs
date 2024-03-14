@@ -3,7 +3,7 @@ mod std_error;
 mod system_error;
 mod verification_error;
 
-pub(crate) use cosmwasm_core::__internal::backtrace::{impl_from_err, BT};
+pub(crate) use cosmwasm_core::__internal::{impl_from_err, BT};
 pub use cosmwasm_core::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     ConversionOverflowError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
