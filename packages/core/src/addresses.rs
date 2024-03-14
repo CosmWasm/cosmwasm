@@ -1,16 +1,13 @@
-use alloc::borrow::Cow;
+use alloc::{borrow::Cow, string::String, vec::Vec};
 use core::fmt;
 use core::ops::Deref;
-use cosmwasm_core::Binary;
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{
     digest::{Digest, Update},
     Sha256,
 };
-use thiserror::Error;
 
-use crate::prelude::*;
+use crate::Binary;
 use crate::{forward_ref_partial_eq, HexBinary};
 
 /// A human readable address.
@@ -29,9 +26,8 @@ use crate::{forward_ref_partial_eq, HexBinary};
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
-)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct Addr(String);
 
 forward_ref_partial_eq!(Addr, Addr);
@@ -131,7 +127,8 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 /// addition to that there are many unsafe ways to convert any binary data into an instance.
 /// So the type should be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct CanonicalAddr(Binary);
 
 /// Implement `CanonicalAddr == Binary`
@@ -252,7 +249,7 @@ impl fmt::Display for CanonicalAddr {
     }
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Instantiate2AddressError {
     /// Checksum must be 32 bytes
     InvalidChecksumLength,
@@ -268,6 +265,9 @@ impl fmt::Display for Instantiate2AddressError {
         }
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for Instantiate2AddressError {}
 
 /// Creates a contract address using the predictable address format introduced with
 /// wasmd 0.29. When using instantiate2, this is a way to precompute the address.
@@ -361,8 +361,9 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::assert_hash_works;
     use crate::HexBinary;
-    use cosmwasm_core::assert_hash_works;
+
     use hex_literal::hex;
 
     #[test]

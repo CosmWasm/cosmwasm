@@ -9,7 +9,6 @@ Builds without the std feature are currently not expected to work. If you need n
 
 // Exposed on all platforms
 
-mod addresses;
 mod assertions;
 mod checksum;
 mod coin;
@@ -43,7 +42,6 @@ pub(crate) mod prelude;
 /// contract devs to use it directly.
 pub mod storage_keys;
 
-pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::coins::Coins;

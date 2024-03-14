@@ -2,10 +2,10 @@
 // The rest of the IBC related functionality is defined here
 
 use core::cmp::{Ord, Ordering, PartialOrd};
+use cosmwasm_core::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::Addr;
 use crate::coin::Coin;
 use crate::errors::StdResult;
 use crate::prelude::*;

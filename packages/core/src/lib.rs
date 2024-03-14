@@ -7,6 +7,7 @@
 #[macro_use]
 extern crate alloc;
 
+mod addresses;
 mod binary;
 mod errors;
 mod forward_ref;
@@ -16,6 +17,7 @@ mod math;
 #[doc(hidden)]
 pub mod __internal;
 
+pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
