@@ -100,29 +100,15 @@ impl From<CoreError> for StdError {
                 actual,
                 backtrace,
             },
-            CoreError::ParseErr {
-                target_type,
-                msg,
-                backtrace,
-            } => Self::ParseErr {
-                target_type,
-                msg,
-                backtrace,
-            },
-            CoreError::SerializeErr {
-                source_type,
-                msg,
-                backtrace,
-            } => Self::SerializeErr {
-                source_type,
-                msg,
-                backtrace,
-            },
+            CoreError::InvalidHex { msg, backtrace } => Self::InvalidHex { msg, backtrace },
             CoreError::Overflow { source, backtrace } => Self::Overflow { source, backtrace },
             CoreError::DivideByZero { source, backtrace } => {
                 Self::DivideByZero { source, backtrace }
             }
-            _ => todo!(),
+            source => Self::CoreErr {
+                source,
+                backtrace: BT::capture(),
+            },
         }
     }
 }

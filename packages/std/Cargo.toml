@@ -54,7 +54,7 @@ cosmwasm_2_0 = ["cosmwasm_1_4"]
 base64 = "0.21.0"
 cosmwasm-derive = { path = "../derive", version = "2.0.0" }
 cosmwasm-core = { path = "../core", version = "2.0.0", features = ["std"] }
-derivative = { version = "2", features = ["use_core"] }
+derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["debug"] }
 hex = "0.4"
 schemars = "0.8.3"
 sha2 = "0.10.3"
