@@ -27,7 +27,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `u64` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_core::Uint64;
+/// # use cosmwasm_std::Uint64;
 /// let a = Uint64::from(42u64);
 /// assert_eq!(a.u64(), 42);
 ///
@@ -135,7 +135,7 @@ impl Uint64 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_core::Uint64;
+    /// use cosmwasm_std::Uint64;
     ///
     /// let a = Uint64::MAX;
     /// let result = a.full_mul(2u32);
@@ -579,7 +579,6 @@ mod tests {
     use crate::ConversionOverflowError;
 
     use alloc::string::ToString;
-    use cosmwasm_std::{from_json, to_json_vec};
 
     #[test]
     fn size_of_works() {
@@ -710,9 +709,9 @@ mod tests {
     #[test]
     fn uint64_json() {
         let orig = Uint64(1234567890987654321);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Uint64 = from_json(serialized).unwrap();
+        let parsed: Uint64 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

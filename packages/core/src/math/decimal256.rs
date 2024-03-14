@@ -79,7 +79,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_core::Decimal256;
+    /// # use cosmwasm_std::Decimal256;
     /// const HALF: Decimal256 = Decimal256::percent(50);
     ///
     /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
@@ -96,7 +96,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_core::Decimal256;
+    /// # use cosmwasm_std::Decimal256;
     /// const HALF: Decimal256 = Decimal256::permille(500);
     ///
     /// assert_eq!(HALF, Decimal256::from_str("0.5").unwrap());
@@ -113,7 +113,7 @@ impl Decimal256 {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_core::Decimal256;
+    /// # use cosmwasm_std::Decimal256;
     /// const TWO_BPS: Decimal256 = Decimal256::bps(2);
     /// const HALF: Decimal256 = Decimal256::bps(5000);
     ///
@@ -137,7 +137,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{Decimal256, Uint256};
+    /// # use cosmwasm_std::{Decimal256, Uint256};
     /// let a = Decimal256::from_atomics(1234u64, 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
@@ -225,7 +225,7 @@ impl Decimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{Decimal256, Uint256};
+    /// # use cosmwasm_std::{Decimal256, Uint256};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = Decimal256::from_str("1.234").unwrap();
@@ -433,7 +433,7 @@ impl Decimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{Decimal256, Uint256};
+    /// use cosmwasm_std::{Decimal256, Uint256};
     ///
     /// let d = Decimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint256::from(12u64));
@@ -456,7 +456,7 @@ impl Decimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{Decimal256, Uint256};
+    /// use cosmwasm_std::{Decimal256, Uint256};
     ///
     /// let d = Decimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint256::from(13u64));
@@ -789,7 +789,6 @@ mod tests {
     use crate::errors::CoreError;
 
     use alloc::vec::Vec;
-    use cosmwasm_std::{from_json, to_json_vec};
 
     fn dec(input: &str) -> Decimal256 {
         Decimal256::from_str(input).unwrap()
@@ -1966,16 +1965,22 @@ mod tests {
 
     #[test]
     fn decimal256_serialize() {
-        assert_eq!(to_json_vec(&Decimal256::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_json_vec(&Decimal256::one()).unwrap(), br#""1""#);
-        assert_eq!(to_json_vec(&Decimal256::percent(8)).unwrap(), br#""0.08""#);
-        assert_eq!(to_json_vec(&Decimal256::percent(87)).unwrap(), br#""0.87""#);
+        assert_eq!(serde_json::to_vec(&Decimal256::zero()).unwrap(), br#""0""#);
+        assert_eq!(serde_json::to_vec(&Decimal256::one()).unwrap(), br#""1""#);
         assert_eq!(
-            to_json_vec(&Decimal256::percent(876)).unwrap(),
+            serde_json::to_vec(&Decimal256::percent(8)).unwrap(),
+            br#""0.08""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal256::percent(87)).unwrap(),
+            br#""0.87""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal256::percent(876)).unwrap(),
             br#""8.76""#
         );
         assert_eq!(
-            to_json_vec(&Decimal256::percent(8765)).unwrap(),
+            serde_json::to_vec(&Decimal256::percent(8765)).unwrap(),
             br#""87.65""#
         );
     }
@@ -1983,36 +1988,36 @@ mod tests {
     #[test]
     fn decimal256_deserialize() {
         assert_eq!(
-            from_json::<Decimal256>(br#""0""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""0""#).unwrap(),
             Decimal256::zero()
         );
         assert_eq!(
-            from_json::<Decimal256>(br#""1""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""1""#).unwrap(),
             Decimal256::one()
         );
         assert_eq!(
-            from_json::<Decimal256>(br#""000""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""000""#).unwrap(),
             Decimal256::zero()
         );
         assert_eq!(
-            from_json::<Decimal256>(br#""001""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""001""#).unwrap(),
             Decimal256::one()
         );
 
         assert_eq!(
-            from_json::<Decimal256>(br#""0.08""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""0.08""#).unwrap(),
             Decimal256::percent(8)
         );
         assert_eq!(
-            from_json::<Decimal256>(br#""0.87""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""0.87""#).unwrap(),
             Decimal256::percent(87)
         );
         assert_eq!(
-            from_json::<Decimal256>(br#""8.76""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""8.76""#).unwrap(),
             Decimal256::percent(876)
         );
         assert_eq!(
-            from_json::<Decimal256>(br#""87.65""#).unwrap(),
+            serde_json::from_slice::<Decimal256>(br#""87.65""#).unwrap(),
             Decimal256::percent(8765)
         );
     }

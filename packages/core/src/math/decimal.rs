@@ -76,7 +76,7 @@ impl Decimal {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_core::Decimal;
+    /// # use cosmwasm_std::Decimal;
     /// const HALF: Decimal = Decimal::percent(50);
     ///
     /// assert_eq!(HALF, Decimal::from_str("0.5").unwrap());
@@ -93,7 +93,7 @@ impl Decimal {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_core::Decimal;
+    /// # use cosmwasm_std::Decimal;
     /// const HALF: Decimal = Decimal::permille(500);
     ///
     /// assert_eq!(HALF, Decimal::from_str("0.5").unwrap());
@@ -110,7 +110,7 @@ impl Decimal {
     ///
     /// ```
     /// # use std::str::FromStr;
-    /// # use cosmwasm_core::Decimal;
+    /// # use cosmwasm_std::Decimal;
     /// const TWO_BPS: Decimal = Decimal::bps(2);
     /// const HALF: Decimal = Decimal::bps(5000);
     ///
@@ -134,7 +134,7 @@ impl Decimal {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{Decimal, Uint128};
+    /// # use cosmwasm_std::{Decimal, Uint128};
     /// let a = Decimal::from_atomics(Uint128::new(1234), 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
@@ -216,7 +216,7 @@ impl Decimal {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{Decimal, Uint128};
+    /// # use cosmwasm_std::{Decimal, Uint128};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = Decimal::from_str("1.234").unwrap();
@@ -420,7 +420,7 @@ impl Decimal {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{Decimal, Uint128};
+    /// use cosmwasm_std::{Decimal, Uint128};
     ///
     /// let d = Decimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_floor(), Uint128::new(12));
@@ -443,7 +443,7 @@ impl Decimal {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{Decimal, Uint128};
+    /// use cosmwasm_std::{Decimal, Uint128};
     ///
     /// let d = Decimal::from_str("12.345").unwrap();
     /// assert_eq!(d.to_uint_ceil(), Uint128::new(13));
@@ -788,7 +788,6 @@ mod tests {
     use super::*;
 
     use alloc::vec::Vec;
-    use cosmwasm_std::{from_json, to_json_vec};
 
     fn dec(input: &str) -> Decimal {
         Decimal::from_str(input).unwrap()
@@ -1904,35 +1903,59 @@ mod tests {
 
     #[test]
     fn decimal_serialize() {
-        assert_eq!(to_json_vec(&Decimal::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_json_vec(&Decimal::one()).unwrap(), br#""1""#);
-        assert_eq!(to_json_vec(&Decimal::percent(8)).unwrap(), br#""0.08""#);
-        assert_eq!(to_json_vec(&Decimal::percent(87)).unwrap(), br#""0.87""#);
-        assert_eq!(to_json_vec(&Decimal::percent(876)).unwrap(), br#""8.76""#);
-        assert_eq!(to_json_vec(&Decimal::percent(8765)).unwrap(), br#""87.65""#);
+        assert_eq!(serde_json::to_vec(&Decimal::zero()).unwrap(), br#""0""#);
+        assert_eq!(serde_json::to_vec(&Decimal::one()).unwrap(), br#""1""#);
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(8)).unwrap(),
+            br#""0.08""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(87)).unwrap(),
+            br#""0.87""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(876)).unwrap(),
+            br#""8.76""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(8765)).unwrap(),
+            br#""87.65""#
+        );
     }
 
     #[test]
     fn decimal_deserialize() {
-        assert_eq!(from_json::<Decimal>(br#""0""#).unwrap(), Decimal::zero());
-        assert_eq!(from_json::<Decimal>(br#""1""#).unwrap(), Decimal::one());
-        assert_eq!(from_json::<Decimal>(br#""000""#).unwrap(), Decimal::zero());
-        assert_eq!(from_json::<Decimal>(br#""001""#).unwrap(), Decimal::one());
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""0""#).unwrap(),
+            Decimal::zero()
+        );
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""1""#).unwrap(),
+            Decimal::one()
+        );
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""000""#).unwrap(),
+            Decimal::zero()
+        );
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""001""#).unwrap(),
+            Decimal::one()
+        );
 
         assert_eq!(
-            from_json::<Decimal>(br#""0.08""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""0.08""#).unwrap(),
             Decimal::percent(8)
         );
         assert_eq!(
-            from_json::<Decimal>(br#""0.87""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""0.87""#).unwrap(),
             Decimal::percent(87)
         );
         assert_eq!(
-            from_json::<Decimal>(br#""8.76""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""8.76""#).unwrap(),
             Decimal::percent(876)
         );
         assert_eq!(
-            from_json::<Decimal>(br#""87.65""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""87.65""#).unwrap(),
             Decimal::percent(8765)
         );
     }

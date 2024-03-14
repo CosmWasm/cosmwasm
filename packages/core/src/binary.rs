@@ -47,7 +47,7 @@ impl Binary {
     /// Copy to array of explicit length
     ///
     /// ```
-    /// # use cosmwasm_core::Binary;
+    /// # use cosmwasm_std::Binary;
     /// let binary = Binary::from(&[0xfb, 0x1f, 0x37]);
     /// let array: [u8; 3] = binary.to_array().unwrap();
     /// assert_eq!(array, [0xfb, 0x1f, 0x37]);
@@ -56,7 +56,7 @@ impl Binary {
     /// Copy to integer
     ///
     /// ```
-    /// # use cosmwasm_core::Binary;
+    /// # use cosmwasm_std::Binary;
     /// let binary = Binary::from(&[0x8b, 0x67, 0x64, 0x84, 0xb5, 0xfb, 0x1f, 0x37]);
     /// let num = u64::from_be_bytes(binary.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
@@ -248,8 +248,6 @@ mod tests {
     use super::*;
     use crate::assert_hash_works;
     use crate::errors::CoreError;
-
-    use cosmwasm_std::{from_json, to_json_vec};
 
     #[test]
     fn to_array_works() {
@@ -446,8 +444,8 @@ mod tests {
     fn serialization_works() {
         let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
-        let json = to_json_vec(&binary).unwrap();
-        let deserialized: Binary = from_json(json).unwrap();
+        let json = serde_json::to_vec(&binary).unwrap();
+        let deserialized: Binary = serde_json::from_slice(&json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -458,16 +456,16 @@ mod tests {
         // this is the binary behind above string
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
-        let serialized = to_json_vec(&b64_str).unwrap();
-        let deserialized: Binary = from_json(serialized).unwrap();
+        let serialized = serde_json::to_vec(&b64_str).unwrap();
+        let deserialized: Binary = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 
     #[test]
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
-        let serialized = to_json_vec(&invalid_str).unwrap();
-        let res = from_json::<Binary>(&serialized);
+        let serialized = serde_json::to_vec(&invalid_str).unwrap();
+        let res = serde_json::from_slice::<Binary>(&serialized);
         assert!(res.is_err());
     }
 

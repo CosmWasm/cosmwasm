@@ -30,7 +30,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `u128` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_core::Uint128;
+/// # use cosmwasm_std::Uint128;
 /// let a = Uint128::from(123u128);
 /// assert_eq!(a.u128(), 123);
 ///
@@ -141,7 +141,7 @@ impl Uint128 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_core::Uint128;
+    /// use cosmwasm_std::Uint128;
     ///
     /// let a = Uint128::MAX;
     /// let result = a.full_mul(2u32);
@@ -612,8 +612,6 @@ mod tests {
     use crate::math::conversion::test_try_from_int_to_uint;
     use crate::{ConversionOverflowError, Decimal};
 
-    use cosmwasm_std::{from_json, to_json_vec};
-
     use super::*;
 
     #[test]
@@ -784,9 +782,9 @@ mod tests {
     #[test]
     fn uint128_json() {
         let orig = Uint128(1234567890987654321);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Uint128 = from_json(serialized).unwrap();
+        let parsed: Uint128 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

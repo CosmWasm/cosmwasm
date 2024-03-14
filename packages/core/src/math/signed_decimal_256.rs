@@ -55,7 +55,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// assert_eq!(
     ///     SignedDecimal256::MAX.to_string(),
     ///     "57896044618658097711785492504343953926634992332820282019728.792003956564819967"
@@ -68,7 +68,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// assert_eq!(
     ///     SignedDecimal256::MIN.to_string(),
     ///     "-57896044618658097711785492504343953926634992332820282019728.792003956564819968"
@@ -82,7 +82,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{SignedDecimal256, Int256};
+    /// # use cosmwasm_std::{SignedDecimal256, Int256};
     /// assert_eq!(SignedDecimal256::new(Int256::one()).to_string(), "0.000000000000000001");
     /// ```
     pub const fn new(value: Int256) -> Self {
@@ -95,7 +95,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// assert_eq!(SignedDecimal256::raw(1234i128).to_string(), "0.000000000000001234");
     /// ```
     pub const fn raw(value: i128) -> Self {
@@ -147,7 +147,7 @@ impl SignedDecimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{SignedDecimal256, Int256};
+    /// # use cosmwasm_std::{SignedDecimal256, Int256};
     /// let a = SignedDecimal256::from_atomics(Int256::from(1234), 3).unwrap();
     /// assert_eq!(a.to_string(), "1.234");
     ///
@@ -196,7 +196,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// assert_eq!(
     ///     SignedDecimal256::from_ratio(1, 3).to_string(),
     ///     "0.333333333333333333"
@@ -217,7 +217,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{SignedDecimal256, CheckedFromRatioError};
+    /// # use cosmwasm_std::{SignedDecimal256, CheckedFromRatioError};
     /// assert_eq!(
     ///     SignedDecimal256::checked_from_ratio(1, 3).unwrap().to_string(),
     ///     "0.333333333333333333"
@@ -263,7 +263,7 @@ impl SignedDecimal256 {
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_core::{SignedDecimal256, Int256};
+    /// # use cosmwasm_std::{SignedDecimal256, Int256};
     /// # use core::str::FromStr;
     /// // Value with whole and fractional part
     /// let a = SignedDecimal256::from_str("1.234").unwrap();
@@ -296,7 +296,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// # use core::str::FromStr;
     /// assert!(SignedDecimal256::from_str("0.6").unwrap().trunc().is_zero());
     /// assert_eq!(SignedDecimal256::from_str("-5.8").unwrap().trunc().to_string(), "-5");
@@ -311,7 +311,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// # use core::str::FromStr;
     /// assert!(SignedDecimal256::from_str("0.6").unwrap().floor().is_zero());
     /// assert_eq!(SignedDecimal256::from_str("-5.2").unwrap().floor().to_string(), "-6");
@@ -346,7 +346,7 @@ impl SignedDecimal256 {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_core::SignedDecimal256;
+    /// # use cosmwasm_std::SignedDecimal256;
     /// # use core::str::FromStr;
     /// assert_eq!(SignedDecimal256::from_str("0.2").unwrap().ceil(), SignedDecimal256::one());
     /// assert_eq!(SignedDecimal256::from_str("-5.8").unwrap().ceil().to_string(), "-5");
@@ -500,7 +500,7 @@ impl SignedDecimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{SignedDecimal256, Int256};
+    /// use cosmwasm_std::{SignedDecimal256, Int256};
     ///
     /// let d = SignedDecimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_floor(), Int256::from(12));
@@ -532,7 +532,7 @@ impl SignedDecimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{SignedDecimal256, Int256};
+    /// use cosmwasm_std::{SignedDecimal256, Int256};
     ///
     /// let d = SignedDecimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_trunc(), Int256::from(12));
@@ -555,7 +555,7 @@ impl SignedDecimal256 {
     ///
     /// ```
     /// use core::str::FromStr;
-    /// use cosmwasm_core::{SignedDecimal256, Int256};
+    /// use cosmwasm_std::{SignedDecimal256, Int256};
     ///
     /// let d = SignedDecimal256::from_str("12.345").unwrap();
     /// assert_eq!(d.to_int_ceil(), Int256::from(13));
@@ -914,7 +914,6 @@ mod tests {
     use super::*;
 
     use alloc::vec::Vec;
-    use cosmwasm_std::{from_json, to_json_vec};
 
     fn dec(input: &str) -> SignedDecimal256 {
         SignedDecimal256::from_str(input).unwrap()
@@ -2546,34 +2545,40 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_serialize() {
-        assert_eq!(to_json_vec(&SignedDecimal256::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_json_vec(&SignedDecimal256::one()).unwrap(), br#""1""#);
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(8)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::zero()).unwrap(),
+            br#""0""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&SignedDecimal256::one()).unwrap(),
+            br#""1""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&SignedDecimal256::percent(8)).unwrap(),
             br#""0.08""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(87)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(87)).unwrap(),
             br#""0.87""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(876)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(876)).unwrap(),
             br#""8.76""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(8765)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(8765)).unwrap(),
             br#""87.65""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(-87654)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(-87654)).unwrap(),
             br#""-876.54""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::negative_one()).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::negative_one()).unwrap(),
             br#""-1""#
         );
         assert_eq!(
-            to_json_vec(&-SignedDecimal256::percent(8)).unwrap(),
+            serde_json::to_vec(&-SignedDecimal256::percent(8)).unwrap(),
             br#""-0.08""#
         );
     }
@@ -2581,54 +2586,54 @@ mod tests {
     #[test]
     fn signed_decimal_256_deserialize() {
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""0""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""0""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""1""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""1""#).unwrap(),
             SignedDecimal256::one()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""000""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""000""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""001""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""001""#).unwrap(),
             SignedDecimal256::one()
         );
 
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""0.08""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""0.08""#).unwrap(),
             SignedDecimal256::percent(8)
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""0.87""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""0.87""#).unwrap(),
             SignedDecimal256::percent(87)
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""8.76""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""8.76""#).unwrap(),
             SignedDecimal256::percent(876)
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""87.65""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""87.65""#).unwrap(),
             SignedDecimal256::percent(8765)
         );
 
         // negative numbers
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-0""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-0""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-1""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-1""#).unwrap(),
             SignedDecimal256::negative_one()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-001""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-001""#).unwrap(),
             SignedDecimal256::negative_one()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-0.08""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-0.08""#).unwrap(),
             SignedDecimal256::percent(-8)
         );
     }

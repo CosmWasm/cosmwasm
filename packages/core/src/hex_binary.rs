@@ -251,7 +251,6 @@ mod tests {
     use super::*;
 
     use crate::{assert_hash_works, CoreError};
-    use cosmwasm_std::{from_json, to_json_vec};
 
     #[test]
     fn from_hex_works() {
@@ -519,8 +518,8 @@ mod tests {
     fn serialization_works() {
         let binary = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
 
-        let json = to_json_vec(&binary).unwrap();
-        let deserialized: HexBinary = from_json(json).unwrap();
+        let json = serde_json::to_vec(&binary).unwrap();
+        let deserialized: HexBinary = serde_json::from_slice(&json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -531,16 +530,16 @@ mod tests {
         // this is the binary behind above string
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
-        let serialized = to_json_vec(&hex).unwrap();
-        let deserialized: HexBinary = from_json(serialized).unwrap();
+        let serialized = serde_json::to_vec(&hex).unwrap();
+        let deserialized: HexBinary = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 
     #[test]
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
-        let serialized = to_json_vec(&invalid_str).unwrap();
-        let res = from_json::<HexBinary>(&serialized);
+        let serialized = serde_json::to_vec(&invalid_str).unwrap();
+        let res = serde_json::from_slice::<HexBinary>(&serialized);
         assert!(res.is_err());
     }
 

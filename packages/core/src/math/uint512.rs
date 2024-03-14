@@ -30,7 +30,7 @@ use super::num_consts::NumConsts;
 /// endian bytes:
 ///
 /// ```
-/// # use cosmwasm_core::Uint512;
+/// # use cosmwasm_std::Uint512;
 /// let a = Uint512::from(258u128);
 /// let b = Uint512::new([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -642,8 +642,6 @@ mod tests {
     use super::*;
     use crate::math::conversion::test_try_from_int_to_uint;
 
-    use cosmwasm_std::{from_json, to_json_vec};
-
     #[test]
     fn size_of_works() {
         assert_eq!(core::mem::size_of::<Uint512>(), 64);
@@ -1004,9 +1002,9 @@ mod tests {
     #[test]
     fn uint512_json() {
         let orig = Uint512::from(1234567890987654321u128);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Uint512 = from_json(serialized).unwrap();
+        let parsed: Uint512 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 
