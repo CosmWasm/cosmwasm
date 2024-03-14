@@ -20,8 +20,9 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 #
-# LEGACY: This doesn't do anything anymore. Cranelift is automatically pulled in on Windows.
-cranelift = []
+# Note: This feature is automatically enabled on Windows, you don't have to toggle it manually anymore.
+# This is just to be able to debug issues with Cranelift on non-Windows platforms.
+cranelift = ["wasmer/cranelift"]
 # For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
 

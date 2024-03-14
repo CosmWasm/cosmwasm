@@ -28,9 +28,9 @@ fn cost(_operator: &Operator) -> u64 {
 
 /// Creates the appropriate compiler config for the platform
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
-    #[cfg(target_family = "windows")]
+    #[cfg(any(feature = "cranelift", target_family = "windows"))]
     return wasmer::Cranelift::new();
-    #[cfg(not(target_family = "windows"))]
+    #[cfg(not(any(feature = "cranelift", target_family = "windows")))]
     wasmer::Singlepass::new()
 }
 
