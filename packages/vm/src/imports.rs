@@ -10,7 +10,7 @@ use cosmwasm_crypto::{
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
-use rand::rngs::OsRng;
+use rand_core::OsRng;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;

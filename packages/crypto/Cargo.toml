@@ -27,6 +27,7 @@ p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
 
 [dev-dependencies]
 criterion = "0.5.1"
+rand_core = { version = "0.6", features = ["getrandom"] }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0.40"
 sha2 = "0.10"
