@@ -6,13 +6,13 @@ use core::ops::{
 };
 use core::str::FromStr;
 
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, CoreError, DivideByZeroError,
     OverflowError, OverflowOperation,
 };
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
     forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint256,
     Uint64,
