@@ -316,3 +316,176 @@ pub struct RoundDownOverflowError;
 
 #[cfg(feature = "std")]
 impl std::error::Error for RoundDownOverflowError {}
+
+impl From<OverflowError> for CoreError {
+    fn from(source: OverflowError) -> Self {
+        Self::overflow(source)
+    }
+}
+
+impl From<DivideByZeroError> for CoreError {
+    fn from(source: DivideByZeroError) -> Self {
+        Self::divide_by_zero(source)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // constructors
+
+    // example of reporting contract errors with format!
+    #[test]
+    fn generic_err_owned() {
+        let guess = 7;
+        let error = CoreError::generic_err(format!("{guess} is too low"));
+        match error {
+            CoreError::GenericErr { msg, .. } => {
+                assert_eq!(msg, String::from("7 is too low"));
+            }
+            e => panic!("unexpected error, {e:?}"),
+        }
+    }
+
+    // example of reporting static contract errors
+    #[test]
+    fn generic_err_ref() {
+        let error = CoreError::generic_err("not implemented");
+        match error {
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "not implemented"),
+            e => panic!("unexpected error, {e:?}"),
+        }
+    }
+
+    #[test]
+    fn invalid_base64_works_for_strings() {
+        let error = CoreError::invalid_base64("my text");
+        match error {
+            CoreError::InvalidBase64 { msg, .. } => {
+                assert_eq!(msg, "my text");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_base64_works_for_errors() {
+        let original = base64::DecodeError::InvalidLength;
+        let error = CoreError::invalid_base64(original);
+        match error {
+            CoreError::InvalidBase64 { msg, .. } => {
+                assert_eq!(msg, "Encoded text cannot have a 6-bit remainder.");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_data_size_works() {
+        let error = CoreError::invalid_data_size(31, 14);
+        match error {
+            CoreError::InvalidDataSize {
+                expected, actual, ..
+            } => {
+                assert_eq!(expected, 31);
+                assert_eq!(actual, 14);
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_hex_works_for_strings() {
+        let error = CoreError::invalid_hex("my text");
+        match error {
+            CoreError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "my text");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_hex_works_for_errors() {
+        let original = hex::FromHexError::OddLength;
+        let error = CoreError::invalid_hex(original);
+        match error {
+            CoreError::InvalidHex { msg, .. } => {
+                assert_eq!(msg, "Odd number of digits");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn underflow_works_for_u128() {
+        let error = CoreError::overflow(OverflowError::new(OverflowOperation::Sub));
+        assert!(matches!(
+            error,
+            CoreError::Overflow {
+                source: OverflowError {
+                    operation: OverflowOperation::Sub
+                },
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn overflow_works_for_i64() {
+        let error = CoreError::overflow(OverflowError::new(OverflowOperation::Sub));
+        assert!(matches!(
+            error,
+            CoreError::Overflow {
+                source: OverflowError {
+                    operation: OverflowOperation::Sub
+                },
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn divide_by_zero_works() {
+        let error = CoreError::divide_by_zero(DivideByZeroError);
+        assert!(matches!(
+            error,
+            CoreError::DivideByZero {
+                source: DivideByZeroError,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn implements_debug() {
+        let error: CoreError = CoreError::from(OverflowError::new(OverflowOperation::Sub));
+        let embedded = format!("Debug: {error:?}");
+        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub }, backtrace: <disabled> }"#;
+        assert_eq!(embedded, expected);
+    }
+
+    #[test]
+    fn implements_display() {
+        let error: CoreError = CoreError::from(OverflowError::new(OverflowOperation::Sub));
+        let embedded = format!("Display: {error}");
+        assert_eq!(
+            embedded,
+            "Display: Overflow: Cannot Sub with given operands"
+        );
+    }
+
+    #[test]
+    fn implements_partial_eq() {
+        let u1 = CoreError::from(OverflowError::new(OverflowOperation::Sub));
+        let u2 = CoreError::from(OverflowError::new(OverflowOperation::Sub));
+        let s1 = CoreError::generic_err("Content too long");
+        let s2 = CoreError::generic_err("Content too long");
+        let s3 = CoreError::generic_err("Title too long");
+        assert_eq!(u1, u2);
+        assert_ne!(u1, s1);
+        assert_eq!(s1, s2);
+        assert_ne!(s1, s3);
+    }
+}
