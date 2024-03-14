@@ -512,6 +512,56 @@ mod tests {
     }
 
     #[test]
+    fn core_error_conversion() {
+        let generic = StdError::from(CoreError::generic_err("test error"));
+        let base64 = StdError::from(CoreError::invalid_base64("invalid data"));
+        let data_size = StdError::from(CoreError::invalid_data_size(10, 12));
+        let hex = StdError::from(CoreError::invalid_hex("invalid hex"));
+        let overflow = StdError::from(CoreError::overflow(OverflowError::new(
+            OverflowOperation::Pow,
+        )));
+        let divide = StdError::from(CoreError::divide_by_zero(DivideByZeroError::new()));
+
+        match generic {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "test error"),
+            _ => panic!("expected different error"),
+        }
+
+        match base64 {
+            StdError::InvalidBase64 { msg, .. } => assert_eq!(msg, "invalid data"),
+            _ => panic!("expected different error"),
+        }
+
+        match data_size {
+            StdError::InvalidDataSize {
+                expected, actual, ..
+            } => {
+                assert_eq!(expected, 10);
+                assert_eq!(actual, 12);
+            }
+            _ => panic!("expected different error"),
+        }
+
+        match hex {
+            StdError::InvalidHex { msg, .. } => assert_eq!(msg, "invalid hex"),
+            _ => panic!("expected different error"),
+        }
+
+        match overflow {
+            StdError::Overflow {
+                source: OverflowError { operation },
+                ..
+            } => assert_eq!(operation, OverflowOperation::Pow),
+            _ => panic!("expected different error"),
+        }
+
+        match divide {
+            StdError::DivideByZero { .. } => (),
+            _ => panic!("expected different error"),
+        }
+    }
+
+    #[test]
     fn invalid_base64_works_for_strings() {
         let error = StdError::invalid_base64("my text");
         match error {
