@@ -7,7 +7,7 @@
 /// We don't need to add `&T == &U` here because this is implemented automatically.
 #[doc(hidden)]
 #[macro_export]
-macro_rules! forward_ref_partial_eq {
+macro_rules! __internal__forward_ref_partial_eq {
     ($t:ty, $u:ty) => {
         // `&T == U`
         impl<'a> PartialEq<$u> for &'a $t {
