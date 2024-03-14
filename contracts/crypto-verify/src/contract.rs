@@ -38,6 +38,16 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             signature.as_slice(),
             public_key.as_slice(),
         )?),
+        QueryMsg::VerifySecp256R1Signature {
+            message,
+            signature,
+            public_key,
+        } => to_json_binary(&query_verify_secp256r1(
+            deps,
+            message.as_slice(),
+            signature.as_slice(),
+            public_key.as_slice(),
+        )?),
         QueryMsg::VerifyEthereumText {
             message,
             signature,
@@ -100,6 +110,25 @@ pub fn query_verify_cosmos(
     let result = deps
         .api
         .secp256k1_verify(hash.as_ref(), signature, public_key);
+    match result {
+        Ok(verifies) => Ok(VerifyResponse { verifies }),
+        Err(err) => Err(err.into()),
+    }
+}
+
+pub fn query_verify_secp256r1(
+    deps: Deps,
+    message: &[u8],
+    signature: &[u8],
+    public_key: &[u8],
+) -> StdResult<VerifyResponse> {
+    // Hashing
+    let hash = Sha256::digest(message);
+
+    // Verification
+    let result = deps
+        .api
+        .secp256r1_verify(hash.as_ref(), signature, public_key);
     match result {
         Ok(verifies) => Ok(VerifyResponse { verifies }),
         Err(err) => Err(err.into()),
@@ -695,6 +724,7 @@ mod tests {
             ListVerificationsResponse {
                 verification_schemes: vec![
                     "secp256k1".into(),
+                    "secp256r1".into(),
                     "ed25519".into(),
                     "ed25519_batch".into()
                 ]
