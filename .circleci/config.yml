@@ -333,7 +333,7 @@ jobs:
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/core
-          command: cargo wasm --locked --features std,testingstd,testing
+          command: cargo wasm --locked --features std,testing
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/core
