@@ -1,8 +1,8 @@
 use core::marker::PhantomData;
 use core::ops::Deref;
+use cosmwasm_core::{Addr, CanonicalAddr};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::addresses::{Addr, CanonicalAddr};
 use crate::coin::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]

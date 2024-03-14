@@ -3068,17 +3068,17 @@ mod tests {
     #[test]
     fn signed_decimal_can_be_serialized_and_deserialized() {
         // properly deserialized
-        let value: SignedDecimal = serde_json_wasm::from_str(r#""123""#).unwrap();
+        let value: SignedDecimal = serde_json::from_str(r#""123""#).unwrap();
         assert_eq!(SignedDecimal::from_str("123").unwrap(), value);
 
         // properly serialized
         let value = SignedDecimal::from_str("456").unwrap();
-        assert_eq!(r#""456""#, serde_json_wasm::to_string(&value).unwrap());
+        assert_eq!(r#""456""#, serde_json::to_string(&value).unwrap());
 
         // invalid: not a string encoded decimal
         assert_eq!(
-            "Invalid type",
-            serde_json_wasm::from_str::<SignedDecimal>("123")
+            "invalid type: integer `123`, expected string-encoded decimal at line 1 column 3",
+            serde_json::from_str::<SignedDecimal>("123")
                 .err()
                 .unwrap()
                 .to_string()
@@ -3086,8 +3086,8 @@ mod tests {
 
         // invalid: not properly defined signed decimal value
         assert_eq!(
-            "Error parsing decimal '1.e': Generic error: Error parsing fractional",
-            serde_json_wasm::from_str::<SignedDecimal>(r#""1.e""#)
+            "Error parsing decimal '1.e': Generic error: Error parsing fractional at line 1 column 5",
+            serde_json::from_str::<SignedDecimal>(r#""1.e""#)
                 .err()
                 .unwrap()
                 .to_string()

@@ -1,7 +1,7 @@
+use cosmwasm_core::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::Addr;
 use crate::coin::Coin;
 use crate::prelude::*;
 use crate::timestamp::Timestamp;

@@ -7,12 +7,12 @@ use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
+use cosmwasm_core::{Addr, CanonicalAddr};
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-use crate::addresses::{Addr, CanonicalAddr};
 use crate::coin::Coin;
 use crate::deps::OwnedDeps;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
