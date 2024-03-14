@@ -26,3 +26,59 @@ macro_rules! forward_ref_partial_eq {
         }
     };
 }
+
+/// implements binary operators "&T op U", "T op &U", "&T op &U"
+/// based on "T op U" where T and U are expected to be `Copy`able
+///
+/// Copied from `libcore`
+macro_rules! forward_ref_binop {
+    (impl $imp:ident, $method:ident for $t:ty, $u:ty) => {
+        impl<'a> $imp<$u> for &'a $t {
+            type Output = <$t as $imp<$u>>::Output;
+
+            #[inline]
+            #[track_caller]
+            fn $method(self, other: $u) -> <$t as $imp<$u>>::Output {
+                $imp::$method(*self, other)
+            }
+        }
+
+        impl $imp<&$u> for $t {
+            type Output = <$t as $imp<$u>>::Output;
+
+            #[inline]
+            #[track_caller]
+            fn $method(self, other: &$u) -> <$t as $imp<$u>>::Output {
+                $imp::$method(self, *other)
+            }
+        }
+
+        impl $imp<&$u> for &$t {
+            type Output = <$t as $imp<$u>>::Output;
+
+            #[inline]
+            #[track_caller]
+            fn $method(self, other: &$u) -> <$t as $imp<$u>>::Output {
+                $imp::$method(*self, *other)
+            }
+        }
+    };
+}
+
+/// implements "T op= &U", based on "T op= U"
+/// where U is expected to be `Copy`able
+///
+/// Copied from `libcore`
+macro_rules! forward_ref_op_assign {
+    (impl $imp:ident, $method:ident for $t:ty, $u:ty) => {
+        impl $imp<&$u> for $t {
+            #[inline]
+            #[track_caller]
+            fn $method(&mut self, other: &$u) {
+                $imp::$method(self, *other);
+            }
+        }
+    };
+}
+
+pub(crate) use {forward_ref_binop, forward_ref_op_assign};

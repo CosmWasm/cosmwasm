@@ -5,12 +5,12 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CoreError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
 };
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
     forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256,
     Uint512, Uint64,
