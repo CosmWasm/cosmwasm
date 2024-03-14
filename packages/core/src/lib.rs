@@ -10,6 +10,7 @@ extern crate alloc;
 mod binary;
 mod errors;
 mod forward_ref;
+mod hex_binary;
 mod math;
 
 #[doc(hidden)]
@@ -21,6 +22,7 @@ pub use crate::errors::{
     ConversionOverflowError, CoreError, CoreResult, DivideByZeroError, DivisionError,
     OverflowError, OverflowOperation, RoundDownOverflowError, RoundUpOverflowError,
 };
+pub use crate::hex_binary::HexBinary;
 pub use crate::math::{
     Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
     Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,

@@ -17,7 +17,6 @@ mod coins;
 mod conversion;
 mod deps;
 mod errors;
-mod hex_binary;
 mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
@@ -55,7 +54,6 @@ pub use crate::errors::{
     OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
     VerificationError,
 };
-pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
@@ -125,5 +123,6 @@ pub mod testing;
 
 // Re-exports
 
+pub use cosmwasm_core as core;
 pub use cosmwasm_core::*;
 pub use cosmwasm_derive::entry_point;

@@ -17,20 +17,8 @@ pub enum CoreError {
         actual: u64,
         backtrace: BT,
     },
-    #[display("Error parsing into type {target_type}: {msg}")]
-    ParseErr {
-        /// the target type that was attempted
-        target_type: String,
-        msg: String,
-        backtrace: BT,
-    },
-    #[display("Error serializing type {source_type}: {msg}")]
-    SerializeErr {
-        /// the source type that was attempted
-        source_type: String,
-        msg: String,
-        backtrace: BT,
-    },
+    #[display("Invalid hex string: {msg}")]
+    InvalidHex { msg: String, backtrace: BT },
     #[display("Overflow: {source}")]
     Overflow {
         source: OverflowError,
@@ -81,17 +69,8 @@ impl CoreError {
         }
     }
 
-    pub fn parse_err(target: impl Into<String>, msg: impl ToString) -> Self {
-        CoreError::ParseErr {
-            target_type: target.into(),
-            msg: msg.to_string(),
-            backtrace: BT::capture(),
-        }
-    }
-
-    pub fn serialize_err(source: impl Into<String>, msg: impl ToString) -> Self {
-        CoreError::SerializeErr {
-            source_type: source.into(),
+    pub fn invalid_hex(msg: impl ToString) -> Self {
+        CoreError::InvalidHex {
             msg: msg.to_string(),
             backtrace: BT::capture(),
         }
@@ -153,34 +132,13 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::ParseErr {
-                target_type,
-                msg,
-                backtrace: _,
-            } => {
-                if let CoreError::ParseErr {
-                    target_type: rhs_target_type,
+            CoreError::InvalidHex { msg, backtrace: _ } => {
+                if let CoreError::InvalidHex {
                     msg: rhs_msg,
                     backtrace: _,
                 } = rhs
                 {
-                    target_type == rhs_target_type && msg == rhs_msg
-                } else {
-                    false
-                }
-            }
-            CoreError::SerializeErr {
-                source_type,
-                msg,
-                backtrace: _,
-            } => {
-                if let CoreError::SerializeErr {
-                    source_type: rhs_source_type,
-                    msg: rhs_msg,
-                    backtrace: _,
-                } = rhs
-                {
-                    source_type == rhs_source_type && msg == rhs_msg
+                    msg == rhs_msg
                 } else {
                     false
                 }
