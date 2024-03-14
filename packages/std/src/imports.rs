@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
+use cosmwasm_core::{Addr, CanonicalAddr};
 
-use crate::addresses::{Addr, CanonicalAddr};
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{alloc, build_region, consume_region, Region};
