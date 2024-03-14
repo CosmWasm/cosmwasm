@@ -371,7 +371,7 @@ mod tests {
 
     #[test]
     fn invalid_base64_works_for_errors() {
-        let original = base64::DecodeError::InvalidLength;
+        let original = base64::DecodeError::InvalidLength(10);
         let error = CoreError::invalid_base64(original);
         match error {
             CoreError::InvalidBase64 { msg, .. } => {

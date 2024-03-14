@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use rand_core::OsRng;
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -9,6 +8,7 @@ use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
 use cosmwasm_core::{Addr, CanonicalAddr};
+use rand_core::OsRng;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
