@@ -28,7 +28,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `i64` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_core::Int64;
+/// # use cosmwasm_std::Int64;
 /// let a = Int64::from(258i64);
 /// assert_eq!(a.i64(), 258);
 /// ```
@@ -130,7 +130,7 @@ impl Int64 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_core::Int64;
+    /// use cosmwasm_std::Int64;
     ///
     /// let a = Int64::MAX;
     /// let result = a.full_mul(2i32);
@@ -554,8 +554,6 @@ mod tests {
     use super::*;
     use crate::math::conversion::test_try_from_uint_to_int;
 
-    use cosmwasm_std::{from_json, to_json_vec};
-
     #[test]
     fn size_of_works() {
         assert_eq!(core::mem::size_of::<Int64>(), 8);
@@ -799,9 +797,9 @@ mod tests {
     #[test]
     fn int64_json() {
         let orig = Int64::from(1234567890987654321i64);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int64 = from_json(serialized).unwrap();
+        let parsed: Int64 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

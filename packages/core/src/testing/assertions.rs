@@ -44,7 +44,7 @@ macro_rules! assert_hash_works {
     }};
 }
 
-/// Implementation for the [`cosmwasm_core::assert_approx_eq`] macro. This does not provide any
+/// Implementation for the [`cosmwasm_std::assert_approx_eq`] macro. This does not provide any
 /// stability guarantees and may change any time.
 #[track_caller]
 #[doc(hidden)]

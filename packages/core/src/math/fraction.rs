@@ -42,7 +42,7 @@ macro_rules! impl_mul_fraction {
             /// ## Examples
             ///
             /// ```
-            /// use cosmwasm_core::Uint128;
+            /// use cosmwasm_std::Uint128;
             /// let fraction = (8u128, 21u128);
             /// let res = Uint128::new(123456).checked_mul_floor(fraction).unwrap();
             /// assert_eq!(Uint128::new(47030), res); // 47030.8571 rounds down
@@ -70,7 +70,7 @@ macro_rules! impl_mul_fraction {
             /// ## Examples
             ///
             /// ```
-            /// use cosmwasm_core::Uint128;
+            /// use cosmwasm_std::Uint128;
             /// let fraction = (8u128, 21u128);
             /// let res = Uint128::new(123456).checked_mul_ceil(fraction).unwrap();
             /// assert_eq!(Uint128::new(47031), res); // 47030.8571 rounds up
@@ -102,7 +102,7 @@ macro_rules! impl_mul_fraction {
             /// ## Examples
             ///
             /// ```
-            /// use cosmwasm_core::Uint128;
+            /// use cosmwasm_std::Uint128;
             /// let fraction = (4u128, 5u128);
             /// let res = Uint128::new(789).checked_div_floor(fraction).unwrap();
             /// assert_eq!(Uint128::new(986), res); // 986.25 rounds down
@@ -136,7 +136,7 @@ macro_rules! impl_mul_fraction {
             /// ## Examples
             ///
             /// ```
-            /// use cosmwasm_core::Uint128;
+            /// use cosmwasm_std::Uint128;
             /// let fraction = (4u128, 5u128);
             /// let res = Uint128::new(789).checked_div_ceil(fraction).unwrap();
             /// assert_eq!(Uint128::new(987), res); // 986.25 rounds up

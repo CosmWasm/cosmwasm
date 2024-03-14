@@ -28,7 +28,7 @@ use super::num_consts::NumConsts;
 /// Use `from` to create instances of this and `i128` to get the value out:
 ///
 /// ```
-/// # use cosmwasm_core::Int128;
+/// # use cosmwasm_std::Int128;
 /// let a = Int128::from(258i128);
 /// assert_eq!(a.i128(), 258);
 /// ```
@@ -130,7 +130,7 @@ impl Int128 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_core::Int128;
+    /// use cosmwasm_std::Int128;
     ///
     /// let a = Int128::MAX;
     /// let result = a.full_mul(2i32);
@@ -575,8 +575,6 @@ mod tests {
     use super::*;
     use crate::math::conversion::test_try_from_uint_to_int;
 
-    use cosmwasm_std::{from_json, to_json_vec};
-
     #[test]
     fn size_of_works() {
         assert_eq!(core::mem::size_of::<Int128>(), 16);
@@ -827,9 +825,9 @@ mod tests {
     #[test]
     fn int128_json() {
         let orig = Int128::from(1234567890987654321i128);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int128 = from_json(serialized).unwrap();
+        let parsed: Int128 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

@@ -33,7 +33,7 @@ use super::num_consts::NumConsts;
 /// endian bytes:
 ///
 /// ```
-/// # use cosmwasm_core::Int256;
+/// # use cosmwasm_std::Int256;
 /// let a = Int256::from(258u128);
 /// let b = Int256::new([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -185,7 +185,7 @@ impl Int256 {
     /// # Examples
     ///
     /// ```
-    /// use cosmwasm_core::Int256;
+    /// use cosmwasm_std::Int256;
     ///
     /// let a = Int256::MAX;
     /// let result = a.full_mul(2i32);
@@ -650,8 +650,6 @@ mod tests {
     use super::*;
     use crate::math::conversion::test_try_from_uint_to_int;
 
-    use cosmwasm_std::{from_json, to_json_vec};
-
     #[test]
     fn size_of_works() {
         assert_eq!(core::mem::size_of::<Int256>(), 32);
@@ -934,9 +932,9 @@ mod tests {
     #[test]
     fn int256_json() {
         let orig = Int256::from(1234567890987654321u128);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int256 = from_json(serialized).unwrap();
+        let parsed: Int256 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 
