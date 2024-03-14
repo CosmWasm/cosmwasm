@@ -4,7 +4,10 @@ use core::ops::Deref;
 
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::{Binary, CoreError, CoreResult};
+use crate::{
+    encoding::{from_hex, to_hex},
+    Binary, CoreError, CoreResult,
+};
 
 /// This is a wrapper around Vec<u8> to add hex de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -17,12 +20,11 @@ pub struct HexBinary(#[cfg_attr(feature = "std", schemars(with = "String"))] Vec
 
 impl HexBinary {
     pub fn from_hex(input: &str) -> CoreResult<Self> {
-        let vec = hex::decode(input).map_err(CoreError::invalid_hex)?;
-        Ok(Self(vec))
+        from_hex(input).map(Self)
     }
 
     pub fn to_hex(&self) -> String {
-        hex::encode(&self.0)
+        to_hex(&self.0)
     }
 
     pub fn as_slice(&self) -> &[u8] {

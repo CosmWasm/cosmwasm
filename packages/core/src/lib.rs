@@ -9,6 +9,7 @@ extern crate alloc;
 
 mod addresses;
 mod binary;
+mod encoding;
 mod errors;
 mod forward_ref;
 mod hex_binary;
@@ -19,6 +20,7 @@ pub mod __internal;
 
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
+pub use crate::encoding::{from_base64, from_hex, to_base64, to_hex};
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     ConversionOverflowError, CoreError, CoreResult, DivideByZeroError, DivisionError,

@@ -2,10 +2,12 @@ use alloc::{string::String, vec::Vec};
 use core::fmt;
 use core::ops::Deref;
 
-use base64::engine::{Engine, GeneralPurpose};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{CoreError, CoreResult};
+use crate::{
+    encoding::{from_base64, to_base64},
+    errors::{CoreError, CoreResult},
+};
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -17,16 +19,6 @@ use crate::errors::{CoreError, CoreResult};
 pub struct Binary(#[cfg_attr(feature = "std", schemars(with = "String"))] Vec<u8>);
 
 impl Binary {
-    /// Base64 encoding engine used in conversion to/from base64.
-    ///
-    /// The engine adds padding when encoding and accepts strings with or
-    /// without padding when decoding.
-    const B64_ENGINE: GeneralPurpose = GeneralPurpose::new(
-        &base64::alphabet::STANDARD,
-        base64::engine::GeneralPurposeConfig::new()
-            .with_decode_padding_mode(base64::engine::DecodePaddingMode::Indifferent),
-    );
-
     /// Creates a new `Binary` containing the given data.
     pub const fn new(data: Vec<u8>) -> Self {
         Self(data)
@@ -35,16 +27,13 @@ impl Binary {
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
     pub fn from_base64(encoded: &str) -> CoreResult<Self> {
-        Self::B64_ENGINE
-            .decode(encoded.as_bytes())
-            .map(Binary::from)
-            .map_err(CoreError::invalid_base64)
+        from_base64(encoded).map(Self::new)
     }
 
     /// encode to base64 string (guaranteed to be success as we control the data inside).
     /// this returns normalized form (with trailing = if needed)
     pub fn to_base64(&self) -> String {
-        Self::B64_ENGINE.encode(self.0.as_slice())
+        to_base64(&self.0)
     }
 
     pub fn as_slice(&self) -> &[u8] {
