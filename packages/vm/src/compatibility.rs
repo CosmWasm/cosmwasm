@@ -83,7 +83,7 @@ const MAX_FUNCTION_RESULTS: usize = 1;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
-    let module = ParsedWasm::parse(wasm_code)?;
+    let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module)?;
     check_wasm_memories(&module)?;
@@ -93,7 +93,7 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
     check_wasm_capabilities(&module, available_capabilities)?;
     check_wasm_functions(&module)?;
 
-    Ok(())
+    module.validate_funcs()
 }
 
 fn check_wasm_tables(module: &ParsedWasm) -> VmResult<()> {
