@@ -268,8 +268,6 @@ name = "cosmwasm-vm"
 version = "2.0.0"
 dependencies = [
  "bech32",
- "bitflags 1.2.1",
- "bytecheck",
  "bytes",
  "clru",
  "cosmwasm-crypto",
@@ -283,6 +281,7 @@ dependencies = [
  "sha2 0.10.3",
  "strum",
  "thiserror",
+ "tracing",
  "wasmer",
  "wasmer-middlewares",
 ]
