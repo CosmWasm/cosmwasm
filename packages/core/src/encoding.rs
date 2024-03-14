@@ -44,3 +44,51 @@ where
 {
     hex::encode(input)
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{from_base64, from_hex, to_base64, to_hex};
+
+    const BASE64_FOOBAR: &str = "Zm9vYmFy"; // utf-8 encoded "foobar"
+    const HEX_FOOBAR: &str = "666f6f626172"; // utf-8 encoded "foobar"
+
+    #[test]
+    fn from_base64_works() {
+        let decoded = from_base64(BASE64_FOOBAR).unwrap();
+        assert_eq!(decoded, b"foobar");
+    }
+
+    #[test]
+    fn to_base64_works() {
+        let encoded = to_base64("foobar");
+        assert_eq!(encoded, BASE64_FOOBAR);
+    }
+
+    #[test]
+    fn base64_roundtrip_works() {
+        let decoded = from_base64(BASE64_FOOBAR).unwrap();
+        assert_eq!(decoded, b"foobar");
+        let encoded = to_base64(decoded);
+        assert_eq!(encoded, BASE64_FOOBAR);
+    }
+
+    #[test]
+    fn from_hex_works() {
+        let decoded = from_hex(HEX_FOOBAR).unwrap();
+        assert_eq!(decoded, b"foobar");
+    }
+
+    #[test]
+    fn to_hex_works() {
+        let encoded = to_hex("foobar");
+        assert_eq!(encoded, HEX_FOOBAR);
+    }
+
+    #[test]
+    fn hex_roundtrip_works() {
+        let decoded = from_hex(HEX_FOOBAR).unwrap();
+        assert_eq!(decoded, b"foobar");
+        let encoded = to_hex(decoded);
+        assert_eq!(encoded, HEX_FOOBAR);
+    }
+}
