@@ -1,9 +1,5 @@
 use std::sync::Arc;
-#[cfg(feature = "cranelift")]
-use wasmer::Cranelift;
 use wasmer::NativeEngineExt;
-#[cfg(not(feature = "cranelift"))]
-use wasmer::Singlepass;
 use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
@@ -30,6 +26,14 @@ fn cost(_operator: &Operator) -> u64 {
     150
 }
 
+/// Creates the appropriate compiler config for the platform
+pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
+    #[cfg(target_family = "windows")]
+    return wasmer::Cranelift::new();
+    #[cfg(not(target_family = "windows"))]
+    wasmer::Singlepass::new()
+}
+
 /// Creates an engine without a compiler.
 /// This is used to run modules compiled before.
 pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
@@ -48,16 +52,11 @@ pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     let deterministic = Arc::new(Gatekeeper::default());
     let metering = Arc::new(Metering::new(gas_limit, cost));
 
-    #[cfg(feature = "cranelift")]
-    let mut compiler = Cranelift::default();
-
-    #[cfg(not(feature = "cranelift"))]
-    let mut compiler = Singlepass::default();
-
+    let mut compiler = make_compiler_config();
     compiler.canonicalize_nans(true);
     compiler.push_middleware(deterministic);
     compiler.push_middleware(metering);
-    let mut engine = Engine::from(compiler);
+    let mut engine: Engine = compiler.into();
     if let Some(limit) = memory_limit {
         let base = BaseTunables::for_target(&Target::default());
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));

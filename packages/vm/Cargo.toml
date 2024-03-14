@@ -19,7 +19,9 @@ staking = ["cosmwasm-std/staking"]
 # this enables all stargate-related functionality, including the ibc entry points
 stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
-cranelift = ["wasmer/cranelift"]
+#
+# LEGACY: This doesn't do anything anymore. Cranelift is automatically pulled in on Windows.
+cranelift = []
 # For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
 
@@ -42,7 +44,7 @@ serde = { workspace = true }
 serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
-wasmer = { version = "=4.2.6", default-features = false, features = ["cranelift", "singlepass"] }
+wasmer = { version = "=4.2.6", default-features = false, features = ["singlepass"] }
 wasmer-middlewares = "=4.2.6"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
@@ -58,6 +60,9 @@ tracing = "0.1.32"
 # wasmer-middlewares = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c" }
 # wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["cranelift", "singlepass"] }
 # wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
+
+[target.'cfg(target_family = "windows")'.dependencies]
+wasmer = { version = "=4.2.6", default-features = false, features = ["cranelift"] }
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
