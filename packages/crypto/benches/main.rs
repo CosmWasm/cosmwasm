@@ -1,4 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
+use rand_core::OsRng;
 use std::time::Duration;
 
 use english_numbers::convert_no_fmt;
@@ -158,6 +159,7 @@ fn bench_crypto(c: &mut Criterion) {
                 |b| {
                     b.iter(|| {
                         assert!(ed25519_batch_verify(
+                            &mut OsRng,
                             &messages[..n],
                             &signatures[..n],
                             &public_keys[..n]
@@ -189,6 +191,7 @@ fn bench_crypto(c: &mut Criterion) {
                 |b| {
                     b.iter(|| {
                         assert!(ed25519_batch_verify(
+                            &mut OsRng,
                             &messages.repeat(n),
                             &signatures.repeat(n),
                             &public_keys
