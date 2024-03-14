@@ -18,6 +18,8 @@ mod math;
 #[doc(hidden)]
 pub mod __internal;
 
+use crate::__internal__forward_ref_partial_eq as forward_ref_partial_eq;
+
 pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
 pub use crate::binary::Binary;
 pub use crate::encoding::{from_base64, from_hex, to_base64, to_hex};
