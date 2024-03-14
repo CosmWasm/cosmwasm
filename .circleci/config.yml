@@ -1066,7 +1066,7 @@ jobs:
           name: Run tests with coverage
           command: |
             mkdir -p reports
-            cargo test
+            cargo test --all-features
 
             grcov . -s packages/core --binary-path ./target/debug -t lcov -o ./reports/core.info
             grcov . -s packages/crypto --binary-path ./target/debug -t lcov -o ./reports/crypto.info
