@@ -9,20 +9,21 @@ license = "Apache-2.0"
 
 [features]
 default = []
+std = []
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
 bench = false
 
 [dependencies]
-k256 = { version = "0.13.3", features = ["ecdsa"] }
-ed25519-zebra = "4.0.3"
+derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["display", "from"] }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
+ed25519-zebra = { version = "4.0.3", default-features = false }
 digest = "0.10"
-rand_core = { version = "0.6", features = ["getrandom"] }
-thiserror = "1.0.38"
+rand_core = "0.6"
 # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
 ecdsa = "0.16.2"
-p256 = { version = "0.13.2", features = ["ecdsa"] }
+p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
 
 [dev-dependencies]
 criterion = "0.5.1"

@@ -7,6 +7,7 @@ use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
     secp256r1_recover_pubkey, secp256r1_verify, CryptoError,
 };
+use rand::rngs::OsRng;
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
@@ -484,7 +485,7 @@ pub fn do_ed25519_batch_verify<
     } * signatures.len() as u64;
     let gas_info = GasInfo::with_cost(max(gas_cost, data.gas_config.ed25519_verify_cost));
     process_gas_info(data, &mut store, gas_info)?;
-    let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
+    let result = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
     let code = match result {
         Ok(valid) => {
             if valid {

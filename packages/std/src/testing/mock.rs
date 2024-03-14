@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use rand_core::OsRng;
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -217,6 +218,7 @@ impl Api for MockApi {
         public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError> {
         Ok(cosmwasm_crypto::ed25519_batch_verify(
+            &mut OsRng,
             messages,
             signatures,
             public_keys,

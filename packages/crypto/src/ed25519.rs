@@ -1,5 +1,5 @@
 use ed25519_zebra::{batch, Signature, VerificationKey};
-use rand_core::OsRng;
+use rand_core::CryptoRngCore;
 
 use crate::errors::{CryptoError, CryptoResult};
 
@@ -60,11 +60,15 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 ///  - The "one-public key, with zero messages and zero signatures" case, is considered the empty
 /// case.
 ///  - The empty case (no messages, no signatures and no public keys) returns true.
-pub fn ed25519_batch_verify(
+pub fn ed25519_batch_verify<R>(
+    rng: &mut R,
     messages: &[&[u8]],
     signatures: &[&[u8]],
     public_keys: &[&[u8]],
-) -> CryptoResult<bool> {
+) -> CryptoResult<bool>
+where
+    R: CryptoRngCore,
+{
     // Structural checks
     let messages_len = messages.len();
     let signatures_len = signatures.len();
@@ -103,7 +107,7 @@ pub fn ed25519_batch_verify(
     }
 
     // Batch verification
-    match batch.verify(OsRng) {
+    match batch.verify(rng) {
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
@@ -139,6 +143,7 @@ fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
 mod tests {
     use super::*;
     use ed25519_zebra::SigningKey;
+    use rand_core::OsRng;
     use serde::Deserialize;
 
     // For generic signature verification
@@ -282,7 +287,7 @@ mod tests {
         let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // ed25519_batch_verify() works
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
     }
 
     // structural tests
@@ -293,7 +298,7 @@ mod tests {
         let public_keys: Vec<&[u8]> = vec![];
 
         // ed25519_batch_verify() works for empty msgs / sigs / pubkeys
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
     }
 
     #[test]
@@ -320,12 +325,12 @@ mod tests {
         let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // Check the whole set passes
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
 
         // Remove one message
         let msg = messages.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -340,7 +345,7 @@ mod tests {
         // Remove one signature
         let sig = signatures.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -355,7 +360,7 @@ mod tests {
         // Remove one public key
         let pubkey = public_keys.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -370,7 +375,7 @@ mod tests {
         // Add one message
         messages.push(messages[0]);
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -384,7 +389,7 @@ mod tests {
 
         // Add one signature
         signatures.push(signatures[0]);
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -398,7 +403,7 @@ mod tests {
 
         // Add one public keys
         public_keys.push(public_keys[0]);
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -432,18 +437,18 @@ mod tests {
         let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // Check the whole set passes
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
 
         // Just one message
         messages.truncate(1);
 
         // Check (in passing) this fails verification
-        assert!(!ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(!ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
 
         // Remove one sig
         let sig = signatures.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -458,7 +463,7 @@ mod tests {
         // Remove one public key
         let pubkey = public_keys.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -495,18 +500,18 @@ mod tests {
         let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // Check the whole set passes
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
 
         // Just one public key
         public_keys.truncate(1);
 
         // Check (in passing) this fails verification
-        assert!(!ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(!ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
 
         // Remove one sig
         let sig = signatures.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -521,7 +526,7 @@ mod tests {
         // Remove one msg
         let msg = messages.pop().unwrap();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        let res = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
         match res.unwrap_err() {
             CryptoError::BatchErr { msg, .. } => assert_eq!(
                 msg,
@@ -551,7 +556,7 @@ mod tests {
         let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
 
         // ed25519_batch_verify() works for empty sigs / pubkeys
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
     }
 
     #[test]
@@ -571,6 +576,6 @@ mod tests {
         let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // ed25519_batch_verify() works for empty msgs / sigs
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys).unwrap());
     }
 }

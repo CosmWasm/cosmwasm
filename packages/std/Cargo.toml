@@ -64,6 +64,7 @@ sha2 = "0.10.3"
 serde = { workspace = true }
 serde-json-wasm = { version = "1.0.1", default-features = false }
 thiserror = "1.0.26"
+rand_core = { version = "0.6.4", features = ["getrandom"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.11.0"

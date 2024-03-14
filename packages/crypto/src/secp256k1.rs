@@ -3,6 +3,7 @@ use k256::{
     ecdsa::signature::DigestVerifier,             // traits
     ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
 };
+use alloc::{string::ToString, vec::Vec};
 
 use crate::ecdsa::{ECDSA_COMPRESSED_PUBKEY_LEN, ECDSA_UNCOMPRESSED_PUBKEY_LEN};
 use crate::errors::{CryptoError, CryptoResult};
