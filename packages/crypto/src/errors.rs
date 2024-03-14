@@ -1,6 +1,6 @@
 use alloc::string::String;
-use derive_more::Display;
 use core::fmt::Debug;
+use derive_more::Display;
 
 use crate::BT;
 

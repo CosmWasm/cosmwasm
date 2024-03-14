@@ -7,10 +7,10 @@ use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
     secp256r1_recover_pubkey, secp256r1_verify, CryptoError,
 };
-use rand::rngs::OsRng;
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
+use rand::rngs::OsRng;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
