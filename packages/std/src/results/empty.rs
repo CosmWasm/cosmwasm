@@ -1,8 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::*;
-
 /// An empty struct that serves as a placeholder in different places,
 /// such as contracts that don't set a custom message.
 ///
