@@ -141,8 +141,6 @@ fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
 
 #[cfg(test)]
 mod tests {
-    extern crate std; // allow for file I/O during tests
-
     use super::*;
     use alloc::{string::String, vec, vec::Vec};
     use ed25519_zebra::SigningKey;
