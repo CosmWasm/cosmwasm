@@ -1,4 +1,4 @@
-use crate::errors::StdError;
+use crate::StdError;
 
 /// A record of a key-value storage that is created through an iterator API.
 /// The first element (key) is always raw binary data. The second element

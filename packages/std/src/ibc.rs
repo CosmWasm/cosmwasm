@@ -7,10 +7,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
-use crate::errors::StdResult;
 use crate::prelude::*;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::timestamp::Timestamp;
+use crate::StdResult;
 use crate::{to_json_binary, Binary};
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts

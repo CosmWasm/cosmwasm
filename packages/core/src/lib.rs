@@ -28,8 +28,9 @@ pub use crate::binary::Binary;
 pub use crate::encoding::{from_base64, from_hex, to_base64, to_hex};
 pub use crate::errors::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    ConversionOverflowError, CoreError, CoreResult, DivideByZeroError, DivisionError,
-    OverflowError, OverflowOperation, RoundDownOverflowError, RoundUpOverflowError,
+    CoinFromStrError, CoinsError, ConversionOverflowError, CoreError, CoreResult,
+    DivideByZeroError, DivisionError, OverflowError, OverflowOperation, RecoverPubkeyError,
+    RoundDownOverflowError, RoundUpOverflowError, SystemError, VerificationError,
 };
 pub use crate::hex_binary::HexBinary;
 pub use crate::math::{

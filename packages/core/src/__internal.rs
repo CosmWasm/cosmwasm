@@ -7,5 +7,3 @@
 //!
 
 pub use crate::__internal__forward_ref_partial_eq as forward_ref_partial_eq;
-pub use crate::errors::backtrace::impl_from_err;
-pub use crate::errors::backtrace::BT;

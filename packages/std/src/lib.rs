@@ -15,7 +15,6 @@ mod coin;
 mod coins;
 mod conversion;
 mod deps;
-mod errors;
 mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
@@ -46,12 +45,6 @@ pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
-pub use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    CoinFromStrError, CoinsError, ConversionOverflowError, DivideByZeroError, DivisionError,
-    OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
-    VerificationError,
-};
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
@@ -122,5 +115,8 @@ pub mod testing;
 // Re-exports
 
 pub use cosmwasm_core as core;
+pub use cosmwasm_core::CoreError as StdError;
+pub use cosmwasm_core::CoreResult as StdResult;
 pub use cosmwasm_core::*;
+
 pub use cosmwasm_derive::entry_point;
