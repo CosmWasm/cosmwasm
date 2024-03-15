@@ -7,6 +7,9 @@
 #[macro_use]
 extern crate alloc;
 
+#[cfg(test)]
+extern crate std; // allow for file I/O during tests
+
 mod addresses;
 mod binary;
 mod encoding;

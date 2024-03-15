@@ -167,8 +167,6 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
 
 #[cfg(test)]
 mod tests {
-    extern crate std; // allow for file I/O during tests
-
     use super::*;
 
     use alloc::{format, string::String};
