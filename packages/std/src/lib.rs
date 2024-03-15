@@ -1,11 +1,5 @@
+#[macro_use]
 extern crate alloc;
-
-#[cfg(not(feature = "std"))]
-core::compile_error!(
-    r#"Please enable `cosmwasm-std`'s `std` feature, as we might move existing functionality to that feature in the future.
-Builds without the std feature are currently not expected to work. If you need no_std support see #1484.
-"#
-);
 
 // Exposed on all platforms
 
@@ -117,6 +111,15 @@ pub mod testing;
 pub use cosmwasm_core as core;
 pub use cosmwasm_core::CoreError as StdError;
 pub use cosmwasm_core::CoreResult as StdResult;
-pub use cosmwasm_core::*;
+pub use cosmwasm_core::{
+    assert_approx_eq, from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, Binary,
+    CanonicalAddr, CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    CoinFromStrError, CoinsError, ConversionOverflowError, Decimal, Decimal256,
+    Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
+    HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
+    OverflowOperation, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
+    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Uint128, Uint256,
+    Uint512, Uint64, VerificationError,
+};
 
 pub use cosmwasm_derive::entry_point;
