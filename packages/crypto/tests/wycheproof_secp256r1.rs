@@ -1,6 +1,6 @@
 #![allow(clippy::single_match)]
 
-use cosmwasm_crypto::secp256r1_verify;
+use cosmwasm_crypto::{secp256r1_recover_pubkey, secp256r1_verify};
 use serde::Deserialize;
 
 // See ./testdata/wycheproof/README.md for how to get/update those files
@@ -33,6 +33,7 @@ struct Key {
 #[serde(rename_all = "camelCase")]
 struct TestCase {
     tc_id: u32,
+    comment: String,
     msg: String,
     sig: String,
     // "acceptable", "valid" or "invalid"
@@ -100,6 +101,11 @@ fn ecdsa_secp256r1_sha256() {
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256r1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
+                    if tc.comment == "k*G has a large x-coordinate" {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [2, 3]);
+                    } else {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
+                    }
                 }
                 "invalid" => {
                     let message = hex::decode(tc.msg).unwrap();
@@ -148,6 +154,11 @@ fn ecdsa_secp256r1_sha512() {
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256r1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
+                    if tc.comment == "k*G has a large x-coordinate" {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [2, 3]);
+                    } else {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
+                    }
                 }
                 "invalid" => {
                     let message = hex::decode(tc.msg).unwrap();
@@ -196,6 +207,11 @@ fn ecdsa_secp256r1_sha3_256() {
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256r1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
+                    if tc.comment == "k*G has a large x-coordinate" {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [2, 3]);
+                    } else {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
+                    }
                 }
                 "invalid" => {
                     let message = hex::decode(tc.msg).unwrap();
@@ -244,6 +260,11 @@ fn ecdsa_secp256r1_sha3_512() {
                     let signature = from_der(&der_signature).unwrap();
                     let valid = secp256r1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
+                    if tc.comment == "k*G has a large x-coordinate" {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [2, 3]);
+                    } else {
+                        test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
+                    }
                 }
                 "invalid" => {
                     let message = hex::decode(tc.msg).unwrap();
@@ -265,6 +286,15 @@ fn ecdsa_secp256r1_sha3_512() {
         }
     }
     assert_eq!(tested, number_of_tests);
+}
+
+fn test_recover_pubkey(message_hash: &[u8], signature: &[u8], public_key: &[u8], params: [u8; 2]) {
+    // Since the recovery param is missing in the test vectors, we try both 0 and 1
+    let recovered0 = secp256r1_recover_pubkey(message_hash, signature, params[0]).unwrap();
+    let recovered1 = secp256r1_recover_pubkey(message_hash, signature, params[1]).unwrap();
+    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
+    assert_ne!(recovered0, recovered1);
+    assert!(recovered0 == public_key || recovered1 == public_key);
 }
 
 fn from_der(data: &[u8]) -> Result<[u8; 64], String> {
