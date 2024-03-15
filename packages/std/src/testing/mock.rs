@@ -226,7 +226,6 @@ impl Api for MockApi {
     }
 
     fn debug(&self, #[allow(unused)] message: &str) {
-        #[cfg(feature = "std")]
         println!("{message}");
     }
 }
@@ -2457,7 +2456,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "cosmwasm_1_3", feature = "std"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     fn distribution_querier_new_works() {
         let addresses = [
             ("addr0000".to_string(), "addr0001".to_string()),
