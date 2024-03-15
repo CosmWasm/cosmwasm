@@ -58,21 +58,19 @@ impl Display for Stub {
 /// the target error has a `backtrace` field.
 /// This is meant as a replacement for `thiserror`'s `#[from]` attribute, which does not
 /// work with our custom backtrace wrapper.
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __internal__impl_from_err {
+macro_rules! impl_from_err {
     ($from:ty, $to:ty, $map:path) => {
         impl From<$from> for $to {
             fn from(err: $from) -> Self {
                 $map {
                     source: err,
-                    backtrace: $crate::__internal::BT::capture(),
+                    backtrace: $crate::errors::backtrace::BT::capture(),
                 }
             }
         }
     };
 }
-pub use __internal__impl_from_err as impl_from_err;
+pub(crate) use impl_from_err;
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,6 @@ use cosmwasm_core::{Addr, CanonicalAddr};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::coin::Coin;
-use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, Record};
 use crate::prelude::*;
@@ -30,6 +29,7 @@ use crate::ContractInfoResponse;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
+use crate::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`

@@ -15,7 +15,6 @@ use sha2::{Digest, Sha256};
 
 use crate::coin::Coin;
 use crate::deps::OwnedDeps;
-use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
@@ -50,6 +49,7 @@ use crate::{Attribute, DenomMetadata};
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
+use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 

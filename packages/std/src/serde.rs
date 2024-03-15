@@ -6,8 +6,8 @@
 use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::errors::{StdError, StdResult};
 use crate::Binary;
+use crate::{StdError, StdResult};
 
 #[deprecated = "use from_json instead"]
 pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {

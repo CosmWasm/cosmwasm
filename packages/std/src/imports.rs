@@ -1,7 +1,6 @@
 use alloc::vec::Vec;
 use cosmwasm_core::{Addr, CanonicalAddr};
 
-use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
@@ -15,6 +14,7 @@ use crate::{
     iterator::{Order, Record},
     memory::get_optional_region_address,
 };
+use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 64;

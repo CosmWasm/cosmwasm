@@ -1,11 +1,38 @@
 use alloc::string::{String, ToString};
+use core::fmt;
 use derive_more::{Display, From};
 
-use super::backtrace::{impl_from_err, BT};
+use super::{impl_from_err, BT};
 
+use crate::errors::{RecoverPubkeyError, VerificationError};
+
+/// Structured error type for init, execute and query.
+///
+/// This can be serialized and passed over the Wasm/VM boundary, which allows us to use structured
+/// error types in e.g. integration tests. In that process backtraces are stripped off.
+///
+/// The prefix "Std" means "the standard error within the standard library". This is not the only
+/// result/error type in cosmwasm-std.
+///
+/// When new cases are added, they should describe the problem rather than what was attempted (e.g.
+/// InvalidBase64 is preferred over Base64DecodingErr). In the long run this allows us to get rid of
+/// the duplication in "StdError::FooErr".
+///
+/// Checklist for adding a new error:
+/// - Add enum case
+/// - Add creator function in std_error_helpers.rs
 #[derive(Display, Debug)]
-#[non_exhaustive]
 pub enum CoreError {
+    #[display("Verification error: {source}")]
+    VerificationErr {
+        source: VerificationError,
+        backtrace: BT,
+    },
+    #[display("Recover pubkey error: {source}")]
+    RecoverPubkeyErr {
+        source: RecoverPubkeyError,
+        backtrace: BT,
+    },
     /// Whenever there is no specific error type available
     #[display("Generic error: {msg}")]
     GenericErr { msg: String, backtrace: BT },
@@ -19,6 +46,25 @@ pub enum CoreError {
     },
     #[display("Invalid hex string: {msg}")]
     InvalidHex { msg: String, backtrace: BT },
+    /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
+    #[display("Cannot decode UTF8 bytes into string: {msg}")]
+    InvalidUtf8 { msg: String, backtrace: BT },
+    #[display("{kind} not found")]
+    NotFound { kind: String, backtrace: BT },
+    #[display("Error parsing into type {target_type}: {msg}")]
+    ParseErr {
+        /// the target type that was attempted
+        target_type: String,
+        msg: String,
+        backtrace: BT,
+    },
+    #[display("Error serializing type {source_type}: {msg}")]
+    SerializeErr {
+        /// the source type that was attempted
+        source_type: String,
+        msg: String,
+        backtrace: BT,
+    },
     #[display("Overflow: {source}")]
     Overflow {
         source: OverflowError,
@@ -36,9 +82,6 @@ pub enum CoreError {
     },
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for CoreError {}
-
 impl_from_err!(
     ConversionOverflowError,
     CoreError,
@@ -46,6 +89,20 @@ impl_from_err!(
 );
 
 impl CoreError {
+    pub fn verification_err(source: VerificationError) -> Self {
+        CoreError::VerificationErr {
+            source,
+            backtrace: BT::capture(),
+        }
+    }
+
+    pub fn recover_pubkey_err(source: RecoverPubkeyError) -> Self {
+        CoreError::RecoverPubkeyErr {
+            source,
+            backtrace: BT::capture(),
+        }
+    }
+
     pub fn generic_err(msg: impl Into<String>) -> Self {
         CoreError::GenericErr {
             msg: msg.into(),
@@ -76,6 +133,36 @@ impl CoreError {
         }
     }
 
+    pub fn invalid_utf8(msg: impl ToString) -> Self {
+        CoreError::InvalidUtf8 {
+            msg: msg.to_string(),
+            backtrace: BT::capture(),
+        }
+    }
+
+    pub fn not_found(kind: impl Into<String>) -> Self {
+        CoreError::NotFound {
+            kind: kind.into(),
+            backtrace: BT::capture(),
+        }
+    }
+
+    pub fn parse_err(target: impl Into<String>, msg: impl ToString) -> Self {
+        CoreError::ParseErr {
+            target_type: target.into(),
+            msg: msg.to_string(),
+            backtrace: BT::capture(),
+        }
+    }
+
+    pub fn serialize_err(source: impl Into<String>, msg: impl ToString) -> Self {
+        CoreError::SerializeErr {
+            source_type: source.into(),
+            msg: msg.to_string(),
+            backtrace: BT::capture(),
+        }
+    }
+
     pub fn overflow(source: OverflowError) -> Self {
         CoreError::Overflow {
             source,
@@ -91,9 +178,40 @@ impl CoreError {
     }
 }
 
+#[cfg(feature = "std")]
+impl std::error::Error for CoreError {}
+
 impl PartialEq<CoreError> for CoreError {
     fn eq(&self, rhs: &CoreError) -> bool {
         match self {
+            CoreError::VerificationErr {
+                source,
+                backtrace: _,
+            } => {
+                if let CoreError::VerificationErr {
+                    source: rhs_source,
+                    backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
+            CoreError::RecoverPubkeyErr {
+                source,
+                backtrace: _,
+            } => {
+                if let CoreError::RecoverPubkeyErr {
+                    source: rhs_source,
+                    backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
             CoreError::GenericErr { msg, backtrace: _ } => {
                 if let CoreError::GenericErr {
                     msg: rhs_msg,
@@ -139,6 +257,60 @@ impl PartialEq<CoreError> for CoreError {
                 } = rhs
                 {
                     msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            CoreError::InvalidUtf8 { msg, backtrace: _ } => {
+                if let CoreError::InvalidUtf8 {
+                    msg: rhs_msg,
+                    backtrace: _,
+                } = rhs
+                {
+                    msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            CoreError::NotFound { kind, backtrace: _ } => {
+                if let CoreError::NotFound {
+                    kind: rhs_kind,
+                    backtrace: _,
+                } = rhs
+                {
+                    kind == rhs_kind
+                } else {
+                    false
+                }
+            }
+            CoreError::ParseErr {
+                target_type,
+                msg,
+                backtrace: _,
+            } => {
+                if let CoreError::ParseErr {
+                    target_type: rhs_target_type,
+                    msg: rhs_msg,
+                    backtrace: _,
+                } = rhs
+                {
+                    target_type == rhs_target_type && msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            CoreError::SerializeErr {
+                source_type,
+                msg,
+                backtrace: _,
+            } => {
+                if let CoreError::SerializeErr {
+                    source_type: rhs_source_type,
+                    msg: rhs_msg,
+                    backtrace: _,
+                } = rhs
+                {
+                    source_type == rhs_source_type && msg == rhs_msg
                 } else {
                     false
                 }
@@ -189,7 +361,50 @@ impl PartialEq<CoreError> for CoreError {
     }
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
+impl From<core::str::Utf8Error> for CoreError {
+    fn from(source: core::str::Utf8Error) -> Self {
+        Self::invalid_utf8(source)
+    }
+}
+
+impl From<alloc::string::FromUtf8Error> for CoreError {
+    fn from(source: alloc::string::FromUtf8Error) -> Self {
+        Self::invalid_utf8(source)
+    }
+}
+
+impl From<VerificationError> for CoreError {
+    fn from(source: VerificationError) -> Self {
+        Self::verification_err(source)
+    }
+}
+
+impl From<RecoverPubkeyError> for CoreError {
+    fn from(source: RecoverPubkeyError) -> Self {
+        Self::recover_pubkey_err(source)
+    }
+}
+
+impl From<OverflowError> for CoreError {
+    fn from(source: OverflowError) -> Self {
+        Self::overflow(source)
+    }
+}
+
+impl From<DivideByZeroError> for CoreError {
+    fn from(source: DivideByZeroError) -> Self {
+        Self::divide_by_zero(source)
+    }
+}
+
+/// The return type for init, execute and query. Since the error type cannot be serialized to JSON,
+/// this is only available within the contract and its unit tests.
+///
+/// The prefix "Std" means "the standard result within the standard library". This is not the only
+/// result/error type in cosmwasm-std.
+pub type CoreResult<T, E = CoreError> = core::result::Result<T, E>;
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum OverflowOperation {
     Add,
     Sub,
@@ -197,6 +412,12 @@ pub enum OverflowOperation {
     Pow,
     Shr,
     Shl,
+}
+
+impl fmt::Display for OverflowOperation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{self:?}")
+    }
 }
 
 #[derive(Display, Debug, PartialEq, Eq)]
@@ -317,21 +538,50 @@ pub struct RoundDownOverflowError;
 #[cfg(feature = "std")]
 impl std::error::Error for RoundDownOverflowError {}
 
-impl From<OverflowError> for CoreError {
-    fn from(source: OverflowError) -> Self {
-        Self::overflow(source)
+#[derive(Display, Debug, PartialEq, Eq)]
+pub enum CoinsError {
+    #[display("Duplicate denom")]
+    DuplicateDenom,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CoinsError {}
+
+impl From<CoinsError> for CoreError {
+    fn from(value: CoinsError) -> Self {
+        Self::generic_err(format!("Creating Coins: {value}"))
     }
 }
 
-impl From<DivideByZeroError> for CoreError {
-    fn from(source: DivideByZeroError) -> Self {
-        Self::divide_by_zero(source)
+#[derive(Display, Debug, PartialEq, Eq)]
+pub enum CoinFromStrError {
+    #[display("Missing denominator")]
+    MissingDenom,
+    #[display("Missing amount or non-digit characters in amount")]
+    MissingAmount,
+    #[display("Invalid amount: {_0}")]
+    InvalidAmount(core::num::ParseIntError),
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for CoinFromStrError {}
+
+impl From<core::num::ParseIntError> for CoinFromStrError {
+    fn from(value: core::num::ParseIntError) -> Self {
+        Self::InvalidAmount(value)
+    }
+}
+
+impl From<CoinFromStrError> for CoreError {
+    fn from(value: CoinFromStrError) -> Self {
+        Self::generic_err(format!("Parsing Coin: {value}"))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::str;
 
     // constructors
 
@@ -419,6 +669,66 @@ mod tests {
     }
 
     #[test]
+    fn invalid_utf8_works_for_strings() {
+        let error = CoreError::invalid_utf8("my text");
+        match error {
+            CoreError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "my text");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_utf8_works_for_errors() {
+        let original = String::from_utf8(vec![0x80]).unwrap_err();
+        let error = CoreError::invalid_utf8(original);
+        match error {
+            CoreError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 1 bytes from index 0");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn not_found_works() {
+        let error = CoreError::not_found("gold");
+        match error {
+            CoreError::NotFound { kind, .. } => assert_eq!(kind, "gold"),
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn parse_err_works() {
+        let error = CoreError::parse_err("Book", "Missing field: title");
+        match error {
+            CoreError::ParseErr {
+                target_type, msg, ..
+            } => {
+                assert_eq!(target_type, "Book");
+                assert_eq!(msg, "Missing field: title");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn serialize_err_works() {
+        let error = CoreError::serialize_err("Book", "Content too long");
+        match error {
+            CoreError::SerializeErr {
+                source_type, msg, ..
+            } => {
+                assert_eq!(source_type, "Book");
+                assert_eq!(msg, "Content too long");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
     fn underflow_works_for_u128() {
         let error = CoreError::overflow(OverflowError::new(OverflowOperation::Sub));
         assert!(matches!(
@@ -480,12 +790,37 @@ mod tests {
     fn implements_partial_eq() {
         let u1 = CoreError::from(OverflowError::new(OverflowOperation::Sub));
         let u2 = CoreError::from(OverflowError::new(OverflowOperation::Sub));
-        let s1 = CoreError::generic_err("Content too long");
-        let s2 = CoreError::generic_err("Content too long");
-        let s3 = CoreError::generic_err("Title too long");
+        let s1 = CoreError::serialize_err("Book", "Content too long");
+        let s2 = CoreError::serialize_err("Book", "Content too long");
+        let s3 = CoreError::serialize_err("Book", "Title too long");
         assert_eq!(u1, u2);
         assert_ne!(u1, s1);
         assert_eq!(s1, s2);
         assert_ne!(s1, s3);
+    }
+
+    #[test]
+    fn from_std_str_utf8error_works() {
+        let broken = Vec::from(b"Hello \xF0\x90\x80World" as &[u8]);
+        let error: CoreError = str::from_utf8(&broken).unwrap_err().into();
+        match error {
+            CoreError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
+            }
+            err => panic!("Unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn from_std_string_from_utf8error_works() {
+        let error: CoreError = String::from_utf8(b"Hello \xF0\x90\x80World".to_vec())
+            .unwrap_err()
+            .into();
+        match error {
+            CoreError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
+            }
+            err => panic!("Unexpected error: {err:?}"),
+        }
     }
 }
