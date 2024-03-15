@@ -3,8 +3,6 @@ use cosmwasm_core::Uint64;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::*;
-
 /// A point in time in nanosecond precision.
 ///
 /// This type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.

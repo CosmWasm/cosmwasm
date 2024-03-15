@@ -112,8 +112,8 @@ pub use cosmwasm_core as core;
 pub use cosmwasm_core::CoreError as StdError;
 pub use cosmwasm_core::CoreResult as StdResult;
 pub use cosmwasm_core::{
-    assert_approx_eq, from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, Binary,
-    CanonicalAddr, CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, Binary, CanonicalAddr,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     CoinFromStrError, CoinsError, ConversionOverflowError, Decimal, Decimal256,
     Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
     HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
@@ -121,5 +121,8 @@ pub use cosmwasm_core::{
     SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Uint128, Uint256,
     Uint512, Uint64, VerificationError,
 };
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use cosmwasm_core::assert_approx_eq;
 
 pub use cosmwasm_derive::entry_point;
