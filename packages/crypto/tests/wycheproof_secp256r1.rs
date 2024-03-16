@@ -289,7 +289,7 @@ fn ecdsa_secp256r1_sha3_512() {
 }
 
 fn test_recover_pubkey(message_hash: &[u8], signature: &[u8], public_key: &[u8], params: [u8; 2]) {
-    // Since the recovery param is missing in the test vectors, we try both 0 and 1
+    // Since the recovery param is missing in the test vectors, we try both
     let recovered0 = secp256r1_recover_pubkey(message_hash, signature, params[0]).unwrap();
     let recovered1 = secp256r1_recover_pubkey(message_hash, signature, params[1]).unwrap();
     // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
