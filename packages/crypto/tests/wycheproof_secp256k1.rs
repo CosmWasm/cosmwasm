@@ -103,7 +103,9 @@ fn ecdsa_secp256k1_sha256() {
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
                     if tc.comment == "k*G has a large x-coordinate" {
-                        // this case is currently not supported for historic reasons
+                        // This case (recovery ID 2 and 3) was never supported in the implementation of
+                        // secp256k1_recover_pubkey because the library we used at that time did not support it.
+                        // If needed, we could enable it now in a consensus breaking change.
                     } else {
                         test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
                     }
@@ -153,7 +155,9 @@ fn ecdsa_secp256k1_sha512() {
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
                     if tc.comment == "k*G has a large x-coordinate" {
-                        // this case is currently not supported for historic reasons
+                        // This case (recovery ID 2 and 3) was never supported in the implementation of
+                        // secp256k1_recover_pubkey because the library we used at that time did not support it.
+                        // If needed, we could enable it now in a consensus breaking change.
                     } else {
                         test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
                     }
@@ -203,7 +207,9 @@ fn ecdsa_secp256k1_sha3_256() {
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
                     if tc.comment == "k*G has a large x-coordinate" {
-                        // this case is currently not supported for historic reasons
+                        // This case (recovery ID 2 and 3) was never supported in the implementation of
+                        // secp256k1_recover_pubkey because the library we used at that time did not support it.
+                        // If needed, we could enable it now in a consensus breaking change.
                     } else {
                         test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
                     }
@@ -253,7 +259,9 @@ fn ecdsa_secp256k1_sha3_512() {
                     let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
                     assert!(valid);
                     if tc.comment == "k*G has a large x-coordinate" {
-                        // this case is currently not supported for historic reasons
+                        // This case (recovery ID 2 and 3) was never supported in the implementation of
+                        // secp256k1_recover_pubkey because the library we used at that time did not support it.
+                        // If needed, we could enable it now in a consensus breaking change.
                     } else {
                         test_recover_pubkey(&message_hash, &signature, &public_key, [0, 1]);
                     }
