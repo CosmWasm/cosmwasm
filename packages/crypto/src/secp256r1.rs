@@ -53,7 +53,7 @@ pub fn secp256r1_verify(
 
 /// Recovers a public key from a message hash and a signature.
 ///
-/// This is required when working in application where public keys
+/// This is required when working with an application where public keys
 /// are not stored directly.
 ///
 /// `recovery_param` must be 0, 1, 2 or 3.
