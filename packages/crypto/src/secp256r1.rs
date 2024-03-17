@@ -53,12 +53,10 @@ pub fn secp256r1_verify(
 
 /// Recovers a public key from a message hash and a signature.
 ///
-/// This is required when working with Ethereum where public keys
-/// are not stored on chain directly.
+/// This is required when working with an application where public keys
+/// are not stored directly.
 ///
-/// `recovery_param` must be 0 or 1. The values 2 and 3 are unsupported by this implementation,
-/// which is the same restriction as Ethereum has (https://github.com/ethereum/go-ethereum/blob/v1.9.25/internal/ethapi/api.go#L466-L469).
-/// All other values are invalid.
+/// `recovery_param` must be 0, 1, 2 or 3.
 ///
 /// Returns the recovered pubkey in compressed form, which can be used
 /// in secp256r1_verify directly.
@@ -66,18 +64,6 @@ pub fn secp256r1_verify(
 /// This implementation accepts both high-S and low-S signatures. This is the
 /// same behavior as Ethereum's `ecrecover`. The reason is that high-S signatures
 /// may be perfectly valid if the application protocol does not disallow them.
-/// Or as [EIP-2] put it "The ECDSA recover precompiled contract remains unchanged
-/// and will keep accepting high s-values; this is useful e.g. if a contract
-/// recovers old Bitcoin signatures.".
-///
-/// See also OpenZeppelin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
-/// which adds further restrictions to avoid potential signature malleability.
-/// Please note that restricting signatures to low-S does not make signatures unique
-/// in the sense that for each (pubkey, message) there is only one signature. The
-/// signer can generate an arbitrary amount of valid signatures.
-/// <https://medium.com/@simonwarta/signature-determinism-for-blockchain-developers-dbd84865a93e>
-///
-/// [EIP-2]: https://eips.ethereum.org/EIPS/eip-2
 pub fn secp256r1_recover_pubkey(
     message_hash: &[u8],
     signature: &[u8],
@@ -86,11 +72,9 @@ pub fn secp256r1_recover_pubkey(
     let message_hash = read_hash(message_hash)?;
     let signature = read_signature(signature)?;
 
-    // params other than 0 and 1 are explicitly not supported
-    let id = match recovery_param {
-        0 => RecoveryId::new(false, false),
-        1 => RecoveryId::new(true, false),
-        _ => return Err(CryptoError::invalid_recovery_param()),
+    // params other than 0, 1, 2 or 3 are explicitly not supported
+    let Some(id) = RecoveryId::from_byte(recovery_param) else {
+        return Err(CryptoError::invalid_recovery_param());
     };
 
     // Compose extended signature
@@ -344,19 +328,6 @@ mod tests {
         let r_s = hex::decode(COSMOS_SECP256R1_SIGNATURE_HEX1).unwrap();
         let message_hash = Sha256::digest(hex::decode(COSMOS_SECP256R1_MSG_HEX1).unwrap());
 
-        // 2 and 3 are explicitly unsupported
-        let recovery_param: u8 = 2;
-        match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
-            CryptoError::InvalidRecoveryParam { .. } => {}
-            err => panic!("Unexpected error: {err}"),
-        }
-        let recovery_param: u8 = 3;
-        match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
-            CryptoError::InvalidRecoveryParam { .. } => {}
-            err => panic!("Unexpected error: {err}"),
-        }
-
-        // Other values are garbage
         let recovery_param: u8 = 4;
         match secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
             CryptoError::InvalidRecoveryParam { .. } => {}
