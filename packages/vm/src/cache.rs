@@ -1431,6 +1431,25 @@ mod tests {
     }
 
     #[test]
+    fn heavy_metrics_works() {
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        cache.pin(&checksum).unwrap();
+
+        let heavy_metrics = cache.heavy_metrics();
+        assert_eq!(heavy_metrics.hits_per_pinned_contract, vec![(checksum, 0)]);
+
+        let backend = mock_backend(&[]);
+        let _ = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+
+        let heavy_metrics = cache.heavy_metrics();
+        assert_eq!(heavy_metrics.hits_per_pinned_contract, vec![(checksum, 1)]);
+    }
+
+    #[test]
     fn pin_unpin_works() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
