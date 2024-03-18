@@ -9,10 +9,11 @@ and this project adheres to
 ### Added
 
 - cosmwasm-vm: Add `secp256r1_verify` and `secp256r1_recover_pubkey` imports for
-  ECDSA signature verification over secp256r1. ([#1983], [#2057])
+  ECDSA signature verification over secp256r1. ([#1983], [#2057], [#2058])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
+[#2058]: https://github.com/CosmWasm/cosmwasm/pull/2058
 
 ### Changed
 
