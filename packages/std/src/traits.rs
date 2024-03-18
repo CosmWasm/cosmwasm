@@ -165,19 +165,33 @@ pub trait Api {
         recovery_param: u8,
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
+    #[allow(unused_variables)]
     fn secp256r1_verify(
         &self,
         message_hash: &[u8],
         signature: &[u8],
         public_key: &[u8],
-    ) -> Result<bool, VerificationError>;
+    ) -> Result<bool, VerificationError> {
+        // Support for secp256r1 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
 
+    #[allow(unused_variables)]
     fn secp256r1_recover_pubkey(
         &self,
         message_hash: &[u8],
         signature: &[u8],
         recovery_param: u8,
-    ) -> Result<Vec<u8>, RecoverPubkeyError>;
+    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+        // Support for secp256r1 was added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
 
     fn ed25519_verify(
         &self,
