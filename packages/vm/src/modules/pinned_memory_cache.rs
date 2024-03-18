@@ -4,9 +4,18 @@ use std::collections::HashMap;
 use super::cached_module::CachedModule;
 use crate::VmResult;
 
+/// Struct storing some additional metadata, which is only of interest for the pinned cache,
+/// alongside the cached module.
+pub struct InstrumentedModule {
+    /// Number of loads from memory this module received
+    pub hits: u32,
+    /// The actual cached module
+    pub module: CachedModule,
+}
+
 /// An pinned in memory module cache
 pub struct PinnedMemoryCache {
-    modules: HashMap<Checksum, CachedModule>,
+    modules: HashMap<Checksum, InstrumentedModule>,
 }
 
 impl PinnedMemoryCache {
@@ -17,8 +26,19 @@ impl PinnedMemoryCache {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = (&Checksum, &InstrumentedModule)> {
+        self.modules.iter()
+    }
+
     pub fn store(&mut self, checksum: &Checksum, cached_module: CachedModule) -> VmResult<()> {
-        self.modules.insert(*checksum, cached_module);
+        self.modules.insert(
+            *checksum,
+            InstrumentedModule {
+                hits: 0,
+                module: cached_module,
+            },
+        );
+
         Ok(())
     }
 
@@ -31,8 +51,11 @@ impl PinnedMemoryCache {
 
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<CachedModule>> {
-        match self.modules.get(checksum) {
-            Some(cached) => Ok(Some(cached.clone())),
+        match self.modules.get_mut(checksum) {
+            Some(cached) => {
+                cached.hits = cached.hits.saturating_add(1);
+                Ok(Some(cached.module.clone()))
+            }
             None => Ok(None),
         }
     }
@@ -54,7 +77,7 @@ impl PinnedMemoryCache {
     pub fn size(&self) -> usize {
         self.modules
             .iter()
-            .map(|(key, module)| std::mem::size_of_val(key) + module.size_estimate)
+            .map(|(key, module)| std::mem::size_of_val(key) + module.module.size_estimate)
             .sum()
     }
 }
@@ -164,6 +187,51 @@ mod tests {
         cache.remove(&checksum).unwrap();
 
         assert!(!cache.has(&checksum));
+    }
+
+    #[test]
+    fn hit_metric_works() {
+        let mut cache = PinnedMemoryCache::new();
+
+        // Create module
+        let wasm = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                local.get $p0
+                i32.const 1
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        assert!(!cache.has(&checksum));
+
+        // Add
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
+        let module = CachedModule {
+            module: original,
+            engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
+            size_estimate: 0,
+        };
+        cache.store(&checksum, module).unwrap();
+
+        let (_checksum, module) = cache
+            .iter()
+            .find(|(iter_checksum, _module)| **iter_checksum == checksum)
+            .unwrap();
+
+        assert_eq!(module.hits, 0);
+
+        let _ = cache.load(&checksum).unwrap();
+        let (_checksum, module) = cache
+            .iter()
+            .find(|(iter_checksum, _module)| **iter_checksum == checksum)
+            .unwrap();
+
+        assert_eq!(module.hits, 1);
     }
 
     #[test]

@@ -53,6 +53,22 @@ pub struct Metrics {
     pub size_memory_cache: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct PerModuleMetrics {
+    /// Hits (i.e. loads) of the module from the cache
+    pub hits: u32,
+    /// Size the module takes up in memory
+    pub size: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct PinnedMetrics {
+    // It is *intentional* that this is only a vector
+    // We don't need a potentially expensive hashing algorithm here
+    // The checksums are sourced from a hashmap already, ensuring uniqueness of the checksums
+    pub per_module: Vec<(Checksum, PerModuleMetrics)>,
+}
+
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct CacheOptions {
@@ -180,6 +196,24 @@ where
 
     pub fn stats(&self) -> Stats {
         self.inner.lock().unwrap().stats
+    }
+
+    pub fn pinned_metrics(&self) -> PinnedMetrics {
+        let cache = self.inner.lock().unwrap();
+        let per_module = cache
+            .pinned_memory_cache
+            .iter()
+            .map(|(checksum, module)| {
+                let metrics = PerModuleMetrics {
+                    hits: module.hits,
+                    size: module.module.size_estimate,
+                };
+
+                (*checksum, metrics)
+            })
+            .collect();
+
+        PinnedMetrics { per_module }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -1407,6 +1441,48 @@ mod tests {
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
             }
         );
+    }
+
+    #[test]
+    fn pinned_metrics_works() {
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        cache.pin(&checksum).unwrap();
+
+        let pinned_metrics = cache.pinned_metrics();
+        assert_eq!(pinned_metrics.per_module.len(), 1);
+        assert_eq!(pinned_metrics.per_module[0].0, checksum);
+        assert_eq!(pinned_metrics.per_module[0].1.hits, 0);
+
+        let backend = mock_backend(&[]);
+        let _ = cache
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
+            .unwrap();
+
+        let pinned_metrics = cache.pinned_metrics();
+        assert_eq!(pinned_metrics.per_module.len(), 1);
+        assert_eq!(pinned_metrics.per_module[0].0, checksum);
+        assert_eq!(pinned_metrics.per_module[0].1.hits, 1);
+
+        let empty_checksum = cache.save_wasm(EMPTY_CONTRACT).unwrap();
+        cache.pin(&empty_checksum).unwrap();
+
+        let pinned_metrics = cache.pinned_metrics();
+        assert_eq!(pinned_metrics.per_module.len(), 2);
+
+        let get_module_hits = |checksum| {
+            pinned_metrics
+                .per_module
+                .iter()
+                .find(|(iter_checksum, _module)| *iter_checksum == checksum)
+                .map(|(_checksum, module)| module)
+                .cloned()
+                .unwrap()
+        };
+
+        assert_eq!(get_module_hits(checksum).hits, 1);
+        assert_eq!(get_module_hits(empty_checksum).hits, 0);
     }
 
     #[test]
