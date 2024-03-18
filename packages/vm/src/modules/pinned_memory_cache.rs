@@ -191,6 +191,51 @@ mod tests {
     }
 
     #[test]
+    fn hit_metric_works() {
+        let mut cache = PinnedMemoryCache::new();
+
+        // Create module
+        let wasm = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                local.get $p0
+                i32.const 1
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        assert!(!cache.has(&checksum));
+
+        // Add
+        let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
+        let original = compile(&engine, &wasm).unwrap();
+        let module = CachedModule {
+            module: original,
+            engine: make_runtime_engine(TESTING_MEMORY_LIMIT),
+            size_estimate: 0,
+        };
+        cache.store(&checksum, module).unwrap();
+
+        let (_checksum, module) = cache
+            .iter()
+            .find(|(iter_checksum, _module)| **iter_checksum == checksum)
+            .unwrap();
+
+        assert_eq!(module.hits, 0);
+
+        let _ = cache.load(&checksum).unwrap();
+        let (_checksum, module) = cache
+            .iter()
+            .find(|(iter_checksum, _module)| **iter_checksum == checksum)
+            .unwrap();
+
+        assert_eq!(module.hits, 1);
+    }
+
+    #[test]
     fn len_works() {
         let mut cache = PinnedMemoryCache::new();
 
