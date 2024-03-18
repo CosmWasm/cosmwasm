@@ -54,11 +54,19 @@ pub struct Metrics {
 }
 
 #[derive(Debug, Clone)]
+pub struct PerModuleMetrics {
+    /// Hits (i.e. loads) of the module from the cache
+    pub hits: u32,
+    /// Size the module takes up in memory
+    pub size: usize,
+}
+
+#[derive(Debug, Clone)]
 pub struct PinnedMetrics {
     // It is *intentional* that this is only a vector
     // We don't need a potentially expensive hashing algorithm here
     // The checksums are sourced from a hashmap already, ensuring uniqueness of the checksums
-    pub hits_per_contract: Vec<(Checksum, u32)>,
+    pub per_module: Vec<(Checksum, PerModuleMetrics)>,
 }
 
 #[derive(Clone, Debug)]
@@ -192,13 +200,20 @@ where
 
     pub fn pinned_metrics(&self) -> PinnedMetrics {
         let cache = self.inner.lock().unwrap();
-        let hits_per_contract = cache
+        let per_module = cache
             .pinned_memory_cache
             .iter()
-            .map(|(checksum, module)| (*checksum, module.hits))
+            .map(|(checksum, module)| {
+                let metrics = PerModuleMetrics {
+                    hits: module.hits,
+                    size: module.module.size_estimate,
+                };
+
+                (*checksum, metrics)
+            })
             .collect();
 
-        PinnedMetrics { hits_per_contract }
+        PinnedMetrics { per_module }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -1436,7 +1451,9 @@ mod tests {
         cache.pin(&checksum).unwrap();
 
         let pinned_metrics = cache.pinned_metrics();
-        assert_eq!(pinned_metrics.hits_per_contract, [(checksum, 0)]);
+        assert_eq!(pinned_metrics.per_module.len(), 1);
+        assert_eq!(pinned_metrics.per_module[0].0, checksum);
+        assert_eq!(pinned_metrics.per_module[0].1.hits, 0);
 
         let backend = mock_backend(&[]);
         let _ = cache
@@ -1444,26 +1461,28 @@ mod tests {
             .unwrap();
 
         let pinned_metrics = cache.pinned_metrics();
-        assert_eq!(pinned_metrics.hits_per_contract, [(checksum, 1)]);
+        assert_eq!(pinned_metrics.per_module.len(), 1);
+        assert_eq!(pinned_metrics.per_module[0].0, checksum);
+        assert_eq!(pinned_metrics.per_module[0].1.hits, 1);
 
         let empty_checksum = cache.save_wasm(EMPTY_CONTRACT).unwrap();
         cache.pin(&empty_checksum).unwrap();
 
         let pinned_metrics = cache.pinned_metrics();
-        assert_eq!(pinned_metrics.hits_per_contract.len(), 2);
+        assert_eq!(pinned_metrics.per_module.len(), 2);
 
         let get_module_hits = |checksum| {
             pinned_metrics
-                .hits_per_contract
+                .per_module
                 .iter()
                 .find(|(iter_checksum, _module)| *iter_checksum == checksum)
                 .map(|(_checksum, module)| module)
-                .copied()
+                .cloned()
                 .unwrap()
         };
 
-        assert_eq!(get_module_hits(checksum), 1);
-        assert_eq!(get_module_hits(empty_checksum), 0);
+        assert_eq!(get_module_hits(checksum).hits, 1);
+        assert_eq!(get_module_hits(empty_checksum).hits, 0);
     }
 
     #[test]
