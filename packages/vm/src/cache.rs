@@ -1438,7 +1438,7 @@ mod tests {
         cache.pin(&checksum).unwrap();
 
         let heavy_metrics = cache.heavy_metrics();
-        assert_eq!(heavy_metrics.hits_per_pinned_contract, vec![(checksum, 0)]);
+        assert_eq!(heavy_metrics.hits_per_pinned_contract, [(checksum, 0)]);
 
         let backend = mock_backend(&[]);
         let _ = cache
@@ -1446,7 +1446,7 @@ mod tests {
             .unwrap();
 
         let heavy_metrics = cache.heavy_metrics();
-        assert_eq!(heavy_metrics.hits_per_pinned_contract, vec![(checksum, 1)]);
+        assert_eq!(heavy_metrics.hits_per_pinned_contract, [(checksum, 1)]);
     }
 
     #[test]
