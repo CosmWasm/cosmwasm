@@ -6,7 +6,6 @@ use crate::VmResult;
 
 /// Struct storing some additional metadata, which is only of interest for the pinned cache,
 /// alongside the cached module.
-// TODO: Maybe implement a `Deref` for this? But would it even worth it considering how little it is actually used?
 pub struct InstrumentedModule {
     /// Number of loads from memory this module received
     pub hits: u32,
