@@ -4,9 +4,19 @@ use std::collections::HashMap;
 use super::cached_module::CachedModule;
 use crate::VmResult;
 
+/// Struct storing some additional metadata, which is only of interest for the pinned cache,
+/// alongside the cached module.
+// TODO: Maybe implement a `Deref` for this? But would it even worth it considering how little it is actually used?
+pub struct InstrumentedModule {
+    /// Number of loads from memory this module received
+    pub hits: u32,
+    /// The actual cached module
+    pub module: CachedModule,
+}
+
 /// An pinned in memory module cache
 pub struct PinnedMemoryCache {
-    modules: HashMap<Checksum, CachedModule>,
+    modules: HashMap<Checksum, InstrumentedModule>,
 }
 
 impl PinnedMemoryCache {
@@ -17,8 +27,19 @@ impl PinnedMemoryCache {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = (&Checksum, &InstrumentedModule)> {
+        self.modules.iter()
+    }
+
     pub fn store(&mut self, checksum: &Checksum, cached_module: CachedModule) -> VmResult<()> {
-        self.modules.insert(*checksum, cached_module);
+        self.modules.insert(
+            *checksum,
+            InstrumentedModule {
+                hits: 0,
+                module: cached_module,
+            },
+        );
+
         Ok(())
     }
 
@@ -31,8 +52,11 @@ impl PinnedMemoryCache {
 
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<CachedModule>> {
-        match self.modules.get(checksum) {
-            Some(cached) => Ok(Some(cached.clone())),
+        match self.modules.get_mut(checksum) {
+            Some(cached) => {
+                cached.hits = cached.hits.saturating_add(1);
+                Ok(Some(cached.module.clone()))
+            }
             None => Ok(None),
         }
     }
@@ -54,7 +78,7 @@ impl PinnedMemoryCache {
     pub fn size(&self) -> usize {
         self.modules
             .iter()
-            .map(|(key, module)| std::mem::size_of_val(key) + module.size_estimate)
+            .map(|(key, module)| std::mem::size_of_val(key) + module.module.size_estimate)
             .sum()
     }
 }

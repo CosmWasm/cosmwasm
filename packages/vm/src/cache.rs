@@ -53,6 +53,14 @@ pub struct Metrics {
     pub size_memory_cache: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct HeavyMetrics {
+    // It is *intentional* that this is only a vector
+    // We don't need a potentially expensive hashing algorithm here
+    // The checksums are sourced from a hashmap already, ensuring uniqueness of the checksums
+    pub hits_per_pinned_contract: Vec<(Checksum, u32)>,
+}
+
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct CacheOptions {
@@ -180,6 +188,19 @@ where
 
     pub fn stats(&self) -> Stats {
         self.inner.lock().unwrap().stats
+    }
+
+    pub fn heavy_metrics(&self) -> HeavyMetrics {
+        let cache = self.inner.lock().unwrap();
+        let hits_per_pinned_contract = cache
+            .pinned_memory_cache
+            .iter()
+            .map(|(checksum, module)| (*checksum, module.hits))
+            .collect();
+
+        HeavyMetrics {
+            hits_per_pinned_contract,
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
