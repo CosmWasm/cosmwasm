@@ -1,12 +1,14 @@
 use serde::de::DeserializeOwned;
 use wasmer::Value;
 
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
+use cosmwasm_std::{
+    ContractResult, CustomMsg, Env, IbcBasicResponse, IbcSourceChainCallbackMsg, MessageInfo,
+    QueryResponse, Reply, Response,
+};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+    Ibc3ChannelOpenResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
@@ -54,6 +56,8 @@ mod read_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
+    /// Max length (in bytes) of the result data from a ibc_source_chain_callback call.
+    pub const RESULT_IBC_SOURCE_CHAIN_CALLBACK: usize = 64 * MI;
 }
 
 /// The limits for the JSON deserialization.
@@ -93,6 +97,8 @@ mod deserialization_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_source_chain_callback call.
+    pub const RESULT_IBC_SOURCE_CHAIN_CALLBACK: usize = 256 * KI;
 }
 
 pub fn call_instantiate<A, S, Q, U>(
@@ -327,6 +333,27 @@ where
     Ok(result)
 }
 
+pub fn call_ibc_source_chain_callback<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &IbcSourceChainCallbackMsg,
+) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_source_chain_callback_raw(instance, &env, &msg)?;
+    let result = from_slice(
+        &data,
+        deserialization_limits::RESULT_IBC_SOURCE_CHAIN_CALLBACK,
+    )?;
+    Ok(result)
+}
+
 /// Calls Wasm export "instantiate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_instantiate_raw<A, S, Q>(
@@ -557,6 +584,25 @@ where
         "ibc_packet_timeout",
         &[env, msg],
         read_limits::RESULT_IBC_PACKET_TIMEOUT,
+    )
+}
+
+pub fn call_ibc_source_chain_callback_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "ibc_source_chain_callback",
+        &[env, msg],
+        read_limits::RESULT_IBC_SOURCE_CHAIN_CALLBACK,
     )
 }
 
@@ -872,7 +918,8 @@ mod tests {
             Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgResponse,
             SubMsgResult,
         };
-        static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        const CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        const IBC_CALLBACKS: &[u8] = include_bytes!("../testdata/ibc_callbacks.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
         fn setup(
             instance: &mut Instance<MockApi, MockStorage, MockQuerier>,
@@ -973,6 +1020,59 @@ mod tests {
             call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
+        }
+        #[test]
+        fn call_ibc_source_chain_callback_works() {
+            let mut instance = mock_instance(IBC_CALLBACKS, &[]);
+
+            // init
+            let creator = instance.api().addr_make("creator");
+            let info = mock_info(&creator, &[]);
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+                .unwrap()
+                .unwrap();
+
+            /// Response type for the `callback_stats` query
+            #[derive(serde::Serialize, serde::Deserialize)]
+            struct CallbackStats {
+                pub ibc_ack_callbacks: Vec<IbcPacketAckMsg>,
+                pub ibc_timeout_callbacks: Vec<IbcPacketTimeoutMsg>,
+            }
+
+            // send ack callback
+            let ack = IbcAcknowledgement::new(br#"{}"#);
+            let msg = IbcSourceChainCallbackMsg::Acknowledgement(
+                mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap(),
+            );
+            call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+                .unwrap()
+                .unwrap();
+            // query the CallbackStats
+            let stats: CallbackStats = serde_json::from_slice(
+                &call_query::<_, _, _>(&mut instance, &mock_env(), br#"{"callback_stats":{}}"#)
+                    .unwrap()
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(1, stats.ibc_ack_callbacks.len());
+            assert_eq!(0, stats.ibc_timeout_callbacks.len());
+
+            // send timeout callback
+            let msg = IbcSourceChainCallbackMsg::Timeout(
+                mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap(),
+            );
+            call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+                .unwrap()
+                .unwrap();
+            // query the CallbackStats
+            let stats: CallbackStats = serde_json::from_slice(
+                &call_query::<_, _, _>(&mut instance, &mock_env(), br#"{"callback_stats":{}}"#)
+                    .unwrap()
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(1, stats.ibc_ack_callbacks.len());
+            assert_eq!(1, stats.ibc_timeout_callbacks.len());
         }
     }
 }
