@@ -33,8 +33,13 @@ pub fn alloc(size: usize) -> *mut Region {
 /// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
 /// a pointer to the Region (preventing the memory from being freed until explicitly called later).
 ///
-/// The resulting Region has capacity = length, i.e. the buffer's capacity is ignored.
-pub fn release_buffer(buffer: Vec<u8>) -> *mut Region {
+/// The resulting Region has capacity = length, the buffer capacity is shrunk down to its length.
+pub fn release_buffer(mut buffer: Vec<u8>) -> *mut Region {
+    // Shrinking the buffer down to the length is important to uphold a safety invariant by the `dealloc` method.
+    // Passing in a differing size into the `dealloc` layout is considered undefined behaviour.
+    //
+    // See: <https://doc.rust-lang.org/stable/alloc/alloc/trait.GlobalAlloc.html#safety-2>
+    buffer.shrink_to_fit();
     let region = build_region(&buffer);
     mem::forget(buffer);
     Box::into_raw(region)
