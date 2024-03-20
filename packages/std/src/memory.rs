@@ -83,17 +83,35 @@ pub unsafe fn consume_region(ptr: *mut Region) -> Vec<u8> {
 /// And since `size` is one of the parameters, it is important to pass in the exact same capacity.
 ///
 /// See: <https://doc.rust-lang.org/stable/alloc/alloc/trait.GlobalAlloc.html#safety-2>
-pub unsafe trait RegionSource: AsRef<[u8]> {
+pub unsafe trait RegionSource {
+    fn ptr(&self) -> *const u8;
+    fn len(&self) -> usize;
     fn capacity(&self) -> usize;
 }
 
 unsafe impl RegionSource for &[u8] {
+    fn ptr(&self) -> *const u8 {
+        self.as_ptr()
+    }
+
+    fn len(&self) -> usize {
+        (*self).len()
+    }
+
     fn capacity(&self) -> usize {
         self.len()
     }
 }
 
 unsafe impl RegionSource for Vec<u8> {
+    fn ptr(&self) -> *const u8 {
+        self.as_ptr()
+    }
+
+    fn len(&self) -> usize {
+        self.len()
+    }
+
     fn capacity(&self) -> usize {
         self.capacity()
     }
@@ -103,6 +121,14 @@ unsafe impl<T: ?Sized> RegionSource for &T
 where
     T: RegionSource,
 {
+    fn ptr(&self) -> *const u8 {
+        (**self).ptr()
+    }
+
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+
     fn capacity(&self) -> usize {
         (**self).capacity()
     }
@@ -116,12 +142,12 @@ pub fn build_region<S>(data: S) -> Box<Region>
 where
     S: RegionSource,
 {
-    let data_slice = data.as_ref();
-    let data_ptr = data_slice.as_ptr() as usize;
+    // Well, this technically violates pointer provenance rules.
+    // But there isn't a stable API for it, so that's the best we can do, I guess.
     build_region_from_components(
-        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
+        u32::try_from(data.ptr() as usize).expect("pointer doesn't fit in u32"),
         u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
-        u32::try_from(data_slice.len()).expect("length doesn't fit in u32"),
+        u32::try_from(data.len()).expect("length doesn't fit in u32"),
     )
 }
 
