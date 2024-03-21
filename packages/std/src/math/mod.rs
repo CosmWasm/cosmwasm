@@ -80,7 +80,7 @@ mod tests {
     {
     }
 
-    #[allow(dead_code)]
+    #[allow(dead_code)] // This is used to statically ensure all the integers have a shared set of traits
     trait SignedImpl<'a>: IntImpl<'a> + Neg<Output = Self> {}
 
     impl AllImpl<'_> for Uint64 {}
