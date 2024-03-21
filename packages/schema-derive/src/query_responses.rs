@@ -1,7 +1,7 @@
 mod context;
 
+use crate::error::{bail, error_message};
 use heck::ToSnakeCase;
-use manyhow::{bail, error_message};
 use syn::{
     parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, TypeParamBound, Variant,
 };
@@ -98,7 +98,7 @@ fn parse_query(v: Variant) -> syn::Result<(String, Expr)> {
         .attrs
         .iter()
         .find(|a| a.path().is_ident("returns"))
-        .ok_or_else(|| error_message!(v, "missing return type for query"))?
+        .ok_or_else(|| error_message!(&v, "missing return type for query"))?
         .parse_args()
         .map_err(|e| error_message!(e.span(), "return must be a type"))?;
 

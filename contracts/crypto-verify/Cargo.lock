@@ -229,7 +229,6 @@ name = "cosmwasm-schema-derive"
 version = "2.0.0"
 dependencies = [
  "heck 0.5.0",
- "manyhow",
  "proc-macro2",
  "quote",
  "syn 2.0.37",
@@ -961,29 +960,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "manyhow"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02bc2a348104913df6d14170bedef54faf224a0970ec7b1f8750748ab94fcd52"
-dependencies = [
- "manyhow-macros",
- "proc-macro2",
- "quote",
- "syn 2.0.37",
-]
-
-[[package]]
-name = "manyhow-macros"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "532aa12d5846b38a524b3acd99fb74dc8a5f193b33e65dac142ef92bd60f9416"
-dependencies = [
- "proc-macro-utils",
- "proc-macro2",
- "quote",
-]
-
-[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1143,17 +1119,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "version_check",
-]
-
-[[package]]
-name = "proc-macro-utils"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f59e109e2f795a5070e69578c4dc101068139f74616778025ae1011d4cd41a8"
-dependencies = [
- "proc-macro2",
- "quote",
- "smallvec",
 ]
 
 [[package]]

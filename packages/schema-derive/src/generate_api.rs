@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use manyhow::bail;
+use crate::error::bail;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{

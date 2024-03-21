@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use manyhow::bail;
+use crate::error::bail;
 use syn::{Ident, ItemEnum};
 
 const ATTR_PATH: &str = "query_responses";

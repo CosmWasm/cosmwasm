@@ -1,4 +1,4 @@
-use manyhow::bail;
+use crate::error::bail;
 use quote::{quote, ToTokens};
 use syn::DeriveInput;
 
