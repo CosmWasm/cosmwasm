@@ -1,7 +1,6 @@
 mod context;
 
 use crate::error::{bail, error_message};
-use heck::ToSnakeCase;
 use syn::{
     parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, TypeParamBound, Variant,
 };
@@ -93,7 +92,7 @@ fn impl_generics(ctx: &Context, generics: &Generics, bounds: &[TypeParamBound]) 
 
 /// Extract the query -> response mapping out of an enum variant.
 fn parse_query(v: Variant) -> syn::Result<(String, Expr)> {
-    let query = v.ident.to_string().to_snake_case();
+    let query = to_snake_case(&v.ident.to_string());
     let response_ty: Type = v
         .attrs
         .iter()
@@ -129,6 +128,18 @@ fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {
     parse_quote! {
         (#q.to_string(), #r)
     }
+}
+
+fn to_snake_case(input: &str) -> String {
+    // this was stolen from serde for consistent behavior
+    let mut snake = String::new();
+    for (i, ch) in input.char_indices() {
+        if i > 0 && ch.is_uppercase() {
+            snake.push('_');
+        }
+        snake.push(ch.to_ascii_lowercase());
+    }
+    snake
 }
 
 #[cfg(test)]
