@@ -1,17 +1,22 @@
 mod context;
 
+use crate::error::{bail, error_message};
 use syn::{
     parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, TypeParamBound, Variant,
 };
 
 use self::context::Context;
 
-pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
-    let ctx = context::get_context(&input);
+pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
+    let ctx = context::get_context(&input)?;
 
-    if ctx.is_nested {
+    let item_impl = if ctx.is_nested {
         let ident = input.ident;
-        let subquery_calls = input.variants.into_iter().map(parse_subquery);
+        let subquery_calls = input
+            .variants
+            .into_iter()
+            .map(parse_subquery)
+            .collect::<syn::Result<Vec<_>>>()?;
 
         // Handle generics if the type has any
         let (_, type_generics, where_clause) = input.generics.split_for_impl();
@@ -36,10 +41,15 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
         }
     } else {
         let ident = input.ident;
-        let mappings = input.variants.into_iter().map(parse_query);
-        let mut queries: Vec<_> = mappings.clone().map(|(q, _)| q).collect();
+        let mappings = input
+            .variants
+            .into_iter()
+            .map(parse_query)
+            .collect::<syn::Result<Vec<_>>>()?;
+
+        let mut queries: Vec<_> = mappings.clone().into_iter().map(|(q, _)| q).collect();
         queries.sort();
-        let mappings = mappings.map(parse_tuple);
+        let mappings = mappings.into_iter().map(parse_tuple);
 
         // Handle generics if the type has any
         let (_, type_generics, where_clause) = input.generics.split_for_impl();
@@ -56,7 +66,8 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> ItemImpl {
                 }
             }
         }
-    }
+    };
+    Ok(item_impl)
 }
 
 /// Takes a list of generics from the type definition and produces a list of generics
@@ -80,36 +91,37 @@ fn impl_generics(ctx: &Context, generics: &Generics, bounds: &[TypeParamBound]) 
 }
 
 /// Extract the query -> response mapping out of an enum variant.
-fn parse_query(v: Variant) -> (String, Expr) {
+fn parse_query(v: Variant) -> syn::Result<(String, Expr)> {
     let query = to_snake_case(&v.ident.to_string());
     let response_ty: Type = v
         .attrs
         .iter()
-        .find(|a| a.path.get_ident().unwrap() == "returns")
-        .unwrap_or_else(|| panic!("missing return type for query: {}", v.ident))
+        .find(|a| a.path().is_ident("returns"))
+        .ok_or_else(|| error_message!(&v, "missing return type for query"))?
         .parse_args()
-        .unwrap_or_else(|_| panic!("return for {} must be a type", v.ident));
+        .map_err(|e| error_message!(e.span(), "return must be a type"))?;
 
-    (
+    Ok((
         query,
         parse_quote!(::cosmwasm_schema::schema_for!(#response_ty)),
-    )
+    ))
 }
 
 /// Extract the nested query  -> response mapping out of an enum variant.
-fn parse_subquery(v: Variant) -> Expr {
+fn parse_subquery(v: Variant) -> syn::Result<Expr> {
     let submsg = match v.fields {
-        syn::Fields::Named(_) => panic!("a struct variant is not a valid subquery"),
+        syn::Fields::Named(_) => bail!(v, "a struct variant is not a valid subquery"),
         syn::Fields::Unnamed(fields) => {
             if fields.unnamed.len() != 1 {
-                panic!("invalid number of subquery parameters");
+                bail!(fields, "invalid number of subquery parameters");
             }
 
             fields.unnamed[0].ty.clone()
         }
-        syn::Fields::Unit => panic!("a unit variant is not a valid subquery"),
+        syn::Fields::Unit => bail!(v, "a unit variant is not a valid subquery"),
     };
-    parse_quote!(<#submsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl())
+
+    Ok(parse_quote!(<#submsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl()))
 }
 
 fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {
@@ -150,7 +162,7 @@ mod tests {
         };
 
         assert_eq!(
-            query_responses_derive_impl(input),
+            query_responses_derive_impl(input).unwrap(),
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
@@ -175,7 +187,7 @@ mod tests {
         };
 
         assert_eq!(
-            query_responses_derive_impl(input),
+            query_responses_derive_impl(input).unwrap(),
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
@@ -225,7 +237,7 @@ mod tests {
             }
         };
 
-        let result = query_responses_derive_impl(input);
+        let result = query_responses_derive_impl(input).unwrap();
 
         assert_eq!(
             result,
@@ -243,7 +255,7 @@ mod tests {
             }
         );
         assert_eq!(
-            query_responses_derive_impl(input2),
+            query_responses_derive_impl(input2).unwrap(),
             parse_quote! {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
@@ -257,7 +269,7 @@ mod tests {
                 }
             }
         );
-        let a = query_responses_derive_impl(input3);
+        let a = query_responses_derive_impl(input3).unwrap();
         assert_eq!(
             a,
             parse_quote! {
@@ -278,7 +290,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "missing return type for query: Supply")]
+    #[should_panic(expected = "missing return type for query")]
     fn missing_return() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
@@ -290,11 +302,11 @@ mod tests {
             }
         };
 
-        query_responses_derive_impl(input);
+        query_responses_derive_impl(input).unwrap();
     }
 
     #[test]
-    #[should_panic(expected = "return for Supply must be a type")]
+    #[should_panic(expected = "return must be a type")]
     fn invalid_return() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
@@ -307,7 +319,7 @@ mod tests {
             }
         };
 
-        query_responses_derive_impl(input);
+        query_responses_derive_impl(input).unwrap();
     }
 
     #[test]
@@ -318,7 +330,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_tuple(parse_query(variant)),
+            parse_tuple(parse_query(variant).unwrap()),
             parse_quote! {
                 ("get_foo".to_string(), ::cosmwasm_schema::schema_for!(Foo))
             }
@@ -330,7 +342,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_tuple(parse_query(variant)),
+            parse_tuple(parse_query(variant).unwrap()),
             parse_quote! { ("get_foo".to_string(), ::cosmwasm_schema::schema_for!(some_crate::Foo)) }
         );
     }
@@ -353,7 +365,7 @@ mod tests {
                 Cw1WhitelistContract(QueryMsg),
             }
         };
-        let result = query_responses_derive_impl(input);
+        let result = query_responses_derive_impl(input).unwrap();
         assert_eq!(
             result,
             parse_quote! {
@@ -381,7 +393,7 @@ mod tests {
             #[query_responses(nested)]
             pub enum EmptyMsg {}
         };
-        let result = query_responses_derive_impl(input);
+        let result = query_responses_derive_impl(input).unwrap();
         assert_eq!(
             result,
             parse_quote! {
@@ -409,7 +421,7 @@ mod tests {
                 Whitelist(whitelist::QueryMsg),
             }
         };
-        query_responses_derive_impl(input);
+        query_responses_derive_impl(input).unwrap();
     }
 
     #[test]
@@ -426,7 +438,7 @@ mod tests {
                 }
             }
         };
-        query_responses_derive_impl(input);
+        query_responses_derive_impl(input).unwrap();
     }
 
     #[test]
@@ -441,6 +453,6 @@ mod tests {
                 Whitelist,
             }
         };
-        query_responses_derive_impl(input);
+        query_responses_derive_impl(input).unwrap();
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-use syn::{Ident, ItemEnum, Meta, NestedMeta};
+use crate::error::bail;
+use syn::{Ident, ItemEnum};
 
 const ATTR_PATH: &str = "query_responses";
 
@@ -13,51 +14,42 @@ pub struct Context {
     pub no_bounds_for: HashSet<Ident>,
 }
 
-pub fn get_context(input: &ItemEnum) -> Context {
-    let params = input
-        .attrs
-        .iter()
-        .filter(|attr| matches!(attr.path.get_ident(), Some(id) if *id == ATTR_PATH))
-        .flat_map(|attr| {
-            if let Meta::List(l) = attr.parse_meta().unwrap() {
-                l.nested
-            } else {
-                panic!("{ATTR_PATH} attribute must contain a meta list");
-            }
-        })
-        .map(|nested_meta| {
-            if let NestedMeta::Meta(m) = nested_meta {
-                m
-            } else {
-                panic!("no literals allowed in QueryResponses params")
-            }
-        });
-
+pub fn get_context(input: &ItemEnum) -> syn::Result<Context> {
     let mut ctx = Context {
         is_nested: false,
         no_bounds_for: HashSet::new(),
     };
 
-    for param in params {
-        match param.path().get_ident().unwrap().to_string().as_str() {
-            "no_bounds_for" => {
-                if let Meta::List(l) = param {
-                    for item in l.nested {
-                        match item {
-                            NestedMeta::Meta(Meta::Path(p)) => {
-                                ctx.no_bounds_for.insert(p.get_ident().unwrap().clone());
-                            }
-                            _ => panic!("`no_bounds_for` only accepts a list of type params"),
-                        }
-                    }
-                } else {
-                    panic!("expected a list for `no_bounds_for`")
-                }
-            }
-            "nested" => ctx.is_nested = true,
-            path => panic!("unrecognized QueryResponses param: {path}"),
+    for attr in &input.attrs {
+        if !attr.path().is_ident(ATTR_PATH) {
+            continue;
         }
+
+        let meta_list = attr.meta.require_list()?;
+        meta_list.parse_nested_meta(|param| {
+            if param.path.is_ident("no_bounds_for") {
+                let meta_list: syn::MetaList = param.input.parse()?;
+                meta_list.parse_nested_meta(|item| {
+                    let syn::Meta::Path(p) = item.input.parse()? else {
+                        bail!(
+                            item.input.span(),
+                            "`no_bounds_for` only accepts a list of type params"
+                        );
+                    };
+
+                    ctx.no_bounds_for.insert(p.get_ident().unwrap().clone());
+
+                    Ok(())
+                })?;
+            } else if param.path.is_ident("nested") {
+                ctx.is_nested = true;
+            } else {
+                bail!(param.path, "unrecognized QueryResponses param");
+            }
+
+            Ok(())
+        })?;
     }
 
-    ctx
+    Ok(ctx)
 }

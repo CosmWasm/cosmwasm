@@ -1,42 +1,38 @@
-use syn::{parse_quote, DeriveInput};
+use crate::error::bail;
+use quote::{quote, ToTokens};
+use syn::DeriveInput;
 
-pub fn cw_serde_impl(input: DeriveInput) -> DeriveInput {
+pub fn cw_serde_impl(input: DeriveInput) -> syn::Result<DeriveInput> {
+    let mut stream = quote! {
+        #[derive(
+            ::cosmwasm_schema::serde::Serialize,
+            ::cosmwasm_schema::serde::Deserialize,
+            ::std::clone::Clone,
+            ::std::fmt::Debug,
+            ::std::cmp::PartialEq,
+            ::cosmwasm_schema::schemars::JsonSchema
+        )]
+        #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
+        #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
+        #[schemars(crate = "::cosmwasm_schema::schemars")]
+    };
+
     match input.data {
-        syn::Data::Struct(_) => parse_quote! {
-            #[derive(
-                ::cosmwasm_schema::serde::Serialize,
-                ::cosmwasm_schema::serde::Deserialize,
-                ::std::clone::Clone,
-                ::std::fmt::Debug,
-                ::std::cmp::PartialEq,
-                ::cosmwasm_schema::schemars::JsonSchema
-            )]
-            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
-            #[schemars(crate = "::cosmwasm_schema::schemars")]
-            #input
-        },
-        syn::Data::Enum(_) => parse_quote! {
-            #[derive(
-                ::cosmwasm_schema::serde::Serialize,
-                ::cosmwasm_schema::serde::Deserialize,
-                ::std::clone::Clone,
-                ::std::fmt::Debug,
-                ::std::cmp::PartialEq,
-                ::cosmwasm_schema::schemars::JsonSchema
-            )]
-            #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
-            #[serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
-            #[schemars(crate = "::cosmwasm_schema::schemars")]
-            #input
-        },
-        syn::Data::Union(_) => panic!("unions are not supported"),
+        syn::Data::Struct(..) => (),
+        syn::Data::Enum(..) => {
+            stream.extend(quote! { #[serde(rename_all = "snake_case")] });
+        }
+        syn::Data::Union(..) => bail!(input, "unions are not supported"),
     }
+
+    stream.extend(input.to_token_stream());
+    syn::parse2(stream)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use syn::parse_quote;
 
     #[test]
     fn structs() {
@@ -45,7 +41,8 @@ mod tests {
                 pub verifier: String,
                 pub beneficiary: String,
             }
-        });
+        })
+        .unwrap();
 
         let expected = parse_quote! {
             #[derive(
@@ -72,7 +69,8 @@ mod tests {
     fn empty_struct() {
         let expanded = cw_serde_impl(parse_quote! {
             pub struct InstantiateMsg {}
-        });
+        })
+        .unwrap();
 
         let expected = parse_quote! {
             #[derive(
@@ -101,7 +99,8 @@ mod tests {
                     amount: Vec<Coin>,
                 },
             }
-        });
+        })
+        .unwrap();
 
         let expected = parse_quote! {
             #[derive(
@@ -113,8 +112,9 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")]
+            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
             #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #[serde(rename_all = "snake_case")]
             pub enum SudoMsg {
                 StealFunds {
                     recipient: String,
@@ -134,6 +134,7 @@ mod tests {
                 x: u32,
                 y: u32,
             }
-        });
+        })
+        .unwrap();
     }
 }

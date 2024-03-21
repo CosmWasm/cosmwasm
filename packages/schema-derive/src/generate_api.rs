@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::error::bail;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
@@ -80,19 +81,17 @@ enum Value {
 }
 
 impl Value {
-    fn unwrap_type(self) -> syn::Path {
-        if let Self::Type(p) = self {
-            p
-        } else {
-            panic!("expected a type");
+    fn get_type(self) -> syn::Result<syn::Path> {
+        match self {
+            Self::Type(p) => Ok(p),
+            Self::Str(other) => bail!(other, "expected a type"),
         }
     }
 
-    fn unwrap_str(self) -> syn::LitStr {
-        if let Self::Str(s) = self {
-            s
-        } else {
-            panic!("expected a string literal");
+    fn get_str(self) -> syn::Result<syn::LitStr> {
+        match self {
+            Self::Str(p) => Ok(p),
+            Self::Type(other) => bail!(other, "expected a string literal"),
         }
     }
 }
@@ -134,11 +133,11 @@ pub struct Options {
 
 impl Parse for Options {
     fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-        let pairs = input.parse_terminated::<Pair, Token![,]>(Pair::parse)?;
+        let pairs = input.parse_terminated(Pair::parse, Token![,])?;
         let mut map: BTreeMap<_, _> = pairs.into_iter().map(|p| p.0).collect();
 
         let name = if let Some(name_override) = map.remove(&parse_quote!(name)) {
-            let name_override = name_override.unwrap_str();
+            let name_override = name_override.get_str()?;
             quote! {
                 #name_override
             }
@@ -149,7 +148,7 @@ impl Parse for Options {
         };
 
         let version = if let Some(version_override) = map.remove(&parse_quote!(version)) {
-            let version_override = version_override.unwrap_str();
+            let version_override = version_override.get_str()?;
             quote! {
                 #version_override
             }
@@ -161,7 +160,7 @@ impl Parse for Options {
 
         let instantiate = match map.remove(&parse_quote!(instantiate)) {
             Some(ty) => {
-                let ty = ty.unwrap_type();
+                let ty = ty.get_type()?;
                 quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
@@ -169,7 +168,7 @@ impl Parse for Options {
 
         let execute = match map.remove(&parse_quote!(execute)) {
             Some(ty) => {
-                let ty = ty.unwrap_type();
+                let ty = ty.get_type()?;
                 quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
@@ -177,7 +176,7 @@ impl Parse for Options {
 
         let (query, responses) = match map.remove(&parse_quote!(query)) {
             Some(ty) => {
-                let ty = ty.unwrap_type();
+                let ty = ty.get_type()?;
                 (
                     quote! {Some(::cosmwasm_schema::schema_for!(#ty))},
                     quote! { Some(<#ty as ::cosmwasm_schema::QueryResponses>::response_schemas().unwrap()) },
@@ -188,7 +187,7 @@ impl Parse for Options {
 
         let migrate = match map.remove(&parse_quote!(migrate)) {
             Some(ty) => {
-                let ty = ty.unwrap_type();
+                let ty = ty.get_type()?;
                 quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
@@ -196,14 +195,14 @@ impl Parse for Options {
 
         let sudo = match map.remove(&parse_quote!(sudo)) {
             Some(ty) => {
-                let ty = ty.unwrap_type();
+                let ty = ty.get_type()?;
                 quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
             }
             None => quote! { None },
         };
 
         if let Some((invalid_option, _)) = map.into_iter().next() {
-            panic!("unknown generate_api option: {invalid_option}");
+            bail!(invalid_option, "unknown generate_api option");
         }
 
         Ok(Self {
@@ -312,7 +311,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "unknown generate_api option: asd")]
+    #[should_panic(expected = "unknown generate_api option")]
     fn invalid_option() {
         let _options: Options = parse_quote! {
             instantiate: InstantiateMsg,
