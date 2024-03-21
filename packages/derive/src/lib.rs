@@ -73,6 +73,6 @@ pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
         }
     };
 
-    item.extend::<TokenStream>(new_code.into());
+    item.extend(TokenStream::from(new_code));
     item
 }
