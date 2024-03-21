@@ -11,6 +11,7 @@ extern crate alloc;
 extern crate std; // allow for file I/O during tests
 
 mod backtrace;
+mod bls12_318;
 mod ecdsa;
 mod ed25519;
 mod errors;
@@ -18,6 +19,7 @@ mod identity_digest;
 mod secp256k1;
 mod secp256r1;
 
+pub use crate::bls12_318::{bls12_318_aggregate_g1, bls12_318_aggregate_g2};
 #[doc(hidden)]
 pub use crate::ecdsa::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};
 #[doc(hidden)]
