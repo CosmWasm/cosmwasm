@@ -348,6 +348,12 @@ mod tests {
     }
 
     #[test]
+    fn to_snake_case_works() {
+        assert_eq!(to_snake_case("SnakeCase"), "snake_case");
+        assert_eq!(to_snake_case("Wasm123AndCo"), "wasm123_and_co");
+    }
+
+    #[test]
     fn nested_works() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
