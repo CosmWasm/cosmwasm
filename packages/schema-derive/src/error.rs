@@ -23,7 +23,7 @@ macro_rules! fallible_macro {
             #[ $( $attribute_decl )* ]
         )*
         pub fn $macro_name ( $( $params )* ) -> $inner_return {
-            let result = move || -> syn::Result<_> {
+            let result = move || -> ::syn::Result<_> {
                 $( $fn_body )*
             };
 
