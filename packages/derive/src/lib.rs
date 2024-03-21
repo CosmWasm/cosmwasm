@@ -1,8 +1,6 @@
-#[macro_use]
-extern crate syn;
-
 use proc_macro::TokenStream;
-use std::str::FromStr;
+use quote::{format_ident, quote};
+use syn::parse_macro_input;
 
 /// This attribute macro generates the boilerplate required to call into the
 /// contract-specific logic from the entry-points to the Wasm module.
@@ -55,27 +53,26 @@ use std::str::FromStr;
 pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
     let cloned = item.clone();
     let function = parse_macro_input!(cloned as syn::ItemFn);
-    let name = function.sig.ident.to_string();
+
     // The first argument is `deps`, the rest is region pointers
     let args = function.sig.inputs.len() - 1;
+    let fn_name = function.sig.ident;
+    let wasm_export = format_ident!("__wasm_export_{fn_name}");
+    let do_call = format_ident!("do_{fn_name}");
 
-    // E.g. "ptr0: u32, ptr1: u32, ptr2: u32, "
-    let typed_ptrs = (0..args).fold(String::new(), |acc, i| format!("{acc}ptr{i}: u32, "));
-    // E.g. "ptr0, ptr1, ptr2, "
-    let ptrs = (0..args).fold(String::new(), |acc, i| format!("{acc}ptr{i}, "));
+    let decl_args = (0..args).map(|item| format_ident!("ptr_{item}"));
+    let call_args = decl_args.clone();
 
-    let new_code = format!(
-        r##"
+    let new_code = quote! {
         #[cfg(target_arch = "wasm32")]
-        mod __wasm_export_{name} {{ // new module to avoid conflict of function name
+        mod #wasm_export { // new module to avoid conflict of function name
             #[no_mangle]
-            extern "C" fn {name}({typed_ptrs}) -> u32 {{
-                cosmwasm_std::do_{name}(&super::{name}, {ptrs})
-            }}
-        }}
-    "##
-    );
-    let entry = TokenStream::from_str(&new_code).unwrap();
-    item.extend(entry);
+            extern "C" fn #fn_name(#( #decl_args : u32 ),*) -> u32 {
+                cosmwasm_std::#do_call(&super::#fn_name, #( #call_args ),*)
+            }
+        }
+    };
+
+    item.extend::<TokenStream>(new_code.into());
     item
 }
