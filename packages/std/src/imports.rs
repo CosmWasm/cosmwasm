@@ -336,7 +336,7 @@ impl Api for ExternalApi {
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
-        let send = build_region(&canonical);
+        let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 

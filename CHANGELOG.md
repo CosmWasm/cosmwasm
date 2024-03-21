@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
+  via `release_buffer` ([#2062])
+
+[#2062]: https://github.com/CosmWasm/cosmwasm/pull/2062
+
 ## [1.5.3]
 
 ### Changed
