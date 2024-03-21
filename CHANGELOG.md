@@ -26,6 +26,13 @@ and this project adheres to
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
 [#2059]: https://github.com/CosmWasm/cosmwasm/pull/2059
 
+### Fixed
+
+- cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
+  via `release_buffer` ([#2062])
+
+[#2062]: https://github.com/CosmWasm/cosmwasm/pull/2062
+
 ## [2.0.0] - 2024-03-12
 
 ### Fixed
