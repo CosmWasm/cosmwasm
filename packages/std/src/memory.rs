@@ -79,7 +79,6 @@ pub unsafe fn consume_region(ptr: *mut Region) -> Vec<u8> {
 ///
 /// This is important to uphold the safety invariant of the `dealloc` method, which requires us to pass the same Layout
 /// into it as was used to allocate a memory region.
-///
 /// And since `size` is one of the parameters, it is important to pass in the exact same capacity.
 ///
 /// See: <https://doc.rust-lang.org/stable/alloc/alloc/trait.GlobalAlloc.html#safety-2>
