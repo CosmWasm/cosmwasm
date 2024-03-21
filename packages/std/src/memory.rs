@@ -33,7 +33,7 @@ pub fn alloc(size: usize) -> *mut Region {
 /// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
 /// a pointer to the Region (preventing the memory from being freed until explicitly called later).
 ///
-/// The resulting Region has capacity = length, the buffer capacity is shrunk down to its length.
+/// The resulting Region spans the entire region allocated by the vector, preserving the length and capacity components.
 pub fn release_buffer(buffer: Vec<u8>) -> *mut Region {
     let region = build_region(&buffer);
     mem::forget(buffer);
