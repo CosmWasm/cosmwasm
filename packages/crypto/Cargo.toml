@@ -24,9 +24,15 @@ rand_core = "0.6"
 # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
 ecdsa = "0.16.2"
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
+pairing = "0.23.0"
+bls12_381 = { version = "0.8.0", features = ["experimental"] }
+rayon = "1.9.0"
+sha2_v9 = { package = "sha2", version = "0.9.1" } # Must be compatible with bls12_381, see https://github.com/zkcrypto/bls12_381/issues/102
 thiserror = { version = "1.0.26", optional = true }
 
 [dev-dependencies]
+base64 = "0.21.0"
+base64-serde = "0.7.0"
 criterion = "0.5.1"
 rand_core = { version = "0.6", features = ["getrandom"] }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
