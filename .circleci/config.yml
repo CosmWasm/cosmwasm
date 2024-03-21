@@ -22,7 +22,19 @@ commands:
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
-      # After wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
+      - run:
+          name: Run cosmwasm-check (2.0)
+          command: |
+            cargo install cosmwasm-check@~2.0 --locked
+            cosmwasm-check --version
+            cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
+      - run:
+          name: Run cosmwasm-check (1.4)
+          command: |
+            cargo install cosmwasm-check@~1.4 --locked
+            cosmwasm-check --version
+            cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
+      # Run clippy after wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
       - run:
           name: Clippy
           command: cargo clippy --all-targets -- -D warnings
