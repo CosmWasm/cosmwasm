@@ -279,9 +279,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "missing return type for query"
-    )]
+    #[should_panic(expected = "missing return type for query")]
     fn missing_return() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
