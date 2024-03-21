@@ -1,9 +1,7 @@
 use core::fmt;
+use cosmwasm_core::Uint64;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use crate::math::Uint64;
-use crate::prelude::*;
 
 /// A point in time in nanosecond precision.
 ///

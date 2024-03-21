@@ -10,6 +10,7 @@ use cosmwasm_crypto::{
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
+use rand_core::OsRng;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -484,7 +485,7 @@ pub fn do_ed25519_batch_verify<
     } * signatures.len() as u64;
     let gas_info = GasInfo::with_cost(max(gas_cost, data.gas_config.ed25519_verify_cost));
     process_gas_info(data, &mut store, gas_info)?;
-    let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
+    let result = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
     let code = match result {
         Ok(valid) => {
             if valid {

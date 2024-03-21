@@ -1,16 +1,16 @@
 mod backtrace;
+mod core_error;
 mod recover_pubkey_error;
-mod std_error;
 mod system_error;
 mod verification_error;
 
 pub(crate) use backtrace::{impl_from_err, BT};
-pub use recover_pubkey_error::RecoverPubkeyError;
-pub use std_error::{
+pub use core_error::{
     CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    CoinFromStrError, CoinsError, ConversionOverflowError, DivideByZeroError, DivisionError,
-    OverflowError, OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
-    StdResult,
+    CoinFromStrError, CoinsError, ConversionOverflowError, CoreError, CoreResult,
+    DivideByZeroError, DivisionError, OverflowError, OverflowOperation, RoundDownOverflowError,
+    RoundUpOverflowError,
 };
+pub use recover_pubkey_error::RecoverPubkeyError;
 pub use system_error::SystemError;
 pub use verification_error::VerificationError;

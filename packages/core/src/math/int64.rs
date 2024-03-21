@@ -1,15 +1,16 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
-use crate::prelude::*;
+use crate::errors::{
+    CoreError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
+};
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
     forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256,
     Uint512, Uint64,
@@ -31,8 +32,9 @@ use super::num_consts::NumConsts;
 /// let a = Int64::from(258i64);
 /// assert_eq!(a.i64(), 258);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Int64(#[schemars(with = "String")] pub(crate) i64);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Int64(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) i64);
 
 forward_ref_partial_eq!(Int64, Int64);
 
@@ -335,7 +337,7 @@ forward_try_from!(Uint256, Int64);
 forward_try_from!(Uint512, Int64);
 
 impl TryFrom<&str> for Int64 {
-    type Error = StdError;
+    type Error = CoreError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -343,12 +345,12 @@ impl TryFrom<&str> for Int64 {
 }
 
 impl FromStr for Int64 {
-    type Err = StdError;
+    type Err = CoreError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<i64>() {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing Int64: {e}"))),
+            Err(e) => Err(CoreError::generic_err(format!("Parsing Int64: {e}"))),
         }
     }
 }
@@ -534,7 +536,7 @@ impl<'de> de::Visitor<'de> for Int64Visitor {
     where
         E: de::Error,
     {
-        Int64::try_from(v).map_err(|e| E::custom(format!("invalid Int64 '{v}' - {e}")))
+        Int64::try_from(v).map_err(|e| E::custom(format_args!("invalid Int64 '{v}' - {e}")))
     }
 }
 
@@ -550,7 +552,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, math::conversion::test_try_from_uint_to_int, to_json_vec};
+    use crate::math::conversion::test_try_from_uint_to_int;
 
     #[test]
     fn size_of_works() {
@@ -795,9 +797,9 @@ mod tests {
     #[test]
     fn int64_json() {
         let orig = Int64::from(1234567890987654321i64);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Int64 = from_json(serialized).unwrap();
+        let parsed: Int64 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

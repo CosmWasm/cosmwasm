@@ -1,3 +1,4 @@
+use alloc::{string::ToString, vec::Vec};
 use digest::{Digest, Update}; // trait
 use k256::{
     ecdsa::signature::DigestVerifier,             // traits
@@ -168,6 +169,7 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
 mod tests {
     use super::*;
 
+    use alloc::{format, string::String};
     use hex_literal::hex;
     use k256::{
         ecdsa::signature::DigestSigner, // trait

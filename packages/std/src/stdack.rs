@@ -1,7 +1,7 @@
+use cosmwasm_core::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::binary::Binary;
 use crate::prelude::*;
 use crate::to_json_binary;
 

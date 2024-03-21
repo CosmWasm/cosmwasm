@@ -1,6 +1,5 @@
+use alloc::boxed::Box;
 use core::fmt::{Debug, Display, Formatter, Result};
-
-use crate::prelude::*;
 
 /// This wraps an actual backtrace to achieve two things:
 /// - being able to fill this with a stub implementation in `no_std` environments

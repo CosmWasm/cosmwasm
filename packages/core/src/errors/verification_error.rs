@@ -1,26 +1,26 @@
 use core::fmt::Debug;
+use derive_more::Display;
 
 use super::BT;
-use thiserror::Error;
 
 #[cfg(not(target_arch = "wasm32"))]
 use cosmwasm_crypto::CryptoError;
 
-#[derive(Error, Debug)]
+#[derive(Display, Debug)]
 pub enum VerificationError {
-    #[error("Batch error")]
+    #[display("Batch error")]
     BatchErr,
-    #[error("Generic error")]
+    #[display("Generic error")]
     GenericErr,
-    #[error("Invalid hash format")]
+    #[display("Invalid hash format")]
     InvalidHashFormat,
-    #[error("Invalid signature format")]
+    #[display("Invalid signature format")]
     InvalidSignatureFormat,
-    #[error("Invalid public key format")]
+    #[display("Invalid public key format")]
     InvalidPubkeyFormat,
-    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
-    #[error("Unknown error: {error_code}")]
+    #[display("Unknown error: {error_code}")]
     UnknownErr { error_code: u32, backtrace: BT },
 }
 
@@ -33,6 +33,9 @@ impl VerificationError {
         }
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for VerificationError {}
 
 impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {

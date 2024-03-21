@@ -2,6 +2,14 @@
 //! Please don't use any of these types directly, as
 //! they might change frequently, or be removed in the future.
 //! This crate does not adhere to semantic versioning.
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+#[cfg(test)]
+extern crate std; // allow for file I/O during tests
+
 mod backtrace;
 mod ecdsa;
 mod ed25519;

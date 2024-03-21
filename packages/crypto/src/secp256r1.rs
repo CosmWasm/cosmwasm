@@ -1,10 +1,11 @@
+use alloc::{string::ToString, vec::Vec};
+use core::convert::TryInto;
 use digest::{Digest, Update}; // trait
 use ecdsa::RecoveryId;
 use p256::{
     ecdsa::signature::DigestVerifier, // traits
     ecdsa::{Signature, VerifyingKey}, // type aliases
 };
-use std::convert::TryInto;
 
 use crate::ecdsa::{ECDSA_COMPRESSED_PUBKEY_LEN, ECDSA_UNCOMPRESSED_PUBKEY_LEN};
 use crate::errors::{CryptoError, CryptoResult};
@@ -146,6 +147,7 @@ mod tests {
     use std::io::BufReader;
 
     use crate::secp256r1_recover_pubkey;
+    use alloc::string::String;
     use ecdsa::RecoveryId;
     use p256::{
         ecdsa::signature::DigestSigner, ecdsa::SigningKey, elliptic_curve::rand_core::OsRng,
