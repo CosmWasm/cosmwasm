@@ -258,7 +258,6 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 mod tests {
     use super::*;
     use crate::assert_hash_works;
-    use crate::errors::StdError;
     use crate::serde::{from_json, to_json_vec};
 
     #[test]

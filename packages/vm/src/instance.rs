@@ -491,9 +491,7 @@ mod tests {
     use std::time::SystemTime;
 
     use super::*;
-    use crate::backend::Storage;
     use crate::calls::{call_execute, call_instantiate, call_query};
-    use crate::errors::VmError;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
@@ -502,7 +500,7 @@ mod tests {
     use cosmwasm_std::{
         coin, coins, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty, QueryRequest,
     };
-    use wasmer::{FunctionEnv, FunctionEnvMut};
+    use wasmer::FunctionEnvMut;
 
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;

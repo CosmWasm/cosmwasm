@@ -4,7 +4,6 @@ use p256::{
     ecdsa::signature::DigestVerifier, // traits
     ecdsa::{Signature, VerifyingKey}, // type aliases
 };
-use std::convert::TryInto;
 
 use crate::ecdsa::{ECDSA_COMPRESSED_PUBKEY_LEN, ECDSA_UNCOMPRESSED_PUBKEY_LEN};
 use crate::errors::{CryptoError, CryptoResult};
@@ -145,8 +144,6 @@ mod tests {
     use std::fs::File;
     use std::io::BufReader;
 
-    use crate::secp256r1_recover_pubkey;
-    use ecdsa::RecoveryId;
     use p256::{
         ecdsa::signature::DigestSigner, ecdsa::SigningKey, elliptic_curve::rand_core::OsRng,
     };

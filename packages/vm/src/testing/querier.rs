@@ -45,16 +45,16 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         self.querier.staking.update(denom, validators, delegations);
     }
 
-    pub fn update_wasm<WH: 'static>(&mut self, handler: WH)
+    pub fn update_wasm<WH>(&mut self, handler: WH)
     where
-        WH: Fn(&cosmwasm_std::WasmQuery) -> cosmwasm_std::QuerierResult,
+        WH: Fn(&cosmwasm_std::WasmQuery) -> cosmwasm_std::QuerierResult + 'static,
     {
         self.querier.update_wasm(handler)
     }
 
-    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
+    pub fn with_custom_handler<CH>(mut self, handler: CH) -> Self
     where
-        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult + 'static,
     {
         self.querier = self.querier.with_custom_handler(handler);
         self
@@ -113,7 +113,7 @@ impl MockQuerier {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{coin, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty};
+    use cosmwasm_std::{coin, from_json, AllBalanceResponse, BalanceResponse, BankQuery};
 
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 

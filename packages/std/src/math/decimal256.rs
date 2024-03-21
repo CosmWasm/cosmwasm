@@ -783,7 +783,6 @@ impl<'de> de::Visitor<'de> for Decimal256Visitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::StdError;
     use crate::{from_json, to_json_vec};
 
     fn dec(input: &str) -> Decimal256 {

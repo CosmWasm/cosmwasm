@@ -241,7 +241,6 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::BackendError;
     use cosmwasm_std::coins;
 
     #[test]

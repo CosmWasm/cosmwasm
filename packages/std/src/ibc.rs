@@ -1,7 +1,7 @@
 // The CosmosMsg variants are defined in results/cosmos_msg.rs
 // The rest of the IBC related functionality is defined here
 
-use core::cmp::{Ord, Ordering, PartialOrd};
+use core::cmp::Ordering;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

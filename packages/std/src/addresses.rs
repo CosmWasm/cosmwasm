@@ -360,7 +360,7 @@ fn hash(ty: &str, key: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{assert_hash_works, HexBinary};
+    use crate::assert_hash_works;
     use hex_literal::hex;
 
     #[test]

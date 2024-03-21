@@ -80,6 +80,7 @@ mod tests {
     {
     }
 
+    #[allow(dead_code)]
     trait SignedImpl<'a>: IntImpl<'a> + Neg<Output = Self> {}
 
     impl AllImpl<'_> for Uint64 {}

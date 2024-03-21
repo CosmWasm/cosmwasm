@@ -32,7 +32,6 @@ pub fn to_i32<T: TryInto<i32> + ToString + Copy>(input: T) -> VmResult<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::VmError;
 
     #[test]
     fn to_u32_works_for_usize() {

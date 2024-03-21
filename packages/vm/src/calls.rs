@@ -859,18 +859,14 @@ mod tests {
     #[cfg(feature = "stargate")]
     mod ibc {
         use super::*;
-        use crate::calls::{call_instantiate, call_reply};
-        use crate::testing::{
-            mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
-        };
+        use crate::testing::{MockApi, MockQuerier, MockStorage};
         use cosmwasm_std::testing::mock_ibc_packet_timeout;
         use cosmwasm_std::testing::{
             mock_ibc_channel_close_init, mock_ibc_channel_connect_ack, mock_ibc_channel_open_init,
             mock_ibc_packet_ack, mock_ibc_packet_recv, mock_wasmd_attr,
         };
         use cosmwasm_std::{
-            Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgResponse,
-            SubMsgResult,
+            Event, IbcAcknowledgement, IbcOrder, ReplyOn, SubMsgResponse, SubMsgResult,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";

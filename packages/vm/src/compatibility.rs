@@ -268,7 +268,7 @@ fn check_wasm_functions(module: &ParsedWasm) -> VmResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{capabilities_from_csv, errors::VmError};
+    use crate::capabilities_from_csv;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
