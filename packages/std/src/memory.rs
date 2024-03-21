@@ -33,7 +33,7 @@ pub fn alloc(size: usize) -> *mut Region {
 /// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
 /// a pointer to the Region (preventing the memory from being freed until explicitly called later).
 ///
-/// The resulting Region has capacity = length, i.e. the buffer's capacity is ignored.
+/// The resulting Region spans the entire region allocated by the vector, preserving the length and capacity components.
 pub fn release_buffer(buffer: Vec<u8>) -> *mut Region {
     let region = build_region(&buffer);
     mem::forget(buffer);
@@ -69,15 +69,83 @@ pub unsafe fn consume_region(ptr: *mut Region) -> Vec<u8> {
     )
 }
 
+/// Element that can be used to construct a new `Box<Region>`
+///
+/// # Safety
+///
+/// The following invariant must be upheld:
+///
+/// - full allocated capacity == value returned by capacity
+///
+/// This is important to uphold the safety invariant of the `dealloc` method, which requires us to pass the same Layout
+/// into it as was used to allocate a memory region.
+/// And since `size` is one of the parameters, it is important to pass in the exact same capacity.
+///
+/// See: <https://doc.rust-lang.org/stable/alloc/alloc/trait.GlobalAlloc.html#safety-2>
+pub unsafe trait RegionSource {
+    fn ptr(&self) -> *const u8;
+    fn len(&self) -> usize;
+    fn capacity(&self) -> usize;
+}
+
+unsafe impl RegionSource for &[u8] {
+    fn ptr(&self) -> *const u8 {
+        self.as_ptr()
+    }
+
+    fn len(&self) -> usize {
+        (*self).len()
+    }
+
+    fn capacity(&self) -> usize {
+        self.len()
+    }
+}
+
+unsafe impl RegionSource for Vec<u8> {
+    fn ptr(&self) -> *const u8 {
+        self.as_ptr()
+    }
+
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn capacity(&self) -> usize {
+        self.capacity()
+    }
+}
+
+unsafe impl<T: ?Sized> RegionSource for &T
+where
+    T: RegionSource,
+{
+    fn ptr(&self) -> *const u8 {
+        (**self).ptr()
+    }
+
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+
+    fn capacity(&self) -> usize {
+        (**self).capacity()
+    }
+}
+
 /// Returns a box of a Region, which can be sent over a call to extern
 /// note that this DOES NOT take ownership of the data, and we MUST NOT consume_region
 /// the resulting data.
 /// The Box must be dropped (with scope), but not the data
-pub fn build_region(data: &[u8]) -> Box<Region> {
-    let data_ptr = data.as_ptr() as usize;
+pub fn build_region<S>(data: S) -> Box<Region>
+where
+    S: RegionSource,
+{
+    // Well, this technically violates pointer provenance rules.
+    // But there isn't a stable API for it, so that's the best we can do, I guess.
     build_region_from_components(
-        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
-        u32::try_from(data.len()).expect("length doesn't fit in u32"),
+        u32::try_from(data.ptr() as usize).expect("pointer doesn't fit in u32"),
+        u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
         u32::try_from(data.len()).expect("length doesn't fit in u32"),
     )
 }
