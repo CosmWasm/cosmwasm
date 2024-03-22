@@ -22,10 +22,6 @@ impl Default for Options {
 impl Parse for Options {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut ret = Self::default();
-        if input.is_empty() {
-            return Ok(ret);
-        }
-
         let attrs = Punctuated::<syn::MetaNameValue, Token![,]>::parse_terminated(input)?;
 
         for kv in attrs {
