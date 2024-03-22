@@ -41,7 +41,8 @@ mod tests {
         assert_eq!(to_u32(2147483647usize).unwrap(), 2147483647);
         assert_eq!(to_u32(2147483648usize).unwrap(), 2147483648);
         assert_eq!(to_u32(4294967295usize).unwrap(), 4294967295);
-
+        // Gate required for Rust 1.77.0 in Linux, possibly a Rust/clippy regression bug
+        #[cfg(target_pointer_width = "64")]
         match to_u32(4294967296usize) {
             Err(VmError::ConversionErr {
                 from_type,
@@ -130,6 +131,8 @@ mod tests {
         assert_eq!(ref_to_u32(&2147483647usize).unwrap(), 2147483647);
         assert_eq!(ref_to_u32(&2147483648usize).unwrap(), 2147483648);
         assert_eq!(ref_to_u32(&4294967295usize).unwrap(), 4294967295);
+        // Gate required for Rust 1.77.0 in Linux, possibly a Rust/clippy regression bug
+        #[cfg(target_pointer_width = "64")]
         match ref_to_u32(&4294967296usize).unwrap_err() {
             VmError::ConversionErr {
                 from_type,
