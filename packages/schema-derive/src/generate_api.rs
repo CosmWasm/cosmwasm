@@ -10,6 +10,7 @@ use syn::{
 
 pub fn write_api_impl(input: Options) -> Block {
     let api_object = generate_api_impl(&input);
+    let crate_name = input.crate_name;
     let name = input.name;
 
     parse_quote! {
@@ -19,7 +20,7 @@ pub fn write_api_impl(input: Options) -> Block {
             use ::std::env;
             use ::std::fs::{create_dir_all, write};
 
-            use ::cosmwasm_schema::{remove_schemas, Api, QueryResponses};
+            use #crate_name::{remove_schemas, Api, QueryResponses};
 
             let mut out_dir = env::current_dir().unwrap();
             out_dir.push("schema");
@@ -50,6 +51,7 @@ pub fn write_api_impl(input: Options) -> Block {
 
 pub fn generate_api_impl(input: &Options) -> ExprStruct {
     let Options {
+        crate_name,
         name,
         version,
         instantiate,
@@ -61,7 +63,7 @@ pub fn generate_api_impl(input: &Options) -> ExprStruct {
     } = input;
 
     parse_quote! {
-        ::cosmwasm_schema::Api {
+        #crate_name::Api {
             contract_name: #name.to_string(),
             contract_version: #version.to_string(),
             instantiate: #instantiate,
@@ -121,6 +123,7 @@ impl Parse for Pair {
 
 #[derive(Debug)]
 pub struct Options {
+    crate_name: TokenStream,
     name: TokenStream,
     version: TokenStream,
     instantiate: TokenStream,
@@ -135,6 +138,13 @@ impl Parse for Options {
     fn parse(input: ParseStream) -> syn::parse::Result<Self> {
         let pairs = input.parse_terminated(Pair::parse, Token![,])?;
         let mut map: BTreeMap<_, _> = pairs.into_iter().map(|p| p.0).collect();
+
+        let crate_name = if let Some(crate_name_override) = map.remove(&parse_quote!(crate_name)) {
+            let crate_name_override = crate_name_override.get_type()?;
+            quote! { #crate_name_override }
+        } else {
+            quote! { ::cosmwasm_schema }
+        };
 
         let name = if let Some(name_override) = map.remove(&parse_quote!(name)) {
             let name_override = name_override.get_str()?;
@@ -206,6 +216,7 @@ impl Parse for Options {
         }
 
         Ok(Self {
+            crate_name,
             name,
             version,
             instantiate,
