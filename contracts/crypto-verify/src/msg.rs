@@ -82,6 +82,24 @@ pub enum QueryMsg {
     /// No pagination - this is a short list.
     #[returns(ListVerificationsResponse)]
     ListVerificationSchemes {},
+    /// Webauthn component verification
+    #[returns(VerifyResponse)]
+    VerifyWebauthn {
+        /// Authenticator data
+        authenticator_data: Binary,
+        /// Client data (JSON encoded)
+        client_data_json: String,
+        /// Challenge value
+        challenge: Binary,
+        /// X coordinate of public key point
+        x: Binary,
+        /// Y coordinate of public key point
+        y: Binary,
+        /// r component of signature
+        r: Binary,
+        /// s component of signature
+        s: Binary,
+    },
 }
 
 #[cw_serde]

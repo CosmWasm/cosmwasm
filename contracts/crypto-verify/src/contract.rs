@@ -94,6 +94,24 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &public_keys,
         )?),
         QueryMsg::ListVerificationSchemes {} => to_json_binary(&query_list_verifications(deps)?),
+        QueryMsg::VerifyWebauthn {
+            authenticator_data,
+            client_data_json,
+            challenge,
+            x,
+            y,
+            r,
+            s,
+        } => to_json_binary(&query_verify_webauthn(
+            deps,
+            &authenticator_data,
+            &client_data_json,
+            &challenge,
+            &x,
+            &y,
+            &r,
+            &s,
+        )?),
     }
 }
 
@@ -133,6 +151,30 @@ pub fn query_verify_secp256r1(
         Ok(verifies) => Ok(VerifyResponse { verifies }),
         Err(err) => Err(err.into()),
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn query_verify_webauthn(
+    deps: Deps,
+    authenticator_data: &[u8],
+    client_data_json: &str,
+    challenge: &[u8],
+    x: &[u8],
+    y: &[u8],
+    r: &[u8],
+    s: &[u8],
+) -> StdResult<VerifyResponse> {
+    let verifies = crate::webauthn::verify(
+        deps.api,
+        authenticator_data,
+        client_data_json,
+        challenge,
+        x,
+        y,
+        r,
+        s,
+    )?;
+    Ok(VerifyResponse { verifies })
 }
 
 pub fn query_verify_ethereum_text(
@@ -246,9 +288,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{
-        from_json, Binary, OwnedDeps, RecoverPubkeyError, StdError, VerificationError,
-    };
+    use cosmwasm_std::{from_json, OwnedDeps, RecoverPubkeyError, VerificationError};
     use hex_literal::hex;
 
     const CREATOR: &str = "creator";
