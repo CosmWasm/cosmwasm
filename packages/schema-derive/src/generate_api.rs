@@ -171,7 +171,7 @@ impl Parse for Options {
         let instantiate = match map.remove(&parse_quote!(instantiate)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -179,7 +179,7 @@ impl Parse for Options {
         let execute = match map.remove(&parse_quote!(execute)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -188,8 +188,8 @@ impl Parse for Options {
             Some(ty) => {
                 let ty = ty.get_type()?;
                 (
-                    quote! {Some(::cosmwasm_schema::schema_for!(#ty))},
-                    quote! { Some(<#ty as ::cosmwasm_schema::QueryResponses>::response_schemas().unwrap()) },
+                    quote! {Some(#crate_name::schema_for!(#ty))},
+                    quote! { Some(<#ty as #crate_name::QueryResponses>::response_schemas().unwrap()) },
                 )
             }
             None => (quote! { None }, quote! { None }),
@@ -198,7 +198,7 @@ impl Parse for Options {
         let migrate = match map.remove(&parse_quote!(migrate)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -206,7 +206,7 @@ impl Parse for Options {
         let sudo = match map.remove(&parse_quote!(sudo)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };

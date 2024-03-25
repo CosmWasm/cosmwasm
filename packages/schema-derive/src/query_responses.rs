@@ -11,11 +11,12 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
     let ctx = context::get_context(&input)?;
 
     let item_impl = if ctx.is_nested {
+        let crate_name = &ctx.crate_name;
         let ident = input.ident;
         let subquery_calls = input
             .variants
             .into_iter()
-            .map(parse_subquery)
+            .map(|variant| parse_subquery(&ctx, variant))
             .collect::<syn::Result<Vec<_>>>()?;
 
         // Handle generics if the type has any
@@ -23,28 +24,29 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
         let impl_generics = impl_generics(
             &ctx,
             &input.generics,
-            &[parse_quote! {::cosmwasm_schema::QueryResponses}],
+            &[parse_quote! {#crate_name::QueryResponses}],
         );
 
         let subquery_len = subquery_calls.len();
         parse_quote! {
             #[automatically_derived]
             #[cfg(not(target_arch = "wasm32"))]
-            impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
-                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+            impl #impl_generics #crate_name::QueryResponses for #ident #type_generics #where_clause {
+                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, #crate_name::schemars::schema::RootSchema> {
                     let subqueries = [
                         #( #subquery_calls, )*
                     ];
-                    ::cosmwasm_schema::combine_subqueries::<#subquery_len, #ident #type_generics>(subqueries)
+                    #crate_name::combine_subqueries::<#subquery_len, #ident #type_generics>(subqueries)
                 }
             }
         }
     } else {
+        let crate_name = &ctx.crate_name;
         let ident = input.ident;
         let mappings = input
             .variants
             .into_iter()
-            .map(parse_query)
+            .map(|variant| parse_query(&ctx, variant))
             .collect::<syn::Result<Vec<_>>>()?;
 
         let mut queries: Vec<_> = mappings.clone().into_iter().map(|(q, _)| q).collect();
@@ -58,8 +60,8 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
         parse_quote! {
             #[automatically_derived]
             #[cfg(not(target_arch = "wasm32"))]
-            impl #impl_generics ::cosmwasm_schema::QueryResponses for #ident #type_generics #where_clause {
-                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+            impl #impl_generics #crate_name::QueryResponses for #ident #type_generics #where_clause {
+                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, #crate_name::schemars::schema::RootSchema> {
                     ::std::collections::BTreeMap::from([
                         #( #mappings, )*
                     ])
@@ -80,9 +82,12 @@ fn impl_generics(ctx: &Context, generics: &Generics, bounds: &[TypeParamBound]) 
         param.default = None;
 
         if !ctx.no_bounds_for.contains(&param.ident) {
+            let crate_name = &ctx.crate_name;
+
             param
                 .bounds
-                .push(parse_quote! {::cosmwasm_schema::schemars::JsonSchema});
+                .push(parse_quote! {#crate_name::schemars::JsonSchema});
+
             param.bounds.extend(bounds.to_owned());
         }
     }
@@ -91,7 +96,8 @@ fn impl_generics(ctx: &Context, generics: &Generics, bounds: &[TypeParamBound]) 
 }
 
 /// Extract the query -> response mapping out of an enum variant.
-fn parse_query(v: Variant) -> syn::Result<(String, Expr)> {
+fn parse_query(ctx: &Context, v: Variant) -> syn::Result<(String, Expr)> {
+    let crate_name = &ctx.crate_name;
     let query = to_snake_case(&v.ident.to_string());
     let response_ty: Type = v
         .attrs
@@ -101,14 +107,12 @@ fn parse_query(v: Variant) -> syn::Result<(String, Expr)> {
         .parse_args()
         .map_err(|e| error_message!(e.span(), "return must be a type"))?;
 
-    Ok((
-        query,
-        parse_quote!(::cosmwasm_schema::schema_for!(#response_ty)),
-    ))
+    Ok((query, parse_quote!(#crate_name::schema_for!(#response_ty))))
 }
 
 /// Extract the nested query  -> response mapping out of an enum variant.
-fn parse_subquery(v: Variant) -> syn::Result<Expr> {
+fn parse_subquery(ctx: &Context, v: Variant) -> syn::Result<Expr> {
+    let crate_name = &ctx.crate_name;
     let submsg = match v.fields {
         syn::Fields::Named(_) => bail!(v, "a struct variant is not a valid subquery"),
         syn::Fields::Unnamed(fields) => {
@@ -121,7 +125,7 @@ fn parse_subquery(v: Variant) -> syn::Result<Expr> {
         syn::Fields::Unit => bail!(v, "a unit variant is not a valid subquery"),
     };
 
-    Ok(parse_quote!(<#submsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl()))
+    Ok(parse_quote!(<#submsg as #crate_name::QueryResponses>::response_schemas_impl()))
 }
 
 fn parse_tuple((q, r): (String, Expr)) -> ExprTuple {
@@ -144,9 +148,19 @@ fn to_snake_case(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use syn::parse_quote;
 
     use super::*;
+
+    fn test_context() -> Context {
+        Context {
+            crate_name: parse_quote!(::cosmwasm_schema),
+            is_nested: false,
+            no_bounds_for: HashSet::new(),
+        }
+    }
 
     #[test]
     fn happy_path() {
@@ -330,7 +344,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_tuple(parse_query(variant).unwrap()),
+            parse_tuple(parse_query(&test_context(), variant).unwrap()),
             parse_quote! {
                 ("get_foo".to_string(), ::cosmwasm_schema::schema_for!(Foo))
             }
@@ -342,7 +356,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse_tuple(parse_query(variant).unwrap()),
+            parse_tuple(parse_query(&test_context(), variant).unwrap()),
             parse_quote! { ("get_foo".to_string(), ::cosmwasm_schema::schema_for!(some_crate::Foo)) }
         );
     }

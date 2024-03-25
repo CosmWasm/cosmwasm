@@ -1,11 +1,13 @@
 use std::collections::HashSet;
 
 use crate::error::bail;
-use syn::{Ident, ItemEnum};
+use syn::{parse_quote, Ident, ItemEnum, LitStr};
 
 const ATTR_PATH: &str = "query_responses";
 
 pub struct Context {
+    /// Name of the crate referenced in the macro expansions
+    pub crate_name: syn::Path,
     /// If the enum we're trying to derive QueryResponses for collects other QueryMsgs,
     /// setting this flag will derive the implementation appropriately, collecting all
     /// KV pairs from the nested enums rather than expecting `#[return]` annotations.
@@ -16,6 +18,7 @@ pub struct Context {
 
 pub fn get_context(input: &ItemEnum) -> syn::Result<Context> {
     let mut ctx = Context {
+        crate_name: parse_quote!(::cosmwasm_schema),
         is_nested: false,
         no_bounds_for: HashSet::new(),
     };
@@ -43,6 +46,9 @@ pub fn get_context(input: &ItemEnum) -> syn::Result<Context> {
                 })?;
             } else if param.path.is_ident("nested") {
                 ctx.is_nested = true;
+            } else if param.path.is_ident("crate") {
+                let crate_name_str: LitStr = param.input.parse()?;
+                ctx.crate_name = crate_name_str.parse()?;
             } else {
                 bail!(param.path, "unrecognized QueryResponses param");
             }
