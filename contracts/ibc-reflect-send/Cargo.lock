@@ -209,6 +209,7 @@ dependencies = [
 name = "cosmwasm-derive"
 version = "2.0.0"
 dependencies = [
+ "proc-macro2",
  "quote",
  "syn 2.0.37",
 ]

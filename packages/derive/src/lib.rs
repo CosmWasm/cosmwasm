@@ -1,11 +1,20 @@
-use proc_macro::TokenStream;
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, parse_quote,
+    parse_quote,
     punctuated::Punctuated,
     Token,
 };
+
+macro_rules! maybe {
+    ($result:expr) => {{
+        match { $result } {
+            Ok(val) => val,
+            Err(err) => return err.into_compile_error(),
+        }
+    }};
+}
 
 struct Options {
     crate_path: syn::Path,
@@ -85,10 +94,17 @@ impl Parse for Options {
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
 #[proc_macro_attribute]
-pub fn entry_point(attr: TokenStream, mut item: TokenStream) -> TokenStream {
+pub fn entry_point(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    entry_point_impl(attr.into(), item.into()).into()
+}
+
+fn entry_point_impl(attr: TokenStream, mut item: TokenStream) -> TokenStream {
     let cloned = item.clone();
-    let function = parse_macro_input!(cloned as syn::ItemFn);
-    let Options { crate_path } = parse_macro_input!(attr as Options);
+    let function: syn::ItemFn = maybe!(syn::parse2(cloned));
+    let Options { crate_path } = maybe!(syn::parse2(attr));
 
     // The first argument is `deps`, the rest is region pointers
     let args = function.sig.inputs.len() - 1;
@@ -109,6 +125,63 @@ pub fn entry_point(attr: TokenStream, mut item: TokenStream) -> TokenStream {
         }
     };
 
-    item.extend(TokenStream::from(new_code));
+    item.extend(new_code);
     item
+}
+
+#[cfg(test)]
+mod test {
+    use proc_macro2::TokenStream;
+    use quote::quote;
+
+    use crate::entry_point_impl;
+
+    #[test]
+    fn default_expansion() {
+        let code = quote! {
+            fn instantiate(deps: DepsMut, env: Env) -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = entry_point_impl(TokenStream::new(), code);
+        let expected = quote! {
+            fn instantiate(deps: DepsMut, env: Env) -> Response { }
+
+            #[cfg(target_arch = "wasm32")]
+            mod __wasm_export_instantiate {
+                #[no_mangle]
+                extern "C" fn instantiate(ptr_0: u32) -> u32 {
+                    ::cosmwasm_std::do_instantiate(&super::instantiate, ptr_0)
+                }
+            }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn renamed_expansion() {
+        let attribute = quote!(crate = "::my_crate::cw_std");
+        let code = quote! {
+            fn instantiate(deps: DepsMut, env: Env) -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = entry_point_impl(attribute, code);
+        let expected = quote! {
+            fn instantiate(deps: DepsMut, env: Env) -> Response { }
+
+            #[cfg(target_arch = "wasm32")]
+            mod __wasm_export_instantiate {
+                #[no_mangle]
+                extern "C" fn instantiate(ptr_0: u32) -> u32 {
+                    ::my_crate::cw_std::do_instantiate(&super::instantiate, ptr_0)
+                }
+            }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
 }
