@@ -96,8 +96,8 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
-            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #[serde(deny_unknown_fields, crate = ":: cosmwasm_schema::serde")]
+            #[schemars(crate = ":: cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {
                 pub verifier: String,
                 pub beneficiary: String,
@@ -127,8 +127,8 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
-            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #[serde(deny_unknown_fields, crate = ":: cosmwasm_schema::serde")]
+            #[schemars(crate = ":: cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {}
         };
 
@@ -160,8 +160,8 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")]
-            #[schemars(crate = "::cosmwasm_schema::schemars")]
+            #[serde(deny_unknown_fields, crate = ":: cosmwasm_schema::serde")]
+            #[schemars(crate = ":: cosmwasm_schema::schemars")]
             #[serde(rename_all = "snake_case")]
             pub enum SudoMsg {
                 StealFunds {
