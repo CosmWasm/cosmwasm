@@ -298,6 +298,83 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "Webauthn component verification",
+      "type": "object",
+      "required": [
+        "verify_webauthn"
+      ],
+      "properties": {
+        "verify_webauthn": {
+          "type": "object",
+          "required": [
+            "authenticator_data",
+            "challenge",
+            "client_data_json",
+            "r",
+            "s",
+            "x",
+            "y"
+          ],
+          "properties": {
+            "authenticator_data": {
+              "description": "Authenticator data",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "challenge": {
+              "description": "Challenge value",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "client_data_json": {
+              "description": "Client data (JSON encoded)",
+              "type": "string"
+            },
+            "r": {
+              "description": "r component of signature",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "s": {
+              "description": "s component of signature",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "x": {
+              "description": "X coordinate of public key point",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "y": {
+              "description": "Y coordinate of public key point",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
