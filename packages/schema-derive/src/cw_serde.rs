@@ -74,6 +74,42 @@ mod tests {
     use syn::parse_quote;
 
     #[test]
+    fn crate_rename() {
+        let expanded = cw_serde_impl(
+            Options {
+                crate_path: parse_quote!(::my_crate::cw_schema),
+            },
+            parse_quote! {
+                pub struct InstantiateMsg {
+                    pub verifier: String,
+                    pub beneficiary: String,
+                }
+            },
+        )
+        .unwrap();
+
+        let expected = parse_quote! {
+            #[derive(
+                ::my_crate::cw_schema::serde::Serialize,
+                ::my_crate::cw_schema::serde::Deserialize,
+                ::std::clone::Clone,
+                ::std::fmt::Debug,
+                ::std::cmp::PartialEq,
+                ::my_crate::cw_schema::schemars::JsonSchema
+            )]
+            #[allow(clippy::derive_partial_eq_without_eq)]
+            #[serde(deny_unknown_fields, crate = ":: my_crate :: cw_schema::serde")]
+            #[schemars(crate = ":: my_crate :: cw_schema::schemars")]
+            pub struct InstantiateMsg {
+                pub verifier: String,
+                pub beneficiary: String,
+            }
+        };
+
+        assert_eq!(expanded, expected);
+    }
+
+    #[test]
     fn structs() {
         let expanded = cw_serde_impl(
             Options::default(),

@@ -234,6 +234,32 @@ mod tests {
     use super::*;
 
     #[test]
+    fn crate_rename() {
+        assert_eq!(
+            generate_api_impl(&parse_quote! {
+                crate_name: ::my_crate::cw_schema,
+                instantiate: InstantiateMsg,
+                execute: ExecuteMsg,
+                query: QueryMsg,
+                migrate: MigrateMsg,
+                sudo: SudoMsg,
+            }),
+            parse_quote! {
+                ::my_crate::cw_schema::Api {
+                    contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
+                    contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
+                    instantiate: Some(::my_crate::cw_schema::schema_for!(InstantiateMsg)),
+                    execute: Some(::my_crate::cw_schema::schema_for!(ExecuteMsg)),
+                    query: Some(::my_crate::cw_schema::schema_for!(QueryMsg)),
+                    migrate: Some(::my_crate::cw_schema::schema_for!(MigrateMsg)),
+                    sudo: Some(::my_crate::cw_schema::schema_for!(SudoMsg)),
+                    responses: Some(<QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas().unwrap()),
+                }
+            }
+        );
+    }
+
+    #[test]
     fn api_object_minimal() {
         assert_eq!(
             generate_api_impl(&parse_quote! {}),

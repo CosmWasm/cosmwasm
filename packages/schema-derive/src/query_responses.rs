@@ -163,6 +163,69 @@ mod tests {
     }
 
     #[test]
+    fn crate_rename() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(rename_all = "snake_case")]
+            #[query_responses(crate = "::my_crate::cw_schema")]
+            pub enum QueryMsg {
+                #[returns(some_crate::AnotherType)]
+                Supply {},
+                #[returns(SomeType)]
+                Balance {},
+            }
+        };
+
+        assert_eq!(
+            query_responses_derive_impl(input).unwrap(),
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl ::my_crate::cw_schema::QueryResponses for QueryMsg {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::schemars::schema::RootSchema> {
+                        ::std::collections::BTreeMap::from([
+                            ("supply".to_string(), ::my_crate::cw_schema::schema_for!(some_crate::AnotherType)),
+                            ("balance".to_string(), ::my_crate::cw_schema::schema_for!(SomeType)),
+                        ])
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn crate_rename_nested() {
+        let input: ItemEnum = parse_quote! {
+            #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]
+            #[serde(untagged)]
+            #[query_responses(crate = "::my_crate::cw_schema", nested)]
+            pub enum ContractQueryMsg {
+                Cw1(QueryMsg1),
+                Whitelist(whitelist::QueryMsg),
+                Cw1WhitelistContract(QueryMsg),
+            }
+        };
+        let result = query_responses_derive_impl(input).unwrap();
+        assert_eq!(
+            result,
+            parse_quote! {
+                #[automatically_derived]
+                #[cfg(not(target_arch = "wasm32"))]
+                impl ::my_crate::cw_schema::QueryResponses for ContractQueryMsg {
+                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::schemars::schema::RootSchema> {
+                        let subqueries = [
+                            <QueryMsg1 as ::my_crate::cw_schema::QueryResponses>::response_schemas_impl(),
+                            <whitelist::QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_impl(),
+                            <QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_impl(),
+                        ];
+                        ::my_crate::cw_schema::combine_subqueries::<3usize, ContractQueryMsg>(subqueries)
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
     fn happy_path() {
         let input: ItemEnum = parse_quote! {
             #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, QueryResponses)]

@@ -31,23 +31,16 @@ pub fn get_context(input: &ItemEnum) -> syn::Result<Context> {
         let meta_list = attr.meta.require_list()?;
         meta_list.parse_nested_meta(|param| {
             if param.path.is_ident("no_bounds_for") {
-                let meta_list: syn::MetaList = param.input.parse()?;
-                meta_list.parse_nested_meta(|item| {
-                    let syn::Meta::Path(p) = item.input.parse()? else {
-                        bail!(
-                            item.input.span(),
-                            "`no_bounds_for` only accepts a list of type params"
-                        );
-                    };
-
-                    ctx.no_bounds_for.insert(p.get_ident().unwrap().clone());
+                param.parse_nested_meta(|item| {
+                    ctx.no_bounds_for
+                        .insert(item.path.get_ident().unwrap().clone());
 
                     Ok(())
                 })?;
             } else if param.path.is_ident("nested") {
                 ctx.is_nested = true;
             } else if param.path.is_ident("crate") {
-                let crate_name_str: LitStr = param.input.parse()?;
+                let crate_name_str: LitStr = param.value()?.parse()?;
                 ctx.crate_name = crate_name_str.parse()?;
             } else {
                 bail!(param.path, "unrecognized QueryResponses param");
@@ -58,4 +51,32 @@ pub fn get_context(input: &ItemEnum) -> syn::Result<Context> {
     }
 
     Ok(ctx)
+}
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashSet;
+
+    use quote::format_ident;
+    use syn::parse_quote;
+
+    use super::get_context;
+
+    #[test]
+    fn parse_context() {
+        let input = parse_quote! {
+            #[query_responses(crate = "::my_crate::cw_schema")]
+            #[query_responses(nested)]
+            #[query_responses(no_bounds_for(Item1, Item2))]
+            enum Test {}
+        };
+        let context = get_context(&input).unwrap();
+
+        assert_eq!(context.crate_name, parse_quote!(::my_crate::cw_schema));
+        assert!(context.is_nested);
+        assert_eq!(
+            context.no_bounds_for,
+            HashSet::from([format_ident!("Item1"), format_ident!("Item2")])
+        );
+    }
 }
