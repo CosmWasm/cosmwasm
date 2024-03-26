@@ -10,6 +10,7 @@ use syn::{
 
 pub fn write_api_impl(input: Options) -> Block {
     let api_object = generate_api_impl(&input);
+    let crate_name = input.crate_name;
     let name = input.name;
 
     parse_quote! {
@@ -19,7 +20,7 @@ pub fn write_api_impl(input: Options) -> Block {
             use ::std::env;
             use ::std::fs::{create_dir_all, write};
 
-            use ::cosmwasm_schema::{remove_schemas, Api, QueryResponses};
+            use #crate_name::{remove_schemas, Api, QueryResponses};
 
             let mut out_dir = env::current_dir().unwrap();
             out_dir.push("schema");
@@ -50,6 +51,7 @@ pub fn write_api_impl(input: Options) -> Block {
 
 pub fn generate_api_impl(input: &Options) -> ExprStruct {
     let Options {
+        crate_name,
         name,
         version,
         instantiate,
@@ -61,7 +63,7 @@ pub fn generate_api_impl(input: &Options) -> ExprStruct {
     } = input;
 
     parse_quote! {
-        ::cosmwasm_schema::Api {
+        #crate_name::Api {
             contract_name: #name.to_string(),
             contract_version: #version.to_string(),
             instantiate: #instantiate,
@@ -121,6 +123,7 @@ impl Parse for Pair {
 
 #[derive(Debug)]
 pub struct Options {
+    crate_name: TokenStream,
     name: TokenStream,
     version: TokenStream,
     instantiate: TokenStream,
@@ -135,6 +138,13 @@ impl Parse for Options {
     fn parse(input: ParseStream) -> syn::parse::Result<Self> {
         let pairs = input.parse_terminated(Pair::parse, Token![,])?;
         let mut map: BTreeMap<_, _> = pairs.into_iter().map(|p| p.0).collect();
+
+        let crate_name = if let Some(crate_name_override) = map.remove(&parse_quote!(crate_name)) {
+            let crate_name_override = crate_name_override.get_type()?;
+            quote! { #crate_name_override }
+        } else {
+            quote! { ::cosmwasm_schema }
+        };
 
         let name = if let Some(name_override) = map.remove(&parse_quote!(name)) {
             let name_override = name_override.get_str()?;
@@ -161,7 +171,7 @@ impl Parse for Options {
         let instantiate = match map.remove(&parse_quote!(instantiate)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -169,7 +179,7 @@ impl Parse for Options {
         let execute = match map.remove(&parse_quote!(execute)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -178,8 +188,8 @@ impl Parse for Options {
             Some(ty) => {
                 let ty = ty.get_type()?;
                 (
-                    quote! {Some(::cosmwasm_schema::schema_for!(#ty))},
-                    quote! { Some(<#ty as ::cosmwasm_schema::QueryResponses>::response_schemas().unwrap()) },
+                    quote! {Some(#crate_name::schema_for!(#ty))},
+                    quote! { Some(<#ty as #crate_name::QueryResponses>::response_schemas().unwrap()) },
                 )
             }
             None => (quote! { None }, quote! { None }),
@@ -188,7 +198,7 @@ impl Parse for Options {
         let migrate = match map.remove(&parse_quote!(migrate)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -196,7 +206,7 @@ impl Parse for Options {
         let sudo = match map.remove(&parse_quote!(sudo)) {
             Some(ty) => {
                 let ty = ty.get_type()?;
-                quote! {Some(::cosmwasm_schema::schema_for!(#ty))}
+                quote! {Some(#crate_name::schema_for!(#ty))}
             }
             None => quote! { None },
         };
@@ -206,6 +216,7 @@ impl Parse for Options {
         }
 
         Ok(Self {
+            crate_name,
             name,
             version,
             instantiate,
@@ -221,6 +232,32 @@ impl Parse for Options {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn crate_rename() {
+        assert_eq!(
+            generate_api_impl(&parse_quote! {
+                crate_name: ::my_crate::cw_schema,
+                instantiate: InstantiateMsg,
+                execute: ExecuteMsg,
+                query: QueryMsg,
+                migrate: MigrateMsg,
+                sudo: SudoMsg,
+            }),
+            parse_quote! {
+                ::my_crate::cw_schema::Api {
+                    contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
+                    contract_version: ::std::env!("CARGO_PKG_VERSION").to_string(),
+                    instantiate: Some(::my_crate::cw_schema::schema_for!(InstantiateMsg)),
+                    execute: Some(::my_crate::cw_schema::schema_for!(ExecuteMsg)),
+                    query: Some(::my_crate::cw_schema::schema_for!(QueryMsg)),
+                    migrate: Some(::my_crate::cw_schema::schema_for!(MigrateMsg)),
+                    sudo: Some(::my_crate::cw_schema::schema_for!(SudoMsg)),
+                    responses: Some(<QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas().unwrap()),
+                }
+            }
+        );
+    }
 
     #[test]
     fn api_object_minimal() {

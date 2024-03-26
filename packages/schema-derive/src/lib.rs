@@ -38,11 +38,14 @@ pub fn generate_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 fallible_macro! {
     #[proc_macro_attribute]
     pub fn cw_serde(
-        _attr: proc_macro::TokenStream,
+        attr: proc_macro::TokenStream,
         input: proc_macro::TokenStream,
     ) -> syn::Result<proc_macro::TokenStream> {
+        let options = syn::parse(attr)?;
         let input = syn::parse(input)?;
-        let expanded = cw_serde::cw_serde_impl(input)?;
+
+        let expanded = cw_serde::cw_serde_impl(options, input)?;
+
         Ok(expanded.into_token_stream().into())
     }
 }
