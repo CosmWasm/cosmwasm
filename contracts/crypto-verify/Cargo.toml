@@ -30,7 +30,7 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
+cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_2_1", "iterator"] }
 hex = "0.4"
 rlp = "0.5"
 schemars = "0.8.12"
