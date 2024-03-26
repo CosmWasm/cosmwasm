@@ -421,6 +421,7 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn secp256r1_verify(
         &self,
         message_hash: &[u8],
@@ -447,6 +448,7 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn secp256r1_recover_pubkey(
         &self,
         message_hash: &[u8],
