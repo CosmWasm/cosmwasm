@@ -62,8 +62,10 @@ extern "C" {
     /// secp256r1 ECDSA parametrization.
     /// Returns 0 on verification success, 1 on verification failure, and values
     /// greater than 1 in case of error.
+    #[cfg(feature = "cosmwasm_2_1")]
     fn secp256r1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn secp256r1_recover_pubkey(
         message_hash_ptr: u32,
         signature_ptr: u32,
@@ -419,6 +421,7 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn secp256r1_verify(
         &self,
         message_hash: &[u8],
@@ -445,6 +448,7 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn secp256r1_recover_pubkey(
         &self,
         message_hash: &[u8],
