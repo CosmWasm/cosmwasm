@@ -521,16 +521,16 @@ impl<C: DeserializeOwned> MockQuerier<C> {
         }
     }
 
-    pub fn update_wasm<WH: 'static>(&mut self, handler: WH)
+    pub fn update_wasm<WH>(&mut self, handler: WH)
     where
-        WH: Fn(&WasmQuery) -> QuerierResult,
+        WH: Fn(&WasmQuery) -> QuerierResult + 'static,
     {
         self.wasm.update_handler(handler)
     }
 
-    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
+    pub fn with_custom_handler<CH>(mut self, handler: CH) -> Self
     where
-        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult + 'static,
     {
         self.custom_handler = Box::from(handler);
         self
@@ -598,9 +598,9 @@ impl WasmQuerier {
         Self { handler }
     }
 
-    fn update_handler<WH: 'static>(&mut self, handler: WH)
+    fn update_handler<WH>(&mut self, handler: WH)
     where
-        WH: Fn(&WasmQuery) -> QuerierResult,
+        WH: Fn(&WasmQuery) -> QuerierResult + 'static,
     {
         self.handler = Box::from(handler)
     }
@@ -1116,10 +1116,7 @@ mod tests {
     use super::*;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{
-        coin, coins, from_json, instantiate2_address, to_json_binary, ContractInfoResponse,
-        HexBinary, Response,
-    };
+    use crate::{coin, coins, instantiate2_address, ContractInfoResponse, HexBinary, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use hex_literal::hex;

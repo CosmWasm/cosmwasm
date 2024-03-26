@@ -580,11 +580,9 @@ mod tests {
     use super::*;
     use crate::calls::{call_execute, call_instantiate};
     use crate::capabilities::capabilities_from_csv;
-    use crate::errors::VmError;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
-    use std::fs::{create_dir_all, remove_dir_all, OpenOptions};
-    use std::io::Write;
+    use std::fs::{create_dir_all, remove_dir_all};
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 500_000_000; // ~0.5ms

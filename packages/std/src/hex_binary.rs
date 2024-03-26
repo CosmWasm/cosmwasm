@@ -248,7 +248,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 mod tests {
     use super::*;
 
-    use crate::{assert_hash_works, from_json, to_json_vec, StdError};
+    use crate::{assert_hash_works, from_json, to_json_vec};
 
     #[test]
     fn from_hex_works() {

@@ -455,9 +455,7 @@ pub fn process_gas_info<A: BackendApi, S: Storage, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend::Storage;
     use crate::conversion::ref_to_u32;
-    use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, make_compiling_engine};

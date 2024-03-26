@@ -237,13 +237,8 @@ fn modules_path(base_path: &Path, wasmer_module_version: u32, target: &Target) -
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
     use super::*;
-    use crate::{
-        size::Size,
-        wasm_backend::{compile, make_compiling_engine},
-    };
+    use crate::wasm_backend::{compile, make_compiling_engine};
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance, Store};
     use wasmer_middlewares::metering::set_remaining_points;

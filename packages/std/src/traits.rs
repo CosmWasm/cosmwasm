@@ -529,7 +529,7 @@ mod tests {
 
     use super::*;
     use crate::testing::MockQuerier;
-    use crate::{coins, from_json, Uint128};
+    use crate::{coins, Uint128};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {

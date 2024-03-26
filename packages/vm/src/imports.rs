@@ -691,7 +691,6 @@ mod tests {
     use std::ptr::NonNull;
     use wasmer::{imports, Function, FunctionEnv, Instance as WasmerInstance, Store};
 
-    use crate::backend::{BackendError, Storage};
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, make_compiling_engine};

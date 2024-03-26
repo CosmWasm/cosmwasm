@@ -15,4 +15,5 @@ use serde::de::DeserializeOwned;
 /// - multi-test/cw-sdk: create a default instance and mutate the fields
 ///
 /// This trait is crate-internal and can change any time.
+#[allow(dead_code)] // This is used to statically ensure all the types have a shared set of traits
 pub(crate) trait QueryResponseType: DeserializeOwned + Debug + PartialEq + Clone {}
