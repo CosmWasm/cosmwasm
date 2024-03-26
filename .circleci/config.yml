@@ -6,6 +6,9 @@ orbs:
 
 commands:
   check_contract:
+    parameters:
+      min_version:
+        type: string
     steps:
       - run:
           name: Add wasm32 target
@@ -23,15 +26,9 @@ commands:
           name: Build wasm binary
           command: cargo wasm --locked
       - run:
-          name: Run cosmwasm-check (2.0)
+          name: Run cosmwasm-check (<<min_version>>)
           command: |
-            cargo install cosmwasm-check@~2.0 --locked
-            cosmwasm-check --version
-            cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
-      - run:
-          name: Run cosmwasm-check (1.4)
-          command: |
-            cargo install cosmwasm-check@~1.4 --locked
+            cargo install cosmwasm-check@~<<min_version>> --locked
             cosmwasm-check --version
             cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
       # Run clippy after wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
@@ -484,7 +481,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_burner-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -511,7 +511,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_crypto_verify-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -538,7 +541,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_cyberpunk-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -565,7 +571,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_hackatom-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -592,7 +601,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_ibc_reflect-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -619,7 +631,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_ibc_reflect_send-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -646,7 +661,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_floaty-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -673,7 +691,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_queue-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -700,7 +721,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_reflect-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -727,7 +751,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_staking-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -754,7 +781,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_virus-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -781,7 +811,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_empty-rust:1.73-{{ checksum "Cargo.lock" }}
-      - check_contract
+      - check_contract:
+        min_version: "1.4"
+      - check_contract:
+        min_version: "2.0"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
