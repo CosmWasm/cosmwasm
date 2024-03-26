@@ -25,7 +25,7 @@ pub fn verify(
     // - the signature could actually exist like this for a secp256r1 ECDSA key
     //
     // In production this should have proper error handling
-    let point = EncodedPoint::from_affine_coordinates(x.into(), y.into(), true);
+    let point = EncodedPoint::from_affine_coordinates(x.into(), y.into(), false);
     let affine = AffinePoint::try_from(point).unwrap();
     let public_key = PublicKey::from_affine(affine).unwrap();
     let signature = Signature::from_scalars(
