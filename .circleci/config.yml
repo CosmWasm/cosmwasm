@@ -35,7 +35,7 @@ commands:
             - run:
                 name: Run cosmwasm-check (<< parameters.min_version >>)
                 command: |
-                  cargo install cosmwasm-check@~<< parameters.min_version >> --locked
+                  cargo install cosmwasm-check@~<< parameters.min_version >> --locked --force
                   cosmwasm-check --version
                   cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
       # Run clippy after wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
