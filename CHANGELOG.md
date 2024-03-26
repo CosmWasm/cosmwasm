@@ -6,28 +6,6 @@ and this project adheres to
 
 ## [Unreleased]
 
-<<<<<<< HEAD
-=======
-### Added
-
-- cosmwasm-vm: Add `secp256r1_verify` and `secp256r1_recover_pubkey` imports for
-  ECDSA signature verification over secp256r1. ([#1983], [#2057], [#2058])
-- cosmwasm-vm: Add metrics for the pinned memory cache ([#2059])
-
-[#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
-[#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
-[#2058]: https://github.com/CosmWasm/cosmwasm/pull/2058
-
-### Changed
-
-- cosmwasm-std: Enable `add_event` and `add_events` functions to process types
-  implementing `Into<Event>` ([#2044])
-- cosmwasm-vm: Improve performance of the `Cache::analyze` function ([#2051])
-
-[#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
-[#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
-[#2059]: https://github.com/CosmWasm/cosmwasm/pull/2059
-
 ### Fixed
 
 - cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
@@ -35,7 +13,6 @@ and this project adheres to
 
 [#2062]: https://github.com/CosmWasm/cosmwasm/pull/2062
 
->>>>>>> e0f963d78 (Update CHANGELOG.md)
 ## [2.0.0] - 2024-03-12
 
 ### Fixed
