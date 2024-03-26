@@ -49,6 +49,9 @@ cosmwasm_1_4 = ["cosmwasm_1_3"]
 # This enables functionality that is only available on 2.0 chains.
 # It adds `CosmosMsg::Any`, replacing `CosmosMsg::Stargate`. It also adds `QueryRequest::Grpc`.
 cosmwasm_2_0 = ["cosmwasm_1_4"]
+# This enables functionality that is only available on 2.1 chains.
+# It adds verification and key recovery for the secp256r1 elliptic curve.
+cosmwasm_2_1 = ["cosmwasm_2_0"]
 
 [dependencies]
 base64 = "0.21.0"
