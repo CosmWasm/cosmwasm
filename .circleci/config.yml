@@ -815,8 +815,6 @@ jobs:
           keys:
             - cargocache-v2-contract_empty-rust:1.73-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
-      - check_contract:
           min_version: "2.0"
       - save_cache:
           paths:
