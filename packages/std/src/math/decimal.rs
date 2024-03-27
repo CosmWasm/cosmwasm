@@ -848,6 +848,13 @@ mod tests {
     }
 
     #[test]
+    fn decimal_try_from_integer() {
+        let int = Uint128::new(0xDEADBEEF);
+        let decimal = Decimal::try_from(int).unwrap();
+        assert_eq!(int.to_string(), decimal.to_string());
+    }
+
+    #[test]
     fn decimal_try_from_signed_works() {
         assert_eq!(
             Decimal::try_from(SignedDecimal::MAX).unwrap(),

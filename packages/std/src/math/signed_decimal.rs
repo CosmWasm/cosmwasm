@@ -991,6 +991,13 @@ mod tests {
     }
 
     #[test]
+    fn try_from_integer() {
+        let int = Int128::new(0xDEADBEEF);
+        let decimal = SignedDecimal::try_from(int).unwrap();
+        assert_eq!(int.to_string(), decimal.to_string());
+    }
+
+    #[test]
     fn signed_decimal_from_atomics_works() {
         let one = SignedDecimal::one();
         let two = one + one;

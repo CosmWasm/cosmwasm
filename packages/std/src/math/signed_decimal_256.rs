@@ -917,6 +917,13 @@ mod tests {
     }
 
     #[test]
+    fn try_from_integer() {
+        let int = Int256::from_i128(0xDEADBEEF);
+        let decimal = SignedDecimal256::try_from(int).unwrap();
+        assert_eq!(int.to_string(), decimal.to_string());
+    }
+
+    #[test]
     fn signed_decimal_256_new() {
         let expected = Int256::from(300i128);
         assert_eq!(SignedDecimal256::new(expected).0, expected);
