@@ -12,11 +12,14 @@ and this project adheres to
   ECDSA signature verification over secp256r1. ([#1983], [#2057], [#2058])
 - cosmwasm-vm: Add metrics for the pinned memory cache ([#2059])
 - cosmwasm-derive: The crate used in the expansion can now be renamed ([#2068])
+- cosmwasm-std: The decimal types now implement `TryFrom` for their respective
+  integer representations ([#2075])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
 [#2058]: https://github.com/CosmWasm/cosmwasm/pull/2058
 [#2068]: https://github.com/CosmWasm/cosmwasm/pull/2068
+[#2075]: https://github.com/CosmWasm/cosmwasm/pull/2075
 
 ### Changed
 

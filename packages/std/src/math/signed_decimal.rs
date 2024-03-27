@@ -638,6 +638,15 @@ impl TryFrom<Decimal256> for SignedDecimal {
     }
 }
 
+impl TryFrom<Int128> for SignedDecimal {
+    type Error = SignedDecimalRangeExceeded;
+
+    #[inline]
+    fn try_from(value: Int128) -> Result<Self, Self::Error> {
+        Self::from_atomics(value, 0)
+    }
+}
+
 impl FromStr for SignedDecimal {
     type Err = StdError;
 
@@ -979,6 +988,13 @@ mod tests {
             value.0,
             SignedDecimal::DECIMAL_FRACTIONAL / Int128::from(-80i8)
         );
+    }
+
+    #[test]
+    fn try_from_integer() {
+        let int = Int128::new(0xDEADBEEF);
+        let decimal = SignedDecimal::try_from(int).unwrap();
+        assert_eq!(int.to_string(), decimal.to_string());
     }
 
     #[test]

@@ -527,6 +527,15 @@ impl TryFrom<SignedDecimal256> for Decimal {
     }
 }
 
+impl TryFrom<Uint128> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    #[inline]
+    fn try_from(value: Uint128) -> Result<Self, Self::Error> {
+        Self::from_atomics(value, 0)
+    }
+}
+
 impl FromStr for Decimal {
     type Err = StdError;
 
@@ -836,6 +845,13 @@ mod tests {
             Decimal::try_from(Decimal256::percent(50)),
             Ok(Decimal::percent(50))
         );
+    }
+
+    #[test]
+    fn decimal_try_from_integer() {
+        let int = Uint128::new(0xDEADBEEF);
+        let decimal = Decimal::try_from(int).unwrap();
+        assert_eq!(int.to_string(), decimal.to_string());
     }
 
     #[test]
