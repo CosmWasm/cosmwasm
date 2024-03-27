@@ -2,7 +2,7 @@
 
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use cosmwasm_std::{Api, StdResult};
-use p256::{ecdsa::Signature, AffinePoint, EncodedPoint, PublicKey};
+use p256::{ecdsa::Signature, elliptic_curve::sec1::FromEncodedPoint, EncodedPoint, PublicKey};
 use sha2::{digest::generic_array::GenericArray, Digest, Sha256};
 
 #[allow(clippy::too_many_arguments)]
@@ -26,8 +26,7 @@ pub fn verify(
     //
     // In production this should have proper error handling
     let point = EncodedPoint::from_affine_coordinates(x.into(), y.into(), false);
-    let affine = AffinePoint::try_from(point).unwrap();
-    let public_key = PublicKey::from_affine(affine).unwrap();
+    let public_key = PublicKey::from_encoded_point(&point).unwrap();
     let signature = Signature::from_scalars(
         GenericArray::clone_from_slice(r),
         GenericArray::clone_from_slice(s),
