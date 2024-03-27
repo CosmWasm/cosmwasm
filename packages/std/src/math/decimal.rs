@@ -527,6 +527,15 @@ impl TryFrom<SignedDecimal256> for Decimal {
     }
 }
 
+impl TryFrom<Uint128> for Decimal {
+    type Error = DecimalRangeExceeded;
+
+    #[inline]
+    fn try_from(value: Uint128) -> Result<Self, Self::Error> {
+        Self::from_atomics(value, 0)
+    }
+}
+
 impl FromStr for Decimal {
     type Err = StdError;
 
