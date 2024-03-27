@@ -350,7 +350,7 @@
                 "type": "string"
               },
               "r": {
-                "description": "r component of signature",
+                "description": "r component of signature\n\nThe representation of this component is a big-endian encoded 256bit integer",
                 "allOf": [
                   {
                     "$ref": "#/definitions/Binary"
@@ -358,7 +358,7 @@
                 ]
               },
               "s": {
-                "description": "s component of signature",
+                "description": "s component of signature\n\nThe representation of this component is a big-endian encoded 256bit integer",
                 "allOf": [
                   {
                     "$ref": "#/definitions/Binary"
@@ -366,7 +366,7 @@
                 ]
               },
               "x": {
-                "description": "X coordinate of public key point",
+                "description": "X coordinate of public key point\n\nUntagged big-endian serialized byte sequence representing the X coordinate on the secp256r1 elliptic curve",
                 "allOf": [
                   {
                     "$ref": "#/definitions/Binary"
@@ -374,7 +374,7 @@
                 ]
               },
               "y": {
-                "description": "Y coordinate of public key point",
+                "description": "Y coordinate of public key point\n\nUntagged big-endian serialized byte sequence representing the Y coordinate on the secp256r1 elliptic curve",
                 "allOf": [
                   {
                     "$ref": "#/definitions/Binary"
