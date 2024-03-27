@@ -2,7 +2,8 @@ use crate::prelude::*;
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
-use bech32::{decode, encode, FromBase32, ToBase32, Variant};
+use bech32::primitives::decode::CheckedHrpstring;
+use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
@@ -126,32 +127,30 @@ impl Api for MockApi {
     }
 
     fn addr_canonicalize(&self, input: &str) -> StdResult<CanonicalAddr> {
-        match decode(input) {
-            Ok((prefix, _, _)) if prefix != self.bech32_prefix => {
-                Err(StdError::generic_err("Wrong bech32 prefix"))
-            }
-            Ok((_, _, Variant::Bech32m)) => Err(StdError::generic_err("Wrong bech32 variant")),
-            Err(_) => Err(StdError::generic_err("Error decoding bech32")),
-            Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
-                Ok(bytes) => {
-                    validate_length(&bytes)?;
-                    Ok(bytes.into())
-                }
-                Err(_) => Err(StdError::generic_err("Invalid bech32 data")),
-            },
+        let hrp_str = CheckedHrpstring::new::<Bech32>(input)
+            .map_err(|_| StdError::generic_err("Error decoding bech32"))?;
+
+        if !hrp_str
+            .hrp()
+            .as_bytes()
+            .eq_ignore_ascii_case(self.bech32_prefix.as_bytes())
+        {
+            return Err(StdError::generic_err("Wrong bech32 prefix"));
         }
+
+        let bytes: Vec<u8> = hrp_str.byte_iter().collect();
+        validate_length(&bytes)?;
+        Ok(bytes.into())
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
         validate_length(canonical.as_ref())?;
 
-        encode(
-            self.bech32_prefix,
-            canonical.as_slice().to_base32(),
-            Variant::Bech32,
-        )
-        .map(Addr::unchecked)
-        .map_err(|_| StdError::generic_err("Invalid bech32 prefix"))
+        let prefix = Hrp::parse(self.bech32_prefix)
+            .map_err(|_| StdError::generic_err("Invalid bech32 prefix"))?;
+        encode::<Bech32>(prefix, canonical.as_slice())
+            .map(Addr::unchecked)
+            .map_err(|_| StdError::generic_err("Bech32 encoding error"))
     }
 
     fn secp256k1_verify(
@@ -273,8 +272,14 @@ impl MockApi {
     /// especially when Bech32 prefix set in function [with_prefix](Self::with_prefix) is empty.
     ///
     pub fn addr_make(&self, input: &str) -> Addr {
-        let digest = Sha256::digest(input).to_vec();
-        match encode(self.bech32_prefix, digest.to_base32(), Variant::Bech32) {
+        let digest = Sha256::digest(input);
+
+        let prefix = match Hrp::parse(self.bech32_prefix) {
+            Ok(prefix) => prefix,
+            Err(reason) => panic!("Generating address failed with reason: {reason}"),
+        };
+
+        match encode::<Bech32>(prefix, &digest) {
             Ok(address) => Addr::unchecked(address),
             Err(reason) => panic!("Generating address failed with reason: {reason}"),
         }
@@ -2444,7 +2449,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Generating address failed with reason: invalid length")]
+    #[should_panic(
+        expected = "Generating address failed with reason: hrp is empty, must have at least 1 character"
+    )]
     fn making_an_address_with_empty_prefix_should_panic() {
         MockApi::default().with_prefix("").addr_make("creator");
     }

@@ -2,7 +2,7 @@ use cosmwasm_std::StdError;
 use snafu::Snafu;
 
 #[derive(Snafu, Debug)]
-#[snafu(visibility = "pub(crate)")]
+#[snafu(context(suffix(false)), visibility(pub(crate)))]
 pub enum StakingError {
     /// this is needed so we can use `bucket.load(...)?` and have it auto-converted to the custom error
     #[snafu(display("StdError: {}", original))]

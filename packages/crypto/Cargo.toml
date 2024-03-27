@@ -16,7 +16,7 @@ bench = false
 
 [dependencies]
 k256 = { version = "0.13.3", features = ["ecdsa"] }
-ed25519-zebra = "3"
+ed25519-zebra = "4.0.3"
 digest = "0.10"
 rand_core = { version = "0.6", features = ["getrandom"] }
 thiserror = "1.0.38"
@@ -31,7 +31,7 @@ serde_json = "1.0.40"
 sha2 = "0.10"
 sha3 = "0.10"
 hex = "0.4"
-hex-literal = "0.3.1"
+hex-literal = "0.4.1"
 english-numbers = "0.3"
 
 [[bench]]

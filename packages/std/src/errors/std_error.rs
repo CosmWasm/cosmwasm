@@ -585,11 +585,11 @@ mod tests {
 
     #[test]
     fn invalid_base64_works_for_errors() {
-        let original = base64::DecodeError::InvalidLength;
+        let original = base64::DecodeError::InvalidLength(10);
         let error = StdError::invalid_base64(original);
         match error {
             StdError::InvalidBase64 { msg, .. } => {
-                assert_eq!(msg, "Encoded text cannot have a 6-bit remainder.");
+                assert_eq!(msg, "Invalid input length: 10");
             }
             _ => panic!("expect different error"),
         }

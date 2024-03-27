@@ -1,4 +1,5 @@
-use bech32::{decode, encode, FromBase32, ToBase32, Variant};
+use bech32::primitives::decode::CheckedHrpstring;
+use bech32::{encode, Bech32, Hrp};
 use cosmwasm_std::{
     Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo,
 };
@@ -108,8 +109,9 @@ impl MockApi {
             MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
-        let digest = Sha256::digest(input).to_vec();
-        match encode(bech32_prefix, digest.to_base32(), Variant::Bech32) {
+        let digest = Sha256::digest(input);
+        let bech32_prefix = Hrp::parse(bech32_prefix).expect("Invalid prefix");
+        match encode::<Bech32>(bech32_prefix, &digest) {
             Ok(address) => address,
             Err(reason) => panic!("Generating address failed with reason: {reason}"),
         }
@@ -158,30 +160,26 @@ impl BackendApi for MockApi {
             MockApiImpl::Bech32 { bech32_prefix } => bech32_prefix,
         };
 
-        match decode(input) {
-            Ok((prefix, _, _)) if prefix != bech32_prefix => (
+        let hrp_str = unwrap_or_return_with_gas!(
+            CheckedHrpstring::new::<Bech32>(input)
+                .map_err(|_| BackendError::user_err("Error decoding bech32")),
+            gas_total
+        );
+
+        if !hrp_str
+            .hrp()
+            .as_bytes()
+            .eq_ignore_ascii_case(bech32_prefix.as_bytes())
+        {
+            return (
                 Err(BackendError::user_err("Wrong bech32 prefix")),
                 gas_total,
-            ),
-            Ok((_, _, Variant::Bech32m)) => (
-                Err(BackendError::user_err("Wrong bech32 variant")),
-                gas_total,
-            ),
-            Err(_) => (
-                Err(BackendError::user_err("Error decoding bech32")),
-                gas_total,
-            ),
-            Ok((_, decoded, Variant::Bech32)) => match Vec::<u8>::from_base32(&decoded) {
-                Ok(bytes) => {
-                    unwrap_or_return_with_gas!(validate_length(&bytes), gas_total);
-                    (Ok(bytes), gas_total)
-                }
-                Err(_) => (
-                    Err(BackendError::user_err("Invalid bech32 data")),
-                    gas_total,
-                ),
-            },
+            );
         }
+
+        let bytes: Vec<u8> = hrp_str.byte_iter().collect();
+        unwrap_or_return_with_gas!(validate_length(&bytes), gas_total);
+        (Ok(bytes), gas_total)
     }
 
     fn addr_humanize(&self, canonical: &[u8]) -> BackendResult<String> {
@@ -194,9 +192,12 @@ impl BackendApi for MockApi {
         };
 
         unwrap_or_return_with_gas!(validate_length(canonical), gas_total);
-
-        let result = encode(bech32_prefix, canonical.to_base32(), Variant::Bech32)
-            .map_err(|_| BackendError::user_err("Invalid bech32 prefix"));
+        let bech32_prefix = unwrap_or_return_with_gas!(
+            Hrp::parse(bech32_prefix).map_err(|_| BackendError::user_err("Invalid bech32 prefix")),
+            gas_total
+        );
+        let result = encode::<Bech32>(bech32_prefix, canonical)
+            .map_err(|_| BackendError::user_err("Invalid data to be encoded to bech32"));
 
         (result, gas_total)
     }

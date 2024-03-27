@@ -331,8 +331,8 @@ mod tests {
     #[test]
     fn test_base64_encoding_error() {
         for (invalid_base64, want) in [
-            ("cm%uZG9taVo", "Invalid byte 37, offset 2."),
-            ("cmFuZ", "Encoded text cannot have a 6-bit remainder."),
+            ("cm%uZG9taVo", "Invalid symbol 37, offset 2."),
+            ("cmFuZ", "Invalid input length: 5"),
         ] {
             match Binary::from_base64(invalid_base64) {
                 Err(StdError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
