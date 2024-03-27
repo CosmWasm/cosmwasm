@@ -82,6 +82,32 @@ pub enum QueryMsg {
     /// No pagination - this is a short list.
     #[returns(ListVerificationsResponse)]
     ListVerificationSchemes {},
+    /// Webauthn component verification
+    #[returns(VerifyResponse)]
+    VerifyWebauthn {
+        /// Authenticator data
+        authenticator_data: Binary,
+        /// Client data (JSON encoded)
+        client_data_json: String,
+        /// Challenge value
+        challenge: Binary,
+        /// X coordinate of public key point
+        ///
+        /// Untagged big-endian serialized byte sequence representing the X coordinate on the secp256r1 elliptic curve
+        x: Binary,
+        /// Y coordinate of public key point
+        ///
+        /// Untagged big-endian serialized byte sequence representing the Y coordinate on the secp256r1 elliptic curve
+        y: Binary,
+        /// r component of signature
+        ///
+        /// The representation of this component is a big-endian encoded 256bit integer
+        r: Binary,
+        /// s component of signature
+        ///
+        /// The representation of this component is a big-endian encoded 256bit integer
+        s: Binary,
+    },
 }
 
 #[cw_serde]

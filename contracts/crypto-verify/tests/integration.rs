@@ -59,6 +59,20 @@ const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416
 const ED25519_PUBLIC_KEY2_HEX: &str =
     "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
+// Vectors sourced from <https://github.com/daimo-eth/p256-verifier/blob/master/test/WebAuthn.t.sol>
+const WEBAUTHN_PUBLIC_KEY_X: &[u8] =
+    &hex!("80d9326e49eb6314d03f58830369ea5bafbc4e2709b30bff1f4379586ca869d9");
+const WEBAUTHN_PUBLIC_KEY_Y: &[u8] =
+    &hex!("806ed746d8ac6c2779a472d8c1ed4c200b07978d9d8d8d862be8b7d4b7fb6350");
+const WEBAUTHN_CLIENT_DATA_JSON: &str = r#"{"type":"webauthn.get","challenge":"dGVzdA","origin":"https://funny-froyo-3f9b75.netlify.app"}"#;
+const WEBAUTHN_CHALLENGE: &[u8] = &hex!("74657374");
+const WEBAUTHN_AUTHENTICATOR_DATA: &[u8] =
+    &hex!("e0b592a7dd54eedeec65206e031fc196b8e5915f9b389735860c83854f65dc0e1d00000000");
+const WEBAUTHN_SIGNATURE_R: &[u8] =
+    &hex!("32e005a53ae49a96ac88c715243638dd5c985fbd463c727d8eefd05bee4e2570");
+const WEBAUTHN_SIGNATURE_S: &[u8] =
+    &hex!("7a4fef4d0b11187f95f69eefbb428df8ac799bbd9305066b1e9c9fe9a5bcf8c4");
+
 const DESERIALIZATION_LIMIT: usize = 20_000;
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
@@ -539,6 +553,63 @@ fn tendermint_signatures_batch_verify_errors() {
         res.unwrap_err(),
         "Verification error: Invalid public key format"
     )
+}
+
+#[test]
+fn webauthn_verify_works() {
+    let mut deps = setup();
+    let verify_msg = QueryMsg::VerifyWebauthn {
+        authenticator_data: WEBAUTHN_AUTHENTICATOR_DATA.into(),
+        client_data_json: WEBAUTHN_CLIENT_DATA_JSON.into(),
+        challenge: WEBAUTHN_CHALLENGE.into(),
+        x: WEBAUTHN_PUBLIC_KEY_X.into(),
+        y: WEBAUTHN_PUBLIC_KEY_Y.into(),
+        r: WEBAUTHN_SIGNATURE_R.into(),
+        s: WEBAUTHN_SIGNATURE_S.into(),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+    assert!(res.verifies);
+}
+
+#[test]
+fn webauthn_verify_errors() {
+    let mut deps = setup();
+
+    let mut r = WEBAUTHN_SIGNATURE_R.to_vec();
+    r[0] ^= 3;
+
+    let verify_msg = QueryMsg::VerifyWebauthn {
+        authenticator_data: WEBAUTHN_AUTHENTICATOR_DATA.into(),
+        client_data_json: WEBAUTHN_CLIENT_DATA_JSON.into(),
+        challenge: WEBAUTHN_CHALLENGE.into(),
+        x: WEBAUTHN_PUBLIC_KEY_X.into(),
+        y: WEBAUTHN_PUBLIC_KEY_Y.into(),
+        r: r.into(),
+        s: WEBAUTHN_SIGNATURE_S.into(),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+    assert!(!res.verifies);
+
+    let mut client_data_json = WEBAUTHN_CLIENT_DATA_JSON.to_string();
+    client_data_json.push_str("tampering with hashes is fun");
+    let verify_msg = QueryMsg::VerifyWebauthn {
+        authenticator_data: WEBAUTHN_AUTHENTICATOR_DATA.into(),
+        client_data_json,
+        challenge: WEBAUTHN_CHALLENGE.into(),
+        x: WEBAUTHN_PUBLIC_KEY_X.into(),
+        y: WEBAUTHN_PUBLIC_KEY_Y.into(),
+        r: WEBAUTHN_SIGNATURE_R.into(),
+        s: WEBAUTHN_SIGNATURE_S.into(),
+    };
+
+    let mut deps = setup();
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+    assert!(!res.verifies);
 }
 
 #[test]
