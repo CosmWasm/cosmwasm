@@ -639,6 +639,15 @@ impl TryFrom<Decimal256> for SignedDecimal256 {
     }
 }
 
+impl TryFrom<Int256> for SignedDecimal256 {
+    type Error = SignedDecimal256RangeExceeded;
+
+    #[inline]
+    fn try_from(value: Int256) -> Result<Self, Self::Error> {
+        Self::from_atomics(value, 0)
+    }
+}
+
 impl FromStr for SignedDecimal256 {
     type Err = StdError;
 

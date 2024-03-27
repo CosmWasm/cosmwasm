@@ -638,6 +638,15 @@ impl TryFrom<Decimal256> for SignedDecimal {
     }
 }
 
+impl TryFrom<Int128> for SignedDecimal {
+    type Error = SignedDecimalRangeExceeded;
+
+    #[inline]
+    fn try_from(value: Int128) -> Result<Self, Self::Error> {
+        Self::from_atomics(value, 0)
+    }
+}
+
 impl FromStr for SignedDecimal {
     type Err = StdError;
 
