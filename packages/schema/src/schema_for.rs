@@ -24,9 +24,18 @@ macro_rules! schema_for {
         )
         .into_root_schema_for::<$type>();
 
-        if let Some(ref mut validation) = schema.schema.object {
-            validation.additional_properties = Some(Box::new(false.into()));
+        struct Visitor;
+        impl $crate::schemars::visit::Visitor for Visitor {
+            fn visit_schema_object(&mut self, schema: &mut $crate::schemars::schema::SchemaObject) {
+                $crate::schemars::visit::visit_schema_object(self, schema);
+
+                if let Some(ref mut validation) = schema.object {
+                    validation.additional_properties = Some(Box::new(false.into()));
+                }
+            }
         }
+
+        $crate::schemars::visit::visit_root_schema(&mut Visitor, &mut schema);
 
         schema
     }};
