@@ -226,6 +226,7 @@
             "additionalProperties": false
           },
           {
+            "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any) that is suppored by the chain. It behaves the same as `CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because a chain running CosmWasm < 2.0 cannot process this.",
             "type": "object",
             "required": [
               "any"
@@ -481,7 +482,7 @@
                     "type": "string"
                   },
                   "memo": {
-                    "description": "optional memo This is only supported on CosmWasm 2.0 chains and ignored on older chains.",
+                    "description": "An optional memo. See the blog post [\"Moving Beyond Simple Token Transfers\"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b) for more information.\n\nThere is no difference between setting this to `None` or an empty string.\n\nThis field is only supported on chains with CosmWasm >= 2.0 and silently ignored on older chains. If you need support for both 1.x and 2.x chain with the same codebase, it is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer protobuf encoder instead.",
                     "type": [
                       "string",
                       "null"
