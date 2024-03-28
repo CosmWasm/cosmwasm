@@ -52,7 +52,7 @@ pub fn cw_serde_impl(options: Options, input: DeriveInput) -> syn::Result<Derive
             #crate_path::schemars::JsonSchema
         )]
         #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
-        #[serde(deny_unknown_fields, crate = #serde_path)]
+        #[serde(crate = #serde_path)]
         #[schemars(crate = #schemars_path)]
     };
 
@@ -98,7 +98,7 @@ mod tests {
                 ::my_crate::cw_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = ":: my_crate :: cw_schema::serde")]
+            #[serde(crate = ":: my_crate :: cw_schema::serde")]
             #[schemars(crate = ":: my_crate :: cw_schema::schemars")]
             pub struct InstantiateMsg {
                 pub verifier: String,
@@ -132,7 +132,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = ":: cosmwasm_schema::serde")]
+            #[serde(crate = ":: cosmwasm_schema::serde")]
             #[schemars(crate = ":: cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {
                 pub verifier: String,
@@ -163,7 +163,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = ":: cosmwasm_schema::serde")]
+            #[serde(crate = ":: cosmwasm_schema::serde")]
             #[schemars(crate = ":: cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {}
         };
@@ -196,7 +196,7 @@ mod tests {
                 ::cosmwasm_schema::schemars::JsonSchema
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, crate = ":: cosmwasm_schema::serde")]
+            #[serde(crate = ":: cosmwasm_schema::serde")]
             #[schemars(crate = ":: cosmwasm_schema::schemars")]
             #[serde(rename_all = "snake_case")]
             pub enum SudoMsg {
