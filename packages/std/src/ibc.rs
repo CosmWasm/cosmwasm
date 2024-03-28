@@ -35,8 +35,17 @@ pub enum IbcMsg {
         amount: Coin,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
-        /// optional memo
-        /// This is only supported on CosmWasm 2.0 chains and ignored on older chains.
+        /// An optional memo. See the blog post
+        /// ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b)
+        /// for more information.
+        ///
+        /// There is no difference between setting this to `None` or an empty string.
+        ///
+        /// This field is only supported on chains with CosmWasm >= 2.0 and silently
+        /// ignored on older chains.
+        /// If you need support for both 1.x and 2.x chain with the same codebase,
+        /// it is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer
+        /// protobuf encoder instead.
         memo: Option<String>,
     },
     /// Sends an IBC packet with given data over the existing channel.
