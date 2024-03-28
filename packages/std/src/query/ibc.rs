@@ -30,7 +30,7 @@ pub enum IbcQuery {
     },
     // TODO: Add more
 }
-
+/// Contains the response information for a query about a port ID in IBC.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct PortIdResponse {
@@ -38,7 +38,7 @@ pub struct PortIdResponse {
 }
 
 impl_response_constructor!(PortIdResponse, port_id: String);
-
+///: A response format containing a list of IBC channels and their details.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct ListChannelsResponse {
@@ -48,6 +48,7 @@ pub struct ListChannelsResponse {
 impl_response_constructor!(ListChannelsResponse, channels: Vec<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///Contains details about a channel, typically used in IBC (Inter-Blockchain Communication) queries.
 #[non_exhaustive]
 pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,

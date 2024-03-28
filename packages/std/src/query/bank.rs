@@ -9,7 +9,8 @@ use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
 
 use super::query_response::QueryResponseType;
-
+///Defines the types of queries that can be made to the bank module.
+///This includes queries for account balances, transaction history, etc.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -35,7 +36,7 @@ pub enum BankQuery {
     #[cfg(feature = "cosmwasm_1_3")]
     AllDenomMetadata { pagination: Option<PageRequest> },
 }
-
+///A response format that provides information about the supply of a specific asset or token.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
@@ -51,6 +52,7 @@ impl QueryResponseType for SupplyResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+///This struct holds the response information for a balance query, detailing the amounts held.
 #[non_exhaustive]
 pub struct BalanceResponse {
     /// Always returns a Coin with the requested denom.
@@ -64,6 +66,8 @@ impl QueryResponseType for BalanceResponse {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+///A response structure that contains all balances for a query,
+///typically used in balance-related requests.
 #[non_exhaustive]
 pub struct AllBalanceResponse {
     /// Returns all non-zero coins held by this account.
@@ -77,6 +81,7 @@ impl QueryResponseType for AllBalanceResponse {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
+/// A response format that contains metadata for a specific denomination in a query.
 pub struct DenomMetadataResponse {
     /// The metadata for the queried denom.
     pub metadata: DenomMetadata,

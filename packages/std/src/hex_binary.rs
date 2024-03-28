@@ -7,6 +7,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use crate::prelude::*;
 use crate::{Binary, StdError, StdResult};
 
+/// A wrapper around a vector (Vec) for hex-encoded binary data, supporting encoding and decoding operations.
 /// This is a wrapper around Vec<u8> to add hex de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///

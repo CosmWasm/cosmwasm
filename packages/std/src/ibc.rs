@@ -14,8 +14,8 @@ use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::serde::to_json_binary;
 use crate::timestamp::Timestamp;
 
-/// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
-/// (contracts that directly speak the IBC protocol via 6 entry points)
+/// Messages pertaining to the IBC lifecycle, specifically for contracts with IBC capabilities.
+/// Manages cross-chain communications and other IBC protocol interactions.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -52,7 +52,7 @@ pub enum IbcMsg {
     /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
 }
-
+///Details about an IBC endpoint, including its port and channel information.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcEndpoint {
     pub port_id: String,
@@ -149,9 +149,9 @@ impl IbcChannel {
     }
 }
 
-/// IbcOrder defines if a channel is ORDERED or UNORDERED
+/// Enumerates the ordering of messages in an IBC channel, such as ORDERED or UNORDERED.
+/// Based on the IBC specifications for message sequencing.
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
-/// Naming comes from the protobuf files and go translations.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub enum IbcOrder {
     #[serde(rename = "ORDER_UNORDERED")]
@@ -194,7 +194,7 @@ impl Ord for IbcTimeoutBlock {
         }
     }
 }
-
+///Struct representing an IBC packet, which contains data transferred across different blockchains.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcPacket {
@@ -227,7 +227,7 @@ impl IbcPacket {
         }
     }
 }
-
+///Represents an acknowledgement message in the IBC protocol.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcAcknowledgement {
@@ -248,7 +248,8 @@ impl IbcAcknowledgement {
     }
 }
 
-/// The message that is passed into `ibc_channel_open`
+/// Message used to establish a connection in an IBC channel.
+/// Initiates the setup for cross-chain or inter-module communication.  
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelOpenMsg {
@@ -306,12 +307,14 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 pub type IbcChannelOpenResponse = Option<Ibc3ChannelOpenResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+///A response format for IBC channel open queries, providing details about the channel's status.
 pub struct Ibc3ChannelOpenResponse {
     /// We can set the channel version to a different one than we were called with
     pub version: String,
 }
 
-/// The message that is passed into `ibc_channel_connect`
+/// Message used to establish a connection in an IBC channel.
+/// Initiates the setup for cross-chain or inter-module communication.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcChannelConnectMsg {
@@ -412,8 +415,7 @@ impl IbcPacketReceiveMsg {
         Self { packet, relayer }
     }
 }
-
-/// The message that is passed into `ibc_packet_ack`
+/// Message format used when acknowledging the receipt of an IBC packet.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcPacketAckMsg {
@@ -456,7 +458,8 @@ impl IbcPacketTimeoutMsg {
 ///
 /// Callbacks that have return values (like receive_packet)
 /// or that cannot redispatch messages (like the handshake callbacks)
-/// will use other Response types
+/// will use other Response types.
+/// A general response structure for IBC handler operations, used when a specific response format isn't required.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty> {

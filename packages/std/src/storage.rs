@@ -9,7 +9,7 @@ use core::ops::{Bound, RangeBounds};
 use crate::iterator::{Order, Record};
 use crate::prelude::*;
 use crate::traits::Storage;
-
+///Represents a storage mechanism that exists only in memory (not persisted).
 #[derive(Default)]
 pub struct MemoryStorage {
     data: BTreeMap<Vec<u8>, Vec<u8>>,

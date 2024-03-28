@@ -5,7 +5,8 @@ use crate::prelude::*;
 use crate::{Addr, Coin, Decimal};
 
 use super::query_response::QueryResponseType;
-
+/// Query types for interacting with the staking module.
+/// Includes queries for delegation status and staking rewards.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -100,6 +101,7 @@ impl_response_constructor!(DelegationResponse, delegation: Option<FullDelegation
 ///
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+/// Detailed information about a delegation, including rewards and redelegation capabilities.
 #[non_exhaustive]
 pub struct FullDelegation {
     pub delegator: Addr,

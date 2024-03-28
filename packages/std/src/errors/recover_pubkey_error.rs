@@ -4,7 +4,8 @@ use cosmwasm_crypto::CryptoError;
 
 use super::BT;
 use thiserror::Error;
-
+/// Errors encountered during the recovery of a public key.
+/// Typically arises from operations involving signatures or encrypted data.
 #[derive(Error, Debug)]
 pub enum RecoverPubkeyError {
     #[error("Invalid hash format")]
