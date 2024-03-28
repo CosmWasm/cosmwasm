@@ -42,6 +42,7 @@
       "type": "string"
     }
   },
+  "additionalProperties": false,
   "definitions": {
     "DenomUnit": {
       "description": "Replicates the cosmos-sdk bank module DenomUnit type",
@@ -66,7 +67,8 @@
           "format": "uint32",
           "minimum": 0.0
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }
