@@ -33,6 +33,20 @@ pub struct MigrateMsg {
 }
 
 #[test]
+fn unknown_fields_explicity_allowed() {
+    let json = serde_json::json!({
+        "admin": "someone",
+        "cap": 512,
+        "UNKNOWN_FIELD_DONT_PANIC": "I MEAN IT"
+    });
+    let json_str = serde_json::to_string(&json).unwrap();
+    let migrate_msg: MigrateMsg = serde_json::from_str(&json_str).unwrap();
+
+    assert_eq!(migrate_msg.admin, "someone");
+    assert_eq!(migrate_msg.cap, 512);
+}
+
+#[test]
 fn test_basic_structure() {
     let api_str = generate_api! {
         name: "test",
