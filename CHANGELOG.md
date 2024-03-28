@@ -12,6 +12,8 @@ and this project adheres to
   ECDSA signature verification over secp256r1. ([#1983], [#2057], [#2058])
 - cosmwasm-vm: Add metrics for the pinned memory cache ([#2059])
 - cosmwasm-derive: The crate used in the expansion can now be renamed ([#2068])
+- cosmwasm-schema-derive: The crate used in the expansion can now be renamed
+  ([#2070])
 - cosmwasm-std: The decimal types now implement `TryFrom` for their respective
   integer representations ([#2075])
 
@@ -26,10 +28,18 @@ and this project adheres to
 - cosmwasm-std: Enable `add_event` and `add_events` functions to process types
   implementing `Into<Event>` ([#2044])
 - cosmwasm-vm: Improve performance of the `Cache::analyze` function ([#2051])
+- cosmwasm-derive: Update to `syn` v2 ([#2063])
+- cosmwasm-schema-derive: Update to `syn` v2 ([#2063])
+- cosmwasm-schema-derive: Improve emitted error messages ([#2063])
+- cosmwasm-schema: `#[cw_serde]` now doesn't add `#[serde(deny_unknown_fields)]`
+  to the expanded code anymore ([#2080])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
 [#2059]: https://github.com/CosmWasm/cosmwasm/pull/2059
+[#2063]: https://github.com/CosmWasm/cosmwasm/pull/2063
+[#2070]: https://github.com/CosmWasm/cosmwasm/pull/2070
+[#2080]: https://github.com/CosmWasm/cosmwasm/pull/2080
 
 ### Fixed
 
