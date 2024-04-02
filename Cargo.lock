@@ -477,7 +477,7 @@ dependencies = [
 name = "cosmwasm-crypto"
 version = "2.0.1"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.0",
  "base64-serde",
  "bls12_381",
  "criterion",
