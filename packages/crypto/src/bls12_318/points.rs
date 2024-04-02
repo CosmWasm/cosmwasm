@@ -1,9 +1,37 @@
 #![allow(unused)]
 
-use std::fmt;
 use std::ops::Add;
+use std::{fmt, ops::Neg};
 
-use bls12_381::{G1Affine, G1Projective, G2Affine, G2Projective};
+use bls12_381::{
+    hash_to_curve::{ExpandMessage, HashToCurve},
+    G1Affine, G1Projective, G2Affine, G2Projective,
+};
+use pairing::group::Group;
+
+/// Element of Gt
+#[derive(Debug, PartialEq, Clone)]
+pub struct Gt(pub(crate) bls12_381::Gt);
+
+impl Gt {
+    /// Creates the identity element of Gt (which is 1)
+    #[inline]
+    pub fn identity() -> Self {
+        Self(bls12_381::Gt::identity())
+    }
+
+    /// Double this element
+    #[inline]
+    pub fn double(&self) -> Self {
+        Self(self.0.double())
+    }
+
+    /// Check whether this element is the identity
+    #[inline]
+    pub fn is_identity(&self) -> bool {
+        self.0.is_identity().into()
+    }
+}
 
 /// Point on G1
 #[derive(Debug, PartialEq, Clone)]
@@ -62,6 +90,22 @@ impl Add<&G1> for &G1 {
     fn add(self, rhs: &G1) -> G1 {
         let sum = self.0 + G1Projective::from(rhs.0);
         G1(sum.into())
+    }
+}
+
+impl Neg for G1 {
+    type Output = G1;
+
+    fn neg(self) -> Self::Output {
+        G1(-self.0)
+    }
+}
+
+impl Neg for &G1 {
+    type Output = G1;
+
+    fn neg(self) -> Self::Output {
+        G1(-self.0)
     }
 }
 
@@ -149,6 +193,13 @@ impl fmt::Display for InvalidPoint {
     }
 }
 
+pub fn g1_from_hash<X>(msg: &[u8], dst: &[u8]) -> G1
+where
+    X: ExpandMessage,
+{
+    G1(<G1Projective as HashToCurve<X>>::hash_to_curve(msg, dst).into())
+}
+
 pub fn g1_from_variable(data: &[u8]) -> Result<G1, InvalidPoint> {
     if data.len() != 48 {
         return Err(InvalidPoint::InvalidLength {
@@ -170,6 +221,13 @@ pub fn g1s_from_variable(data_list: &[&[u8]]) -> Vec<Result<G1, InvalidPoint>> {
         .map(|&data| g1_from_variable(data))
         .collect_into_vec(&mut out);
     out
+}
+
+pub fn g2_from_hash<X>(msg: &[u8], dst: &[u8]) -> G2
+where
+    X: ExpandMessage,
+{
+    G2(<G2Projective as HashToCurve<X>>::hash_to_curve(msg, dst).into())
 }
 
 pub fn g2_from_variable(data: &[u8]) -> Result<G2, InvalidPoint> {

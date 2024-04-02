@@ -95,7 +95,7 @@ pub fn g2_sum(elements: &[G2]) -> G2 {
 
 #[cfg(test)]
 mod tests {
-    use super::super::points::{g1_from_fixed, g1_from_variable, g1s_from_variable, g2_from_fixed};
+    use super::super::points::{g1_from_variable, g1s_from_variable};
     use super::*;
     use base64::engine::general_purpose::STANDARD;
     use base64_serde::base64_serde_type;
