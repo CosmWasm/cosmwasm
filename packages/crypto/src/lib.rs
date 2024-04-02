@@ -19,7 +19,11 @@ mod identity_digest;
 mod secp256k1;
 mod secp256r1;
 
-pub use crate::bls12_318::{bls12_318_aggregate_g1, bls12_318_aggregate_g2};
+#[doc(hidden)]
+pub use crate::bls12_318::{
+    bls12_318_aggregate_g1, bls12_318_aggregate_g2, bls12_381_pairing_equality, bls12_381_pairing,
+    bls12_381_multi_miller_loop,
+};
 #[doc(hidden)]
 pub use crate::ecdsa::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};
 #[doc(hidden)]
