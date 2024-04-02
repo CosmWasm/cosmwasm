@@ -20,12 +20,6 @@ impl Gt {
         Self(bls12_381::Gt::identity())
     }
 
-    /// Double this element
-    #[inline]
-    pub fn double(&self) -> Self {
-        Self(self.0.double())
-    }
-
     /// Check whether this element is the identity
     #[inline]
     pub fn is_identity(&self) -> bool {
@@ -366,5 +360,10 @@ mod tests {
         let a = g2_from_fixed_unchecked(data).unwrap();
         let b = g2_from_fixed(&data).unwrap();
         assert_eq!(a, b);
+    }
+
+    #[test]
+    fn gt_is_identity_works() {
+        assert!(Gt::identity().is_identity());
     }
 }
