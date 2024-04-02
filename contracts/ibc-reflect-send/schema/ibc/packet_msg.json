@@ -179,6 +179,32 @@
           "additionalProperties": false
         },
         {
+          "description": "This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)",
+          "deprecated": true,
+          "type": "object",
+          "required": [
+            "stargate"
+          ],
+          "properties": {
+            "stargate": {
+              "type": "object",
+              "required": [
+                "type_url",
+                "value"
+              ],
+              "properties": {
+                "type_url": {
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/definitions/Binary"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
           "type": "object",
           "required": [
             "ibc"

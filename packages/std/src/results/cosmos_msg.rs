@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use core::fmt;
 use derivative::Derivative;
 use schemars::JsonSchema;
@@ -34,6 +36,13 @@ pub enum CosmosMsg<T = Empty> {
     Staking(StakingMsg),
     #[cfg(feature = "staking")]
     Distribution(DistributionMsg),
+    /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
+    #[cfg(feature = "stargate")]
+    #[deprecated = "Use `CosmosMsg::Any` instead (if you only target CosmWasm 2+ chains)"]
+    Stargate {
+        type_url: String,
+        value: Binary,
+    },
     /// `CosmosMsg::Any` is the replaces the "stargate message" – a message wrapped
     /// in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)
     /// that is suppored by the chain. It behaves the same as
