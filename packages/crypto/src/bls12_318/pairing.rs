@@ -16,11 +16,9 @@ pub fn bls12_381_multi_miller_loop(points: &[(&G1, &G2)]) -> Gt {
         .map(|(_g1, g2)| G2Prepared::from(g2.0))
         .collect_into_vec(&mut prepared_g2);
 
-    let terms: Vec<_> = points
-        .iter()
-        .map(|(g1, _g2)| &g1.0)
-        .zip(prepared_g2.iter())
-        .collect();
+    let mut terms = Vec::with_capacity(points.len());
+    let term_iter = points.iter().map(|(g1, _g2)| &g1.0).zip(prepared_g2.iter());
+    terms.extend(term_iter);
 
     Gt(bls12_381::multi_miller_loop(&terms).final_exponentiation())
 }
