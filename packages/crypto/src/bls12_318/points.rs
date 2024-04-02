@@ -152,6 +152,14 @@ impl G2 {
     }
 }
 
+impl Add<&G2> for &G2 {
+    type Output = G2;
+
+    fn add(self, rhs: &G2) -> Self::Output {
+        [self, rhs].into_iter().sum()
+    }
+}
+
 impl core::iter::Sum<G2> for G2 {
     fn sum<I: Iterator<Item = G2>>(iter: I) -> Self {
         let zero = G2Projective::identity();
