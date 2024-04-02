@@ -2,8 +2,8 @@ use std::any::type_name;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    from_json, storage_keys::to_length_prefixed, to_json_vec, IbcPacketAckMsg, IbcPacketTimeoutMsg,
-    StdError, StdResult, Storage,
+    from_json, storage_keys::to_length_prefixed, to_json_vec, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, StdError, StdResult, Storage,
 };
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -15,7 +15,7 @@ pub const KEY_STATS: &[u8] = b"counts";
 pub struct CallbackStats {
     pub ibc_ack_callbacks: Vec<IbcPacketAckMsg>,
     pub ibc_timeout_callbacks: Vec<IbcPacketTimeoutMsg>,
-    // pub ibc_receive_callback: u32,
+    pub ibc_receive_callback: Vec<IbcPacketReceiveMsg>,
 }
 
 pub fn load_stats(storage: &dyn Storage) -> StdResult<CallbackStats> {

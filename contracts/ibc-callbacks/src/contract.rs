@@ -1,7 +1,8 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, to_json_string, Binary, Deps, DepsMut, Empty, Env,
-    IbcBasicResponse, IbcCallbackData, IbcMsg, IbcSourceChainCallbackMsg, IbcSrcCallback,
-    IbcTimeout, MessageInfo, Response, StdError, StdResult,
+    IbcBasicResponse, IbcCallbackData, IbcDestinationChainCallbackMsg, IbcDstCallback, IbcMsg,
+    IbcPacketReceiveMsg, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo,
+    Response, StdError, StdResult,
 };
 
 use crate::msg::{ExecuteMsg, QueryMsg};
@@ -73,11 +74,11 @@ pub fn ibc_source_chain_callback(
 
     match msg {
         IbcSourceChainCallbackMsg::Acknowledgement(ack) => {
-            // increment the counter
+            // save the ack
             counts.ibc_ack_callbacks.push(ack);
         }
         IbcSourceChainCallbackMsg::Timeout(timeout) => {
-            // increment the counter
+            // save the timeout
             counts.ibc_timeout_callbacks.push(timeout);
         }
     }
@@ -85,4 +86,20 @@ pub fn ibc_source_chain_callback(
     save_stats(deps.storage, &counts)?;
 
     Ok(IbcBasicResponse::new().add_attribute("action", "ibc_source_chain_callback"))
+}
+
+#[entry_point]
+pub fn ibc_destination_chain_callback(
+    deps: DepsMut,
+    _env: Env,
+    msg: IbcDestinationChainCallbackMsg,
+) -> StdResult<IbcBasicResponse> {
+    let mut counts = load_stats(deps.storage)?;
+
+    // save the receive
+    counts.ibc_receive_callback.push(msg);
+
+    save_stats(deps.storage, &counts)?;
+
+    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_destination_chain_callback"))
 }

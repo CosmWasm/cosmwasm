@@ -4,7 +4,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
+use crate::{Addr, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, Uint64};
 
 /// This is just a type representing the data that has to be sent with the IBC message to receive
 /// callbacks. It should be serialized to JSON and sent with the IBC message.
@@ -46,8 +46,6 @@ pub struct IbcCallbackData {
 
 impl IbcCallbackData {
     /// Use this if you want to execute callbacks on both the source and destination chain.
-    ///
-    /// In the first prototype, we only support receiving callbacks on the source chain.
     pub fn both(src_callback: IbcSrcCallback, dst_callback: IbcDstCallback) -> Self {
         IbcCallbackData {
             src_callback: Some(src_callback),
@@ -64,8 +62,6 @@ impl IbcCallbackData {
     }
 
     /// Use this if you want to execute callbacks on the destination chain, but not the source chain.
-    ///
-    /// In the first prototype, we only support receiving callbacks on the source chain.
     pub fn destination(dst_callback: IbcDstCallback) -> Self {
         IbcCallbackData {
             src_callback: None,
@@ -93,11 +89,11 @@ pub struct IbcDstCallback {
     pub gas_limit: Option<Uint64>,
 }
 
-/// The type of IBC callback that is being called.
+/// The type of IBC source chain callback that is being called.
 ///
-/// IBC callbacks are needed for cases where your contract triggers the sending of an IBC packet
-/// through some other message (i.e. not through [`IbcMsg::SendPacket`]) and needs to know whether
-/// or not the packet was successfully received on the other chain.
+/// IBC source chain callbacks are needed for cases where your contract triggers the sending of an
+/// IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and needs to
+/// know whether or not the packet was successfully received on the other chain.
 /// A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know
 /// whether the transfer was successful or not.
 ///
@@ -113,6 +109,23 @@ pub enum IbcSourceChainCallbackMsg {
     Acknowledgement(IbcPacketAckMsg),
     Timeout(IbcPacketTimeoutMsg),
 }
+
+/// The message type of the IBC destination chain callback.
+/// This is just an alias for [`IbcPacketReceiveMsg`] to add some documentation.
+///
+/// The IBC destination chain callback is needed for cases where someone triggers the sending of an
+/// IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and
+/// your contract needs to know that it received this.
+/// A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know
+/// that someone sent you IBC coins.
+///
+/// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
+/// - The contract must implement the `ibc_destination_chain_callback` entrypoint.
+/// - The module that receives the packet must be wrapped by an `IBCMiddleware`
+///   (i.e. the destination chain needs to support callbacks for the message you are being sent).
+/// - You have to add json-encoded [`IbcCallbackData`] to a specific field of the message.
+///   For `IbcMsg::Transfer`, this is the `memo` field.
+pub type IbcDestinationChainCallbackMsg = IbcPacketReceiveMsg;
 
 #[cfg(test)]
 mod tests {

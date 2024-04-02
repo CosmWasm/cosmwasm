@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 use serde::de::DeserializeOwned;
 
 use crate::deps::OwnedDeps;
-use crate::ibc::{IbcBasicResponse, IbcSourceChainCallbackMsg};
+use crate::ibc::{IbcBasicResponse, IbcDestinationChainCallbackMsg, IbcSourceChainCallbackMsg};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcPacketAckMsg, IbcPacketReceiveMsg,
@@ -472,6 +472,31 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
+pub fn do_ibc_destination_chain_callback<Q, C, E>(
+    contract_fn: &dyn Fn(
+        DepsMut<Q>,
+        Env,
+        IbcDestinationChainCallbackMsg,
+    ) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    #[cfg(feature = "abort")]
+    install_panic_handler();
+    let res = _do_ibc_destination_chain_callback(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
+    let v = to_json_vec(&res).unwrap();
+    Region::from_vec(v).to_heap_ptr() as u32
+}
+
 fn _do_instantiate<Q, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region<Owned>,
@@ -745,6 +770,30 @@ where
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcSourceChainCallbackMsg = try_into_contract_result!(from_json(msg));
+
+    let mut deps = make_dependencies();
+    contract_fn(deps.as_mut(), env, msg).into()
+}
+
+fn _do_ibc_destination_chain_callback<Q, C, E>(
+    contract_fn: &dyn Fn(
+        DepsMut<Q>,
+        Env,
+        IbcDestinationChainCallbackMsg,
+    ) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
+) -> ContractResult<IbcBasicResponse<C>>
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+
+    let env: Env = try_into_contract_result!(from_json(env));
+    let msg: IbcDestinationChainCallbackMsg = try_into_contract_result!(from_json(msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

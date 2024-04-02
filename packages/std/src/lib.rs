@@ -41,9 +41,10 @@ pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcCallbackData, IbcChannel,
-    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcDstCallback, IbcEndpoint,
-    IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcDestinationChainCallbackMsg,
+    IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout,
+    IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
@@ -91,8 +92,8 @@ mod memory; // Used by exports and imports only. This assumes pointers are 32 bi
 
 #[cfg(target_arch = "wasm32")]
 pub use crate::exports::{
-    do_execute, do_ibc_source_chain_callback, do_instantiate, do_migrate, do_query, do_reply,
-    do_sudo,
+    do_execute, do_ibc_destination_chain_callback, do_ibc_source_chain_callback, do_instantiate,
+    do_migrate, do_query, do_reply, do_sudo,
 };
 #[cfg(all(feature = "stargate", target_arch = "wasm32"))]
 pub use crate::exports::{
