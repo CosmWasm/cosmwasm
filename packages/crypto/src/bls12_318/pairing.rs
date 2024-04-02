@@ -80,11 +80,38 @@ mod test {
 
         assert!(bls12_381_pairing_equality(&g1, &sigma, &key, &g2_msg));
 
-        // Wrong round -> Therefore wrong hashed G2 point
-        #[allow(clippy::unusual_byte_groupings)]
-        let msg = build_message(0xDEAD_2_BAD, &previous_signature);
-        let g2_msg = g2_from_hash::<ExpandMsgXmd<Sha256>>(msg.as_slice(), DOMAIN_HASH_TO_G2);
+        // Do this in a separate scope to not shadow with wrong values
+        {
+            // Wrong round -> Therefore wrong hashed G2 point
+            #[allow(clippy::unusual_byte_groupings)]
+            let msg = build_message(0xDEAD_2_BAD, &previous_signature);
+            let g2_msg = g2_from_hash::<ExpandMsgXmd<Sha256>>(msg.as_slice(), DOMAIN_HASH_TO_G2);
 
-        assert!(!bls12_381_pairing_equality(&g1, &sigma, &key, &g2_msg));
+            assert!(!bls12_381_pairing_equality(&g1, &sigma, &key, &g2_msg));
+        }
+
+        // curl -sS https://drand.cloudflare.com/public/1
+        let previous_signature =
+            hex::decode("176f93498eac9ca337150b46d21dd58673ea4e3581185f869672e59fa4cb390a")
+                .unwrap();
+        let signature = hex::decode("8d61d9100567de44682506aea1a7a6fa6e5491cd27a0a0ed349ef6910ac5ac20ff7bc3e09d7c046566c9f7f3c6f3b10104990e7cb424998203d8f7de586fb7fa5f60045417a432684f85093b06ca91c769f0e7ca19268375e659c2a2352b4655").unwrap();
+        let round: u64 = 1;
+
+        // Aggregate things down
+        let aggregated_key = &key + &key;
+        let aggregated_sigma = &sigma + &g2_from_variable(&signature).unwrap();
+        let aggregated_g1 = &g1 + &g1;
+        let aggregated_msg = &g2_msg
+            + &g2_from_hash::<ExpandMsgXmd<Sha256>>(
+                build_message(round, &previous_signature).as_slice(),
+                DOMAIN_HASH_TO_G2,
+            );
+
+        assert!(bls12_381_pairing_equality(
+            &aggregated_g1,
+            &aggregated_sigma,
+            &aggregated_key,
+            &aggregated_msg
+        ));
     }
 }
