@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use core::fmt;
 use derivative::Derivative;
 use schemars::JsonSchema;

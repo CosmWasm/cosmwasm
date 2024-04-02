@@ -10,8 +10,11 @@ and this project adheres to
 
 - cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
   via `release_buffer` ([#2062])
+- cosmwasm-std: Add back `CosmosMsg::Stargate` case to support new contracts on
+  older CosmWasm versions
 
 [#2062]: https://github.com/CosmWasm/cosmwasm/pull/2062
+[#2083]: https://github.com/CosmWasm/cosmwasm/pull/2083
 
 ## [2.0.0] - 2024-03-12
 
