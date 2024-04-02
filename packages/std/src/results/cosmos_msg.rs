@@ -38,7 +38,7 @@ pub enum CosmosMsg<T = Empty> {
     Distribution(DistributionMsg),
     /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
     #[cfg(feature = "stargate")]
-    #[deprecated = "Use `CosmosMsg::Any` instead (if you can)"]
+    #[deprecated = "Use `CosmosMsg::Any` instead (if you only target CosmWasm 2+ chains)"]
     Stargate {
         type_url: String,
         value: Binary,
