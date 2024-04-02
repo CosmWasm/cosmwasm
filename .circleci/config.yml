@@ -656,7 +656,7 @@ jobs:
 
   contract_ibc_callbacks:
     docker:
-      - image: rust:1.70.0
+      - image: rust:1.73
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/ibc-callbacks
@@ -668,8 +668,11 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibc_callbacks-rust:1.70.0-{{ checksum "Cargo.lock" }}
-      - check_contract
+            - cargocache-v2-contract_ibc_callbacks-rust:1.73-{{ checksum "Cargo.lock" }}
+      # TODO: Enable this once 2.1 has been released to crates.io
+      - check_contract:
+          min_version: "2.1"
+          skip_cosmwasm_check: true
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -679,7 +682,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibc_callbacks-rust:1.70.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc_callbacks-rust:1.73-{{ checksum "Cargo.lock" }}
 
   contract_ibc_reflect:
     docker:
