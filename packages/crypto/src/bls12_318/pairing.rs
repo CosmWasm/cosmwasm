@@ -36,13 +36,12 @@ pub fn bls12_381_pairing_equality(p: &G1, q: &G2, r: &G1, s: &G2) -> bool {
 
 #[cfg(test)]
 mod test {
-    use bls12_381::hash_to_curve::ExpandMsgXmd;
     use digest::generic_array::GenericArray;
     use hex_literal::hex;
     use sha2_v9::{Digest, Sha256};
 
     use crate::{
-        bls12_318::points::{g1_from_fixed, g2_from_hash, g2_from_variable, G1},
+        bls12_318::points::{g1_from_fixed, g2_from_hash, g2_from_variable, HashFunction, G1},
         bls12_381_pairing_equality,
     };
 
@@ -76,7 +75,7 @@ mod test {
         let sigma = g2_from_variable(&signature).unwrap();
         let g1 = G1::generator();
         let msg = build_message(round, &previous_signature);
-        let g2_msg = g2_from_hash::<ExpandMsgXmd<Sha256>>(msg.as_slice(), DOMAIN_HASH_TO_G2);
+        let g2_msg = g2_from_hash(HashFunction::Sha256, msg.as_slice(), DOMAIN_HASH_TO_G2);
 
         assert!(bls12_381_pairing_equality(&g1, &sigma, &key, &g2_msg));
 
@@ -85,7 +84,7 @@ mod test {
             // Wrong round -> Therefore wrong hashed G2 point
             #[allow(clippy::unusual_byte_groupings)]
             let msg = build_message(0xDEAD_2_BAD, &previous_signature);
-            let g2_msg = g2_from_hash::<ExpandMsgXmd<Sha256>>(msg.as_slice(), DOMAIN_HASH_TO_G2);
+            let g2_msg = g2_from_hash(HashFunction::Sha256, msg.as_slice(), DOMAIN_HASH_TO_G2);
 
             assert!(!bls12_381_pairing_equality(&g1, &sigma, &key, &g2_msg));
         }
@@ -102,7 +101,8 @@ mod test {
         let aggregated_sigma = &sigma + &g2_from_variable(&signature).unwrap();
         let aggregated_g1 = &g1 + &g1;
         let aggregated_msg = &g2_msg
-            + &g2_from_hash::<ExpandMsgXmd<Sha256>>(
+            + &g2_from_hash(
+                HashFunction::Sha256,
                 build_message(round, &previous_signature).as_slice(),
                 DOMAIN_HASH_TO_G2,
             );

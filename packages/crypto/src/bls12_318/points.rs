@@ -3,11 +3,13 @@
 use std::ops::Add;
 use std::{fmt, ops::Neg};
 
+use bls12_381::hash_to_curve::ExpandMsgXmd;
 use bls12_381::{
     hash_to_curve::{ExpandMessage, HashToCurve},
     G1Affine, G1Projective, G2Affine, G2Projective,
 };
 use pairing::group::Group;
+use sha2_v9::Sha256;
 
 /// Element of Gt
 #[derive(Debug, PartialEq, Clone)]
@@ -195,11 +197,37 @@ impl fmt::Display for InvalidPoint {
     }
 }
 
-pub fn g1_from_hash<X>(msg: &[u8], dst: &[u8]) -> G1
-where
-    X: ExpandMessage,
-{
-    G1(<G1Projective as HashToCurve<X>>::hash_to_curve(msg, dst).into())
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum HashFunction {
+    Sha256,
+}
+
+impl HashFunction {
+    pub fn from_usize(idx: usize) -> Option<Self> {
+        let hash = match idx {
+            0 => Self::Sha256,
+            _ => return None,
+        };
+
+        Some(hash)
+    }
+
+    pub fn to_usize(self) -> usize {
+        match self {
+            Self::Sha256 => 0,
+        }
+    }
+}
+
+pub fn g1_from_hash(hash: HashFunction, msg: &[u8], dst: &[u8]) -> G1 {
+    let g1 = match hash {
+        HashFunction::Sha256 => {
+            <G1Projective as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(msg, dst)
+        }
+    };
+
+    G1(g1.into())
 }
 
 pub fn g1_from_variable(data: &[u8]) -> Result<G1, InvalidPoint> {
@@ -225,11 +253,14 @@ pub fn g1s_from_variable(data_list: &[&[u8]]) -> Vec<Result<G1, InvalidPoint>> {
     out
 }
 
-pub fn g2_from_hash<X>(msg: &[u8], dst: &[u8]) -> G2
-where
-    X: ExpandMessage,
-{
-    G2(<G2Projective as HashToCurve<X>>::hash_to_curve(msg, dst).into())
+pub fn g2_from_hash(hash: HashFunction, msg: &[u8], dst: &[u8]) -> G2 {
+    let g2 = match hash {
+        HashFunction::Sha256 => {
+            <G2Projective as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(msg, dst)
+        }
+    };
+
+    G2(g2.into())
 }
 
 pub fn g2_from_variable(data: &[u8]) -> Result<G2, InvalidPoint> {
