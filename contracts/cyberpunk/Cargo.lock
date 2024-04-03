@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "digest",
  "ecdsa",
@@ -245,7 +245,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -254,7 +254,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -274,7 +274,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "base64 0.22.0",
  "bech32",
@@ -294,7 +294,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "bech32",
  "bytes",
