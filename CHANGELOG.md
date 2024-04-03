@@ -31,6 +31,8 @@ and this project adheres to
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
 [#2059]: https://github.com/CosmWasm/cosmwasm/pull/2059
 
+## [2.0.1] - 2024-04-03
+
 ### Fixed
 
 - cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
@@ -788,7 +790,8 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.0...v1.4.1
