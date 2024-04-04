@@ -73,6 +73,7 @@
       "type": "object",
       "required": [
         "ibc_ack_callbacks",
+        "ibc_receive_callback",
         "ibc_timeout_callbacks"
       ],
       "properties": {
@@ -80,6 +81,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/IbcPacketAckMsg"
+          }
+        },
+        "ibc_receive_callback": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IbcPacketReceiveMsg"
           }
         },
         "ibc_timeout_callbacks": {
@@ -183,6 +190,22 @@
               "$ref": "#/definitions/IbcAcknowledgement"
             },
             "original_packet": {
+              "$ref": "#/definitions/IbcPacket"
+            },
+            "relayer": {
+              "$ref": "#/definitions/Addr"
+            }
+          }
+        },
+        "IbcPacketReceiveMsg": {
+          "description": "The message that is passed into `ibc_packet_receive`",
+          "type": "object",
+          "required": [
+            "packet",
+            "relayer"
+          ],
+          "properties": {
+            "packet": {
               "$ref": "#/definitions/IbcPacket"
             },
             "relayer": {
