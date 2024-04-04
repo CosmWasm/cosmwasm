@@ -108,7 +108,6 @@ pub mod testing;
 
 // Re-exports
 
-pub use cosmwasm_core as core;
 pub use cosmwasm_core::CoreError as StdError;
 pub use cosmwasm_core::CoreResult as StdResult;
 pub use cosmwasm_core::{
