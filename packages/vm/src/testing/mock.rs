@@ -211,7 +211,7 @@ fn validate_length(bytes: &[u8]) -> Result<(), BackendError> {
     }
 }
 
-/// Returns a default enviroment with height, time, chain_id, and contract address
+/// Returns a default environment with height, time, chain_id, and contract address
 /// You can submit as is to most contracts, or modify height/time if you want to
 /// test for expiration.
 ///

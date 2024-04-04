@@ -303,7 +303,7 @@ mod tests {
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
             ),
             Err(e) => panic!("Unexpected error {e:?}"),
-            Ok(_) => panic!("This must not succeeed"),
+            Ok(_) => panic!("This must not succeed"),
         };
 
         match check_wasm(CONTRACT_0_14, &default_capabilities()) {
@@ -312,7 +312,7 @@ mod tests {
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
             ),
             Err(e) => panic!("Unexpected error {e:?}"),
-            Ok(_) => panic!("This must not succeeed"),
+            Ok(_) => panic!("This must not succeed"),
         };
 
         match check_wasm(CONTRACT_0_12, &default_capabilities()) {
@@ -322,7 +322,7 @@ mod tests {
                 ))
             }
             Err(e) => panic!("Unexpected error {e:?}"),
-            Ok(_) => panic!("This must not succeeed"),
+            Ok(_) => panic!("This must not succeed"),
         };
 
         match check_wasm(CONTRACT_0_7, &default_capabilities()) {
@@ -332,7 +332,7 @@ mod tests {
                 ))
             }
             Err(e) => panic!("Unexpected error {e:?}"),
-            Ok(_) => panic!("This must not succeeed"),
+            Ok(_) => panic!("This must not succeed"),
         };
     }
 
