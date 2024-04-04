@@ -6,7 +6,8 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "InstantiateMsg",
     "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
-    "type": "object"
+    "type": "object",
+    "additionalProperties": false
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -115,7 +116,8 @@
             "data": {
               "$ref": "#/definitions/Binary"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcEndpoint": {
           "type": "object",
@@ -130,7 +132,8 @@
             "port_id": {
               "type": "string"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcPacket": {
           "type": "object",
@@ -175,7 +178,8 @@
             "timeout": {
               "$ref": "#/definitions/IbcTimeout"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcPacketAckMsg": {
           "description": "The message that is passed into `ibc_packet_ack`",
@@ -195,7 +199,8 @@
             "relayer": {
               "$ref": "#/definitions/Addr"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcPacketReceiveMsg": {
           "description": "The message that is passed into `ibc_packet_receive`",
@@ -211,7 +216,8 @@
             "relayer": {
               "$ref": "#/definitions/Addr"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcPacketTimeoutMsg": {
           "description": "The message that is passed into `ibc_packet_timeout`",
@@ -227,7 +233,8 @@
             "relayer": {
               "$ref": "#/definitions/Addr"
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcTimeout": {
           "description": "In IBC each package must set at least one type of timeout: the timestamp or the block height. Using this rather complex enum instead of two timeout fields we ensure that at least one timeout is set.",
@@ -253,7 +260,8 @@
                 }
               ]
             }
-          }
+          },
+          "additionalProperties": false
         },
         "IbcTimeoutBlock": {
           "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",
@@ -275,7 +283,8 @@
               "format": "uint64",
               "minimum": 0.0
             }
-          }
+          },
+          "additionalProperties": false
         },
         "Timestamp": {
           "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
