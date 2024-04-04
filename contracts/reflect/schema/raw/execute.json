@@ -87,7 +87,8 @@
         "value": {
           "$ref": "#/definitions/Binary"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "BankMsg": {
       "description": "The message types of the bank module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto",
@@ -115,7 +116,8 @@
                 "to_address": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -139,7 +141,8 @@
                     "$ref": "#/definitions/Coin"
                   }
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -163,7 +166,8 @@
         "denom": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "CosmosMsg_for_CustomMsg": {
       "oneOf": [
@@ -345,7 +349,8 @@
                   "description": "The `withdraw_address`",
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -367,7 +372,8 @@
                   "description": "The `validator_address`",
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -392,7 +398,8 @@
                     "$ref": "#/definitions/Coin"
                   }
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -429,7 +436,8 @@
                   "format": "uint64",
                   "minimum": 0.0
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -459,7 +467,8 @@
                   "format": "uint64",
                   "minimum": 0.0
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -516,7 +525,8 @@
                   "description": "address on the remote chain to receive these tokens",
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -550,7 +560,8 @@
                     }
                   ]
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -571,7 +582,8 @@
                 "channel_id": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -602,7 +614,8 @@
             }
           ]
         }
-      }
+      },
+      "additionalProperties": false
     },
     "IbcTimeoutBlock": {
       "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",
@@ -624,7 +637,8 @@
           "format": "uint64",
           "minimum": 0.0
         }
-      }
+      },
+      "additionalProperties": false
     },
     "ReplyOn": {
       "description": "Use this to define when the contract gets a response callback. If you only need it for errors or success you can select just those in order to save gas.",
@@ -682,7 +696,8 @@
                 "validator": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -707,7 +722,8 @@
                 "validator": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -736,7 +752,8 @@
                 "src_validator": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -782,7 +799,8 @@
         "reply_on": {
           "$ref": "#/definitions/ReplyOn"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "Timestamp": {
       "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
@@ -844,7 +862,8 @@
                     }
                   ]
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -894,7 +913,8 @@
                     }
                   ]
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -948,7 +968,8 @@
                 "salt": {
                   "$ref": "#/definitions/Binary"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -985,7 +1006,8 @@
                   "format": "uint64",
                   "minimum": 0.0
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -1010,7 +1032,8 @@
                 "contract_addr": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -1031,7 +1054,8 @@
                 "contract_addr": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -1051,7 +1075,8 @@
         "weight": {
           "$ref": "#/definitions/Decimal"
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }
