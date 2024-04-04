@@ -625,7 +625,7 @@ mod tests {
         let error = CoreError::invalid_base64(original);
         match error {
             CoreError::InvalidBase64 { msg, .. } => {
-                assert_eq!(msg, "Encoded text cannot have a 6-bit remainder.");
+                assert_eq!(msg, "Invalid input length: 10");
             }
             _ => panic!("expect different error"),
         }
