@@ -278,7 +278,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
                 format!("Querier contract error: {contract_err}"),
             )),
-            SystemResult::Ok(ContractResult::Ok(value)) => from_json(value).map_err(Into::into),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_json(value),
         }
     }
 
