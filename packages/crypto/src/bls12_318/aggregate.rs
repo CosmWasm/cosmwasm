@@ -7,7 +7,7 @@ const G2_POINT_SIZE: usize = 96;
 ///
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
-pub fn bls12_318_aggregate_g1(points: &[u8]) -> Result<[u8; 48], InvalidPoint> {
+pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], InvalidPoint> {
     if points.len() % G1_POINT_SIZE != 0 {
         return Err(InvalidPoint::DecodingError {});
     }
@@ -43,7 +43,7 @@ pub fn bls12_318_aggregate_g1(points: &[u8]) -> Result<[u8; 48], InvalidPoint> {
 ///
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
-pub fn bls12_318_aggregate_g2(points: &[u8]) -> Result<[u8; 96], InvalidPoint> {
+pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], InvalidPoint> {
     if points.len() % G2_POINT_SIZE != 0 {
         return Err(InvalidPoint::DecodingError {});
     }
@@ -137,13 +137,13 @@ mod tests {
 
     #[test]
     fn bls12_318_aggregate_g1_works() {
-        let sum = bls12_318_aggregate_g1(b"").unwrap();
+        let sum = bls12_381_aggregate_g1(b"").unwrap();
         assert_eq!(sum, G1::identity().to_compressed());
     }
 
     #[test]
     fn bls12_318_aggregate_g2_works() {
-        let sum = bls12_318_aggregate_g2(b"").unwrap();
+        let sum = bls12_381_aggregate_g2(b"").unwrap();
         assert_eq!(sum, G2::identity().to_compressed());
     }
 

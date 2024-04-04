@@ -21,8 +21,8 @@ mod secp256r1;
 
 #[doc(hidden)]
 pub use crate::bls12_318::{
-    bls12_318_aggregate_g1, bls12_318_aggregate_g2, bls12_381_multi_miller_loop, bls12_381_pairing,
-    bls12_381_pairing_equality,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator, bls12_381_g2_generator,
+    bls12_381_hash_to_g1, bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
 };
 #[doc(hidden)]
 pub use crate::ecdsa::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};
