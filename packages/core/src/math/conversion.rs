@@ -1,4 +1,4 @@
-#[allow(unused_imports)]
+#[cfg(test)]
 use alloc::string::String;
 
 /// Grows a big endian signed integer to a bigger size.
