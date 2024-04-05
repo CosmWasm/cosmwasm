@@ -400,9 +400,9 @@ impl From<DivideByZeroError> for CoreError {
 /// The return type for init, execute and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
-/// The prefix "Std" means "the standard result within the standard library". This is not the only
-/// result/error type in cosmwasm-std.
-pub type CoreResult<T, E = CoreError> = core::result::Result<T, E>;
+/// The prefix "Core"/"Std" means "the standard result within the core/standard library". This is not the only
+/// result/error type in cosmwasm-core/cosmwasm-std.
+pub type CoreResult<T> = core::result::Result<T, CoreError>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum OverflowOperation {
