@@ -74,7 +74,7 @@
       "type": "object",
       "required": [
         "ibc_ack_callbacks",
-        "ibc_receive_callback",
+        "ibc_destination_callbacks",
         "ibc_timeout_callbacks"
       ],
       "properties": {
@@ -84,10 +84,10 @@
             "$ref": "#/definitions/IbcPacketAckMsg"
           }
         },
-        "ibc_receive_callback": {
+        "ibc_destination_callbacks": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/IbcPacketReceiveMsg"
+            "$ref": "#/definitions/IbcDestinationChainCallbackMsg"
           }
         },
         "ibc_timeout_callbacks": {
@@ -115,6 +115,23 @@
           "properties": {
             "data": {
               "$ref": "#/definitions/Binary"
+            }
+          },
+          "additionalProperties": false
+        },
+        "IbcDestinationChainCallbackMsg": {
+          "description": "The message type of the IBC destination chain callback.\n\nThe IBC destination chain callback is needed for cases where someone triggers the sending of an IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and your contract needs to know that it received this. The callback is called after the packet was successfully acknowledged on the destination chain. A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know that someone sent you IBC coins.\n\nNote that there are some prerequisites that need to be fulfilled to receive source chain callbacks: - The contract must implement the `ibc_destination_chain_callback` entrypoint. - The module that receives the packet must be wrapped by an `IBCMiddleware` (i.e. the destination chain needs to support callbacks for the message you are being sent). - You have to add json-encoded [`IbcCallbackData`] to a specific field of the message. For `IbcMsg::Transfer`, this is the `memo` field.",
+          "type": "object",
+          "required": [
+            "ack",
+            "packet"
+          ],
+          "properties": {
+            "ack": {
+              "$ref": "#/definitions/IbcAcknowledgement"
+            },
+            "packet": {
+              "$ref": "#/definitions/IbcPacket"
             }
           },
           "additionalProperties": false
@@ -194,23 +211,6 @@
               "$ref": "#/definitions/IbcAcknowledgement"
             },
             "original_packet": {
-              "$ref": "#/definitions/IbcPacket"
-            },
-            "relayer": {
-              "$ref": "#/definitions/Addr"
-            }
-          },
-          "additionalProperties": false
-        },
-        "IbcPacketReceiveMsg": {
-          "description": "The message that is passed into `ibc_packet_receive`",
-          "type": "object",
-          "required": [
-            "packet",
-            "relayer"
-          ],
-          "properties": {
-            "packet": {
               "$ref": "#/definitions/IbcPacket"
             },
             "relayer": {
