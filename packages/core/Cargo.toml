@@ -13,7 +13,7 @@ release = false
 [dependencies]
 base64 = { version = "0.22.0", default-features = false, features = ["alloc"] }
 bnum = "0.11.0"
-cosmwasm-crypto = { version = "2.0.0", path = "../crypto" }
+cosmwasm-crypto = { version = "2.0.1", path = "../crypto" }
 derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["display", "from"] }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
 schemars = { version = "0.8.16", optional = true }
@@ -27,7 +27,7 @@ std = ["dep:schemars", "dep:thiserror"]
 
 [dev-dependencies]
 # Cyclic dependencies for doc tests..
-cosmwasm-std = { path = "../std", version = "2.0.0" }
+cosmwasm-std = { path = "../std", version = "2.0.1" }
 crc32fast = { version = "1.4.0", default-features = false }
 hex-literal = "0.4.1"
 serde_json = "1.0.114"

@@ -73,7 +73,7 @@ cosmwasm-crypto = { version = "2.0.1", path = "../crypto" }
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 
 [dev-dependencies]
-cosmwasm-core = { path = "../core", version = "2.0.1", features = ["testing"] }
+cosmwasm-core = { path = "../core", version = "2.0.1" }
 cosmwasm-schema = { version = "2.0.1", path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
