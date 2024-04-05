@@ -255,7 +255,8 @@
                 "value": {
                   "$ref": "#/definitions/Binary"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
