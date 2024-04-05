@@ -29,11 +29,9 @@ pub struct Decimal256(#[cfg_attr(feature = "std", schemars(with = "String"))] Ui
 forward_ref_partial_eq!(Decimal256, Decimal256);
 
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Decimal256 range exceeded")]
 pub struct Decimal256RangeExceeded;
-
-#[cfg(feature = "std")]
-impl std::error::Error for Decimal256RangeExceeded {}
 
 impl Decimal256 {
     const DECIMAL_FRACTIONAL: Uint256 = // 1*10**18

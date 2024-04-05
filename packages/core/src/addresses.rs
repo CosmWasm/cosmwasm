@@ -250,6 +250,7 @@ impl fmt::Display for CanonicalAddr {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum Instantiate2AddressError {
     /// Checksum must be 32 bytes
     InvalidChecksumLength,
@@ -265,9 +266,6 @@ impl fmt::Display for Instantiate2AddressError {
         }
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for Instantiate2AddressError {}
 
 /// Creates a contract address using the predictable address format introduced with
 /// wasmd 0.29. When using instantiate2, this is a way to precompute the address.

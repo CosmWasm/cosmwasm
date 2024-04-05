@@ -9,7 +9,7 @@ license = "Apache-2.0"
 
 [features]
 default = []
-std = []
+std = ["dep:thiserror"]
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
@@ -24,6 +24,7 @@ rand_core = "0.6"
 # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
 ecdsa = "0.16.2"
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
+thiserror = { version = "1.0.26", optional = true }
 
 [dev-dependencies]
 criterion = "0.5.1"

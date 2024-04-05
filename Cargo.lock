@@ -431,6 +431,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "static_assertions",
+ "thiserror",
 ]
 
 [[package]]
@@ -452,6 +453,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sha3",
+ "thiserror",
 ]
 
 [[package]]

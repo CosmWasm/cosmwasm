@@ -22,6 +22,7 @@ use crate::errors::{RecoverPubkeyError, VerificationError};
 /// - Add enum case
 /// - Add creator function in std_error_helpers.rs
 #[derive(Display, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CoreError {
     #[display("Verification error: {source}")]
     VerificationErr {
@@ -177,9 +178,6 @@ impl CoreError {
         }
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for CoreError {}
 
 impl PartialEq<CoreError> for CoreError {
     fn eq(&self, rhs: &CoreError) -> bool {
@@ -421,6 +419,7 @@ impl fmt::Display for OverflowOperation {
 }
 
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Cannot {operation} with given operands")]
 pub struct OverflowError {
     pub operation: OverflowOperation,
@@ -432,9 +431,6 @@ impl OverflowError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for OverflowError {}
-
 /// The error returned by [`TryFrom`] conversions that overflow, for example
 /// when converting from [`Uint256`] to [`Uint128`].
 ///
@@ -442,6 +438,7 @@ impl std::error::Error for OverflowError {}
 /// [`Uint256`]: crate::Uint256
 /// [`Uint128`]: crate::Uint128
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Error converting {source_type} to {target_type}")]
 pub struct ConversionOverflowError {
     pub source_type: &'static str,
@@ -457,10 +454,8 @@ impl ConversionOverflowError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ConversionOverflowError {}
-
 #[derive(Display, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Cannot divide by zero")]
 pub struct DivideByZeroError;
 
@@ -470,10 +465,8 @@ impl DivideByZeroError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for DivideByZeroError {}
-
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum DivisionError {
     #[display("Divide by zero")]
     DivideByZero,
@@ -482,10 +475,9 @@ pub enum DivisionError {
     Overflow,
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for DivisionError {}
-
-#[derive(Display, Debug, From, PartialEq, Eq)]
+#[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[cfg_attr(not(feature = "std"), derive(From))]
 pub enum CheckedMultiplyFractionError {
     #[display("{_0}")]
     DivideByZero(#[from] DivideByZeroError),
@@ -497,10 +489,8 @@ pub enum CheckedMultiplyFractionError {
     Overflow(#[from] OverflowError),
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for CheckedMultiplyFractionError {}
-
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CheckedMultiplyRatioError {
     #[display("Denominator must not be zero")]
     DivideByZero,
@@ -509,10 +499,8 @@ pub enum CheckedMultiplyRatioError {
     Overflow,
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for CheckedMultiplyRatioError {}
-
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CheckedFromRatioError {
     #[display("Denominator must not be zero")]
     DivideByZero,
@@ -521,31 +509,22 @@ pub enum CheckedFromRatioError {
     Overflow,
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for CheckedFromRatioError {}
-
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Round up operation failed because of overflow")]
 pub struct RoundUpOverflowError;
 
-#[cfg(feature = "std")]
-impl std::error::Error for RoundUpOverflowError {}
-
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Round down operation failed because of overflow")]
 pub struct RoundDownOverflowError;
 
-#[cfg(feature = "std")]
-impl std::error::Error for RoundDownOverflowError {}
-
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CoinsError {
     #[display("Duplicate denom")]
     DuplicateDenom,
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for CoinsError {}
 
 impl From<CoinsError> for CoreError {
     fn from(value: CoinsError) -> Self {
@@ -554,6 +533,7 @@ impl From<CoinsError> for CoreError {
 }
 
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CoinFromStrError {
     #[display("Missing denominator")]
     MissingDenom,
@@ -562,9 +542,6 @@ pub enum CoinFromStrError {
     #[display("Invalid amount: {_0}")]
     InvalidAmount(core::num::ParseIntError),
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for CoinFromStrError {}
 
 impl From<core::num::ParseIntError> for CoinFromStrError {
     fn from(value: core::num::ParseIntError) -> Self {

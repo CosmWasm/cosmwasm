@@ -6,6 +6,7 @@ use derive_more::Display;
 use super::BT;
 
 #[derive(Display, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum RecoverPubkeyError {
     #[display("Invalid hash format")]
     InvalidHashFormat,
@@ -26,9 +27,6 @@ impl RecoverPubkeyError {
         }
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for RecoverPubkeyError {}
 
 impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
     fn eq(&self, rhs: &RecoverPubkeyError) -> bool {

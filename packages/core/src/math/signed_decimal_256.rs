@@ -34,11 +34,9 @@ pub struct SignedDecimal256(#[cfg_attr(feature = "std", schemars(with = "String"
 forward_ref_partial_eq!(SignedDecimal256, SignedDecimal256);
 
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("SignedDecimal256 range exceeded")]
 pub struct SignedDecimal256RangeExceeded;
-
-#[cfg(feature = "std")]
-impl std::error::Error for SignedDecimal256RangeExceeded {}
 
 impl SignedDecimal256 {
     const DECIMAL_FRACTIONAL: Int256 = // 1*10**18

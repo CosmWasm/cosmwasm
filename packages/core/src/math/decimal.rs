@@ -27,11 +27,9 @@ pub struct Decimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint1
 forward_ref_partial_eq!(Decimal, Decimal);
 
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("Decimal range exceeded")]
 pub struct DecimalRangeExceeded;
-
-#[cfg(feature = "std")]
-impl std::error::Error for DecimalRangeExceeded {}
 
 impl Decimal {
     const DECIMAL_FRACTIONAL: Uint128 = Uint128::new(1_000_000_000_000_000_000u128); // 1*10**18

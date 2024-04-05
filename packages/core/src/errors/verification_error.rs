@@ -7,6 +7,7 @@ use super::BT;
 use cosmwasm_crypto::CryptoError;
 
 #[derive(Display, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum VerificationError {
     #[display("Batch error")]
     BatchErr,
@@ -33,9 +34,6 @@ impl VerificationError {
         }
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for VerificationError {}
 
 impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {

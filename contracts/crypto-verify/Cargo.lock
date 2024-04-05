@@ -214,6 +214,7 @@ dependencies = [
  "serde",
  "sha2",
  "static_assertions",
+ "thiserror",
 ]
 
 [[package]]
@@ -227,6 +228,7 @@ dependencies = [
  "k256",
  "p256",
  "rand_core",
+ "thiserror",
 ]
 
 [[package]]

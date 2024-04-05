@@ -13,7 +13,7 @@ use crate::Binary;
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema, thiserror::Error))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
@@ -39,9 +39,6 @@ pub enum SystemError {
         kind: String,
     },
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for SystemError {}
 
 impl core::fmt::Display for SystemError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

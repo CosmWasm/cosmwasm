@@ -29,11 +29,9 @@ pub struct SignedDecimal(#[cfg_attr(feature = "std", schemars(with = "String"))]
 forward_ref_partial_eq!(SignedDecimal, SignedDecimal);
 
 #[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 #[display("SignedDecimal range exceeded")]
 pub struct SignedDecimalRangeExceeded;
-
-#[cfg(feature = "std")]
-impl std::error::Error for SignedDecimalRangeExceeded {}
 
 impl SignedDecimal {
     const DECIMAL_FRACTIONAL: Int128 = Int128::new(1_000_000_000_000_000_000i128); // 1*10**18

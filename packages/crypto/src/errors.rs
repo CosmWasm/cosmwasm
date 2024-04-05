@@ -7,6 +7,7 @@ use crate::BT;
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
 #[derive(Display, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CryptoError {
     #[display("Batch verify error: {msg}")]
     BatchErr { msg: String, backtrace: BT },
@@ -21,9 +22,6 @@ pub enum CryptoError {
     #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam { backtrace: BT },
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for CryptoError {}
 
 impl CryptoError {
     pub fn batch_err(msg: impl Into<String>) -> Self {
