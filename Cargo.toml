@@ -12,3 +12,8 @@ version = "2.0.1"
 [workspace.dependencies]
 schemars = "0.8.4"
 serde = { version = "1.0.192", default-features = false, features = ["derive", "alloc"] }
+
+[workspace.metadata.release]
+shared-version = true
+tag-message = "chore: Release cosmwasm v{{version}}"
+tag-name = "v{{version}}"
