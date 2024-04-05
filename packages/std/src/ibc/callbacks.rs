@@ -4,7 +4,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, Uint64};
+use crate::{Addr, IbcAcknowledgement, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 
 /// This is just a type representing the data that has to be sent with the IBC message to receive
 /// callbacks. It should be serialized to JSON and sent with the IBC message.
@@ -111,11 +111,11 @@ pub enum IbcSourceChainCallbackMsg {
 }
 
 /// The message type of the IBC destination chain callback.
-/// This is just an alias for [`IbcPacketReceiveMsg`] to add some documentation.
 ///
 /// The IBC destination chain callback is needed for cases where someone triggers the sending of an
 /// IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and
 /// your contract needs to know that it received this.
+/// The callback is called after the packet was successfully acknowledged on the destination chain.
 /// A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know
 /// that someone sent you IBC coins.
 ///
@@ -125,7 +125,11 @@ pub enum IbcSourceChainCallbackMsg {
 ///   (i.e. the destination chain needs to support callbacks for the message you are being sent).
 /// - You have to add json-encoded [`IbcCallbackData`] to a specific field of the message.
 ///   For `IbcMsg::Transfer`, this is the `memo` field.
-pub type IbcDestinationChainCallbackMsg = IbcPacketReceiveMsg;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct IbcDestinationChainCallbackMsg {
+    pub packet: IbcPacket,
+    pub ack: IbcAcknowledgement,
+}
 
 #[cfg(test)]
 mod tests {

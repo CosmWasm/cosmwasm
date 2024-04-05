@@ -97,7 +97,7 @@ pub fn ibc_destination_chain_callback(
     let mut counts = load_stats(deps.storage)?;
 
     // save the receive
-    counts.ibc_receive_callback.push(msg);
+    counts.ibc_destination_callbacks.push(msg);
 
     save_stats(deps.storage, &counts)?;
 
