@@ -6,7 +6,7 @@ and this project adheres to
 
 <!-- next-header -->
 
-## [Unreleased] - ReleaseDate
+## [Unreleased]
 
 ### Added
 
