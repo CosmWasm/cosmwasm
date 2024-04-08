@@ -804,7 +804,7 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...HEAD
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0
