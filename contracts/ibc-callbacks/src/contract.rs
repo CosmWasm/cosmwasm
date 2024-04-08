@@ -1,11 +1,11 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, to_json_string, Binary, Deps, DepsMut, Empty, Env,
-    IbcBasicResponse, IbcCallbackData, IbcDestinationChainCallbackMsg, IbcMsg,
+    IbcBasicResponse, IbcCallbackData, IbcDestinationChainCallbackMsg, IbcDstCallback, IbcMsg,
     IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo, Response, StdError,
     StdResult,
 };
 
-use crate::msg::{ExecuteMsg, QueryMsg};
+use crate::msg::{CallbackType, ExecuteMsg, QueryMsg};
 use crate::state::{load_stats, save_stats, CallbackStats};
 
 #[entry_point]
@@ -30,6 +30,14 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
+    let src_callback = IbcSrcCallback {
+        address: env.contract.address,
+        gas_limit: None,
+    };
+    let dst_callback = IbcDstCallback {
+        address: msg.to_address.clone(),
+        gas_limit: None,
+    };
     let transfer_msg = match &*info.funds {
         [coin] if !coin.amount.is_zero() => IbcMsg::Transfer {
             to_address: msg.to_address,
@@ -38,10 +46,11 @@ pub fn execute(
             ),
             channel_id: msg.channel_id,
             amount: coin.clone(),
-            memo: Some(to_json_string(&IbcCallbackData::source(IbcSrcCallback {
-                address: env.contract.address,
-                gas_limit: None,
-            }))?),
+            memo: Some(to_json_string(&match msg.callback_type {
+                CallbackType::Both => IbcCallbackData::both(src_callback, dst_callback),
+                CallbackType::Src => IbcCallbackData::source(src_callback),
+                CallbackType::Dst => IbcCallbackData::destination(dst_callback),
+            })?),
         },
         _ => {
             return Err(StdError::generic_err(
