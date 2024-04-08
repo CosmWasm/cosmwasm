@@ -8,6 +8,9 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
 
 [package.metadata.release]
+pre-release-hook = [
+    "../../devtools/release_checks.sh"
+]
 pre-release-replacements = [
     { file="../../CHANGELOG.md", search="## \\[Unreleased\\]", replace="## [{{version}}] - {{date}}", exactly=1 },
     { file="../../CHANGELOG.md", search="Unreleased", replace="{{version}}" },
