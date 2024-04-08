@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-schema"
-version = "2.0.1"
+version.workspace = true
 authors = ["Simon Warta <webmaster128@users.noreply.github.com>", "Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "A dev-dependency for CosmWasm contracts to generate JSON Schema files."
