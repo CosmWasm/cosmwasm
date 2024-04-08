@@ -41,15 +41,15 @@ pub struct IbcCallbackData {
     #[serde(skip_serializing_if = "Option::is_none")]
     src_callback: Option<IbcSrcCallback>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    dst_callback: Option<IbcDstCallback>,
+    dest_callback: Option<IbcDstCallback>,
 }
 
 impl IbcCallbackData {
     /// Use this if you want to execute callbacks on both the source and destination chain.
-    pub fn both(src_callback: IbcSrcCallback, dst_callback: IbcDstCallback) -> Self {
+    pub fn both(src_callback: IbcSrcCallback, dest_callback: IbcDstCallback) -> Self {
         IbcCallbackData {
             src_callback: Some(src_callback),
-            dst_callback: Some(dst_callback),
+            dest_callback: Some(dest_callback),
         }
     }
 
@@ -57,15 +57,15 @@ impl IbcCallbackData {
     pub fn source(src_callback: IbcSrcCallback) -> Self {
         IbcCallbackData {
             src_callback: Some(src_callback),
-            dst_callback: None,
+            dest_callback: None,
         }
     }
 
     /// Use this if you want to execute callbacks on the destination chain, but not the source chain.
-    pub fn destination(dst_callback: IbcDstCallback) -> Self {
+    pub fn destination(dest_callback: IbcDstCallback) -> Self {
         IbcCallbackData {
             src_callback: None,
-            dst_callback: Some(dst_callback),
+            dest_callback: Some(dest_callback),
         }
     }
 }
@@ -154,19 +154,19 @@ mod tests {
         let json = to_json_string(&data).unwrap();
         assert_eq!(
             json,
-            r#"{"src_callback":{"address":"src_address","gas_limit":"123"},"dst_callback":{"address":"dst_address","gas_limit":"1234"}}"#
+            r#"{"src_callback":{"address":"src_address","gas_limit":"123"},"dest_callback":{"address":"dst_address","gas_limit":"1234"}}"#
         );
 
         // dst only, without gas limit
         let mut src = data.src_callback.take().unwrap();
-        data.dst_callback.as_mut().unwrap().gas_limit = None;
+        data.dest_callback.as_mut().unwrap().gas_limit = None;
         let json = to_json_string(&data).unwrap();
-        assert_eq!(json, r#"{"dst_callback":{"address":"dst_address"}}"#);
+        assert_eq!(json, r#"{"dest_callback":{"address":"dst_address"}}"#);
 
         // source only, without gas limit
         src.gas_limit = None;
         data.src_callback = Some(src);
-        data.dst_callback = None;
+        data.dest_callback = None;
         let json = to_json_string(&data).unwrap();
         assert_eq!(json, r#"{"src_callback":{"address":"src_address"}}"#);
     }
