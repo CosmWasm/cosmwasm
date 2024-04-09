@@ -431,7 +431,7 @@ jobs:
       - run:
           name: Test
           working_directory: ~/project/packages/vm
-          command: cargo nextest run --locked && cargo test --doc --locked 
+          command: cargo nextest run --locked && cargo test --doc --locked
       - run:
           name: Test with all features
           working_directory: ~/project/packages/vm
