@@ -177,16 +177,16 @@ jobs:
       - run:
           name: "packages/crypto: test"
           working_directory: ~/project/packages/crypto
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - run:
           name: "packages/std: test"
           working_directory: ~/project/packages/std
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - run:
           name: "packages/vm: test"
           working_directory: ~/project/packages/vm
           # use all features
-          command: cargo nextest run --locked --features iterator,staking,stargate
+          command: cargo nextest run --locked --features iterator,staking,stargate  && cargo test --doc --locked --features iterator,staking,stargate
       - save_cache:
           key: v4-arm64-workspace-rust:1.73-{{ checksum "Cargo.lock" }}
           paths:
@@ -255,7 +255,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/crypto
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -285,7 +285,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/check
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -315,7 +315,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/schema
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -345,7 +345,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/schema-derive
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -385,7 +385,7 @@ jobs:
       - run:
           name: Run unit tests (no features)
           working_directory: ~/project/packages/std
-          command: cargo nextest run --locked --no-default-features --features std
+          command: cargo nextest run --locked --no-default-features --features std && cargo test --doc --locked --no-default-features --features std
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
@@ -397,7 +397,7 @@ jobs:
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo nextest run --locked --features abort,iterator,staking,stargate,cosmwasm_2_0
+          command: cargo nextest run --locked --features abort,iterator,staking,stargate,cosmwasm_2_0 && cargo test --doc --locked --features abort,iterator,staking,stargate,cosmwasm_2_0
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -431,11 +431,11 @@ jobs:
       - run:
           name: Test
           working_directory: ~/project/packages/vm
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked 
       - run:
           name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo nextest run --locked --features iterator,staking,stargate
+          command: cargo nextest run --locked --features iterator,staking,stargate && cargo test --doc --locked --features iterator,staking,stargate
       - run:
           name: Test multi threaded cache
           working_directory: ~/project/packages/vm
@@ -483,11 +483,11 @@ jobs:
       - run:
           name: Test
           working_directory: ~/project/packages/vm
-          command: cargo nextest run --locked
+          command: cargo nextest run --locked && cargo test --doc --locked
       - run:
           name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo nextest run --locked --features iterator,staking,stargate
+          command: cargo nextest run --locked --features iterator,staking,stargate && cargo test --doc --locked --features iterator,staking,stargate
       - save_cache:
           paths:
             # ".." is the easiest way to get $HOME here (pwd is $HOME\project)
@@ -1025,6 +1025,7 @@ jobs:
           command: |
             mkdir -p reports
             cargo nextest run
+            cargo test --doc
 
             grcov . -s packages/crypto --binary-path ./target/debug -t lcov -o ./reports/crypto.info
             grcov . -s packages/derive --binary-path ./target/debug -t lcov -o ./reports/derive.info
