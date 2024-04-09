@@ -67,33 +67,52 @@ impl Timestamp {
         Timestamp(nanos)
     }
 
+    /// Subtracts the given amount of days from the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result is not >= 0. I.e. times before epoch cannot be represented.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn minus_days(&self, subtrahend: u64) -> Timestamp {
         self.minus_hours(subtrahend * 24)
     }
 
+    /// Subtracts the given amount of hours from the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result is not >= 0. I.e. times before epoch cannot be represented.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn minus_hours(&self, subtrahend: u64) -> Timestamp {
         self.minus_minutes(subtrahend * 60)
     }
 
+    /// Subtracts the given amount of minutes from the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result is not >= 0. I.e. times before epoch cannot be represented.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn minus_minutes(&self, subtrahend: u64) -> Timestamp {
         self.minus_seconds(subtrahend * 60)
     }
 
+    /// Subtracts the given amount of seconds from the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result is not >= 0. I.e. times before epoch cannot be represented.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn minus_seconds(&self, subtrahend: u64) -> Timestamp {
         self.minus_nanos(subtrahend * 1_000_000_000)
     }
 
+    /// Subtracts the given amount of nanoseconds from the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result is not >= 0. I.e. times before epoch cannot be represented.
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn minus_nanos(&self, subtrahend: u64) -> Timestamp {
-        let nanos = Uint64::new(self.0.u64() - subtrahend);
-        Timestamp(nanos)
+        Timestamp(self.0.panicking_sub(Uint64::new(subtrahend)))
     }
 
     /// Returns nanoseconds since epoch
