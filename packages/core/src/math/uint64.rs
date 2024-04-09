@@ -1,17 +1,16 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, StdError,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, CoreError, DivideByZeroError,
+    OverflowError, OverflowOperation,
 };
-use crate::prelude::*;
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
     forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
 };
@@ -35,8 +34,9 @@ use super::num_consts::NumConsts;
 /// let b = Uint64::from(70u32);
 /// assert_eq!(b.u64(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Uint64(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);
 
@@ -313,12 +313,12 @@ forward_try_from!(Int256, Uint64);
 forward_try_from!(Int512, Uint64);
 
 impl TryFrom<&str> for Uint64 {
-    type Error = StdError;
+    type Error = CoreError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u64>() {
             Ok(u) => Ok(Uint64(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u64: {e}"))),
+            Err(e) => Err(CoreError::generic_err(format!("Parsing u64: {e}"))),
         }
     }
 }
@@ -557,7 +557,7 @@ impl<'de> de::Visitor<'de> for Uint64Visitor {
     {
         match v.parse::<u64>() {
             Ok(u) => Ok(Uint64(u)),
-            Err(e) => Err(E::custom(format!("invalid Uint64 '{v}' - {e}"))),
+            Err(e) => Err(E::custom(format_args!("invalid Uint64 '{v}' - {e}"))),
         }
     }
 }
@@ -576,7 +576,9 @@ mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
     use crate::math::conversion::test_try_from_int_to_uint;
-    use crate::{from_json, to_json_vec, ConversionOverflowError};
+    use crate::ConversionOverflowError;
+
+    use alloc::string::ToString;
 
     #[test]
     fn size_of_works() {
@@ -707,9 +709,9 @@ mod tests {
     #[test]
     fn uint64_json() {
         let orig = Uint64(1234567890987654321);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Uint64 = from_json(serialized).unwrap();
+        let parsed: Uint64 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

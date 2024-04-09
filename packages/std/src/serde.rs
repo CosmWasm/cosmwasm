@@ -2,12 +2,12 @@
 // The reason is two fold:
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
+
 use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::binary::Binary;
-use crate::errors::{StdError, StdResult};
-use crate::prelude::*;
+use crate::Binary;
+use crate::{StdError, StdResult};
 
 #[deprecated = "use from_json instead"]
 pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {

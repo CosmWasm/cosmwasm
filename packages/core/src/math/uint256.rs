@@ -1,18 +1,17 @@
+use alloc::string::{String, ToString};
 use core::fmt;
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
-    DivideByZeroError, OverflowError, OverflowOperation, StdError,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError, CoreError,
+    DivideByZeroError, OverflowError, OverflowOperation,
 };
-use crate::prelude::*;
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
     forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
     Uint512, Uint64,
@@ -45,8 +44,9 @@ use super::num_consts::NumConsts;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Uint256(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) U256);
 
 forward_ref_partial_eq!(Uint256, Uint256);
 
@@ -402,7 +402,7 @@ try_from_int_to_uint!(Int256, Uint256);
 try_from_int_to_uint!(Int512, Uint256);
 
 impl TryFrom<&str> for Uint256 {
-    type Error = StdError;
+    type Error = CoreError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -410,16 +410,18 @@ impl TryFrom<&str> for Uint256 {
 }
 
 impl FromStr for Uint256 {
-    type Err = StdError;
+    type Err = CoreError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.is_empty() {
-            return Err(StdError::generic_err("Parsing u256: received empty string"));
+            return Err(CoreError::generic_err(
+                "Parsing u256: received empty string",
+            ));
         }
 
         match U256::from_str_radix(s, 10) {
             Ok(u) => Ok(Uint256(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {e}"))),
+            Err(e) => Err(CoreError::generic_err(format!("Parsing u256: {e}"))),
         }
     }
 }
@@ -655,7 +657,7 @@ impl<'de> de::Visitor<'de> for Uint256Visitor {
     where
         E: de::Error,
     {
-        Uint256::try_from(v).map_err(|e| E::custom(format!("invalid Uint256 '{v}' - {e}")))
+        Uint256::try_from(v).map_err(|e| E::custom(format_args!("invalid Uint256 '{v}' - {e}")))
     }
 }
 
@@ -673,7 +675,7 @@ mod tests {
     use super::*;
     use crate::errors::CheckedMultiplyFractionError::{ConversionOverflow, DivideByZero};
     use crate::math::conversion::test_try_from_int_to_uint;
-    use crate::{from_json, to_json_vec, Decimal, Decimal256};
+    use crate::{Decimal, Decimal256};
 
     #[test]
     fn size_of_works() {
@@ -1295,9 +1297,9 @@ mod tests {
     #[test]
     fn uint256_json() {
         let orig = Uint256::from(1234567890987654321u128);
-        let serialized = to_json_vec(&orig).unwrap();
+        let serialized = serde_json::to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
-        let parsed: Uint256 = from_json(serialized).unwrap();
+        let parsed: Uint256 = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
     }
 

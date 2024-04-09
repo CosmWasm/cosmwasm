@@ -1,19 +1,18 @@
 #![allow(deprecated)]
 
 use core::fmt;
-use derivative::Derivative;
+use derive_more::Debug;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::binary::Binary;
 use crate::coin::Coin;
-use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
 use crate::prelude::*;
-use crate::serde::to_json_binary;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 use crate::Decimal;
+use crate::StdResult;
+use crate::{to_json_binary, Binary};
 
 use super::Empty;
 
@@ -140,10 +139,14 @@ pub struct AnyMsg {
     pub value: Binary,
 }
 
-fn binary_to_string(data: &Binary, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
-    match core::str::from_utf8(data.as_slice()) {
-        Ok(s) => fmt.write_str(s),
-        Err(_) => fmt::Debug::fmt(data, fmt),
+struct BinaryToStringEncoder<'a>(&'a Binary);
+
+impl fmt::Display for BinaryToStringEncoder<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match core::str::from_utf8(self.0.as_slice()) {
+            Ok(s) => f.write_str(s),
+            Err(_) => fmt::Debug::fmt(self.0, f),
+        }
     }
 }
 
@@ -151,8 +154,7 @@ fn binary_to_string(data: &Binary, fmt: &mut core::fmt::Formatter) -> core::fmt:
 ///
 /// See https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Derivative, PartialEq, Eq, JsonSchema)]
-#[derivative(Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum WasmMsg {
     /// Dispatches a call to another contract at a known address (with known ABI).
@@ -162,7 +164,7 @@ pub enum WasmMsg {
     Execute {
         contract_addr: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[debug("{}", BinaryToStringEncoder(msg))]
         msg: Binary,
         funds: Vec<Coin>,
     },
@@ -179,7 +181,7 @@ pub enum WasmMsg {
         admin: Option<String>,
         code_id: u64,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[debug("{}", BinaryToStringEncoder(msg))]
         msg: Binary,
         funds: Vec<Coin>,
         /// A human-readable label for the contract.
@@ -209,7 +211,7 @@ pub enum WasmMsg {
         /// - not start / end with whitespace
         label: String,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[debug("{}", BinaryToStringEncoder(msg))]
         msg: Binary,
         funds: Vec<Coin>,
         salt: Binary,
@@ -226,7 +228,7 @@ pub enum WasmMsg {
         /// the code_id of the new logic to place in the given contract
         new_code_id: u64,
         /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
-        #[derivative(Debug(format_with = "binary_to_string"))]
+        #[debug("{}", BinaryToStringEncoder(msg))]
         msg: Binary,
     },
     /// Sets a new admin (for migrate) on the given contract.

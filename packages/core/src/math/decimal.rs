@@ -1,17 +1,16 @@
+use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
 use core::str::FromStr;
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
+use derive_more::Display;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use thiserror::Error;
 
 use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, RoundUpOverflowError, StdError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, CoreError, DivideByZeroError, OverflowError,
+    OverflowOperation, RoundUpOverflowError,
 };
-use crate::prelude::*;
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{forward_ref_partial_eq, Decimal256, SignedDecimal, SignedDecimal256};
 
 use super::Fraction;
@@ -21,13 +20,15 @@ use super::{Uint128, Uint256};
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
 /// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Decimal(#[schemars(with = "String")] Uint128);
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct Decimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Uint128);
 
 forward_ref_partial_eq!(Decimal, Decimal);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("Decimal range exceeded")]
+#[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[display("Decimal range exceeded")]
 pub struct DecimalRangeExceeded;
 
 impl Decimal {
@@ -537,7 +538,7 @@ impl TryFrom<Uint128> for Decimal {
 }
 
 impl FromStr for Decimal {
-    type Err = StdError;
+    type Err = CoreError;
 
     /// Converts the decimal string to a Decimal
     /// Possible inputs: "1.23", "1", "000012", "1.123000000"
@@ -551,18 +552,18 @@ impl FromStr for Decimal {
         let whole_part = parts_iter.next().unwrap(); // split always returns at least one element
         let whole = whole_part
             .parse::<Uint128>()
-            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
+            .map_err(|_| CoreError::generic_err("Error parsing whole"))?;
         let mut atomics = whole
             .checked_mul(Self::DECIMAL_FRACTIONAL)
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+            .map_err(|_| CoreError::generic_err("Value too big"))?;
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part
                 .parse::<Uint128>()
-                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+                .map_err(|_| CoreError::generic_err("Error parsing fractional"))?;
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
-                    StdError::generic_err(format!(
+                    CoreError::generic_err(format!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
@@ -576,11 +577,11 @@ impl FromStr for Decimal {
                     // fractional < 10^DECIMAL_PLACES && fractional_factor <= 10^DECIMAL_PLACES
                     fractional.checked_mul(fractional_factor).unwrap(),
                 )
-                .map_err(|_| StdError::generic_err("Value too big"))?;
+                .map_err(|_| CoreError::generic_err("Value too big"))?;
         }
 
         if parts_iter.next().is_some() {
-            return Err(StdError::generic_err("Unexpected number of dots"));
+            return Err(CoreError::generic_err("Unexpected number of dots"));
         }
 
         Ok(Decimal(atomics))
@@ -775,7 +776,7 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
     {
         match Decimal::from_str(v) {
             Ok(d) => Ok(d),
-            Err(e) => Err(E::custom(format!("Error parsing decimal '{v}': {e}"))),
+            Err(e) => Err(E::custom(format_args!("Error parsing decimal '{v}': {e}"))),
         }
     }
 }
@@ -783,7 +784,8 @@ impl<'de> de::Visitor<'de> for DecimalVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec};
+
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> Decimal {
         Decimal::from_str(input).unwrap()
@@ -1090,17 +1092,17 @@ mod tests {
     #[test]
     fn decimal_from_str_errors_for_broken_whole_part() {
         match Decimal::from_str("").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str(" ").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("-1").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
             e => panic!("Unexpected error: {e:?}"),
         }
     }
@@ -1108,22 +1110,22 @@ mod tests {
     #[test]
     fn decimal_from_str_errors_for_broken_fractional_part() {
         match Decimal::from_str("1.").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1. ").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1.e").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1.2e3").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
             e => panic!("Unexpected error: {e:?}"),
         }
     }
@@ -1131,7 +1133,7 @@ mod tests {
     #[test]
     fn decimal_from_str_errors_for_more_than_18_fractional_digits() {
         match Decimal::from_str("7.1234567890123456789").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
+            CoreError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits",)
             }
             e => panic!("Unexpected error: {e:?}"),
@@ -1139,7 +1141,7 @@ mod tests {
 
         // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
         match Decimal::from_str("7.1230000000000000000").unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
+            CoreError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "Cannot parse more than 18 fractional digits")
             }
             e => panic!("Unexpected error: {e:?}"),
@@ -1149,12 +1151,12 @@ mod tests {
     #[test]
     fn decimal_from_str_errors_for_invalid_number_of_dots() {
         match Decimal::from_str("1.2.3").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         match Decimal::from_str("1.2.3.4").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
             e => panic!("Unexpected error: {e:?}"),
         }
     }
@@ -1163,17 +1165,17 @@ mod tests {
     fn decimal_from_str_errors_for_more_than_max_value() {
         // Integer
         match Decimal::from_str("340282366920938463464").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
 
         // Decimal
         match Decimal::from_str("340282366920938463464.0").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
         match Decimal::from_str("340282366920938463463.374607431768211456").unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
             e => panic!("Unexpected error: {e:?}"),
         }
     }
@@ -1899,35 +1901,59 @@ mod tests {
 
     #[test]
     fn decimal_serialize() {
-        assert_eq!(to_json_vec(&Decimal::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_json_vec(&Decimal::one()).unwrap(), br#""1""#);
-        assert_eq!(to_json_vec(&Decimal::percent(8)).unwrap(), br#""0.08""#);
-        assert_eq!(to_json_vec(&Decimal::percent(87)).unwrap(), br#""0.87""#);
-        assert_eq!(to_json_vec(&Decimal::percent(876)).unwrap(), br#""8.76""#);
-        assert_eq!(to_json_vec(&Decimal::percent(8765)).unwrap(), br#""87.65""#);
+        assert_eq!(serde_json::to_vec(&Decimal::zero()).unwrap(), br#""0""#);
+        assert_eq!(serde_json::to_vec(&Decimal::one()).unwrap(), br#""1""#);
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(8)).unwrap(),
+            br#""0.08""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(87)).unwrap(),
+            br#""0.87""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(876)).unwrap(),
+            br#""8.76""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&Decimal::percent(8765)).unwrap(),
+            br#""87.65""#
+        );
     }
 
     #[test]
     fn decimal_deserialize() {
-        assert_eq!(from_json::<Decimal>(br#""0""#).unwrap(), Decimal::zero());
-        assert_eq!(from_json::<Decimal>(br#""1""#).unwrap(), Decimal::one());
-        assert_eq!(from_json::<Decimal>(br#""000""#).unwrap(), Decimal::zero());
-        assert_eq!(from_json::<Decimal>(br#""001""#).unwrap(), Decimal::one());
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""0""#).unwrap(),
+            Decimal::zero()
+        );
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""1""#).unwrap(),
+            Decimal::one()
+        );
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""000""#).unwrap(),
+            Decimal::zero()
+        );
+        assert_eq!(
+            serde_json::from_slice::<Decimal>(br#""001""#).unwrap(),
+            Decimal::one()
+        );
 
         assert_eq!(
-            from_json::<Decimal>(br#""0.08""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""0.08""#).unwrap(),
             Decimal::percent(8)
         );
         assert_eq!(
-            from_json::<Decimal>(br#""0.87""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""0.87""#).unwrap(),
             Decimal::percent(87)
         );
         assert_eq!(
-            from_json::<Decimal>(br#""8.76""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""8.76""#).unwrap(),
             Decimal::percent(876)
         );
         assert_eq!(
-            from_json::<Decimal>(br#""87.65""#).unwrap(),
+            serde_json::from_slice::<Decimal>(br#""87.65""#).unwrap(),
             Decimal::percent(8765)
         );
     }

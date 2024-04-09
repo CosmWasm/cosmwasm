@@ -1,18 +1,17 @@
 // The CosmosMsg variants are defined in results/cosmos_msg.rs
 // The rest of the IBC related functionality is defined here
 
-use core::cmp::Ordering;
+use core::cmp::{Ord, Ordering, PartialOrd};
+use cosmwasm_core::Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::Addr;
-use crate::binary::Binary;
 use crate::coin::Coin;
-use crate::errors::StdResult;
 use crate::prelude::*;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
-use crate::serde::to_json_binary;
 use crate::timestamp::Timestamp;
+use crate::StdResult;
+use crate::{to_json_binary, Binary};
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)

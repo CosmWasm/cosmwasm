@@ -12,13 +12,15 @@ readme = "README.md"
 features = ["abort", "stargate", "staking", "cosmwasm_2_0"]
 
 [features]
-default = ["iterator", "abort", "std"]
+default = ["iterator", "abort"]
 abort = []
-# This feature can be used in the future to provide support for no_std environments,
-# but disabling it will not provide any benefit at the moment. Even with this feature disabled,
-# we currently require an std environment.
-# You probably want to keep this enabled for now to avoid possible breaking changes later.
-std = ["serde/std", "serde-json-wasm/std"]
+# LEGACY. REMOVE NEXT BREAKING RELEASE.
+#
+# This feature is unused. This library is not intended to run without the `std` library.
+# Use `cosmwasm-core` instead if you *really* need a `no_std` environment.
+#
+# If you need any types exclusive to `cosmwasm-std` in a `no_std` environment, open an issue to discuss moving it to `cosmwasm-core`.
+std = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
@@ -56,22 +58,22 @@ cosmwasm_2_1 = ["cosmwasm_2_0"]
 [dependencies]
 base64 = "0.22.0"
 cosmwasm-derive = { version = "2.0.1", path = "../derive" }
-derivative = { version = "2", features = ["use_core"] }
-forward_ref = "1"
+cosmwasm-core = { path = "../core", version = "2.0.1", features = ["std"] }
+derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["debug"] }
 hex = "0.4"
 schemars = { workspace = true }
 sha2 = "0.10.3"
-serde = { workspace = true }
-serde-json-wasm = { version = "1.0.1", default-features = false }
+serde = { workspace = true, features = ["std"] }
+serde-json-wasm = { version = "1.0.1", default-features = false, features = ["std"] }
 thiserror = "1.0.26"
-bnum = "0.11.0"
-static_assertions = "1.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.11.0"
 cosmwasm-crypto = { version = "2.0.1", path = "../crypto" }
+rand_core = { version = "0.6.4", features = ["getrandom"] }
 
 [dev-dependencies]
+cosmwasm-core = { path = "../core", version = "2.0.1" }
 cosmwasm-schema = { version = "2.0.1", path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }

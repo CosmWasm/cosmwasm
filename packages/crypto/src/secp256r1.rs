@@ -1,3 +1,5 @@
+use alloc::{string::ToString, vec::Vec};
+use core::convert::TryInto;
 use digest::{Digest, Update}; // trait
 use ecdsa::RecoveryId;
 use p256::{
@@ -144,6 +146,9 @@ mod tests {
     use std::fs::File;
     use std::io::BufReader;
 
+    use crate::secp256r1_recover_pubkey;
+    use alloc::string::String;
+    use ecdsa::RecoveryId;
     use p256::{
         ecdsa::signature::DigestSigner, ecdsa::SigningKey, elliptic_curve::rand_core::OsRng,
     };

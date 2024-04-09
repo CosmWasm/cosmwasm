@@ -7,23 +7,21 @@ use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
+use cosmwasm_core::{Addr, CanonicalAddr};
+use rand_core::OsRng;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-use crate::addresses::{Addr, CanonicalAddr};
-use crate::binary::Binary;
 use crate::coin::Coin;
 use crate::deps::OwnedDeps;
-use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
-use crate::math::Uint128;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -37,11 +35,11 @@ use crate::query::{
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::serde::{from_json, to_json_binary};
 use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
+use crate::{from_json, to_json_binary, Binary, Uint128};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
     query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},
@@ -52,6 +50,7 @@ use crate::{Attribute, DenomMetadata};
 use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
+use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -219,6 +218,7 @@ impl Api for MockApi {
         public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError> {
         Ok(cosmwasm_crypto::ed25519_batch_verify(
+            &mut OsRng,
             messages,
             signatures,
             public_keys,
@@ -226,7 +226,6 @@ impl Api for MockApi {
     }
 
     fn debug(&self, #[allow(unused)] message: &str) {
-        #[cfg(feature = "std")]
         println!("{message}");
     }
 }
@@ -2457,7 +2456,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "cosmwasm_1_3", feature = "std"))]
+    #[cfg(feature = "cosmwasm_1_3")]
     fn distribution_querier_new_works() {
         let addresses = [
             ("addr0000".to_string(), "addr0001".to_string()),

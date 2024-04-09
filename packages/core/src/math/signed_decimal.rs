@@ -1,19 +1,18 @@
+use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
+use derive_more::Display;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use thiserror::Error;
 
 use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, CoreError, DivideByZeroError, OverflowError,
+    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError,
 };
-use crate::prelude::*;
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{forward_ref_partial_eq, Decimal, Decimal256, Int256, SignedDecimal256};
 
 use super::Fraction;
@@ -23,13 +22,15 @@ use super::Int128;
 ///
 /// The greatest possible value that can be represented is 170141183460469231731.687303715884105727 (which is (2^127 - 1) / 10^18)
 /// and the smallest is -170141183460469231731.687303715884105728 (which is -2^127 / 10^18).
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct SignedDecimal(#[schemars(with = "String")] Int128);
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct SignedDecimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Int128);
 
 forward_ref_partial_eq!(SignedDecimal, SignedDecimal);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("SignedDecimal range exceeded")]
+#[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[display("SignedDecimal range exceeded")]
 pub struct SignedDecimalRangeExceeded;
 
 impl SignedDecimal {
@@ -648,7 +649,7 @@ impl TryFrom<Int128> for SignedDecimal {
 }
 
 impl FromStr for SignedDecimal {
-    type Err = StdError;
+    type Err = CoreError;
 
     /// Converts the decimal string to a SignedDecimal
     /// Possible inputs: "1.23", "1", "000012", "1.123000000", "-1.12300"
@@ -664,18 +665,18 @@ impl FromStr for SignedDecimal {
 
         let whole = whole_part
             .parse::<Int128>()
-            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
+            .map_err(|_| CoreError::generic_err("Error parsing whole"))?;
         let mut atomics = whole
             .checked_mul(Self::DECIMAL_FRACTIONAL)
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+            .map_err(|_| CoreError::generic_err("Value too big"))?;
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part
                 .parse::<u64>() // u64 is enough for 18 decimal places
-                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+                .map_err(|_| CoreError::generic_err("Error parsing fractional"))?;
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
-                    StdError::generic_err(format!(
+                    CoreError::generic_err(format!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
@@ -696,11 +697,11 @@ impl FromStr for SignedDecimal {
             } else {
                 atomics.checked_add(fractional_part)
             }
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+            .map_err(|_| CoreError::generic_err("Value too big"))?;
         }
 
         if parts_iter.next().is_some() {
-            return Err(StdError::generic_err("Unexpected number of dots"));
+            return Err(CoreError::generic_err("Unexpected number of dots"));
         }
 
         Ok(SignedDecimal(atomics))
@@ -900,7 +901,7 @@ impl<'de> de::Visitor<'de> for SignedDecimalVisitor {
     {
         match SignedDecimal::from_str(v) {
             Ok(d) => Ok(d),
-            Err(e) => Err(E::custom(format!("Error parsing decimal '{v}': {e}"))),
+            Err(e) => Err(E::custom(format_args!("Error parsing decimal '{v}': {e}"))),
         }
     }
 }
@@ -908,8 +909,8 @@ impl<'de> de::Visitor<'de> for SignedDecimalVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec};
-    use schemars::schema_for;
+
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> SignedDecimal {
         SignedDecimal::from_str(input).unwrap()
@@ -1357,7 +1358,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_broken_whole_part() {
-        let expected_err = StdError::generic_err("Error parsing whole");
+        let expected_err = CoreError::generic_err("Error parsing whole");
         assert_eq!(SignedDecimal::from_str("").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str(" ").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str("-").unwrap_err(), expected_err);
@@ -1365,7 +1366,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_broken_fractional_part() {
-        let expected_err = StdError::generic_err("Error parsing fractional");
+        let expected_err = CoreError::generic_err("Error parsing fractional");
         assert_eq!(SignedDecimal::from_str("1.").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str("1. ").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str("1.e").unwrap_err(), expected_err);
@@ -1375,7 +1376,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_more_than_18_fractional_digits() {
-        let expected_err = StdError::generic_err("Cannot parse more than 18 fractional digits");
+        let expected_err = CoreError::generic_err("Cannot parse more than 18 fractional digits");
         assert_eq!(
             SignedDecimal::from_str("7.1234567890123456789").unwrap_err(),
             expected_err
@@ -1389,7 +1390,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_invalid_number_of_dots() {
-        let expected_err = StdError::generic_err("Unexpected number of dots");
+        let expected_err = CoreError::generic_err("Unexpected number of dots");
         assert_eq!(SignedDecimal::from_str("1.2.3").unwrap_err(), expected_err);
         assert_eq!(
             SignedDecimal::from_str("1.2.3.4").unwrap_err(),
@@ -1399,7 +1400,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_more_than_max_value() {
-        let expected_err = StdError::generic_err("Value too big");
+        let expected_err = CoreError::generic_err("Value too big");
         // Integer
         assert_eq!(
             SignedDecimal::from_str("170141183460469231732").unwrap_err(),
@@ -2439,34 +2440,40 @@ mod tests {
 
     #[test]
     fn signed_decimal_serialize() {
-        assert_eq!(to_json_vec(&SignedDecimal::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_json_vec(&SignedDecimal::one()).unwrap(), br#""1""#);
         assert_eq!(
-            to_json_vec(&SignedDecimal::percent(8)).unwrap(),
+            serde_json::to_vec(&SignedDecimal::zero()).unwrap(),
+            br#""0""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&SignedDecimal::one()).unwrap(),
+            br#""1""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&SignedDecimal::percent(8)).unwrap(),
             br#""0.08""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal::percent(87)).unwrap(),
+            serde_json::to_vec(&SignedDecimal::percent(87)).unwrap(),
             br#""0.87""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal::percent(876)).unwrap(),
+            serde_json::to_vec(&SignedDecimal::percent(876)).unwrap(),
             br#""8.76""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal::percent(8765)).unwrap(),
+            serde_json::to_vec(&SignedDecimal::percent(8765)).unwrap(),
             br#""87.65""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal::percent(-87654)).unwrap(),
+            serde_json::to_vec(&SignedDecimal::percent(-87654)).unwrap(),
             br#""-876.54""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal::negative_one()).unwrap(),
+            serde_json::to_vec(&SignedDecimal::negative_one()).unwrap(),
             br#""-1""#
         );
         assert_eq!(
-            to_json_vec(&-SignedDecimal::percent(8)).unwrap(),
+            serde_json::to_vec(&-SignedDecimal::percent(8)).unwrap(),
             br#""-0.08""#
         );
     }
@@ -2474,54 +2481,54 @@ mod tests {
     #[test]
     fn signed_decimal_deserialize() {
         assert_eq!(
-            from_json::<SignedDecimal>(br#""0""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""0""#).unwrap(),
             SignedDecimal::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""1""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""1""#).unwrap(),
             SignedDecimal::one()
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""000""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""000""#).unwrap(),
             SignedDecimal::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""001""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""001""#).unwrap(),
             SignedDecimal::one()
         );
 
         assert_eq!(
-            from_json::<SignedDecimal>(br#""0.08""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""0.08""#).unwrap(),
             SignedDecimal::percent(8)
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""0.87""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""0.87""#).unwrap(),
             SignedDecimal::percent(87)
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""8.76""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""8.76""#).unwrap(),
             SignedDecimal::percent(876)
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""87.65""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""87.65""#).unwrap(),
             SignedDecimal::percent(8765)
         );
 
         // negative numbers
         assert_eq!(
-            from_json::<SignedDecimal>(br#""-0""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""-0""#).unwrap(),
             SignedDecimal::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""-1""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""-1""#).unwrap(),
             SignedDecimal::negative_one()
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""-001""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""-001""#).unwrap(),
             SignedDecimal::negative_one()
         );
         assert_eq!(
-            from_json::<SignedDecimal>(br#""-0.08""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal>(br#""-0.08""#).unwrap(),
             SignedDecimal::percent(-8)
         );
     }
@@ -3091,8 +3098,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn signed_decimal_has_defined_json_schema() {
-        let schema = schema_for!(SignedDecimal);
+        let schema = schemars::schema_for!(SignedDecimal);
         assert_eq!(
             "SignedDecimal",
             schema.schema.metadata.unwrap().title.unwrap()

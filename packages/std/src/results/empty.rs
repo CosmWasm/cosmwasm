@@ -1,8 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::*;
-
 /// An empty struct that serves as a placeholder in different places,
 /// such as contracts that don't set a custom message.
 ///
@@ -16,7 +14,7 @@ pub struct Empty {}
 mod tests {
     use super::*;
 
-    use crate::serde::{from_json, to_json_vec};
+    use crate::{from_json, to_json_vec};
 
     #[test]
     fn empty_can_be_instantiated() {

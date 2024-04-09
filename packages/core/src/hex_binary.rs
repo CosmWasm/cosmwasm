@@ -1,28 +1,30 @@
+use alloc::{string::String, vec::Vec};
 use core::fmt;
 use core::ops::Deref;
 
-use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::prelude::*;
-use crate::{Binary, StdError, StdResult};
+use crate::{
+    encoding::{from_hex, to_hex},
+    Binary, CoreError, CoreResult,
+};
 
 /// This is a wrapper around Vec<u8> to add hex de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
-pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct HexBinary(#[cfg_attr(feature = "std", schemars(with = "String"))] Vec<u8>);
 
 impl HexBinary {
-    pub fn from_hex(input: &str) -> StdResult<Self> {
-        let vec = hex::decode(input).map_err(StdError::invalid_hex)?;
-        Ok(Self(vec))
+    pub fn from_hex(input: &str) -> CoreResult<Self> {
+        from_hex(input).map(Self)
     }
 
     pub fn to_hex(&self) -> String {
-        hex::encode(&self.0)
+        to_hex(&self.0)
     }
 
     pub fn as_slice(&self) -> &[u8] {
@@ -50,9 +52,9 @@ impl HexBinary {
     /// let num = u64::from_be_bytes(data.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
     /// ```
-    pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
+    pub fn to_array<const LENGTH: usize>(&self) -> CoreResult<[u8; LENGTH]> {
         if self.len() != LENGTH {
-            return Err(StdError::invalid_data_size(LENGTH, self.len()));
+            return Err(CoreError::invalid_data_size(LENGTH, self.len()));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];
@@ -248,7 +250,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 mod tests {
     use super::*;
 
-    use crate::{assert_hash_works, from_json, to_json_vec};
+    use crate::{assert_hash_works, CoreError};
 
     #[test]
     fn from_hex_works() {
@@ -268,21 +270,21 @@ mod tests {
 
         // odd
         match HexBinary::from_hex("123").unwrap_err() {
-            StdError::InvalidHex { msg, .. } => {
+            CoreError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Odd number of digits")
             }
             _ => panic!("Unexpected error type"),
         }
         // non-hex
         match HexBinary::from_hex("efgh").unwrap_err() {
-            StdError::InvalidHex { msg, .. } => {
+            CoreError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Invalid character 'g' at position 2")
             }
             _ => panic!("Unexpected error type"),
         }
         // 0x prefixed
         match HexBinary::from_hex("0xaa").unwrap_err() {
-            StdError::InvalidHex { msg, .. } => {
+            CoreError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Invalid character 'x' at position 1")
             }
             _ => panic!("Unexpected error type"),
@@ -290,19 +292,19 @@ mod tests {
         // spaces
         assert!(matches!(
             HexBinary::from_hex("aa ").unwrap_err(),
-            StdError::InvalidHex { .. }
+            CoreError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex(" aa").unwrap_err(),
-            StdError::InvalidHex { .. }
+            CoreError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex("a a").unwrap_err(),
-            StdError::InvalidHex { .. }
+            CoreError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex(" aa ").unwrap_err(),
-            StdError::InvalidHex { .. }
+            CoreError::InvalidHex { .. }
         ));
     }
 
@@ -337,7 +339,7 @@ mod tests {
         let binary = HexBinary::from(&[1, 2, 3]);
         let error = binary.to_array::<8>().unwrap_err();
         match error {
-            StdError::InvalidDataSize {
+            CoreError::InvalidDataSize {
                 expected, actual, ..
             } => {
                 assert_eq!(expected, 8);
@@ -516,8 +518,8 @@ mod tests {
     fn serialization_works() {
         let binary = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
 
-        let json = to_json_vec(&binary).unwrap();
-        let deserialized: HexBinary = from_json(json).unwrap();
+        let json = serde_json::to_vec(&binary).unwrap();
+        let deserialized: HexBinary = serde_json::from_slice(&json).unwrap();
 
         assert_eq!(binary, deserialized);
     }
@@ -528,16 +530,16 @@ mod tests {
         // this is the binary behind above string
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
-        let serialized = to_json_vec(&hex).unwrap();
-        let deserialized: HexBinary = from_json(serialized).unwrap();
+        let serialized = serde_json::to_vec(&hex).unwrap();
+        let deserialized: HexBinary = serde_json::from_slice(&serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 
     #[test]
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
-        let serialized = to_json_vec(&invalid_str).unwrap();
-        let res = from_json::<HexBinary>(&serialized);
+        let serialized = serde_json::to_vec(&invalid_str).unwrap();
+        let res = serde_json::from_slice::<HexBinary>(&serialized);
         assert!(res.is_err());
     }
 

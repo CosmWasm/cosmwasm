@@ -1,30 +1,18 @@
+#[macro_use]
 extern crate alloc;
-
-#[cfg(not(feature = "std"))]
-core::compile_error!(
-    r#"Please enable `cosmwasm-std`'s `std` feature, as we might move existing functionality to that feature in the future.
-Builds without the std feature are currently not expected to work. If you need no_std support see #1484.
-"#
-);
 
 // Exposed on all platforms
 
-mod addresses;
 mod assertions;
-mod binary;
 mod checksum;
 mod coin;
 mod coins;
 mod conversion;
 mod deps;
-mod errors;
-mod forward_ref;
-mod hex_binary;
 mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
-mod math;
 mod metadata;
 mod never;
 mod pagination;
@@ -47,19 +35,10 @@ pub(crate) mod prelude;
 /// contract devs to use it directly.
 pub mod storage_keys;
 
-pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
-pub use crate::binary::Binary;
 pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
-pub use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    CoinFromStrError, CoinsError, ConversionOverflowError, DivideByZeroError, DivisionError,
-    OverflowError, OverflowOperation, RecoverPubkeyError, StdError, StdResult, SystemError,
-    VerificationError,
-};
-pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
@@ -69,11 +48,6 @@ pub use crate::ibc::{
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
-pub use crate::math::{
-    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
-    Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
-    SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
-};
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
@@ -133,5 +107,21 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 pub mod testing;
 
 // Re-exports
+
+pub use cosmwasm_core::CoreError as StdError;
+pub use cosmwasm_core::CoreResult as StdResult;
+pub use cosmwasm_core::{
+    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, Binary, CanonicalAddr,
+    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    CoinFromStrError, CoinsError, ConversionOverflowError, Decimal, Decimal256,
+    Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
+    HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
+    OverflowOperation, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
+    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Uint128, Uint256,
+    Uint512, Uint64, VerificationError,
+};
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use cosmwasm_core::assert_approx_eq;
 
 pub use cosmwasm_derive::entry_point;

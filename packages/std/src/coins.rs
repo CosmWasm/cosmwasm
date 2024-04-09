@@ -3,9 +3,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use crate::prelude::*;
-use crate::{
-    errors::CoinsError, Coin, OverflowError, OverflowOperation, StdError, StdResult, Uint128,
-};
+use crate::{Coin, CoinsError, OverflowError, OverflowOperation, StdError, StdResult, Uint128};
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
 ///

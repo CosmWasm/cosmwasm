@@ -1,5 +1,6 @@
-use crate::prelude::*;
 use crate::{Decimal, Uint128};
+
+use alloc::string::String;
 #[cfg(test)]
 use core::hash::{Hash, Hasher};
 use core::str::FromStr as _;

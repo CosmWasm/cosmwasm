@@ -1,22 +1,25 @@
+use alloc::string::String;
+use core::fmt::Debug;
+use derive_more::Display;
+
 use crate::BT;
-use std::fmt::Debug;
-use thiserror::Error;
 
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
-#[derive(Error, Debug)]
+#[derive(Display, Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CryptoError {
-    #[error("Batch verify error: {msg}")]
+    #[display("Batch verify error: {msg}")]
     BatchErr { msg: String, backtrace: BT },
-    #[error("Crypto error: {msg}")]
+    #[display("Crypto error: {msg}")]
     GenericErr { msg: String, backtrace: BT },
-    #[error("Invalid hash format")]
+    #[display("Invalid hash format")]
     InvalidHashFormat { backtrace: BT },
-    #[error("Invalid public key format")]
+    #[display("Invalid public key format")]
     InvalidPubkeyFormat { backtrace: BT },
-    #[error("Invalid signature format")]
+    #[display("Invalid signature format")]
     InvalidSignatureFormat { backtrace: BT },
-    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam { backtrace: BT },
 }
 

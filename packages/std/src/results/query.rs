@@ -1,3 +1,1 @@
-use crate::binary::Binary;
-
-pub type QueryResponse = Binary;
+pub type QueryResponse = cosmwasm_core::Binary;

@@ -1,19 +1,18 @@
+use alloc::string::ToString;
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use schemars::JsonSchema;
+use derive_more::Display;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use thiserror::Error;
 
 use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
-    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, CoreError, DivideByZeroError, OverflowError,
+    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError,
 };
-use crate::prelude::*;
+use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{forward_ref_partial_eq, Decimal, Decimal256, Int512, SignedDecimal};
 
 use super::Fraction;
@@ -28,13 +27,15 @@ use super::Int256;
 /// and the smallest is
 /// -57896044618658097711785492504343953926634992332820282019728.792003956564819968
 /// (which is -2^255 / 10^18).
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct SignedDecimal256(#[schemars(with = "String")] Int256);
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+pub struct SignedDecimal256(#[cfg_attr(feature = "std", schemars(with = "String"))] Int256);
 
 forward_ref_partial_eq!(SignedDecimal256, SignedDecimal256);
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[error("SignedDecimal256 range exceeded")]
+#[derive(Display, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[display("SignedDecimal256 range exceeded")]
 pub struct SignedDecimal256RangeExceeded;
 
 impl SignedDecimal256 {
@@ -649,7 +650,7 @@ impl TryFrom<Int256> for SignedDecimal256 {
 }
 
 impl FromStr for SignedDecimal256 {
-    type Err = StdError;
+    type Err = CoreError;
 
     /// Converts the decimal string to a SignedDecimal256
     /// Possible inputs: "1.23", "1", "000012", "1.123000000", "-1.12300"
@@ -665,18 +666,18 @@ impl FromStr for SignedDecimal256 {
 
         let whole = whole_part
             .parse::<Int256>()
-            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
+            .map_err(|_| CoreError::generic_err("Error parsing whole"))?;
         let mut atomics = whole
             .checked_mul(Self::DECIMAL_FRACTIONAL)
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+            .map_err(|_| CoreError::generic_err("Value too big"))?;
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part
                 .parse::<u64>() // u64 is enough for 18 decimal places
-                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+                .map_err(|_| CoreError::generic_err("Error parsing fractional"))?;
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
-                    StdError::generic_err(format!(
+                    CoreError::generic_err(format!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
@@ -697,11 +698,11 @@ impl FromStr for SignedDecimal256 {
             } else {
                 atomics.checked_add(fractional_part)
             }
-            .map_err(|_| StdError::generic_err("Value too big"))?;
+            .map_err(|_| CoreError::generic_err("Value too big"))?;
         }
 
         if parts_iter.next().is_some() {
-            return Err(StdError::generic_err("Unexpected number of dots"));
+            return Err(CoreError::generic_err("Unexpected number of dots"));
         }
 
         Ok(SignedDecimal256(atomics))
@@ -901,7 +902,7 @@ impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
     {
         match SignedDecimal256::from_str(v) {
             Ok(d) => Ok(d),
-            Err(e) => Err(E::custom(format!("Error parsing decimal '{v}': {e}"))),
+            Err(e) => Err(E::custom(format_args!("Error parsing decimal '{v}': {e}"))),
         }
     }
 }
@@ -909,8 +910,8 @@ impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec};
-    use schemars::schema_for;
+
+    use alloc::vec::Vec;
 
     fn dec(input: &str) -> SignedDecimal256 {
         SignedDecimal256::from_str(input).unwrap()
@@ -1364,7 +1365,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_broken_whole_part() {
-        let expected_err = StdError::generic_err("Error parsing whole");
+        let expected_err = CoreError::generic_err("Error parsing whole");
         assert_eq!(SignedDecimal256::from_str("").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal256::from_str(" ").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal256::from_str("-").unwrap_err(), expected_err);
@@ -1372,7 +1373,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_broken_fractional_part() {
-        let expected_err = StdError::generic_err("Error parsing fractional");
+        let expected_err = CoreError::generic_err("Error parsing fractional");
         assert_eq!(SignedDecimal256::from_str("1.").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal256::from_str("1. ").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal256::from_str("1.e").unwrap_err(), expected_err);
@@ -1388,7 +1389,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_more_than_18_fractional_digits() {
-        let expected_err = StdError::generic_err("Cannot parse more than 18 fractional digits");
+        let expected_err = CoreError::generic_err("Cannot parse more than 18 fractional digits");
         assert_eq!(
             SignedDecimal256::from_str("7.1234567890123456789").unwrap_err(),
             expected_err
@@ -1402,7 +1403,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_invalid_number_of_dots() {
-        let expected_err = StdError::generic_err("Unexpected number of dots");
+        let expected_err = CoreError::generic_err("Unexpected number of dots");
         assert_eq!(
             SignedDecimal256::from_str("1.2.3").unwrap_err(),
             expected_err
@@ -1415,7 +1416,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_from_str_errors_for_more_than_max_value() {
-        let expected_err = StdError::generic_err("Value too big");
+        let expected_err = CoreError::generic_err("Value too big");
         // Integer
         assert_eq!(
             SignedDecimal256::from_str(
@@ -2542,34 +2543,40 @@ mod tests {
 
     #[test]
     fn signed_decimal_256_serialize() {
-        assert_eq!(to_json_vec(&SignedDecimal256::zero()).unwrap(), br#""0""#);
-        assert_eq!(to_json_vec(&SignedDecimal256::one()).unwrap(), br#""1""#);
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(8)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::zero()).unwrap(),
+            br#""0""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&SignedDecimal256::one()).unwrap(),
+            br#""1""#
+        );
+        assert_eq!(
+            serde_json::to_vec(&SignedDecimal256::percent(8)).unwrap(),
             br#""0.08""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(87)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(87)).unwrap(),
             br#""0.87""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(876)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(876)).unwrap(),
             br#""8.76""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(8765)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(8765)).unwrap(),
             br#""87.65""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::percent(-87654)).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::percent(-87654)).unwrap(),
             br#""-876.54""#
         );
         assert_eq!(
-            to_json_vec(&SignedDecimal256::negative_one()).unwrap(),
+            serde_json::to_vec(&SignedDecimal256::negative_one()).unwrap(),
             br#""-1""#
         );
         assert_eq!(
-            to_json_vec(&-SignedDecimal256::percent(8)).unwrap(),
+            serde_json::to_vec(&-SignedDecimal256::percent(8)).unwrap(),
             br#""-0.08""#
         );
     }
@@ -2577,54 +2584,54 @@ mod tests {
     #[test]
     fn signed_decimal_256_deserialize() {
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""0""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""0""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""1""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""1""#).unwrap(),
             SignedDecimal256::one()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""000""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""000""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""001""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""001""#).unwrap(),
             SignedDecimal256::one()
         );
 
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""0.08""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""0.08""#).unwrap(),
             SignedDecimal256::percent(8)
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""0.87""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""0.87""#).unwrap(),
             SignedDecimal256::percent(87)
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""8.76""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""8.76""#).unwrap(),
             SignedDecimal256::percent(876)
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""87.65""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""87.65""#).unwrap(),
             SignedDecimal256::percent(8765)
         );
 
         // negative numbers
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-0""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-0""#).unwrap(),
             SignedDecimal256::zero()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-1""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-1""#).unwrap(),
             SignedDecimal256::negative_one()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-001""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-001""#).unwrap(),
             SignedDecimal256::negative_one()
         );
         assert_eq!(
-            from_json::<SignedDecimal256>(br#""-0.08""#).unwrap(),
+            serde_json::from_slice::<SignedDecimal256>(br#""-0.08""#).unwrap(),
             SignedDecimal256::percent(-8)
         );
     }
@@ -3264,8 +3271,9 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn signed_decimal_256_has_defined_json_schema() {
-        let schema = schema_for!(SignedDecimal256);
+        let schema = schemars::schema_for!(SignedDecimal256);
         assert_eq!(
             "SignedDecimal256",
             schema.schema.metadata.unwrap().title.unwrap()

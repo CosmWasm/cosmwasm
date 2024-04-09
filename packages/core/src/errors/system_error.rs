@@ -1,7 +1,6 @@
-use schemars::JsonSchema;
+use alloc::string::String;
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::*;
 use crate::Binary;
 
 /// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
@@ -13,7 +12,8 @@ use crate::Binary;
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema, thiserror::Error))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
@@ -39,9 +39,6 @@ pub enum SystemError {
         kind: String,
     },
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for SystemError {}
 
 impl core::fmt::Display for SystemError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -71,7 +68,6 @@ impl core::fmt::Display for SystemError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_json, to_json_vec};
 
     #[test]
     fn system_error_no_such_contract_serialization() {
@@ -80,14 +76,15 @@ mod tests {
         };
 
         // ser
-        let json = to_json_vec(&err).unwrap();
+        let json = serde_json::to_vec(&err).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"no_such_contract":{"addr":"gibtsnicht"}}"#,
         );
 
         // de
-        let err: SystemError = from_json(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
+        let err: SystemError =
+            serde_json::from_slice(br#"{"no_such_contract":{"addr":"nada"}}"#).unwrap();
         assert_eq!(
             err,
             SystemError::NoSuchContract {
@@ -101,14 +98,15 @@ mod tests {
         let err = SystemError::NoSuchCode { code_id: 13 };
 
         // ser
-        let json = to_json_vec(&err).unwrap();
+        let json = serde_json::to_vec(&err).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"no_such_code":{"code_id":13}}"#,
         );
 
         // de
-        let err: SystemError = from_json(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
+        let err: SystemError =
+            serde_json::from_slice(br#"{"no_such_code":{"code_id":987}}"#).unwrap();
         assert_eq!(err, SystemError::NoSuchCode { code_id: 987 },);
     }
 }

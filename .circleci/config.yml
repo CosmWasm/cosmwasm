@@ -65,6 +65,7 @@ workflows:
       - arm64
       - package_crypto
       - package_check
+      - package_core
       - package_schema
       - package_schema_derive
       - package_std
@@ -171,6 +172,10 @@ jobs:
           name: "contracts/staking: integration-test"
           working_directory: ~/project/contracts/staking
           command: cargo wasm --locked && cargo integration-test --locked
+      - run:
+          name: "packages/core: test"
+          working_directory: ~/project/packages/core
+          command: cargo test --all-features --locked
       - run:
           name: "packages/crypto: test"
           working_directory: ~/project/packages/crypto
@@ -284,6 +289,62 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_check-rust:1.73-{{ checksum "Cargo.lock" }}
+
+  package_core:
+    docker:
+      - image: rust:1.73
+    environment:
+      # Limit the number of parallel jobs to avoid OOM crashes during doc testing
+      RUST_TEST_THREADS: 8
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_core-rust:1.73-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add thumbv7em-none-eabi target
+          command: rustup target add thumbv7em-none-eabi && rustup target list --installed
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Build library for native target (no features)
+          working_directory: ~/project/packages/core
+          command: cargo build --locked --no-default-features
+      - run:
+          name: Build library for wasm target (no features)
+          working_directory: ~/project/packages/core
+          command: cargo wasm --locked --no-default-features
+      - run:
+          name: Build library for no_std target (no features)
+          working_directory: ~/project/packages/core
+          command: cargo no-std --locked --no-default-features
+      - run:
+          name: Run unit tests (no features)
+          working_directory: ~/project/packages/core
+          command: cargo test --locked --no-default-features
+      - run:
+          name: Build library for native target (all features)
+          working_directory: ~/project/packages/core
+          command: cargo build --locked --features std
+      - run:
+          name: Build library for wasm target (all features)
+          working_directory: ~/project/packages/core
+          command: cargo wasm --locked --features std
+      - run:
+          name: Run unit tests (all features)
+          working_directory: ~/project/packages/core
+          command: cargo test --locked --features std
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_core-rust:1.73-{{ checksum "Cargo.lock" }}
 
   package_schema:
     docker:
@@ -926,6 +987,14 @@ jobs:
           working_directory: ~/project/packages/schema-derive
           command: cargo clippy --all-targets --tests -- -D warnings
       - run:
+          name: Clippy linting on core (no feature flags)
+          working_directory: ~/project/packages/core
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
+          name: Clippy linting on core (all feature flags)
+          working_directory: ~/project/packages/core
+          command: cargo clippy --all-features --all-targets -- -D warnings
+      - run:
           name: Clippy linting on std (no feature flags)
           working_directory: ~/project/packages/std
           command: cargo clippy --all-targets --tests -- -D warnings
@@ -997,8 +1066,9 @@ jobs:
           name: Run tests with coverage
           command: |
             mkdir -p reports
-            cargo test
+            cargo test --all-features
 
+            grcov . -s packages/core --binary-path ./target/debug -t lcov -o ./reports/core.info
             grcov . -s packages/crypto --binary-path ./target/debug -t lcov -o ./reports/crypto.info
             grcov . -s packages/derive --binary-path ./target/debug -t lcov -o ./reports/derive.info
             grcov . -s packages/schema --binary-path ./target/debug -t lcov -o ./reports/schema.info
@@ -1007,6 +1077,9 @@ jobs:
           environment:
             RUSTFLAGS: "-Cinstrument-coverage"
             LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
+      - codecov/upload:
+          file: reports/core.info
+          flags: cosmwasm-core
       - codecov/upload:
           file: reports/crypto.info
           flags: cosmwasm-crypto
