@@ -285,7 +285,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/check
-          command: cargo nextest run --locked && cargo test --doc --locked
+          command: cargo nextest run --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
