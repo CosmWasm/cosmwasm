@@ -135,6 +135,9 @@ jobs:
             chmod +x rustup-init
             ./rustup-init -y --default-toolchain 1.73 --profile minimal
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux-arm | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - run:
@@ -174,16 +177,16 @@ jobs:
       - run:
           name: "packages/crypto: test"
           working_directory: ~/project/packages/crypto
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - run:
           name: "packages/std: test"
           working_directory: ~/project/packages/std
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - run:
           name: "packages/vm: test"
           working_directory: ~/project/packages/vm
           # use all features
-          command: cargo test --locked --features iterator,staking,stargate
+          command: cargo nextest run --locked --features iterator,staking,stargate
       - save_cache:
           key: v4-arm64-workspace-rust:1.73-{{ checksum "Cargo.lock" }}
           paths:
@@ -237,6 +240,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
@@ -249,7 +255,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/crypto
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -264,6 +270,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
@@ -276,7 +285,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/check
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -291,6 +300,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
@@ -303,7 +315,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/schema
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -318,6 +330,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
@@ -330,7 +345,7 @@ jobs:
       - run:
           name: Run tests
           working_directory: ~/project/packages/schema-derive
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -347,6 +362,9 @@ jobs:
       RUST_TEST_THREADS: 8
     steps:
       - checkout
+      - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
@@ -367,7 +385,7 @@ jobs:
       - run:
           name: Run unit tests (no features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --no-default-features --features std
+          command: cargo nextest run --locked --no-default-features --features std
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
@@ -379,7 +397,7 @@ jobs:
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features abort,iterator,staking,stargate,cosmwasm_2_0
+          command: cargo nextest run --locked --features abort,iterator,staking,stargate,cosmwasm_2_0
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -393,6 +411,9 @@ jobs:
       - image: rust:1.73
     steps:
       - checkout
+      - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
@@ -410,11 +431,11 @@ jobs:
       - run:
           name: Test
           working_directory: ~/project/packages/vm
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - run:
           name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo test --locked --features iterator,staking,stargate
+          command: cargo nextest run --locked --features iterator,staking,stargate
       - run:
           name: Test multi threaded cache
           working_directory: ~/project/packages/vm
@@ -449,6 +470,9 @@ jobs:
             ./rustup-init.exe --default-toolchain 1.73 -y
             echo 'export PATH="$PATH;$USERPROFILE/.cargo/bin"' >> "$BASH_ENV"
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/windows-tar | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Version information
           command: |
             set -o errexit
@@ -459,11 +483,11 @@ jobs:
       - run:
           name: Test
           working_directory: ~/project/packages/vm
-          command: cargo test --locked
+          command: cargo nextest run --locked
       - run:
           name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo test --locked --features iterator,staking,stargate
+          command: cargo nextest run --locked --features iterator,staking,stargate
       - save_cache:
           paths:
             # ".." is the easiest way to get $HOME here (pwd is $HOME\project)
@@ -989,6 +1013,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Nextest
+          command: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Install grcov
           command: |
             rustup component add llvm-tools-preview
@@ -997,7 +1024,7 @@ jobs:
           name: Run tests with coverage
           command: |
             mkdir -p reports
-            cargo test
+            cargo nextest run
 
             grcov . -s packages/crypto --binary-path ./target/debug -t lcov -o ./reports/crypto.info
             grcov . -s packages/derive --binary-path ./target/debug -t lcov -o ./reports/derive.info
