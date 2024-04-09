@@ -345,17 +345,14 @@ impl Add<Uint64> for Uint64 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Uint64(self.u64().checked_add(rhs.u64()).unwrap())
+        Self(
+            self.u64()
+                .checked_add(rhs.u64())
+                .expect("attempt to add with overflow"),
+        )
     }
 }
-
-impl<'a> Add<&'a Uint64> for Uint64 {
-    type Output = Self;
-
-    fn add(self, rhs: &'a Uint64) -> Self {
-        Uint64(self.u64().checked_add(rhs.u64()).unwrap())
-    }
-}
+forward_ref_binop!(impl Add, add for Uint64, Uint64);
 
 impl Sub<Uint64> for Uint64 {
     type Output = Self;
@@ -732,10 +729,6 @@ mod tests {
         let a = Uint64(12345);
         let b = Uint64(23456);
 
-        // test + with owned and reference right hand side
-        assert_eq!(a + b, Uint64(35801));
-        assert_eq!(a + &b, Uint64(35801));
-
         // test - with owned and reference right hand side
         assert_eq!((b.checked_sub(a)).unwrap(), Uint64(11111));
 
@@ -753,6 +746,29 @@ mod tests {
             operand1, operand2, ..
         } = underflow_result.unwrap_err();
         assert_eq!((operand1, operand2), (a.to_string(), b.to_string()));
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn uint64_add_works() {
+        assert_eq!(Uint64::from(2u32) + Uint64::from(1u32), Uint64::from(3u32));
+        assert_eq!(Uint64::from(2u32) + Uint64::from(0u32), Uint64::from(2u32));
+
+        // works for refs
+        let a = Uint64::from(10u32);
+        let b = Uint64::from(3u32);
+        let expected = Uint64::from(13u32);
+        assert_eq!(a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(&a + &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn uint64_add_overflow_panics() {
+        let max = Uint64::MAX;
+        let _ = max + Uint64(12);
     }
 
     #[test]

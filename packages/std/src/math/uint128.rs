@@ -372,21 +372,14 @@ impl Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Uint128(
+        Self(
             self.u128()
                 .checked_add(rhs.u128())
                 .expect("attempt to add with overflow"),
         )
     }
 }
-
-impl<'a> Add<&'a Uint128> for Uint128 {
-    type Output = Self;
-
-    fn add(self, rhs: &'a Uint128) -> Self {
-        self + *rhs
-    }
-}
+forward_ref_binop!(impl Add, add for Uint128, Uint128);
 
 impl Sub<Uint128> for Uint128 {
     type Output = Self;
@@ -811,10 +804,6 @@ mod tests {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
-        // test + with owned and reference right hand side
-        assert_eq!(a + b, Uint128(35801));
-        assert_eq!(a + &b, Uint128(35801));
-
         // test - with owned and reference right hand side
         assert_eq!(b - a, Uint128(11111));
         assert_eq!(b - &a, Uint128(11111));
@@ -844,11 +833,32 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[allow(clippy::op_ref)]
+    fn uint128_add_works() {
+        assert_eq!(
+            Uint128::from(2u32) + Uint128::from(1u32),
+            Uint128::from(3u32)
+        );
+        assert_eq!(
+            Uint128::from(2u32) + Uint128::from(0u32),
+            Uint128::from(2u32)
+        );
+
+        // works for refs
+        let a = Uint128::from(10u32);
+        let b = Uint128::from(3u32);
+        let expected = Uint128::from(13u32);
+        assert_eq!(a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(&a + &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
     fn uint128_add_overflow_panics() {
-        // almost_max is 2^128 - 10
-        let almost_max = Uint128(340282366920938463463374607431768211446);
-        let _ = almost_max + Uint128(12);
+        let max = Uint128::MAX;
+        let _ = max + Uint128(12);
     }
 
     #[test]
