@@ -6,6 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
+  `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
+  `Uint512::add` ([#2092])
+
+[#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
+
 ### Fixed
 
 - cosmwasm-std: Correctly deallocate vectors that were turned into a `Region`
