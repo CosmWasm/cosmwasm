@@ -18,12 +18,16 @@ and this project adheres to
   ([#2070])
 - cosmwasm-std: The decimal types now implement `TryFrom` for their respective
   integer representations ([#2075])
+- cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
+  `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
+  `Uint512::add` ([#2092])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
 [#2058]: https://github.com/CosmWasm/cosmwasm/pull/2058
 [#2068]: https://github.com/CosmWasm/cosmwasm/pull/2068
 [#2075]: https://github.com/CosmWasm/cosmwasm/pull/2075
+[#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
 
 ### Changed
 
