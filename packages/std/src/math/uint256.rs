@@ -435,14 +435,7 @@ impl Add<Uint256> for Uint256 {
         )
     }
 }
-
-impl<'a> Add<&'a Uint256> for Uint256 {
-    type Output = Self;
-
-    fn add(self, rhs: &'a Uint256) -> Self {
-        self + *rhs
-    }
-}
+forward_ref_binop!(impl Add, add for Uint256, Uint256);
 
 impl Sub<Uint256> for Uint256 {
     type Output = Self;
@@ -1289,10 +1282,6 @@ mod tests {
         let a = Uint256::from(12345u32);
         let b = Uint256::from(23456u32);
 
-        // test + with owned and reference right hand side
-        assert_eq!(a + b, Uint256::from(35801u32));
-        assert_eq!(a + &b, Uint256::from(35801u32));
-
         // test - with owned and reference right hand side
         assert_eq!(b - a, Uint256::from(11111u32));
         assert_eq!(b - &a, Uint256::from(11111u32));
@@ -1322,7 +1311,29 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[allow(clippy::op_ref)]
+    fn uint256_add_works() {
+        assert_eq!(
+            Uint256::from(2u32) + Uint256::from(1u32),
+            Uint256::from(3u32)
+        );
+        assert_eq!(
+            Uint256::from(2u32) + Uint256::from(0u32),
+            Uint256::from(2u32)
+        );
+
+        // works for refs
+        let a = Uint256::from(10u32);
+        let b = Uint256::from(3u32);
+        let expected = Uint256::from(13u32);
+        assert_eq!(a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(&a + &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
     fn uint256_add_overflow_panics() {
         let max = Uint256::new([255u8; 32]);
         let _ = max + Uint256::from(12u32);

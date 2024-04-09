@@ -415,17 +415,14 @@ impl Add<Uint512> for Uint512 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Uint512(self.0.checked_add(rhs.0).unwrap())
+        Self(
+            self.0
+                .checked_add(rhs.0)
+                .expect("attempt to add with overflow"),
+        )
     }
 }
-
-impl<'a> Add<&'a Uint512> for Uint512 {
-    type Output = Self;
-
-    fn add(self, rhs: &'a Uint512) -> Self {
-        Uint512(self.0.checked_add(rhs.0).unwrap())
-    }
-}
+forward_ref_binop!(impl Add, add for Uint512, Uint512);
 
 impl Sub<Uint512> for Uint512 {
     type Output = Self;
@@ -993,14 +990,6 @@ mod tests {
         let a = Uint512::from(12345u32);
         let b = Uint512::from(23456u32);
 
-        // test + with owned and reference right hand side
-        assert_eq!(a + b, Uint512::from(35801u32));
-        assert_eq!(a + &b, Uint512::from(35801u32));
-
-        // test - with owned and reference right hand side
-        assert_eq!(b - a, Uint512::from(11111u32));
-        assert_eq!(b - &a, Uint512::from(11111u32));
-
         // test += with owned and reference right hand side
         let mut c = Uint512::from(300000u32);
         c += b;
@@ -1026,9 +1015,31 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[allow(clippy::op_ref)]
+    fn uint512_add_works() {
+        assert_eq!(
+            Uint512::from(2u32) + Uint512::from(1u32),
+            Uint512::from(3u32)
+        );
+        assert_eq!(
+            Uint512::from(2u32) + Uint512::from(0u32),
+            Uint512::from(2u32)
+        );
+
+        // works for refs
+        let a = Uint512::from(10u32);
+        let b = Uint512::from(3u32);
+        let expected = Uint512::from(13u32);
+        assert_eq!(a + b, expected);
+        assert_eq!(a + &b, expected);
+        assert_eq!(&a + b, expected);
+        assert_eq!(&a + &b, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
     fn uint512_add_overflow_panics() {
-        let max = Uint512::new([255u8; 64]);
+        let max = Uint512::MAX;
         let _ = max + Uint512::from(12u32);
     }
 
