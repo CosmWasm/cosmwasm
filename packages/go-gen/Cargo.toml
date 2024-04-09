@@ -5,8 +5,6 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 cosmwasm-std = { version = "2.0.1", path = "../std", features = ["cosmwasm_2_0", "staking", "stargate"] }
 cosmwasm-schema = { version = "2.0.1", path = "../schema" }
