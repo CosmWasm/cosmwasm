@@ -232,6 +232,23 @@ impl<T> Response<T> {
         self.data = Some(data.into());
         self
     }
+
+    /// Convert this [`Response<T>`] to a [`Response<U>`] with a different custom message type.
+    /// This allows easier interactions between code written for a specific chain and
+    /// code written for multiple chains.
+    /// If this contains a [`CosmosMsg::Custom`] submessage, the function returns `None`.
+    pub fn change_custom<U>(self) -> Option<Response<U>> {
+        Some(Response {
+            messages: self
+                .messages
+                .into_iter()
+                .map(|msg| msg.change_custom())
+                .collect::<Option<Vec<_>>>()?,
+            attributes: self.attributes,
+            events: self.events,
+            data: self.data,
+        })
+    }
 }
 
 #[cfg(test)]

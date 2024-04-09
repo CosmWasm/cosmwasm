@@ -59,6 +59,32 @@ pub enum CosmosMsg<T = Empty> {
     Gov(GovMsg),
 }
 
+impl<T> CosmosMsg<T> {
+    /// Convert this this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
+    /// This allows easier interactions between code written for a specific chain and
+    /// code written for multiple chains.
+    /// If this is the [`CosmosMsg::Custom`] variant, the function returns `None`.
+    pub fn change_custom<U>(self) -> Option<CosmosMsg<U>> {
+        Some(match self {
+            CosmosMsg::Bank(msg) => CosmosMsg::Bank(msg),
+            CosmosMsg::Custom(_) => return None,
+            #[cfg(feature = "staking")]
+            CosmosMsg::Staking(msg) => CosmosMsg::Staking(msg),
+            #[cfg(feature = "staking")]
+            CosmosMsg::Distribution(msg) => CosmosMsg::Distribution(msg),
+            #[cfg(feature = "stargate")]
+            CosmosMsg::Stargate { type_url, value } => CosmosMsg::Stargate { type_url, value },
+            #[cfg(feature = "cosmwasm_2_0")]
+            CosmosMsg::Any(msg) => CosmosMsg::Any(msg),
+            #[cfg(feature = "stargate")]
+            CosmosMsg::Ibc(msg) => CosmosMsg::Ibc(msg),
+            CosmosMsg::Wasm(msg) => CosmosMsg::Wasm(msg),
+            #[cfg(feature = "stargate")]
+            CosmosMsg::Gov(msg) => CosmosMsg::Gov(msg),
+        })
+    }
+}
+
 /// The message types of the bank module.
 ///
 /// See https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto
@@ -661,5 +687,32 @@ mod tests {
                 r#"{"vote_weighted":{"proposal_id":25,"options":[{"option":"yes","weight":"0.25"},{"option":"no","weight":"0.25"},{"option":"abstain","weight":"0.5"}]}}"#,
             );
         }
+    }
+
+    #[test]
+    fn change_custom_works() {
+        #[derive(Debug, PartialEq, Eq, Clone)]
+        struct Custom {
+            _a: i32,
+        }
+        let send = BankMsg::Send {
+            to_address: "you".to_string(),
+            amount: coins(1015, "earth"),
+        };
+        // Custom to Empty
+        let msg: CosmosMsg<Custom> = send.clone().into();
+        let msg2: CosmosMsg<Empty> = msg.change_custom().unwrap();
+        assert_eq!(msg2, CosmosMsg::Bank(send.clone()));
+        let custom = CosmosMsg::Custom(Custom { _a: 5 });
+        let converted = custom.change_custom::<Empty>();
+        assert_eq!(converted, None);
+
+        // Empty to Custom
+        let msg: CosmosMsg<Empty> = send.clone().into();
+        let msg2: CosmosMsg<Custom> = msg.change_custom().unwrap();
+        assert_eq!(msg2, CosmosMsg::Bank(send));
+        let empty = CosmosMsg::Custom(Empty {});
+        let converted = empty.change_custom::<Custom>();
+        assert_eq!(converted, None);
     }
 }

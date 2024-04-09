@@ -148,6 +148,20 @@ impl<T> SubMsg<T> {
             gas_limit: None,
         }
     }
+
+    /// Convert this [`SubMsg<T>`] to a [`SubMsg<U>`] with a different generic type.
+    /// This allows easier interactions between code written for a specific chain and
+    /// code written for multiple chains.
+    /// If this is a [`CosmosMsg::Custom`] submessage, the function returns `None`.
+    pub fn change_custom<U>(self) -> Option<SubMsg<U>> {
+        Some(SubMsg {
+            id: self.id,
+            payload: self.payload,
+            msg: self.msg.change_custom::<U>()?,
+            gas_limit: self.gas_limit,
+            reply_on: self.reply_on,
+        })
+    }
 }
 
 /// The result object returned to `reply`. We always get the ID from the submessage
