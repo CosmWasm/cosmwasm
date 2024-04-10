@@ -131,6 +131,11 @@ mod tests {
             10_000_000_000_000_000_000_000_000_000_000_000_000_u128,
             "0.10"
         );
+        assert_approx_eq!(0_u32, 0_u32, "0.12");
+        assert_approx_eq!(1_u64, 0_u64, "1");
+        assert_approx_eq!(0_u64, 1_u64, "1");
+        assert_approx_eq!(5_u64, 0_u64, "1");
+        assert_approx_eq!(0_u64, 5_u64, "1");
     }
 
     #[test]
