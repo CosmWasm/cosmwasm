@@ -257,6 +257,17 @@ impl Uint64 {
         Self(self.0.saturating_pow(exp))
     }
 
+    /// This is the same as [`Uint64::add`] but const.
+    ///
+    /// Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn panicking_add(self, other: Self) -> Self {
+        match self.0.checked_add(other.u64()) {
+            None => panic!("attempt to add with overflow"),
+            Some(sum) => Self(sum),
+        }
+    }
+
     /// This is the same as [`Uint64::sub`] but const.
     ///
     /// Panics on overflow.
@@ -356,11 +367,7 @@ impl Add<Uint64> for Uint64 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Self(
-            self.u64()
-                .checked_add(rhs.u64())
-                .expect("attempt to add with overflow"),
-        )
+        self.panicking_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint64, Uint64);

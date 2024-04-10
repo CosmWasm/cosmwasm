@@ -263,6 +263,17 @@ impl Uint128 {
         Self(self.0.saturating_pow(exp))
     }
 
+    /// This is the same as [`Uint128::add`] but const.
+    ///
+    /// Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn panicking_add(self, other: Self) -> Self {
+        match self.0.checked_add(other.u128()) {
+            None => panic!("attempt to add with overflow"),
+            Some(sum) => Self(sum),
+        }
+    }
+
     /// This is the same as [`Uint128::sub`] but const.
     ///
     /// Panics on overflow.
@@ -383,11 +394,7 @@ impl Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Self(
-            self.u128()
-                .checked_add(rhs.u128())
-                .expect("attempt to add with overflow"),
-        )
+        self.panicking_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint128, Uint128);

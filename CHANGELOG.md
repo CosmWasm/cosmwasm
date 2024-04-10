@@ -23,8 +23,8 @@ and this project adheres to
   `Uint512::add` ([#2092])
 - cosmwasm-std: Add `{CosmosMsg,SubMsg,Response}::change_custom` to change the
   custom message type ([#2099])
-- cosmwasm-std: Add `Uint{64,128,256,512}::panicking_sub` which is like the
-  `Sub` implementation but `const`.
+- cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
+  which are like the `Add`/`Sub` implementations but `const`.
 - cosmwasm-std: Let `Timestamp::minus_nanos` use `Uint64::panicking_sub` and
   document panicking behaviour.
 
