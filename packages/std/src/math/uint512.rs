@@ -1366,8 +1366,8 @@ mod tests {
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
     fn uint512_panicking_sub_panics_on_overflow() {
-        let a = Uint512::ZERO;
-        let b = Uint512::ONE;
+        let a = Uint512::zero();
+        let b = Uint512::one();
         let _diff = a.panicking_sub(b);
     }
 
