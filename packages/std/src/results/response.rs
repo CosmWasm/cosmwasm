@@ -232,6 +232,23 @@ impl<T> Response<T> {
         self.data = Some(data.into());
         self
     }
+
+    /// Convert this [`Response<T>`] to a [`Response<U>`] with a different custom message type.
+    /// This allows easier interactions between code written for a specific chain and
+    /// code written for multiple chains.
+    /// If this contains a [`CosmosMsg::Custom`] submessage, the function returns `None`.
+    pub fn change_custom<U>(self) -> Option<Response<U>> {
+        Some(Response {
+            messages: self
+                .messages
+                .into_iter()
+                .map(|msg| msg.change_custom())
+                .collect::<Option<Vec<_>>>()?,
+            attributes: self.attributes,
+            events: self.events,
+            data: self.data,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -369,5 +386,39 @@ mod tests {
         let actual = Response::<Empty>::new().add_events([our_event1, our_event2]);
         let expected = Response::<Empty>::new().add_events(events);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn change_custom_works() {
+        let response: Response<Empty> = Response {
+            messages: vec![SubMsg::new(BankMsg::Send {
+                to_address: "address".to_string(),
+                amount: coins(123, "earth"),
+            })],
+            attributes: vec![Attribute::new("foo", "bar")],
+            events: vec![Event::new("our_event").add_attribute("msg", "hello")],
+            data: None,
+        };
+        let converted_resp: Response<String> = response.clone().change_custom().unwrap();
+        assert_eq!(
+            converted_resp.messages,
+            vec![SubMsg::new(BankMsg::Send {
+                to_address: "address".to_string(),
+                amount: coins(123, "earth"),
+            })]
+        );
+        assert_eq!(converted_resp.attributes, response.attributes);
+        assert_eq!(converted_resp.events, response.events);
+        assert_eq!(converted_resp.data, response.data);
+
+        // response with custom message
+        let response = Response {
+            messages: vec![SubMsg::new(CosmosMsg::Custom(Empty {}))],
+            attributes: vec![Attribute::new("foo", "bar")],
+            events: vec![Event::new("our_event").add_attribute("msg", "hello")],
+            data: None,
+        };
+
+        assert_eq!(response.change_custom::<String>(), None);
     }
 }
