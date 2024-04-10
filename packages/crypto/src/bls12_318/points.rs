@@ -1,7 +1,8 @@
 #![allow(unused)]
 
-use std::ops::Add;
-use std::{fmt, ops::Neg};
+use alloc::vec::Vec;
+use core::ops::Add;
+use core::{fmt, ops::Neg};
 
 use bls12_381::hash_to_curve::ExpandMsgXmd;
 use bls12_381::{

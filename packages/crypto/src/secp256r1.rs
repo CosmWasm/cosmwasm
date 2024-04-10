@@ -1,5 +1,4 @@
 use alloc::{string::ToString, vec::Vec};
-use core::convert::TryInto;
 use digest::{Digest, Update}; // trait
 use ecdsa::RecoveryId;
 use p256::{
