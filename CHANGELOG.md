@@ -23,6 +23,7 @@ and this project adheres to
 =======
 =======
 - cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
+<<<<<<< HEAD
   which are like the `Add`/`Sub` implementations but `const`.
 <<<<<<< HEAD
 >>>>>>> a74aba0ef (Add Uint{64,128,256,512}::panicking_add)
@@ -33,8 +34,18 @@ and this project adheres to
 - cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
   `Uint64::panicking_add`/`::panicking_sub` and document panicking behaviour.
 >>>>>>> b265b33c7 (Make overflow behaviour explicit for Timestamp)
+=======
+  which are like the `Add`/`Sub` implementations but `const`. ([#2098])
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::panicking_add`/`::panicking_sub` and document overflows. ([#2098])
+>>>>>>> 198001e03 (Add PR link to new CHANGELOG entries)
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
+<<<<<<< HEAD
+=======
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
+>>>>>>> 198001e03 (Add PR link to new CHANGELOG entries)
 
 ### Changed
 
