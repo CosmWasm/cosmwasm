@@ -23,6 +23,7 @@ and this project adheres to
 =======
 =======
 - cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
+<<<<<<< HEAD
   which are like the `Add`/`Sub` implementations but `const`.
 <<<<<<< HEAD
 >>>>>>> a74aba0ef (Add Uint{64,128,256,512}::panicking_add)
@@ -33,8 +34,38 @@ and this project adheres to
 - cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
   `Uint64::panicking_add`/`::panicking_sub` and document panicking behaviour.
 >>>>>>> b265b33c7 (Make overflow behaviour explicit for Timestamp)
+=======
+  which are like the `Add`/`Sub` implementations but `const`. ([#2098])
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::panicking_add`/`::panicking_sub` and document overflows. ([#2098])
+>>>>>>> 198001e03 (Add PR link to new CHANGELOG entries)
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
+<<<<<<< HEAD
+=======
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
+
+### Changed
+
+- cosmwasm-std: Enable `add_event` and `add_events` functions to process types
+  implementing `Into<Event>` ([#2044])
+- cosmwasm-vm: Improve performance of the `Cache::analyze` function ([#2051])
+- cosmwasm-derive: Update to `syn` v2 ([#2063])
+- cosmwasm-schema-derive: Update to `syn` v2 ([#2063])
+- cosmwasm-schema-derive: Improve emitted error messages ([#2063])
+- cosmwasm-schema: `#[cw_serde]` now doesn't add `#[serde(deny_unknown_fields)]`
+  to the expanded code anymore ([#2080])
+
+[#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
+[#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
+[#2059]: https://github.com/CosmWasm/cosmwasm/pull/2059
+[#2063]: https://github.com/CosmWasm/cosmwasm/pull/2063
+[#2070]: https://github.com/CosmWasm/cosmwasm/pull/2070
+[#2080]: https://github.com/CosmWasm/cosmwasm/pull/2080
+
+## [2.0.1] - 2024-04-03
+>>>>>>> 198001e03 (Add PR link to new CHANGELOG entries)
 
 ### Fixed
 
