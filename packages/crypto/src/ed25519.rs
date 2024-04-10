@@ -1,5 +1,3 @@
-use alloc::{string::String, vec::Vec};
-
 use ed25519_zebra::{batch, Signature, VerificationKey};
 use rand_core::CryptoRngCore;
 
@@ -144,7 +142,7 @@ fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloc::vec;
+    use alloc::{string::String, vec, vec::Vec};
     use ed25519_zebra::SigningKey;
     use rand_core::OsRng;
     use serde::Deserialize;
