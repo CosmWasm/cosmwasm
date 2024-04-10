@@ -21,6 +21,8 @@ and this project adheres to
 - cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
   `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
   `Uint512::add` ([#2092])
+- cosmwasm-std: Add `{CosmosMsg,SubMsg,Response}::change_custom` to change the
+  custom message type ([#2099])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
@@ -28,6 +30,7 @@ and this project adheres to
 [#2068]: https://github.com/CosmWasm/cosmwasm/pull/2068
 [#2075]: https://github.com/CosmWasm/cosmwasm/pull/2075
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
+[#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
 
 ### Changed
 
