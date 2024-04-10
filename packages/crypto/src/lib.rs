@@ -11,6 +11,7 @@ extern crate alloc;
 extern crate std; // allow for file I/O during tests
 
 mod backtrace;
+#[cfg(feature = "std")]
 mod bls12_318;
 mod ecdsa;
 mod ed25519;
@@ -19,6 +20,7 @@ mod identity_digest;
 mod secp256k1;
 mod secp256r1;
 
+#[cfg(feature = "std")]
 #[doc(hidden)]
 pub use crate::bls12_318::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator, bls12_381_g2_generator,

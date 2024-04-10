@@ -1,6 +1,8 @@
+#![cfg(feature = "std")]
+
 use base64::engine::general_purpose::STANDARD;
 use base64_serde::base64_serde_type;
-use cosmwasm_crypto::{bls12_318_aggregate_g1, bls12_318_aggregate_g2};
+use cosmwasm_crypto::{bls12_381_aggregate_g1, bls12_381_aggregate_g2};
 
 base64_serde_type!(Base64Standard, STANDARD);
 
@@ -64,7 +66,7 @@ fn bls12_318_aggregate_g1_works() {
     let pubkeys: Vec<&[u8]> = file.public_keys.iter().map(|m| m.0.as_slice()).collect();
     let pubkeys_combined: Vec<u8> = pubkeys.concat();
 
-    let sum = bls12_318_aggregate_g1(&pubkeys_combined).unwrap();
+    let sum = bls12_381_aggregate_g1(&pubkeys_combined).unwrap();
     assert_eq!(sum.as_slice(), file.aggregate_pubkey);
 }
 
@@ -82,7 +84,7 @@ fn bls12_318_aggregate_g2_works() {
         let test = read_aggregate_test(json);
         let signatures: Vec<&[u8]> = test.input.iter().map(|m| m.as_slice()).collect();
         let signatures_combined: Vec<u8> = signatures.concat();
-        let sum = bls12_318_aggregate_g2(&signatures_combined).unwrap();
+        let sum = bls12_381_aggregate_g2(&signatures_combined).unwrap();
         match test.output {
             Some(expected) => assert_eq!(sum.as_slice(), expected),
             None => assert_eq!(
