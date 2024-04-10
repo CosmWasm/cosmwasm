@@ -259,6 +259,28 @@ impl Uint128 {
         Self(self.0.saturating_pow(exp))
     }
 
+    /// This is the same as [`Uint128::add`] but const.
+    ///
+    /// Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn panicking_add(self, other: Self) -> Self {
+        match self.0.checked_add(other.u128()) {
+            None => panic!("attempt to add with overflow"),
+            Some(sum) => Self(sum),
+        }
+    }
+
+    /// This is the same as [`Uint128::sub`] but const.
+    ///
+    /// Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn panicking_sub(self, other: Self) -> Self {
+        match self.0.checked_sub(other.u128()) {
+            None => panic!("attempt to subtract with overflow"),
+            Some(diff) => Self(diff),
+        }
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(if self.0 < other.0 {
@@ -363,11 +385,7 @@ impl Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Self(
-            self.u128()
-                .checked_add(rhs.u128())
-                .expect("attempt to add with overflow"),
-        )
+        self.panicking_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint128, Uint128);
@@ -376,11 +394,7 @@ impl Sub<Uint128> for Uint128 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        Uint128(
-            self.u128()
-                .checked_sub(rhs.u128())
-                .expect("attempt to subtract with overflow"),
-        )
+        self.panicking_sub(rhs)
     }
 }
 forward_ref_binop!(impl Sub, sub for Uint128, Uint128);
@@ -1146,6 +1160,21 @@ mod tests {
         let b = Uint128::from(6u32);
         a %= &b;
         assert_eq!(a, Uint128::from(1u32));
+    }
+
+    #[test]
+    fn uint128_panicking_sub_works() {
+        let a = Uint128::new(5);
+        let b = Uint128::new(3);
+        assert_eq!(a.panicking_sub(b), Uint128::new(2));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to subtract with overflow")]
+    fn uint128_panicking_sub_panics_on_overflow() {
+        let a = Uint128::zero();
+        let b = Uint128::one();
+        let _diff = a.panicking_sub(b);
     }
 
     #[test]
