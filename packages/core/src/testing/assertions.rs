@@ -59,6 +59,9 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
     let max_rel_diff = Decimal::from_str(max_rel_diff).unwrap();
 
     let largest = core::cmp::max(left, right);
+    if largest.is_zero() {
+        return;
+    }
     let rel_diff = Decimal::from_ratio(left.abs_diff(right), largest);
 
     if rel_diff > max_rel_diff {
