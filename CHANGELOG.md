@@ -11,41 +11,13 @@ and this project adheres to
 - cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
   `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
   `Uint512::add` ([#2092])
-<<<<<<< HEAD
-=======
-- cosmwasm-std: Add `{CosmosMsg,SubMsg,Response}::change_custom` to change the
-  custom message type ([#2099])
-<<<<<<< HEAD
-- cosmwasm-std: Add `Uint{64,128,256,512}::panicking_sub` which is like the
-  `Sub` implementation but `const`.
-<<<<<<< HEAD
->>>>>>> 547efeda0 (Add panicking_sub to Uint64/Uint128/Uint256/Uint512)
-=======
-=======
 - cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
-<<<<<<< HEAD
-  which are like the `Add`/`Sub` implementations but `const`.
-<<<<<<< HEAD
->>>>>>> a74aba0ef (Add Uint{64,128,256,512}::panicking_add)
-- cosmwasm-std: Let `Timestamp::minus_nanos` use `Uint64::panicking_sub` and
-  document panicking behaviour.
->>>>>>> 242cc1ffc (Improve docs of Timestamp::minus_* and use panicking_sub)
-=======
-- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
-  `Uint64::panicking_add`/`::panicking_sub` and document panicking behaviour.
->>>>>>> b265b33c7 (Make overflow behaviour explicit for Timestamp)
-=======
   which are like the `Add`/`Sub` implementations but `const`. ([#2098])
 - cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
   `Uint64::panicking_add`/`::panicking_sub` and document overflows. ([#2098])
->>>>>>> 198001e03 (Add PR link to new CHANGELOG entries)
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
-<<<<<<< HEAD
-=======
 [#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
-[#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
->>>>>>> 198001e03 (Add PR link to new CHANGELOG entries)
 
 ### Changed
 
