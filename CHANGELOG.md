@@ -24,10 +24,15 @@ and this project adheres to
 =======
 - cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
   which are like the `Add`/`Sub` implementations but `const`.
+<<<<<<< HEAD
 >>>>>>> a74aba0ef (Add Uint{64,128,256,512}::panicking_add)
 - cosmwasm-std: Let `Timestamp::minus_nanos` use `Uint64::panicking_sub` and
   document panicking behaviour.
 >>>>>>> 242cc1ffc (Improve docs of Timestamp::minus_* and use panicking_sub)
+=======
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::panicking_add`/`::panicking_sub` and document panicking behaviour.
+>>>>>>> b265b33c7 (Make overflow behaviour explicit for Timestamp)
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
 

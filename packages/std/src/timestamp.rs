@@ -38,34 +38,54 @@ impl Timestamp {
         Timestamp(Uint64::new(seconds_since_epoch * 1_000_000_000))
     }
 
+    /// Adds the given amount of days to the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result exceeds the value range of [`Timestamp`].
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn plus_days(&self, addition: u64) -> Timestamp {
         self.plus_hours(addition * 24)
     }
 
+    /// Adds the given amount of hours to the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result exceeds the value range of [`Timestamp`].
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn plus_hours(&self, addition: u64) -> Timestamp {
         self.plus_minutes(addition * 60)
     }
 
+    /// Adds the given amount of minutes to the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result exceeds the value range of [`Timestamp`].
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn plus_minutes(&self, addition: u64) -> Timestamp {
         self.plus_seconds(addition * 60)
     }
 
+    /// Adds the given amount of seconds to the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result exceeds the value range of [`Timestamp`].
     #[must_use = "this returns the result of the operation, without modifying the original"]
     #[inline]
     pub const fn plus_seconds(&self, addition: u64) -> Timestamp {
         self.plus_nanos(addition * 1_000_000_000)
     }
 
+    /// Adds the given amount of nanoseconds to the timestamp and
+    /// returns the result. The original value remains unchanged.
+    ///
+    /// Panics if the result exceeds the value range of [`Timestamp`].
     #[must_use = "this returns the result of the operation, without modifying the original"]
     // no #[inline] here as this could be shared with all the callers
     pub const fn plus_nanos(&self, addition: u64) -> Timestamp {
-        let nanos = Uint64::new(self.0.u64() + addition);
+        let nanos = self.0.panicking_add(Uint64::new(addition));
         Timestamp(nanos)
     }
 
@@ -181,6 +201,13 @@ mod tests {
         assert_eq!(sum.0.u64(), 126);
         let sum = Timestamp::from_nanos(123).plus_nanos(0);
         assert_eq!(sum.0.u64(), 123);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn timestamp_plus_nanos_panics_on_overflow() {
+        let max = Timestamp::from_nanos(u64::MAX);
+        let _earlier = max.plus_nanos(20);
     }
 
     #[test]
