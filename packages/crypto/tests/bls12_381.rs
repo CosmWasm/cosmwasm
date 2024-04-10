@@ -262,7 +262,7 @@ fn bls12_381_verify_works() {
         })();
 
         let verify_result = verify_result
-            .inspect_err(|err| eprintln!("error: {err}"))
+            .map_err(|err| eprintln!("error: {err}"))
             .unwrap_or(false);
 
         assert_eq!(
@@ -336,7 +336,7 @@ fn bls12_381_aggregate_verify_works() {
         })();
 
         let verify_result = verify_result
-            .inspect_err(|err| eprintln!("error: {err}"))
+            .map_err(|err| eprintln!("error: {err}"))
             .unwrap_or(false);
 
         assert_eq!(
@@ -402,7 +402,7 @@ fn bls12_381_fast_aggregate_verify_works() {
         })();
 
         let verify_result = verify_result
-            .inspect_err(|err| eprintln!("error: {err}"))
+            .map_err(|err| eprintln!("error: {err}"))
             .unwrap_or(false);
 
         assert_eq!(
@@ -482,7 +482,7 @@ fn bls12_381_batch_verify_works() {
         })();
 
         let verify_result = verify_result
-            .inspect_err(|err| eprintln!("error: {err}"))
+            .map_err(|err| eprintln!("error: {err}"))
             .unwrap_or(false);
 
         assert_eq!(
