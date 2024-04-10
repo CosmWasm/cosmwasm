@@ -69,6 +69,19 @@ struct VerifyTestFile {
     output: bool,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+struct FastAggregateVerifyInput {
+    pubkeys: Vec<String>,
+    message: String,
+    signature: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct FastAggregateVerifyFile {
+    input: FastAggregateVerifyInput,
+    output: bool,
+}
+
 const ETH_HEADER_FILE: &str = include_str!("../testdata/eth-headers/1699693797.394876721s.json");
 const AGGREGATE_1: &str = include_str!("../testdata/bls-tests/aggregate/aggregate_0x0000000000000000000000000000000000000000000000000000000000000000.json");
 const AGGREGATE_2: &str = include_str!("../testdata/bls-tests/aggregate/aggregate_0x5656565656565656565656565656565656565656565656565656565656565656.json");
@@ -202,6 +215,72 @@ fn bls12_381_verify_works() {
                 println!("pubkey is identity");
                 return Ok(false);
             }
+
+            if bls12_381_g2_is_identity(&signature)? {
+                println!("signature is identity");
+                return Ok(false);
+            }
+
+            let bool_result = bls12_381_pairing_equality(
+                &pubkey,
+                &message_point,
+                &bls12_381_g1_generator(),
+                &signature,
+            )?;
+
+            if !bool_result {
+                println!("pairing is not equal");
+            }
+
+            Ok::<_, Box<dyn Error>>(bool_result)
+        })();
+
+        let verify_result = verify_result
+            .inspect_err(|err| eprintln!("error: {err}"))
+            .unwrap_or(false);
+
+        assert_eq!(
+            verify_result,
+            test_data.output,
+            "Failed with test vector {}",
+            path.display()
+        );
+
+        println!("Finished case {}", path.display());
+        println!("========================");
+    }
+}
+
+#[test]
+fn bls12_381_fast_aggregate_verify() {
+    let paths = glob::glob("testdata/bls-tests/fast_aggregate_verify/*.json")
+        .unwrap()
+        .flatten();
+
+    for path in paths {
+        let test_data = fs::read(&path).unwrap();
+        let test_data: FastAggregateVerifyFile = serde_json::from_slice(&test_data).unwrap();
+
+        let message = hex::decode(&test_data.input.message[2..]).unwrap();
+        let signature = hex::decode(&test_data.input.signature[2..]).unwrap();
+
+        let message_point = bls12_381_hash_to_g2(HashFunction::Sha256, &message, ETHEREUM_DST);
+        let signature = signature.try_into().unwrap();
+
+        let verify_result = (|| {
+            let mut pubkeys: Vec<u8> = Vec::with_capacity(test_data.input.pubkeys.len() * 48);
+            for pubkey in test_data.input.pubkeys {
+                let pubkey = hex::decode(&pubkey[2..]).unwrap();
+
+                if bls12_381_g1_is_identity(&pubkey.as_slice().try_into()?)? {
+                    println!("pubkey is identity");
+                    return Ok(false);
+                }
+
+                pubkeys.extend(pubkey);
+            }
+
+            let pubkey = bls12_381_aggregate_g1(&pubkeys).unwrap();
 
             if bls12_381_g2_is_identity(&signature)? {
                 println!("signature is identity");
