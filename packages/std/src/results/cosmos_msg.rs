@@ -460,6 +460,7 @@ impl<T> From<GovMsg> for CosmosMsg<T> {
 mod tests {
     use super::*;
     use crate::{coin, coins};
+    use fmt::Debug;
 
     #[test]
     fn from_bank_msg_works() {
