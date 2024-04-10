@@ -12,24 +12,6 @@ use bls12_381::{
 use pairing::group::Group;
 use sha2_v9::Sha256;
 
-/// Element of Gt
-#[derive(Debug, PartialEq, Clone)]
-pub struct Gt(pub(crate) bls12_381::Gt);
-
-impl Gt {
-    /// Creates the identity element of Gt (which is 1)
-    #[inline]
-    pub fn identity() -> Self {
-        Self(bls12_381::Gt::identity())
-    }
-
-    /// Check whether this element is the identity
-    #[inline]
-    pub fn is_identity(&self) -> bool {
-        self.0.is_identity().into()
-    }
-}
-
 /// Point on G1
 #[derive(Debug, PartialEq, Clone)]
 pub struct G1(pub(crate) G1Affine);
@@ -45,6 +27,12 @@ impl G1 {
     #[inline]
     pub fn identity() -> Self {
         Self(G1Affine::identity())
+    }
+
+    /// Check if the point is the identity element
+    #[inline]
+    pub fn is_identity(&self) -> bool {
+        self.0.is_identity().into()
     }
 
     #[inline]
@@ -139,6 +127,12 @@ impl G2 {
         Self(G2Affine::identity())
     }
 
+    /// Check if the point is the identity element
+    #[inline]
+    pub fn is_identity(&self) -> bool {
+        self.0.is_identity().into()
+    }
+
     #[inline]
     pub fn from_uncompressed(data: &[u8; 192]) -> Option<Self> {
         G2Affine::from_uncompressed(data).map(Self).into()
@@ -179,7 +173,7 @@ impl<'a> core::iter::Sum<&'a G2> for G2 {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum InvalidPoint {
     InvalidLength { expected: usize, actual: usize },
     DecodingError {},
@@ -260,6 +254,14 @@ pub fn g2_from_fixed_unchecked(data: [u8; 96]) -> Result<G2, InvalidPoint> {
     Option::from(G2Affine::from_compressed_unchecked(&data))
         .map(G2)
         .ok_or(InvalidPoint::DecodingError {})
+}
+
+pub fn bls12_381_g1_is_identity(g1: &[u8; 48]) -> Result<bool, InvalidPoint> {
+    g1_from_fixed(g1).map(|point| point.is_identity())
+}
+
+pub fn bls12_381_g2_is_identity(g2: &[u8; 96]) -> Result<bool, InvalidPoint> {
+    g2_from_fixed(g2).map(|point| point.is_identity())
 }
 
 #[cfg(test)]
@@ -357,10 +359,5 @@ mod tests {
         let a = g2_from_fixed_unchecked(data).unwrap();
         let b = g2_from_fixed(&data).unwrap();
         assert_eq!(a, b);
-    }
-
-    #[test]
-    fn gt_is_identity_works() {
-        assert!(Gt::identity().is_identity());
     }
 }

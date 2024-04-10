@@ -23,7 +23,8 @@ mod secp256r1;
 #[cfg(feature = "std")]
 #[doc(hidden)]
 pub use crate::bls12_318::{
-    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator, bls12_381_g2_generator,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator,
+    bls12_381_g1_is_identity, bls12_381_g2_generator, bls12_381_g2_is_identity,
     bls12_381_hash_to_g1, bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
 };
 #[doc(hidden)]

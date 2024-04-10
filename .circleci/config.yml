@@ -252,13 +252,13 @@ jobs:
           working_directory: ~/project/packages/crypto
           command: cargo build --locked --no-default-features
       - run:
-          name: Build
+          name: Build (all features)
           working_directory: ~/project/packages/crypto
-          command: cargo build --locked
+          command: cargo build --locked --features std
       - run:
           name: Run tests
           working_directory: ~/project/packages/crypto
-          command: cargo test --locked
+          command: cargo test --locked --features std
       - save_cache:
           paths:
             - /usr/local/cargo/registry

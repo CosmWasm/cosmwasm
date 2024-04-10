@@ -486,6 +486,7 @@ dependencies = [
  "ecdsa",
  "ed25519-zebra",
  "english-numbers",
+ "glob",
  "hex",
  "hex-literal",
  "k256",
