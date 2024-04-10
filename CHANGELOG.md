@@ -25,8 +25,8 @@ and this project adheres to
   custom message type ([#2099])
 - cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
   which are like the `Add`/`Sub` implementations but `const`.
-- cosmwasm-std: Let `Timestamp::minus_nanos` use `Uint64::panicking_sub` and
-  document panicking behaviour.
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::panicking_add`/`::panicking_sub` and document panicking behaviour.
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
