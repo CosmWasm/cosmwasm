@@ -298,6 +298,17 @@ impl Uint512 {
         Self(self.0.saturating_pow(exp))
     }
 
+    /// This is the same as [`Uint512::sub`] but const.
+    ///
+    /// Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn panicking_sub(self, other: Self) -> Self {
+        match self.0.checked_sub(other.0) {
+            None => panic!("attempt to subtract with overflow"),
+            Some(diff) => Self(diff),
+        }
+    }
+
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs_diff(self, other: Self) -> Self {
         Self(self.0.abs_diff(other.0))
@@ -434,7 +445,7 @@ impl Sub<Uint512> for Uint512 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        Uint512(self.0.checked_sub(rhs.0).unwrap())
+        self.panicking_sub(rhs)
     }
 }
 forward_ref_binop!(impl Sub, sub for Uint512, Uint512);
@@ -1368,6 +1379,21 @@ mod tests {
         let b = Uint512::from(6u32);
         a %= &b;
         assert_eq!(a, Uint512::from(1u32));
+    }
+
+    #[test]
+    fn uint512_panicking_sub_works() {
+        let a = Uint512::from(5u32);
+        let b = Uint512::from(3u32);
+        assert_eq!(a.panicking_sub(b), Uint512::from(2u32));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to subtract with overflow")]
+    fn uint512_panicking_sub_panics_on_overflow() {
+        let a = Uint512::ZERO;
+        let b = Uint512::ONE;
+        let _diff = a.panicking_sub(b);
     }
 
     #[test]
