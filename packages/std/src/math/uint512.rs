@@ -294,6 +294,17 @@ impl Uint512 {
         Self(self.0.saturating_pow(exp))
     }
 
+    /// This is the same as [`Uint512::add`] but const.
+    ///
+    /// Panics on overflow.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub const fn panicking_add(self, other: Self) -> Self {
+        match self.0.checked_add(other.0) {
+            None => panic!("attempt to add with overflow"),
+            Some(sum) => Self(sum),
+        }
+    }
+
     /// This is the same as [`Uint512::sub`] but const.
     ///
     /// Panics on overflow.
@@ -426,11 +437,7 @@ impl Add<Uint512> for Uint512 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Self(
-            self.0
-                .checked_add(rhs.0)
-                .expect("attempt to add with overflow"),
-        )
+        self.panicking_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint512, Uint512);
