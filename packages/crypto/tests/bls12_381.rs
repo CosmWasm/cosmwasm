@@ -10,6 +10,8 @@ use cosmwasm_crypto::{
     bls12_381_pairing_equality, HashFunction,
 };
 
+const ETHEREUM_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+
 base64_serde_type!(Base64Standard, STANDARD);
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -35,6 +37,23 @@ struct AggregateTestFile {
 struct AggregateTest {
     input: Vec<Vec<u8>>,
     output: Option<Vec<u8>>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct HashTestInput {
+    msg: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct HashTestOutput {
+    x: String,
+    y: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct HashTestFile {
+    input: HashTestInput,
+    output: HashTestOutput,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -124,6 +143,42 @@ fn bls12_381_aggregate_g2_works() {
 }
 
 #[test]
+fn bls12_381_hash_to_g2_works() {
+    let paths = glob::glob("testdata/bls-tests/hash_to_G2/*.json")
+        .unwrap()
+        .flatten();
+
+    for path in paths {
+        let test_data = fs::read(&path).unwrap();
+        let test_data: HashTestFile = serde_json::from_slice(&test_data).unwrap();
+        let g2_point = bls12_381_hash_to_g2(
+            HashFunction::Sha256,
+            test_data.input.msg.as_bytes(),
+            b"QUUX-V01-CS02-with-BLS12381G2_XMD:SHA-256_SSWU_RO_",
+        );
+
+        let prepared_x = test_data.output.x.replace("0x", "");
+        let (x1, x2) = prepared_x.split_once(',').unwrap();
+        let decoded_x = hex::decode(format!("{x2}{x1}")).unwrap();
+
+        let prepared_y = test_data.output.y.replace("0x", "");
+        let (y1, y2) = prepared_y.split_once(',').unwrap();
+        let decoded_y = hex::decode(format!("{y2}{y1}")).unwrap();
+        let uncompressed = [decoded_x.as_slice(), &decoded_y].concat();
+
+        let affine =
+            bls12_381::G2Affine::from_uncompressed(&uncompressed.try_into().unwrap()).unwrap();
+
+        assert_eq!(
+            g2_point,
+            affine.to_compressed(),
+            "Failed with test vector {}",
+            path.display()
+        );
+    }
+}
+
+#[test]
 fn bls12_381_verify_works() {
     let paths = glob::glob("testdata/bls-tests/verify/*.json")
         .unwrap()
@@ -137,11 +192,7 @@ fn bls12_381_verify_works() {
         let message = hex::decode(&test_data.input.message[2..]).unwrap();
         let signature = hex::decode(&test_data.input.signature[2..]).unwrap();
 
-        let message_point = bls12_381_hash_to_g2(
-            HashFunction::Sha256,
-            &message,
-            b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_",
-        );
+        let message_point = bls12_381_hash_to_g2(HashFunction::Sha256, &message, ETHEREUM_DST);
 
         let pubkey = pubkey.try_into().unwrap();
         let signature = signature.try_into().unwrap();
