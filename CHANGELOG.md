@@ -11,6 +11,13 @@ and this project adheres to
 - cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
   `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
   `Uint512::add` ([#2092])
+<<<<<<< HEAD
+=======
+- cosmwasm-std: Add `{CosmosMsg,SubMsg,Response}::change_custom` to change the
+  custom message type ([#2099])
+- cosmwasm-std: Add `Uint{64,128,256,512}::panicking_sub` which is like the
+  `Sub` implementation but `const`.
+>>>>>>> 547efeda0 (Add panicking_sub to Uint64/Uint128/Uint256/Uint512)
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
 
