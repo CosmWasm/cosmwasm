@@ -56,12 +56,16 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
 ) {
     let left = left.into();
     let right = right.into();
+
+    if left == right {
+        // If both values are equal, we don't need to check the relative difference.
+        // We check this first to avoid division by zero below.
+        return;
+    }
+
     let max_rel_diff = Decimal::from_str(max_rel_diff).unwrap();
 
     let largest = core::cmp::max(left, right);
-    if largest.is_zero() {
-        return;
-    }
     let rel_diff = Decimal::from_ratio(left.abs_diff(right), largest);
 
     if rel_diff > max_rel_diff {
