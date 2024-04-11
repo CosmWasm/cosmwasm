@@ -96,6 +96,16 @@ impl Uint128 {
         self.0.pow(exp).into()
     }
 
+    /// Returns the base 2 logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if `self` is zero.
+    #[must_use = "this returns the result of the operation, without modifying the original"]
+    pub fn ilog2(self) -> u32 {
+        self.0.checked_ilog2().unwrap()
+    }
+
     /// Returns `self * numerator / denominator`.
     ///
     /// Due to the nature of the integer division involved, the result is always floored.
