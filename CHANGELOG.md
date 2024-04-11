@@ -11,13 +11,45 @@ and this project adheres to
 - cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
   `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
   `Uint512::add` ([#2092])
+<<<<<<< HEAD
 - cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
   which are like the `Add`/`Sub` implementations but `const`. ([#2098])
+=======
+- cosmwasm-std: Add `{CosmosMsg,SubMsg,Response}::change_custom` to change the
+  custom message type ([#2099])
+- cosmwasm-std: Add `Uint{64,128,256,512}::strict_add` and `::strict_sub` which
+  are like the `Add`/`Sub` implementations but `const`. ([#2098], [#2107])
+>>>>>>> 3b59561d5 (Rename math functions to strict_add/strict_sub (#2107))
 - cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
-  `Uint64::panicking_add`/`::panicking_sub` and document overflows. ([#2098])
+  `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
 [#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+<<<<<<< HEAD
+=======
+[#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+
+### Changed
+
+- cosmwasm-std: Enable `add_event` and `add_events` functions to process types
+  implementing `Into<Event>` ([#2044])
+- cosmwasm-vm: Improve performance of the `Cache::analyze` function ([#2051])
+- cosmwasm-derive: Update to `syn` v2 ([#2063])
+- cosmwasm-schema-derive: Update to `syn` v2 ([#2063])
+- cosmwasm-schema-derive: Improve emitted error messages ([#2063])
+- cosmwasm-schema: `#[cw_serde]` now doesn't add `#[serde(deny_unknown_fields)]`
+  to the expanded code anymore ([#2080])
+
+[#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
+[#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
+[#2059]: https://github.com/CosmWasm/cosmwasm/pull/2059
+[#2063]: https://github.com/CosmWasm/cosmwasm/pull/2063
+[#2070]: https://github.com/CosmWasm/cosmwasm/pull/2070
+[#2080]: https://github.com/CosmWasm/cosmwasm/pull/2080
+
+## [2.0.1] - 2024-04-03
+>>>>>>> 3b59561d5 (Rename math functions to strict_add/strict_sub (#2107))
 
 ### Fixed
 
