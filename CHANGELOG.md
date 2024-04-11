@@ -47,6 +47,7 @@ and this project adheres to
 - cosmwasm-schema-derive: Improve emitted error messages ([#2063])
 - cosmwasm-schema: `#[cw_serde]` now doesn't add `#[serde(deny_unknown_fields)]`
   to the expanded code anymore ([#2080])
+- cosmwasm-std: Improve performance of `Uint{64,128,256,512}::isqrt` ([#2108])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
@@ -54,6 +55,7 @@ and this project adheres to
 [#2063]: https://github.com/CosmWasm/cosmwasm/pull/2063
 [#2070]: https://github.com/CosmWasm/cosmwasm/pull/2070
 [#2080]: https://github.com/CosmWasm/cosmwasm/pull/2080
+[#2108]: https://github.com/CosmWasm/cosmwasm/pull/2108
 
 ## [2.0.1] - 2024-04-03
 
