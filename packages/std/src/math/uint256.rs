@@ -329,22 +329,22 @@ impl Uint256 {
         Self(self.0.saturating_pow(exp))
     }
 
-    /// This is the same as [`Uint256::add`] but const.
+    /// Strict integer addition. Computes `self + rhs`, panicking if overflow occurred.
     ///
-    /// Panics on overflow.
+    /// This is the same as [`Uint256::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn panicking_add(self, other: Self) -> Self {
-        match self.0.checked_add(other.0) {
+    pub const fn strict_add(self, rhs: Self) -> Self {
+        match self.0.checked_add(rhs.0) {
             None => panic!("attempt to add with overflow"),
             Some(sum) => Self(sum),
         }
     }
 
-    /// This is the same as [`Uint256::sub`] but const.
+    /// Strict integer subtraction. Computes `self - rhs`, panicking if overflow occurred.
     ///
-    /// Panics on overflow.
+    /// This is the same as [`Uint256::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn panicking_sub(self, other: Self) -> Self {
+    pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.0) {
             None => panic!("attempt to subtract with overflow"),
             Some(diff) => Self(diff),
@@ -450,7 +450,7 @@ impl Add<Uint256> for Uint256 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        self.panicking_add(rhs)
+        self.strict_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint256, Uint256);
@@ -459,7 +459,7 @@ impl Sub<Uint256> for Uint256 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        self.panicking_sub(rhs)
+        self.strict_sub(rhs)
     }
 }
 forward_ref_binop!(impl Sub, sub for Uint256, Uint256);
@@ -1705,18 +1705,41 @@ mod tests {
     }
 
     #[test]
-    fn uint256_panicking_sub_works() {
+    fn uint256_strict_add_works() {
         let a = Uint256::from(5u32);
         let b = Uint256::from(3u32);
-        assert_eq!(a.panicking_sub(b), Uint256::from(2u32));
+        assert_eq!(a.strict_add(b), Uint256::from(8u32));
+        assert_eq!(b.strict_add(a), Uint256::from(8u32));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn uint256_strict_add_panics_on_overflow() {
+        let a = Uint256::MAX;
+        let b = Uint256::ONE;
+        let _ = a.strict_add(b);
+    }
+
+    #[test]
+    fn uint256_strict_sub_works() {
+        let a = Uint256::from(5u32);
+        let b = Uint256::from(3u32);
+        assert_eq!(a.strict_sub(b), Uint256::from(2u32));
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
+<<<<<<< HEAD:packages/std/src/math/uint256.rs
     fn uint256_panicking_sub_panics_on_overflow() {
         let a = Uint256::zero();
         let b = Uint256::one();
         let _diff = a.panicking_sub(b);
+=======
+    fn uint256_strict_sub_panics_on_overflow() {
+        let a = Uint256::ZERO;
+        let b = Uint256::ONE;
+        let _ = a.strict_sub(b);
+>>>>>>> 3b59561d5 (Rename math functions to strict_add/strict_sub (#2107)):packages/core/src/math/uint256.rs
     }
 
     #[test]

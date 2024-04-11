@@ -294,22 +294,22 @@ impl Uint512 {
         Self(self.0.saturating_pow(exp))
     }
 
-    /// This is the same as [`Uint512::add`] but const.
+    /// Strict integer addition. Computes `self + rhs`, panicking if overflow occurred.
     ///
-    /// Panics on overflow.
+    /// This is the same as [`Uint512::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn panicking_add(self, other: Self) -> Self {
-        match self.0.checked_add(other.0) {
+    pub const fn strict_add(self, rhs: Self) -> Self {
+        match self.0.checked_add(rhs.0) {
             None => panic!("attempt to add with overflow"),
             Some(sum) => Self(sum),
         }
     }
 
-    /// This is the same as [`Uint512::sub`] but const.
+    /// Strict integer subtraction. Computes `self - rhs`, panicking if overflow occurred.
     ///
-    /// Panics on overflow.
+    /// This is the same as [`Uint512::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn panicking_sub(self, other: Self) -> Self {
+    pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.0) {
             None => panic!("attempt to subtract with overflow"),
             Some(diff) => Self(diff),
@@ -437,7 +437,7 @@ impl Add<Uint512> for Uint512 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        self.panicking_add(rhs)
+        self.strict_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint512, Uint512);
@@ -446,7 +446,7 @@ impl Sub<Uint512> for Uint512 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        self.panicking_sub(rhs)
+        self.strict_sub(rhs)
     }
 }
 forward_ref_binop!(impl Sub, sub for Uint512, Uint512);
@@ -1357,18 +1357,41 @@ mod tests {
     }
 
     #[test]
-    fn uint512_panicking_sub_works() {
+    fn uint512_strict_add_works() {
         let a = Uint512::from(5u32);
         let b = Uint512::from(3u32);
-        assert_eq!(a.panicking_sub(b), Uint512::from(2u32));
+        assert_eq!(a.strict_add(b), Uint512::from(8u32));
+        assert_eq!(b.strict_add(a), Uint512::from(8u32));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn uint512_strict_add_panics_on_overflow() {
+        let a = Uint512::MAX;
+        let b = Uint512::ONE;
+        let _ = a.strict_add(b);
+    }
+
+    #[test]
+    fn uint512_strict_sub_works() {
+        let a = Uint512::from(5u32);
+        let b = Uint512::from(3u32);
+        assert_eq!(a.strict_sub(b), Uint512::from(2u32));
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
+<<<<<<< HEAD:packages/std/src/math/uint512.rs
     fn uint512_panicking_sub_panics_on_overflow() {
         let a = Uint512::zero();
         let b = Uint512::one();
         let _diff = a.panicking_sub(b);
+=======
+    fn uint512_strict_sub_panics_on_overflow() {
+        let a = Uint512::ZERO;
+        let b = Uint512::ONE;
+        let _ = a.strict_sub(b);
+>>>>>>> 3b59561d5 (Rename math functions to strict_add/strict_sub (#2107)):packages/core/src/math/uint512.rs
     }
 
     #[test]
