@@ -84,7 +84,7 @@ impl Timestamp {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     // no #[inline] here as this could be shared with all the callers
     pub const fn plus_nanos(&self, addition: u64) -> Timestamp {
-        let nanos = self.0.panicking_add(Uint64::new(addition));
+        let nanos = self.0.strict_add(Uint64::new(addition));
         Timestamp(nanos)
     }
 
@@ -135,7 +135,7 @@ impl Timestamp {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     // no #[inline] here as this could be shared with all the callers
     pub const fn minus_nanos(&self, subtrahend: u64) -> Timestamp {
-        Timestamp(self.0.panicking_sub(Uint64::new(subtrahend)))
+        Timestamp(self.0.strict_sub(Uint64::new(subtrahend)))
     }
 
     /// Returns nanoseconds since epoch
