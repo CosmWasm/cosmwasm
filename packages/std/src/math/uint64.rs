@@ -257,22 +257,22 @@ impl Uint64 {
         Self(self.0.saturating_pow(exp))
     }
 
-    /// This is the same as [`Uint64::add`] but const.
+    /// Strict integer addition. Computes `self + rhs`, panicking if overflow occurred.
     ///
-    /// Panics on overflow.
+    /// This is the same as [`Uint64::add`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn panicking_add(self, other: Self) -> Self {
-        match self.0.checked_add(other.u64()) {
+    pub const fn strict_add(self, rhs: Self) -> Self {
+        match self.0.checked_add(rhs.u64()) {
             None => panic!("attempt to add with overflow"),
             Some(sum) => Self(sum),
         }
     }
 
-    /// This is the same as [`Uint64::sub`] but const.
+    /// Strict integer subtraction. Computes `self - rhs`, panicking if overflow occurred.
     ///
-    /// Panics on overflow.
+    /// This is the same as [`Uint64::sub`] but const.
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn panicking_sub(self, other: Self) -> Self {
+    pub const fn strict_sub(self, other: Self) -> Self {
         match self.0.checked_sub(other.u64()) {
             None => panic!("attempt to subtract with overflow"),
             Some(diff) => Self(diff),
@@ -367,7 +367,7 @@ impl Add<Uint64> for Uint64 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        self.panicking_add(rhs)
+        self.strict_add(rhs)
     }
 }
 forward_ref_binop!(impl Add, add for Uint64, Uint64);
@@ -376,7 +376,7 @@ impl Sub<Uint64> for Uint64 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        self.panicking_sub(rhs)
+        self.strict_sub(rhs)
     }
 }
 forward_ref_binop!(impl Sub, sub for Uint64, Uint64);
@@ -1103,18 +1103,34 @@ mod tests {
     }
 
     #[test]
-    fn uint64_panicking_sub_works() {
+    fn uint64_strict_add_works() {
         let a = Uint64::new(5);
         let b = Uint64::new(3);
-        assert_eq!(a.panicking_sub(b), Uint64::new(2));
+        assert_eq!(a.strict_add(b), Uint64::new(8));
+        assert_eq!(b.strict_add(a), Uint64::new(8));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn uint64_strict_add_panics_on_overflow() {
+        let a = Uint64::MAX;
+        let b = Uint64::ONE;
+        let _ = a.strict_add(b);
+    }
+
+    #[test]
+    fn uint64_strict_sub_works() {
+        let a = Uint64::new(5);
+        let b = Uint64::new(3);
+        assert_eq!(a.strict_sub(b), Uint64::new(2));
     }
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
-    fn uint64_panicking_sub_panics_on_overflow() {
+    fn uint64_strict_sub_panics_on_overflow() {
         let a = Uint64::ZERO;
         let b = Uint64::ONE;
-        let _diff = a.panicking_sub(b);
+        let _ = a.strict_sub(b);
     }
 
     #[test]
