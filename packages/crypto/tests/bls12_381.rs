@@ -5,12 +5,12 @@ use std::{error::Error, fs};
 use base64::engine::general_purpose::STANDARD;
 use base64_serde::base64_serde_type;
 use cosmwasm_crypto::{
-    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator,
-    bls12_381_g1_is_identity, bls12_381_g2_is_identity, bls12_381_hash_to_g2,
-    bls12_381_pairing_equality, HashFunction,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_aggregate_pairing_equality,
+    bls12_381_g1_generator, bls12_381_g1_is_identity, bls12_381_g2_is_identity,
+    bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
 };
 
-const ETHEREUM_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+const PROOF_OF_POSSESSION_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
 
 base64_serde_type!(Base64Standard, STANDARD);
 
@@ -231,7 +231,8 @@ fn bls12_381_verify_works() {
         let message = hex::decode(&test_data.input.message[2..]).unwrap();
         let signature = hex::decode(&test_data.input.signature[2..]).unwrap();
 
-        let message_point = bls12_381_hash_to_g2(HashFunction::Sha256, &message, ETHEREUM_DST);
+        let message_point =
+            bls12_381_hash_to_g2(HashFunction::Sha256, &message, PROOF_OF_POSSESSION_DST);
 
         let pubkey = pubkey.try_into().unwrap();
         let signature = signature.try_into().unwrap();
@@ -295,13 +296,17 @@ fn bls12_381_aggregate_verify_works() {
             .iter()
             .flat_map(|message| {
                 let msg = hex::decode(&message[2..]).unwrap();
-                bls12_381_hash_to_g2(HashFunction::Sha256, &msg, ETHEREUM_DST)
+                bls12_381_hash_to_g2(HashFunction::Sha256, &msg, PROOF_OF_POSSESSION_DST)
             })
             .collect();
-        let message_point = bls12_381_aggregate_g2(&messages).unwrap();
-        let signature = signature.try_into().unwrap();
 
         let verify_result = (|| {
+            let signature = signature.as_slice().try_into()?;
+            if bls12_381_g2_is_identity(&signature)? {
+                println!("signature is identity");
+                return Ok(false);
+            }
+
             let mut pubkeys: Vec<u8> = Vec::with_capacity(test_data.input.pubkeys.len() * 48);
             for pubkey in test_data.input.pubkeys {
                 let pubkey = hex::decode(&pubkey[2..]).unwrap();
@@ -314,16 +319,14 @@ fn bls12_381_aggregate_verify_works() {
                 pubkeys.extend(pubkey);
             }
 
-            let pubkey = bls12_381_aggregate_g1(&pubkeys).unwrap();
-
-            if bls12_381_g2_is_identity(&signature)? {
-                println!("signature is identity");
+            if pubkeys.is_empty() || messages.is_empty() {
+                println!("no keys or no signatures");
                 return Ok(false);
             }
 
-            let bool_result = bls12_381_pairing_equality(
-                &pubkey,
-                &message_point,
+            let bool_result = bls12_381_aggregate_pairing_equality(
+                &pubkeys,
+                &messages,
                 &bls12_381_g1_generator(),
                 &signature,
             )?;
@@ -336,7 +339,7 @@ fn bls12_381_aggregate_verify_works() {
         })();
 
         let verify_result = verify_result
-            .map_err(|err| eprintln!("error: {err}"))
+            .map_err(|err| eprintln!("error: {err:?}"))
             .unwrap_or(false);
 
         assert_eq!(
@@ -364,7 +367,8 @@ fn bls12_381_fast_aggregate_verify_works() {
         let message = hex::decode(&test_data.input.message[2..]).unwrap();
         let signature = hex::decode(&test_data.input.signature[2..]).unwrap();
 
-        let message_point = bls12_381_hash_to_g2(HashFunction::Sha256, &message, ETHEREUM_DST);
+        let message_point =
+            bls12_381_hash_to_g2(HashFunction::Sha256, &message, PROOF_OF_POSSESSION_DST);
         let signature = signature.try_into().unwrap();
 
         let verify_result = (|| {
@@ -433,7 +437,7 @@ fn bls12_381_batch_verify_works() {
             .iter()
             .flat_map(|message| {
                 let msg = hex::decode(&message[2..]).unwrap();
-                bls12_381_hash_to_g2(HashFunction::Sha256, &msg, ETHEREUM_DST)
+                bls12_381_hash_to_g2(HashFunction::Sha256, &msg, PROOF_OF_POSSESSION_DST)
             })
             .collect();
         let message_point = bls12_381_aggregate_g2(&messages).unwrap();
@@ -454,7 +458,7 @@ fn bls12_381_batch_verify_works() {
             let pubkey = bls12_381_aggregate_g1(&pubkeys).unwrap();
 
             let mut signatures: Vec<u8> = Vec::with_capacity(test_data.input.signatures.len() * 96);
-            for signature in test_data.input.signatures {
+            for signature in &test_data.input.signatures {
                 let signature = hex::decode(&signature[2..]).unwrap();
 
                 if bls12_381_g2_is_identity(&signature[..].try_into()?)? {
@@ -466,13 +470,10 @@ fn bls12_381_batch_verify_works() {
             }
 
             let signature = bls12_381_aggregate_g2(&signatures).unwrap();
+            let generator = bls12_381_g1_generator();
 
-            let bool_result = bls12_381_pairing_equality(
-                &pubkey,
-                &message_point,
-                &bls12_381_g1_generator(),
-                &signature,
-            )?;
+            let bool_result =
+                bls12_381_pairing_equality(&pubkey, &message_point, &generator, &signature)?;
 
             if !bool_result {
                 println!("pairing is not equal");

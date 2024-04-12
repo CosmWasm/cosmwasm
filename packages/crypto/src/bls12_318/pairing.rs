@@ -1,6 +1,47 @@
-use super::points::{g1_from_fixed, g2_from_fixed, InvalidPoint};
+use super::points::{
+    g1_from_fixed, g1_from_variable, g2_from_fixed, g2_from_variable, InvalidPoint,
+};
 use bls12_381::G2Prepared;
 use pairing::group::Group;
+use rayon::iter::{ParallelBridge, ParallelIterator};
+
+pub fn bls12_381_aggregate_pairing_equality(
+    ps: &[u8],
+    qs: &[u8],
+    r: &[u8; 48],
+    s: &[u8; 96],
+) -> Result<bool, InvalidPoint> {
+    let pq_pairs: Vec<_> = ps
+        .chunks_exact(48)
+        .zip(qs.chunks_exact(96))
+        // From here on parallelism is fine since the miller loop runs over
+        // a sum of the pairings and is therefore a commutative operation
+        .par_bridge()
+        .map(|(p, q)| {
+            let g1 = g1_from_variable(p)?;
+            let g2 = g2_from_variable(q)?;
+
+            Ok((g1.0, G2Prepared::from(g2.0)))
+        })
+        .collect::<Result<_, _>>()?;
+
+    let r = g1_from_fixed(r)?;
+    let s = g2_from_fixed(s)?;
+
+    let r_neg = -r.0;
+    let s_prepared = G2Prepared::from(s.0);
+
+    let ref_pq: Vec<_> = pq_pairs
+        .iter()
+        .map(|(g1, g2)| (g1, g2))
+        .chain([(&r_neg, &s_prepared)])
+        .collect();
+
+    Ok(bls12_381::multi_miller_loop(&ref_pq)
+        .final_exponentiation()
+        .is_identity()
+        .into())
+}
 
 /// Check whether the following condition holds true:
 ///
