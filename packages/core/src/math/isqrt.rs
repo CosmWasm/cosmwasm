@@ -15,17 +15,22 @@ where
     I: Unsigned
         + ops::Add<I, Output = I>
         + ops::Div<I, Output = I>
+        + ops::Shl<u32, Output = I>
         + ops::Shr<u32, Output = I>
         + cmp::PartialOrd
-        + Copy
-        + From<u8>,
+        + Copy,
 {
     /// Algorithm adapted from
     /// [Wikipedia](https://en.wikipedia.org/wiki/Integer_square_root#Example_implementation_in_C).
     fn isqrt(self) -> Self {
-        let mut x0 = self >> 1;
+        // sqrt(0) = 0, sqrt(1) = 1
+        if self <= Self::ONE {
+            return self;
+        }
 
-        if x0 > 0.into() {
+        let mut x0 = Self::ONE << ((self.log_2() / 2) + 1);
+
+        if x0 > Self::ZERO {
             let mut x1 = (x0 + self / x0) >> 1;
 
             while x1 < x0 {
@@ -40,17 +45,35 @@ where
 }
 
 /// Marker trait for types that represent unsigned integers.
-pub trait Unsigned {}
-impl Unsigned for u8 {}
-impl Unsigned for u16 {}
-impl Unsigned for u32 {}
-impl Unsigned for u64 {}
-impl Unsigned for u128 {}
-impl Unsigned for Uint64 {}
-impl Unsigned for Uint128 {}
-impl Unsigned for Uint256 {}
-impl Unsigned for Uint512 {}
-impl Unsigned for usize {}
+pub trait Unsigned {
+    const ZERO: Self;
+    const ONE: Self;
+
+    fn log_2(self) -> u32;
+}
+
+macro_rules! impl_unsigned {
+    ($type:ty, $zero:expr, $one:expr) => {
+        impl Unsigned for $type {
+            const ZERO: Self = $zero;
+            const ONE: Self = $one;
+
+            fn log_2(self) -> u32 {
+                self.ilog2()
+            }
+        }
+    };
+}
+impl_unsigned!(u8, 0, 1);
+impl_unsigned!(u16, 0, 1);
+impl_unsigned!(u32, 0, 1);
+impl_unsigned!(u64, 0, 1);
+impl_unsigned!(u128, 0, 1);
+impl_unsigned!(usize, 0, 1);
+impl_unsigned!(Uint64, Self::zero(), Self::one());
+impl_unsigned!(Uint128, Self::zero(), Self::one());
+impl_unsigned!(Uint256, Self::zero(), Self::one());
+impl_unsigned!(Uint512, Self::zero(), Self::one());
 
 #[cfg(test)]
 mod tests {
