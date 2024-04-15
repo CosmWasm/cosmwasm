@@ -9,14 +9,14 @@ use crate::sections::decode_sections2;
 use crate::sections::encode_sections;
 use crate::serde::from_json;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
+#[cfg(feature = "cosmwasm_2_1")]
+use crate::HashFunction;
 #[cfg(feature = "iterator")]
 use crate::{
     iterator::{Order, Record},
     memory::get_optional_region_address,
 };
-use crate::{
-    HashFunction, RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError,
-};
+use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 64;
@@ -49,10 +49,10 @@ extern "C" {
     fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_aggregate_g1(g1s_ptr: u32) -> u64;
+    fn bls12_381_aggregate_g1(g1s_ptr: u32, out_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_aggregate_g2(g2s_ptr: u32) -> u64;
+    fn bls12_381_aggregate_g2(g2s_ptr: u32, out_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_aggregate_pairing_equality(
@@ -63,10 +63,10 @@ extern "C" {
     ) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_hash_to_g1(hash_function: u32, msg_ptr: u32, dst_ptr: u32) -> u64;
+    fn bls12_381_hash_to_g1(hash_function: u32, msg_ptr: u32, dst_ptr: u32, out_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_hash_to_g2(hash_function: u32, msg_ptr: u32, dst_ptr: u32) -> u64;
+    fn bls12_381_hash_to_g2(hash_function: u32, msg_ptr: u32, dst_ptr: u32, out_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_pairing_equality(p_ptr: u32, q_ptr: u32, r_ptr: u32, s_ptr: u32) -> u32;
@@ -400,14 +400,15 @@ impl Api for ExternalApi {
         Ok(Addr::unchecked(address))
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
-        let mut point = [0; 48];
+        let mut point = [0_u8; 48];
 
         let send = build_region(g1s);
         let send_ptr = &*send as *const Region as u32;
 
-        let out = build_region(&point);
-        let out_ptr = &*send as *const Region as u32;
+        let out = build_region(&point[..]);
+        let out_ptr = &*out as *const Region as u32;
         let result = unsafe { bls12_381_aggregate_g1(send_ptr, out_ptr) };
         match result {
             0 => Ok(point),
@@ -416,14 +417,15 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
-        let mut point = [0; 96];
+        let mut point = [0_u8; 96];
 
         let send = build_region(g2s);
         let send_ptr = &*send as *const Region as u32;
 
-        let out = build_region(&point);
-        let out_ptr = &*send as *const Region as u32;
+        let out = build_region(&point[..]);
+        let out_ptr = &*out as *const Region as u32;
         let result = unsafe { bls12_381_aggregate_g1(send_ptr, out_ptr) };
         match result {
             0 => Ok(point),
@@ -432,6 +434,7 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_aggregate_pairing_equality(
         &self,
         ps: &[u8],
@@ -460,13 +463,14 @@ impl Api for ExternalApi {
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_hash_to_g1(
         &self,
         hash_function: HashFunction,
         msg: &[u8],
         dst: &[u8],
     ) -> Result<[u8; 48], VerificationError> {
-        let mut point = [0; 48];
+        let mut point = [0_u8; 48];
 
         let send_msg = build_region(msg);
         let send_msg_ptr = &*send_msg as *const Region as u32;
@@ -474,26 +478,27 @@ impl Api for ExternalApi {
         let send_dst = build_region(dst);
         let send_dst_ptr = &*send_dst as *const Region as u32;
 
-        let out = build_region(&point);
-        let out_ptr = &*send as *const Region as u32;
+        let out = build_region(&point[..]);
+        let out_ptr = &*out as *const Region as u32;
         let result = unsafe {
             bls12_381_hash_to_g1(hash_function.to_u32(), send_msg_ptr, send_dst_ptr, out_ptr)
         };
 
         match result {
             0 => Ok(point),
-            9 => Err(VerificationError::InvalidHashFunction),
+            9 => Err(VerificationError::UnknownHashFunction),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_hash_to_g2(
         &self,
         hash_function: HashFunction,
         msg: &[u8],
         dst: &[u8],
     ) -> Result<[u8; 96], VerificationError> {
-        let mut point = [0; 96];
+        let mut point = [0_u8; 96];
 
         let send_msg = build_region(msg);
         let send_msg_ptr = &*send_msg as *const Region as u32;
@@ -501,19 +506,20 @@ impl Api for ExternalApi {
         let send_dst = build_region(dst);
         let send_dst_ptr = &*send_dst as *const Region as u32;
 
-        let out = build_region(&point);
-        let out_ptr = &*send as *const Region as u32;
+        let out = build_region(&point[..]);
+        let out_ptr = &*out as *const Region as u32;
         let result = unsafe {
             bls12_381_hash_to_g2(hash_function.to_u32(), send_msg_ptr, send_dst_ptr, out_ptr)
         };
 
         match result {
             0 => Ok(point),
-            9 => Err(VerificationError::InvalidHashFunction),
+            9 => Err(VerificationError::UnknownHashFunction),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }
 
+    #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_pairing_equality(
         &self,
         p: &[u8],
