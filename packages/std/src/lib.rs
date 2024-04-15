@@ -77,7 +77,7 @@ pub use crate::serde::{
 };
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
-pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
+pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 
 // Exposed in wasm build only
@@ -121,7 +121,5 @@ pub use cosmwasm_core::{
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use cosmwasm_core::assert_approx_eq;
-
-pub use cosmwasm_crypto::HashFunction;
 
 pub use cosmwasm_derive::entry_point;

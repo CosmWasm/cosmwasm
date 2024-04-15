@@ -22,12 +22,6 @@ impl HashFunction {
 
         Ok(hash)
     }
-
-    pub fn to_u32(self) -> u32 {
-        match self {
-            Self::Sha256 => 0,
-        }
-    }
 }
 
 pub fn bls12_381_hash_to_g1(hash: HashFunction, msg: &[u8], dst: &[u8]) -> [u8; 48] {
