@@ -1,4 +1,6 @@
-use super::points::{g1_from_fixed, g2_from_fixed, InvalidPoint, G1, G2};
+use crate::{errors::InvalidPoint, CryptoError};
+
+use super::points::{g1_from_fixed, g2_from_fixed, G1, G2};
 
 const G1_POINT_SIZE: usize = 48;
 const G2_POINT_SIZE: usize = 96;
@@ -7,9 +9,9 @@ const G2_POINT_SIZE: usize = 96;
 ///
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
-pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], InvalidPoint> {
+pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
     if points.len() % G1_POINT_SIZE != 0 {
-        return Err(InvalidPoint::DecodingError {});
+        return Err(InvalidPoint::DecodingError {}.into());
     }
 
     let points_count = points.len() / G1_POINT_SIZE;
@@ -31,7 +33,7 @@ pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], InvalidPoint> {
         .map(g1_from_fixed)
         .collect_into_vec(&mut decoded_points);
 
-    let out: Result<Vec<G1>, InvalidPoint> = decoded_points.into_iter().collect();
+    let out: Result<Vec<G1>, CryptoError> = decoded_points.into_iter().collect();
     let out = out?;
 
     let out = g1_sum(&out);
@@ -43,9 +45,9 @@ pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], InvalidPoint> {
 ///
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
-pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], InvalidPoint> {
+pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], CryptoError> {
     if points.len() % G2_POINT_SIZE != 0 {
-        return Err(InvalidPoint::DecodingError {});
+        return Err(InvalidPoint::DecodingError {}.into());
     }
 
     let points_count = points.len() / G2_POINT_SIZE;
@@ -67,7 +69,7 @@ pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], InvalidPoint> {
         .map(g2_from_fixed)
         .collect_into_vec(&mut decoded_points);
 
-    let out: Result<Vec<G2>, InvalidPoint> = decoded_points.into_iter().collect();
+    let out: Result<Vec<G2>, CryptoError> = decoded_points.into_iter().collect();
     let out = out?;
 
     let out = g2_sum(&out);

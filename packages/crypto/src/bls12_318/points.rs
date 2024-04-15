@@ -12,6 +12,9 @@ use bls12_381::{
 use pairing::group::Group;
 use sha2_v9::Sha256;
 
+use crate::errors::InvalidPoint;
+use crate::CryptoError;
+
 /// Point on G1
 #[derive(Debug, PartialEq, Clone)]
 pub struct G1(pub(crate) G1Affine);
@@ -173,31 +176,13 @@ impl<'a> core::iter::Sum<&'a G2> for G2 {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum InvalidPoint {
-    InvalidLength { expected: usize, actual: usize },
-    DecodingError {},
-}
-
-impl fmt::Display for InvalidPoint {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            InvalidPoint::InvalidLength { expected, actual } => {
-                write!(f, "Invalid input length for point (must be in compressed format): Expected {}, actual: {}", expected, actual)
-            }
-            InvalidPoint::DecodingError {} => {
-                write!(f, "Invalid point")
-            }
-        }
-    }
-}
-
-pub fn g1_from_variable(data: &[u8]) -> Result<G1, InvalidPoint> {
+pub fn g1_from_variable(data: &[u8]) -> Result<G1, CryptoError> {
     if data.len() != 48 {
         return Err(InvalidPoint::InvalidLength {
             expected: 48,
             actual: data.len(),
-        });
+        }
+        .into());
     }
 
     let mut buf = [0u8; 48];
@@ -205,7 +190,7 @@ pub fn g1_from_variable(data: &[u8]) -> Result<G1, InvalidPoint> {
     g1_from_fixed(&buf)
 }
 
-pub fn g1s_from_variable(data_list: &[&[u8]]) -> Vec<Result<G1, InvalidPoint>> {
+pub fn g1s_from_variable(data_list: &[&[u8]]) -> Vec<Result<G1, CryptoError>> {
     use rayon::prelude::*;
     let mut out = Vec::with_capacity(data_list.len());
     data_list
@@ -215,12 +200,13 @@ pub fn g1s_from_variable(data_list: &[&[u8]]) -> Vec<Result<G1, InvalidPoint>> {
     out
 }
 
-pub fn g2_from_variable(data: &[u8]) -> Result<G2, InvalidPoint> {
+pub fn g2_from_variable(data: &[u8]) -> Result<G2, CryptoError> {
     if data.len() != 96 {
         return Err(InvalidPoint::InvalidLength {
             expected: 96,
             actual: data.len(),
-        });
+        }
+        .into());
     }
 
     let mut buf = [0u8; 96];
@@ -228,39 +214,39 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2, InvalidPoint> {
     g2_from_fixed(&buf)
 }
 
-pub fn g1_from_fixed(data: &[u8; 48]) -> Result<G1, InvalidPoint> {
+pub fn g1_from_fixed(data: &[u8; 48]) -> Result<G1, CryptoError> {
     Option::from(G1Affine::from_compressed(data))
         .map(G1)
-        .ok_or(InvalidPoint::DecodingError {})
+        .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
 /// Like [`g1_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
-pub fn g1_from_fixed_unchecked(data: [u8; 48]) -> Result<G1, InvalidPoint> {
+pub fn g1_from_fixed_unchecked(data: [u8; 48]) -> Result<G1, CryptoError> {
     Option::from(G1Affine::from_compressed_unchecked(&data))
         .map(G1)
-        .ok_or(InvalidPoint::DecodingError {})
+        .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
-pub fn g2_from_fixed(data: &[u8; 96]) -> Result<G2, InvalidPoint> {
+pub fn g2_from_fixed(data: &[u8; 96]) -> Result<G2, CryptoError> {
     Option::from(G2Affine::from_compressed(data))
         .map(G2)
-        .ok_or(InvalidPoint::DecodingError {})
+        .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
 /// Like [`g2_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
-pub fn g2_from_fixed_unchecked(data: [u8; 96]) -> Result<G2, InvalidPoint> {
+pub fn g2_from_fixed_unchecked(data: [u8; 96]) -> Result<G2, CryptoError> {
     Option::from(G2Affine::from_compressed_unchecked(&data))
         .map(G2)
-        .ok_or(InvalidPoint::DecodingError {})
+        .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
-pub fn bls12_381_g1_is_identity(g1: &[u8; 48]) -> Result<bool, InvalidPoint> {
+pub fn bls12_381_g1_is_identity(g1: &[u8; 48]) -> Result<bool, CryptoError> {
     g1_from_fixed(g1).map(|point| point.is_identity())
 }
 
-pub fn bls12_381_g2_is_identity(g2: &[u8; 96]) -> Result<bool, InvalidPoint> {
+pub fn bls12_381_g2_is_identity(g2: &[u8; 96]) -> Result<bool, CryptoError> {
     g2_from_fixed(g2).map(|point| point.is_identity())
 }
 
@@ -286,7 +272,10 @@ mod tests {
 
         let result = g1_from_variable(&hex::decode("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af").unwrap());
         match result.unwrap_err() {
-            InvalidPoint::InvalidLength { expected, actual } => {
+            CryptoError::InvalidPoint {
+                source: InvalidPoint::InvalidLength { expected, actual },
+                ..
+            } => {
                 assert_eq!(expected, 48);
                 assert_eq!(actual, 47);
             }
@@ -301,7 +290,10 @@ mod tests {
 
         let result = g2_from_variable(&hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e").unwrap());
         match result.unwrap_err() {
-            InvalidPoint::InvalidLength { expected, actual } => {
+            CryptoError::InvalidPoint {
+                source: InvalidPoint::InvalidLength { expected, actual },
+                ..
+            } => {
                 assert_eq!(expected, 96);
                 assert_eq!(actual, 95);
             }
@@ -316,13 +308,19 @@ mod tests {
 
         let result = g1_from_fixed(&hex_literal::hex!("118f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31"));
         match result.unwrap_err() {
-            InvalidPoint::DecodingError {} => {}
+            CryptoError::InvalidPoint {
+                source: InvalidPoint::DecodingError {},
+                ..
+            } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
 
         let result = g1_from_fixed(&hex_literal::hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af22"));
         match result.unwrap_err() {
-            InvalidPoint::DecodingError {} => {}
+            CryptoError::InvalidPoint {
+                source: InvalidPoint::DecodingError {},
+                ..
+            } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }
@@ -342,13 +340,19 @@ mod tests {
 
         let result = g2_from_fixed(&hex_literal::hex!("11f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42"));
         match result.unwrap_err() {
-            InvalidPoint::DecodingError {} => {}
+            CryptoError::InvalidPoint {
+                source: InvalidPoint::DecodingError {},
+                ..
+            } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
 
         let result = g2_from_fixed(&hex_literal::hex!("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e44"));
         match result.unwrap_err() {
-            InvalidPoint::DecodingError {} => {}
+            CryptoError::InvalidPoint {
+                source: InvalidPoint::DecodingError {},
+                ..
+            } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }

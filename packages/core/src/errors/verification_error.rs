@@ -21,6 +21,10 @@ pub enum VerificationError {
     InvalidPubkeyFormat,
     #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
+    #[display("Invalid point")]
+    InvalidPoint,
+    #[display("Unknown hash function")]
+    UnknownHashFunction,
     #[display("Unknown error: {error_code}")]
     UnknownErr { error_code: u32, backtrace: BT },
 }
@@ -52,6 +56,10 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::InvalidRecoveryParam => {
                 matches!(rhs, VerificationError::InvalidRecoveryParam)
             }
+            VerificationError::InvalidPoint => matches!(rhs, VerificationError::InvalidPoint),
+            VerificationError::UnknownHashFunction => {
+                matches!(rhs, VerificationError::UnknownHashFunction)
+            }
             VerificationError::UnknownErr { error_code, .. } => {
                 if let VerificationError::UnknownErr {
                     error_code: rhs_error_code,
@@ -76,7 +84,9 @@ impl From<CryptoError> for VerificationError {
             CryptoError::InvalidSignatureFormat { .. } => VerificationError::InvalidSignatureFormat,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
+            CryptoError::InvalidPoint { .. } => VerificationError::InvalidPoint,
             CryptoError::BatchErr { .. } => VerificationError::BatchErr,
+            CryptoError::UnknownHashFunction { .. } => VerificationError::UnknownHashFunction,
         }
     }
 }

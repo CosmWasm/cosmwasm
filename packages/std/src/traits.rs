@@ -165,6 +165,36 @@ pub trait Api {
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
     #[allow(unused_variables)]
+    fn bls12_381_pairing_equality(
+        &self,
+        p: &[u8],
+        q: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    fn bls12_381_aggregate_pairing_equality(
+        &self,
+        ps: &[u8],
+        qs: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
     fn secp256r1_verify(
         &self,
         message_hash: &[u8],

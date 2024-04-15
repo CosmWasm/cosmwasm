@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
 use rand_core::OsRng;
-use std::time::Duration;
+use std::{hint::black_box, time::Duration};
 
 use english_numbers::convert_no_fmt;
 use hex_literal::hex;
@@ -12,8 +12,9 @@ use k256::ecdsa::SigningKey; // type alias
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_recover_pubkey, secp256r1_verify,
+    bls12_381_g1_generator, bls12_381_hash_to_g2, bls12_381_pairing_equality, ed25519_batch_verify,
+    ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, secp256r1_recover_pubkey,
+    secp256r1_verify, HashFunction,
 };
 use std::cmp::min;
 
@@ -34,6 +35,14 @@ const COSMOS_ED25519_PUBLIC_KEY_HEX: &str =
 
 // Test data from https://tools.ietf.org/html/rfc8032#section-7.1
 const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
+
+// BLS test vector
+// Path: "packages/crypto/testdata/bls-tests/verify/verify_valid_case_2ea479adf8c40300.json"
+const BLS_PUBKEY: [u8; 48] = hex!("a491d1b0ecd9bb917989f0e74f0dea0422eac4a873e5e2644f368dffb9a6e20fd6e10c1b77654d067c0618f6e5a7f79a");
+const BLS_MESSAGE: [u8; 32] =
+    hex!("5656565656565656565656565656565656565656565656565656565656565656");
+const BLS_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+const BLS_SIGNATURE: [u8; 96] = hex!("882730e5d03f6b42c3abc26d3372625034e1d871b65a8a6b900a56dae22da98abbe1b68f85e49fe7652a55ec3d0591c20767677e33e5cbb1207315c41a9ac03be39c2e7668edc043d6cb1d9fd93033caa8a1c5b0e84bedaeb6c64972503a43eb");
 
 #[derive(Deserialize, Debug)]
 struct Encoded {
@@ -134,6 +143,23 @@ fn bench_crypto(c: &mut Criterion) {
         b.iter(|| {
             let pubkey = secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
             assert_eq!(pubkey, expected);
+        });
+    });
+
+    group.bench_function("bls12_381_verify", |b| {
+        let generator = bls12_381_g1_generator();
+        let message = bls12_381_hash_to_g2(HashFunction::Sha256, &BLS_MESSAGE, BLS_DST);
+
+        b.iter(|| {
+            let is_equal = bls12_381_pairing_equality(
+                black_box(&BLS_PUBKEY),
+                &message,
+                &generator,
+                black_box(&BLS_SIGNATURE),
+            )
+            .unwrap();
+
+            assert!(is_equal);
         });
     });
 

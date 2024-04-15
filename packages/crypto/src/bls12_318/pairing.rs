@@ -1,6 +1,6 @@
-use super::points::{
-    g1_from_fixed, g1_from_variable, g2_from_fixed, g2_from_variable, InvalidPoint,
-};
+use crate::CryptoError;
+
+use super::points::{g1_from_variable, g2_from_variable};
 use bls12_381::G2Prepared;
 use pairing::group::Group;
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -8,9 +8,9 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 pub fn bls12_381_aggregate_pairing_equality(
     ps: &[u8],
     qs: &[u8],
-    r: &[u8; 48],
-    s: &[u8; 96],
-) -> Result<bool, InvalidPoint> {
+    r: &[u8],
+    s: &[u8],
+) -> Result<bool, CryptoError> {
     let pq_pairs: Vec<_> = ps
         .chunks_exact(48)
         .zip(qs.chunks_exact(96))
@@ -23,10 +23,10 @@ pub fn bls12_381_aggregate_pairing_equality(
 
             Ok((g1.0, G2Prepared::from(g2.0)))
         })
-        .collect::<Result<_, _>>()?;
+        .collect::<Result<_, CryptoError>>()?;
 
-    let r = g1_from_fixed(r)?;
-    let s = g2_from_fixed(s)?;
+    let r = g1_from_variable(r)?;
+    let s = g2_from_variable(s)?;
 
     let r_neg = -r.0;
     let s_prepared = G2Prepared::from(s.0);
@@ -49,16 +49,16 @@ pub fn bls12_381_aggregate_pairing_equality(
 /// e(p, q) = e(r, s)
 /// $$
 pub fn bls12_381_pairing_equality(
-    p: &[u8; 48],
-    q: &[u8; 96],
-    r: &[u8; 48],
-    s: &[u8; 96],
-) -> Result<bool, InvalidPoint> {
+    p: &[u8],
+    q: &[u8],
+    r: &[u8],
+    s: &[u8],
+) -> Result<bool, CryptoError> {
     let (p, q, r, s) = (
-        g1_from_fixed(p)?,
-        g2_from_fixed(q)?,
-        g1_from_fixed(r)?,
-        g2_from_fixed(s)?,
+        g1_from_variable(p)?,
+        g2_from_variable(q)?,
+        g1_from_variable(r)?,
+        g2_from_variable(s)?,
     );
 
     let p_neg = -p;

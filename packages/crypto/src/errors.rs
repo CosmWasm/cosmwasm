@@ -1,10 +1,30 @@
 use alloc::string::String;
-use core::fmt::Debug;
+use core::fmt::{self, Debug};
 use derive_more::Display;
 
 use crate::BT;
 
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
+
+#[derive(Debug)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum InvalidPoint {
+    InvalidLength { expected: usize, actual: usize },
+    DecodingError {},
+}
+
+impl fmt::Display for InvalidPoint {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            InvalidPoint::InvalidLength { expected, actual } => {
+                write!(f, "Invalid input length for point (must be in compressed format): Expected {}, actual: {}", expected, actual)
+            }
+            InvalidPoint::DecodingError {} => {
+                write!(f, "Invalid point")
+            }
+        }
+    }
+}
 
 #[derive(Display, Debug)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
@@ -21,6 +41,10 @@ pub enum CryptoError {
     InvalidSignatureFormat { backtrace: BT },
     #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam { backtrace: BT },
+    #[display("Invalid point: {source}")]
+    InvalidPoint { source: InvalidPoint, backtrace: BT },
+    #[display("Unknown hash function")]
+    UnknownHashFunction { backtrace: BT },
 }
 
 impl CryptoError {
@@ -62,6 +86,12 @@ impl CryptoError {
         }
     }
 
+    pub fn unknown_hash_function() -> Self {
+        CryptoError::UnknownHashFunction {
+            backtrace: BT::capture(),
+        }
+    }
+
     /// Numeric error code that can easily be passed over the
     /// contract VM boundary.
     pub fn code(&self) -> u32 {
@@ -71,7 +101,19 @@ impl CryptoError {
             CryptoError::InvalidPubkeyFormat { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::BatchErr { .. } => 7,
+            CryptoError::InvalidPoint { .. } => 8,
+            CryptoError::UnknownHashFunction { .. } => 9,
             CryptoError::GenericErr { .. } => 10,
+        }
+    }
+}
+
+impl From<InvalidPoint> for CryptoError {
+    #[track_caller]
+    fn from(value: InvalidPoint) -> Self {
+        Self::InvalidPoint {
+            source: value,
+            backtrace: BT::capture(),
         }
     }
 }
