@@ -1,7 +1,7 @@
 use core::fmt;
-use cosmwasm_core::Uint64;
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::Uint64;
 
 /// A point in time in nanosecond precision.
 ///
@@ -21,9 +21,8 @@ use serde::{Deserialize, Serialize};
 /// assert_eq!(ts.seconds(), 3);
 /// assert_eq!(ts.subsec_nanos(), 202);
 /// ```
-#[derive(
-    Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
-)]
+#[derive(Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {
