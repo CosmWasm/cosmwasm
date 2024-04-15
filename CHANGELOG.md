@@ -11,13 +11,20 @@ and this project adheres to
 - cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
   `Uint256` and `Uint512`; improve panic message for `Uint64::add` and
   `Uint512::add` ([#2092])
-- cosmwasm-std: Add `Uint{64,128,256,512}::panicking_add` and `::panicking_sub`
-  which are like the `Add`/`Sub` implementations but `const`. ([#2098])
-- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
-  `Uint64::panicking_add`/`::panicking_sub` and document overflows. ([#2098])
+- cosmwasm-std: Add `Uint{64,128,256,512}::strict_add` and `::strict_sub` which
+  are like the `Add`/`Sub` implementations but `const`. ([#2098], [#2107])
 
 [#2092]: https://github.com/CosmWasm/cosmwasm/pull/2092
 [#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+
+### Changed
+
+- cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
+  `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
+
+[#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
+[#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
 
 ## [2.0.1] - 2024-04-03
 
