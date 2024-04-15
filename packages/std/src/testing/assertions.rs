@@ -54,6 +54,13 @@ pub fn assert_approx_eq_impl<U: Into<Uint128>>(
 ) {
     let left = left.into();
     let right = right.into();
+
+    if left == right {
+        // If both values are equal, we don't need to check the relative difference.
+        // We check this first to avoid division by zero below.
+        return;
+    }
+
     let max_rel_diff = Decimal::from_str(max_rel_diff).unwrap();
 
     let largest = core::cmp::max(left, right);
@@ -126,6 +133,11 @@ mod tests {
             10_000_000_000_000_000_000_000_000_000_000_000_000_u128,
             "0.10"
         );
+        assert_approx_eq!(0_u32, 0_u32, "0.12");
+        assert_approx_eq!(1_u64, 0_u64, "1");
+        assert_approx_eq!(0_u64, 1_u64, "1");
+        assert_approx_eq!(5_u64, 0_u64, "1");
+        assert_approx_eq!(0_u64, 5_u64, "1");
     }
 
     #[test]
