@@ -47,3 +47,4 @@ glob = "0.3.1"
 [[bench]]
 name = "main"
 harness = false
+required-features = ["std"]

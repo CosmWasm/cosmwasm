@@ -14,8 +14,10 @@ use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::imports::{
-    do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_read, do_db_remove,
-    do_db_write, do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
+    do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_bls12_381_aggregate_g1,
+    do_bls12_381_aggregate_g2, do_bls12_381_aggregate_pairing_equality, do_bls12_381_hash_to_g1,
+    do_bls12_381_hash_to_g2, do_bls12_381_pairing_equality, do_db_read, do_db_remove, do_db_write,
+    do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
     do_secp256k1_recover_pubkey, do_secp256k1_verify, do_secp256r1_recover_pubkey,
     do_secp256r1_verify,
 };
@@ -140,6 +142,57 @@ where
         env_imports.insert(
             "addr_humanize",
             Function::new_typed_with_env(&mut store, &fe, do_addr_humanize),
+        );
+
+        // Reads a list of points on of the subgroup G1 on the BLS12-381 curve and aggregates them down to a single element.
+        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // The lower half is a pointer to a new memory region containing the new point.
+        env_imports.insert(
+            "bls12_381_aggregate_g1",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g1),
+        );
+
+        // Reads a list of points on of the subgroup G2 on the BLS12-381 curve and aggregates them down to a single element.
+        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // The lower half is a pointer to a new memory region containing the new point.
+        env_imports.insert(
+            "bls12_381_aggregate_g2",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g2),
+        );
+
+        // Four parameters, "ps", "qs", "r", "s", which all represent elements on the BLS12-381 curve (where "ps" and "r" are elements of the G1 subgroup, and "qs" and "s" elements of G2).
+        // The "ps" and "qs" are interpreted as a continous list of points in the subgroups G1 and G2 respectively.
+        // Returns a single u32 which signifies the validity of the pairing equality.
+        // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
+        env_imports.insert(
+            "bls12_381_aggregate_pairing_equality",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_pairing_equality),
+        );
+
+        // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.
+        // The "hash_function" parameter is interpreted as a case of the "HashFunction" enum.
+        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // The lower half is a pointer to a new memory region containing the newly generated point.
+        env_imports.insert(
+            "bls12_381_hash_to_g1",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g1),
+        );
+
+        // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.
+        // The "hash_function" parameter is interpreted as a case of the "HashFunction" enum.
+        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
+        // The lower half is a pointer to a new memory region containing the newly generated point.
+        env_imports.insert(
+            "bls12_381_hash_to_g2",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g2),
+        );
+
+        // Four parameters, "p", "q", "r", "s", which all represent elements on the BLS12-381 curve (where "p" and "r" are elements of the G1 subgroup, and "q" and "s" elements of G2).
+        // Returns a single u32 which signifies the validity of the pairing equality.
+        // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
+        env_imports.insert(
+            "bls12_381_pairing_equality",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_pairing_equality),
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.

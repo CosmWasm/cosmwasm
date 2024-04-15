@@ -4,6 +4,8 @@ use bls12_381::{
 };
 use sha2_v9::Sha256;
 
+use crate::CryptoError;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum HashFunction {
@@ -11,16 +13,16 @@ pub enum HashFunction {
 }
 
 impl HashFunction {
-    pub fn from_usize(idx: usize) -> Option<Self> {
+    pub fn from_u32(idx: u32) -> Result<Self, CryptoError> {
         let hash = match idx {
             0 => Self::Sha256,
-            _ => return None,
+            _ => return Err(CryptoError::unknown_hash_function()),
         };
 
-        Some(hash)
+        Ok(hash)
     }
 
-    pub fn to_usize(self) -> usize {
+    pub fn to_u32(self) -> u32 {
         match self {
             Self::Sha256 => 0,
         }
