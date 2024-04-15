@@ -86,8 +86,11 @@ impl Int128 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn pow(self, exp: u32) -> Self {
-        Self(self.0.pow(exp))
+    pub const fn pow(self, exp: u32) -> Self {
+        match self.0.checked_pow(exp) {
+            Some(val) => Self(val),
+            None => panic!("attempt to exponentiate with overflow"),
+        }
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -208,6 +211,16 @@ impl Int128 {
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs_diff(self, other: Self) -> Uint128 {
         Uint128(self.0.abs_diff(other.0))
+    }
+
+    /// Strict negation. Computes -self, panicking if self == MIN.
+    ///
+    /// This is the same as [`Int128::neg`] but const.
+    pub const fn strict_neg(self) -> Self {
+        match self.0.checked_neg() {
+            Some(val) => Self(val),
+            None => panic!("attempt to negate with overflow"),
+        }
     }
 }
 
@@ -367,7 +380,7 @@ impl Neg for Int128 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self(-self.0)
+        self.strict_neg()
     }
 }
 

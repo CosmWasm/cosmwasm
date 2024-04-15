@@ -158,8 +158,11 @@ impl Uint256 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn pow(self, exp: u32) -> Self {
-        Self(self.0.pow(exp))
+    pub const fn pow(self, exp: u32) -> Self {
+        match self.0.checked_pow(exp) {
+            Some(val) => Self(val),
+            None => panic!("attempt to exponentiate with overflow"),
+        }
     }
 
     /// Returns `self * numerator / denominator`.
