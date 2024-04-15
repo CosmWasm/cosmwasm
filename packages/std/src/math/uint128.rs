@@ -1174,7 +1174,7 @@ mod tests {
     #[should_panic(expected = "attempt to add with overflow")]
     fn uint128_strict_add_panics_on_overflow() {
         let a = Uint128::MAX;
-        let b = Uint128::ONE;
+        let b = Uint128::one();
         let _ = a.strict_add(b);
     }
 
@@ -1187,17 +1187,10 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
-<<<<<<< HEAD:packages/std/src/math/uint128.rs
-    fn uint128_panicking_sub_panics_on_overflow() {
+    fn uint128_strict_sub_panics_on_overflow() {
         let a = Uint128::zero();
         let b = Uint128::one();
-        let _diff = a.panicking_sub(b);
-=======
-    fn uint128_strict_sub_panics_on_overflow() {
-        let a = Uint128::ZERO;
-        let b = Uint128::ONE;
         let _ = a.strict_sub(b);
->>>>>>> 3b59561d5 (Rename math functions to strict_add/strict_sub (#2107)):packages/core/src/math/uint128.rs
     }
 
     #[test]

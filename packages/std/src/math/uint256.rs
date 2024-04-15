@@ -1716,7 +1716,7 @@ mod tests {
     #[should_panic(expected = "attempt to add with overflow")]
     fn uint256_strict_add_panics_on_overflow() {
         let a = Uint256::MAX;
-        let b = Uint256::ONE;
+        let b = Uint256::one();
         let _ = a.strict_add(b);
     }
 
@@ -1729,17 +1729,10 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "attempt to subtract with overflow")]
-<<<<<<< HEAD:packages/std/src/math/uint256.rs
-    fn uint256_panicking_sub_panics_on_overflow() {
+    fn uint256_strict_sub_panics_on_overflow() {
         let a = Uint256::zero();
         let b = Uint256::one();
-        let _diff = a.panicking_sub(b);
-=======
-    fn uint256_strict_sub_panics_on_overflow() {
-        let a = Uint256::ZERO;
-        let b = Uint256::ONE;
         let _ = a.strict_sub(b);
->>>>>>> 3b59561d5 (Rename math functions to strict_add/strict_sub (#2107)):packages/core/src/math/uint256.rs
     }
 
     #[test]
