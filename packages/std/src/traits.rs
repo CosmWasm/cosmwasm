@@ -26,11 +26,34 @@ use crate::query::{
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
-use crate::HashFunction;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
 use crate::{RecoverPubkeyError, StdError, StdResult, VerificationError};
+
+#[derive(Clone, Copy, Debug)]
+#[non_exhaustive]
+pub enum HashFunction {
+    Sha256,
+}
+
+#[doc(hidden)]
+impl HashFunction {
+    pub fn to_u32(self) -> u32 {
+        match self {
+            Self::Sha256 => 0,
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl From<HashFunction> for cosmwasm_crypto::HashFunction {
+    fn from(value: HashFunction) -> Self {
+        match value {
+            HashFunction::Sha256 => cosmwasm_crypto::HashFunction::Sha256,
+        }
+    }
+}
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`

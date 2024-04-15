@@ -177,7 +177,7 @@ impl Api for MockApi {
         dst: &[u8],
     ) -> Result<[u8; 48], VerificationError> {
         Ok(cosmwasm_crypto::bls12_381_hash_to_g1(
-            hash_function,
+            hash_function.into(),
             msg,
             dst,
         ))
@@ -190,7 +190,7 @@ impl Api for MockApi {
         dst: &[u8],
     ) -> Result<[u8; 96], VerificationError> {
         Ok(cosmwasm_crypto::bls12_381_hash_to_g2(
-            hash_function,
+            hash_function.into(),
             msg,
             dst,
         ))

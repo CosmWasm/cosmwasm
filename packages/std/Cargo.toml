@@ -59,7 +59,6 @@ cosmwasm_2_1 = ["cosmwasm_2_0"]
 base64 = "0.22.0"
 cosmwasm-derive = { version = "2.0.1", path = "../derive" }
 cosmwasm-core = { path = "../core", version = "2.0.1", features = ["std"] }
-cosmwasm-crypto = { path = "../crypto", version = "2.0.1", features = ["std"] }
 derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["debug"] }
 hex = "0.4"
 schemars = { workspace = true }
@@ -70,7 +69,7 @@ thiserror = "1.0.26"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.11.0"
-cosmwasm-crypto = { version = "2.0.1", path = "../crypto" }
+cosmwasm-crypto = { version = "2.0.1", path = "../crypto", features = ["std"] }
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 
 [dev-dependencies]
