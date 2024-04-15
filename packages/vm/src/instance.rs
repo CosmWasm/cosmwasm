@@ -145,16 +145,16 @@ where
         );
 
         // Reads a list of points on of the subgroup G1 on the BLS12-381 curve and aggregates them down to a single element.
-        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
-        // The lower half is a pointer to a new memory region containing the new point.
+        // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G1 (48 bytes).
+        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_aggregate_g1",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g1),
         );
 
         // Reads a list of points on of the subgroup G2 on the BLS12-381 curve and aggregates them down to a single element.
-        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
-        // The lower half is a pointer to a new memory region containing the new point.
+        // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G2 (96 bytes).
+        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_aggregate_g2",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_g2),
@@ -171,8 +171,8 @@ where
 
         // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.
         // The "hash_function" parameter is interpreted as a case of the "HashFunction" enum.
-        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
-        // The lower half is a pointer to a new memory region containing the newly generated point.
+        // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G1 (48 bytes).
+        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_hash_to_g1",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g1),
@@ -180,8 +180,8 @@ where
 
         // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.
         // The "hash_function" parameter is interpreted as a case of the "HashFunction" enum.
-        // Returns a u64 as a result, the top half represents the error code. 0 signifies success, anything else may be converted into a `CryptoError`.
-        // The lower half is a pointer to a new memory region containing the newly generated point.
+        // The "out_ptr" parameter has to be a pointer to a region with the sufficient size to fit an element of G2 (96 bytes).
+        // Returns a u32 as a result. 0 signifies success, anything else may be converted into a `CryptoError`.
         env_imports.insert(
             "bls12_381_hash_to_g2",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g2),

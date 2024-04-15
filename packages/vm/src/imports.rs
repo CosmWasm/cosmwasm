@@ -263,8 +263,9 @@ pub fn do_bls12_381_aggregate_g1<
 >(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     g1s_ptr: u32,
-) -> VmResult<u64> {
-    let (data, mut store) = env.data_and_store_mut();
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let g1s = read_region(&memory, g1s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
@@ -272,9 +273,12 @@ pub fn do_bls12_381_aggregate_g1<
     // TODO: Add gas consumption metering
 
     let code = match bls12_381_aggregate_g1(&g1s) {
-        Ok(point) => to_low_half(write_to_contract(data, &mut store, &point)?),
+        Ok(point) => {
+            write_region(&memory, out_ptr, &point)?;
+            0
+        }
         Err(err) => match err {
-            CryptoError::InvalidPoint { .. } => to_high_half(err.code()),
+            CryptoError::InvalidPoint { .. } => err.code(),
             CryptoError::BatchErr { .. }
             | CryptoError::GenericErr { .. }
             | CryptoError::InvalidHashFormat { .. }
@@ -297,8 +301,9 @@ pub fn do_bls12_381_aggregate_g2<
 >(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     g2s_ptr: u32,
-) -> VmResult<u64> {
-    let (data, mut store) = env.data_and_store_mut();
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let g2s = read_region(&memory, g2s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
@@ -306,9 +311,12 @@ pub fn do_bls12_381_aggregate_g2<
     // TODO: Add gas consumption metering
 
     let code = match bls12_381_aggregate_g2(&g2s) {
-        Ok(point) => to_low_half(write_to_contract(data, &mut store, &point)?),
+        Ok(point) => {
+            write_region(&memory, out_ptr, &point)?;
+            0
+        }
         Err(err) => match err {
-            CryptoError::InvalidPoint { .. } => to_high_half(err.code()),
+            CryptoError::InvalidPoint { .. } => err.code(),
             CryptoError::BatchErr { .. }
             | CryptoError::GenericErr { .. }
             | CryptoError::InvalidHashFormat { .. }
@@ -376,8 +384,9 @@ pub fn do_bls12_381_hash_to_g1<
     hash_function: u32,
     msg_ptr: u32,
     dst_ptr: u32,
-) -> VmResult<u64> {
-    let (data, mut store) = env.data_and_store_mut();
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let msg = read_region(&memory, msg_ptr, BLS12_381_MAX_MESSAGE_SIZE)?;
@@ -387,11 +396,13 @@ pub fn do_bls12_381_hash_to_g1<
 
     let hash_function = match HashFunction::from_u32(hash_function) {
         Ok(func) => func,
-        Err(error) => return Ok(to_high_half(error.code())),
+        Err(error) => return Ok(error.code()),
     };
     let point = bls12_381_hash_to_g1(hash_function, &msg, &dst);
 
-    Ok(to_low_half(write_to_contract(data, &mut store, &point)?))
+    write_region(&memory, out_ptr, &point)?;
+
+    Ok(0)
 }
 
 pub fn do_bls12_381_hash_to_g2<
@@ -403,8 +414,9 @@ pub fn do_bls12_381_hash_to_g2<
     hash_function: u32,
     msg_ptr: u32,
     dst_ptr: u32,
+    out_ptr: u32,
 ) -> VmResult<u64> {
-    let (data, mut store) = env.data_and_store_mut();
+    let (data, store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let msg = read_region(&memory, msg_ptr, BLS12_381_MAX_MESSAGE_SIZE)?;
@@ -418,7 +430,9 @@ pub fn do_bls12_381_hash_to_g2<
     };
     let point = bls12_381_hash_to_g2(hash_function, &msg, &dst);
 
-    Ok(to_low_half(write_to_contract(data, &mut store, &point)?))
+    write_region(&memory, out_ptr, &point)?;
+
+    Ok(0)
 }
 
 pub fn do_bls12_381_pairing_equality<

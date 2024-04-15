@@ -6,12 +6,13 @@ use sha2_v9::Sha256;
 
 use crate::CryptoError;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum HashFunction {
     Sha256,
 }
 
+#[doc(hidden)]
 impl HashFunction {
     pub fn from_u32(idx: u32) -> Result<Self, CryptoError> {
         let hash = match idx {

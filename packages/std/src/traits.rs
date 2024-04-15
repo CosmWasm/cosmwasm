@@ -26,6 +26,7 @@ use crate::query::{
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
+use crate::HashFunction;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
@@ -165,13 +166,16 @@ pub trait Api {
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
     #[allow(unused_variables)]
-    fn bls12_381_pairing_equality(
-        &self,
-        p: &[u8],
-        q: &[u8],
-        r: &[u8],
-        s: &[u8],
-    ) -> Result<bool, VerificationError> {
+    fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
+        // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
         // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
         // Any implementation of the Api trait which does not implement this function but tries to call it will
         // panic at runtime. We don't assume such cases exist.
@@ -184,6 +188,49 @@ pub trait Api {
         &self,
         ps: &[u8],
         qs: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    fn bls12_381_hash_to_g1(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 48], VerificationError> {
+        // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    fn bls12_381_hash_to_g2(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 96], VerificationError> {
+        // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
+        // Any implementation of the Api trait which does not implement this function but tries to call it will
+        // panic at runtime. We don't assume such cases exist.
+        // See also https://doc.rust-lang.org/cargo/reference/semver.html#trait-new-default-item
+        unimplemented!()
+    }
+
+    #[allow(unused_variables)]
+    fn bls12_381_pairing_equality(
+        &self,
+        p: &[u8],
+        q: &[u8],
         r: &[u8],
         s: &[u8],
     ) -> Result<bool, VerificationError> {

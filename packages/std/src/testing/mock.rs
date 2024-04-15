@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::HashFunction;
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -149,6 +150,60 @@ impl Api for MockApi {
         encode::<Bech32>(prefix, canonical.as_slice())
             .map(Addr::unchecked)
             .map_err(|_| StdError::generic_err("Bech32 encoding error"))
+    }
+
+    fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
+        cosmwasm_crypto::bls12_381_aggregate_g1(g1s).map_err(Into::into)
+    }
+
+    fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
+        cosmwasm_crypto::bls12_381_aggregate_g2(g2s).map_err(Into::into)
+    }
+
+    fn bls12_381_aggregate_pairing_equality(
+        &self,
+        ps: &[u8],
+        qs: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        cosmwasm_crypto::bls12_381_aggregate_pairing_equality(ps, qs, r, s).map_err(Into::into)
+    }
+
+    fn bls12_381_hash_to_g1(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 48], VerificationError> {
+        Ok(cosmwasm_crypto::bls12_381_hash_to_g1(
+            hash_function,
+            msg,
+            dst,
+        ))
+    }
+
+    fn bls12_381_hash_to_g2(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 96], VerificationError> {
+        Ok(cosmwasm_crypto::bls12_381_hash_to_g2(
+            hash_function,
+            msg,
+            dst,
+        ))
+    }
+
+    fn bls12_381_pairing_equality(
+        &self,
+        p: &[u8],
+        q: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        cosmwasm_crypto::bls12_381_pairing_equality(p, q, r, s).map_err(Into::into)
     }
 
     fn secp256k1_verify(
