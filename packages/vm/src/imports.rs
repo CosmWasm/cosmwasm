@@ -415,7 +415,7 @@ pub fn do_bls12_381_hash_to_g2<
     msg_ptr: u32,
     dst_ptr: u32,
     out_ptr: u32,
-) -> VmResult<u64> {
+) -> VmResult<u32> {
     let (data, store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
@@ -426,7 +426,7 @@ pub fn do_bls12_381_hash_to_g2<
 
     let hash_function = match HashFunction::from_u32(hash_function) {
         Ok(func) => func,
-        Err(error) => return Ok(to_high_half(error.code())),
+        Err(error) => return Ok(error.code()),
     };
     let point = bls12_381_hash_to_g2(hash_function, &msg, &dst);
 
