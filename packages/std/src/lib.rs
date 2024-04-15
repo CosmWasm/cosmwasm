@@ -23,7 +23,6 @@ mod sections;
 mod serde;
 mod stdack;
 mod storage;
-mod timestamp;
 mod traits;
 mod types;
 
@@ -78,7 +77,6 @@ pub use crate::serde::{
 };
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
-pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 
@@ -117,8 +115,8 @@ pub use cosmwasm_core::{
     Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
     HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
     OverflowOperation, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
-    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Uint128, Uint256,
-    Uint512, Uint64, VerificationError,
+    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Timestamp, Uint128,
+    Uint256, Uint512, Uint64, VerificationError,
 };
 
 #[cfg(not(target_arch = "wasm32"))]

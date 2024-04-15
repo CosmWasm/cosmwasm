@@ -17,6 +17,7 @@ mod errors;
 mod forward_ref;
 mod hex_binary;
 mod math;
+mod timestamp;
 
 #[doc(hidden)]
 pub mod __internal;
@@ -38,6 +39,7 @@ pub use crate::math::{
     Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
     SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
 };
+pub use crate::timestamp::Timestamp;
 
 /// Exposed for testing only
 /// Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
