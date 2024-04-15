@@ -481,7 +481,7 @@ impl Api for ExternalApi {
         let out = build_region(&point[..]);
         let out_ptr = &*out as *const Region as u32;
         let result = unsafe {
-            bls12_381_hash_to_g1(hash_function.to_u32(), send_msg_ptr, send_dst_ptr, out_ptr)
+            bls12_381_hash_to_g1(hash_function as u32, send_msg_ptr, send_dst_ptr, out_ptr)
         };
 
         match result {
@@ -509,7 +509,7 @@ impl Api for ExternalApi {
         let out = build_region(&point[..]);
         let out_ptr = &*out as *const Region as u32;
         let result = unsafe {
-            bls12_381_hash_to_g2(hash_function.to_u32(), send_msg_ptr, send_dst_ptr, out_ptr)
+            bls12_381_hash_to_g2(hash_function as u32, send_msg_ptr, send_dst_ptr, out_ptr)
         };
 
         match result {

@@ -34,16 +34,7 @@ use crate::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum HashFunction {
-    Sha256,
-}
-
-#[doc(hidden)]
-impl HashFunction {
-    pub fn to_u32(self) -> u32 {
-        match self {
-            Self::Sha256 => 0,
-        }
-    }
+    Sha256 = 0,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
