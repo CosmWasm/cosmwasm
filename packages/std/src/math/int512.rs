@@ -179,8 +179,11 @@ impl Int512 {
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub fn pow(self, exp: u32) -> Self {
-        Self(self.0.pow(exp))
+    pub const fn pow(self, exp: u32) -> Self {
+        match self.0.checked_pow(exp) {
+            Some(val) => Self(val),
+            None => panic!("attempt to exponentiate with overflow"),
+        }
     }
 
     pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
@@ -305,12 +308,25 @@ impl Int512 {
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn abs(self) -> Self {
-        Self(self.0.abs())
+        match self.0.checked_abs() {
+            Some(val) => Self(val),
+            None => panic!("attempt to calculate absolute value with overflow"),
+        }
     }
 
     #[must_use = "this returns the result of the operation, without modifying the original"]
     pub const fn unsigned_abs(self) -> Uint512 {
         Uint512(self.0.unsigned_abs())
+    }
+
+    /// Strict negation. Computes -self, panicking if self == MIN.
+    ///
+    /// This is the same as [`Int512::neg`] but const.
+    pub const fn strict_neg(self) -> Self {
+        match self.0.checked_neg() {
+            Some(val) => Self(val),
+            None => panic!("attempt to negate with overflow"),
+        }
     }
 }
 
@@ -516,7 +532,7 @@ impl Neg for Int512 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Self(-self.0)
+        self.strict_neg()
     }
 }
 
@@ -1349,7 +1365,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic = "attempt to negate with overflow"]
+    #[should_panic = "attempt to calculate absolute value with overflow"]
     fn int512_abs_min_panics() {
         _ = Int512::MIN.abs();
     }
