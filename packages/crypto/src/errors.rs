@@ -1,34 +1,39 @@
 use alloc::string::String;
-use core::fmt::{self, Debug};
+use core::fmt::Debug;
 use derive_more::Display;
 
 use crate::BT;
 
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
-pub enum InvalidPoint {
-    InvalidLength { expected: usize, actual: usize },
-    DecodingError {},
+pub enum AggregationPairingEquality {
+    #[display("List is not a multiple of 48. Remainder: {remainder}")]
+    NotMultipleG1 { remainder: usize },
+    #[display("List is not a multiple of 96. Remainder: {remainder}")]
+    NotMultipleG2 { remainder: usize },
+    #[display("Not the same amount of points passed. Left: {left}, Right: {right}")]
+    UnequalPointAmount { left: usize, right: usize },
 }
 
-impl fmt::Display for InvalidPoint {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            InvalidPoint::InvalidLength { expected, actual } => {
-                write!(f, "Invalid input length for point (must be in compressed format): Expected {}, actual: {}", expected, actual)
-            }
-            InvalidPoint::DecodingError {} => {
-                write!(f, "Invalid point")
-            }
-        }
-    }
+#[derive(Debug, Display)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum InvalidPoint {
+    #[display("Invalid input length for point (must be in compressed format): Expected {expected}, actual: {actual}")]
+    InvalidLength { expected: usize, actual: usize },
+    #[display("Invalid point")]
+    DecodingError {},
 }
 
 #[derive(Display, Debug)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CryptoError {
+    #[display("Aggregation pairing equality error: {source}")]
+    AggregationPairingEquality {
+        source: AggregationPairingEquality,
+        backtrace: BT,
+    },
     #[display("Batch verify error: {msg}")]
     BatchErr { msg: String, backtrace: BT },
     #[display("Crypto error: {msg}")]
@@ -104,6 +109,28 @@ impl CryptoError {
             CryptoError::InvalidPoint { .. } => 8,
             CryptoError::UnknownHashFunction { .. } => 9,
             CryptoError::GenericErr { .. } => 10,
+            CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEquality::NotMultipleG1 { .. },
+                ..
+            } => 11,
+            CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEquality::NotMultipleG2 { .. },
+                ..
+            } => 12,
+            CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEquality::UnequalPointAmount { .. },
+                ..
+            } => 13,
+        }
+    }
+}
+
+impl From<AggregationPairingEquality> for CryptoError {
+    #[track_caller]
+    fn from(value: AggregationPairingEquality) -> Self {
+        Self::AggregationPairingEquality {
+            source: value,
+            backtrace: BT::capture(),
         }
     }
 }
