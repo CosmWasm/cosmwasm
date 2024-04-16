@@ -13,7 +13,11 @@ pub fn bls12_381_aggregate_pairing_equality(
     r: &[u8],
     s: &[u8],
 ) -> Result<bool, CryptoError> {
-    if ps.len() % BLS12_381_G1_POINT_LEN != 0 {
+    if ps.is_empty() {
+        return Err(AggregationPairingEquality::EmptyG1.into());
+    } else if qs.is_empty() {
+        return Err(AggregationPairingEquality::EmptyG2.into());
+    } else if ps.len() % BLS12_381_G1_POINT_LEN != 0 {
         return Err(AggregationPairingEquality::NotMultipleG1 {
             remainder: ps.len() % BLS12_381_G1_POINT_LEN,
         }

@@ -9,6 +9,10 @@ pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 #[derive(Debug, Display)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum AggregationPairingEquality {
+    #[display("List of G1 points is empty")]
+    EmptyG1,
+    #[display("List of G2 points is empty")]
+    EmptyG2,
     #[display("List is not a multiple of 48. Remainder: {remainder}")]
     NotMultipleG1 { remainder: usize },
     #[display("List is not a multiple of 96. Remainder: {remainder}")]
@@ -121,6 +125,14 @@ impl CryptoError {
                 source: AggregationPairingEquality::UnequalPointAmount { .. },
                 ..
             } => 13,
+            CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEquality::EmptyG1 { .. },
+                ..
+            } => 14,
+            CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEquality::EmptyG2 { .. },
+                ..
+            } => 15,
         }
     }
 }

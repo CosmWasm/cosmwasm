@@ -471,6 +471,12 @@ impl Api for ExternalApi {
             13 => Err(VerificationError::AggregationPairingEquality {
                 source: AggregationPairingEqualityError::UnequalPointAmount,
             }),
+            14 => Err(VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::EmptyG1,
+            }),
+            15 => Err(VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::EmptyG2,
+            }),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }
