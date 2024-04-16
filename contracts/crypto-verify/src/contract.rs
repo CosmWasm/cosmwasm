@@ -112,6 +112,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &r,
             &s,
         )?),
+        QueryMsg::VerifyBls12PairingEquality { p, q, r, msg, dst } => {
+            to_json_binary(&query_verify_bls12_pairing(deps, &p, &q, &r, &msg, &dst)?)
+        }
     }
 }
 
@@ -280,6 +283,18 @@ pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsRespon
     Ok(ListVerificationsResponse {
         verification_schemes,
     })
+}
+
+pub fn query_verify_bls12_pairing(
+    deps: Deps,
+    p: &[u8],
+    q: &[u8],
+    r: &[u8],
+    msg: &[u8],
+    dst: &[u8],
+) -> StdResult<VerifyResponse> {
+    let verifies = crate::bls12_381::verify(deps.api, p, q, r, msg, dst)?;
+    Ok(VerifyResponse { verifies })
 }
 
 #[cfg(test)]

@@ -514,6 +514,7 @@ name = "crypto-verify"
 version = "0.0.0"
 dependencies = [
  "base64",
+ "bls12_381",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cosmwasm-vm",

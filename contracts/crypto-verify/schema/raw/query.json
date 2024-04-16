@@ -375,6 +375,69 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "BLS12-381 pairing equality verification",
+      "type": "object",
+      "required": [
+        "verify_bls12_pairing_equality"
+      ],
+      "properties": {
+        "verify_bls12_pairing_equality": {
+          "type": "object",
+          "required": [
+            "dst",
+            "msg",
+            "p",
+            "q",
+            "r"
+          ],
+          "properties": {
+            "dst": {
+              "description": "The `dst` component used to hash the message to the curve",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "msg": {
+              "description": "The message that should be verified",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "p": {
+              "description": "The point $p$ in its compressed format (element of G1)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "q": {
+              "description": "The point $q$ in its compressed format (element of G2)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "r": {
+              "description": "The point $r$ in its compressed format (element of G1)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
