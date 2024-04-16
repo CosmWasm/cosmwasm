@@ -1,10 +1,11 @@
 //! This module contains types for the IBC callbacks defined in
 //! [ADR-8](https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md).
 
+use cosmwasm_core::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, IbcAcknowledgement, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
+use crate::{Addr, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 
 /// This is just a type representing the data that has to be sent with the IBC message to receive
 /// callbacks. It should be serialized to JSON and sent with the IBC message.
@@ -117,9 +118,14 @@ pub enum IbcSourceChainCallbackMsg {
 /// The IBC destination chain callback is needed for cases where someone triggers the sending of an
 /// IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and
 /// your contract needs to know that it received this.
-/// The callback is called after the packet was successfully acknowledged on the destination chain.
 /// A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know
 /// that someone sent you IBC coins.
+///
+/// The callback is called after the packet was acknowledged on the destination chain, as follows:
+/// - If the acknowledgement is synchronous (i.e. returned immediately when the packet is received),
+///   the callback is called only if the acknowledgement was successful.
+/// - If the acknowledgement is asynchronous (i.e. written later using `WriteAcknowledgement`),
+///   the callback is called regardless of the success of the acknowledgement.
 ///
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
 /// - The contract must implement the `ibc_destination_chain_callback` entrypoint.
@@ -130,7 +136,17 @@ pub enum IbcSourceChainCallbackMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcDestinationChainCallbackMsg {
     pub packet: IbcPacket,
-    pub ack: IbcAcknowledgement,
+    pub ack: IbcFullAcknowledgement,
+}
+
+/// The acknowledgement written by the module on the destination chain.
+/// It is different from the [`IbcAcknowledgement`] as it can be unsuccessful.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct IbcFullAcknowledgement {
+    /// The acknowledgement data returned by the module.
+    pub data: Binary,
+    /// Whether the acknowledgement was successful or not.
+    pub success: bool,
 }
 
 #[cfg(test)]

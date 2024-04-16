@@ -42,9 +42,9 @@ pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcCallbackData, IbcChannel,
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcDestinationChainCallbackMsg,
-    IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout,
-    IbcTimeoutBlock,
+    IbcDstCallback, IbcEndpoint, IbcFullAcknowledgement, IbcMsg, IbcOrder, IbcPacket,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
