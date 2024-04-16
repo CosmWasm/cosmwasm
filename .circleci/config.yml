@@ -126,12 +126,12 @@ jobs:
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - restore_cache:
           keys:
-            - v4-arm64-workspace-rust:1.73-{{ checksum "Cargo.lock" }}
-            - v4-arm64-workspace-rust:1.73-
+            - v5-arm64-workspace-rust:1.73-{{ checksum "Cargo.lock" }}
+            - v5-arm64-workspace-rust:1.73-
       - restore_cache:
           keys:
-            - v4-arm64-contracts-rust:1.73-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
-            - v4-arm64-contracts-rust:1.73-
+            - v5-arm64-contracts-rust:1.73-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - v5-arm64-contracts-rust:1.73-
       # Test a few contracts that do something potentially interesting in the VM
       # to test contract execution on ARM64.
       # No need to add all contracts here.
@@ -169,14 +169,14 @@ jobs:
           # use all features
           command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
-          key: v4-arm64-workspace-rust:1.73-{{ checksum "Cargo.lock" }}
+          key: v5-arm64-workspace-rust:1.73-{{ checksum "Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
       - save_cache:
-          key: v4-arm64-contracts-rust:1.73-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: v5-arm64-contracts-rust:1.73-{{ checksum "contracts/crypto-verify/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
           paths:
             - ~/.cargo/registry
             # crypto-verify
