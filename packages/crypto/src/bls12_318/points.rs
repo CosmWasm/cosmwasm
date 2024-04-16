@@ -36,40 +36,10 @@ impl G1 {
     }
 
     #[inline]
-    pub fn from_uncompressed(data: &[u8; { BLS12_381_G1_POINT_LEN * 2 }]) -> Option<Self> {
-        G1Affine::deserialize_uncompressed(&data[..]).map(Self).ok()
-    }
-
-    #[inline]
-    pub fn to_uncompressed(&self) -> [u8; { BLS12_381_G1_POINT_LEN * 2 }] {
-        let mut serialized = [0; { BLS12_381_G1_POINT_LEN * 2 }];
-        self.0.serialize_uncompressed(&mut serialized[..]).unwrap();
-        serialized
-    }
-
-    #[inline]
     pub fn to_compressed(&self) -> [u8; BLS12_381_G1_POINT_LEN] {
         let mut serialized = [0; BLS12_381_G1_POINT_LEN];
         self.0.serialize_compressed(&mut serialized[..]).unwrap();
         serialized
-    }
-}
-
-impl Add<G1> for G1 {
-    type Output = G1;
-
-    fn add(self, rhs: Self) -> Self {
-        let sum = self.0 + G1Projective::from(rhs.0);
-        Self(sum.into())
-    }
-}
-
-impl Add<&G1> for G1 {
-    type Output = G1;
-
-    fn add(self, rhs: &G1) -> G1 {
-        let sum = self.0 + G1Projective::from(rhs.0);
-        G1(sum.into())
     }
 }
 
@@ -87,22 +57,6 @@ impl Neg for G1 {
 
     fn neg(self) -> Self::Output {
         G1(-self.0)
-    }
-}
-
-impl Neg for &G1 {
-    type Output = G1;
-
-    fn neg(self) -> Self::Output {
-        G1(-self.0)
-    }
-}
-
-impl core::iter::Sum<G1> for G1 {
-    fn sum<I: Iterator<Item = G1>>(iter: I) -> Self {
-        let zero = G1Projective::zero();
-        let sum = iter.fold(zero, |acc, next| acc + G1Projective::from(next.0));
-        G1(sum.into())
     }
 }
 
@@ -138,18 +92,6 @@ impl G2 {
     }
 
     #[inline]
-    pub fn from_uncompressed(data: &[u8; { BLS12_381_G2_POINT_LEN * 2 }]) -> Option<Self> {
-        G2Affine::deserialize_uncompressed(&data[..]).map(Self).ok()
-    }
-
-    #[inline]
-    pub fn to_uncompressed(&self) -> [u8; { BLS12_381_G2_POINT_LEN * 2 }] {
-        let mut serialized = [0; { BLS12_381_G2_POINT_LEN * 2 }];
-        self.0.serialize_uncompressed(&mut serialized[..]).unwrap();
-        serialized
-    }
-
-    #[inline]
     pub fn to_compressed(&self) -> [u8; BLS12_381_G2_POINT_LEN] {
         let mut serialized = [0; BLS12_381_G2_POINT_LEN];
         self.0.serialize_compressed(&mut serialized[..]).unwrap();
@@ -162,14 +104,6 @@ impl Add<&G2> for &G2 {
 
     fn add(self, rhs: &G2) -> Self::Output {
         [self, rhs].into_iter().sum()
-    }
-}
-
-impl core::iter::Sum<G2> for G2 {
-    fn sum<I: Iterator<Item = G2>>(iter: I) -> Self {
-        let zero = G2Projective::zero();
-        let sum = iter.fold(zero, |acc, next| acc + G2Projective::from(next.0));
-        G2(sum.into())
     }
 }
 
