@@ -13,7 +13,7 @@ use pairing::group::Group;
 use sha2_v9::Sha256;
 
 use crate::errors::InvalidPoint;
-use crate::CryptoError;
+use crate::{CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 
 /// Point on G1
 #[derive(Debug, PartialEq, Clone)]
@@ -39,17 +39,17 @@ impl G1 {
     }
 
     #[inline]
-    pub fn from_uncompressed(data: &[u8; 96]) -> Option<Self> {
+    pub fn from_uncompressed(data: &[u8; { BLS12_381_G1_POINT_LEN * 2 }]) -> Option<Self> {
         G1Affine::from_uncompressed(data).map(Self).into()
     }
 
     #[inline]
-    pub fn to_uncompressed(&self) -> [u8; 96] {
+    pub fn to_uncompressed(&self) -> [u8; { BLS12_381_G1_POINT_LEN * 2 }] {
         self.0.to_uncompressed()
     }
 
     #[inline]
-    pub fn to_compressed(&self) -> [u8; 48] {
+    pub fn to_compressed(&self) -> [u8; BLS12_381_G1_POINT_LEN] {
         self.0.to_compressed()
     }
 }
@@ -137,17 +137,17 @@ impl G2 {
     }
 
     #[inline]
-    pub fn from_uncompressed(data: &[u8; 192]) -> Option<Self> {
+    pub fn from_uncompressed(data: &[u8; { BLS12_381_G2_POINT_LEN * 2 }]) -> Option<Self> {
         G2Affine::from_uncompressed(data).map(Self).into()
     }
 
     #[inline]
-    pub fn to_uncompressed(&self) -> [u8; 192] {
+    pub fn to_uncompressed(&self) -> [u8; { BLS12_381_G2_POINT_LEN * 2 }] {
         self.0.to_uncompressed()
     }
 
     #[inline]
-    pub fn to_compressed(&self) -> [u8; 96] {
+    pub fn to_compressed(&self) -> [u8; BLS12_381_G2_POINT_LEN] {
         self.0.to_compressed()
     }
 }
@@ -177,15 +177,15 @@ impl<'a> core::iter::Sum<&'a G2> for G2 {
 }
 
 pub fn g1_from_variable(data: &[u8]) -> Result<G1, CryptoError> {
-    if data.len() != 48 {
+    if data.len() != BLS12_381_G1_POINT_LEN {
         return Err(InvalidPoint::InvalidLength {
-            expected: 48,
+            expected: BLS12_381_G1_POINT_LEN,
             actual: data.len(),
         }
         .into());
     }
 
-    let mut buf = [0u8; 48];
+    let mut buf = [0u8; BLS12_381_G1_POINT_LEN];
     buf[..].clone_from_slice(data);
     g1_from_fixed(&buf)
 }
@@ -201,20 +201,20 @@ pub fn g1s_from_variable(data_list: &[&[u8]]) -> Vec<Result<G1, CryptoError>> {
 }
 
 pub fn g2_from_variable(data: &[u8]) -> Result<G2, CryptoError> {
-    if data.len() != 96 {
+    if data.len() != BLS12_381_G2_POINT_LEN {
         return Err(InvalidPoint::InvalidLength {
-            expected: 96,
+            expected: BLS12_381_G2_POINT_LEN,
             actual: data.len(),
         }
         .into());
     }
 
-    let mut buf = [0u8; 96];
+    let mut buf = [0u8; BLS12_381_G2_POINT_LEN];
     buf[..].clone_from_slice(data);
     g2_from_fixed(&buf)
 }
 
-pub fn g1_from_fixed(data: &[u8; 48]) -> Result<G1, CryptoError> {
+pub fn g1_from_fixed(data: &[u8; BLS12_381_G1_POINT_LEN]) -> Result<G1, CryptoError> {
     Option::from(G1Affine::from_compressed(data))
         .map(G1)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
@@ -222,13 +222,13 @@ pub fn g1_from_fixed(data: &[u8; 48]) -> Result<G1, CryptoError> {
 
 /// Like [`g1_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
-pub fn g1_from_fixed_unchecked(data: [u8; 48]) -> Result<G1, CryptoError> {
+pub fn g1_from_fixed_unchecked(data: [u8; BLS12_381_G1_POINT_LEN]) -> Result<G1, CryptoError> {
     Option::from(G1Affine::from_compressed_unchecked(&data))
         .map(G1)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
-pub fn g2_from_fixed(data: &[u8; 96]) -> Result<G2, CryptoError> {
+pub fn g2_from_fixed(data: &[u8; BLS12_381_G2_POINT_LEN]) -> Result<G2, CryptoError> {
     Option::from(G2Affine::from_compressed(data))
         .map(G2)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
@@ -236,17 +236,17 @@ pub fn g2_from_fixed(data: &[u8; 96]) -> Result<G2, CryptoError> {
 
 /// Like [`g2_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
-pub fn g2_from_fixed_unchecked(data: [u8; 96]) -> Result<G2, CryptoError> {
+pub fn g2_from_fixed_unchecked(data: [u8; BLS12_381_G2_POINT_LEN]) -> Result<G2, CryptoError> {
     Option::from(G2Affine::from_compressed_unchecked(&data))
         .map(G2)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
-pub fn bls12_381_g1_is_identity(g1: &[u8; 48]) -> Result<bool, CryptoError> {
+pub fn bls12_381_g1_is_identity(g1: &[u8; BLS12_381_G1_POINT_LEN]) -> Result<bool, CryptoError> {
     g1_from_fixed(g1).map(|point| point.is_identity())
 }
 
-pub fn bls12_381_g2_is_identity(g2: &[u8; 96]) -> Result<bool, CryptoError> {
+pub fn bls12_381_g2_is_identity(g2: &[u8; BLS12_381_G2_POINT_LEN]) -> Result<bool, CryptoError> {
     g2_from_fixed(g2).map(|point| point.is_identity())
 }
 

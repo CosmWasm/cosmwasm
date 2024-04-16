@@ -4,7 +4,7 @@ use bls12_381::{
 };
 use sha2_v9::Sha256;
 
-use crate::CryptoError;
+use crate::{CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
@@ -24,7 +24,11 @@ impl HashFunction {
     }
 }
 
-pub fn bls12_381_hash_to_g1(hash: HashFunction, msg: &[u8], dst: &[u8]) -> [u8; 48] {
+pub fn bls12_381_hash_to_g1(
+    hash: HashFunction,
+    msg: &[u8],
+    dst: &[u8],
+) -> [u8; BLS12_381_G1_POINT_LEN] {
     let g1 = match hash {
         HashFunction::Sha256 => {
             <G1Projective as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(msg, dst)
@@ -34,7 +38,11 @@ pub fn bls12_381_hash_to_g1(hash: HashFunction, msg: &[u8], dst: &[u8]) -> [u8; 
     G1Affine::from(g1).to_compressed()
 }
 
-pub fn bls12_381_hash_to_g2(hash: HashFunction, msg: &[u8], dst: &[u8]) -> [u8; 96] {
+pub fn bls12_381_hash_to_g2(
+    hash: HashFunction,
+    msg: &[u8],
+    dst: &[u8],
+) -> [u8; BLS12_381_G2_POINT_LEN] {
     let g2 = match hash {
         HashFunction::Sha256 => {
             <G2Projective as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(msg, dst)

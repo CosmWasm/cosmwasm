@@ -16,7 +16,10 @@ use crate::{
     iterator::{Order, Record},
     memory::get_optional_region_address,
 };
-use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+use crate::{
+    AggregationPairingEqualityError, RecoverPubkeyError, StdError, StdResult, SystemError,
+    VerificationError,
+};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 64;
@@ -459,6 +462,15 @@ impl Api for ExternalApi {
             0 => Ok(true),
             1 => Ok(false),
             8 => Err(VerificationError::InvalidPoint),
+            11 => Err(VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::NotMultipleG1,
+            }),
+            12 => Err(VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::NotMultipleG2,
+            }),
+            13 => Err(VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::UnequalPointAmount,
+            }),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }

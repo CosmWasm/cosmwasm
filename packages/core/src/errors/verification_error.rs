@@ -6,9 +6,24 @@ use super::BT;
 #[cfg(not(target_arch = "wasm32"))]
 use cosmwasm_crypto::CryptoError;
 
+#[derive(Display, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum AggregationPairingEqualityError {
+    #[display("List is not a multiple of 48")]
+    NotMultipleG1,
+    #[display("List is not a multiple of 96")]
+    NotMultipleG2,
+    #[display("Not the same amount of points passed")]
+    UnequalPointAmount,
+}
+
 #[derive(Display, Debug)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum VerificationError {
+    #[display("Aggregation pairing equality error: {source}")]
+    AggregationPairingEquality {
+        source: AggregationPairingEqualityError,
+    },
     #[display("Batch error")]
     BatchErr,
     #[display("Generic error")]
@@ -42,6 +57,9 @@ impl VerificationError {
 impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {
         match self {
+            VerificationError::AggregationPairingEquality { source: lhs_source } => {
+                matches!(rhs, VerificationError::AggregationPairingEquality { source: rhs_source } if rhs_source == lhs_source)
+            }
             VerificationError::BatchErr => matches!(rhs, VerificationError::BatchErr),
             VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
             VerificationError::InvalidHashFormat => {
@@ -79,6 +97,24 @@ impl PartialEq<VerificationError> for VerificationError {
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
+            CryptoError::AggregationPairingEquality {
+                source: cosmwasm_crypto::AggregationPairingEqualityError::NotMultipleG1 { .. },
+                ..
+            } => VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::NotMultipleG1,
+            },
+            CryptoError::AggregationPairingEquality {
+                source: cosmwasm_crypto::AggregationPairingEqualityError::NotMultipleG2 { .. },
+                ..
+            } => VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::NotMultipleG2,
+            },
+            CryptoError::AggregationPairingEquality {
+                source: cosmwasm_crypto::AggregationPairingEqualityError::UnequalPointAmount { .. },
+                ..
+            } => VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::UnequalPointAmount,
+            },
             CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
             CryptoError::InvalidPubkeyFormat { .. } => VerificationError::InvalidPubkeyFormat,
             CryptoError::InvalidSignatureFormat { .. } => VerificationError::InvalidSignatureFormat,

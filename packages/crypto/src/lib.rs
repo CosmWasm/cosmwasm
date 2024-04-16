@@ -35,7 +35,9 @@ pub use crate::ed25519::EDDSA_PUBKEY_LEN;
 #[doc(hidden)]
 pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
 #[doc(hidden)]
-pub use crate::errors::{CryptoError, CryptoResult};
+pub use crate::errors::{
+    AggregationPairingEquality as AggregationPairingEqualityError, CryptoError, CryptoResult,
+};
 #[doc(hidden)]
 pub use crate::secp256k1::{secp256k1_recover_pubkey, secp256k1_verify};
 #[doc(hidden)]

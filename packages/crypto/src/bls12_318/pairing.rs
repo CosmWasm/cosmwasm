@@ -1,4 +1,6 @@
-use crate::CryptoError;
+use crate::{
+    errors::AggregationPairingEquality, CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
+};
 
 use super::points::{g1_from_variable, g2_from_variable};
 use bls12_381::G2Prepared;
@@ -11,9 +13,27 @@ pub fn bls12_381_aggregate_pairing_equality(
     r: &[u8],
     s: &[u8],
 ) -> Result<bool, CryptoError> {
+    if ps.len() % BLS12_381_G1_POINT_LEN != 0 {
+        return Err(AggregationPairingEquality::NotMultipleG1 {
+            remainder: ps.len() % BLS12_381_G1_POINT_LEN,
+        }
+        .into());
+    } else if qs.len() % BLS12_381_G2_POINT_LEN != 0 {
+        return Err(AggregationPairingEquality::NotMultipleG2 {
+            remainder: qs.len() % BLS12_381_G2_POINT_LEN,
+        }
+        .into());
+    } else if ps.len() % BLS12_381_G1_POINT_LEN != qs.len() % BLS12_381_G2_POINT_LEN {
+        return Err(AggregationPairingEquality::UnequalPointAmount {
+            left: ps.len() % BLS12_381_G1_POINT_LEN,
+            right: qs.len() % BLS12_381_G2_POINT_LEN,
+        }
+        .into());
+    }
+
     let pq_pairs: Vec<_> = ps
-        .chunks_exact(48)
-        .zip(qs.chunks_exact(96))
+        .chunks_exact(BLS12_381_G1_POINT_LEN)
+        .zip(qs.chunks_exact(BLS12_381_G2_POINT_LEN))
         // From here on parallelism is fine since the miller loop runs over
         // a sum of the pairings and is therefore a commutative operation
         .par_bridge()
