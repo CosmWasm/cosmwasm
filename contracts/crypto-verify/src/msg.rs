@@ -108,6 +108,20 @@ pub enum QueryMsg {
         /// The representation of this component is a big-endian encoded 256bit integer
         s: Binary,
     },
+    /// BLS12-381 pairing equality verification
+    #[returns(VerifyResponse)]
+    VerifyBls12PairingEquality {
+        /// The point $p$ in its compressed format (element of G1)
+        p: Binary,
+        /// The point $q$ in its compressed format (element of G2)
+        q: Binary,
+        /// The point $r$ in its compressed format (element of G1)
+        r: Binary,
+        /// The message that should be verified
+        msg: Binary,
+        /// The `dst` component used to hash the message to the curve
+        dst: Binary,
+    },
 }
 
 #[cw_serde]

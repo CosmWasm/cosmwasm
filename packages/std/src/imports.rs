@@ -405,7 +405,7 @@ impl Api for ExternalApi {
 
     #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
-        let mut point = [0_u8; 48];
+        let point = [0_u8; 48];
 
         let send = build_region(g1s);
         let send_ptr = &*send as *const Region as u32;
@@ -422,14 +422,14 @@ impl Api for ExternalApi {
 
     #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
-        let mut point = [0_u8; 96];
+        let point = [0_u8; 96];
 
         let send = build_region(g2s);
         let send_ptr = &*send as *const Region as u32;
 
         let out = build_region(&point[..]);
         let out_ptr = &*out as *const Region as u32;
-        let result = unsafe { bls12_381_aggregate_g1(send_ptr, out_ptr) };
+        let result = unsafe { bls12_381_aggregate_g2(send_ptr, out_ptr) };
         match result {
             0 => Ok(point),
             8 => Err(VerificationError::InvalidPoint),
@@ -488,7 +488,7 @@ impl Api for ExternalApi {
         msg: &[u8],
         dst: &[u8],
     ) -> Result<[u8; 48], VerificationError> {
-        let mut point = [0_u8; 48];
+        let point = [0_u8; 48];
 
         let send_msg = build_region(msg);
         let send_msg_ptr = &*send_msg as *const Region as u32;
@@ -516,7 +516,7 @@ impl Api for ExternalApi {
         msg: &[u8],
         dst: &[u8],
     ) -> Result<[u8; 96], VerificationError> {
-        let mut point = [0_u8; 96];
+        let point = [0_u8; 96];
 
         let send_msg = build_region(msg);
         let send_msg_ptr = &*send_msg as *const Region as u32;
