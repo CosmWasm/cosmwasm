@@ -42,7 +42,7 @@ pub fn execute(
         [coin] if !coin.amount.is_zero() => IbcMsg::Transfer {
             to_address: msg.to_address,
             timeout: IbcTimeout::with_timestamp(
-                env.block.time.plus_seconds(msg.timeout_seconds.u64()),
+                env.block.time.plus_seconds(msg.timeout_seconds as u64),
             ),
             channel_id: msg.channel_id,
             amount: coin.clone(),

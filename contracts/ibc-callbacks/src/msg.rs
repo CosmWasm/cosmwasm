@@ -1,5 +1,4 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Uint64;
 
 #[cw_serde]
 #[derive(QueryResponses)]
@@ -16,7 +15,7 @@ pub struct ExecuteMsg {
     /// The channel to send the packet through
     pub channel_id: String,
     /// The amount of seconds from now the transfer should timeout at
-    pub timeout_seconds: Uint64,
+    pub timeout_seconds: u32,
     /// Who should receive callbacks for the message
     #[serde(default)]
     pub callback_type: CallbackType,
