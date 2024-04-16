@@ -1,6 +1,9 @@
+use ark_bls12_381::{G1Affine, G2Affine};
+use ark_ff::UniformRand;
+use ark_serialize::CanonicalSerialize;
 use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
 use rand_core::OsRng;
-use std::{hint::black_box, time::Duration};
+use std::{hint::black_box, io, time::Duration};
 
 use english_numbers::convert_no_fmt;
 use hex_literal::hex;
@@ -12,9 +15,10 @@ use k256::ecdsa::SigningKey; // type alias
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
-    bls12_381_g1_generator, bls12_381_hash_to_g1, bls12_381_hash_to_g2, bls12_381_pairing_equality,
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_recover_pubkey, secp256r1_verify, HashFunction,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator, bls12_381_hash_to_g1,
+    bls12_381_hash_to_g2, bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify,
+    secp256k1_recover_pubkey, secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify,
+    HashFunction, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 use std::cmp::min;
 
@@ -145,6 +149,43 @@ fn bench_crypto(c: &mut Criterion) {
             assert_eq!(pubkey, expected);
         });
     });
+
+    let two_pow_max = 8;
+    let num_random_points = 2_usize.pow(two_pow_max);
+
+    let random_points_g1: Vec<G1Affine> = (0..num_random_points)
+        .map(|_| G1Affine::rand(&mut OsRng))
+        .collect();
+    let mut g1_serialized = io::Cursor::new(Vec::new());
+    random_points_g1
+        .serialize_compressed(&mut g1_serialized)
+        .unwrap();
+    let g1_serialized = &g1_serialized.into_inner()[8..];
+
+    let random_points_g2: Vec<G2Affine> = (0..num_random_points)
+        .map(|_| G2Affine::rand(&mut OsRng))
+        .collect();
+    let mut g2_serialized = io::Cursor::new(Vec::new());
+    random_points_g2
+        .serialize_compressed(&mut g2_serialized)
+        .unwrap();
+    let g2_serialized = &g2_serialized.into_inner()[8..];
+
+    for i in 1..=two_pow_max {
+        let num_points = 2_usize.pow(i);
+        let points_to_aggregate_g1 = &g1_serialized[..num_points * BLS12_381_G1_POINT_LEN];
+        group.bench_function(format!("bls12_381_aggregate_g1_{num_points}"), |b| {
+            b.iter(|| bls12_381_aggregate_g1(points_to_aggregate_g1).unwrap());
+        });
+    }
+
+    for i in 1..=two_pow_max {
+        let num_points = 2_usize.pow(i);
+        let points_to_aggregate_g2 = &g2_serialized[..num_points * BLS12_381_G2_POINT_LEN];
+        group.bench_function(format!("bls12_381_aggregate_g2_{num_points}"), |b| {
+            b.iter(|| bls12_381_aggregate_g2(points_to_aggregate_g2).unwrap());
+        });
+    }
 
     group.bench_function("bls12_381_hash_to_g1", |b| {
         b.iter(|| {
