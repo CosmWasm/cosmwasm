@@ -961,6 +961,7 @@ mod tests {
         const CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_CALLBACKS: &[u8] = include_bytes!("../testdata/ibc_callbacks.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
+
         fn setup(
             instance: &mut Instance<MockApi, MockStorage, MockQuerier>,
             channel_id: &str,
@@ -1014,13 +1015,16 @@ mod tests {
             };
             call_reply::<_, _, _, Empty>(instance, &mock_env(), &response).unwrap();
         }
+
         const CHANNEL_ID: &str = "channel-123";
         const ACCOUNT: &str = "account-456";
+
         #[test]
         fn call_ibc_channel_open_and_connect_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
         }
+
         #[test]
         fn call_ibc_channel_close_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
@@ -1032,6 +1036,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
         }
+
         #[test]
         fn call_ibc_packet_ack_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
@@ -1042,6 +1047,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
         }
+
         #[test]
         fn call_ibc_packet_timeout_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
@@ -1051,6 +1057,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
         }
+
         #[test]
         fn call_ibc_packet_receive_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
@@ -1061,6 +1068,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
         }
+
         #[test]
         fn call_ibc_source_chain_callback_works() {
             let mut instance = mock_instance(IBC_CALLBACKS, &[]);

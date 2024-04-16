@@ -1,4 +1,4 @@
-# Ibc Reflect Contract
+# IBC Callbacks Contract
 
 This is a simple contract to demonstrate [IBC Callbacks]. It sends an ICS-20
 transfer message to a remote chain and writes to storage which callbacks were

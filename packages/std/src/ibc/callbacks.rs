@@ -73,7 +73,8 @@ impl IbcCallbackData {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcSrcCallback {
     /// The source chain address that should receive the callback.
-    /// You probably want to put `env.contract.address` here.
+    /// For CosmWasm contracts, this *must* be `env.contract.address`.
+    /// Other addresses are not allowed and will effectively be ignored.
     pub address: Addr,
     /// Optional gas limit for the callback (in Cosmos SDK gas units)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -105,6 +106,7 @@ pub struct IbcDstCallback {
 ///   For `IbcMsg::Transfer`, this is the `memo` field.
 /// - The receiver of the callback must also be the sender of the message.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum IbcSourceChainCallbackMsg {
     Acknowledgement(IbcPacketAckMsg),
     Timeout(IbcPacketTimeoutMsg),
