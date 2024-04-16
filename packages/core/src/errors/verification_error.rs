@@ -9,6 +9,10 @@ use cosmwasm_crypto::CryptoError;
 #[derive(Display, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum AggregationPairingEqualityError {
+    #[display("List of G1 points is empty")]
+    EmptyG1,
+    #[display("List of G2 points is empty")]
+    EmptyG2,
     #[display("List is not a multiple of 48")]
     NotMultipleG1,
     #[display("List is not a multiple of 96")]
@@ -97,6 +101,18 @@ impl PartialEq<VerificationError> for VerificationError {
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
+            CryptoError::AggregationPairingEquality {
+                source: cosmwasm_crypto::AggregationPairingEqualityError::EmptyG1,
+                ..
+            } => VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::EmptyG1,
+            },
+            CryptoError::AggregationPairingEquality {
+                source: cosmwasm_crypto::AggregationPairingEqualityError::EmptyG2,
+                ..
+            } => VerificationError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::EmptyG2,
+            },
             CryptoError::AggregationPairingEquality {
                 source: cosmwasm_crypto::AggregationPairingEqualityError::NotMultipleG1 { .. },
                 ..
