@@ -1,16 +1,13 @@
 #![allow(unused)]
 
 use alloc::vec::Vec;
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use core::ops::Add;
 use core::{fmt, ops::Neg};
 
-use bls12_381::hash_to_curve::ExpandMsgXmd;
-use bls12_381::{
-    hash_to_curve::{ExpandMessage, HashToCurve},
-    G1Affine, G1Projective, G2Affine, G2Projective,
-};
-use pairing::group::Group;
-use sha2_v9::Sha256;
+use ark_bls12_381::{G1Affine, G1Projective, G2Affine, G2Projective};
+use ark_ec::AffineRepr;
+use num_traits::Zero;
 
 use crate::errors::InvalidPoint;
 use crate::{CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
@@ -35,22 +32,26 @@ impl G1 {
     /// Check if the point is the identity element
     #[inline]
     pub fn is_identity(&self) -> bool {
-        self.0.is_identity().into()
+        self.0.is_zero()
     }
 
     #[inline]
     pub fn from_uncompressed(data: &[u8; { BLS12_381_G1_POINT_LEN * 2 }]) -> Option<Self> {
-        G1Affine::from_uncompressed(data).map(Self).into()
+        G1Affine::deserialize_uncompressed(&data[..]).map(Self).ok()
     }
 
     #[inline]
     pub fn to_uncompressed(&self) -> [u8; { BLS12_381_G1_POINT_LEN * 2 }] {
-        self.0.to_uncompressed()
+        let mut serialized = [0; { BLS12_381_G1_POINT_LEN * 2 }];
+        self.0.serialize_uncompressed(&mut serialized[..]).unwrap();
+        serialized
     }
 
     #[inline]
     pub fn to_compressed(&self) -> [u8; BLS12_381_G1_POINT_LEN] {
-        self.0.to_compressed()
+        let mut serialized = [0; BLS12_381_G1_POINT_LEN];
+        self.0.serialize_compressed(&mut serialized[..]).unwrap();
+        serialized
     }
 }
 
@@ -99,7 +100,7 @@ impl Neg for &G1 {
 
 impl core::iter::Sum<G1> for G1 {
     fn sum<I: Iterator<Item = G1>>(iter: I) -> Self {
-        let zero = G1Projective::identity();
+        let zero = G1Projective::zero();
         let sum = iter.fold(zero, |acc, next| acc + G1Projective::from(next.0));
         G1(sum.into())
     }
@@ -107,7 +108,7 @@ impl core::iter::Sum<G1> for G1 {
 
 impl<'a> core::iter::Sum<&'a G1> for G1 {
     fn sum<I: Iterator<Item = &'a G1>>(iter: I) -> Self {
-        let zero = G1Projective::identity();
+        let zero = G1Projective::zero();
         let sum = iter.fold(zero, |acc, next| acc + G1Projective::from(next.0));
         G1(sum.into())
     }
@@ -133,22 +134,26 @@ impl G2 {
     /// Check if the point is the identity element
     #[inline]
     pub fn is_identity(&self) -> bool {
-        self.0.is_identity().into()
+        self.0.is_zero()
     }
 
     #[inline]
     pub fn from_uncompressed(data: &[u8; { BLS12_381_G2_POINT_LEN * 2 }]) -> Option<Self> {
-        G2Affine::from_uncompressed(data).map(Self).into()
+        G2Affine::deserialize_uncompressed(&data[..]).map(Self).ok()
     }
 
     #[inline]
     pub fn to_uncompressed(&self) -> [u8; { BLS12_381_G2_POINT_LEN * 2 }] {
-        self.0.to_uncompressed()
+        let mut serialized = [0; { BLS12_381_G2_POINT_LEN * 2 }];
+        self.0.serialize_uncompressed(&mut serialized[..]).unwrap();
+        serialized
     }
 
     #[inline]
     pub fn to_compressed(&self) -> [u8; BLS12_381_G2_POINT_LEN] {
-        self.0.to_compressed()
+        let mut serialized = [0; BLS12_381_G2_POINT_LEN];
+        self.0.serialize_compressed(&mut serialized[..]).unwrap();
+        serialized
     }
 }
 
@@ -162,7 +167,7 @@ impl Add<&G2> for &G2 {
 
 impl core::iter::Sum<G2> for G2 {
     fn sum<I: Iterator<Item = G2>>(iter: I) -> Self {
-        let zero = G2Projective::identity();
+        let zero = G2Projective::zero();
         let sum = iter.fold(zero, |acc, next| acc + G2Projective::from(next.0));
         G2(sum.into())
     }
@@ -170,7 +175,7 @@ impl core::iter::Sum<G2> for G2 {
 
 impl<'a> core::iter::Sum<&'a G2> for G2 {
     fn sum<I: Iterator<Item = &'a G2>>(iter: I) -> Self {
-        let zero = G2Projective::identity();
+        let zero = G2Projective::zero();
         let sum = iter.fold(zero, |acc, next| acc + G2Projective::from(next.0));
         G2(sum.into())
     }
@@ -215,7 +220,8 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2, CryptoError> {
 }
 
 pub fn g1_from_fixed(data: &[u8; BLS12_381_G1_POINT_LEN]) -> Result<G1, CryptoError> {
-    Option::from(G1Affine::from_compressed(data))
+    G1Affine::deserialize_compressed(&data[..])
+        .ok()
         .map(G1)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
@@ -223,13 +229,15 @@ pub fn g1_from_fixed(data: &[u8; BLS12_381_G1_POINT_LEN]) -> Result<G1, CryptoEr
 /// Like [`g1_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
 pub fn g1_from_fixed_unchecked(data: [u8; BLS12_381_G1_POINT_LEN]) -> Result<G1, CryptoError> {
-    Option::from(G1Affine::from_compressed_unchecked(&data))
+    G1Affine::deserialize_compressed_unchecked(&data[..])
+        .ok()
         .map(G1)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
 
 pub fn g2_from_fixed(data: &[u8; BLS12_381_G2_POINT_LEN]) -> Result<G2, CryptoError> {
-    Option::from(G2Affine::from_compressed(data))
+    G2Affine::deserialize_compressed(&data[..])
+        .ok()
         .map(G2)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }
@@ -237,7 +245,8 @@ pub fn g2_from_fixed(data: &[u8; BLS12_381_G2_POINT_LEN]) -> Result<G2, CryptoEr
 /// Like [`g2_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
 pub fn g2_from_fixed_unchecked(data: [u8; BLS12_381_G2_POINT_LEN]) -> Result<G2, CryptoError> {
-    Option::from(G2Affine::from_compressed_unchecked(&data))
+    G2Affine::deserialize_compressed_unchecked(&data[..])
+        .ok()
         .map(G2)
         .ok_or_else(|| InvalidPoint::DecodingError {}.into())
 }

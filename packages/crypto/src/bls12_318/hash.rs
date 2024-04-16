@@ -1,10 +1,18 @@
-use bls12_381::{
-    hash_to_curve::{ExpandMsgXmd, HashToCurve},
-    G1Affine, G1Projective, G2Affine, G2Projective,
+use ark_bls12_381::{g1, g2};
+use ark_ec::{
+    hashing::{
+        curve_maps::wb::WBMap, map_to_curve_hasher::MapToCurveBasedHasher, HashToCurve as _,
+    },
+    short_weierstrass::Projective,
 };
-use sha2_v9::Sha256;
+use ark_ff::field_hashers::DefaultFieldHasher;
+use ark_serialize::CanonicalSerialize;
+use sha2::Sha256;
 
 use crate::{CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
+
+type HashToCurve<CurveConfig, Hash> =
+    MapToCurveBasedHasher<Projective<CurveConfig>, DefaultFieldHasher<Hash>, WBMap<CurveConfig>>;
 
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
@@ -29,13 +37,16 @@ pub fn bls12_381_hash_to_g1(
     msg: &[u8],
     dst: &[u8],
 ) -> [u8; BLS12_381_G1_POINT_LEN] {
-    let g1 = match hash {
-        HashFunction::Sha256 => {
-            <G1Projective as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(msg, dst)
-        }
+    let point = match hash {
+        HashFunction::Sha256 => HashToCurve::<g1::Config, Sha256>::new(dst)
+            .unwrap()
+            .hash(msg)
+            .unwrap(),
     };
 
-    G1Affine::from(g1).to_compressed()
+    let mut serialized = [0; BLS12_381_G1_POINT_LEN];
+    point.serialize_compressed(&mut serialized[..]).unwrap();
+    serialized
 }
 
 pub fn bls12_381_hash_to_g2(
@@ -43,11 +54,14 @@ pub fn bls12_381_hash_to_g2(
     msg: &[u8],
     dst: &[u8],
 ) -> [u8; BLS12_381_G2_POINT_LEN] {
-    let g2 = match hash {
-        HashFunction::Sha256 => {
-            <G2Projective as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(msg, dst)
-        }
+    let point = match hash {
+        HashFunction::Sha256 => HashToCurve::<g2::Config, Sha256>::new(dst)
+            .unwrap()
+            .hash(msg)
+            .unwrap(),
     };
 
-    G2Affine::from(g2).to_compressed()
+    let mut serialized = [0; BLS12_381_G2_POINT_LEN];
+    point.serialize_compressed(&mut serialized[..]).unwrap();
+    serialized
 }

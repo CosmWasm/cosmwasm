@@ -9,25 +9,36 @@ license = "Apache-2.0"
 
 [features]
 default = []
-std = ["dep:bls12_381", "dep:rayon", "dep:sha2_v9", "dep:thiserror"]
+std = [
+    "dep:ark-bls12-381",
+    "dep:ark-ec",
+    "dep:ark-ff",
+    "dep:ark-serialize",
+    "dep:num-traits",
+    "dep:rayon",
+    "dep:sha2",
+    "dep:thiserror"
+]
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
 bench = false
 
 [dependencies]
+ark-bls12-381 = { version = "0.4.0", optional = true }
+ark-ec = { version = "0.4.2", features = ["parallel"], optional = true }
+ark-ff = { version = "0.4.2", features = ["parallel"], optional = true }
+ark-serialize = { version = "0.4.2", optional = true }
 derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["display", "from"] }
-k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-ed25519-zebra = { version = "4.0.3", default-features = false }
 digest = "0.10"
-rand_core = "0.6"
-# Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
-ecdsa = "0.16.2"
+ecdsa = "0.16.2" # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
+ed25519-zebra = { version = "4.0.3", default-features = false }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
+num-traits = { version = "0.2.18", optional = true }
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
-pairing = "0.23.0"
-bls12_381 = { version = "0.8.0", features = ["experimental"], optional = true }
+rand_core = "0.6"
 rayon = { version = "1.9.0", optional = true }
-sha2_v9 = { package = "sha2", version = "0.9.1", optional = true } # Must be compatible with bls12_381, see https://github.com/zkcrypto/bls12_381/issues/102
+sha2 = { version = "0.10", optional = true }
 thiserror = { version = "1.0.26", optional = true }
 
 [dev-dependencies]
