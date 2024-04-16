@@ -12,9 +12,9 @@ use k256::ecdsa::SigningKey; // type alias
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
-    bls12_381_g1_generator, bls12_381_hash_to_g2, bls12_381_pairing_equality, ed25519_batch_verify,
-    ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, secp256r1_recover_pubkey,
-    secp256r1_verify, HashFunction,
+    bls12_381_g1_generator, bls12_381_hash_to_g1, bls12_381_hash_to_g2, bls12_381_pairing_equality,
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
+    secp256r1_recover_pubkey, secp256r1_verify, HashFunction,
 };
 use std::cmp::min;
 
@@ -143,6 +143,26 @@ fn bench_crypto(c: &mut Criterion) {
         b.iter(|| {
             let pubkey = secp256r1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
             assert_eq!(pubkey, expected);
+        });
+    });
+
+    group.bench_function("bls12_381_hash_to_g1", |b| {
+        b.iter(|| {
+            bls12_381_hash_to_g1(
+                black_box(HashFunction::Sha256),
+                black_box(&BLS_MESSAGE),
+                black_box(BLS_DST),
+            )
+        });
+    });
+
+    group.bench_function("bls12_381_hash_to_g2", |b| {
+        b.iter(|| {
+            bls12_381_hash_to_g2(
+                black_box(HashFunction::Sha256),
+                black_box(&BLS_MESSAGE),
+                black_box(BLS_DST),
+            )
         });
     });
 
