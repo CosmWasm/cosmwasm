@@ -72,10 +72,10 @@ impl Default for GasConfig {
             // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
             ed25519_batch_verify_cost: 63 * GAS_PER_US / 2,
             ed25519_batch_verify_one_pubkey_cost: 63 * GAS_PER_US / 4,
-            bls12_381_hash_to_g1_cost: 95 * GAS_PER_US,
-            bls12_381_hash_to_g2_cost: 392 * GAS_PER_US,
+            bls12_381_hash_to_g1_cost: 337 * GAS_PER_US,
+            bls12_381_hash_to_g2_cost: 543 * GAS_PER_US,
             // god i wish i was lying
-            bls12_381_pairing_equality_cost: 1733 * GAS_PER_US,
+            bls12_381_pairing_equality_cost: 1409 * GAS_PER_US,
         }
     }
 }

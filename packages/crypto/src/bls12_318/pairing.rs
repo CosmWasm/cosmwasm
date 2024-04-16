@@ -3,8 +3,12 @@ use crate::{
 };
 
 use super::points::{g1_from_variable, g2_from_variable};
-use bls12_381::G2Prepared;
-use pairing::group::Group;
+use ark_bls12_381::Bls12_381;
+use ark_ec::{
+    bls12::{G1Prepared, G2Prepared},
+    pairing::Pairing,
+};
+use num_traits::Zero;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 pub fn bls12_381_aggregate_pairing_equality(
@@ -45,26 +49,19 @@ pub fn bls12_381_aggregate_pairing_equality(
             let g1 = g1_from_variable(p)?;
             let g2 = g2_from_variable(q)?;
 
-            Ok((g1.0, G2Prepared::from(g2.0)))
+            Ok((G1Prepared::from(g1.0), G2Prepared::from(g2.0)))
         })
         .collect::<Result<_, CryptoError>>()?;
 
     let r = g1_from_variable(r)?;
     let s = g2_from_variable(s)?;
 
-    let r_neg = -r.0;
+    let r_neg = G1Prepared::from(-r.0);
     let s_prepared = G2Prepared::from(s.0);
 
-    let ref_pq: Vec<_> = pq_pairs
-        .iter()
-        .map(|(g1, g2)| (g1, g2))
-        .chain([(&r_neg, &s_prepared)])
-        .collect();
+    let (ps, qs): (Vec<_>, Vec<_>) = pq_pairs.into_iter().chain([(r_neg, s_prepared)]).unzip();
 
-    Ok(bls12_381::multi_miller_loop(&ref_pq)
-        .final_exponentiation()
-        .is_identity()
-        .into())
+    Ok(Bls12_381::multi_pairing(ps, qs).is_zero())
 }
 
 /// Check whether the following condition holds true:
@@ -86,22 +83,18 @@ pub fn bls12_381_pairing_equality(
     );
 
     let p_neg = -p;
-    let terms = [
-        (&p_neg.0, &G2Prepared::from(q.0)),
-        (&r.0, &G2Prepared::from(s.0)),
-    ];
 
-    Ok(bls12_381::multi_miller_loop(&terms)
-        .final_exponentiation()
-        .is_identity()
-        .into())
+    Ok(Bls12_381::multi_pairing(
+        [G1Prepared::from(p_neg.0), G1Prepared::from(r.0)],
+        [G2Prepared::from(q.0), G2Prepared::from(s.0)],
+    )
+    .is_zero())
 }
 
 #[cfg(test)]
 mod test {
-    use digest::generic_array::GenericArray;
     use hex_literal::hex;
-    use sha2_v9::{Digest, Sha256};
+    use sha2::{Digest, Sha256};
 
     use crate::{
         bls12_318::points::{g1_from_fixed, g2_from_fixed, g2_from_variable, G1},
@@ -118,13 +111,10 @@ mod test {
     /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
     const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
 
-    fn build_message(
-        round: u64,
-        previous_signature: &[u8],
-    ) -> GenericArray<u8, <Sha256 as Digest>::OutputSize> {
+    fn build_message(round: u64, previous_signature: &[u8]) -> digest::Output<Sha256> {
         Sha256::new()
-            .chain(previous_signature)
-            .chain(round.to_be_bytes())
+            .chain_update(previous_signature)
+            .chain_update(round.to_be_bytes())
             .finalize()
     }
 

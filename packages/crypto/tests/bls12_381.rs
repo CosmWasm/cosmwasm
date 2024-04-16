@@ -2,12 +2,13 @@
 
 use std::{error::Error, fs};
 
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use base64::engine::general_purpose::STANDARD;
 use base64_serde::base64_serde_type;
 use cosmwasm_crypto::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_aggregate_pairing_equality,
     bls12_381_g1_generator, bls12_381_g1_is_identity, bls12_381_g2_is_identity,
-    bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
+    bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction, BLS12_381_G2_POINT_LEN,
 };
 
 const PROOF_OF_POSSESSION_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
@@ -205,12 +206,15 @@ fn bls12_381_hash_to_g2_works() {
         let decoded_y = hex::decode(format!("{y2}{y1}")).unwrap();
         let uncompressed = [decoded_x.as_slice(), &decoded_y].concat();
 
-        let affine =
-            bls12_381::G2Affine::from_uncompressed(&uncompressed.try_into().unwrap()).unwrap();
+        let affine = ark_bls12_381::G2Affine::deserialize_uncompressed(&uncompressed[..]).unwrap();
+        let mut compressed_affine = [0; BLS12_381_G2_POINT_LEN];
+        affine
+            .serialize_compressed(&mut compressed_affine[..])
+            .unwrap();
 
         assert_eq!(
             g2_point,
-            affine.to_compressed(),
+            compressed_affine,
             "Failed with test vector {}",
             path.display()
         );

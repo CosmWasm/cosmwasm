@@ -30,7 +30,7 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 base64 = "0.22.0"
-bls12_381 = { version = "0.8.0", default-features = false }
+ark-bls12-381 = { version = "0.4.0", default-features = false }
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_2_1", "iterator"] }
 hex = "0.4"
@@ -42,5 +42,7 @@ sha2 = "0.10"
 sha3 = "0.10"
 
 [dev-dependencies]
+ark-ec = "0.4.2"
+ark-serialize = { version = "0.4.2", default-features = false }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
 hex-literal = "0.4.1"
