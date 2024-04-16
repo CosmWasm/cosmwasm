@@ -187,7 +187,7 @@
           "additionalProperties": false
         },
         "IbcFullAcknowledgement": {
-          "description": "The acknowledgement written by the module on the destination chain. It is different from the [`IbcAcknowledgement`] as it can be unsuccessful.",
+          "description": "The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.",
           "type": "object",
           "required": [
             "data",

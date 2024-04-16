@@ -140,7 +140,7 @@ pub struct IbcDestinationChainCallbackMsg {
 }
 
 /// The acknowledgement written by the module on the destination chain.
-/// It is different from the [`IbcAcknowledgement`] as it can be unsuccessful.
+/// It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcFullAcknowledgement {
     /// The acknowledgement data returned by the module.
