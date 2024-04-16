@@ -390,13 +390,14 @@ pub fn do_bls12_381_hash_to_g1<
     dst_ptr: u32,
     out_ptr: u32,
 ) -> VmResult<u32> {
-    let (data, store) = env.data_and_store_mut();
+    let (data, mut store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let msg = read_region(&memory, msg_ptr, BLS12_381_MAX_MESSAGE_SIZE)?;
     let dst = read_region(&memory, dst_ptr, BLS12_381_MAX_DST_SIZE)?;
 
-    // TODO: Add gas consumption metering
+    let gas_info = GasInfo::with_cost(data.gas_config.bls12_381_hash_to_g1_cost);
+    process_gas_info(data, &mut store, gas_info)?;
 
     let hash_function = match HashFunction::from_u32(hash_function) {
         Ok(func) => func,
@@ -404,6 +405,7 @@ pub fn do_bls12_381_hash_to_g1<
     };
     let point = bls12_381_hash_to_g1(hash_function, &msg, &dst);
 
+    let memory = data.memory(&store);
     write_region(&memory, out_ptr, &point)?;
 
     Ok(0)
@@ -420,13 +422,14 @@ pub fn do_bls12_381_hash_to_g2<
     dst_ptr: u32,
     out_ptr: u32,
 ) -> VmResult<u32> {
-    let (data, store) = env.data_and_store_mut();
+    let (data, mut store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let msg = read_region(&memory, msg_ptr, BLS12_381_MAX_MESSAGE_SIZE)?;
     let dst = read_region(&memory, dst_ptr, BLS12_381_MAX_DST_SIZE)?;
 
-    // TODO: Add gas consumption metering
+    let gas_info = GasInfo::with_cost(data.gas_config.bls12_381_hash_to_g2_cost);
+    process_gas_info(data, &mut store, gas_info)?;
 
     let hash_function = match HashFunction::from_u32(hash_function) {
         Ok(func) => func,
@@ -434,6 +437,7 @@ pub fn do_bls12_381_hash_to_g2<
     };
     let point = bls12_381_hash_to_g2(hash_function, &msg, &dst);
 
+    let memory = data.memory(&store);
     write_region(&memory, out_ptr, &point)?;
 
     Ok(0)
