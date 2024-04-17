@@ -363,8 +363,14 @@ pub fn do_bls12_381_aggregate_pairing_equality<
     let r = read_region(&memory, r_ptr, BLS12_381_G1_POINT_LEN)?;
     let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
 
-    // TODO: Adjust gas consumption metering to aggregated cost
-    let gas_info = GasInfo::with_cost(data.gas_config.bls12_381_pairing_equality_cost);
+    // TODO: We should really meter this by the actual cost of aggregated signatures instead of adding up aggregation costs of points
+    let gas_info = GasInfo::with_cost(
+        data.gas_config.bls12_381_pairing_equality_cost
+            + (data.gas_config.bls12_381_aggregate_g1_per_point
+                * (ps.len() / BLS12_381_G1_POINT_LEN) as u64)
+            + (data.gas_config.bls12_381_aggregate_g2_per_point
+                * (qs.len() / BLS12_381_G2_POINT_LEN) as u64),
+    );
     process_gas_info(data, &mut store, gas_info)?;
 
     let code = match bls12_381_aggregate_pairing_equality(&ps, &qs, &r, &s) {
