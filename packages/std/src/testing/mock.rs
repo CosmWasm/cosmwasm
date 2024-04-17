@@ -1195,6 +1195,13 @@ mod tests {
     const ED25519_PUBKEY_HEX: &str =
         "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
+    // See https://github.com/drand/kyber-bls12381/issues/22 and
+    // https://github.com/drand/drand/pull/1249
+    const DOMAIN_HASH_TO_G2: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
+
+    /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
+    const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
+
     #[test]
     fn mock_info_works() {
         let info = mock_info("my name", &coins(100, "atom"));
@@ -1310,6 +1317,69 @@ mod tests {
             api.addr_humanize(&input).unwrap_err(),
             StdError::generic_err("Invalid canonical address length")
         );
+    }
+
+    #[test]
+    fn bls12_381_hash_to_g1_works() {
+        // See: <https://datatracker.ietf.org/doc/rfc9380/>; Section J.9.1
+
+        let api = MockApi::default();
+        let msg = b"abc";
+        let dst = b"QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_";
+
+        let hashed_point = api
+            .bls12_381_hash_to_g1(HashFunction::Sha256, msg, dst)
+            .unwrap();
+        let mut serialized_expected_compressed = hex!("03567bc5ef9c690c2ab2ecdf6a96ef1c139cc0b2f284dca0a9a7943388a49a3aee664ba5379a7655d3c68900be2f6903");
+        // Set the compression tag
+        serialized_expected_compressed[0] |= 0b1000_0000;
+
+        assert_eq!(hashed_point, serialized_expected_compressed);
+    }
+
+    #[test]
+    fn bls12_381_hash_to_g2_works() {
+        let api = MockApi::default();
+        let msg = b"abc";
+        let dst = b"QUUX-V01-CS02-with-BLS12381G2_XMD:SHA-256_SSWU_RO_";
+
+        let hashed_point = api
+            .bls12_381_hash_to_g2(HashFunction::Sha256, msg, dst)
+            .unwrap();
+        let mut serialized_expected_compressed = hex!("139cddbccdc5e91b9623efd38c49f81a6f83f175e80b06fc374de9eb4b41dfe4ca3a230ed250fbe3a2acf73a41177fd802c2d18e033b960562aae3cab37a27ce00d80ccd5ba4b7fe0e7a210245129dbec7780ccc7954725f4168aff2787776e6");
+        // Set the compression tag
+        serialized_expected_compressed[0] |= 0b1000_0000;
+
+        assert_eq!(hashed_point, serialized_expected_compressed);
+    }
+
+    #[test]
+    fn bls12_318_pairing_equality_works() {
+        fn build_bls_message(round: u64, previous_signature: &[u8]) -> Vec<u8> {
+            Sha256::new()
+                .chain_update(previous_signature)
+                .chain_update(round.to_be_bytes())
+                .finalize()
+                .to_vec()
+        }
+
+        let api = MockApi::default();
+
+        let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
+        let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
+        let round: u64 = 72785;
+
+        let msg = build_bls_message(round, &previous_signature);
+        let msg_point = api
+            .bls12_381_hash_to_g2(HashFunction::Sha256, &msg, DOMAIN_HASH_TO_G2)
+            .unwrap();
+
+        let g1_generator = cosmwasm_crypto::bls12_381_g1_generator();
+        let is_valid = api
+            .bls12_381_pairing_equality(&g1_generator, &signature, &PK_LEO_MAINNET, &msg_point)
+            .unwrap();
+
+        assert!(is_valid);
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
