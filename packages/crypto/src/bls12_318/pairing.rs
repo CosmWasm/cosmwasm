@@ -31,10 +31,10 @@ pub fn bls12_381_aggregate_pairing_equality(
             remainder: qs.len() % BLS12_381_G2_POINT_LEN,
         }
         .into());
-    } else if ps.len() % BLS12_381_G1_POINT_LEN != qs.len() % BLS12_381_G2_POINT_LEN {
+    } else if (ps.len() / BLS12_381_G1_POINT_LEN) != (qs.len() / BLS12_381_G2_POINT_LEN) {
         return Err(AggregationPairingEquality::UnequalPointAmount {
-            left: ps.len() % BLS12_381_G1_POINT_LEN,
-            right: qs.len() % BLS12_381_G2_POINT_LEN,
+            left: ps.len() / BLS12_381_G1_POINT_LEN,
+            right: qs.len() / BLS12_381_G2_POINT_LEN,
         }
         .into());
     }
@@ -98,7 +98,8 @@ mod test {
 
     use crate::{
         bls12_318::points::{g1_from_fixed, g2_from_fixed, g2_from_variable, G1},
-        bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
+        bls12_381_aggregate_pairing_equality, bls12_381_hash_to_g2, bls12_381_pairing_equality,
+        AggregationPairingEqualityError, CryptoError, HashFunction,
     };
 
     // Let's directly go for something really cool and advanced:
@@ -181,5 +182,53 @@ mod test {
             &aggregated_msg.to_compressed()
         )
         .unwrap());
+    }
+
+    #[test]
+    fn aggregate_pairing_equality_error_cases_work() {
+        let result = bls12_381_aggregate_pairing_equality(&[], &[12], &[12], &[12]);
+        assert!(matches!(
+            result,
+            Err(CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::EmptyG1,
+                ..
+            })
+        ));
+
+        let result = bls12_381_aggregate_pairing_equality(&[12], &[], &[12], &[12]);
+        assert!(matches!(
+            result,
+            Err(CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::EmptyG2,
+                ..
+            })
+        ));
+
+        let result = bls12_381_aggregate_pairing_equality(&[12], &[0; 96], &[12], &[12]);
+        assert!(matches!(
+            result,
+            Err(CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::NotMultipleG1 { remainder: 1 },
+                ..
+            })
+        ));
+
+        let result = bls12_381_aggregate_pairing_equality(&[0; 48], &[12], &[12], &[12]);
+        assert!(matches!(
+            result,
+            Err(CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::NotMultipleG2 { remainder: 1 },
+                ..
+            })
+        ));
+
+        let result = bls12_381_aggregate_pairing_equality(&[0; 96], &[0; 96], &[12], &[12]);
+        assert!(matches!(
+            result,
+            Err(CryptoError::AggregationPairingEquality {
+                source: AggregationPairingEqualityError::UnequalPointAmount { left: 2, right: 1 },
+                ..
+            })
+        ));
     }
 }
