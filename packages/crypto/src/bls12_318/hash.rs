@@ -65,3 +65,38 @@ pub fn bls12_381_hash_to_g2(
     point.serialize_compressed(&mut serialized[..]).unwrap();
     serialized
 }
+
+#[cfg(test)]
+mod test {
+    use hex_literal::hex;
+
+    use crate::{bls12_381_hash_to_g1, bls12_381_hash_to_g2, HashFunction};
+
+    #[test]
+    fn hash_to_g1_works() {
+        // See: <https://datatracker.ietf.org/doc/rfc9380/>; Section J.9.1
+
+        let msg = b"abc";
+        let dst = b"QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_";
+
+        let hashed_point = bls12_381_hash_to_g1(HashFunction::Sha256, msg, dst);
+        let mut serialized_expected_compressed = hex!("03567bc5ef9c690c2ab2ecdf6a96ef1c139cc0b2f284dca0a9a7943388a49a3aee664ba5379a7655d3c68900be2f6903");
+        // Set the compression tag
+        serialized_expected_compressed[0] |= 0b1000_0000;
+
+        assert_eq!(hashed_point, serialized_expected_compressed);
+    }
+
+    #[test]
+    fn hash_to_g2_works() {
+        let msg = b"abc";
+        let dst = b"QUUX-V01-CS02-with-BLS12381G2_XMD:SHA-256_SSWU_RO_";
+
+        let hashed_point = bls12_381_hash_to_g2(HashFunction::Sha256, msg, dst);
+        let mut serialized_expected_compressed = hex!("139cddbccdc5e91b9623efd38c49f81a6f83f175e80b06fc374de9eb4b41dfe4ca3a230ed250fbe3a2acf73a41177fd802c2d18e033b960562aae3cab37a27ce00d80ccd5ba4b7fe0e7a210245129dbec7780ccc7954725f4168aff2787776e6");
+        // Set the compression tag
+        serialized_expected_compressed[0] |= 0b1000_0000;
+
+        assert_eq!(hashed_point, serialized_expected_compressed);
+    }
+}
