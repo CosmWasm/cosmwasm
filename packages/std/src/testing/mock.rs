@@ -1177,6 +1177,7 @@ mod tests {
     use crate::{coin, coins, instantiate2_address, ContractInfoResponse, HexBinary, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
+    use base64::{engine::general_purpose, Engine};
     use hex_literal::hex;
     use serde::Deserialize;
 
@@ -1201,6 +1202,9 @@ mod tests {
 
     /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
     const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
+
+    const ETH_BLOCK_HEADER: &[u8] =
+        include_bytes!("../../../crypto/testdata/eth-headers/1699693797.394876721s.json");
 
     #[test]
     fn mock_info_works() {
@@ -1317,6 +1321,49 @@ mod tests {
             api.addr_humanize(&input).unwrap_err(),
             StdError::generic_err("Invalid canonical address length")
         );
+    }
+
+    #[test]
+    fn bls12_381_aggregate_g1_works() {
+        #[derive(serde::Deserialize)]
+        struct EthHeader {
+            public_keys: Vec<String>,
+            aggregate_pubkey: String,
+        }
+
+        let api = MockApi::default();
+        let header: EthHeader = serde_json::from_slice(ETH_BLOCK_HEADER).unwrap();
+        let expected = general_purpose::STANDARD
+            .decode(header.aggregate_pubkey)
+            .unwrap();
+
+        let pubkeys: Vec<u8> = header
+            .public_keys
+            .into_iter()
+            .flat_map(|key| general_purpose::STANDARD.decode(key).unwrap())
+            .collect();
+        let sum = api.bls12_381_aggregate_g1(&pubkeys).unwrap();
+
+        assert_eq!(expected, sum);
+    }
+
+    #[test]
+    fn bls12_381_aggregate_g2_works() {
+        let api = MockApi::default();
+
+        let points: Vec<u8> = [
+            hex!("b6ed936746e01f8ecf281f020953fbf1f01debd5657c4a383940b020b26507f6076334f91e2366c96e9ab279fb5158090352ea1c5b0c9274504f4f0e7053af24802e51e4568d164fe986834f41e55c8e850ce1f98458c0cfc9ab380b55285a55"),
+            hex!("b23c46be3a001c63ca711f87a005c200cc550b9429d5f4eb38d74322144f1b63926da3388979e5321012fb1a0526bcd100b5ef5fe72628ce4cd5e904aeaa3279527843fae5ca9ca675f4f51ed8f83bbf7155da9ecc9663100a885d5dc6df96d9"),
+            hex!("948a7cb99f76d616c2c564ce9bf4a519f1bea6b0a624a02276443c245854219fabb8d4ce061d255af5330b078d5380681751aa7053da2c98bae898edc218c75f07e24d8802a17cd1f6833b71e58f5eb5b94208b4d0bb3848cecb075ea21be115"),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
+
+        let expected = hex!("9683b3e6701f9a4b706709577963110043af78a5b41991b998475a3d3fd62abf35ce03b33908418efc95a058494a8ae504354b9f626231f6b3f3c849dfdeaf5017c4780e2aee1850ceaf4b4d9ce70971a3d2cfcd97b7e5ecf6759f8da5f76d31");
+        let sum = api.bls12_381_aggregate_g2(&points).unwrap();
+
+        assert_eq!(sum, expected);
     }
 
     #[test]
