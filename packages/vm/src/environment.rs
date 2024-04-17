@@ -45,6 +45,10 @@ pub struct GasConfig {
     pub ed25519_batch_verify_cost: u64,
     /// ed25519 batch signature verification cost (single public key)
     pub ed25519_batch_verify_one_pubkey_cost: u64,
+    /// bls12-381 aggregate cost per point (g1)
+    pub bls12_381_aggregate_g1_per_point: u64,
+    /// bls12-381 aggregate cost per point (g2)
+    pub bls12_381_aggregate_g2_per_point: u64,
     /// bls12-381 hash to g1 cost
     pub bls12_381_hash_to_g1_cost: u64,
     /// bls12-381 hash to g2 cost
@@ -72,6 +76,9 @@ impl Default for GasConfig {
             // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
             ed25519_batch_verify_cost: 63 * GAS_PER_US / 2,
             ed25519_batch_verify_one_pubkey_cost: 63 * GAS_PER_US / 4,
+            // just assume the production machines have more than 4 cores, so we can half that
+            bls12_381_aggregate_g1_per_point: 16 * GAS_PER_US / 2,
+            bls12_381_aggregate_g2_per_point: 33 * GAS_PER_US / 2,
             bls12_381_hash_to_g1_cost: 324 * GAS_PER_US,
             bls12_381_hash_to_g2_cost: 528 * GAS_PER_US,
             // god i wish i was lying
