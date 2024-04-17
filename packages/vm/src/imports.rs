@@ -265,15 +265,20 @@ pub fn do_bls12_381_aggregate_g1<
     g1s_ptr: u32,
     out_ptr: u32,
 ) -> VmResult<u32> {
-    let (data, store) = env.data_and_store_mut();
+    let (data, mut store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let g1s = read_region(&memory, g1s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
 
-    // TODO: Add gas consumption metering
+    let gas_info = GasInfo::with_cost(
+        data.gas_config.bls12_381_aggregate_g1_per_point
+            * (g1s.len() / BLS12_381_G1_POINT_LEN) as u64,
+    );
+    process_gas_info(data, &mut store, gas_info)?;
 
     let code = match bls12_381_aggregate_g1(&g1s) {
         Ok(point) => {
+            let memory = data.memory(&store);
             write_region(&memory, out_ptr, &point)?;
             0
         }
@@ -304,15 +309,20 @@ pub fn do_bls12_381_aggregate_g2<
     g2s_ptr: u32,
     out_ptr: u32,
 ) -> VmResult<u32> {
-    let (data, store) = env.data_and_store_mut();
+    let (data, mut store) = env.data_and_store_mut();
     let memory = data.memory(&store);
 
     let g2s = read_region(&memory, g2s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
 
-    // TODO: Add gas consumption metering
+    let gas_info = GasInfo::with_cost(
+        data.gas_config.bls12_381_aggregate_g2_per_point
+            * (g2s.len() / BLS12_381_G2_POINT_LEN) as u64,
+    );
+    process_gas_info(data, &mut store, gas_info)?;
 
     let code = match bls12_381_aggregate_g2(&g2s) {
         Ok(point) => {
+            let memory = data.memory(&store);
             write_region(&memory, out_ptr, &point)?;
             0
         }
