@@ -1,6 +1,7 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 use std::rc::Rc;
@@ -208,6 +209,9 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     }
 
     /// Calls a function with the given name and arguments.
+    ///
+    /// The args is a map from arity to arguments. If the contract has an unexpected arity, an error is raised.
+    ///
     /// The number of return values is variable and controlled by the guest.
     /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
     /// or [`Self::call_function1`] to ensure the number of return values is checked.
@@ -215,13 +219,16 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         &self,
         store: &mut impl AsStoreMut,
         name: &str,
-        args: &[Value],
+        args: HashMap<usize, &[Value]>,
     ) -> VmResult<Box<[Value]>> {
         // Clone function before calling it to avoid dead locks
         let func = self.with_wasmer_instance(|instance| {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
         })?;
+        let Some(args) = args.get(&func.param_arity(store)) else {
+            panic!("Wrong number of args")
+        };
         self.increment_call_depth()?;
         let res = func.call(store, args).map_err(|runtime_err| -> VmError {
             self.with_wasmer_instance::<_, Never>(|instance| {
@@ -243,6 +250,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         name: &str,
         args: &[Value],
     ) -> VmResult<()> {
+        let args = HashMap::from([(args.len(), args)]);
         let result = self.call_function(store, name, args)?;
         let expected = 0;
         let actual = result.len();
@@ -258,6 +266,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         name: &str,
         args: &[Value],
     ) -> VmResult<Value> {
+        let args = HashMap::from([(args.len(), args)]);
         let result = self.call_function(store, name, args)?;
         let expected = 1;
         let actual = result.len();
@@ -741,9 +750,9 @@ mod tests {
         let (env, mut store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let result = env
-            .call_function(&mut store, "allocate", &[10u32.into()])
-            .unwrap();
+        let args = [Value::from(10u32)];
+        let args = HashMap::from([(args.len(), &args as &[Value])]);
+        let result = env.call_function(&mut store, "allocate", args).unwrap();
         let ptr = ref_to_u32(&result[0]).unwrap();
         assert!(ptr > 0);
     }
@@ -756,7 +765,7 @@ mod tests {
         // Clear context's wasmer_instance
         env.set_wasmer_instance(None);
 
-        let res = env.call_function(&mut store, "allocate", &[]);
+        let res = env.call_function(&mut store, "allocate", HashMap::new());
         match res.unwrap_err() {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
             err => panic!("Unexpected error: {err:?}"),
@@ -768,7 +777,7 @@ mod tests {
         let (env, mut store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        let res = env.call_function(&mut store, "doesnt_exist", &[]);
+        let res = env.call_function(&mut store, "doesnt_exist", HashMap::new());
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
                 assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
