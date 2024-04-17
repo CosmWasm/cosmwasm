@@ -1320,6 +1320,32 @@ mod tests {
     }
 
     #[test]
+    fn bls12_381_aggregate_pairing_equality_works() {
+        let api = MockApi::default();
+
+        let dst = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+        let g1_generator = cosmwasm_crypto::bls12_381_g1_generator();
+        let ps = hex!("a491d1b0ecd9bb917989f0e74f0dea0422eac4a873e5e2644f368dffb9a6e20fd6e10c1b77654d067c0618f6e5a7f79ab301803f8b5ac4a1133581fc676dfedc60d891dd5fa99028805e5ea5b08d3491af75d0707adab3b70c6a6a580217bf81b53d21a4cfd562c469cc81514d4ce5a6b577d8403d32a394dc265dd190b47fa9f829fdd7963afdf972e5e77854051f6f");
+        let qs: Vec<u8> = [
+            hex!("0000000000000000000000000000000000000000000000000000000000000000"),
+            hex!("5656565656565656565656565656565656565656565656565656565656565656"),
+            hex!("abababababababababababababababababababababababababababababababab"),
+        ]
+        .into_iter()
+        .flat_map(|msg| {
+            api.bls12_381_hash_to_g2(HashFunction::Sha256, &msg, dst)
+                .unwrap()
+        })
+        .collect();
+        let s = hex!("9104e74b9dfd3ad502f25d6a5ef57db0ed7d9a0e00f3500586d8ce44231212542fcfaf87840539b398bf07626705cf1105d246ca1062c6c2e1a53029a0f790ed5e3cb1f52f8234dc5144c45fc847c0cd37a92d68e7c5ba7c648a8a339f171244");
+
+        let is_valid = api
+            .bls12_381_aggregate_pairing_equality(&ps, &qs, &g1_generator, &s)
+            .unwrap();
+        assert!(is_valid);
+    }
+
+    #[test]
     fn bls12_381_hash_to_g1_works() {
         // See: <https://datatracker.ietf.org/doc/rfc9380/>; Section J.9.1
 
