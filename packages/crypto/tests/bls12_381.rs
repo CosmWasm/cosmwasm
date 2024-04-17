@@ -199,22 +199,13 @@ fn bls12_381_hash_to_g2_works() {
 
         let prepared_x = test_data.output.x.replace("0x", "");
         let (x1, x2) = prepared_x.split_once(',').unwrap();
-        let decoded_x = hex::decode(format!("{x2}{x1}")).unwrap();
-
-        let prepared_y = test_data.output.y.replace("0x", "");
-        let (y1, y2) = prepared_y.split_once(',').unwrap();
-        let decoded_y = hex::decode(format!("{y2}{y1}")).unwrap();
-        let uncompressed = [decoded_x.as_slice(), &decoded_y].concat();
-
-        let affine = ark_bls12_381::G2Affine::deserialize_uncompressed(&uncompressed[..]).unwrap();
-        let mut compressed_affine = [0; BLS12_381_G2_POINT_LEN];
-        affine
-            .serialize_compressed(&mut compressed_affine[..])
-            .unwrap();
+        let mut decoded_x = hex::decode(format!("{x2}{x1}")).unwrap();
+        // Set the compression tag
+        decoded_x[0] |= 0b1000_0000;
 
         assert_eq!(
-            g2_point,
-            compressed_affine,
+            g2_point.as_slice(),
+            decoded_x.as_slice(),
             "Failed with test vector {}",
             path.display()
         );
