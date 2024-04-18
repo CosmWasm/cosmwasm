@@ -465,7 +465,7 @@ mod tests {
     }
 
     #[test]
-    fn serialization_works() {
+    fn json_serialization_works() {
         let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
         let json = serde_json::to_vec(&binary).unwrap();
@@ -475,7 +475,7 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_from_valid_string() {
+    fn json_deserialize_from_valid_string() {
         let b64_str = "ALs9C/oA";
         // this is the binary behind above string
         let expected = vec![0u8, 187, 61, 11, 250, 0];
@@ -486,11 +486,30 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_from_invalid_string() {
+    fn json_deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
         let serialized = serde_json::to_vec(&invalid_str).unwrap();
         let res = serde_json::from_slice::<Binary>(&serialized);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn msgpack_serialization_works() {
+        let data = Binary(vec![0u8, 187, 61, 11, 250, 0]);
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let expected = [196, 6, 0, 187, 61, 11, 250, 0];
+
+        assert_eq!(rmp_serde::to_vec(&data).unwrap(), expected);
+    }
+
+    #[test]
+    fn msgpack_deserialization_works() {
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let serialized = vec![196, 6, 0, 187, 61, 11, 250, 0];
+        let expected = vec![0u8, 187, 61, 11, 250, 0];
+
+        let deserialized: Binary = rmp_serde::from_slice(&serialized).unwrap();
+        assert_eq!(expected, deserialized.as_slice());
     }
 
     #[test]

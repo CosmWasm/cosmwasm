@@ -568,6 +568,25 @@ mod tests {
     }
 
     #[test]
+    fn msgpack_serialization_works() {
+        let data = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let expected = [196, 6, 0, 187, 61, 11, 250, 0];
+
+        assert_eq!(rmp_serde::to_vec(&data).unwrap(), expected);
+    }
+
+    #[test]
+    fn msgpack_deserialization_works() {
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let serialized = vec![196, 6, 0, 187, 61, 11, 250, 0];
+        let expected = vec![0u8, 187, 61, 11, 250, 0];
+
+        let deserialized: HexBinary = rmp_serde::from_slice(&serialized).unwrap();
+        assert_eq!(expected, deserialized.as_slice());
+    }
+
+    #[test]
     fn hex_binary_implements_debug() {
         // Some data
         let data = HexBinary(vec![0x07, 0x35, 0xAA, 0xcb, 0x00, 0xff]);
