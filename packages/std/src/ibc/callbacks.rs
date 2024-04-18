@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::{Addr, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 
 /// This is just a type representing the data that has to be sent with the IBC message to receive
-/// callbacks. It should be serialized to JSON and sent with the IBC message.
-/// The specific field to send it in can vary depending on the IBC message,
+/// callbacks. It should be serialized and sent with the IBC message.
+/// The specific field and format to send it in can vary depending on the IBC message,
 /// but is usually the `memo` field by convention.
 ///
 /// See [`IbcSourceChainCallback`] for more details.
@@ -102,8 +102,8 @@ pub struct IbcDstCallback {
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
 /// - The contract must implement the `ibc_source_chain_callback` entrypoint.
 /// - The IBC application in the source chain must have support for the callbacks middleware.
-/// - You have to add json-encoded [`IbcCallbackData`] to a specific field of the message.
-///   For `IbcMsg::Transfer`, this is the `memo` field.
+/// - You have to add serialized [`IbcCallbackData`] to a specific field of the message.
+///   For `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.
 /// - The receiver of the callback must also be the sender of the message.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -128,10 +128,9 @@ pub enum IbcSourceChainCallbackMsg {
 ///
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
 /// - The contract must implement the `ibc_destination_chain_callback` entrypoint.
-/// - The module that receives the packet must be wrapped by an `IBCMiddleware`
-///   (i.e. the destination chain needs to support callbacks for the message you are being sent).
-/// - You have to add json-encoded [`IbcCallbackData`] to a specific field of the message.
-///   For `IbcMsg::Transfer`, this is the `memo` field.
+/// - The IBC application in the destination chain must have support for the callbacks middleware.
+/// - You have to add serialized [`IbcCallbackData`] to a specific field of the message.
+///   For `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcDestinationChainCallbackMsg {
     pub packet: IbcPacket,
