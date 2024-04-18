@@ -214,7 +214,7 @@ impl Serialize for HexBinary {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_hex())
         } else {
-            panic!("HexBinary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            serializer.serialize_bytes(&self.0)
         }
     }
 }
@@ -228,7 +228,7 @@ impl<'de> Deserialize<'de> for HexBinary {
         if deserializer.is_human_readable() {
             deserializer.deserialize_str(HexVisitor)
         } else {
-            panic!("HexBinary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            deserializer.deserialize_bytes(BytesVisitor)
         }
     }
 }
@@ -250,6 +250,23 @@ impl<'de> de::Visitor<'de> for HexVisitor {
             Ok(data) => Ok(data),
             Err(_) => Err(E::custom(format!("invalid hex: {v}"))),
         }
+    }
+}
+
+struct BytesVisitor;
+
+impl<'de> de::Visitor<'de> for BytesVisitor {
+    type Value = HexBinary;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("byte array")
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(HexBinary(v.to_vec()))
     }
 }
 

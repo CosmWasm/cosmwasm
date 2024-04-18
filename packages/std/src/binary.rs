@@ -211,7 +211,7 @@ impl Serialize for Binary {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_base64())
         } else {
-            panic!("Binary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            serializer.serialize_bytes(&self.0)
         }
     }
 }
@@ -225,7 +225,7 @@ impl<'de> Deserialize<'de> for Binary {
         if deserializer.is_human_readable() {
             deserializer.deserialize_str(Base64Visitor)
         } else {
-            panic!("Binary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            deserializer.deserialize_bytes(BytesVisitor)
         }
     }
 }
@@ -247,6 +247,23 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
             Ok(binary) => Ok(binary),
             Err(_) => Err(E::custom(format_args!("invalid base64: {v}"))),
         }
+    }
+}
+
+struct BytesVisitor;
+
+impl<'de> de::Visitor<'de> for BytesVisitor {
+    type Value = Binary;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("byte array")
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Binary(v.to_vec()))
     }
 }
 
