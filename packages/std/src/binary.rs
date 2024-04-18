@@ -503,13 +503,20 @@ mod tests {
     }
 
     #[test]
-    fn msgpack_deserialization_works() {
+    fn msgpack_deserialize_from_valid_data() {
         // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
         let serialized = vec![196, 6, 0, 187, 61, 11, 250, 0];
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
         let deserialized: Binary = rmp_serde::from_slice(&serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
+    }
+
+    #[test]
+    fn msgpack_deserialize_from_invalid_data() {
+        let invalid_data = vec![0, 1, 2, 3, 4, 5];
+        let res = rmp_serde::from_slice::<Binary>(&invalid_data);
+        assert!(res.is_err());
     }
 
     #[test]
