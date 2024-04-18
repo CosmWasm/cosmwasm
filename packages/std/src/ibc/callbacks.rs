@@ -5,7 +5,7 @@ use cosmwasm_core::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
+use crate::{Addr, IbcAcknowledgement, IbcPacket, Uint64};
 
 /// This is just a type representing the data that has to be sent with the IBC message to receive
 /// callbacks. It should be serialized and sent with the IBC message.
@@ -108,8 +108,14 @@ pub struct IbcDstCallback {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcSourceChainCallbackMsg {
-    Acknowledgement(IbcPacketAckMsg),
-    Timeout(IbcPacketTimeoutMsg),
+    #[non_exhaustive]
+    Acknowledgement {
+        acknowledgement: IbcAcknowledgement,
+        original_packet: IbcPacket,
+        relayer: Addr,
+    },
+    #[non_exhaustive]
+    Timeout { packet: IbcPacket, relayer: Addr },
 }
 
 /// The message type of the IBC destination chain callback.
