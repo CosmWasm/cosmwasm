@@ -101,8 +101,7 @@ pub struct IbcDstCallback {
 ///
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
 /// - The contract must implement the `ibc_source_chain_callback` entrypoint.
-/// - The module that sends the packet must be wrapped by an `IBCMiddleware`
-///   (i.e. the source chain needs to support callbacks for the message you are sending).
+/// - The IBC application in the source chain must have support for the callbacks middleware.
 /// - You have to add json-encoded [`IbcCallbackData`] to a specific field of the message.
 ///   For `IbcMsg::Transfer`, this is the `memo` field.
 /// - The receiver of the callback must also be the sender of the message.
