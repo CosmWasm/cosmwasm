@@ -24,6 +24,7 @@ rand_core = "0.6"
 # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
 ecdsa = "0.16.2"
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
+sha1 = "0.10.6"
 thiserror = { version = "1.0.26", optional = true }
 
 [dev-dependencies]
