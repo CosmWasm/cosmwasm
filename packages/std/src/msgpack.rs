@@ -1,7 +1,7 @@
-// This file simply re-exports some methods from serde_json
+// This file mostly re-exports some methods from rmp-serde
 // The reason is two fold:
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
-// 2. To allow us to switch out to eg. serde-json-core more easily
+// 2. To allow us to switch out to another MessagePack library if needed
 
 use core::any::type_name;
 use serde::{de::DeserializeOwned, Serialize};
