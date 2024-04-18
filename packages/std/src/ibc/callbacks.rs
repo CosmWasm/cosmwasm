@@ -18,7 +18,7 @@ use crate::{Addr, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 ///
 /// ```rust
 /// use cosmwasm_std::{
-///     to_json_string, Coin, IbcCallbackData, IbcMsg, IbcSrcCallback, IbcTimeout, Response,
+///     to_json_string, Coin, IbcCallbackRequest, IbcMsg, IbcSrcCallback, IbcTimeout, Response,
 ///     Timestamp,
 /// };
 ///
@@ -30,14 +30,14 @@ use crate::{Addr, IbcPacket, IbcPacketAckMsg, IbcPacketTimeoutMsg, Uint64};
 ///     channel_id: "channel-0".to_string(),
 ///     amount: Coin::new(10u32, "ucoin"),
 ///     timeout: Timestamp::from_seconds(12345).into(),
-///     memo: Some(to_json_string(&IbcCallbackData::source(IbcSrcCallback {
+///     memo: Some(to_json_string(&IbcCallbackRequest::source(IbcSrcCallback {
 ///         address: env.contract.address,
 ///         gas_limit: None,
 ///     })).unwrap()),
 /// };
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct IbcCallbackData {
+pub struct IbcCallbackRequest {
     // using private fields to force use of the constructors
     #[serde(skip_serializing_if = "Option::is_none")]
     src_callback: Option<IbcSrcCallback>,
@@ -45,10 +45,10 @@ pub struct IbcCallbackData {
     dest_callback: Option<IbcDstCallback>,
 }
 
-impl IbcCallbackData {
+impl IbcCallbackRequest {
     /// Use this if you want to execute callbacks on both the source and destination chain.
     pub fn both(src_callback: IbcSrcCallback, dest_callback: IbcDstCallback) -> Self {
-        IbcCallbackData {
+        IbcCallbackRequest {
             src_callback: Some(src_callback),
             dest_callback: Some(dest_callback),
         }
@@ -56,7 +56,7 @@ impl IbcCallbackData {
 
     /// Use this if you want to execute callbacks on the source chain, but not the destination chain.
     pub fn source(src_callback: IbcSrcCallback) -> Self {
-        IbcCallbackData {
+        IbcCallbackRequest {
             src_callback: Some(src_callback),
             dest_callback: None,
         }
@@ -64,7 +64,7 @@ impl IbcCallbackData {
 
     /// Use this if you want to execute callbacks on the destination chain, but not the source chain.
     pub fn destination(dest_callback: IbcDstCallback) -> Self {
-        IbcCallbackData {
+        IbcCallbackRequest {
             src_callback: None,
             dest_callback: Some(dest_callback),
         }
@@ -102,7 +102,7 @@ pub struct IbcDstCallback {
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
 /// - The contract must implement the `ibc_source_chain_callback` entrypoint.
 /// - The IBC application in the source chain must have support for the callbacks middleware.
-/// - You have to add serialized [`IbcCallbackData`] to a specific field of the message.
+/// - You have to add serialized [`IbcCallbackRequest`] to a specific field of the message.
 ///   For `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.
 /// - The receiver of the callback must also be the sender of the message.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -129,7 +129,7 @@ pub enum IbcSourceChainCallbackMsg {
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
 /// - The contract must implement the `ibc_destination_chain_callback` entrypoint.
 /// - The IBC application in the destination chain must have support for the callbacks middleware.
-/// - You have to add serialized [`IbcCallbackData`] to a specific field of the message.
+/// - You have to add serialized [`IbcCallbackRequest`] to a specific field of the message.
 ///   For `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcDestinationChainCallbackMsg {
@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn ibc_callback_data_serialization() {
-        let mut data = IbcCallbackData::both(
+        let mut data = IbcCallbackRequest::both(
             IbcSrcCallback {
                 address: Addr::unchecked("src_address"),
                 gas_limit: Some(123u64.into()),

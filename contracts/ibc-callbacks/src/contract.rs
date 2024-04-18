@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, to_json_string, Binary, Deps, DepsMut, Empty, Env,
-    IbcBasicResponse, IbcCallbackData, IbcDestinationChainCallbackMsg, IbcDstCallback, IbcMsg,
+    IbcBasicResponse, IbcCallbackRequest, IbcDestinationChainCallbackMsg, IbcDstCallback, IbcMsg,
     IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo, Response, StdError,
     StdResult,
 };
@@ -47,9 +47,9 @@ pub fn execute(
             channel_id: msg.channel_id,
             amount: coin.clone(),
             memo: Some(to_json_string(&match msg.callback_type {
-                CallbackType::Both => IbcCallbackData::both(src_callback, dst_callback),
-                CallbackType::Src => IbcCallbackData::source(src_callback),
-                CallbackType::Dst => IbcCallbackData::destination(dst_callback),
+                CallbackType::Both => IbcCallbackRequest::both(src_callback, dst_callback),
+                CallbackType::Src => IbcCallbackRequest::source(src_callback),
+                CallbackType::Dst => IbcCallbackRequest::destination(dst_callback),
             })?),
         },
         _ => {
