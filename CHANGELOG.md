@@ -27,6 +27,8 @@ and this project adheres to
   are like the `Add`/`Sub` implementations but `const`. ([#2098], [#2107])
 - cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
   `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
+- cosmwasm-std: Add `QuerierWrapper::query_grpc` helper for gRPC queries.
+  ([#2120])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
@@ -37,6 +39,7 @@ and this project adheres to
 [#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
 [#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
 [#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+[#2120]: https://github.com/CosmWasm/cosmwasm/pull/2120
 
 ### Changed
 
