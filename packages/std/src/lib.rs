@@ -40,11 +40,12 @@ pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
-    Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcCallbackRequest, IbcChannel,
-    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcDestinationChainCallbackMsg,
-    IbcDstCallback, IbcEndpoint, IbcFullAcknowledgement, IbcMsg, IbcOrder, IbcPacket,
-    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
-    IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock,
+    Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
+    IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcDestinationChainCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFullAcknowledgement, IbcMsg,
+    IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock,
+    IbcTimeoutCallbackMsg,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};

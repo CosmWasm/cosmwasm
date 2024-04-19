@@ -12,7 +12,7 @@
     "ibc_ack_callbacks": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/IbcPacketAckMsg"
+        "$ref": "#/definitions/IbcAckCallbackMsg"
       }
     },
     "ibc_destination_callbacks": {
@@ -24,7 +24,7 @@
     "ibc_timeout_callbacks": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/IbcPacketTimeoutMsg"
+        "$ref": "#/definitions/IbcTimeoutCallbackMsg"
       }
     }
   },
@@ -37,6 +37,26 @@
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
       "type": "string"
+    },
+    "IbcAckCallbackMsg": {
+      "type": "object",
+      "required": [
+        "acknowledgement",
+        "original_packet",
+        "relayer"
+      ],
+      "properties": {
+        "acknowledgement": {
+          "$ref": "#/definitions/IbcAcknowledgement"
+        },
+        "original_packet": {
+          "$ref": "#/definitions/IbcPacket"
+        },
+        "relayer": {
+          "$ref": "#/definitions/Addr"
+        }
+      },
+      "additionalProperties": false
     },
     "IbcAcknowledgement": {
       "type": "object",
@@ -152,44 +172,6 @@
       },
       "additionalProperties": false
     },
-    "IbcPacketAckMsg": {
-      "description": "The message that is passed into `ibc_packet_ack`",
-      "type": "object",
-      "required": [
-        "acknowledgement",
-        "original_packet",
-        "relayer"
-      ],
-      "properties": {
-        "acknowledgement": {
-          "$ref": "#/definitions/IbcAcknowledgement"
-        },
-        "original_packet": {
-          "$ref": "#/definitions/IbcPacket"
-        },
-        "relayer": {
-          "$ref": "#/definitions/Addr"
-        }
-      },
-      "additionalProperties": false
-    },
-    "IbcPacketTimeoutMsg": {
-      "description": "The message that is passed into `ibc_packet_timeout`",
-      "type": "object",
-      "required": [
-        "packet",
-        "relayer"
-      ],
-      "properties": {
-        "packet": {
-          "$ref": "#/definitions/IbcPacket"
-        },
-        "relayer": {
-          "$ref": "#/definitions/Addr"
-        }
-      },
-      "additionalProperties": false
-    },
     "IbcTimeout": {
       "description": "In IBC each package must set at least one type of timeout: the timestamp or the block height. Using this rather complex enum instead of two timeout fields we ensure that at least one timeout is set.",
       "type": "object",
@@ -236,6 +218,22 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "IbcTimeoutCallbackMsg": {
+      "type": "object",
+      "required": [
+        "packet",
+        "relayer"
+      ],
+      "properties": {
+        "packet": {
+          "$ref": "#/definitions/IbcPacket"
+        },
+        "relayer": {
+          "$ref": "#/definitions/Addr"
         }
       },
       "additionalProperties": false

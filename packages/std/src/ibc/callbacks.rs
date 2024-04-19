@@ -108,14 +108,43 @@ pub struct IbcDstCallback {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcSourceChainCallbackMsg {
-    #[non_exhaustive]
-    Acknowledgement {
+    Acknowledgement(IbcAckCallbackMsg),
+    Timeout(IbcTimeoutCallbackMsg),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct IbcAckCallbackMsg {
+    acknowledgement: IbcAcknowledgement,
+    original_packet: IbcPacket,
+    relayer: Addr,
+}
+
+impl IbcAckCallbackMsg {
+    pub fn new(
         acknowledgement: IbcAcknowledgement,
         original_packet: IbcPacket,
         relayer: Addr,
-    },
-    #[non_exhaustive]
-    Timeout { packet: IbcPacket, relayer: Addr },
+    ) -> Self {
+        Self {
+            acknowledgement,
+            original_packet,
+            relayer,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct IbcTimeoutCallbackMsg {
+    packet: IbcPacket,
+    relayer: Addr,
+}
+
+impl IbcTimeoutCallbackMsg {
+    pub fn new(packet: IbcPacket, relayer: Addr) -> Self {
+        Self { packet, relayer }
+    }
 }
 
 /// The message type of the IBC destination chain callback.

@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, to_json_string, Binary, Deps, DepsMut, Empty, Env,
     IbcBasicResponse, IbcCallbackRequest, IbcDestinationChainCallbackMsg, IbcDstCallback, IbcMsg,
-    IbcPacketAckMsg, IbcPacketTimeoutMsg, IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout,
-    MessageInfo, Response, StdError, StdResult,
+    IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo, Response, StdError,
+    StdResult,
 };
 
 use crate::msg::{CallbackType, ExecuteMsg, QueryMsg};
@@ -82,26 +82,13 @@ pub fn ibc_source_chain_callback(
     let mut counts = load_stats(deps.storage)?;
 
     match msg {
-        IbcSourceChainCallbackMsg::Acknowledgement {
-            acknowledgement,
-            original_packet,
-            relayer,
-            ..
-        } => {
+        IbcSourceChainCallbackMsg::Acknowledgement(ack) => {
             // save the ack
-            counts.ibc_ack_callbacks.push(IbcPacketAckMsg::new(
-                acknowledgement,
-                original_packet,
-                relayer,
-            ));
+            counts.ibc_ack_callbacks.push(ack);
         }
-        IbcSourceChainCallbackMsg::Timeout {
-            packet, relayer, ..
-        } => {
+        IbcSourceChainCallbackMsg::Timeout(timeout) => {
             // save the timeout
-            counts
-                .ibc_timeout_callbacks
-                .push(IbcPacketTimeoutMsg::new(packet, relayer));
+            counts.ibc_timeout_callbacks.push(timeout);
         }
     }
 

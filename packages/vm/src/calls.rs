@@ -956,7 +956,8 @@ mod tests {
             mock_ibc_packet_ack, mock_ibc_packet_recv, mock_wasmd_attr,
         };
         use cosmwasm_std::{
-            Event, IbcAcknowledgement, IbcOrder, ReplyOn, SubMsgResponse, SubMsgResult,
+            Event, IbcAckCallbackMsg, IbcAcknowledgement, IbcOrder, IbcTimeoutCallbackMsg, ReplyOn,
+            SubMsgResponse, SubMsgResult,
         };
         const CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_CALLBACKS: &[u8] = include_bytes!("../testdata/ibc_callbacks.wasm");
@@ -1088,10 +1089,13 @@ mod tests {
             }
 
             // send ack callback
-            let ack = IbcAcknowledgement::new(br#"{}"#);
-            let msg = IbcSourceChainCallbackMsg::Acknowledgement(
-                mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap(),
-            );
+            let ack = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, IbcAcknowledgement::new(br#"{}"#))
+                .unwrap();
+            let msg = IbcSourceChainCallbackMsg::Acknowledgement(IbcAckCallbackMsg::new(
+                ack.acknowledgement,
+                ack.original_packet,
+                ack.relayer,
+            ));
             call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
@@ -1106,9 +1110,11 @@ mod tests {
             assert_eq!(0, stats.ibc_timeout_callbacks.len());
 
             // send timeout callback
-            let msg = IbcSourceChainCallbackMsg::Timeout(
-                mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap(),
-            );
+            let timeout = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
+            let msg = IbcSourceChainCallbackMsg::Timeout(IbcTimeoutCallbackMsg::new(
+                timeout.packet,
+                timeout.relayer,
+            ));
             call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
