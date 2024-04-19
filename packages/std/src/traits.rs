@@ -268,6 +268,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
     /// one level. Only use this if you don't need to check the SystemError
     /// eg. If you don't differentiate between contract missing and contract returned error
     pub fn query<U: DeserializeOwned>(&self, request: &QueryRequest<C>) -> StdResult<U> {
+        self.query_raw(request).and_then(|raw| from_json(raw))
+    }
+
+    /// Internal helper to avoid code duplication.
+    /// Performs a query and returns the binary result without deserializing it,
+    /// wrapping any errors that may occur into `StdError`.
+    fn query_raw(&self, request: &QueryRequest<C>) -> StdResult<Binary> {
         let raw = to_json_vec(request).map_err(|serialize_err| {
             StdError::generic_err(format!("Serializing QueryRequest: {serialize_err}"))
         })?;
@@ -278,7 +285,7 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
             SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
                 format!("Querier contract error: {contract_err}"),
             )),
-            SystemResult::Ok(ContractResult::Ok(value)) => from_json(value),
+            SystemResult::Ok(ContractResult::Ok(value)) => Ok(value),
         }
     }
 
@@ -393,6 +400,13 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         .into();
         let res: DelegatorValidatorsResponse = self.query(&request)?;
         Ok(res.validators)
+    }
+
+    /// See [`GrpcQuery`](crate::GrpcQuery) for more information.
+    #[cfg(feature = "cosmwasm_2_0")]
+    pub fn query_grpc(&self, path: String, data: Binary) -> StdResult<Binary> {
+        use crate::GrpcQuery;
+        self.query_raw(&QueryRequest::Grpc(GrpcQuery { path, data }))
     }
 
     /// Queries another wasm contract. You should know a priori the proper types for T and U

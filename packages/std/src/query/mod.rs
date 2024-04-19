@@ -76,6 +76,10 @@ pub enum QueryRequest<C> {
 /// The drawback of this query is that you have to handle the protobuf encoding and decoding yourself.
 ///
 /// The returned data is protobuf encoded. The protobuf type depends on the query.
+/// Because of this, using it with the [`query`](crate::QuerierWrapper::query) function will result
+/// in a deserialization error.
+/// Use [`raw_query`](crate::Querier::raw_query) or [`query_grpc`](crate::QuerierWrapper::query_grpc)
+/// instead.
 ///
 /// To find the path, as well as the request and response types,
 /// you can query the chain's gRPC endpoint using a tool like
