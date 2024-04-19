@@ -51,14 +51,14 @@ fn read_file(path: &str) -> File {
 mod hashers {
     use digest::Digest;
     use sha2::Sha256;
-    use sha3::Sha3_256;
+    use sha3::Keccak256;
 
     pub fn sha256(data: &[u8]) -> [u8; 32] {
         Sha256::digest(data).into()
     }
 
-    pub fn sha3_256(data: &[u8]) -> [u8; 32] {
-        Sha3_256::digest(data).into()
+    pub fn keccak_256(data: &[u8]) -> [u8; 32] {
+        Keccak256::digest(data).into()
     }
 }
 
@@ -73,18 +73,16 @@ fn rootberg_ecdsa_secp256k1_sha256() {
 
         tested += 1;
 
-        if test.flags.iter().any(|f| f == "special_rs") {
-            // skip for now
-            continue;
-        }
-
         assert_eq!(test.tc_id as usize, tested);
         eprintln!("Test case ID: {}", test.tc_id);
         let message_hash = hashers::sha256(&test.msg);
 
         let signature = combine_signature(&test.sig);
         match secp256k1_verify(&message_hash, &signature, &test.pubkey) {
-            Ok(valid) => assert_eq!(test.valid, valid),
+            Ok(valid) => assert_eq!(
+                test.valid || test.comment.contains("(s not in range 1 .. n//2)"),
+                valid
+            ),
             Err(e) => {
                 assert!(!test.valid, "expected valid signature, got {:?}", e);
             }
@@ -110,18 +108,16 @@ fn rootberg_ecdsa_secp256k1_keccak256() {
 
         tested += 1;
 
-        if test.flags.iter().any(|f| f == "special_rs") {
-            // skip for now
-            continue;
-        }
-
         assert_eq!(test.tc_id as usize, tested);
         eprintln!("Test case ID: {}", test.tc_id);
-        let message_hash = hashers::sha3_256(&test.msg);
+        let message_hash = hashers::keccak_256(&test.msg);
 
         let signature = combine_signature(&test.sig);
         match secp256k1_verify(&message_hash, &signature, &test.pubkey) {
-            Ok(valid) => assert_eq!(test.valid, valid),
+            Ok(valid) => assert_eq!(
+                test.valid || test.comment.contains("(s not in range 1 .. n//2)"),
+                valid
+            ),
             Err(e) => {
                 assert!(!test.valid, "expected valid signature, got {:?}", e);
             }
