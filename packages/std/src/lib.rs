@@ -25,6 +25,7 @@ mod stdack;
 mod storage;
 mod traits;
 mod types;
+mod uuid;
 
 /// This module is to simplify no_std imports
 pub(crate) mod prelude;
@@ -79,6 +80,7 @@ pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
+pub use crate::uuid::{new_uuid, Uuid};
 
 // Exposed in wasm build only
 
