@@ -439,6 +439,7 @@ name = "cosmwasm-crypto"
 version = "2.0.1"
 dependencies = [
  "criterion",
+ "criterion-inverted-throughput",
  "derive_more",
  "digest",
  "ecdsa",
@@ -675,6 +676,15 @@ dependencies = [
  "serde_json",
  "tinytemplate",
  "walkdir",
+]
+
+[[package]]
+name = "criterion-inverted-throughput"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e7d7ff207904d8fa54563351cf3cd019973a96d211fe6bbe3cf1d76d1ced730"
+dependencies = [
+ "criterion",
 ]
 
 [[package]]

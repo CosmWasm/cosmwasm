@@ -102,6 +102,7 @@ workflows:
                 - /^[0-9]+\.[0-9]+$/
                 # Add your branch here if benchmarking matters to your work
                 - secp256r1-support
+                - sha1-uuid
       - coverage
   deploy:
     jobs:

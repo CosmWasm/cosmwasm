@@ -1,4 +1,8 @@
-use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
+use criterion::{
+    criterion_group, criterion_main, measurement::Measurement, BenchmarkId, Criterion,
+    PlottingBackend, Throughput,
+};
+use criterion_inverted_throughput::InvertedThroughput;
 use rand_core::OsRng;
 use std::time::Duration;
 
@@ -13,7 +17,7 @@ use sha2::Sha256;
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_recover_pubkey, secp256r1_verify,
+    secp256r1_recover_pubkey, secp256r1_verify, sha1_calculate,
 };
 use std::cmp::min;
 
@@ -206,8 +210,73 @@ fn bench_crypto(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_sha1_subblock(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sha1-subblock");
+
+    // bench for 16bytes to 64bytes (1 block).
+    for i in 4..=6 {
+        // Every 64 bytes needs a hassing and there are
+        // 8 bytes header (message length) and 1 byte tail (EOF).
+        let len = u64::pow(2, i) - 9;
+        let mut message: Vec<u8> = vec![];
+        message.resize(len as usize, 42);
+        group.bench_with_input(BenchmarkId::new("bytes", len + 9), &message, |b, msg| {
+            b.iter(|| {
+                let _ = sha1_calculate(msg);
+            });
+        });
+    }
+
+    // bench for 65bytes to 128bytes (1 block).
+    for i in 1..=6 {
+        // Every 64 bytes needs a hassing and there are
+        // 8 bytes header (message length) and 1 byte tail (EOF).
+        let len = 64 + u64::pow(2, i) - 9;
+        let mut message: Vec<u8> = vec![];
+        message.resize(len as usize, 42);
+        group.bench_with_input(BenchmarkId::new("bytes", len + 9), &message, |b, msg| {
+            b.iter(|| {
+                let _ = sha1_calculate(msg);
+            });
+        });
+    }
+
+    group.finish();
+}
+
+fn bench_sha1<M: Measurement>(c: &mut Criterion<M>) {
+    let mut group = c.benchmark_group("sha1");
+
+    // bench for 1 block to 1024 blocks.
+    for i in 6..=16 {
+        // Every 64 bytes needs a hassing and there are
+        // 8 bytes header (message length) and 1 byte tail (EOF).
+        let len = u64::pow(2, i) - 9;
+        let blocks = u64::pow(2, i) / 64;
+        group.throughput(Throughput::Elements(blocks));
+        let mut message: Vec<u8> = vec![];
+        message.resize(len as usize, 42);
+        group.bench_with_input(BenchmarkId::new("blocks", blocks), &message, |b, msg| {
+            b.iter(|| {
+                let _ = sha1_calculate(msg);
+            });
+        });
+    }
+
+    group.finish();
+}
+
 fn make_config() -> Criterion {
     Criterion::default()
+        .plotting_backend(PlottingBackend::Plotters)
+        .without_plots()
+        .measurement_time(Duration::new(10, 0))
+        .sample_size(12)
+}
+
+fn make_inversion_throughput_config() -> Criterion<InvertedThroughput> {
+    Criterion::default()
+        .with_measurement(InvertedThroughput::new())
         .plotting_backend(PlottingBackend::Plotters)
         .without_plots()
         .measurement_time(Duration::new(10, 0))
@@ -219,4 +288,14 @@ criterion_group!(
     config = make_config();
     targets = bench_crypto
 );
-criterion_main!(crypto);
+criterion_group!(
+    name = sha1_subblock;
+    config = make_config();
+    targets = bench_sha1_subblock
+);
+criterion_group!(
+    name = sha1;
+    config = make_inversion_throughput_config();
+    targets = bench_sha1
+);
+criterion_main!(crypto, sha1_subblock, sha1);
