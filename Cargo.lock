@@ -528,6 +528,7 @@ dependencies = [
  "cosmwasm-std",
  "crc32fast",
  "criterion",
+ "criterion-inverted-throughput",
  "derivative",
  "dhat",
  "glob",
