@@ -45,12 +45,15 @@ pub struct GasConfig {
     pub ed25519_batch_verify_cost: u64,
     /// ed25519 batch signature verification cost (single public key)
     pub ed25519_batch_verify_one_pubkey_cost: u64,
+    /// sha1 calculate cost per block.
+    pub sha1_calculate_cost_per_block: u64,
 }
 
 impl Default for GasConfig {
     fn default() -> Self {
         // Target is 10^12 per second (see GAS.md), i.e. 10^6 gas per µ second.
         const GAS_PER_US: u64 = 1_000_000;
+        const GAS_PER_NS: u64 = 1_000;
         Self {
             // ~119 us in crypto benchmarks
             secp256k1_verify_cost: 119 * GAS_PER_US,
@@ -66,6 +69,9 @@ impl Default for GasConfig {
             // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
             ed25519_batch_verify_cost: 63 * GAS_PER_US / 2,
             ed25519_batch_verify_one_pubkey_cost: 63 * GAS_PER_US / 4,
+            // ~27 ns per block in crypto benchmarks
+            // adjustment for only 1 block is done in vm
+            sha1_calculate_cost_per_block: 28 * GAS_PER_NS,
         }
     }
 }

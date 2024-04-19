@@ -206,6 +206,8 @@ pub trait Api {
         public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError>;
 
+    fn sha1_calculate(&self, message: &[u8]) -> StdResult<[u8; 20]>;
+
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);

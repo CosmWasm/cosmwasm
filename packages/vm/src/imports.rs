@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_recover_pubkey, secp256r1_verify, CryptoError,
+    secp256r1_recover_pubkey, secp256r1_verify, sha1_calculate, CryptoError,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -54,6 +54,8 @@ const MAX_LENGTH_ED25519_MESSAGE: usize = 128 * 1024;
 /// This is an arbitrary value, for performance / memory constraints. If you need to batch-verify a
 /// larger number of signatures, let us know.
 const MAX_COUNT_ED25519_BATCH: usize = 256;
+/// Max length of sha1 message. Max sha1 blocks count is 1024.
+const MAX_LENGTH_SHA1_MESSAGE: usize = 64 * 1024 - 9;
 
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
@@ -507,6 +509,31 @@ pub fn do_ed25519_batch_verify<
     Ok(code)
 }
 
+pub fn do_sha1_calculate<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    message_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+
+    let message = read_region(&data.memory(&store), message_ptr, MAX_LENGTH_SHA1_MESSAGE)?;
+
+    let block_length = (message.len() as u64 + 8) / 64 + 1;
+    let gas = if block_length == 1 {
+        // only 1 block takes 7 / 4 times than time per 1 block
+        data.gas_config.sha1_calculate_cost_per_block * 7 / 4
+    } else {
+        // 2 or more blocks takes time which is in direct proportion
+        // to block length.
+        data.gas_config.sha1_calculate_cost_per_block * block_length
+    };
+    let gas_info = GasInfo::with_cost(gas);
+    process_gas_info(data, &mut store, gas_info)?;
+
+    let digest = sha1_calculate(&message);
+    let digest_ptr = write_to_contract(data, &mut store, &digest)?;
+    Ok(digest_ptr)
+}
+
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn do_debug<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
@@ -762,6 +789,7 @@ mod tests {
                 "secp256r1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "ed25519_batch_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "sha1_calculate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "debug" => Function::new_typed(&mut store, |_a: u32| {}),
                 "abort" => Function::new_typed(&mut store, |_a: u32| {}),
             },
@@ -2269,6 +2297,45 @@ mod tests {
             do_ed25519_verify(fe_mut, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
             1 // verification failure
         )
+    }
+
+    #[test]
+    fn do_sha1_calculate_works() {
+        let api = MockApi::default();
+        let (fe, mut store, _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let msg = vec![42u8; MAX_LENGTH_SHA1_MESSAGE];
+        let msg_ptr = write_data(&mut fe_mut, &msg);
+
+        let digest_ptr = do_sha1_calculate(fe_mut.as_mut(), msg_ptr).unwrap();
+        assert!(digest_ptr > 0);
+        leave_default_data(&mut fe_mut);
+        assert_eq!(force_read(&mut fe_mut, digest_ptr), sha1_calculate(&msg));
+    }
+
+    #[test]
+    fn do_sha1_calculate_long_message_fails() {
+        let api = MockApi::default();
+        let (fe, mut store, _instance) = make_instance(api);
+        let mut fe_mut = fe.into_mut(&mut store);
+
+        let msg = vec![42u8; MAX_LENGTH_SHA1_MESSAGE + 1];
+        let msg_ptr = write_data(&mut fe_mut, &msg);
+
+        match do_sha1_calculate(fe_mut.as_mut(), msg_ptr).unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+                ..
+            } => {
+                assert_eq!(length, MAX_LENGTH_SHA1_MESSAGE + 1);
+                assert_eq!(max_length, MAX_LENGTH_SHA1_MESSAGE);
+            }
+            err => panic!("unexpected error: {err:?}"),
+        };
     }
 
     #[test]

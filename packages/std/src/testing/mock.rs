@@ -224,6 +224,10 @@ impl Api for MockApi {
         )?)
     }
 
+    fn sha1_calculate(&self, message: &[u8]) -> StdResult<[u8; 20]> {
+        Ok(cosmwasm_crypto::sha1_calculate(message))
+    }
+
     fn debug(&self, #[allow(unused)] message: &str) {
         println!("{message}");
     }

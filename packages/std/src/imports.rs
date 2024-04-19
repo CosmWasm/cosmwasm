@@ -84,6 +84,9 @@ extern "C" {
     /// greater than 1 in case of error.
     fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 
+    /// Calculate the sha1 digest of the given message.
+    fn sha1_calculate(message_ptr: u32) -> u32;
+
     /// Writes a debug message (UFT-8 encoded) to the host for debugging purposes.
     /// The host is free to log or process this in any way it considers appropriate.
     /// In production environments it is expected that those messages are discarded.
@@ -533,6 +536,23 @@ impl Api for ExternalApi {
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
+    }
+
+    fn sha1_calculate(&self, message: &[u8]) -> StdResult<[u8; 20]> {
+        let message_send = build_region(&message);
+        let message_send_ptr = &*message_send as *const Region as u32;
+
+        let result = unsafe { sha1_calculate(message_send_ptr) };
+
+        if result == 0 {
+            panic!("sha1_calculate returns 0. This is a bug in the VM.")
+        }
+
+        let digest_ptr = result as *mut Region;
+        let digest = unsafe { consume_region(digest_ptr) };
+        Ok(digest.try_into().unwrap_or_else(|v: Vec<u8>| {
+            panic!("Expected a Vec of length {} but it was {}", 20, v.len())
+        }))
     }
 
     fn debug(&self, message: &str) {
