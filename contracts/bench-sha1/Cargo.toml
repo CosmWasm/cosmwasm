@@ -1,0 +1,37 @@
+[package]
+name = "bench-sha1"
+version = "0.0.0"
+authors = ["loloicci <loloicci@linecorp.com>"]
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# Add feature "cranelift" to default if you need 32 bit or ARM support
+default = []
+# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
+cranelift = ["cosmwasm-vm/cranelift"]
+
+[dependencies]
+cosmwasm-schema = { path = "../../packages/schema" }
+cosmwasm-std = { path = "../../packages/std" }
+sha1 = "0.10.6"
+
+[dev-dependencies]
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }

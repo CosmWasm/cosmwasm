@@ -113,6 +113,11 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_empty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/empty
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_bench_sha1",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer:0.15.0 ./contracts/bench-sha1
 ```
 
 ## Entry points
@@ -129,3 +134,4 @@ points in order to demonstrate and test the flexibility we have.
 | reflect     | yes         | no            |
 | staking     | yes         | no            |
 | virus       | no          | no            |
+| bench-sha1  | no          | no            |
