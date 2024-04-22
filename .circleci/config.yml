@@ -1044,7 +1044,7 @@ jobs:
       - run:
           name: Run crypto benchmarks
           working_directory: ~/project/packages/crypto
-          command: cargo bench -- --color never --save-baseline crypto
+          command: cargo bench --features std -- --color never --save-baseline crypto
       - save_cache:
           paths:
             - /usr/local/cargo/registry
