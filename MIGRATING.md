@@ -348,7 +348,7 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
-- If you want to use a fewture that os only available on CosmWasm 1.2+ chains,
+- If you want to use a feature that is only available on CosmWasm 1.2+ chains,
   use this feature:
 
   ```diff
