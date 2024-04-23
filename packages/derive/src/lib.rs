@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream},
+    parse::{Parse, ParseStream, Parser},
     parse_quote,
     punctuated::Punctuated,
-    Token,
+    MetaNameValue, Token,
 };
 
 macro_rules! maybe {
@@ -129,12 +129,99 @@ fn entry_point_impl(attr: TokenStream, mut item: TokenStream) -> TokenStream {
     item
 }
 
+/// Set the version of the state of your contract.  
+/// The VM will use this as a hint whether it needs to run the migrate function of your contract or not.
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     DepsMut, entry_point, Env, set_contract_state_version,
+/// #     Response, StdResult,
+/// # };
+/// #
+/// # type MigrateMsg = ();
+/// #[entry_point]
+/// #[set_contract_state_version(version = 2)]
+/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
+///     todo!();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn set_contract_state_version(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    set_contract_state_version_impl(attr.into(), item.into()).into()
+}
+
+fn set_contract_state_version_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let name_value =
+        maybe!(Punctuated::<MetaNameValue, Token![,]>::parse_separated_nonempty.parse2(attr));
+
+    let mut version = None;
+    for pair @ MetaNameValue { path, value, .. } in &name_value {
+        if !path.is_ident("version") {
+            return syn::Error::new_spanned(pair, "unexpected key-value pair").into_compile_error();
+        }
+
+        let syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Int(version_num),
+            ..
+        }) = value
+        else {
+            return syn::Error::new_spanned(value, "expected number").into_compile_error();
+        };
+
+        version = Some(version_num.base10_digits());
+    }
+
+    let Some(version) = version else {
+        return syn::Error::new_spanned(name_value, "expected \"version\"").into_compile_error();
+    };
+
+    quote! {
+        #[allow(unused)]
+        #[doc(hidden)]
+        #[link_section = "cw_contract_state_version"]
+        /// This is an internal constant exported as a custom section denoting the contract state version.
+        /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+        static __CW_CONTRACT_STATE_VERSION: &str = #version;
+
+        #item
+    }
+}
+
 #[cfg(test)]
 mod test {
     use proc_macro2::TokenStream;
     use quote::quote;
 
-    use crate::entry_point_impl;
+    use crate::{entry_point_impl, set_contract_state_version_impl};
+
+    #[test]
+    fn contract_state_expansion() {
+        let attribute = quote!(version = 5);
+        let code = quote! {
+            fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = set_contract_state_version_impl(attribute, code);
+        let expected = quote! {
+            #[allow(unused)]
+            #[doc(hidden)]
+            #[link_section = "cw_contract_state_version"]
+            /// This is an internal constant exported as a custom section denoting the contract state version.
+            /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+            static __CW_CONTRACT_STATE_VERSION: &str = "5";
+
+            fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
+                // Logic here
+            }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
 
     #[test]
     fn default_expansion() {

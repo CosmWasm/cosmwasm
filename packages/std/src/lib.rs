@@ -122,4 +122,4 @@ pub use cosmwasm_core::{
 #[cfg(not(target_arch = "wasm32"))]
 pub use cosmwasm_core::assert_approx_eq;
 
-pub use cosmwasm_derive::entry_point;
+pub use cosmwasm_derive::{entry_point, set_contract_state_version};
