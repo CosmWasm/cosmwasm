@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse::{Parse, ParseStream, Parser},
+    parse::{Parse, ParseStream},
     parse_quote,
     punctuated::Punctuated,
-    ItemFn, MetaNameValue, Token,
+    ItemFn, Token,
 };
 
 macro_rules! maybe {
@@ -93,48 +93,14 @@ impl Parse for Options {
 ///
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
-#[proc_macro_attribute]
-pub fn entry_point(
-    attr: proc_macro::TokenStream,
-    item: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    entry_point_impl(attr.into(), item.into()).into()
-}
-
-fn entry_point_impl(attr: TokenStream, mut item: TokenStream) -> TokenStream {
-    let cloned = item.clone();
-    let function: syn::ItemFn = maybe!(syn::parse2(cloned));
-    let Options { crate_path } = maybe!(syn::parse2(attr));
-
-    // The first argument is `deps`, the rest is region pointers
-    let args = function.sig.inputs.len() - 1;
-    let fn_name = function.sig.ident;
-    let wasm_export = format_ident!("__wasm_export_{fn_name}");
-    let do_call = format_ident!("do_{fn_name}");
-
-    let decl_args = (0..args).map(|item| format_ident!("ptr_{item}"));
-    let call_args = decl_args.clone();
-
-    let new_code = quote! {
-        #[cfg(target_arch = "wasm32")]
-        mod #wasm_export { // new module to avoid conflict of function name
-            #[no_mangle]
-            extern "C" fn #fn_name(#( #decl_args : u32 ),*) -> u32 {
-                #crate_path::#do_call(&super::#fn_name, #( #call_args ),*)
-            }
-        }
-    };
-
-    item.extend(new_code);
-    item
-}
-
-/// Set the version of the state of your contract.  
+///
+/// ## Set the version of the state of your contract
+///
 /// The VM will use this as a hint whether it needs to run the migrate function of your contract or not.
 ///
 /// ```
 /// # use cosmwasm_std::{
-/// #     DepsMut, entry_point, Env, set_contract_state_version,
+/// #     DepsMut, entry_point, Env,
 /// #     Response, StdResult,
 /// # };
 /// #
@@ -146,56 +112,82 @@ fn entry_point_impl(attr: TokenStream, mut item: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn set_contract_state_version(
+pub fn entry_point(
     attr: proc_macro::TokenStream,
     item: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-    set_contract_state_version_impl(attr.into(), item.into()).into()
+    entry_point_impl(attr.into(), item.into()).into()
 }
 
-fn set_contract_state_version_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let function = maybe!(syn::parse2::<ItemFn>(item));
-    if function.sig.ident != "migrate" {
-        return syn::Error::new_spanned(
-            function.sig.ident,
-            "you only want to add this macro to your migrate function",
-        )
-        .into_compile_error();
-    }
-
-    let name_value =
-        maybe!(Punctuated::<MetaNameValue, Token![,]>::parse_separated_nonempty.parse2(attr));
-
-    let mut version = None;
-    for pair @ MetaNameValue { path, value, .. } in &name_value {
-        if !path.is_ident("version") {
-            return syn::Error::new_spanned(pair, "unexpected key-value pair").into_compile_error();
+fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
+    let mut attributes = std::mem::take(&mut func.attrs);
+    let mut stream = TokenStream::new();
+    while let Some(attribute) = attributes.pop() {
+        if !attribute.path().is_ident("set_contract_state_version") {
+            func.attrs.push(attribute);
+            continue;
         }
 
-        let syn::Expr::Lit(syn::ExprLit {
-            lit: syn::Lit::Int(version_num),
-            ..
-        }) = value
-        else {
-            return syn::Error::new_spanned(value, "expected number").into_compile_error();
-        };
+        if func.sig.ident != "migrate" {
+            return Err(syn::Error::new_spanned(
+                &func.sig.ident,
+                "you only want to add this macro to your migrate function",
+            ));
+        }
 
-        version = Some(version_num.base10_digits());
+        attribute.parse_nested_meta(|meta| {
+            if !meta.path.is_ident("version") {
+                return Err(meta.error("unexpected attribute"));
+            }
+
+            let version: syn::LitInt = meta.value()?.parse()?;
+            let version = version.base10_digits();
+
+            stream = quote! {
+                #stream
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                #[link_section = "cw_contract_state_version"]
+                /// This is an internal constant exported as a custom section denoting the contract state version.
+                /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+                static __CW_CONTRACT_STATE_VERSION: &str = #version;
+            };
+
+            Ok(())
+        })?;
     }
 
-    let Some(version) = version else {
-        return syn::Error::new_spanned(name_value, "expected \"version\"").into_compile_error();
-    };
+    Ok(stream)
+}
+
+fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut function: syn::ItemFn = maybe!(syn::parse2(item));
+    let Options { crate_path } = maybe!(syn::parse2(attr));
+
+    let attribute_code = maybe!(expand_attributes(&mut function));
+
+    // The first argument is `deps`, the rest is region pointers
+    let args = function.sig.inputs.len().saturating_sub(1);
+    let fn_name = &function.sig.ident;
+    let wasm_export = format_ident!("__wasm_export_{fn_name}");
+    let do_call = format_ident!("do_{fn_name}");
+
+    let decl_args = (0..args).map(|item| format_ident!("ptr_{item}"));
+    let call_args = decl_args.clone();
 
     quote! {
-        #[allow(unused)]
-        #[doc(hidden)]
-        #[link_section = "cw_contract_state_version"]
-        /// This is an internal constant exported as a custom section denoting the contract state version.
-        /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-        static __CW_CONTRACT_STATE_VERSION: &str = #version;
+        #attribute_code
 
         #function
+
+        #[cfg(target_arch = "wasm32")]
+        mod #wasm_export { // new module to avoid conflict of function name
+            #[no_mangle]
+            extern "C" fn #fn_name(#( #decl_args : u32 ),*) -> u32 {
+                #crate_path::#do_call(&super::#fn_name, #( #call_args ),*)
+            }
+        }
     }
 }
 
@@ -204,28 +196,36 @@ mod test {
     use proc_macro2::TokenStream;
     use quote::quote;
 
-    use crate::{entry_point_impl, set_contract_state_version_impl};
+    use crate::entry_point_impl;
 
     #[test]
-    fn contract_state_expansion() {
-        let attribute = quote!(version = 5);
+    fn contract_state_version_expansion() {
         let code = quote! {
+            #[set_contract_state_version(version = 2)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
             }
         };
 
-        let actual = set_contract_state_version_impl(attribute, code);
+        let actual = entry_point_impl(TokenStream::new(), code);
         let expected = quote! {
             #[allow(unused)]
             #[doc(hidden)]
             #[link_section = "cw_contract_state_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_CONTRACT_STATE_VERSION: &str = "5";
+            static __CW_CONTRACT_STATE_VERSION: &str = "2";
 
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
+            }
+
+            #[cfg(target_arch = "wasm32")]
+            mod __wasm_export_migrate {
+                #[no_mangle]
+                extern "C" fn migrate(ptr_0: u32, ptr_1: u32) -> u32 {
+                    ::cosmwasm_std::do_migrate(&super::migrate, ptr_0, ptr_1)
+                }
             }
         };
 
