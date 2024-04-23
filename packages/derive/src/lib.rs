@@ -4,7 +4,7 @@ use syn::{
     parse::{Parse, ParseStream, Parser},
     parse_quote,
     punctuated::Punctuated,
-    MetaNameValue, Token,
+    ItemFn, MetaNameValue, Token,
 };
 
 macro_rules! maybe {
@@ -154,6 +154,15 @@ pub fn set_contract_state_version(
 }
 
 fn set_contract_state_version_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let function = maybe!(syn::parse2::<ItemFn>(item));
+    if function.sig.ident != "migrate" {
+        return syn::Error::new_spanned(
+            function.sig.ident,
+            "you only want to add this macro to your migrate function",
+        )
+        .into_compile_error();
+    }
+
     let name_value =
         maybe!(Punctuated::<MetaNameValue, Token![,]>::parse_separated_nonempty.parse2(attr));
 
@@ -186,7 +195,7 @@ fn set_contract_state_version_impl(attr: TokenStream, item: TokenStream) -> Toke
         /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
         static __CW_CONTRACT_STATE_VERSION: &str = #version;
 
-        #item
+        #function
     }
 }
 
