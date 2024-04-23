@@ -61,6 +61,16 @@ pub enum IbcMsg {
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
     },
+    /// Acknowledges a packet that this contract received over IBC.
+    /// This allows acknowledging a packet that was not acknowledged yet in the `ibc_packet_receive` call.
+    WriteAcknowledgement {
+        /// Existing channel where the packet was received
+        channel_id: String,
+        /// Sequence number of the packet that was received
+        packet_sequence: u64,
+        /// The acknowledgement to send back
+        ack: IbcFullAcknowledgement,
+    },
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
