@@ -1,7 +1,7 @@
 use cosmwasm_crypto::{secp256k1_recover_pubkey, secp256k1_verify};
 use serde::Deserialize;
 
-// See ./testdata/wycheproof/README.md for how to get/update those files
+// See ./testdata/rootberg/README.md for how to get/update those files
 const SECP256K1_SHA256: &str = "./testdata/rootberg/ecdsa_normalized_secp256k1_sha_256_raw.json";
 const SECP256K1_KECCAK256: &str =
     "./testdata/rootberg/ecdsa_normalized_secp256k1_keccak256_raw.json";
