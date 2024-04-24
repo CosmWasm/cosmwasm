@@ -134,21 +134,9 @@ fn rootberg_ecdsa_secp256k1_keccak256() {
 
 fn combine_signature(sig: &Sig) -> Vec<u8> {
     // the test data contains values with leading zeroes, which we need to ignore
-    let first_non_zero = sig
-        .r
-        .iter()
-        .enumerate()
-        .find(|(_, v)| **v != 0) // find first non-zero byte
-        .map(|(i, _)| i)
-        .unwrap_or_default(); // default to 0 if all zero
+    let first_non_zero = sig.r.iter().position(|&v| v != 0).unwrap_or_default();
     let r = &sig.r[first_non_zero..];
-    let first_non_zero = sig
-        .s
-        .iter()
-        .enumerate()
-        .find(|(_, v)| **v != 0)
-        .map(|(i, _)| i)
-        .unwrap_or_default();
+    let first_non_zero = sig.s.iter().position(|&v| v != 0).unwrap_or_default();
     let s = &sig.s[first_non_zero..];
 
     assert!(r.len() <= 32, "r value is too big");
