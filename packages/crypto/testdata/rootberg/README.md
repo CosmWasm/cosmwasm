@@ -15,5 +15,7 @@ from the repo root:
 (cd packages/crypto/testdata/rootberg \
   && curl -sSL https://github.com/bleichenbacher-daniel/Rooterberg/raw/main/ecdsa/ecdsa_secp256k1_keccak256_raw.json > ecdsa_secp256k1_keccak256_raw.json \
   && curl -sSL https://github.com/bleichenbacher-daniel/Rooterberg/raw/main/ecdsa/ecdsa_secp256k1_sha_256_raw.json > ecdsa_secp256k1_sha_256_raw.json \
+  && curl -sSL https://github.com/bleichenbacher-daniel/Rooterberg/raw/main/ecdsa/ecdsa_secp256r1_keccak256_raw.json > ecdsa_secp256r1_keccak256_raw.json \
+  && curl -sSL https://github.com/bleichenbacher-daniel/Rooterberg/raw/main/ecdsa/ecdsa_secp256r1_sha_256_raw.json > ecdsa_secp256r1_sha_256_raw.json \
 )
 ```

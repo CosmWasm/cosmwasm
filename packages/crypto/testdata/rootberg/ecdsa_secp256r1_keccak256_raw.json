@@ -1,0 +1,3481 @@
+{
+  "testType": "EcdsaVerify",
+  "algorithm": {
+    "type": "Ecdsa",
+    "curve": "secp256r1",
+    "sha": "KECCAK256",
+    "encoding": "RAW",
+    "normalize": false,
+    "signature_generation": "Generic"
+  },
+  "version": "0.34",
+  "description": [
+    "The underlying elliptic curve is secp256r1",
+    "The message digest for hashing the input is KECCAK256",
+    "Note KECCAK256 is not SHA-3, since it does not include the domain bits added by NIST.",
+    "Signatures are dictionaries containing r, s and id, where id is the recovery id used by a number of protocols that verify signatures by recovering the public key. Public keys are given as a pair of coordinates",
+    "The test vectors were generated for signature verification through public key recovery."
+  ],
+  "references": [],
+  "numTests": 247,
+  "tests": [
+    {
+      "tcId": 1,
+      "publicKeyUncompressed": "04a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5c17aa5bdecb4f86ac3a1e94d54beb591589197ceb5ac061afb9ddd311f2931ae",
+      "publicKeyCompressed": "02a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5",
+      "msg": "",
+      "sig": {
+        "r": "2549ca541c1b0a06379725f05a295e23f24ac9ee5d087fe773d045bd29c825f7",
+        "s": "265034ab0c6643fa28d1f116b2040fe45903b3072fa95ce18d1023346bc07255",
+        "id": 0
+      },
+      "comment": "normal",
+      "valid": true,
+      "flags": ["normal"]
+    },
+    {
+      "tcId": 2,
+      "publicKeyUncompressed": "04a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5c17aa5bdecb4f86ac3a1e94d54beb591589197ceb5ac061afb9ddd311f2931ae",
+      "publicKeyCompressed": "02a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5",
+      "msg": "000102030405060708090a0b0c0d0e0f",
+      "sig": {
+        "r": "008799631131d6f61405eb770ba66df274e75464ad8ca419f54c3b7b3099b1862c",
+        "s": "0ea2d4f842b88a20e178c3980bce30d44147072e1ce683706f9204867e7d2697",
+        "id": 0
+      },
+      "comment": "normal",
+      "valid": true,
+      "flags": ["normal"]
+    },
+    {
+      "tcId": 3,
+      "publicKeyUncompressed": "04a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5c17aa5bdecb4f86ac3a1e94d54beb591589197ceb5ac061afb9ddd311f2931ae",
+      "publicKeyCompressed": "02a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5",
+      "msg": "616263",
+      "sig": {
+        "r": "00e5d49e587060dbe0b484657540cd511790bf00e562cad532b781b20aed88bdbd",
+        "s": "00ad3636b42741891a3bdb1c9db389f7262bbb60670cf8d910652f3c9731326e2b",
+        "id": 0
+      },
+      "comment": "normal",
+      "valid": true,
+      "flags": ["normal"]
+    },
+    {
+      "tcId": 4,
+      "publicKeyUncompressed": "04a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5c17aa5bdecb4f86ac3a1e94d54beb591589197ceb5ac061afb9ddd311f2931ae",
+      "publicKeyCompressed": "02a0009c3b693aa32d0547fe1cbc10bcd2e0e971d6f5dd8e18326bb904655ea1c5",
+      "msg": "54657374",
+      "sig": {
+        "r": "0562adcacb0ab69493c6096783650721fdda1b80cc111bc1d295bbae6d925292",
+        "s": "00b6a81b6b65534de1d81a59ed67de9c08e7bcbd0c60f0cc51240276273db26f5f",
+        "id": 1
+      },
+      "comment": "normal",
+      "valid": true,
+      "flags": ["normal"]
+    },
+    {
+      "tcId": 5,
+      "publicKeyUncompressed": "04d372ac5e8f88e19470342f4d936ec18dc69ea4677a3191a4c6012e09148289e6f4fec98c6ebcfa0dd2b3f950b12f73d97d27bd60b01d1f7d84d01847a74a2295",
+      "publicKeyCompressed": "03d372ac5e8f88e19470342f4d936ec18dc69ea4677a3191a4c6012e09148289e6",
+      "msg": "54657374",
+      "sig": {
+        "r": "05",
+        "s": "05",
+        "id": 0
+      },
+      "comment": "r=5, s=5",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 6,
+      "publicKeyUncompressed": "04fae09d7e64f341702ec5dce1394f91f7c58bad5d3f8b80d0f7cbad6a36a1b92369d7ae8135663c190523c78a67410fdbd59c320679225d0ec44436b30fc456cd",
+      "publicKeyCompressed": "03fae09d7e64f341702ec5dce1394f91f7c58bad5d3f8b80d0f7cbad6a36a1b923",
+      "msg": "54657374",
+      "sig": {
+        "r": "06",
+        "s": "06",
+        "id": 0
+      },
+      "comment": "r=6, s=6",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 7,
+      "publicKeyUncompressed": "043d845b56288c8c983d50dafb97e6182fb40817d3226501e1b209bf4e7f02a35d975bae53148e0db51ad43376176c8426b2e43913866feba9c94a14a265949e91",
+      "publicKeyCompressed": "033d845b56288c8c983d50dafb97e6182fb40817d3226501e1b209bf4e7f02a35d",
+      "msg": "54657374",
+      "sig": {
+        "r": "08",
+        "s": "08",
+        "id": 0
+      },
+      "comment": "r=8, s=8",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 8,
+      "publicKeyUncompressed": "04e9e3cf506b96325151a73e661523ea7a8c06b388d47d2791b0a428544f1db47545410b125120be9def320f80d24f02a0d9c9c1404d3ce404f00c645f00c61c33",
+      "publicKeyCompressed": "03e9e3cf506b96325151a73e661523ea7a8c06b388d47d2791b0a428544f1db475",
+      "msg": "54657374",
+      "sig": {
+        "r": "09",
+        "s": "09",
+        "id": 0
+      },
+      "comment": "r=9, s=9",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 9,
+      "publicKeyUncompressed": "04284b6c826d1f79275a447ba592767fca834795b46eae3a45a39c7b4a1d2e5173df9649f6b954414285f45bb748964173a2257432f874e62fa658c18c4595f2a2",
+      "publicKeyCompressed": "02284b6c826d1f79275a447ba592767fca834795b46eae3a45a39c7b4a1d2e5173",
+      "msg": "54657374",
+      "sig": {
+        "r": "7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a9",
+        "s": "7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a9",
+        "id": 0
+      },
+      "comment": "r=(n+1)/2, s=(n+1)/2",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 10,
+      "publicKeyUncompressed": "0413e352a42802af4c8e107df369bf9a9348e6fbaa9fcf9e325b609e643c2184ff04a274afe2c8fcc58887f766f03eaf2193b4369dfddda69d2af00bd770d2108e",
+      "publicKeyCompressed": "0213e352a42802af4c8e107df369bf9a9348e6fbaa9fcf9e325b609e643c2184ff",
+      "msg": "54657374",
+      "sig": {
+        "r": "7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192aa",
+        "s": "7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192aa",
+        "id": 0
+      },
+      "comment": "r=(n+3)/2, s=(n+3)/2",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 11,
+      "publicKeyUncompressed": "044639ccf0d42467d05082bb2e8c2146d196b295b13d2c48624127cd88789ca7a22352b0aaf9bed14c1924587a910ee6cf47c78a87aab277ff15b4bf3f26b4ee97",
+      "publicKeyCompressed": "034639ccf0d42467d05082bb2e8c2146d196b295b13d2c48624127cd88789ca7a2",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254f",
+        "s": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254f",
+        "id": 0
+      },
+      "comment": "r=n-2, s=n-2",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 12,
+      "publicKeyUncompressed": "0412818025fa916250d2eb96c0278d1e144efa171f9e99dccf9c9165435028743138b067891a32f42dbcf40322334216b404d26f78853f0ca5920021cfde76c2c9",
+      "publicKeyCompressed": "0312818025fa916250d2eb96c0278d1e144efa171f9e99dccf9c91654350287431",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254e",
+        "s": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254e",
+        "id": 0
+      },
+      "comment": "r=n-3, s=n-3",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 13,
+      "publicKeyUncompressed": "0443df016d32756883902412519843591f395e7ffded8862d9d6397f036e5e15627dc285c0949793ad726630433e90077d6abcb569d0f97616abcb5f9c6ded63ab",
+      "publicKeyCompressed": "0343df016d32756883902412519843591f395e7ffded8862d9d6397f036e5e1562",
+      "msg": "54657374",
+      "sig": {
+        "r": "7b",
+        "s": "00b21642c7a6f4de9c8590b21642c8590af2b6f12ae38add9423fbae7161a92517",
+        "id": 0
+      },
+      "comment": "r and s^-1 small",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 14,
+      "publicKeyUncompressed": "04ce3f6b6329526ab78839e7a46dad7998253660aedb0ad66bc2d2e68385384be9a8ec8fe7405070d3139e8809c88d8ef98153403c66664f0b4311b8197767a8ce",
+      "publicKeyCompressed": "02ce3f6b6329526ab78839e7a46dad7998253660aedb0ad66bc2d2e68385384be9",
+      "msg": "54657374",
+      "sig": {
+        "r": "3039",
+        "s": "00e62027d80c0b6a9ea2c034e51427b717a4eab2c011de1f466bdbc6bb4fd7667c",
+        "id": 0
+      },
+      "comment": "r and s^-1 are 16 bit integers",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 15,
+      "publicKeyUncompressed": "0451f3c3c88ac6708ed4c984925daa62358b58ee169d38c7278c42c35285fe3e6732c274e778195f05d52fc3a87dd195e96940ba116303458366f6f927e3a22055",
+      "publicKeyCompressed": "0351f3c3c88ac6708ed4c984925daa62358b58ee169d38c7278c42c35285fe3e67",
+      "msg": "54657374",
+      "sig": {
+        "r": "24f22125a254278f",
+        "s": "008d00c610ee357b04f2eeacc811ffc54895931b3287c3a4e3f80b39005d45688a",
+        "id": 0
+      },
+      "comment": "r and s^-1 are 64 bit integers",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 16,
+      "publicKeyUncompressed": "04a1ba16b8ad1c97abfb70803ed3ef37c45f29a5584ea2fa01b47393f098d465b8ff2fd16a9d618380b59aa72d0e0a7e3a063b8e5b8995991a62ac1ef7d5c4690d",
+      "publicKeyCompressed": "03a1ba16b8ad1c97abfb70803ed3ef37c45f29a5584ea2fa01b47393f098d465b8",
+      "msg": "54657374",
+      "sig": {
+        "r": "00fffffffffffffffd",
+        "s": "1d702a231af70e2602791bfd535e466efac1e065553149e559e3e70f9bf9a3e6",
+        "id": 0
+      },
+      "comment": "r and s^-1 are edge case 64-bit integers",
+      "valid": true,
+      "flags": ["special_rs"]
+    },
+    {
+      "tcId": 17,
+      "publicKeyUncompressed": "04fcafa281c79547a7029ab973aee900d22ce428ad4d132d196b0583ca8439e3d58025546a5bda1005521624e8a41a283fbea776a89ac5a28b6f793b14c233a6d5",
+      "publicKeyCompressed": "03fcafa281c79547a7029ab973aee900d22ce428ad4d132d196b0583ca8439e3d5",
+      "msg": "54657374",
+      "sig": {
+        "r": "008000000000000000000000000000000000000000000000000000000000000004",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 0
+      },
+      "comment": "R: x-coordinate >= 2**255",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 18,
+      "publicKeyUncompressed": "04ed4ad8d7544147e24909875f31811ace36ead0f68076cf8d3e2e376f0d58a23fd6ef49e9232926690488050a0dd277a3c0fc645a17fadc41c1d71bef73421c2c",
+      "publicKeyCompressed": "02ed4ad8d7544147e24909875f31811ace36ead0f68076cf8d3e2e376f0d58a23f",
+      "msg": "54657374",
+      "sig": {
+        "r": "008000000000000000000000000000000000000000000000000000000000000004",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 0
+      },
+      "comment": "R: x-coordinate >= 2**255",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 19,
+      "publicKeyUncompressed": "047c0ab77748801fccedf5a20ef880d221bd4676e71849ea0c1bf3c832a9f3d0ea8ee8efe6acf5dd2b503fb8600004724085a6f72140281ea74820fcf2224aff69",
+      "publicKeyCompressed": "037c0ab77748801fccedf5a20ef880d221bd4676e71849ea0c1bf3c832a9f3d0ea",
+      "msg": "54657374",
+      "sig": {
+        "r": "0100000000000000000000000000000000000000000000000000000000000000",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 0
+      },
+      "comment": "R: x-coordinate >= 2**248",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 20,
+      "publicKeyUncompressed": "04e8dc2281d996162fcb36329783a87417d1402a35b56f2b04a85e98468f37304fef6ba607d34eaca3b89b81d82dcc4428f01da6cb071027af89bdb624a8d2c51e",
+      "publicKeyCompressed": "02e8dc2281d996162fcb36329783a87417d1402a35b56f2b04a85e98468f37304f",
+      "msg": "54657374",
+      "sig": {
+        "r": "0100000000000000000000000000000000000000000000000000000000000000",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 0
+      },
+      "comment": "R: x-coordinate >= 2**248",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 21,
+      "publicKeyUncompressed": "046cc501ab4ccbe491bd0967f212444da8e7c2d68d35548adff4723932d5f9183c3483e2b733a900b8749712569a6fcaa7f69dd90fd256bc623ac545437a909dc3",
+      "publicKeyCompressed": "036cc501ab4ccbe491bd0967f212444da8e7c2d68d35548adff4723932d5f9183c",
+      "msg": "54657374",
+      "sig": {
+        "r": "0080",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 0
+      },
+      "comment": "R: small x coordinate",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 22,
+      "publicKeyUncompressed": "0427a4b9f169a2d5ee2e66aa64756887b17212bffc462ace548a13aa811749e835c726ad8458b21191be15d17ef0fac6cbe5f2404f825bf9efcdaad82a9d121668",
+      "publicKeyCompressed": "0227a4b9f169a2d5ee2e66aa64756887b17212bffc462ace548a13aa811749e835",
+      "msg": "54657374",
+      "sig": {
+        "r": "0080",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 0
+      },
+      "comment": "R: small x coordinate",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 23,
+      "publicKeyUncompressed": "04bb3816e0107fff850a68300343d0859667e5b2574673de3e84b663b76f35cbe4a1ba3d261c411214b41efb1d573ffed76b1ff8fbb27ab4c1c45e21c120f0f579",
+      "publicKeyCompressed": "03bb3816e0107fff850a68300343d0859667e5b2574673de3e84b663b76f35cbe4",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254f",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 2
+      },
+      "comment": "R: large x-coordinate (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 24,
+      "publicKeyUncompressed": "047c42683243164cea8754bdb552c07f57aa5d75f201ffa49abf4a58a0721e7cb772623ff6d98ea5a77a86815d5681b22d3e545294eb1e7ae5999be9f39993ad97",
+      "publicKeyCompressed": "037c42683243164cea8754bdb552c07f57aa5d75f201ffa49abf4a58a0721e7cb7",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254f",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 2
+      },
+      "comment": "R: large x-coordinate (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 25,
+      "publicKeyUncompressed": "04b864dc5273fb1a362c2dfec6c3c1efa3d0f9f922819ab211d2d27e78b463f3d3b848d9aa4d5809ba3eb5965f176e9648ae5940859ce9ea1a73c4fd7aad4514db",
+      "publicKeyCompressed": "03b864dc5273fb1a362c2dfec6c3c1efa3d0f9f922819ab211d2d27e78b463f3d3",
+      "msg": "54657374",
+      "sig": {
+        "r": "4319055358e8617b0c46353d039cdaac",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 2
+      },
+      "comment": "R: x-coordinate close to p (Could not recover R)",
+      "valid": false,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 26,
+      "publicKeyUncompressed": "04301e4933a35224dbaf59b0d4694221272b1c579a738983ef1116024ce767381b9fd7788b8dfb34887a245d1b1567e9bae500ec124916fc6c4d51185914e86bf1",
+      "publicKeyCompressed": "03301e4933a35224dbaf59b0d4694221272b1c579a738983ef1116024ce767381b",
+      "msg": "54657374",
+      "sig": {
+        "r": "4319055358e8617b0c46353d039cdaac",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 2
+      },
+      "comment": "R: x-coordinate close to p (Could not recover R)",
+      "valid": false,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 27,
+      "publicKeyUncompressed": "04eb030e764aca1c61707b5d4e3ee140ce6eeeccc41686c1674507fdc88ad46b558306c6340ccb33b511ed443a092b2ec0eb4a2150840ab0202d2666e3c32975a8",
+      "publicKeyCompressed": "02eb030e764aca1c61707b5d4e3ee140ce6eeeccc41686c1674507fdc88ad46b55",
+      "msg": "54657374",
+      "sig": {
+        "r": "7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 2
+      },
+      "comment": "R: x-coordinate < 2**255 (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 28,
+      "publicKeyUncompressed": "042f63a94f417404f0dfb36f8816221d75425f563fe88f5c36229308fd131d325cd789b8c84be4f6ea4ecc17501d73f48c563e8475d3d19125652e9e2bbe946fbe",
+      "publicKeyCompressed": "022f63a94f417404f0dfb36f8816221d75425f563fe88f5c36229308fd131d325c",
+      "msg": "54657374",
+      "sig": {
+        "r": "7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 2
+      },
+      "comment": "R: x-coordinate < 2**255 (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 29,
+      "publicKeyUncompressed": "0402e41326ee944eddb1223b13a36f2e71219ffc32563e7908abce4869f06c1996fc4f0c00c5a2e376d7f825ac3d2d04c122b40170f990908f2a80fa1be1615346",
+      "publicKeyCompressed": "0202e41326ee944eddb1223b13a36f2e71219ffc32563e7908abce4869f06c1996",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "s": "14f9d5b0aa8902335126115bf781e1fa75e276fbf231fc21655f4698c4f5dc4c",
+        "id": 0
+      },
+      "comment": "R: x-coordinate < 2**248",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 30,
+      "publicKeyUncompressed": "0408005306bb7b1e07d8e03f2707c39555e81d045cb3999cf6654ca73f87e625fac96934db1a8c03b9b8fe9e915487cb7ecaf8397df9f6cf2d6758839c8958fa94",
+      "publicKeyCompressed": "0208005306bb7b1e07d8e03f2707c39555e81d045cb3999cf6654ca73f87e625fa",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "s": "0088d6a41c104c10d426cdf01a24bd170b6b70c06b1feb19c1d3a2582361d9db20",
+        "id": 0
+      },
+      "comment": "R: x-coordinate < 2**248",
+      "valid": true,
+      "flags": ["special_R"]
+    },
+    {
+      "tcId": 31,
+      "publicKeyUncompressed": "04c2d2058aa78905fe7ad9756f261a0bbb33995a00b7e8c156bf32cfe0866a325d8572bc79b69859f7673f0e17e24acf436b354d08e2113ce2bb801a0db4abee77",
+      "publicKeyCompressed": "03c2d2058aa78905fe7ad9756f261a0bbb33995a00b7e8c156bf32cfe0866a325d",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00ce72b7154350663c68acd3307dd00f4ec968a61a6d2c6896febf7b6f28caf76e",
+        "s": "00eead82f547f58ed95c83a9f7b697587b0bd1753bd2869940966ee5fae81a2bd1",
+        "id": 0
+      },
+      "comment": "u1 = 1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 32,
+      "publicKeyUncompressed": "04c0c29be3e7fa6e3126c863ab95294451693f9ed61e989bd7dc263a4284c38ddfac1666bf8364a5e676c7cddb8f8267e427bd3beb119d77643dc24f7f1f71d164",
+      "publicKeyCompressed": "02c0c29be3e7fa6e3126c863ab95294451693f9ed61e989bd7dc263a4284c38ddf",
+      "msg": "5465737420",
+      "sig": {
+        "r": "2a7d4c90af879dd70fbeb52f8eed9e113515de81f6e6d0018968c3f10d41481b",
+        "s": "2a7d4c90af879dd70fbeb52f8eed9e113515de81f6e6d0018968c3f10d41481b",
+        "id": 0
+      },
+      "comment": "u2 = 1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 33,
+      "publicKeyUncompressed": "045ff812f0cbf089b8ff494293a2a7b40b525dc81a4c7f91e7cc19de5bf512c76b3162d952c3f803e4d1ce8306b831659d9b5767a2070842cf966b4751737a0d73",
+      "publicKeyCompressed": "035ff812f0cbf089b8ff494293a2a7b40b525dc81a4c7f91e7cc19de5bf512c76b",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "05070213946974a1de009713ab64b5a3c3cc755130b33a53a21f8fe1deb13cff",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 34,
+      "publicKeyUncompressed": "0481dc4011bb36cedad5508193e12d8046ddf4f5c6a77f48d9da407e20762439415ebf2e3fb26646b5bada17220bcf554242a91f20d2f9eda9945ca2d2b63cfc2b",
+      "publicKeyCompressed": "0381dc4011bb36cedad5508193e12d8046ddf4f5c6a77f48d9da407e2076243941",
+      "msg": "5465737421",
+      "sig": {
+        "r": "00e750ba811783b89ca0d42fe8a322b302c65ba365797cb1fa228ed0b0f75f42be",
+        "s": "00a41afcd6492ebd11dfa928f3ff6943ce5933167259c07429d020f1df5026fe73",
+        "id": 0
+      },
+      "comment": "u1 = 2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 35,
+      "publicKeyUncompressed": "04277af3a01bdcbcd3ed834f991f727fac0f84d635e1660040a2b062e67f844d3dab744ace6d92f6c93d8dc324057d5071f4486b649c750bb9a82c740c0465e731",
+      "publicKeyCompressed": "03277af3a01bdcbcd3ed834f991f727fac0f84d635e1660040a2b062e67f844d3d",
+      "msg": "5465737420",
+      "sig": {
+        "r": "58f3b884a5a67275cb52ee869c688ac2fd019062c7ba6d7f630d9818b2d619a9",
+        "s": "00ac79dc41d2d3393b65a977434e3445615cf44588376906022b63b16dd79c9f7d",
+        "id": 0
+      },
+      "comment": "u2 = 2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 36,
+      "publicKeyUncompressed": "04ea6b8171f88647a3b6c36e50b8f3d220babbfc0b6c2b87ce7fd4a67d22c11617355e0c10b1f9d60872c482b291ae68eac7e5a1e5dcee77a3ce2fa8b371f1abc2",
+      "publicKeyCompressed": "02ea6b8171f88647a3b6c36e50b8f3d220babbfc0b6c2b87ce7fd4a67d22c11617",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "045a700e1a53a782a5e7e09143d8dfa9c43770d8abb0a5dbf11f020b9fefdabb",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 37,
+      "publicKeyUncompressed": "0430b8d4c88a2e1320f95ac6d1431496ee50f57ba9ac569ce3d0977ae6d69552ea16b267dbf5e91c70e7f17a70686dce0ad62eb69e2a73625e1dc315a7929b8750",
+      "publicKeyCompressed": "0230b8d4c88a2e1320f95ac6d1431496ee50f57ba9ac569ce3d0977ae6d69552ea",
+      "msg": "5465737420",
+      "sig": {
+        "r": "2b151559881a0f71abf4afaf8b4cff9b21689d69faa808bdba437f89a71f6b4a",
+        "s": "00a4e480fc17fc84f3742be352923272d3983d7aa3288a12972e0d903f4c29c5b6",
+        "id": 0
+      },
+      "comment": "u1 = 3",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 38,
+      "publicKeyUncompressed": "0498568a31bddc28c3ab68057e29ed2d8e8c607fe2784a440419760396acbf5c09473f10007502b5573d3e7448a0de5403b2597592819f0c849fb0a4c45c6cbc2e",
+      "publicKeyCompressed": "0298568a31bddc28c3ab68057e29ed2d8e8c607fe2784a440419760396acbf5c09",
+      "msg": "5465737423",
+      "sig": {
+        "r": "00805d24be7a7f1b481e77fc7fa49029b1dfe6509dfbe5f408b913a911c58d8c76",
+        "s": "2ac9b6ea28d509180a27fed536dab8909ff77034a94ca6ad93068db0972f2ed2",
+        "id": 0
+      },
+      "comment": "u2 = 3",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 39,
+      "publicKeyUncompressed": "04fb0a04765cb673b3871feec71d9e605d9656a82229c47412f0566a1877bbf290bcdcdc96bc92e93068a1ce087eac2df06bfeaa52cd6f4c11614efc85bd8b682d",
+      "publicKeyCompressed": "03fb0a04765cb673b3871feec71d9e605d9656a82229c47412f0566a1877bbf290",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "0cda3cb6a146af17ce1595013a736ecaa001ebe55ced89a938f193fb9b8282a0",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 3",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 40,
+      "publicKeyUncompressed": "04605dea3529e68ab2bdccc8cd0d319acbb69e8010ce5365154a7ac8e92a92c2a581c4767eb5102a2b27b452951e93d71141808c15a2abe265ef328a4d93ae8b28",
+      "publicKeyCompressed": "02605dea3529e68ab2bdccc8cd0d319acbb69e8010ce5365154a7ac8e92a92c2a5",
+      "msg": "5465737420",
+      "sig": {
+        "r": "6b5db778b38628e5707b7ea7552f403a163363c375a377361ec9295652013524",
+        "s": "11527d09b80a7127a37c56084968a784b1158571d49105445d4ae4c81448f980",
+        "id": 0
+      },
+      "comment": "u1 = n-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 41,
+      "publicKeyUncompressed": "04a74ab39e2686abbd212968e9794cc3a629c4c7160b90f49559f4fffa31f9ecdf9ac1c370734f6e56f158899fa8810be732b6acdc90e0ea7fe698670ca9aa0578",
+      "publicKeyCompressed": "02a74ab39e2686abbd212968e9794cc3a629c4c7160b90f49559f4fffa31f9ecdf",
+      "msg": "5465737423",
+      "sig": {
+        "r": "00915ce49729b041d9dd7b29c5110f618cb6ba66a6e5c99ffc76b094a26273ff3a",
+        "s": "6ea31b67d64fbe272284d63aeef09e73062c9406c14dfe887d09362099ef2617",
+        "id": 0
+      },
+      "comment": "u2 = n-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 42,
+      "publicKeyUncompressed": "046e2feead6e3ce8ca7e6ed80be30349071eee9abda2993781349d5de22ddf75c283a0e486704541a9723944df74526c52d3612a984955d01a22054a9f5d1b7cc9",
+      "publicKeyCompressed": "036e2feead6e3ce8ca7e6ed80be30349071eee9abda2993781349d5de22ddf75c2",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "43ea3a71be552c1e36b5a48ef6dafbebf2f4e890db827f0bf62978414ba0d771",
+        "id": 0
+      },
+      "comment": "u1 = u2 = n-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 43,
+      "publicKeyUncompressed": "04c01ad7730c6c54e591eb7db06f8794e676a2451fed84d9893c1d6f75fc5398c3daa43210924bb81889368b82fb2be99e7d0e711682bb40cd85ef7bd9ff0749b1",
+      "publicKeyCompressed": "03c01ad7730c6c54e591eb7db06f8794e676a2451fed84d9893c1d6f75fc5398c3",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00ba256f798be4df6700f9cdaf0cd0453f2dd9eae4a2654eecc0de98da10414b30",
+        "s": "08a93e84dc053893d1be2b0424b453c2588ac2b8ea4882a22ea572640a247cc0",
+        "id": 0
+      },
+      "comment": "u1 = n-2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 44,
+      "publicKeyUncompressed": "04c4506e091c5d8fd513548ebd8d85d8318169e227c8255f82eb069815b29c9cde67027ef9086b3adf7e029027ff9685cb807cb0acccd3bcb84c72a4fcee9614c2",
+      "publicKeyCompressed": "02c4506e091c5d8fd513548ebd8d85d8318169e227c8255f82eb069815b29c9cde",
+      "msg": "5465737421",
+      "sig": {
+        "r": "6635a38c6b013438b70b46cd53d587caffe2c0124ec849338ff2676f05702da8",
+        "s": "00cce52e38ca7f65e4a47a5c9956153c1a3cf59aa47fb379eb2bc0970b79ab0e7d",
+        "id": 0
+      },
+      "comment": "u2 = n-2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 45,
+      "publicKeyUncompressed": "043446e754502face71a3c69492e3d05477a00b75d13ccbfade3b5078e573868bc922823aaf88a835049700b9e4e59aa7f86e7d77bf6be905311f488bb9e31dd07",
+      "publicKeyCompressed": "033446e754502face71a3c69492e3d05477a00b75d13ccbfade3b5078e573868bc",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "1d1a3fa75d6b3dd574ed54bba83944ca0379027856d1d5eb5cb3731dcaa600e0",
+        "id": 0
+      },
+      "comment": "u1 = u2 = n-2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 46,
+      "publicKeyUncompressed": "0419128f03aece22dc983ce953f32c6d80d3bccb3c79a0b7f889a02755c209f61c128f618b94d9f3f5b5a5845f1dae669abc66a2ee20953c66ed55e114b2ad366e",
+      "publicKeyCompressed": "0219128f03aece22dc983ce953f32c6d80d3bccb3c79a0b7f889a02755c209f61c",
+      "msg": "5465737425",
+      "sig": {
+        "r": "00d59b87cdafd686f2adc6b55a3c09713c300a95190e0847004ab704d0289cda24",
+        "s": "00e84ee6104b2ad6da792ee2fdb59ec49656a7af2f865d153040744217b7712270",
+        "id": 0
+      },
+      "comment": "u1 = n-3",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 47,
+      "publicKeyUncompressed": "042824d07ca74f4ef4fdd5b00941ca78b2e397be0f183c8285922d0d8521c702ae69e751dab814545d5aae87212c496e1989a4b8deb8fe21f1058e7cc0466ea8cb",
+      "publicKeyCompressed": "032824d07ca74f4ef4fdd5b00941ca78b2e397be0f183c8285922d0d8521c702ae",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00d79eac27587a32e11018547952bc6acd7093fbedb76fe234ba1dc84548ed7f3f",
+        "s": "00b820714737d74460a54d392ce46bdc65ecb5a6b3bf47a873605a88013969503c",
+        "id": 0
+      },
+      "comment": "u2 = n-3",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 48,
+      "publicKeyUncompressed": "04a64afb20762109093be3f91860c6964d3f44a0b5a73e79eee695d88d7e8b370fd633884f1a09de2ab44b3c4076b83daec73485248459e82735c319a50c1b6e94",
+      "publicKeyCompressed": "02a64afb20762109093be3f91860c6964d3f44a0b5a73e79eee695d88d7e8b370f",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "00ca042c0f96727e568c7b30fb0732eeab3d0f05c6b2e0ad576c0105f82553030d",
+        "id": 0
+      },
+      "comment": "u1 = u2 = n-3",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 49,
+      "publicKeyUncompressed": "04d7ed46213c25f1388c580e9ea341054bac6398c1960e5f3d38eb9b0c3c486a00ea736b56e7c4c51835ff1845ec6ea1ff8b3955af087d31331363b854e33a9966",
+      "publicKeyCompressed": "02d7ed46213c25f1388c580e9ea341054bac6398c1960e5f3d38eb9b0c3c486a00",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00c488f18c195180dabaa02950fa532dd9ed885fd745bf9dca6dd6406cf9520866",
+        "s": "00d043b29abe687d08ba4c1134db7b54b3edbd166e7cfcb311a2706990cdf782f4",
+        "id": 0
+      },
+      "comment": "u1 = n-5",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 50,
+      "publicKeyUncompressed": "0483949b2200b0312c78d406138160d0ccde0fff427fe954cd95f81314ff3ca36710ca8851c2d6a29c596ad708847e6826adca8d3fed3eca50339f3659ea77a0e6",
+      "publicKeyCompressed": "0283949b2200b0312c78d406138160d0ccde0fff427fe954cd95f81314ff3ca367",
+      "msg": "5465737421",
+      "sig": {
+        "r": "0089c98179d376bcc7f557ea0b8b968689f52ec6b532c438fe47caf9155503265c",
+        "s": "4ad7b2e73c1b73d86888046417484b7de75309546be234025321b8e353f3d40e",
+        "id": 0
+      },
+      "comment": "u2 = n-5",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 51,
+      "publicKeyUncompressed": "04f6d81cb218e9fe49be95bb34c37581ac30442246b9093d589f074aef493bc76b76195da4497bebc0194c402b885263b22c1054883bb2246d63448c6dcd5a8f40",
+      "publicKeyCompressed": "02f6d81cb218e9fe49be95bb34c37581ac30442246b9093d589f074aef493bc76b",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "1265f5a673fa50ceb4e517f657b5e5593934cb587a9910eefe5d43753b9f61a9",
+        "id": 0
+      },
+      "comment": "u1 = u2 = n-5",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 52,
+      "publicKeyUncompressed": "042110470c2dcbefb34351bb344c49410faaa074b0dc996cefaa47086105dbf5baf4cc3aac1335a5ac904cea4cfd9c75cf713cdd8e33506073ad2b6ed3efe4a13e",
+      "publicKeyCompressed": "022110470c2dcbefb34351bb344c49410faaa074b0dc996cefaa47086105dbf5ba",
+      "msg": "5465737423",
+      "sig": {
+        "r": "30b9841818967851ab12a149d1f5df40a8f08661f950d1ce4c050fcecb8ef67a",
+        "s": "137fe8e11fa9c953c99edba9a03219b9473efc53575de0bff6de8671029b6b10",
+        "id": 0
+      },
+      "comment": "u1 = n-7",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 53,
+      "publicKeyUncompressed": "04cef7f64ed174219e3efd673aa1250c48e7ebf9ed15f9a4b049819ffd61c768d44af7b808044488beca8948213a12683ebb13b16eda942778f234a277a6a8fcba",
+      "publicKeyCompressed": "02cef7f64ed174219e3efd673aa1250c48e7ebf9ed15f9a4b049819ffd61c768d4",
+      "msg": "5465737420",
+      "sig": {
+        "r": "70489fc4fbcd5e50fcb2059e2502c6d134ba9296d20c249dbd555545b80b2da1",
+        "s": "00cb6356e3009984d0b75448571f48bf0675cfe67f4ca4cbc923930f54072ed053",
+        "id": 0
+      },
+      "comment": "u2 = n-7",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 54,
+      "publicKeyUncompressed": "04ae46af4da6971727734c0cdc7d67e4213eaf05c03832ca4e32102858f00562d66f822a4df53b6865cbcabaceaf8ffe53b00063ddbf7cc88d4e437c4f5179479f",
+      "publicKeyCompressed": "03ae46af4da6971727734c0cdc7d67e4213eaf05c03832ca4e32102858f00562d6",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "00dce5f8dd7287bc40edb1cb0d4890de80484dc85b26a50011b39d349e965e4f7e",
+        "id": 0
+      },
+      "comment": "u1 = u2 = n-7",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 55,
+      "publicKeyUncompressed": "04dbf1fbaa18731258d81720810fc5f4c53d5d01420555cd810f973fc8e06fe71e1708c9d6157a4ba3ad569d97dcc37f237f25f7adf65bfa388352bc67fccb0b27",
+      "publicKeyCompressed": "03dbf1fbaa18731258d81720810fc5f4c53d5d01420555cd810f973fc8e06fe71e",
+      "msg": "5465737423",
+      "sig": {
+        "r": "00d1f048e882a2c6acd8dace007a93b7ae685a131cd505d1751d2cea29c7d9d56b",
+        "s": "00ef0143ae44b6fd6cf94ffcb93d4297dd945c28cc870cf28a67483b57d4466fc2",
+        "id": 0
+      },
+      "comment": "u1 = (n+1)/2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 56,
+      "publicKeyUncompressed": "040e41456187c12b6eed39d86bf575a9a28d5fd194dafb4a9c131c31fbfdfb0b4e7fa46c8c67246ace09c5d93ce0a290c1b9c44a4b00826a558ede7010a14a3355",
+      "publicKeyCompressed": "030e41456187c12b6eed39d86bf575a9a28d5fd194dafb4a9c131c31fbfdfb0b4e",
+      "msg": "5465737427",
+      "sig": {
+        "r": "48e0d3ae13400accde44322047c22bbe229789b967d9630482c48b54abf4c929",
+        "s": "0091c1a75c26801599bc8864408f84577c452f1372cfb2c609058916a957e99252",
+        "id": 0
+      },
+      "comment": "u2 = (n+1)/2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 57,
+      "publicKeyUncompressed": "04c39ed2ff18aba180ff0eb97c861d76cafb986aab6a8140317958e4f7c0abe7e062cd3307c3f89535fb1122d19d6df72c34f81f4ce7035f02767828402bb4d280",
+      "publicKeyCompressed": "02c39ed2ff18aba180ff0eb97c861d76cafb986aab6a8140317958e4f7c0abe7e0",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "51bbad6323449ab2def4aab7655846cdc421ce713c1322e254b76cc038ac9bc8",
+        "id": 0
+      },
+      "comment": "u1 = u2 = (n+1)/2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 58,
+      "publicKeyUncompressed": "04c4d2dfcbe07ce0d765dc077cc84f7a5ab10c3d2b890c1bac07f77380d7306b41446aab9b54d586d0e7081abc08dcd9e06ca1d644e595618d5162de5be46b1da7",
+      "publicKeyCompressed": "03c4d2dfcbe07ce0d765dc077cc84f7a5ab10c3d2b890c1bac07f77380d7306b41",
+      "msg": "5465737421",
+      "sig": {
+        "r": "3c1f82df7be5189140e6d78d79ed9c321ce53f48f886bca5c471b7295806b84e",
+        "s": "6f940ca3db450bbb815b5c30025af0c5d1e8963f8e450ae79aa998cbb48d7627",
+        "id": 0
+      },
+      "comment": "u1 = (n-1)/2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 59,
+      "publicKeyUncompressed": "0463fe1f3105d35d276d938d093677104a6a2c21dc74833a77b2695b67e619f7e51fe2b56d8b413bf756d448a521569a10efd74c58291184ad216dc618861bc232",
+      "publicKeyCompressed": "0263fe1f3105d35d276d938d093677104a6a2c21dc74833a77b2695b67e619f7e5",
+      "msg": "5465737421",
+      "sig": {
+        "r": "00f3148795d125b99c11693603d41de5d74de5d58970011145833fe991f4244b2e",
+        "s": "19d6f0d25db48cc9dd2d93f857c43450de024a486e2d1a7ee0f3c262107db446",
+        "id": 0
+      },
+      "comment": "u2 = (n-1)/2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 60,
+      "publicKeyUncompressed": "04f756742a4fd335f4f95f905525f4a49075515ed45b4496f194ecbb25d59a62bf5b8b22300d1726df11a414c2a05d7065b4c13a49a5d1dbff6aebd980e190d4f6",
+      "publicKeyCompressed": "02f756742a4fd335f4f95f905525f4a49075515ed45b4496f194ecbb25d59a62bf",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "32bc5bc6b67c57e27207befc3a8d251e2ad9800bd0783684656b2496d9373bc2",
+        "id": 0
+      },
+      "comment": "u1 = u2 = (n-1)/2",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 61,
+      "publicKeyUncompressed": "04e2da133a4bb5ea763f8a3e89907d0a5069f8b4de4da341f1ed54060d3ce72fb348af87aabf3df28cbe7245ea3121fd6f88234c893193e1e131649eadd706e052",
+      "publicKeyCompressed": "02e2da133a4bb5ea763f8a3e89907d0a5069f8b4de4da341f1ed54060d3ce72fb3",
+      "msg": "5465737423",
+      "sig": {
+        "r": "3b0e4d12fc68add0d2e0ed271a947c7b3395423203476f08f918cca8ce7a1679",
+        "s": "3686d0cf847c3113e922c74e229179ebea27518f0a61fa69a81a857901ff5f77",
+        "id": 0
+      },
+      "comment": "u1 = 2**255",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 62,
+      "publicKeyUncompressed": "04d2b8589e0c815c7af74b531b333c469bc44d926b371f63bdb9fab8357134bb5fec1a8c3f4620be0cd4423c0a6bd54d48b2266ad464ebaecfd282518335fa4377",
+      "publicKeyCompressed": "03d2b8589e0c815c7af74b531b333c469bc44d926b371f63bdb9fab8357134bb5f",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00a582238b58a80d01da9dbd007381a52a158c37fc07be0c4430cd96d2c7aa120b",
+        "s": "0096305f99c7d205d8238e835513b1076909f4c53d7381eb45fcaf043992861721",
+        "id": 0
+      },
+      "comment": "u2 = 2**255",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 63,
+      "publicKeyUncompressed": "04ea51360b1f79b9b03cb02b5121f10db553ed5430fa8bd048979da798babded890a635972631cac9133f3087f5917ef624a967d9af577a8f89675f65ce909f7b2",
+      "publicKeyCompressed": "02ea51360b1f79b9b03cb02b5121f10db553ed5430fa8bd048979da798babded89",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "008689666c3e6ccc008f3b3373e7e378e21131a06556356e04219dfbf59d11fd71",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 2**255",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 64,
+      "publicKeyUncompressed": "04d726ae868eb081f6f6211977593a956f86d6fc53545378136f8659030ad9019fcbf3f4de59bb12441e2eef7697398bdefdbb4fe45394447381bbe21f18998f81",
+      "publicKeyCompressed": "03d726ae868eb081f6f6211977593a956f86d6fc53545378136f8659030ad9019f",
+      "msg": "5465737420",
+      "sig": {
+        "r": "477886c1934feedeb2905e0da655d9d56e282299759273c82d83c9ee9f9d1699",
+        "s": "00bc86e4fe8fb2895ada46a86f27b29c64c11d352992b2d13aca8f92ff1ae97b56",
+        "id": 0
+      },
+      "comment": "u1 = 2**255-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 65,
+      "publicKeyUncompressed": "0452ef35fb443c0649842fe8fcce90ba296bcd59a953128523a83321edaf7d0d3ba68c0cdcfa7ea0103a22808e3d0ad081fde5f79b32314168489f808c77cfe401",
+      "publicKeyCompressed": "0352ef35fb443c0649842fe8fcce90ba296bcd59a953128523a83321edaf7d0d3b",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00aaf2037e638a2fd6f15412a25bf747260188c4a4b13d62c26f1b520c5ea43e58",
+        "s": "58fd96ca2483e10ad5fd675bb57b1810ffb176ae28fd32778e17dfb80ff51a6d",
+        "id": 0
+      },
+      "comment": "u2 = 2**255-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 66,
+      "publicKeyUncompressed": "047192c89bfb78d8eeb935b19aaa57e7dfa260840b9698c7b6068487a31fd54fca1bc36cce664a3368eee6a4e9fb029ca1231e61a2c11eea25ad9cc5e989aeba32",
+      "publicKeyCompressed": "027192c89bfb78d8eeb935b19aaa57e7dfa260840b9698c7b6068487a31fd54fca",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "00a84e90bdbd831f41ae75ee567d404915555dbd8927ba7904545eafa594cbd998",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 2**255-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 67,
+      "publicKeyUncompressed": "04c1b8b175b1ece331b052168e7ce689487d408118260e69aaffae4b6e5c6f042abd7fce2ab2184f9de2cee0d1ff41d0d47e51c081b2bd23066fa54cb35d2b3224",
+      "publicKeyCompressed": "02c1b8b175b1ece331b052168e7ce689487d408118260e69aaffae4b6e5c6f042a",
+      "msg": "5465737423",
+      "sig": {
+        "r": "0082fd4140cbf7c0a88da62b79bac4c048f8a565fca544a2007726e401591146e0",
+        "s": "6d0da19f08f86227d2458e9c4522f3d7d44ea31e14c3f4d350350af203febeee",
+        "id": 0
+      },
+      "comment": "u1 = 2**254",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 68,
+      "publicKeyUncompressed": "0434f41af11ba1833f5a20846e56672bb497629f5c65913308f3fc035d17faed33d7363970066996b7eaeafe365389368b5fe0a178b7a864d0ebba3ff70c807434",
+      "publicKeyCompressed": "0234f41af11ba1833f5a20846e56672bb497629f5c65913308f3fc035d17faed33",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00b9fd68bb11ef397669e0bf25a579041c890aa717081f2221c570716243a1415d",
+        "s": "1df5e0a24002608013f2b2fff9467ccde47f6af8147ffd71a02b498b7b0be07c",
+        "id": 0
+      },
+      "comment": "u2 = 2**254",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 69,
+      "publicKeyUncompressed": "0463d04c6b5dc1090b98532f00ebe404ce4c6ba75b8979f165aa839020329ed771347ccd173193287c94d0001c6330ef37ee5a3b5eae969896d412b3d3594704ea",
+      "publicKeyCompressed": "0263d04c6b5dc1090b98532f00ebe404ce4c6ba75b8979f165aa839020329ed771",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "62c3c708bdb4960cb5b17c488b12092b1f8a2f5914f3db980eaba83c2e7037f8",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 2**254",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 70,
+      "publicKeyUncompressed": "043c670f7abaa6b332b357ec5c0c352fc44cfc0e8c06309405613c1bcfec63db9b91b70909bbc802511b0e77b3b580b509cea2b7587f5efb5beda0fe3e3edef008",
+      "publicKeyCompressed": "023c670f7abaa6b332b357ec5c0c352fc44cfc0e8c06309405613c1bcfec63db9b",
+      "msg": "5465737422",
+      "sig": {
+        "r": "00e20cd792581915165380c846c9938f21602ac0352d03b2830f019bd81808a760",
+        "s": "00cc40451ecf869a1eb2d191ce7e0194267999ee73fad9ac508d228ae7fc515d03",
+        "id": 0
+      },
+      "comment": "u1 = 2**254-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 71,
+      "publicKeyUncompressed": "04a2239179433af4a70c29dbad75e3a15372d1b5a7ab8a4f43aa8f0c6657c5faa695a8cdd945194b235ef6af751e74be0721d270bdbd6774d53ae1a07fb6ff47f0",
+      "publicKeyCompressed": "02a2239179433af4a70c29dbad75e3a15372d1b5a7ab8a4f43aa8f0c6657c5faa6",
+      "msg": "5465737420",
+      "sig": {
+        "r": "3c000cbedf59be842f00d96ce259b698aac0468f4960e6f3b5c2b82a71fb1048",
+        "s": "008ad41af7ba19f49b7c67db650694371a0f91a652adf4149bd3920c6378184484",
+        "id": 0
+      },
+      "comment": "u2 = 2**254-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 72,
+      "publicKeyUncompressed": "04eb8b7af0d3ee3ddf9502f40f41cc44ec8068320451c462bca4e69bf219d6e00aad16a578961350f0c0b06a883fe3627f537e6659643b7272f466e6c15820f2c1",
+      "publicKeyCompressed": "03eb8b7af0d3ee3ddf9502f40f41cc44ec8068320451c462bca4e69bf219d6e00a",
+      "msg": "5465737422",
+      "sig": {
+        "r": "5a8a266f7d8aee338538cac32177b3df76a83e7a36a5f5019bde5745252ffb44",
+        "s": "43eceb926235d361e7f14aaf7c120de3ea9cef86aa8e8178bb55ed9635e4ef64",
+        "id": 0
+      },
+      "comment": "u1 = u2 = 2**254-1",
+      "valid": true,
+      "flags": ["special_u12"]
+    },
+    {
+      "tcId": 73,
+      "publicKeyUncompressed": "04c8e4aaf26340ef2cd67a02f10765b5085b5d68acba63b4a54b86bc0aef5417edecd8f0f7ac78c65741b9ff9451df82d44a74f45d5ccfaf0475d67c53f9576db2",
+      "publicKeyCompressed": "02c8e4aaf26340ef2cd67a02f10765b5085b5d68acba63b4a54b86bc0aef5417ed",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00d7e44235059ff6ff53f4253ddb243eea241e5131a266c7be7e0ffe6048674706",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "A = B",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 74,
+      "publicKeyUncompressed": "04464dc3db8bad6efe4d74f9cbd08e0a39d3a530672533300f089dd9a86e69e5b142b490cb7e7d92116f02ce52301c7116d3ef48bb079e2063d2da1d1e078f7857",
+      "publicKeyCompressed": "03464dc3db8bad6efe4d74f9cbd08e0a39d3a530672533300f089dd9a86e69e5b1",
+      "msg": "5465737420",
+      "sig": {
+        "r": "57d14f5026ecfce0a0fbbbbf858e47cb35198a810edfa2a4245f85ef788b0314",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B: x-coordinate >= 2**255",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 75,
+      "publicKeyUncompressed": "04d0b12f3e437363d123ae65fb1b189b99d0700db4f79ea6fd7709cd73de19f11230f2cba814652a08e2830e8613874c4456670cd2ece3542dc5d230d14e4c096e",
+      "publicKeyCompressed": "02d0b12f3e437363d123ae65fb1b189b99d0700db4f79ea6fd7709cd73de19f112",
+      "msg": "5465737420",
+      "sig": {
+        "r": "48ae535fcf18f02a1fb64256845ed8e019d11c267cf17c4486f3644b82516f2e",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B: x-coordinate >= 2**248",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 76,
+      "publicKeyUncompressed": "044c78753d5d8fc35e6b85ca7f1c018f8b08dc36900b5eaf851c202415b76306905771aae5ccae804e66268536e1397e83d84253b1ee7fe6c3b69177ee3c62d077",
+      "publicKeyCompressed": "034c78753d5d8fc35e6b85ca7f1c018f8b08dc36900b5eaf851c202415b7630690",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00e4403b16fb0674e83ad503c19f63672a166d48ced83c0f78e36e0d6dfad42805",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B: small x coordinate",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 77,
+      "publicKeyUncompressed": "0481dec1382315bfafb7c379657babfcd5d69362b2d65c42fbb1339dce133d9f76b457f30dc3b420638730d987810d694aacde6f9036295ea3cea47ccf09a49861",
+      "publicKeyCompressed": "0381dec1382315bfafb7c379657babfcd5d69362b2d65c42fbb1339dce133d9f76",
+      "msg": "5465737420",
+      "sig": {
+        "r": "5afbf23c7699fecdc6151c421b05c38fac15f74c64d2c872c65e955f969c6e12",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 0
+      },
+      "comment": "B: small x coordinate",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 78,
+      "publicKeyUncompressed": "04285d8e910a8df2353022ab96e36981b8e65d935298f5609920a0ca35d556865cc2f5c4beb6b4c3b5d2a7eb38cbd1c8bdbe7b69bdf70f27e9e528890984a05299",
+      "publicKeyCompressed": "03285d8e910a8df2353022ab96e36981b8e65d935298f5609920a0ca35d556865c",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00d022d1e94329cd44d7a18377e1d56bde93572f6c11822c2b692f65a1b2b0de33",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 0
+      },
+      "comment": "B: large x-coordinate",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 79,
+      "publicKeyUncompressed": "04141783ec06e48fcb46485e3b4e7bf0431a8e3c63b9690e0757c177a6bf848c660f5401e31ab2c3964e7edcb1adf9338927623a4e11e88eab464c9018d42f9502",
+      "publicKeyCompressed": "02141783ec06e48fcb46485e3b4e7bf0431a8e3c63b9690e0757c177a6bf848c66",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00aadf944ce0d6fd6a7967f920babe97da3eb81fd469e7e56136028e3e9eb04fd1",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 0
+      },
+      "comment": "B: x-coordinate close to p",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 80,
+      "publicKeyUncompressed": "04ae3be508ac7d61b4517be9640020d64d761f9adfee7493401f1cd7fd621ba0d55f757f75831e7e9cc247cc053f31c6bd8ad58ec9b43689c79c97a0125f41b3d2",
+      "publicKeyCompressed": "02ae3be508ac7d61b4517be9640020d64d761f9adfee7493401f1cd7fd621ba0d5",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00a3561db55be9206b9483c3c9dc7873c4a6c759f5725e745de6336b5a64dab412",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B: x-coordinate < 2**255",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 81,
+      "publicKeyUncompressed": "0487ab6ee91da4a954e167d280a100b0da217b7b19d9d958a4590b522d88104711f47a01ac3f9d0c7253ad1e39ee973cab0634544c3e9209feb4d8881556446153",
+      "publicKeyCompressed": "0387ab6ee91da4a954e167d280a100b0da217b7b19d9d958a4590b522d88104711",
+      "msg": "5465737420",
+      "sig": {
+        "r": "68316a85e59282303651b5af78c37ef60de875524570ed6404008df656382fd0",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 0
+      },
+      "comment": "B: x-coordinate < 2**248",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 82,
+      "publicKeyUncompressed": "04c68e6feb91ce9b9160c55f6ca255a03c688aaa7feacf771d0712acf393e36b99422126e0090c8ee288ede2a63d9b3c42486a3b0d89399bc19f29b102e12a0704",
+      "publicKeyCompressed": "02c68e6feb91ce9b9160c55f6ca255a03c688aaa7feacf771d0712acf393e36b99",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00c0184c80542e178ac307eb4a955832952cd7bf7fa08747974be92b617967e5d1",
+        "s": "00eead82f547f58ed95c83a9f7b697587b0bd1753bd2869940966ee5fae81a2bd1",
+        "id": 1
+      },
+      "comment": "A: g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 83,
+      "publicKeyUncompressed": "0404f0395ea48159e41467933e3e99fcad06faf8ac75465bba114a1d5bbc3d60122e4db505d9acfdc04f9247e2be871b7f2391a4f4333cb7f83dfca487e4b39a74",
+      "publicKeyCompressed": "0204f0395ea48159e41467933e3e99fcad06faf8ac75465bba114a1d5bbc3d6012",
+      "msg": "5465737420",
+      "sig": {
+        "r": "7cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc47669978",
+        "s": "00eead82f547f58ed95c83a9f7b697587b0bd1753bd2869940966ee5fae81a2bd1",
+        "id": 1
+      },
+      "comment": "A = B: g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 84,
+      "publicKeyUncompressed": "048dad6df7b81c84bfa3d8fa278bf9c4983b57ea38d6b9aeb925641725095fcd5e9efc667be97124419f58448da27c58d13841c08ba75f12ccfc641e29958ffd28",
+      "publicKeyCompressed": "028dad6df7b81c84bfa3d8fa278bf9c4983b57ea38d6b9aeb925641725095fcd5e",
+      "msg": "5465737420",
+      "sig": {
+        "r": "0985cf6e5a90f03e5488693dd74b2907845b5434df5593aeb9912345a7344bcb",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B; g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 85,
+      "publicKeyUncompressed": "04f33abfcd04c46d70666386390e29c6c01affde7ce760cad9995c0cd08c42d798dd8c1c1774582dce88d4f614eefe2ec0aea94af7a535f8c98f22ecaddbf3ae02",
+      "publicKeyCompressed": "02f33abfcd04c46d70666386390e29c6c01affde7ce760cad9995c0cd08c42d798",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00b2509e6211892906ddf5c8433d39eae66fb59a6b6250d083e8e911db6f3747f2",
+        "s": "11527d09b80a7127a37c56084968a784b1158571d49105445d4ae4c81448f980",
+        "id": 0
+      },
+      "comment": "A: -g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 86,
+      "publicKeyUncompressed": "0404f0395ea48159e41467933e3e99fcad06faf8ac75465bba114a1d5bbc3d60122e4db505d9acfdc04f9247e2be871b7f2391a4f4333cb7f83dfca487e4b39a74",
+      "publicKeyCompressed": "0204f0395ea48159e41467933e3e99fcad06faf8ac75465bba114a1d5bbc3d6012",
+      "msg": "5465737420",
+      "sig": {
+        "r": "7cf27b188d034f7e8a52380304b51ac3c08969e277f21b35a60b48fc47669978",
+        "s": "11527d09b80a7127a37c56084968a784b1158571d49105445d4ae4c81448f980",
+        "id": 0
+      },
+      "comment": "A = B: -g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 87,
+      "publicKeyUncompressed": "04f73e577649f69c6268fc8e42b0249ca2c89b08b1a60a1c22acb7c8b666f108d72c7c99a1c4176d40fab3b17d49f84f83a3ba25cf596e043af802fc59c5db6704",
+      "publicKeyCompressed": "02f73e577649f69c6268fc8e42b0249ca2c89b08b1a60a1c22acb7c8b666f108d7",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00dddd63df54915edab89d853669776af1210f3ae694c8a9dc8ef20a688c3edf86",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B; -g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 88,
+      "publicKeyUncompressed": "04982c472667bbeca5c68d6b06a8cd96b64eb8dbb03a6aa5b011f9f0233a5075dd7aa439fe9f82421e2c4a0754471fe165e0b46b549044e9bcd6b91be40d7cb7ff",
+      "publicKeyCompressed": "03982c472667bbeca5c68d6b06a8cd96b64eb8dbb03a6aa5b011f9f0233a5075dd",
+      "msg": "5465737420",
+      "sig": {
+        "r": "6d83b811d0272c3185731bcccb73840f714f19d2c60393ef9b2f7c2aaba0a50d",
+        "s": "00f756c17a23fac76d2e41d4fbdb4bac3d645c37f4bccf1be2c514585ef23ea891",
+        "id": 0
+      },
+      "comment": "A: 2*g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 89,
+      "publicKeyUncompressed": "047c75c7b5a6fb35c13015cf98ca42050fb0884d7eb986e0f0db2922c06b02d7e2534b01ce3f58232ed7381ee7d4307acfd82a3d6f40207d37478e3b2696bce87d",
+      "publicKeyCompressed": "037c75c7b5a6fb35c13015cf98ca42050fb0884d7eb986e0f0db2922c06b02d7e2",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00e2534a3532d08fbba02dde659ee62bd0031fe2db785596ef509302446b030852",
+        "s": "00f756c17a23fac76d2e41d4fbdb4bac3d645c37f4bccf1be2c514585ef23ea891",
+        "id": 0
+      },
+      "comment": "A = B: 2*g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 90,
+      "publicKeyUncompressed": "042b6fb48848fed520c192929bee5da69962decc1c33661417e72c02e004c0931258d9ed0f8cb6e431cb293686b8eb7f15ead3a8e1347540487c9d5863757b358f",
+      "publicKeyCompressed": "032b6fb48848fed520c192929bee5da69962decc1c33661417e72c02e004c09312",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00953c08269f92f17ab80478c2beea2cde894869e1e349c1e32462effeda72a6b6",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 0
+      },
+      "comment": "B; 2*g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 91,
+      "publicKeyUncompressed": "0484fff67362913b71beb3deb0bc88b560d194328f326b13bfaf2f4ff5acdc1683e3466a8d33c307124ab9f37882ba72d90243ed3fcc88d2b60c825b1ae0e9fda0",
+      "publicKeyCompressed": "0284fff67362913b71beb3deb0bc88b560d194328f326b13bfaf2f4ff5acdc1683",
+      "msg": "5465737420",
+      "sig": {
+        "r": "77bc3055fa00efc35c2fb17316bcaa23fd5ad6f2f052b7721183d4094eee8699",
+        "s": "00fbab60bc91fd63b71720ea7deda5d61e90a1995131f35d33dc671190f750e6f1",
+        "id": 0
+      },
+      "comment": "A: 4*g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 92,
+      "publicKeyUncompressed": "04ec576f26d876df379dbf01522b99847b44d3321f407576314522cd1ee42e678020f98c7fa012cbbc8399670add2f08ec034c8c1808852b3bf4204690c0db23d5",
+      "publicKeyCompressed": "03ec576f26d876df379dbf01522b99847b44d3321f407576314522cd1ee42e6780",
+      "msg": "5465737420",
+      "sig": {
+        "r": "62d9779dbee9b0534042742d3ab54cadc1d238980fce97dbb4dd9dc1db6fb393",
+        "s": "00fbab60bc91fd63b71720ea7deda5d61e90a1995131f35d33dc671190f750e6f1",
+        "id": 0
+      },
+      "comment": "A = B: 4*g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 93,
+      "publicKeyUncompressed": "0480e7f7258b0e45f04469980dbef55353b28b773799063307f96ee72335bc59ea24c3ad65795dfcd61bd6210db34392963917345239100fc6d039b07ed1a305bc",
+      "publicKeyCompressed": "0280e7f7258b0e45f04469980dbef55353b28b773799063307f96ee72335bc59ea",
+      "msg": "5465737420",
+      "sig": {
+        "r": "64d15bdda3c85c6baffc72871949d9633ee5f4555688beac9b33d60242405eea",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B; 4*g",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 94,
+      "publicKeyUncompressed": "04031e495c5e39bda5bc1b2a4f5b66efea83b581628a442c0f41538f84e62afd4b3e1a0e77dcca249f21c1422b3861adc01e19e9ae8b5cb3ed3bdb1b6b9b53641a",
+      "publicKeyCompressed": "02031e495c5e39bda5bc1b2a4f5b66efea83b581628a442c0f41538f84e62afd4b",
+      "msg": "5465737420",
+      "sig": {
+        "r": "00ed7a264a8502592ea677623a6ac8e751611a528b104950d8b5f5df6a44e035bb",
+        "s": "22a4fa137014e24f46f8ac1092d14f09622b0ae3a9220a88ba95c9902891f300",
+        "id": 1
+      },
+      "comment": "A: g*(n-1)/2",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 95,
+      "publicKeyUncompressed": "047fbf4a4edd2dda34cca3c3a2410ce1b5028faf2c758dff3ae887496d8c0e5d688b046d14da3a9bcc01c9b7029a3fe7c1244e09f982df85c249c49d38916f5b43",
+      "publicKeyCompressed": "037fbf4a4edd2dda34cca3c3a2410ce1b5028faf2c758dff3ae887496d8c0e5d68",
+      "msg": "5465737420",
+      "sig": {
+        "r": "6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296",
+        "s": "22a4fa137014e24f46f8ac1092d14f09622b0ae3a9220a88ba95c9902891f300",
+        "id": 0
+      },
+      "comment": "A = B: g*(n-1)/2",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 96,
+      "publicKeyUncompressed": "04b01af7be1fd695c926d37baef448963b4ec07b8cca47206bb204b85e159cbbf7f4a336037728dbe85ed41b247307f80857f26e5759c2a41af93af0ee7f228856",
+      "publicKeyCompressed": "02b01af7be1fd695c926d37baef448963b4ec07b8cca47206bb204b85e159cbbf7",
+      "msg": "5465737420",
+      "sig": {
+        "r": "52cdd8d0c6fe33cbd7fd39b2afa4a4163cd8d32b4c4a4d3fb5aedeff7c89845c",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B; g*(n-1)/2",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 97,
+      "publicKeyUncompressed": "04121bcf2bfb364a9d9c61feea715490531c734a1f425ef1abd45c6b6234dd20b38468f22e9e2cd3d7942fd1ca8e77e5a7d907e3919852eefdd29fdbd14e85666e",
+      "publicKeyCompressed": "02121bcf2bfb364a9d9c61feea715490531c734a1f425ef1abd45c6b6234dd20b3",
+      "msg": "5465737420",
+      "sig": {
+        "r": "1096696c9b44f12e2fa18b98fd4f05250643d0a9a7e5ba5267fdbee78b93b597",
+        "s": "00dd5b05eb8feb1db1b90753ef6d2eb0f65abbefc9fdf593fc39240132d3d13251",
+        "id": 0
+      },
+      "comment": "A: g*(n+1)/2",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 98,
+      "publicKeyUncompressed": "047fbf4a4edd2dda34cca3c3a2410ce1b5028faf2c758dff3ae887496d8c0e5d688b046d14da3a9bcc01c9b7029a3fe7c1244e09f982df85c249c49d38916f5b43",
+      "publicKeyCompressed": "037fbf4a4edd2dda34cca3c3a2410ce1b5028faf2c758dff3ae887496d8c0e5d68",
+      "msg": "5465737420",
+      "sig": {
+        "r": "6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296",
+        "s": "00dd5b05eb8feb1db1b90753ef6d2eb0f65abbefc9fdf593fc39240132d3d13251",
+        "id": 1
+      },
+      "comment": "A = B: g*(n+1)/2",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 99,
+      "publicKeyUncompressed": "0472fe385eff01bb0746847f86fdb2c238a7b10bbb49f9c93feeb5312b41bef9bb6ab7d8fcbb4b5b9ec289bd7e1859bb748e5386fb20b0fc24ecc6b2408e46fcfa",
+      "publicKeyCompressed": "0272fe385eff01bb0746847f86fdb2c238a7b10bbb49f9c93feeb5312b41bef9bb",
+      "msg": "5465737420",
+      "sig": {
+        "r": "40bfe5cad72e741c7ab53bc449bea32f9b9cbb49fd864ac694e91c6e758f63e1",
+        "s": "77b93a89fba7d9a433342caeab7e5a5cf320350209a7c18cb0e2fd5b688f14bc",
+        "id": 1
+      },
+      "comment": "B; g*(n+1)/2",
+      "valid": true,
+      "flags": ["special_AB"]
+    },
+    {
+      "tcId": 100,
+      "publicKeyUncompressed": "04a99a0e7399ca1d7d4017233571381d1d6e13b1075fdcd538ea98df9f62bf9b5acf75c7dad906464ff55b214928a382fae56c5acd6bea2bb17bc416062fad321a",
+      "publicKeyCompressed": "02a99a0e7399ca1d7d4017233571381d1d6e13b1075fdcd538ea98df9f62bf9b5a",
+      "msg": "54657374",
+      "sig": {
+        "r": "61c1d7309f79d427e19f7d0df4a86da27a66132cbc68f9994f53d94fd18a8f87",
+        "s": "00839603a42b9f57947b1a6bc9a36c112ca6977ac6b6d217b1f6dcae4c5aef9ae5",
+        "id": 0
+      },
+      "comment": "point at infinity during verify (invalid signature)",
+      "valid": false,
+      "flags": ["inf during verify"]
+    },
+    {
+      "tcId": 101,
+      "publicKeyUncompressed": "04311641197a36d7b4592ac22cfa88e4d0921b5e396c5fa8fc1cad922925133bf95d7590e835d33dd16ea42c5f03b0257eeed3443fd942498af7bd5453dbd449b7",
+      "publicKeyCompressed": "03311641197a36d7b4592ac22cfa88e4d0921b5e396c5fa8fc1cad922925133bf9",
+      "msg": "54657374",
+      "sig": {
+        "r": "7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc",
+        "s": "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "id": 2
+      },
+      "comment": "point at infinity during verify (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["inf during verify"]
+    },
+    {
+      "tcId": 102,
+      "publicKeyUncompressed": "04554efa11c5b704a41bff093a68bee858b74a1cf621b2fadfdee54681193ae3c7f3bc958bda487b650f0e5ef4991953cf628edf744d8920527845928ca05d519c",
+      "publicKeyCompressed": "02554efa11c5b704a41bff093a68bee858b74a1cf621b2fadfdee54681193ae3c7",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000000000004319055258e8617b0c46353d039cdaac",
+        "s": "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "id": 2
+      },
+      "comment": "point at infinity during verify (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["inf during verify"]
+    },
+    {
+      "tcId": 103,
+      "publicKeyUncompressed": "04e16cf316cae74dc2e7e81d5228e2e68ceec3a7c498304a95214943683650a36a24e94b9798da6657a705b19af97eab9026a383cdfc7be603c259630be8b3f3ad",
+      "publicKeyCompressed": "03e16cf316cae74dc2e7e81d5228e2e68ceec3a7c498304a95214943683650a36a",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000000000004319055258e8617b0c46353d039cdaaf",
+        "s": "010000000000000000000000000000000000000000000000000000000000000000",
+        "id": 2
+      },
+      "comment": "point at infinity during verify (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["inf during verify"]
+    },
+    {
+      "tcId": 104,
+      "publicKeyUncompressed": "0445a318af55d481c4e6a7ef104c9579b8044a0636d3687713d7a9eeaf6ed69bd7de4efe2f6d0fc8ac63fbf62672d865da35c8e961e9212f50ba0cfaa11812e89d",
+      "publicKeyCompressed": "0345a318af55d481c4e6a7ef104c9579b8044a0636d3687713d7a9eeaf6ed69bd7",
+      "msg": "54657374",
+      "sig": {
+        "r": "05",
+        "s": "01",
+        "id": 0
+      },
+      "comment": "point at infinity during verify (invalid signature)",
+      "valid": false,
+      "flags": ["inf during verify"]
+    },
+    {
+      "tcId": 105,
+      "publicKeyUncompressed": "04f0479f65d30010fbe350f61420c9bbc3b02676f1a0e616ea65353404b6f5db9893636fe97bfcd1d72e221f541568cdbb6004e81f6decfb2f8446712edd528c85",
+      "publicKeyCompressed": "03f0479f65d30010fbe350f61420c9bbc3b02676f1a0e616ea65353404b6f5db98",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc63254f",
+        "s": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632550",
+        "id": 2
+      },
+      "comment": "point at infinity during verify (Invalid signature: r too large)",
+      "valid": false,
+      "flags": ["inf during verify"]
+    },
+    {
+      "tcId": 106,
+      "publicKeyUncompressed": "04f65cfbd616cd929d86306118d50084493ab96f388871f720f5b8d857dfaae581059e5213e90da92251c07fa286c2a2723101c29097bad86a3820d96bebc03baa",
+      "publicKeyCompressed": "02f65cfbd616cd929d86306118d50084493ab96f388871f720f5b8d857dfaae581",
+      "msg": "54657374",
+      "sig": {
+        "r": "2042a0b0ee3263284e3d1a0fb131d16d6a6a14f2cf35430027ed822791b9ba83",
+        "s": "00ffffffff3819c29161219a96f640bbab98477168beb0d5b84f50821e66bbfb03",
+        "id": 0
+      },
+      "comment": "s too large (s not in range)",
+      "valid": false,
+      "flags": ["invalid_range"]
+    },
+    {
+      "tcId": 107,
+      "publicKeyUncompressed": "04104d9f6a73b38b72aa260767a61f27ad42d3a6bc1d096d411aa0e8f2826ba02f3c23a5c9eeb742187c0c6e8a06673b0b01d8241d9ef8c5052210b931649c0ccb",
+      "publicKeyCompressed": "03104d9f6a73b38b72aa260767a61f27ad42d3a6bc1d096d411aa0e8f2826ba02f",
+      "msg": "54657374",
+      "sig": {
+        "r": "2042a0b0ee3263284e3d1a0fb131d16d6a6a14f2cf35430027ed822791b9ba83",
+        "s": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632552",
+        "id": 0
+      },
+      "comment": "s = n+1 (s not in range)",
+      "valid": false,
+      "flags": ["invalid_range"]
+    },
+    {
+      "tcId": 108,
+      "publicKeyUncompressed": "048d347ca6837d5fe368ffcd565523afd34a58e77373ee91e5517a0121ea2eaa72c04c280ac42691e5ba05c18c7940804c48cf20f083039a8bd694a03fcd4c8d93",
+      "publicKeyCompressed": "038d347ca6837d5fe368ffcd565523afd34a58e77373ee91e5517a0121ea2eaa72",
+      "msg": "54657374",
+      "sig": {
+        "r": "00ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632556",
+        "s": "783e27b1db66d4f1a115a611bdb91e5f8af5312a5fce5fd23b5ff29680bc1391",
+        "id": 0
+      },
+      "comment": "r = n+{Rlow[0]} (Could not recover R)",
+      "valid": false,
+      "flags": ["invalid_range"]
+    },
+    {
+      "tcId": 109,
+      "publicKeyUncompressed": "04b6a7d5f2546e772b87f086146a7c23982d458ff5b4eb7997bc65dfaf7ecf1929ded5ca88daaad96773fb880aa784448cbf262f267193c385489e5d9b3b68293e",
+      "publicKeyCompressed": "02b6a7d5f2546e772b87f086146a7c23982d458ff5b4eb7997bc65dfaf7ecf1929",
+      "msg": "54657374",
+      "sig": {
+        "r": "2042a0b0ee3263284e3d1a0fb131d16d6a6a14f2cf35430027ed822791b9ba83",
+        "s": "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "id": 0
+      },
+      "comment": "s = 2**256-1 (s not in range)",
+      "valid": false,
+      "flags": ["invalid_range"]
+    },
+    {
+      "tcId": 110,
+      "publicKeyUncompressed": "04cf296889966b477c7a3c69db76145525780f2816ae4c32ff1f4d66987ebd4f44c5c55f5050337521fd7f2d2bb4a093785b5e35995d8afbd2588acda0247d36ff",
+      "publicKeyCompressed": "03cf296889966b477c7a3c69db76145525780f2816ae4c32ff1f4d66987ebd4f44",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0081bfb55b010b1bdf08b8d9d8590087aa278e28febff3b05632eeff09011c5579",
+        "s": "6eea692963f0478703dc1dbfffbf68c8037bead20a17cc5e725be35964121736",
+        "id": 0
+      },
+      "comment": "R: x2=0 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 111,
+      "publicKeyUncompressed": "045baa516db161001497d57cc7f9d832ac24764eae2b52100ee38bab25952297a42516f984949df3bcd6166a1fd77b6eda4669d58d2f0c84e04a6296486d67d1b2",
+      "publicKeyCompressed": "025baa516db161001497d57cc7f9d832ac24764eae2b52100ee38bab25952297a4",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e3f4bd402343936c2bff08e7430a86ad85b72bedf0ec53f385093a7e1c55d096",
+        "s": "00a2077c5299ad49b45c113c8d7a91ec9ba90df5d491b4773a4937e914d11b23a5",
+        "id": 0
+      },
+      "comment": "R: y2=-3 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 112,
+      "publicKeyUncompressed": "0400e2cad4402da4555b2af202c43388dfd87aa2e1bcbd8633cf7e513c878d0b26ac747a778ca75be8d26f6374b767887e00ce76b7a3aedc5fd5572137c8dd6a1e",
+      "publicKeyCompressed": "0200e2cad4402da4555b2af202c43388dfd87aa2e1bcbd8633cf7e513c878d0b26",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "3477806617481c3944ea395d71a15a7b95daf52825f2b26ca73d89a7f0d63cb8",
+        "s": "00ce2b52b4dbc0c232d4a32108accfb3c1bb08107c60d8f02363d2315e2eefb4ca",
+        "id": 0
+      },
+      "comment": "R: y2=-3 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 113,
+      "publicKeyUncompressed": "04700411ac0f923c1219137e68e48e33a055e7d2cc6dba2143cf650250b8c05389a1763c033ccbfe4bc1f8d99d91d313c265b81ec991af83114e3335f02caf1901",
+      "publicKeyCompressed": "03700411ac0f923c1219137e68e48e33a055e7d2cc6dba2143cf650250b8c05389",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "45170061e1e3a4aacaecdf24c4943b5e45549b20c00135e6cb34aed92cf8b728",
+        "s": "00c6d1540ad3a0d8d46a2bdda04e881ef4af4211bd7ad80cc8bb3863cc4e843810",
+        "id": 0
+      },
+      "comment": "R: y2=-1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 114,
+      "publicKeyUncompressed": "04c365fde6c85eb44dd0f89d6494fde26dd55dcf23b0bdce049314c94e560ec60113ec9ce85c2da5855bed08f06cbe8bb71cb2fc768c81c4ffd9e1dd7e2b3eede8",
+      "publicKeyCompressed": "02c365fde6c85eb44dd0f89d6494fde26dd55dcf23b0bdce049314c94e560ec601",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00d9ef981511b93f7adc6ebdf36a8f4b823aa6090057ad3738fe18a42e46dfe12c",
+        "s": "0a6960303d668ebc05d1aa4e40bee167bdff34711aec2916cdcef176affa9125",
+        "id": 0
+      },
+      "comment": "R: y2=1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 115,
+      "publicKeyUncompressed": "04eb9f2e67b5bee346b0c438155eb546cc77fe493462ef21e75debd91ea16fa68fa1d0970b285dceeb706ed9f7b022c5ac267fcd8c0c9e76a55bb725be0aa851c3",
+      "publicKeyCompressed": "03eb9f2e67b5bee346b0c438155eb546cc77fe493462ef21e75debd91ea16fa68f",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00af8bbdfe8cdd5577acbf345b543d28cf402f4e94d3865b97ea0787f2d3aa5d22",
+        "s": "008f899903f5b953636ad0c6eadb8e483e2891000625bfb0b8dd8ec1fe1c3d9b16",
+        "id": 0
+      },
+      "comment": "R: w=3 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 116,
+      "publicKeyUncompressed": "04d2dff3e26456e0016b3da386ccc584fe9ce2abfb89c8e0fae0f01c5247b2995507721d3ab6945e969669b58a7b6c412005fe6eaa1c8f0da5a618581f4ffe712a",
+      "publicKeyCompressed": "02d2dff3e26456e0016b3da386ccc584fe9ce2abfb89c8e0fae0f01c5247b29955",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "507442007322aa895340cba4abc2d730bfd0b16c2c79a46815f8780d2c55a2dd",
+        "s": "00d1fb497ebd66ab23afa7abdfa51cdc2bb40a722b8c82979b237539f9d321d406",
+        "id": 0
+      },
+      "comment": "R: w=3 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 117,
+      "publicKeyUncompressed": "04c42d28ad6b94db29e0e111fb65490d154010cf57ccade316033db74150c873b303fac3dfdd9aeb74fa065e4df38a81e94ffe5a89b5a422bcb600b2f7d3af3e5b",
+      "publicKeyCompressed": "03c42d28ad6b94db29e0e111fb65490d154010cf57ccade316033db74150c873b3",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00de16fd61a828098877199f6b9691ac16b068ea147264d32ecebf8afb1cee87c6",
+        "s": "00b6d4278ec5a783688ef0dc8b40483307f98bc1babadcecfbd508f41d45d1e8e8",
+        "id": 0
+      },
+      "comment": "R: b=1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 118,
+      "publicKeyUncompressed": "049976f021fb35ce0b01b556da77fc92e88148419fb44e52cf000bcc3eeec06fb721ca31be2aec898afeee54740e7a09a0ad88a3fca33d2c8216f276bb751373e1",
+      "publicKeyCompressed": "039976f021fb35ce0b01b556da77fc92e88148419fb44e52cf000bcc3eeec06fb7",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "15802d3d7aec18b1830f8b59148e86a2e59edfda163b8823e320d6c65c8d3386",
+        "s": "486fcffb06ae7fbbb3c56a1a0d5a4d222d7d2bb6bcaed9bcd83efc9d19800358",
+        "id": 0
+      },
+      "comment": "R: h=-3 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 119,
+      "publicKeyUncompressed": "04af3583dbce72eae4356f24013045bd6569705db92589912cc6362495ee786d0c3afe89882c10d78753d633e99e0559e592f46da3ac6d3754d581ca2f7d39b4e5",
+      "publicKeyCompressed": "03af3583dbce72eae4356f24013045bd6569705db92589912cc6362495ee786d0c",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00851eb1b8699d1cc01c6b6048139797dab3981c924f9ef81bd1f464c3182c8709",
+        "s": "20813f0131bb98d224a5aefbb5246c1ffa765786f7a6fafaf4ad11bda3b9137e",
+        "id": 0
+      },
+      "comment": "R: h=-1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 120,
+      "publicKeyUncompressed": "043e020ea6063f22e50c04a7b27aeb5e90ebfa4c564ce370d6c39367205d565f19911cb0cb2eed4968d5bdbc06293679b2b49ea57081c8357307106e987d704553",
+      "publicKeyCompressed": "033e020ea6063f22e50c04a7b27aeb5e90ebfa4c564ce370d6c39367205d565f19",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00be2d2738a9b2ccddbdc0954d6e990d23ee62920b2e6a49d3125bc3002dd07ffd",
+        "s": "00b2d82165f6887256b82a7c85608dfb3c59631b6556aa5a9cfe9c4b5e2e9288f3",
+        "id": 0
+      },
+      "comment": "R: s**2=-3 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 121,
+      "publicKeyUncompressed": "045715840ef4a5d697de8cc9b31b8503dc0576c1eea217c20c3a557ce34bdf61b1b54891293c6135bf426e51ad57ea7c35e4f230dacfd0779e869d3ed159270d67",
+      "publicKeyCompressed": "035715840ef4a5d697de8cc9b31b8503dc0576c1eea217c20c3a557ce34bdf61b1",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "09e78d4ef60d05f750f6636209092bc43cbdd6b47e11a9de20a9feb2a50bb96c",
+        "s": "00f4889ec371c54ef31cf815338b2ebf847da0618ee3d4bd9f7b00f69caf8f98aa",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 122,
+      "publicKeyUncompressed": "0456a29342040e36a4b8431ac59b98d9b8a9d65f4cbc98d8bef80c9736b59560ce1932f6f488010d0345a6c063361e988c811baee576e2751ae92679a147565670",
+      "publicKeyCompressed": "0256a29342040e36a4b8431ac59b98d9b8a9d65f4cbc98d8bef80c9736b59560ce",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "008d0177ebab9c6e9e10db6dd095dbac0d6375e8a97b70f611875d877f0069d2c7",
+        "s": "451078019ec72b4261d2a232c7e2806f3cc85588aacd319e025965deecb8ab7f",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 123,
+      "publicKeyUncompressed": "043b584d141e4f9c7ee0a583105e50829bfae9ff26ab28befbc58ae2b77c141c9fcfdebfc2c5d8599887595aa581e003a6d96443bea18cead076390b3f4c790aac",
+      "publicKeyCompressed": "023b584d141e4f9c7ee0a583105e50829bfae9ff26ab28befbc58ae2b77c141c9f",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "6916fac45e568b6b9e2e2ecd611b282e5fcc40a3067d601057f879ce5a8a73cc",
+        "s": "27ebcbbda29384519badbb642d99e4762232bb1a23a0591683a99f7c53172af3",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 124,
+      "publicKeyUncompressed": "041dacdb0135e4c9976f1907a08a07456e977501ca1c3139a0d72e492b151b1da3bb07c083fe1b7312aed8ed451acdf10c84652834f2078951382003dc490dcd60",
+      "publicKeyCompressed": "021dacdb0135e4c9976f1907a08a07456e977501ca1c3139a0d72e492b151b1da3",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e8f28207e8621cc82d634671493877fea23e3ce7fb73b4e0a6be4d6c7d9f3564",
+        "s": "00ea653774d237018aa723bcc15f6982199dbeadb596f3f425875075789a62b2af",
+        "id": 0
+      },
+      "comment": "R: s**2=2 for m=2 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 125,
+      "publicKeyUncompressed": "04c44eb8d4e604cd634ceb2795e30d604a233099a0d663ee4daf1f4ed2ce8fc6bd5f100616f683ec89e080bd09a514313fed0edf92ffc9394bb1941985d31b9209",
+      "publicKeyCompressed": "03c44eb8d4e604cd634ceb2795e30d604a233099a0d663ee4daf1f4ed2ce8fc6bd",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00f6e0274e045257cc028cfe83df31e1678c2c4c0573371c315dbae73fd412d078",
+        "s": "00f78e2b701901e310d69c6f945e68db5c444e9dc84795096abf1d28e666e73fe9",
+        "id": 0
+      },
+      "comment": "R: x3=-3 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 126,
+      "publicKeyUncompressed": "04aee5b9b43deaaaf5f38b749190826bcf0e407d5acdc7b026d6d895930b68e9c3a79962cf80d48cd0a571b035beb3151b53758e537a848e5be21d5e3f1d6bcd1c",
+      "publicKeyCompressed": "02aee5b9b43deaaaf5f38b749190826bcf0e407d5acdc7b026d6d895930b68e9c3",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "100121f1a09443851c9aa2ab6ee6440e2ac5e1be648274bd5d26c12fb3ba3f7f",
+        "s": "00fedae13f3dde18069d68c6ac93128afd6a6cad3dc46985776a116334d2488072",
+        "id": 0
+      },
+      "comment": "R: x3=0 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 127,
+      "publicKeyUncompressed": "04925a329233f3d46c38d7f87a93c8bcd14c3a07bbd5a403c74462601549f421d2781f85dd250e71bbdd8558cf2014a7ff0b5ff7d6ee8e001ec123021e05652ada",
+      "publicKeyCompressed": "02925a329233f3d46c38d7f87a93c8bcd14c3a07bbd5a403c74462601549f421d2",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00dca4cf4b841c05e45b3b70f1c6e02a1a03811234c3c044b2928981030bf6d39c",
+        "s": "563c051976e50c06137e9b67ad1631f6eb2aa9e7db268fb21144852bf9f6a5df",
+        "id": 0
+      },
+      "comment": "R: x3=1 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 128,
+      "publicKeyUncompressed": "04f8bd6cc89d937affca97aae338a0c3bb4aed9219ab2c21733d78f0a5b25ecde95bcc4dbe0940cd4a8d0c1311211c1025ab84bf0fd1459df6c932a931025ee7f3",
+      "publicKeyCompressed": "03f8bd6cc89d937affca97aae338a0c3bb4aed9219ab2c21733d78f0a5b25ecde9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00d006f2785f3e4d6a3e9fee57dc668cf1c48e4a6a69ee72706d0f54075db6d9eb",
+        "s": "1964e1c2f66c894fa7af49013cc03db15739087981bf82fff391032007187e52",
+        "id": 0
+      },
+      "comment": "R: x3=2 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 129,
+      "publicKeyUncompressed": "049f7449c951d1f6ba80bc7aab3dde63e13cac0b9adf257ab8921f8b8c64c3ff72c81bd76498068be99863df7af41c6cc7e1350fab3b984194f709e815c6e19bed",
+      "publicKeyCompressed": "039f7449c951d1f6ba80bc7aab3dde63e13cac0b9adf257ab8921f8b8c64c3ff72",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "45d3fb3ac7aa271f91b234ad1d18ee96d3d7d7654c5a5a4c3166ab50abbf5b30",
+        "s": "00b7200656c05aca4f776980c47b2ae948dcb67e8f82dac306ce3efe3f8abdfbd4",
+        "id": 0
+      },
+      "comment": "R: x3=3 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 130,
+      "publicKeyUncompressed": "044d4f9d7b2e47d160c08eadc9130766defb404ed69ceb904cbca1dd837af92026fda0755f9da6f1c565696e57749e9098ea4716fd5dfb20c3791c2e0bbb7dc92e",
+      "publicKeyCompressed": "024d4f9d7b2e47d160c08eadc9130766defb404ed69ceb904cbca1dd837af92026",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0092db0aeaaa4ae24b119b2e30f29cb79d836c220e90fbc9031144261ffe75dcd1",
+        "s": "00e8dcfae19ee5015f393d4ef40e98ec4a4c6645ea1918ad9756d7177d8eaea6a0",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 131,
+      "publicKeyUncompressed": "04ed4fc026c931298b94d8e23798f1494745383d9c4ed79b298b1dbe5e70db5d7ca7ace88569222fe4300b64ff6fd323bd125f3888791c54aa513216d3eec77315",
+      "publicKeyCompressed": "03ed4fc026c931298b94d8e23798f1494745383d9c4ed79b298b1dbe5e70db5d7c",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00dc64ac26b3cf53362fdac1c0eccd15d50d58bda1a355ad0b732bf99e70532f0c",
+        "s": "008b78dde28ecd0ed2ea837a68938254abf3fda52396c44a27e3e39885cd751ae7",
+        "id": 0
+      },
+      "comment": "R: u1=-3 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 132,
+      "publicKeyUncompressed": "04032702ead24ef7336f56a7e1033f41896f6fa0797c309bafc7052dfed8e30f9ae49bcd1335644d6dee5fead76e3c4bd8fda36cbf29e9edf24ea7b5cf29d422a1",
+      "publicKeyCompressed": "03032702ead24ef7336f56a7e1033f41896f6fa0797c309bafc7052dfed8e30f9a",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "1ad9ee1ebfe0a768960e19421ec32322fef50aaf8eba16b7ad65d99ffb243fc6",
+        "s": "47f7847dd57aca8cea98ba49056341b019bff301b4048e8d02814932346142fa",
+        "id": 0
+      },
+      "comment": "R: u1=1 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 133,
+      "publicKeyUncompressed": "0484690f40717a2112dc0d964f2efdef12d80ce5db006a4fc377d04b00320b1003d72771e0624435ba72d69bd10ade673dd89d4b53f0e6fa16c2a7ab05cc3119d6",
+      "publicKeyCompressed": "0284690f40717a2112dc0d964f2efdef12d80ce5db006a4fc377d04b00320b1003",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "1b7672ce8a192d8826af545fe544db7d11c8cd5d379187910e5cbff5b010339a",
+        "s": "42602bce80e6251d3f788c9c2c5e70d6567b144fb1a242e75257c4ae44cf41d3",
+        "id": 0
+      },
+      "comment": "R: u=-2 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 134,
+      "publicKeyUncompressed": "040b841842270a6702cd138a9c65c310944176c7096527e0ea51df6b6095de04e636476d5f4692718dc119e13cf2847245cd712a3ebab0ec73e000e9c45db08294",
+      "publicKeyCompressed": "020b841842270a6702cd138a9c65c310944176c7096527e0ea51df6b6095de04e6",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e10df2402d508d573d3ab41b0f3717273c54e7c0b509c33350a9f2a6ec5ba85b",
+        "s": "00d9c701ff43a8e8a8dd356ba821b29245a5dc329a14103d2e6a007d711a4e053f",
+        "id": 0
+      },
+      "comment": "R: u=-2 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 135,
+      "publicKeyUncompressed": "04ac211ecabda3ffd1dce56ae270322e8eaed4b553b87af81f374aec74d44115fd77accda10f4f61a4b2272ba5ce55177e507a6faed86e928e5bf47819f4a05a8c",
+      "publicKeyCompressed": "02ac211ecabda3ffd1dce56ae270322e8eaed4b553b87af81f374aec74d44115fd",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "03a8409c233a9533040ebb555820d443f49813e0f49228e17341ddfd2447e1df",
+        "s": "00d06337378cf8464a4f74f5e660d38d25e091b19c4132efe30363920cbf8b4007",
+        "id": 0
+      },
+      "comment": "R: u=2 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 136,
+      "publicKeyUncompressed": "041f7536c94a3c95542aef13c5976c29507e5f1ee04ab053a1adfecc1e1930d4d0b4c4b7e8e4e8fe609bfb54b82676d77dfbfd70d1748f57441a3a19d2dcfa6fa2",
+      "publicKeyCompressed": "021f7536c94a3c95542aef13c5976c29507e5f1ee04ab053a1adfecc1e1930d4d0",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "008556fdab5268b568871532bb325da41b437caa7e59065f522e31983899870991",
+        "s": "1f2a18271ea9aec54cc4df2fa4c92fcd4bc603b219f69ccc0ec68d1faa759bb7",
+        "id": 0
+      },
+      "comment": "R: v**2=-3 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 137,
+      "publicKeyUncompressed": "0457812d96185d8868dd18cfe2b756685fcca0b9e05dbfe0574a9be5707122c90ae4cf7ecb2a661caec7d8ac950be2eb73d21aaaee96341e361ed7b01136a2ed3a",
+      "publicKeyCompressed": "0257812d96185d8868dd18cfe2b756685fcca0b9e05dbfe0574a9be5707122c90a",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "594b38e571e1e6bc11306b17d76d3c8b7a8c650d12fed44dad531a1c3e08e9b9",
+        "s": "6fee183bf10e59510cc72d5fa065664df08cbae726ea28d5d4dcdd744555f292",
+        "id": 0
+      },
+      "comment": "R: v**2=1 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 138,
+      "publicKeyUncompressed": "0434d58edfffc190517a17010b84a0f6b0181a40d4aeefcd95883bc1cc9b8877b449a26d33b549ab9060b779f65824ab32a7f52db2224c44f37dbc6e44bcb0f47c",
+      "publicKeyCompressed": "0234d58edfffc190517a17010b84a0f6b0181a40d4aeefcd95883bc1cc9b8877b4",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00f3c0b02574fed1d737abe3eaf06cbce1294475024750dd474b1722f815ecde1f",
+        "s": "00feafc2b7a3a9615396cee22b552f0f3f84658dc6543c4227b0b94cbc8724a437",
+        "id": 0
+      },
+      "comment": "R: v**2=1 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 139,
+      "publicKeyUncompressed": "04ce1dad27c755715d075d4e7c971d24f7d1ca0d53fc8219c629f4591f17ae1ea9e49e596367d4cc904e33bc027e9588e7d984c299b238514e12dea14197c495a9",
+      "publicKeyCompressed": "03ce1dad27c755715d075d4e7c971d24f7d1ca0d53fc8219c629f4591f17ae1ea9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4c52f8345031965608a68c513a9a99c7077e0161bd1a1e0da360b233312a9cdf",
+        "s": "00f3f0a8d0b865933c0e8f4d2a8eb99a5e1e743c2e8ac73c5852893a02f9a550cb",
+        "id": 0
+      },
+      "comment": "R: v**2=1 for m=3 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 140,
+      "publicKeyUncompressed": "04edc1a1299c6a3fe814b9f116fe7c70c31cb391399849a15792a7db0ea6b5c1a9cf940fcc8a53cc517b751023857d6b53430a5d0378a6f746d7689cf888f0ce65",
+      "publicKeyCompressed": "03edc1a1299c6a3fe814b9f116fe7c70c31cb391399849a15792a7db0ea6b5c1a9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "02495ac9f43e45aae30d3366e351cc08828cf3e11cc3b7209fbd1730c4a14f4e",
+        "s": "4fb0fb50033e000e23b622e19b1b9b8f823e26cd24b7ab2d64abe83bfea95508",
+        "id": 0
+      },
+      "comment": "R: x2=0 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 141,
+      "publicKeyUncompressed": "044a652eabc687ef8cc26eac4f4949cb495ed13a3285b94447d8e975a719cf998cbbb742f5bdfa9d2491efdbd40c253fb6e79d0c198402560fa76a3c5fa933b097",
+      "publicKeyCompressed": "034a652eabc687ef8cc26eac4f4949cb495ed13a3285b94447d8e975a719cf998c",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "009e6c031feed8a8e8eb3d04de0b8d62c268d61131d225aa3420141aa17dd8d135",
+        "s": "496d18cb28a2c7c8facb4414f893aac5981d3df725604a0c5212ca2d77b9b2ba",
+        "id": 0
+      },
+      "comment": "R: y2=-2 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 142,
+      "publicKeyUncompressed": "046a9d2ef155b347b18125a260e527804cb9e13eef0a6e878d6b509b53b08da66969f3f026c8073e184fa384d4583b661f2b5f4350129e8ff6fd8287906d8b0e57",
+      "publicKeyCompressed": "036a9d2ef155b347b18125a260e527804cb9e13eef0a6e878d6b509b53b08da669",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00d3e9423ae5ab78c1c32dc26b6c5c6762fb03859988f18aa8b655055d4e94b182",
+        "s": "00cb0d18f480a897ac729deb4147fa1865efccf1bdd6b20dc8be74f6158e522a07",
+        "id": 0
+      },
+      "comment": "R: y2=-1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 143,
+      "publicKeyUncompressed": "0427a619dde54cabbc1b061e61adc6e2d99b22b9e24bb95e95435bb2d15c828dc964b9f0c1be75184cfe4936b299062e58dbd935e0c34a16997955dbee5b170749",
+      "publicKeyCompressed": "0327a619dde54cabbc1b061e61adc6e2d99b22b9e24bb95e95435bb2d15c828dc9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "61f127502b1792c64f08ce2fe482b97fb5c96fb27d11bad0c43d6bec71ede3f5",
+        "s": "008c668944533b871207e5829a6928c9b1fd901f6cca29f64dd5b7eab1da8e7ab8",
+        "id": 0
+      },
+      "comment": "R: y2=-1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 144,
+      "publicKeyUncompressed": "04995201389ede8b29c537eee68a4b17d4e721d27b7b41e7f697cd6f80cad42b959a1d3f8fd4ee2c4c19c71db3f5f449b38caf672ae0ce3f37ffbb981b5d969d06",
+      "publicKeyCompressed": "02995201389ede8b29c537eee68a4b17d4e721d27b7b41e7f697cd6f80cad42b95",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4ccc7675f1f08200ae2b3e96293774621f387720b842f3261df37e6c32a5879b",
+        "s": "00bdababf0f6dc8587198b1f4c3ff9172e191e6311ca861b3e4599f7782ad6d937",
+        "id": 0
+      },
+      "comment": "R: y2=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 145,
+      "publicKeyUncompressed": "04836e2b4bd2d9ccdab5a7d06c84fdd93f1565e3f12275dee3f7886aafed643d1e216db969528e6aa5b626baeffe8a4f9e49b0fdbfb69fc6f94df5a888d211c05c",
+      "publicKeyCompressed": "02836e2b4bd2d9ccdab5a7d06c84fdd93f1565e3f12275dee3f7886aafed643d1e",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0096d990ec5473803f3af2c85fa52ceeac3724096d14d5d6afe96148b0f01fa4d3",
+        "s": "660dd07ce84324defb63672b6b505ec28839db3b31bda4f235ead769e45af2fe",
+        "id": 0
+      },
+      "comment": "R: y2=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 146,
+      "publicKeyUncompressed": "049b9d0724c2bdce3a81c9b2eb80dca561227e757d0edd0fc4f71e4c85b0052e50def2d276df6f041380c1702bcee1de3ba0a24c1493ce2cef2fab672983fce6a4",
+      "publicKeyCompressed": "029b9d0724c2bdce3a81c9b2eb80dca561227e757d0edd0fc4f71e4c85b0052e50",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "41983b5e4fd04fdd5342c3f6d95edaebf1692eda9463ef48de63a1f4e009768e",
+        "s": "1d0889daaa56f7a7040b0e5b8198030cf0a498ea16ac03e4285332bac20f4c68",
+        "id": 0
+      },
+      "comment": "R: y2=2 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 147,
+      "publicKeyUncompressed": "040f38fb9cde7df71f29a761b42ae2a467b762545ae5aebe93f583dd35418de1f14f34542d116298864abd3c14010ea39b27f6824673c0812ba718288fa8c654ab",
+      "publicKeyCompressed": "030f38fb9cde7df71f29a761b42ae2a467b762545ae5aebe93f583dd35418de1f1",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00afb102393ce571d0863e6c5053baf9dfd879b7f1a2f97dd6b7651e099a4a407a",
+        "s": "0c2581029e1f46f0ccc231e1ac5f3c3c6f9492b92d0a4f0abbe200cadf85c0a4",
+        "id": 0
+      },
+      "comment": "R: w=-1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 148,
+      "publicKeyUncompressed": "04ccf9f44079f421c1b33b39fde9b146ba4d231354c32a9af3f4f4a91b21efcb29a0bb6fa3a21768677833db7005c666ef4877e7f44db7d9ca836f908bbdfc833c",
+      "publicKeyCompressed": "02ccf9f44079f421c1b33b39fde9b146ba4d231354c32a9af3f4f4a91b21efcb29",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2ac5023330649c40cef0df17091dde7bdc174214f59f5a0bdb7076fc4482d866",
+        "s": "7be6bf4aa0eedf1d68da29b0c1bac0410cc1c915dedfa334c3a15592d0440df4",
+        "id": 0
+      },
+      "comment": "R: w=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 149,
+      "publicKeyUncompressed": "04d79eae470f52f86e030a52e781f493701efa16150390406f59002a9cec24c1feaa0dee8ee92049a369b231587e86a955d3a072144a4e308098142eac6eaaaaa8",
+      "publicKeyCompressed": "02d79eae470f52f86e030a52e781f493701efa16150390406f59002a9cec24c1fe",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a2a027822b7801a45288c10d56e89323025d683780bba99c1769e847d340a984",
+        "s": "3e09f7397866e1847f3b4bf827d270c5dc0cb8fcb8c252ae2a98f941cb9ad41b",
+        "id": 0
+      },
+      "comment": "R: w=3 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 150,
+      "publicKeyUncompressed": "049e26d17a02ebc0866faf23cbc98faf3dc49f28be8c3435d3443fcfb86de4ca42d96f12f1f76a1d713fd45b58b906d86aa4250bc50afec9e535e5b15630136c25",
+      "publicKeyCompressed": "039e26d17a02ebc0866faf23cbc98faf3dc49f28be8c3435d3443fcfb86de4ca42",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00abafa2dcef57c183e7ef837d1b0fb3339d7dad0fccc4040ed9f5f31210fc7cea",
+        "s": "00d934758ecf616cd689807a228ac759eef66c72f662721fce1bc420c96dfe4a5b",
+        "id": 0
+      },
+      "comment": "R: b=-2 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 151,
+      "publicKeyUncompressed": "04517105f5d696aecb39a7483a2c3171ff4eff3133d6eef7177c658bac77db566590b10ae92594f12cb5fc9f3aba0d4191fd49d51de042198c0348c9b307c8d641",
+      "publicKeyCompressed": "03517105f5d696aecb39a7483a2c3171ff4eff3133d6eef7177c658bac77db5665",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "3c70c74ed8f746cbb70f0b928672e3aa21e799c64e028fdd07a6e05bdbf86d9b",
+        "s": "00910c030f1ee0bddcfd79bd1de185c8a352cc4ce036a242f669707da5f1b978b0",
+        "id": 0
+      },
+      "comment": "R: b=2 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 152,
+      "publicKeyUncompressed": "045b21c1f7cb16419367ac5207d90e6665132914906724578a9c5a9924c5ac5ebe9b4912fb4482e6f713c4ae700b47c763ed63453206f9c1f7d151caef0d426e18",
+      "publicKeyCompressed": "025b21c1f7cb16419367ac5207d90e6665132914906724578a9c5a9924c5ac5ebe",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0080a997849fd32975698dff60367e6aedc8f34c87c1e13934c9213f7e8ce12de6",
+        "s": "00a7f5a7d8664993bc75b37d779425c8e1368b949ec9dd8feca31bd1a0a95c1aed",
+        "id": 0
+      },
+      "comment": "R: h=-1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 153,
+      "publicKeyUncompressed": "04a3562590511a7ee9fdf6d132d8a809cb70fb3a69ebd52a6be113330ca2ebd734409dab65294cf8df0cbcfc58099b0e34d8555f8dcb9473072eb88125effe8af3",
+      "publicKeyCompressed": "03a3562590511a7ee9fdf6d132d8a809cb70fb3a69ebd52a6be113330ca2ebd734",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "70299e2de1c90bb9f3136dd368a425a8f9e319ee250267895af4f52f5c730077",
+        "s": "5d1be61ccf04570703cc773b05cb9f831029d4294992206b7d55bbdb05517bc2",
+        "id": 0
+      },
+      "comment": "R: h=3 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 154,
+      "publicKeyUncompressed": "0468bf81d20fd1f02f9142b054debe09ab34303b87d00bbc7363eebd34e4dfbbbbe6d4c81760708f97070a58fd51277f1f298c6eaa27bdeae9f8848a92787bc0a6",
+      "publicKeyCompressed": "0268bf81d20fd1f02f9142b054debe09ab34303b87d00bbc7363eebd34e4dfbbbb",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "3a06155ea858f061eed65c9d392aa00f4cb70bece7160b23c4069d4917dd6949",
+        "s": "00af026e2222e32865625865c73525ad7bc75635a5af6b35b1d06941ea38516534",
+        "id": 0
+      },
+      "comment": "R: h=3 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 155,
+      "publicKeyUncompressed": "041cf04d482fcefb954f92383073c3085d3b0fe182add48e56cddc4d97324d062ae2b95a52dee572aeaff3570c80c668da91032a82ff561cc92189adec7a4630dc",
+      "publicKeyCompressed": "021cf04d482fcefb954f92383073c3085d3b0fe182add48e56cddc4d97324d062a",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2dc3896bde982e80023cb97dc35dd727039972475efa9035f00254b38ecaed29",
+        "s": "37dfa6161f77f707051ce25221b11b0b837246ae630f62636ff00e7e3a45fbe6",
+        "id": 0
+      },
+      "comment": "R: s**2=-3 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 156,
+      "publicKeyUncompressed": "04dee39879a3dc936fafc0211e992aa57d2d88dc27fb31808e82624630882ff941f5194c641f3a7477d174667a5cf5111bdf65dacffde5b3f0b2f0dbd5d6421878",
+      "publicKeyCompressed": "02dee39879a3dc936fafc0211e992aa57d2d88dc27fb31808e82624630882ff941",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0087468a3a54d8bb346a050e9745f64477d460953576e738d891ac2be25d922e70",
+        "s": "45ea813f0a893359218de143fcae6e342483a66e63256b088ae8036070048747",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 157,
+      "publicKeyUncompressed": "0499fa5f66f830ad2f84a94bc59945ff11b1c9e7392b49deb72efbea81d4f53d46bfdb2c30e72df5bb02586561fe0f9d3971c19722231f6a27588d0a4ede87684d",
+      "publicKeyCompressed": "0399fa5f66f830ad2f84a94bc59945ff11b1c9e7392b49deb72efbea81d4f53d46",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e0daf6dea6aed50232f24c4268836abe20f3e014fba530e8f2d892a0c52fe038",
+        "s": "00c5480f26a7ed3f9ebd859e3fb9c106063e9385f6fa4177f1e9e16e4e0db4c5",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 158,
+      "publicKeyUncompressed": "0489485a86fd44fae41e98172199164e668d691410a14346236dede34706e8fe72198f8adfa93531bf1311ccffe851a46f4a2a4abf8774eaba607dd6d2950fa8e1",
+      "publicKeyCompressed": "0389485a86fd44fae41e98172199164e668d691410a14346236dede34706e8fe72",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00eebb798553d86d9fb67812eda033fbf2438ea0e3722d041e344c94d16de90641",
+        "s": "009afdf40c98727ba5c73afc12add91f4938acd5c564336993a39a07d858acac37",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 159,
+      "publicKeyUncompressed": "04bfc47246ebf83356a49d62491947fe08e7e87c5e38f1c3576f22fda6b18a9499a448ed8e503cccbfb03b1f4246887a2589e12620245bffd515a0f027203a151e",
+      "publicKeyCompressed": "02bfc47246ebf83356a49d62491947fe08e7e87c5e38f1c3576f22fda6b18a9499",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e2eaae70c5ee8e7a7e9d8af7111745309450aa147972ca00ab4d0627dfa02d59",
+        "s": "727aeb3b968e1993a7623affad2ae54270fefa6787546ffeb904014dbaa43f86",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=4 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 160,
+      "publicKeyUncompressed": "04c6b0006fbc5023593bbf00803ccd7c86c2612e08d3549662c2c23bbae1a88bf8a628e4c07e75f11fa39ab643c1d3824bf03e83b627172be7916220617cd917e1",
+      "publicKeyCompressed": "03c6b0006fbc5023593bbf00803ccd7c86c2612e08d3549662c2c23bbae1a88bf8",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a122dde09dcb45bb9fdd2d09adf28dd4c97b9438ff01731cf98535f34c3ed749",
+        "s": "7cd974399d48032cb84c3ce86c2db90dabcae5663ad685ef7ccb6d7cc52c5930",
+        "id": 0
+      },
+      "comment": "R: x3=-3 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 161,
+      "publicKeyUncompressed": "04f3e486df08ba61d1a6e60bc551edd4b33b83df831a29354db54bf1367eefb639bfaeda397fb648327034b897f1922b8c0360dd7a02d168717eb8ece325be1470",
+      "publicKeyCompressed": "02f3e486df08ba61d1a6e60bc551edd4b33b83df831a29354db54bf1367eefb639",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "73ae4017ede4357af4ac31bf724593d396320c2837d855ffd4b1ed5fc98b9729",
+        "s": "00c2bdf7f4cffba46789867b32ae6b8516d4e95d6e57576368cc7aba2566ac08b2",
+        "id": 0
+      },
+      "comment": "R: x3=-1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 162,
+      "publicKeyUncompressed": "04dd04a8779583730b7547d8513df312c82c47985adddbb0c3d4f517a6110e3bd3eef30a3092c56c47e843a14068c0931f42563351c1a8bdd458c4f6537c51c9af",
+      "publicKeyCompressed": "03dd04a8779583730b7547d8513df312c82c47985adddbb0c3d4f517a6110e3bd3",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "008df110bb5baf68a1e0fe0ce44fc7b14f2dfdf9f63ecbc85b664eb12b702518c4",
+        "s": "5afaacbac78403f24336ad3d0b286d183534bc41e4d213c33a9caaadc50ff9bd",
+        "id": 0
+      },
+      "comment": "R: x3=0 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 163,
+      "publicKeyUncompressed": "04c5678f2e3c270a61a8b536abee96d4619d9b918a3fb5c35df5b69c47c97e9a8bb0aec1aeca962768c5438e991428ee1cafdeb5bdc49bd12af07b5bec2c23a711",
+      "publicKeyCompressed": "03c5678f2e3c270a61a8b536abee96d4619d9b918a3fb5c35df5b69c47c97e9a8b",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "144f69853b3c2763563e48afa941b6e1e3c2830a59760b7e2560505b65245b22",
+        "s": "1cd7dd1a26a0236a213bd2c4be5bbcd940ba1c087a67a07e3cdc6d9090f63125",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 164,
+      "publicKeyUncompressed": "041f302b7cdfdba224d738560fe785b5c62e26897e3fd7aef22d071883f3536cfd408a20c3d165dcc0e11fbd3c6e73c799f944b23f48beb307563f826e0586683b",
+      "publicKeyCompressed": "031f302b7cdfdba224d738560fe785b5c62e26897e3fd7aef22d071883f3536cfd",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "57caabb051db60b3b6ac866bd9965b2faea60fc41e182f812219da2455bb5c91",
+        "s": "00a7d55b6c30d7a932f60570f393f5ee7b0b587d4445049a88773d42ab3a0538f3",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 165,
+      "publicKeyUncompressed": "04c2b7bf7093392bc4ecc94e0e8e5dbbad687aebe06429c840faa20f622d8a37b756d1bdb053e6d229be468da83ba5347c991137992996e90baf208c40433d1755",
+      "publicKeyCompressed": "03c2b7bf7093392bc4ecc94e0e8e5dbbad687aebe06429c840faa20f622d8a37b7",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a653a2d51e89aa5bf400bcfacf6b6476e7c3d8d9879b31139b195ad4b8bb6d72",
+        "s": "00a021310f89aa854b11848962864b53ea2a4caedac7799ccb3e1d58e3c2dd96f3",
+        "id": 0
+      },
+      "comment": "R: z3=1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 166,
+      "publicKeyUncompressed": "0402cee6aecb44ed1452f55e1c2c3109e77cbc3d79cf0e35957a8a646d1a37bb805bf243d326ba19a2033f484eb931a1597b215afbb4efe9ab647f904aed4ee268",
+      "publicKeyCompressed": "0202cee6aecb44ed1452f55e1c2c3109e77cbc3d79cf0e35957a8a646d1a37bb80",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00c05b61b9b8af7b3e937516dcc5820228a845899b1b953419eefc3320b189fc63",
+        "s": "125f08f49571a41ca66e3e9f4a74c9734f2eec70f9590b0a2ac287ae48b6c772",
+        "id": 0
+      },
+      "comment": "R: z3=1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 167,
+      "publicKeyUncompressed": "04d1ebe853b6dd4d3e5f8e6fd9e735ce4120081b735c166e34db69bab620d6839d4899adc63cdf08bac3252f73487614f93534a9bc5a42ed6190b78d2c03b26a46",
+      "publicKeyCompressed": "02d1ebe853b6dd4d3e5f8e6fd9e735ce4120081b735c166e34db69bab620d6839d",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00dc7d6606ceb858ebcb6d0ee0f1a524a8a43322df57e2b622059df5dd748c54c6",
+        "s": "00e52e22fd2cac62255c43c96c5fc835269d2acfc02e16e9fd1386a43e66049f6d",
+        "id": 0
+      },
+      "comment": "R: z3=1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 168,
+      "publicKeyUncompressed": "048b6729a67009c65a474f6ea1121756ee0d0f2b630c4e3418c938f407b2f3c17355a11875b9e6bfdd7c22b43e85c3166af418e11a77db5a961ad73416b05b6f3a",
+      "publicKeyCompressed": "028b6729a67009c65a474f6ea1121756ee0d0f2b630c4e3418c938f407b2f3c173",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "3c7765e478dddd5f2fa0bfcab074bb6db939ecc421eb888fba6e325ca19879c4",
+        "s": "0090c632fcba48ec4637d6bdc92896c00acdc782d66e051b5b3ad01129b4a90754",
+        "id": 0
+      },
+      "comment": "R: u1=2 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 169,
+      "publicKeyUncompressed": "0445421842b1a9dc6c601c17dfed67ed977cfb1cc72adad7c3e890762cba75e9affa4f8d3cd32ebd1f6db890ce0566d105fc33406a3e18eeb5a896aabdd1ff8d0e",
+      "publicKeyCompressed": "0245421842b1a9dc6c601c17dfed67ed977cfb1cc72adad7c3e890762cba75e9af",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "009004592c20ae8f841db0317b241fa209d312c1f5ef5b94f06d04d09ef87c5e75",
+        "s": "1092d572833a93ed8badefb0970e61a43be100d433b25abb7b81ba571d235bf2",
+        "id": 0
+      },
+      "comment": "R: u1=3 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 170,
+      "publicKeyUncompressed": "047150e37bb095a048876a484edc8aea148ceed2ef4a6a8146351aad04cd345a088ef1ee84e5f05d21387c17bd8ce9c76088bbf626610036c86545cea1f6efc55c",
+      "publicKeyCompressed": "027150e37bb095a048876a484edc8aea148ceed2ef4a6a8146351aad04cd345a08",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "51ff091bd9abe18ebfa9f5797b0d185bf1b9dd3cab6df2fd04b9fac830fe0625",
+        "s": "00aa9aa400a7e16cc0d2a3e3cb7fab68dedd227adb9b1d0b45f5a2e4a8619b44d1",
+        "id": 0
+      },
+      "comment": "R: u=-3 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 171,
+      "publicKeyUncompressed": "049cc4f6095587db487fc27574aea94a7be2b8d28ed1c4a77485916f626be360e499afb06cf273a66701f2c8b767ddf9ddd6bf9e5c2796176a5f13f41daae471bd",
+      "publicKeyCompressed": "039cc4f6095587db487fc27574aea94a7be2b8d28ed1c4a77485916f626be360e4",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "38467fe82fc695ba460f30d93d635c3b65a2b25824ba575bdaae07285b2a6769",
+        "s": "00a951680196620a861f1b89f41454fd2b8f3d7f0b7e9ca276eaa0b765dd25cc28",
+        "id": 0
+      },
+      "comment": "R: u=1 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 172,
+      "publicKeyUncompressed": "04c3742fd65774d30e22676caa4d17eed05c098a1f178b796ae14f1c4cfa32bd0bd8a76fe973b97d548c950479090fb71d6ae89f30b18c693019e6b22cb7e90e2d",
+      "publicKeyCompressed": "03c3742fd65774d30e22676caa4d17eed05c098a1f178b796ae14f1c4cfa32bd0b",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00d3c153403a498c04b7571cd63c7f4d9f610602b16d01555a1a9d9273befd226c",
+        "s": "00b5882d9f5b6f6e068f045d81fcb07d06649cbfd202d0c6bda29a3a560b2598c9",
+        "id": 0
+      },
+      "comment": "R: u=3 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 173,
+      "publicKeyUncompressed": "04d50d5819c49a3853819e0daa9277036c46f5bfcb2770aab04ba89ed1a5f77a8cbf792ef4b9be42316139740445543cdb6a5c3afb322b780774411e048cbefe82",
+      "publicKeyCompressed": "02d50d5819c49a3853819e0daa9277036c46f5bfcb2770aab04ba89ed1a5f77a8c",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "5755181d433d73ce9c071bb3e755f2bc78fa48a1c016ba5225f66a3887269542",
+        "s": "0095a5204ac2fc4c089dba45c20df3a585e52f7bd9821fbd8366cc28e302b9c80b",
+        "id": 0
+      },
+      "comment": "R: v**2=-3 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 174,
+      "publicKeyUncompressed": "042fb8a409cf0bfe8a0625ddae4428186c83fddc936ff1c04024b98ab053d4bc9683b1b1fc0e511b9f69a7ed04f395e32713e2229849534189aa8fb720593ea336",
+      "publicKeyCompressed": "022fb8a409cf0bfe8a0625ddae4428186c83fddc936ff1c04024b98ab053d4bc96",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00c03de55f1518a637f71e539ef4989a883c468ad9d0b0c7d8702e89224f02754b",
+        "s": "009b5de330cbd44426a12b5f0bbab117059c004aa6b62e2f2b859006cef70566df",
+        "id": 0
+      },
+      "comment": "R: v**2=2 for m=5 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 175,
+      "publicKeyUncompressed": "04fde67f2f9075a2f912f3f98bbdc2c57716f7287f29de4bdce2e1e59748296018124257c19bdb1793b01c9399f0f668d012e59729c59f83d9d4b4092734ffb1b1",
+      "publicKeyCompressed": "03fde67f2f9075a2f912f3f98bbdc2c57716f7287f29de4bdce2e1e59748296018",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00c2ee7bea87fbb8b162ca8dc44448aab0356c95c1ee66198a38ab75868c797d17",
+        "s": "00c712e673b1c6e83fc3745c247e82cfbf878cb719914487a5905361b787cd1819",
+        "id": 0
+      },
+      "comment": "R: x2=0 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 176,
+      "publicKeyUncompressed": "04bf2f647f00dabb36e644809be9c10313ee16eec10e96379ee542abad3e4ec3a8fd8857f129fc229e62bc43aad916d160253dd2108ddc1ee367a3690b3337593f",
+      "publicKeyCompressed": "03bf2f647f00dabb36e644809be9c10313ee16eec10e96379ee542abad3e4ec3a8",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "083fc07aaa8b51ff33669d240dfdaab825daf06eb7e7a19a40f86a019355b633",
+        "s": "00c8378ced1a323c4498373bb6dcf8bbccd3cf2719fa4576de9bac1652257944e4",
+        "id": 0
+      },
+      "comment": "R: y2=1 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 177,
+      "publicKeyUncompressed": "04fcec2b5e6ed033bd4758050c980a753d3ca821462c0802ec688e5c808702c22020d968faf018feb0b753d65ac706989f12b355fcd810a683f7b4c379828da375",
+      "publicKeyCompressed": "03fcec2b5e6ed033bd4758050c980a753d3ca821462c0802ec688e5c808702c220",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00f19f8d708c8074c1ea70351961c9f667754e06e1aa6f83c05a3cf5ec06c2fa8a",
+        "s": "07dd88a3d07c365cba4c90fcb580cd6a79b541fd21c93f9be8b2f8c427866b3c",
+        "id": 0
+      },
+      "comment": "R: w=-1 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 178,
+      "publicKeyUncompressed": "045bd1f26f9db15354390560046ea87184836e70d41d6ef0e0768318da40db86a123e237681e8819a8f6b56195123e48368d68510e2acfabf4c009f4f15ae2404a",
+      "publicKeyCompressed": "025bd1f26f9db15354390560046ea87184836e70d41d6ef0e0768318da40db86a1",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "09d8f4cf514e685daa5ebaa5c46eefdbe194e01c4e17659e611950d57fe2b6d7",
+        "s": "63272065697c6e7a3616be8d9ce3cfc0b4392342f71311a547bce53c34c0a0e1",
+        "id": 0
+      },
+      "comment": "R: w=-1 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 179,
+      "publicKeyUncompressed": "044af4febf1eb17607c90adae71b38f3b3dfc426fca2bea1b75e77a1a22610f2379e3492273a72a555bf72da2afd388535af7a3a30ca7ac289e0bc51dc0441faa8",
+      "publicKeyCompressed": "024af4febf1eb17607c90adae71b38f3b3dfc426fca2bea1b75e77a1a22610f237",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00f0dc6573f319ca8d094db16e2e257958c195e31ad4c96dd4b04ab41f2d32a988",
+        "s": "2cacd76e96be257429a968120ccbc1a23f8062a064d52d70f73e352fd53b7db8",
+        "id": 0
+      },
+      "comment": "R: b=3 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 180,
+      "publicKeyUncompressed": "0472c516ed180c9db606f4c95e6b09e75cb7633c03fedbcf3cc50caef9bc1923ba98c76e216e534d140bbaff379253050d4b1f92db9c58fcf57ebd04a86241f9f8",
+      "publicKeyCompressed": "0272c516ed180c9db606f4c95e6b09e75cb7633c03fedbcf3cc50caef9bc1923ba",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "782b68c39f139a003a930ed98e14168a9c656cf0b1564cde0a2f252f7a927d30",
+        "s": "00e34731055f349390daa3fc8621dd5786f568e1b3194e8f6d00de0c3bebcd46a0",
+        "id": 0
+      },
+      "comment": "R: h=-2 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 181,
+      "publicKeyUncompressed": "04bdd0c6cd9839f9e8abb9f914455a8e56249e4221810737ee11c6e9ac1b691a153ca55a69811a2702054d975260505100a8720b5ca93122b2c4850503bc666133",
+      "publicKeyCompressed": "03bdd0c6cd9839f9e8abb9f914455a8e56249e4221810737ee11c6e9ac1b691a15",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0084c763085295190928266b708bfb9a01296cf2f1f2a058fd64419d4fee3ec0a5",
+        "s": "7b6b7c8f00f46acfef1e5d2abe54451d5cff582ea1c1fe004435b00d2d70220a",
+        "id": 0
+      },
+      "comment": "R: h=-1 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 182,
+      "publicKeyUncompressed": "04a2a2679427fd685eec38cd59de738b7c65f010fdd9617dfae1e3f0a731c242911f3c7a1307cd52977ad537deba109546e2a4659b0a3845642cf94af1e3aa83d6",
+      "publicKeyCompressed": "02a2a2679427fd685eec38cd59de738b7c65f010fdd9617dfae1e3f0a731c24291",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2e4124ed0ab49f465ddc25aaeca1e25a949dd79217f5936af9e6a840594b973a",
+        "s": "00806e98e9790155855420f16f985d3aafd36dde0f8fd10fc4f043330921f4915a",
+        "id": 0
+      },
+      "comment": "R: h=2 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 183,
+      "publicKeyUncompressed": "04bf219b21723b351a85f0cedf33f7d0c03a8b6a0f65f9effcb8919f9508c42ecbf8c38a24abb9da3a02e9ac9fb5a91d356720bbce4c979afcc993750199a79f74",
+      "publicKeyCompressed": "02bf219b21723b351a85f0cedf33f7d0c03a8b6a0f65f9effcb8919f9508c42ecb",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "64c275a99b3e10da6d7a866a6b998ca64c31ea5171b6a9a8ce96d001b011b86b",
+        "s": "4eb94fbfb7252fc7442859cdb76379457962e2f8f9143d4488b4ace2db69eda4",
+        "id": 0
+      },
+      "comment": "R: h=2 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 184,
+      "publicKeyUncompressed": "04012d7e88dd7e6371b7c6f6990e7cb23703de40cba3a3a635df04fc4477562763b176961aaf74ee0557f6baaa613421c93b0f67d7aaac3bdd13c016bdb3c42227",
+      "publicKeyCompressed": "03012d7e88dd7e6371b7c6f6990e7cb23703de40cba3a3a635df04fc4477562763",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ee67c92d40b499e711a801b58ef1936f4868cd8cb2dcc3a4b1aaf3faddc85882",
+        "s": "009176ef54646bb4db570a7e881a637a6520eac5fe6c8dea64e94fa5a36f0db1d4",
+        "id": 0
+      },
+      "comment": "R: h=2 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 185,
+      "publicKeyUncompressed": "0421885a677b2474fb4f2b65ef8c90ccef4466612e76907ada01aa81e2638b53811d864867942b1103ab715f53e3c9e367401f5795cc6bdc7b91bcba756efa5816",
+      "publicKeyCompressed": "0221885a677b2474fb4f2b65ef8c90ccef4466612e76907ada01aa81e2638b5381",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "39e5eb47a9845716415f0d8e925c31049702c9cafa7dcb2ceef5560e0c0297b3",
+        "s": "58ffaefb06cdadeabd010e7fd81babb263d27bd580c049c2068e292b955cf3dd",
+        "id": 0
+      },
+      "comment": "R: h=3 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 186,
+      "publicKeyUncompressed": "04c93b106a3cafcab49118346f7fff0b6b9c02db00e274283a71ca2e782007191faaec78be863e82891fa3a7c624f99d208ed4894e51a9eb2d50cdf84a9141e2e4",
+      "publicKeyCompressed": "02c93b106a3cafcab49118346f7fff0b6b9c02db00e274283a71ca2e782007191f",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "75ecc48752a8833f9d9de5271c2ec98992725c5e1561e19826e293567a78e808",
+        "s": "4da9c43d64f3576bab60f98c8729e75555f1d8364e2b3f6c4d3c5444097b326d",
+        "id": 0
+      },
+      "comment": "R: h=3 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 187,
+      "publicKeyUncompressed": "049b8ec0d9cc302b8607a7ad57570281f60bfdccb908a4ff9485c31c881db71751f98437e803d57ed0ee12367b1e0fb322decc6a07ccefa73a458b392e086594fc",
+      "publicKeyCompressed": "029b8ec0d9cc302b8607a7ad57570281f60bfdccb908a4ff9485c31c881db71751",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ac0a86d75b1171904c1de94fcd8805eaf5ffae92becb6b98ae6cc7279eca30da",
+        "s": "00e8d0f2f003a8016651d2a07fdaae533e560855153f6dd3ec852312b418db0183",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 188,
+      "publicKeyUncompressed": "04e599c52763fec07f2d044d95e721e80aee0b6276253d19c2c7f08bb51a105939d2f370e3fcc36286870bf8ab25fd969551a0a7647ef1b1cbac2d870d8e2d457f",
+      "publicKeyCompressed": "03e599c52763fec07f2d044d95e721e80aee0b6276253d19c2c7f08bb51a105939",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0090ec05a4505ead5aa4d8e629f49e256ec8f9094180972b09151b41a11c2cc0e1",
+        "s": "008186c9af41c430d05af42c478e1a32d183cca95f8c4c6aaab523eb28adab6cf8",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 189,
+      "publicKeyUncompressed": "0424966c4e31dc3cfd75267764327cf0a5293d0461f1e1676255d854defdd2a887144cfab797375960e744b1a72405839c42227c0452f777575f8d4347eff3a9d5",
+      "publicKeyCompressed": "0324966c4e31dc3cfd75267764327cf0a5293d0461f1e1676255d854defdd2a887",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00984046b079d62d28e0237e067a53eea649a463faf5e5ae1331168fbd6454f6a5",
+        "s": "0090077277301c4731f32a261485739026e7041ed2a443b103b80ba3628aa65689",
+        "id": 0
+      },
+      "comment": "R: s**2=2 for m=6 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 190,
+      "publicKeyUncompressed": "045062de179f83cab36b8aa2ea14508a886113fc1dee4f4dcbabdfe435a54d62253be6cecca4fafcc85257d9b3776f545e82cb3cba9086517f6de40adc09acbdac",
+      "publicKeyCompressed": "025062de179f83cab36b8aa2ea14508a886113fc1dee4f4dcbabdfe435a54d6225",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4b8f4cd9c1e2d33a068ae498a7e59bceba571a423efac7dfcb33baee87c72510",
+        "s": "72eff2f1f3c8ac17efade5e943d1aae93ff94edab67e3b4b8bddf1f586949238",
+        "id": 0
+      },
+      "comment": "R: x3=-3 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 191,
+      "publicKeyUncompressed": "04b01df1bd5a96d45a0a9371befe7cc30746a05e3e7ef99181ac6756cb16a409f392a5c8327d60f85820ca83d1f237b77a6e07762fdec6b8dc2bd69f89035d731c",
+      "publicKeyCompressed": "02b01df1bd5a96d45a0a9371befe7cc30746a05e3e7ef99181ac6756cb16a409f3",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "117921cd569ed3c9cb1e16014ff1972ec5a747753ece69481586543a81dfbc99",
+        "s": "00e12af5d0e62f3d00feff0534d6c6546e9a847d7d281a63ed40f80fe9ef3b3150",
+        "id": 0
+      },
+      "comment": "R: x3=0 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 192,
+      "publicKeyUncompressed": "048ef283866378a380373cd88051393ae2abd5efddaff0876723c75026870c1392eababe946a2b4b06d6b0e1f5884b887e2b727bdff1dcdc59b1574a89861ae383",
+      "publicKeyCompressed": "038ef283866378a380373cd88051393ae2abd5efddaff0876723c75026870c1392",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4919f309d1f8c8f5d38c2759d1430e3a3888faff767ae0ecc6813d0511336b4f",
+        "s": "00aea24df22346fcf4273ec49c21f6b80c4616a120a7f1d84e53b8c91a74954b13",
+        "id": 0
+      },
+      "comment": "R: x3=2 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 193,
+      "publicKeyUncompressed": "04b595efa21521b66ac503b85b2335d99fc752c1360a20dfce756d2e56ef0bb37a21e55ef2e3f9eeda18f7080a24650d7b8b4ab3ddfd567a60c8f522aa465f5dea",
+      "publicKeyCompressed": "02b595efa21521b66ac503b85b2335d99fc752c1360a20dfce756d2e56ef0bb37a",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "649f43f659fdf648e4de1a75257e311402a95bcb26f2cb242fe98ca85473b8ec",
+        "s": "7c2211d68a7bf002d967018db4100fb7080cebaff98ed241b54739cf354cefde",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 194,
+      "publicKeyUncompressed": "042a79b73289b02e0f44036ece316a98aab7e90b4a534f00ffcbc29284f068cb744e8c543815b3b7a68b0d88dd2f161b4a3326d9cec5b3c8287b745d73ab90cf99",
+      "publicKeyCompressed": "032a79b73289b02e0f44036ece316a98aab7e90b4a534f00ffcbc29284f068cb74",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00f56503713cb789b2407ca2341f887c93f8d462ae4e9c27689f0a1801c91220fa",
+        "s": "00923d5e85ee5303f309686757d7bbc11348eed5edaea057508fd10eabd4772d70",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 195,
+      "publicKeyUncompressed": "0465485b6c8e1a45b24dfaaf1e0611a213de30657c00a09e82bc36b569d760ce6cbf07254c8766e3be6bee23a389c51690b2d170357cf7d54210c9dd5fd508c822",
+      "publicKeyCompressed": "0265485b6c8e1a45b24dfaaf1e0611a213de30657c00a09e82bc36b569d760ce6c",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2d07ad8cb9cba3ded7512e2ab2a1e3ec4e6203a6893e5e77990ede8e29970a72",
+        "s": "00857dabecfb7abe29e987490da413b0e6085681a610d451fe0b5e2d3a9d8d6f68",
+        "id": 0
+      },
+      "comment": "R: u1=-2 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 196,
+      "publicKeyUncompressed": "047d7a21ea588524eb19b91e0cfb73e241f11bfa8c5f00b1d5c7e5eace44021001952b6168103206bdbc8f470aa5182a704258cfeedf1c9c7518a0926a3acf97c1",
+      "publicKeyCompressed": "037d7a21ea588524eb19b91e0cfb73e241f11bfa8c5f00b1d5c7e5eace44021001",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a63e0c6554986bd71b299d17fb2f1b0ab029ba5025de0c40ec976f0d3e4719f0",
+        "s": "63db849c041723ebc01e5726b5eab63f065ba17dbc6ed578e1a96b21f55860af",
+        "id": 0
+      },
+      "comment": "R: u1=-1 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 197,
+      "publicKeyUncompressed": "04d3546dedaa8ecc70d3382b9eb5df2074e4b1e8a61bd4f217c36386f1ccf8cdf8dbdbef76184c331f96a8ba531fec14da25923e8073ac1356e05309ac303361df",
+      "publicKeyCompressed": "03d3546dedaa8ecc70d3382b9eb5df2074e4b1e8a61bd4f217c36386f1ccf8cdf8",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "009d05f09ffc104eb07f4d52ffa285ad1bea383f70dfe8830458f81331c338ea12",
+        "s": "00c2edb152683f32a2ed577d3b2c36ad8b583f9e13b81e1557e82e9669a1fa0423",
+        "id": 0
+      },
+      "comment": "R: u1=2 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 198,
+      "publicKeyUncompressed": "04636c6da6e35077bd21460f2588a24ffd849dd1aebbda6ba26fd47c8126ddd4e68594c035a5ab15ff68ad86b1e1800c89af6536776908c09d2f7824f9b2bab184",
+      "publicKeyCompressed": "02636c6da6e35077bd21460f2588a24ffd849dd1aebbda6ba26fd47c8126ddd4e6",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "10d6410ebff86d27bac87ee9532d871a3013637ff179850b556c070842dbe7c6",
+        "s": "41b58f24694b1875338c6bdbf7eb5e1d30968d36341fdbc07553e1d5fddd95f8",
+        "id": 0
+      },
+      "comment": "R: u1=3 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 199,
+      "publicKeyUncompressed": "04867a52ab5d834ca73ee5223bfd22ffdbc046a3e943c55f8a2a31c9a5a8dd134615d97b3c8b500fed4de3d398f11cdc2773e14a4038231a98bade3bc1b7dec599",
+      "publicKeyCompressed": "03867a52ab5d834ca73ee5223bfd22ffdbc046a3e943c55f8a2a31c9a5a8dd1346",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "6e302d509c7a101aa91be9f50681c9a0fc6e23648ed5e48ebe7193709b838f32",
+        "s": "00f9d9e4b803a3ce78bf1f29e019fea091fafee0953a2ba77524e8fee5a195288f",
+        "id": 0
+      },
+      "comment": "R: u=-2 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 200,
+      "publicKeyUncompressed": "0423860319bf6083c6aac7bd4b3a20871c37d6912ae0191921cc6d3759132fe89581e0c5b8ca436dc19560704de3b1231bdaf2f6db486cb2c81872442db1effbd9",
+      "publicKeyCompressed": "0323860319bf6083c6aac7bd4b3a20871c37d6912ae0191921cc6d3759132fe895",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "009b085c23103e9ee43f9a63dd7fc0964cc19b4433ecba1838aba6db3a4ae2ea12",
+        "s": "3a0b97f06fa01b380e9e6c2b4a2423c785e6c9dc97f5c8e12b10d6b487b50436",
+        "id": 0
+      },
+      "comment": "R: u=0 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 201,
+      "publicKeyUncompressed": "0494975cce6418444e3098011c4bf2add2173a3ff77e5ba1c05bb0978899fa7c1f70cdca5b96f7c4e50b655d034a44b1e9cbc351f262fb8c0b4dc3ec3294a66892",
+      "publicKeyCompressed": "0294975cce6418444e3098011c4bf2add2173a3ff77e5ba1c05bb0978899fa7c1f",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4cc5d73de553bb661b4bcf7c2765dda32bd658ff38a1c16d51c75f294769695a",
+        "s": "1f987afa3181211cb3c28bdec1e379761e055ab43fed42723a43949addf0ca69",
+        "id": 0
+      },
+      "comment": "R: v**2=1 for m=7 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 202,
+      "publicKeyUncompressed": "0489e77d2ea09abee020707291f2b0bf422dbe530bc100fffe380cf5c3f8978ec92f1c7eeb45726f5b4ff65f41bd2a62ad6da4226048902a3ee94df4958877a356",
+      "publicKeyCompressed": "0289e77d2ea09abee020707291f2b0bf422dbe530bc100fffe380cf5c3f8978ec9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "41e9d4cfa8efe80b895a8cbcce2568e251db7ecdfd20a7ad710d4a4bf2addc6b",
+        "s": "4896d37000e999af0c6a3df02b9ea654eb3236bd23b5eb3884c5bf743215e855",
+        "id": 0
+      },
+      "comment": "R: x2=0 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 203,
+      "publicKeyUncompressed": "048945fd1223b5fe90c85df6ec76deabde84f9f4e54e5be5c6b98d197de5b917f6d7fda139914754038d833663d558cc3e9c8ed42fc60e6e993116c49a5f39a001",
+      "publicKeyCompressed": "038945fd1223b5fe90c85df6ec76deabde84f9f4e54e5be5c6b98d197de5b917f6",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ec88507f0b351dbcd74bbb91362873511204eb9e2b2675c3a137f96b1584aae3",
+        "s": "00b021645eecf531d0712632a60bc7acb6dddcc6fbf33aac3352cc84c3d1fe34a6",
+        "id": 0
+      },
+      "comment": "R: y2=-1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 204,
+      "publicKeyUncompressed": "041c1b46a975aa9c6cd7b609110aa1d0617ff13c2f14b36ff1972ef1825fc9a810bde996f4b599b095db05c0ba0afa4bb1fee431e6fd914391e2fbf2c097849d3e",
+      "publicKeyCompressed": "021c1b46a975aa9c6cd7b609110aa1d0617ff13c2f14b36ff1972ef1825fc9a810",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ef3eb0332fb3908126a4a56e59f875a38d4c62b28a05ab689f4c89df1192483f",
+        "s": "3a4be5ae82ef14e3cb7f328a25fd155f1effe3145d5eb6db46cee7a9afe0ced1",
+        "id": 0
+      },
+      "comment": "R: b=-3 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 205,
+      "publicKeyUncompressed": "0447ceec14256d20be12e00c94c9a7a569e3506968e2f804d08a775e5a0a8dec272244028018d51450b2fd78f5668c42a29665bf9190451a77f585a47b58021edc",
+      "publicKeyCompressed": "0247ceec14256d20be12e00c94c9a7a569e3506968e2f804d08a775e5a0a8dec27",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0780d995655a44c061621a6deb166f53fe76230da60ed2658d57e7a91dc90bd9",
+        "s": "0091b2fa586fd39f1b637f8f4c0c290a18fed7d7bc9d6e861390fe22f8aac84571",
+        "id": 0
+      },
+      "comment": "R: b=-1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 206,
+      "publicKeyUncompressed": "0489f40ceeffb06c37a78f992fa9a843728576e6a4e94e8cf0b25a451c7c2efc140fe51583fb0d1b07e6696f0349fb9120bd27b63c5392b30b975656052e3a308b",
+      "publicKeyCompressed": "0389f40ceeffb06c37a78f992fa9a843728576e6a4e94e8cf0b25a451c7c2efc14",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2fe268e46c447ff46a1b7a9a17dbba8c846cccf97459e8b47d8c44038ad018fb",
+        "s": "36931168035342a05ffcd9d278f4b283f514e5ea155377984e4bb9e7cdc2f0cd",
+        "id": 0
+      },
+      "comment": "R: b=1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 207,
+      "publicKeyUncompressed": "04350c6755018e027902f44cb59360c619b19aad0e0ee865ef9e5eb70af2a205abbcc3d17cdcb65de90cbcb0a317263c351e030c238ecc80a2bc846d034c586351",
+      "publicKeyCompressed": "03350c6755018e027902f44cb59360c619b19aad0e0ee865ef9e5eb70af2a205ab",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "7cc049629717da3873fcc837d172f7a31bd617e235f2ef30016bf2b7e3dd394a",
+        "s": "386a7ca10b24688b5de9c2c1af17a8226b58e9d6426b2568ed90bc8420f55c3c",
+        "id": 0
+      },
+      "comment": "R: b=1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 208,
+      "publicKeyUncompressed": "04ddb2e07d089b04edc4fa967b814bb0825b3d3e9e96274964da4d02b0326a8b4ef92e4750ac756ef0cce598eb5b9f94a1bc9c16221102698ccbe9246df7d21f64",
+      "publicKeyCompressed": "02ddb2e07d089b04edc4fa967b814bb0825b3d3e9e96274964da4d02b0326a8b4e",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "5b763276f00a55ea1fe4ec980a4e25f482f23abbbf36928a043ea64cacb327a0",
+        "s": "009e0c399bf2f03b077a3478327960e4eb453b56d94337d7066f827ae8d283ed08",
+        "id": 0
+      },
+      "comment": "R: b=3 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 209,
+      "publicKeyUncompressed": "04637f86dfecda787ad9db64dcba34c381685b2dd46c3230c04efa6a744551956c55e6212a510c2643bc077798b81d6b45fe4004d5512708dc89bbc149b0651163",
+      "publicKeyCompressed": "03637f86dfecda787ad9db64dcba34c381685b2dd46c3230c04efa6a744551956c",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2c40539453ecb592eee5771c8c2b7d3b82f13902ce4f96ae11539c42e45b022a",
+        "s": "00ca1f486f27f30d2fe0a47f90879156ffb334b72006c6234911b0a1ad2fe8fa50",
+        "id": 0
+      },
+      "comment": "R: h=-3 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 210,
+      "publicKeyUncompressed": "04b0223de3cf79e6892918ff8822797dd5987f456e1b62b680d464b1bf35be16901718d2fef5cb6315a04bf00943f1ce54d09559d4f192f35b1eb0fa1720487b4a",
+      "publicKeyCompressed": "02b0223de3cf79e6892918ff8822797dd5987f456e1b62b680d464b1bf35be1690",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00c42d9f9a1ce6062e1c8c61c189f6dc1996856d400055d77c16517edcff401827",
+        "s": "651d6848c6178cc3885213983d40b5c4b38d743d304197b0b6654aa2154c8487",
+        "id": 0
+      },
+      "comment": "R: h=-2 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 211,
+      "publicKeyUncompressed": "049a5d97032f70f9a23ab3dc9f2c5fb7b174a81223c175478833a57a8e717f81c99e01ca8cd66affb336ec222827e10bf43ab44dc8f04a5ff5211a5c5bf95360f7",
+      "publicKeyCompressed": "039a5d97032f70f9a23ab3dc9f2c5fb7b174a81223c175478833a57a8e717f81c9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "13744b5595ef9b31162372bb090f5db8be2abe8fc928f0fa3ce3d941c6a129e7",
+        "s": "00acad9e6f77954796d546a92e6a0e4b50993e9b589f2bb3897dfbce7ef3c216e5",
+        "id": 0
+      },
+      "comment": "R: h=-2 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 212,
+      "publicKeyUncompressed": "040ac507a54b40a2988429d487767cc234ca740dbc9e8040bd4716fb8a2729ae7d26a5220abd5f25b985a3e36ead45d53dc6beab1939e5c46f7507c6cbbfeebaf5",
+      "publicKeyCompressed": "030ac507a54b40a2988429d487767cc234ca740dbc9e8040bd4716fb8a2729ae7d",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "36fef0ce5d5d6306831eecf4db8e8c56dc19753e3b65940d4f009d5e63b82383",
+        "s": "00aba658141388edd2e6e7014e20be8410d82bb910106f10dab1c632c1c7c339de",
+        "id": 0
+      },
+      "comment": "R: h=-2 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 213,
+      "publicKeyUncompressed": "04a0f957a8aab21fc9c08e7bd7b05c4b1ede808aeeb4d719654e8e5ede8052af57198c0b9b857c62bbca466f88bd8912fa51d29ebf949112474a07ae5a1af218b1",
+      "publicKeyCompressed": "03a0f957a8aab21fc9c08e7bd7b05c4b1ede808aeeb4d719654e8e5ede8052af57",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "46b463e34ba3a0b488beaf00c6309d5d913e4dae395e9fae9a2356ed0a3bb86e",
+        "s": "1a4d0bc98b1b0cff4220c5eca1315af9a1d8c9a9c8334c0b0756976d833469a4",
+        "id": 0
+      },
+      "comment": "R: h=1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 214,
+      "publicKeyUncompressed": "040943deb0379e7f3b94c9e70a0bb55175b9834e462068c933101c13f61889f8df6f16cb1c3b61dd3c51aef179630b176c625f0c8bb12bcc5ac28f8ade38da54ac",
+      "publicKeyCompressed": "020943deb0379e7f3b94c9e70a0bb55175b9834e462068c933101c13f61889f8df",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "7a7c383d359af0d14b69c0de89bc141cf88be73adb6de70da0ac0fe398df86ff",
+        "s": "4f147b7e41a30ae8fbf14094f8eefcfbf9edf0660df0fa9aa561b3d3a0337599",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 215,
+      "publicKeyUncompressed": "04863f0e0036ea66933a98f1a4523e79bfc8d7fc759a0cff3913b58e25234633a195703ba32bd796f8f54e99b4b67ffa37e113415e4015a834f0c1ade09c25cfea",
+      "publicKeyCompressed": "02863f0e0036ea66933a98f1a4523e79bfc8d7fc759a0cff3913b58e25234633a1",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a3dfd954239db2c932df89c4031edd3df7ab10ba5069d4024575c76b05f45e09",
+        "s": "33da03c04fb3c4c572ebc3d3de5ea6c790efc805d62886a5087329ceacf14f09",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 216,
+      "publicKeyUncompressed": "04c125101d39f5c62deeff8e012743dbd3beec6f8ab219fbd4babf879febb4879428b441974cde95aa36f29b1a7ad72f813ed97967098abf11020635ecbe8ea5e7",
+      "publicKeyCompressed": "03c125101d39f5c62deeff8e012743dbd3beec6f8ab219fbd4babf879febb48794",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ead6f954fe239dea0a2beb666bdf157f3f70e08fb268cb51fe68053338b9393f",
+        "s": "50248d93e7cc97ff0f9ed5ae9d591a472987752fcbdfd94ab8fbbfea966068bb",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=8 in scalar mult with projective coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 217,
+      "publicKeyUncompressed": "0470de838fe172280fb4aa727e6a473d2cc00337156588eff066abc7d045a0b4c29ecbb64deb5327c00adf10070b0a0f6af460dfa2e557b60c83a82b3f4eda3854",
+      "publicKeyCompressed": "0270de838fe172280fb4aa727e6a473d2cc00337156588eff066abc7d045a0b4c2",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "6ec0381227a54a91841a0b753a89e332d7117b4f70ab3562881808ae73f3493a",
+        "s": "08119211e4d03e34c0e1948dc13f631cccd38c4abab07d7846af13dc483392a2",
+        "id": 0
+      },
+      "comment": "R: x3=-3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 218,
+      "publicKeyUncompressed": "0416c92c7e2ec23cf1f771b6f080608e12d01d0598e7bffa7d9cb9fc6e556460aa58435c6dcf8186102fc8d386dabd561c6de8e6210f4a829a93f1cbf2a56c221f",
+      "publicKeyCompressed": "0316c92c7e2ec23cf1f771b6f080608e12d01d0598e7bffa7d9cb9fc6e556460aa",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "1da05b38dbaf1d74d3e30c322e70168850ccedb36ee765cc15874480e4d66ef2",
+        "s": "00f99dc25bf10dbd52378a00147087e29dffe36d2fe3700335cc960f9e02677d9a",
+        "id": 0
+      },
+      "comment": "R: x3=-2 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 219,
+      "publicKeyUncompressed": "0478a69fbeb201539c11840ea0eec202bb24aeb8b193d816005ec731c3f01c5981ab79d8893c61b680aef3326c149373f00f044bf0400d6f62428e63c7ffa373be",
+      "publicKeyCompressed": "0278a69fbeb201539c11840ea0eec202bb24aeb8b193d816005ec731c3f01c5981",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "66fd79ea023c047c3d6163406cb8fe2e1482ae34e2197d31c929c46867ff8ee4",
+        "s": "26da55f3afb8b05889f622a7e19e7d436e48a1370594d95f2efd14aedb82817e",
+        "id": 0
+      },
+      "comment": "R: x3=0 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 220,
+      "publicKeyUncompressed": "044fb971b4fb4de453032f152db0fa0891c0d313f41bd8f970bcb596c21060da37475d2bf7741bcfcac7fa01e24323e411d68542be2fdc049bc9f16edd47205d75",
+      "publicKeyCompressed": "034fb971b4fb4de453032f152db0fa0891c0d313f41bd8f970bcb596c21060da37",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0c3508b28c914471f770529e922dd35bc450316d9065d616ad9f00f3cca04c37",
+        "s": "009979f65049cddb76ff672f888f20bee8bd7b34d202b5f967f34f0cfb604c8cf3",
+        "id": 0
+      },
+      "comment": "R: x3=1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 221,
+      "publicKeyUncompressed": "04dc45b72be2412854823ee5bd32af9d85bc0bc737a9181c2563098e7aa349475344b62b1d0583089de79150c0a5125ec8e32dc92da3ede5c7841f01b5f605474b",
+      "publicKeyCompressed": "03dc45b72be2412854823ee5bd32af9d85bc0bc737a9181c2563098e7aa3494753",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00c3d6fc07d2b7fd08882721dfafdcff50909b48fbbed447ae1aa4ee69ff83d53f",
+        "s": "00876bbab08bb284a3bf1222fdf643ccd1fc2a19ed728aa4c4e28f652e9e28fd25",
+        "id": 0
+      },
+      "comment": "R: x3=2 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 222,
+      "publicKeyUncompressed": "049c80b15d1a2ec78fea394fbdcb1d68f209e9078f2f8088fc165493915358e4fb2c43141e501ec32952161de315f25e16317210b02b196146456e7efd1327894e",
+      "publicKeyCompressed": "029c80b15d1a2ec78fea394fbdcb1d68f209e9078f2f8088fc165493915358e4fb",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "008d8bcd78685b7052718b099d76717b50bd78412d07c84b738144537c53fdda62",
+        "s": "00e470883fc186dc0c3b6ca668c2fea22ee6375b38d87b65ea9121783abd31c480",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 223,
+      "publicKeyUncompressed": "04f45dbd753ad5ac0cc75bb3436d0cb2d11b076eb22ea30316ef51429a3279421f2a2c395d221eece1a827f4ff71674f9b09048d92a4adf176117641cd26d68a17",
+      "publicKeyCompressed": "03f45dbd753ad5ac0cc75bb3436d0cb2d11b076eb22ea30316ef51429a3279421f",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "2f89f84909c72cbe94fd2bfe82c0120a3555697f55ac8fe68c21b1ae4e180554",
+        "s": "00f29af8db917f6abc52ab289bdf0bda62ae4f49b99ef90373631882c1765d4a88",
+        "id": 0
+      },
+      "comment": "R: z3=-1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 224,
+      "publicKeyUncompressed": "048e420fd8995c1e86f73faf70cccb6981fb6260a8d72606be293e3fc45e7a3d74b8f0882b3840deadbfd0ff69946cbe3207ccb605bf4db0c3dd79154174c4c657",
+      "publicKeyCompressed": "038e420fd8995c1e86f73faf70cccb6981fb6260a8d72606be293e3fc45e7a3d74",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00cc7bf7ad32379c41b7b28a4993df8668502d7514c4f6e54ff61e66d2e7c25b",
+        "s": "44d6d5594c39f9693b955ea95b1e08075fbfd87bf699f8d3379391ada34b9c32",
+        "id": 0
+      },
+      "comment": "R: z3=1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 225,
+      "publicKeyUncompressed": "04de907ea2aceac4618ab2a3f88c890f080a654ea22e9c5e096e4e6d555e0d45b62328222d4e5b0a2c44fd75cb367dd7934fe8313ea4b6d8945f5d8b0c90d78ab4",
+      "publicKeyCompressed": "02de907ea2aceac4618ab2a3f88c890f080a654ea22e9c5e096e4e6d555e0d45b6",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4001af78648bb4cc6c8f895fd66f67fdada7320c26ade81b6c3d61d48c83f532",
+        "s": "4e270d146bbc73618fa7ea20a8c2cba1a7c9510c94545bfd91f7281df6195831",
+        "id": 0
+      },
+      "comment": "R: z3=1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 226,
+      "publicKeyUncompressed": "04b1ff5efe9305e65a5ca017d86eaca58b29523e13a05c2569dd13efd55636bfc5671d19030b2a18d0f503ff6a3ef1aa76ae6ef5ae8388f019b274db02afceea10",
+      "publicKeyCompressed": "02b1ff5efe9305e65a5ca017d86eaca58b29523e13a05c2569dd13efd55636bfc5",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a90a1bd0a54cc0d80062f53313b8fdafa89efc15126329dd824d452b80555f95",
+        "s": "0097d7da96061109ebe10396c2c720775754dda141b8905dc702d48fecc36e8838",
+        "id": 0
+      },
+      "comment": "R: u1=-3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 227,
+      "publicKeyUncompressed": "04e8f9d2fd00ad8955ab9247bfd143cb5fe7a50b3ff707488177510881509efa94ebebac117f796a5aabe792f419454f796710c9b695a197878cfa8e9aeaee00f6",
+      "publicKeyCompressed": "02e8f9d2fd00ad8955ab9247bfd143cb5fe7a50b3ff707488177510881509efa94",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e62f13414fa3f975271e020ecb043e1c5430355e63e3cba69440f4941d5060ad",
+        "s": "4d21fbe22a1ca1bb4d9bfc04a5428155c0a2e375002da8196f2066f0a9a49e77",
+        "id": 0
+      },
+      "comment": "R: u1=-3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 228,
+      "publicKeyUncompressed": "0437cc00961e26a5c5d275c955bd51d0b386193fbc118a578f6c14933646a315d57fc802176e6be3193b77675fc0534c1db33224210beede00c92354e231ef457c",
+      "publicKeyCompressed": "0237cc00961e26a5c5d275c955bd51d0b386193fbc118a578f6c14933646a315d5",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00e1f5a8f3524ccc1f31a2bde450187d4f3307376eb109647bc778e15ca646b7a4",
+        "s": "008e90335ae897625082b064d46dcb63cc33feada00d4d7914383c3c7cfa3a8437",
+        "id": 0
+      },
+      "comment": "R: u1=-1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 229,
+      "publicKeyUncompressed": "0441fc2d90cad55f32c03532626994c5b103ddfb6338873d54ff548d93f11472da0f6c9ab1e27efb9c886d77da474c84b662a952cd332870352ceaa6e50fbb0299",
+      "publicKeyCompressed": "0341fc2d90cad55f32c03532626994c5b103ddfb6338873d54ff548d93f11472da",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00caa952ad57d56a21e0d54c35b0cd034256d9cd7bae81246a6cd473c9ba9e0288",
+        "s": "1566f23c6ab34b88968528cb831827a27fe04e9c19e54da0ade8bcb1d28392b7",
+        "id": 0
+      },
+      "comment": "R: u1=1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 230,
+      "publicKeyUncompressed": "04e8b1989b0b6b5eee465593c6f81b37b3396cf51e97217dcb8e8fd85610b20df4932eb04ec99a7185381e30ad968d910099fec37c827d3508edcd5d3d59fa7b4b",
+      "publicKeyCompressed": "03e8b1989b0b6b5eee465593c6f81b37b3396cf51e97217dcb8e8fd85610b20df4",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "0087f9d2f48f029188b12fa3b0f2fc76817fdcc63ce2617723a4b25a544f41e18b",
+        "s": "45f8bfa647740a630894bdd6f8a94728012fda4df73b2276fb3da227cb33ee8f",
+        "id": 0
+      },
+      "comment": "R: u1=3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 231,
+      "publicKeyUncompressed": "047fce31bd3f9b3fb1a842ea17a53baad2352094445a7cf39efc987812ec4b995dca312366f972a01f6bebf5680bf8185621ff50fd028b50e7d1ee7c9da56e29fb",
+      "publicKeyCompressed": "037fce31bd3f9b3fb1a842ea17a53baad2352094445a7cf39efc987812ec4b995d",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "008c4989c84f34517fe93ea1c77a799615ed9dfc194d93cdca258e9b0e14e435a4",
+        "s": "4345fa9f5917c7e61824a14a8319947eb47a95aec1fd88c54e88c2fb855b8780",
+        "id": 0
+      },
+      "comment": "R: u=-3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 232,
+      "publicKeyUncompressed": "047416cb6e9b532938adde612e2f5580a97832d89d881f41fc31c75047f2b3ac152c25a58686b933f74ec031fdae871ba2dac4b885808a4d24e28dd79473ed91ee",
+      "publicKeyCompressed": "027416cb6e9b532938adde612e2f5580a97832d89d881f41fc31c75047f2b3ac15",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "37d85fef8747cb6625c89f090d609f42bdd30cde9d69fecbdea1c21afbec5609",
+        "s": "5568375c18eab0c1bf6f5454de3b7a9abd1a29f8652ab0cdb19cee100c590158",
+        "id": 0
+      },
+      "comment": "R: u=-3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 233,
+      "publicKeyUncompressed": "045844b942cec91c9d6dfa2f97ee3b933bf342437b51c7b2541a035213f1311becd62d024025d47d1e774725c4ee3320e98b412772d413328ba146143320b5e421",
+      "publicKeyCompressed": "035844b942cec91c9d6dfa2f97ee3b933bf342437b51c7b2541a035213f1311bec",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00b9cbbeee86618b5b768176834e6d4a8323b97100024211abcd079df865a6a2d2",
+        "s": "00c0ffe6e67317e49123d8dacac48676255e10c45a00cd5e0e29b1e90694f6eb74",
+        "id": 0
+      },
+      "comment": "R: v**2=-3 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 234,
+      "publicKeyUncompressed": "0493c0b8f22f73a1a27c863f0871d764f77ee5ff0a2a8251b0f0a1c9c32a7a86676b96a4d62db806e7ba37003399664e95bc5231906140c72682934230995cc671",
+      "publicKeyCompressed": "0393c0b8f22f73a1a27c863f0871d764f77ee5ff0a2a8251b0f0a1c9c32a7a8667",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ed66b0a6171288a6df5fd55deb22c10eaeaca9fdb93b5d59956b51987aeb1942",
+        "s": "0b794870361405c0424b06be315d84e3a8f19fe1361b5250cc2e2a99deb8847a",
+        "id": 0
+      },
+      "comment": "R: v**2=1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 235,
+      "publicKeyUncompressed": "046e3b719c523c4cffc2203d34d2e0df31e308e4e6246c970a080b5d1cc020eb87156c8455caeada889c7ac8f8de193d65725e4f4ba937e14ab64193c91e68cb01",
+      "publicKeyCompressed": "036e3b719c523c4cffc2203d34d2e0df31e308e4e6246c970a080b5d1cc020eb87",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00927301ece93ac72c494a5ca120221836d84859b17c67e96d2d9318088e8a9fc2",
+        "s": "0303a8e75fa28ec5a985949a9ad1776452d542503271a687ee2039aafd1bfc72",
+        "id": 0
+      },
+      "comment": "R: v**2=1 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 236,
+      "publicKeyUncompressed": "04291b734bf5f17536dab9dceeb8a345399f747e3d8895d09bc232d03c76bb4fc909d49f36d64cf58a47d194ec905fa16dd61ae4c4395a64b73cb62e6dbbe1200a",
+      "publicKeyCompressed": "02291b734bf5f17536dab9dceeb8a345399f747e3d8895d09bc232d03c76bb4fc9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "7ff6ffbfdc347afbcd0b2d320aac84c0f4ad3f262f47f3e7eb1c65fc340b53b5",
+        "s": "0085cf180404a24e0cef7cedcb311a1e902d1c0562a7825ab8f4b3bad9f75e7245",
+        "id": 0
+      },
+      "comment": "R: v**2=2 for m=9 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 237,
+      "publicKeyUncompressed": "04ae34b2fd61a937d5cfdd8d5db1515414247cbdce3234c9c1ae5caa647459c5f90b106681a3cd83faa06e5b309fb0cec5331878ca1b748713a59d2d8387bdae86",
+      "publicKeyCompressed": "02ae34b2fd61a937d5cfdd8d5db1515414247cbdce3234c9c1ae5caa647459c5f9",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00df302c7721144e7d4a6a06dfbd5f06d63ac7d3610c6170c0b35824aef84be24f",
+        "s": "0c05659c1d4ef90ee726cee55fdf933b5e7939733043ccf685089ffed959a073",
+        "id": 0
+      },
+      "comment": "R: x2=0 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 238,
+      "publicKeyUncompressed": "047d72e9375e95326a338b0f175956879c181f8b31ae600c9627e68005167d92cc8db65f76976673e506f709df937d138cbc3b46f3d18b2fd97206c595e037e822",
+      "publicKeyCompressed": "027d72e9375e95326a338b0f175956879c181f8b31ae600c9627e68005167d92cc",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00810cc9530b007654b603dc10dc6bc707b0d3c827bb838175c38f1be2dc0e1c49",
+        "s": "08531eddc074009066bd3b90047d8551d70ead992fa13454a1f999d8a50b678e",
+        "id": 0
+      },
+      "comment": "R: y2=-2 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 239,
+      "publicKeyUncompressed": "048cd900f1432461b0bad3883603fc0cfd51f92e759bcd722651ac8cdddc1cfe790d9bc78b22c351d0b1ee4bef048c669e3d1792af1fb9f074dda9c19eda222886",
+      "publicKeyCompressed": "028cd900f1432461b0bad3883603fc0cfd51f92e759bcd722651ac8cdddc1cfe79",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a655cedd14387c223a3a766e5648e7d917c1b51892317c6231b869efd11aed86",
+        "s": "00a31c8eec009d1e57f5964354f7343a02214a8f004d3f4355ba4034615913a2ed",
+        "id": 0
+      },
+      "comment": "R: y2=3 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 240,
+      "publicKeyUncompressed": "040c8b3c05cdff3a6fe784bb55770e4a85fd1509960b70a3435f27f2381396673e8e97de89407f22f253bf9cafe0752651cd7bfa76b6b88916fea69862154f5e89",
+      "publicKeyCompressed": "030c8b3c05cdff3a6fe784bb55770e4a85fd1509960b70a3435f27f2381396673e",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00c6ec18ec85ec79926b1d630f301d1a08ace807cbbbb6b1e74f66a4e34b3c79f9",
+        "s": "4f9c2480129b419ff4dcbe90a4f518796c8d4e69f0b1f5c608dbb886019e9ac4",
+        "id": 0
+      },
+      "comment": "R: y2=3 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 241,
+      "publicKeyUncompressed": "0468f52cee55d8fc4a46a75befe9db6e4ac2d0b61fc4e869fbbddfbf9c2a88d9a0025013c614cefb5241202737256deb6e5bb88c794e228e0001fb32a92bb65415",
+      "publicKeyCompressed": "0368f52cee55d8fc4a46a75befe9db6e4ac2d0b61fc4e869fbbddfbf9c2a88d9a0",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "4cf2e653839afcd7407d9f807f484a10bb4b2623b57812437126d88f09e33f2c",
+        "s": "76e665d57afa97e20e88240b2ec0d2720ef2875a86450ffd814297de2af55ea3",
+        "id": 0
+      },
+      "comment": "R: w=1 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 242,
+      "publicKeyUncompressed": "047d00cf88234c426b4835df20b6790735ccdff004a5c6ed55fe97ac0c9834399ade36b311eac69a954722b96bee92f531b83ae048277e7c6f1b53ee25e364ca7c",
+      "publicKeyCompressed": "027d00cf88234c426b4835df20b6790735ccdff004a5c6ed55fe97ac0c9834399a",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00dc76e5f5bd796d75523d87449b10ebc5961522cabf56fc66b4b9b9d448747fd3",
+        "s": "009b7687f94300cde6df9b8a83277a75d981751cbf65fded90d9dba90b29ecc614",
+        "id": 0
+      },
+      "comment": "R: w=3 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 243,
+      "publicKeyUncompressed": "04651c2f2f95d9b00ee39bf8fe9f261a9005877d6bdaf0462832490f53746df88bd0e11f367915414bfb42037eb7dbc480dbc5322f9b31d4ca95a14fecc44347c0",
+      "publicKeyCompressed": "02651c2f2f95d9b00ee39bf8fe9f261a9005877d6bdaf0462832490f53746df88b",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00a933b332f3805199e1ceb439e3ecdacfe9bc916851a636e54159e97f21f41ead",
+        "s": "0093ec50c35ee1a05460d2c52c43035eee7c3001ded0858d4d8d17a416586011a0",
+        "id": 0
+      },
+      "comment": "R: b=-1 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 244,
+      "publicKeyUncompressed": "040e2908dae4d07e2a977014404b690d465b93ce8021abaa3595ed56d73ea7575729558dde019d195d3c152ac8331e2dfe0d75f6f3b94645175c3b1f77ad14c31e",
+      "publicKeyCompressed": "020e2908dae4d07e2a977014404b690d465b93ce8021abaa3595ed56d73ea75757",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "51aa95a3108b9f9bfcf07788e9bc3a95e4be465e8d175dc635158dd983fc6086",
+        "s": "5457a08194ce8369acd555b8e7288fe56c3579f30c250b771d80d4b6eda139d5",
+        "id": 0
+      },
+      "comment": "R: h=-2 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 245,
+      "publicKeyUncompressed": "046e8006f1096e78dc1912802e73bd8ef733443d45d9c1a809f68a9f6c138e8958a75821c148a46c1df6953e184e5fbbd9361504109a1c90c5a8d967e9d95078f4",
+      "publicKeyCompressed": "026e8006f1096e78dc1912802e73bd8ef733443d45d9c1a809f68a9f6c138e8958",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00ff219ff783c3ea55256663273a5ae39135895cfca3b6771d645977eb779798bd",
+        "s": "0e27004def07d5b9bc061c36a5af8356e6433182e732c7a9ae356451ece2f446",
+        "id": 0
+      },
+      "comment": "R: h=1 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 246,
+      "publicKeyUncompressed": "04c7d94ad71aef9c21e849b30b0be8a472e80861448ef0b9600c749d6d5ea6a2db45616e01fdd2a4dab0f56f0ee081c32133e4e17a7cca24c902131d521c1bd3f1",
+      "publicKeyCompressed": "03c7d94ad71aef9c21e849b30b0be8a472e80861448ef0b9600c749d6d5ea6a2db",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "30d33d47c71ac31f1a3a0801c96d35046fa3bce782d3fff0fa1165fc5955dd7b",
+        "s": "00f30c3b5bef2a3cee3853275941d6cf25e1f7478c62caea737352cbf2b0c19f99",
+        "id": 0
+      },
+      "comment": "R: s**2=1 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    },
+    {
+      "tcId": 247,
+      "publicKeyUncompressed": "0447079cd0f557f08b5ba52e7e00d1dd3fa8441d69af0d80da44ce9e42dfad18eb9a7b4503f45500a521618626f9fe8d879d16c92e87750bc17293203a45d9fac7",
+      "publicKeyCompressed": "0347079cd0f557f08b5ba52e7e00d1dd3fa8441d69af0d80da44ce9e42dfad18eb",
+      "msg": "68656c6c6f",
+      "sig": {
+        "r": "00b270df208af53772ddaf632480405eaac58f0cbdbfaf3dc58b9ce8aaf8015f79",
+        "s": "00ed43a0c84cbabce3d7b6bd7f8b1049c7a2d716dbf02b3ede079713cf3e8d2b37",
+        "id": 0
+      },
+      "comment": "R: s**2=2 for m=10 in scalar mult with Jacobian coordinates",
+      "valid": true,
+      "flags": ["edge_case_R"]
+    }
+  ]
+}
