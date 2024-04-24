@@ -209,7 +209,11 @@ impl Serialize for HexBinary {
     where
         S: ser::Serializer,
     {
-        serializer.serialize_str(&self.to_hex())
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_hex())
+        } else {
+            panic!("HexBinary is only intended to be used with JSON serialization for now")
+        }
     }
 }
 
@@ -219,7 +223,11 @@ impl<'de> Deserialize<'de> for HexBinary {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(HexVisitor)
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_str(HexVisitor)
+        } else {
+            panic!("HexBinary is only intended to be used with JSON serialization for now")
+        }
     }
 }
 
