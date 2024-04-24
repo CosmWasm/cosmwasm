@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Fix CWA-2024-002
+
 ### Added
 
 - cosmwasm-vm: Add `secp256r1_verify` and `secp256r1_recover_pubkey` imports for
