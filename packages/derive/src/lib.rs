@@ -120,9 +120,9 @@ pub fn entry_point(
 }
 
 fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
-    let mut attributes = std::mem::take(&mut func.attrs);
+    let attributes = std::mem::take(&mut func.attrs);
     let mut stream = TokenStream::new();
-    while let Some(attribute) = attributes.pop() {
+    for attribute in attributes {
         if !attribute.path().is_ident("set_contract_state_version") {
             func.attrs.push(attribute);
             continue;
@@ -130,7 +130,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
 
         if func.sig.ident != "migrate" {
             return Err(syn::Error::new_spanned(
-                &func.sig.ident,
+                &attribute,
                 "you only want to add this macro to your migrate function",
             ));
         }
