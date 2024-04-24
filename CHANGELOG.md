@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.2] - 2024-04-24
+
+### Fixed
+
+- cosmwasm-std: Fix CWA-2024-002
+
 ### Added
 
 - cosmwasm-std: Implement `&T + T` and `&T op &T` for `Uint64`, `Uint128`,
@@ -785,7 +791,8 @@ and this project adheres to
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.2...HEAD
+[2.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.1...v1.5.0
