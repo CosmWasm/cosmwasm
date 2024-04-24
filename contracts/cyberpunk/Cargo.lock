@@ -229,7 +229,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "digest 0.10.7",
  "ed25519-zebra",
@@ -240,14 +240,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "syn 1.0.109",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -258,7 +258,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -267,7 +267,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "base64 0.21.2",
  "bech32",
@@ -287,7 +287,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "bech32",
  "bitflags 1.2.1",
