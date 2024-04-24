@@ -64,17 +64,14 @@ mod hashers {
 
 #[test]
 fn rootberg_ecdsa_secp256k1_sha256() {
-    let mut tested = 0;
     let File { num_tests, tests } = read_file(SECP256K1_SHA256);
+    assert_eq!(num_tests, tests.len(), "Invalid number of tests");
     assert!(num_tests >= 423, "Got unexpected number of tests");
 
     for test in tests {
         assert_eq!(test.pubkey.len(), 65);
 
-        tested += 1;
-
-        assert_eq!(test.tc_id as usize, tested);
-        eprintln!("Test case ID: {}", test.tc_id);
+        // eprintln!("Test case ID: {}", test.tc_id);
         let message_hash = hashers::sha256(&test.msg);
 
         let signature = combine_signature(&test.sig);
@@ -94,22 +91,18 @@ fn rootberg_ecdsa_secp256k1_sha256() {
             assert_eq!(recovered, test.pubkey);
         }
     }
-    assert_eq!(tested, num_tests);
 }
 
 #[test]
 fn rootberg_ecdsa_secp256k1_keccak256() {
-    let mut tested = 0;
     let File { num_tests, tests } = read_file(SECP256K1_KECCAK256);
+    assert_eq!(num_tests, tests.len(), "Invalid number of tests");
     assert!(num_tests >= 263, "Got unexpected number of tests");
 
     for test in tests {
         assert_eq!(test.pubkey.len(), 65);
 
-        tested += 1;
-
-        assert_eq!(test.tc_id as usize, tested);
-        eprintln!("Test case ID: {}", test.tc_id);
+        // eprintln!("Test case ID: {}", test.tc_id);
         let message_hash = hashers::keccak_256(&test.msg);
 
         let signature = combine_signature(&test.sig);
@@ -129,7 +122,6 @@ fn rootberg_ecdsa_secp256k1_keccak256() {
             assert_eq!(recovered, test.pubkey);
         }
     }
-    assert_eq!(tested, num_tests);
 }
 
 fn combine_signature(sig: &Sig) -> Vec<u8> {
