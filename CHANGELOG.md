@@ -52,6 +52,8 @@ and this project adheres to
 - cosmwasm-schema: `#[cw_serde]` now doesn't add `#[serde(deny_unknown_fields)]`
   to the expanded code anymore ([#2080])
 - cosmwasm-std: Improve performance of `Uint{64,128,256,512}::isqrt` ([#2108])
+- cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`,
+  `Checksum` ([#2125])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
@@ -60,6 +62,7 @@ and this project adheres to
 [#2070]: https://github.com/CosmWasm/cosmwasm/pull/2070
 [#2080]: https://github.com/CosmWasm/cosmwasm/pull/2080
 [#2108]: https://github.com/CosmWasm/cosmwasm/pull/2108
+[#2125]: https://github.com/CosmWasm/cosmwasm/pull/2125
 
 ## [2.0.1] - 2024-04-03
 
