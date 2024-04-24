@@ -1,80 +1,16 @@
 #![allow(clippy::single_match)]
 
 use cosmwasm_crypto::{secp256r1_recover_pubkey, secp256r1_verify};
-use serde::Deserialize;
+use wycheproof::*;
+
+mod wycheproof;
+mod hashers;
 
 // See ./testdata/wycheproof/README.md for how to get/update those files
 const SECP256R1_SHA256: &str = "./testdata/wycheproof/ecdsa_secp256r1_sha256_test.json";
 const SECP256R1_SHA512: &str = "./testdata/wycheproof/ecdsa_secp256r1_sha512_test.json";
 const SECP256R1_SHA3_256: &str = "./testdata/wycheproof/ecdsa_secp256r1_sha3_256_test.json";
 const SECP256R1_SHA3_512: &str = "./testdata/wycheproof/ecdsa_secp256r1_sha3_512_test.json";
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct File {
-    number_of_tests: usize,
-    test_groups: Vec<TestGroup>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct TestGroup {
-    public_key: Key,
-    tests: Vec<TestCase>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct Key {
-    uncompressed: String,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct TestCase {
-    tc_id: u32,
-    comment: String,
-    msg: String,
-    sig: String,
-    // "acceptable", "valid" or "invalid"
-    result: String,
-}
-
-fn read_file(path: &str) -> File {
-    use std::fs::File;
-    use std::io::BufReader;
-
-    // Open the file in read-only mode with buffer.
-    let file = File::open(path).unwrap();
-    let reader = BufReader::new(file);
-
-    serde_json::from_reader(reader).unwrap()
-}
-
-mod hashers {
-    use sha2::{Digest, Sha256, Sha512};
-    use sha3::{Sha3_256, Sha3_512};
-
-    pub fn sha256(data: &[u8]) -> [u8; 32] {
-        Sha256::digest(data).into()
-    }
-
-    // ecdsa_secp256r1_sha512 requires truncating to 32 bytes
-    pub fn sha512(data: &[u8]) -> [u8; 32] {
-        let hash = Sha512::digest(data).to_vec();
-        hash[..32].try_into().unwrap()
-    }
-
-    pub fn sha3_256(data: &[u8]) -> [u8; 32] {
-        Sha3_256::digest(data).into()
-    }
-
-    // ecdsa_secp256r1_sha3_512 requires truncating to 32 bytes
-    pub fn sha3_512(data: &[u8]) -> [u8; 32] {
-        let hash = Sha3_512::digest(data).to_vec();
-        hash[..32].try_into().unwrap()
-    }
-}
 
 #[test]
 fn ecdsa_secp256r1_sha256() {
