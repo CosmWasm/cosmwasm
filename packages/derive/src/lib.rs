@@ -106,7 +106,7 @@ impl Parse for Options {
 /// #
 /// # type MigrateMsg = ();
 /// #[entry_point]
-/// #[set_contract_state_version(version = 2)]
+/// #[set_contract_state_version(2)]
 /// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
 ///     todo!();
 /// }
@@ -135,27 +135,19 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
             ));
         }
 
-        attribute.parse_nested_meta(|meta| {
-            if !meta.path.is_ident("version") {
-                return Err(meta.error("unexpected attribute"));
-            }
+        let version: syn::LitInt = attribute.parse_args()?;
+        let version = version.base10_digits();
 
-            let version: syn::LitInt = meta.value()?.parse()?;
-            let version = version.base10_digits();
+        stream = quote! {
+            #stream
 
-            stream = quote! {
-                #stream
-
-                #[allow(unused)]
-                #[doc(hidden)]
-                #[link_section = "cw_contract_state_version"]
-                /// This is an internal constant exported as a custom section denoting the contract state version.
-                /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-                static __CW_CONTRACT_STATE_VERSION: &str = #version;
-            };
-
-            Ok(())
-        })?;
+            #[allow(unused)]
+            #[doc(hidden)]
+            #[link_section = "cw_contract_state_version"]
+            /// This is an internal constant exported as a custom section denoting the contract state version.
+            /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+            static __CW_CONTRACT_STATE_VERSION: &str = #version;
+        };
     }
 
     Ok(stream)
@@ -201,7 +193,7 @@ mod test {
     #[test]
     fn contract_state_version_expansion() {
         let code = quote! {
-            #[set_contract_state_version(version = 2)]
+            #[set_contract_state_version(2)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
             }
