@@ -3,8 +3,8 @@
 use cosmwasm_crypto::{secp256r1_recover_pubkey, secp256r1_verify};
 use wycheproof::*;
 
-mod wycheproof;
 mod hashers;
+mod wycheproof;
 
 // See ./testdata/wycheproof/README.md for how to get/update those files
 const SECP256R1_SHA256: &str = "./testdata/wycheproof/ecdsa_secp256r1_sha256_test.json";
