@@ -74,7 +74,7 @@ impl Serialize for Checksum {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_hex())
         } else {
-            panic!("Checksum is only intended to be used with JSON serialization for now")
+            panic!("Checksum is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
         }
     }
 }
@@ -88,7 +88,7 @@ impl<'de> Deserialize<'de> for Checksum {
         if deserializer.is_human_readable() {
             deserializer.deserialize_str(ChecksumVisitor)
         } else {
-            panic!("Checksum is only intended to be used with JSON serialization for now")
+            panic!("Checksum is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
         }
     }
 }
