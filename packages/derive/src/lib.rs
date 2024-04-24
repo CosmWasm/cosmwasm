@@ -143,10 +143,10 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
 
             #[allow(unused)]
             #[doc(hidden)]
-            #[link_section = "cw_contract_state_version"]
+            #[link_section = "cw_state_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_CONTRACT_STATE_VERSION: &str = #version;
+            static __CW_STATE_VERSION: &str = #version;
         };
     }
 
@@ -203,10 +203,10 @@ mod test {
         let expected = quote! {
             #[allow(unused)]
             #[doc(hidden)]
-            #[link_section = "cw_contract_state_version"]
+            #[link_section = "cw_state_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_CONTRACT_STATE_VERSION: &str = "2";
+            static __CW_STATE_VERSION: &str = "2";
 
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
