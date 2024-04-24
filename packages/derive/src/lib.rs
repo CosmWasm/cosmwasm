@@ -106,7 +106,7 @@ impl Parse for Options {
 /// #
 /// # type MigrateMsg = ();
 /// #[entry_point]
-/// #[set_contract_state_version(2)]
+/// #[set_state_version(2)]
 /// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
 ///     todo!();
 /// }
@@ -123,7 +123,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
     let attributes = std::mem::take(&mut func.attrs);
     let mut stream = TokenStream::new();
     for attribute in attributes {
-        if !attribute.path().is_ident("set_contract_state_version") {
+        if !attribute.path().is_ident("set_state_version") {
             func.attrs.push(attribute);
             continue;
         }
@@ -193,7 +193,7 @@ mod test {
     #[test]
     fn contract_state_version_expansion() {
         let code = quote! {
-            #[set_contract_state_version(2)]
+            #[set_state_version(2)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
             }
