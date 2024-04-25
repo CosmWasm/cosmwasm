@@ -131,7 +131,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
         if func.sig.ident != "migrate" {
             return Err(syn::Error::new_spanned(
                 &attribute,
-                "you only want to add this macro to your migrate function",
+                "you only want to add this attribute to your migrate function",
             ));
         }
 
@@ -191,6 +191,23 @@ mod test {
     use quote::quote;
 
     use crate::entry_point_impl;
+
+    #[test]
+    fn contract_state_version_on_non_migratee() {
+        let code = quote! {
+            #[state_version(42)]
+            fn anything_else() -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = entry_point_impl(TokenStream::new(), code);
+        let expected = quote! {
+            ::core::compile_error! { "you only want to add this attribute to your migrate function" }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
 
     #[test]
     fn contract_state_version_in_u64() {
