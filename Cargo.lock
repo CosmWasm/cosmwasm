@@ -544,6 +544,7 @@ dependencies = [
  "thiserror",
  "time",
  "tracing",
+ "wasm-encoder 0.205.0",
  "wasmer",
  "wasmer-middlewares",
  "wat",
@@ -2492,6 +2493,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm-encoder"
+version = "0.205.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90e95b3563d164f33c1cfb0a7efbd5940c37710019be10cd09f800fdec8b0e5c"
+dependencies = [
+ "leb128",
+]
+
+[[package]]
 name = "wasmer"
 version = "4.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2672,7 +2682,7 @@ dependencies = [
  "leb128",
  "memchr",
  "unicode-width",
- "wasm-encoder",
+ "wasm-encoder 0.27.0",
 ]
 
 [[package]]

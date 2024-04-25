@@ -1,4 +1,4 @@
-use std::{fmt, mem};
+use std::{fmt, mem, str};
 
 use wasmer::wasmparser::{
     BinaryReaderError, CompositeType, Export, FuncToValidate, FunctionBody, Import, MemoryType,
@@ -66,6 +66,8 @@ pub struct ParsedWasm<'a> {
     pub total_func_params: usize,
     /// Collections of functions that are potentially pending validation
     pub func_validator: FunctionValidator<'a>,
+    /// Contract state version as defined in a custom section
+    pub contract_state_version: Option<u64>,
 }
 
 impl<'a> ParsedWasm<'a> {
@@ -108,6 +110,7 @@ impl<'a> ParsedWasm<'a> {
             max_func_results: 0,
             total_func_params: 0,
             func_validator: FunctionValidator::Pending(OpaqueDebug::default()),
+            contract_state_version: None,
         };
 
         for p in Parser::new(0).parse_all(wasm) {
@@ -179,6 +182,17 @@ impl<'a> ParsedWasm<'a> {
                 Payload::ExportSection(e) => {
                     this.exports = e.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
+                Payload::CustomSection(reader) if reader.name() == "cw_state_version" => {
+                    // This is supposed to be valid UTF-8
+                    let raw_version = str::from_utf8(reader.data())
+                        .map_err(|err| VmError::parse_err("str", err))?;
+
+                    this.contract_state_version = Some(
+                        raw_version
+                            .parse()
+                            .map_err(|err| VmError::parse_err("u64", err))?,
+                    );
+                }
                 _ => {} // ignore everything else
             }
         }
@@ -212,5 +226,26 @@ impl<'a> ParsedWasm<'a> {
             FunctionValidator::Success => Ok(()),
             FunctionValidator::Error(ref err) => Err(err.clone().into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::ParsedWasm;
+
+    #[test]
+    fn read_state_version() {
+        let wasm_data =
+            wat::parse_str(r#"( module ( @custom "cw_state_version" "42" ) )"#).unwrap();
+        let parsed = ParsedWasm::parse(&wasm_data).unwrap();
+
+        assert_eq!(parsed.contract_state_version, Some(42));
+    }
+
+    #[test]
+    fn read_state_version_fails() {
+        let wasm_data =
+            wat::parse_str(r#"( module ( @custom "cw_state_version" "not a number" ) )"#).unwrap();
+        assert!(ParsedWasm::parse(&wasm_data).is_err());
     }
 }
