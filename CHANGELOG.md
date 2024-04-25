@@ -29,6 +29,8 @@ and this project adheres to
   `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
 - cosmwasm-std: Add `QuerierWrapper::query_grpc` helper for gRPC queries.
   ([#2120])
+- cosmwasm-derive: Add `state_version` attribute for `migrate` entrypoints
+  ([#2124])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
@@ -40,6 +42,7 @@ and this project adheres to
 [#2099]: https://github.com/CosmWasm/cosmwasm/pull/2099
 [#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
 [#2120]: https://github.com/CosmWasm/cosmwasm/pull/2120
+[#2124]: https://github.com/CosmWasm/cosmwasm/pull/2124
 
 ### Changed
 
