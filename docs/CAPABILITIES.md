@@ -3,7 +3,7 @@
 Capabilities are a mechanism to negotiate functionality between a contract and
 an environment (i.e. the chain that embeds cosmwasm-vm/[wasmvm]) in a very
 primitive way. The contract defines required capabilities. The environment
-defines it's capabilities. If the required capabilities are all available, the
+defines it capabilities. If the required capabilities are all available, the
 contract can be used. Doing this check when the contract is first stored ensures
 missing capabilities are detected early and not when a user tries to execute a
 certain code path.
