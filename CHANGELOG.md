@@ -35,7 +35,7 @@ and this project adheres to
   ([#2120])
 - cosmwasm-derive: Add `state_version` attribute for `migrate` entrypoints
   ([#2124])
-- cosmwasm-vm: Read the state version from WASM modules and return them as part
+- cosmwasm-vm: Read the state version from Wasm modules and return them as part
   of `AnalyzeReport` ([#2129])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
