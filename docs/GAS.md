@@ -1,7 +1,7 @@
 # Gas
 
 Gas is a way to measure computational expense of a smart contract execution,
-including CPU time and storage cost. It's unit is 1, i.e. you can think of it as
+including CPU time and storage cost. Its unit is 1, i.e. you can think of it as
 countable points. Gas consumption is deterministic, so executing the same thing
 costs the same amount of gas across all hardware and operating systems.
 
