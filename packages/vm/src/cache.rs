@@ -124,6 +124,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
 }
 
 #[derive(PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub struct AnalysisReport {
     /// `true` if and only if all [`REQUIRED_IBC_EXPORTS`] exist as exported functions.
     /// This does not guarantee they are functional or even have the correct signatures.
@@ -132,6 +133,8 @@ pub struct AnalysisReport {
     pub entrypoints: BTreeSet<Entrypoint>,
     /// The set of capabilities the contract requires.
     pub required_capabilities: BTreeSet<String>,
+    /// The contract state version exported set by the contract developer
+    pub contract_state_version: Option<u64>,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -320,6 +323,7 @@ where
             required_capabilities: required_capabilities_from_module(&module)
                 .into_iter()
                 .collect(),
+            contract_state_version: module.contract_state_version,
         })
     }
 
@@ -582,8 +586,10 @@ mod tests {
     use crate::capabilities::capabilities_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
+    use std::borrow::Cow;
     use std::fs::{create_dir_all, remove_dir_all};
     use tempfile::TempDir;
+    use wasm_encoder::ComponentSection;
 
     const TESTING_GAS_LIMIT: u64 = 500_000_000; // ~0.5ms
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
@@ -1410,6 +1416,7 @@ mod tests {
                     E::Query
                 ]),
                 required_capabilities: BTreeSet::new(),
+                contract_state_version: None,
             }
         );
 
@@ -1427,6 +1434,7 @@ mod tests {
                     "iterator".to_string(),
                     "stargate".to_string()
                 ]),
+                contract_state_version: None,
             }
         );
 
@@ -1438,6 +1446,26 @@ mod tests {
                 has_ibc_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
+                contract_state_version: None,
+            }
+        );
+
+        let mut wasm_with_version = EMPTY_CONTRACT.to_vec();
+        let custom_section = wasm_encoder::CustomSection {
+            name: Cow::Borrowed("cw_state_version"),
+            data: Cow::Borrowed(b"21"),
+        };
+        custom_section.append_to_component(&mut wasm_with_version);
+
+        let checksum4 = cache.save_wasm(&wasm_with_version).unwrap();
+        let report4 = cache.analyze(&checksum4).unwrap();
+        assert_eq!(
+            report4,
+            AnalysisReport {
+                has_ibc_entry_points: false,
+                entrypoints: BTreeSet::new(),
+                required_capabilities: BTreeSet::from(["iterator".to_string()]),
+                contract_state_version: Some(21),
             }
         );
     }
