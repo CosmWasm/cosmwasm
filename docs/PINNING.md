@@ -40,7 +40,7 @@ At the chain level pinning and unpinning is done via governance proposals. See
 
 When contracts are migrated from one code to another, there is no automatic
 pinning or unpinning. This is primarily since the migration of a single instance
-does not means all instances of the same code become unused. In the future we
+does not mean all instances of the same code become unused. In the future we
 want to provide hit stats for each checksum in order to easily find unused codes
 in the pinned memory cache[^2].
 
