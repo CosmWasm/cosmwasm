@@ -185,12 +185,12 @@ impl<'a> ParsedWasm<'a> {
                 Payload::CustomSection(reader) if reader.name() == "cw_state_version" => {
                     // This is supposed to be valid UTF-8
                     let raw_version = str::from_utf8(reader.data())
-                        .map_err(|err| VmError::parse_err("str", err))?;
+                        .map_err(|err| VmError::static_validation_err(err.to_string()))?;
 
                     this.contract_state_version = Some(
                         raw_version
-                            .parse()
-                            .map_err(|err| VmError::parse_err("u64", err))?,
+                            .parse::<u64>()
+                            .map_err(|err| VmError::static_validation_err(err.to_string()))?,
                     );
                 }
                 _ => {} // ignore everything else

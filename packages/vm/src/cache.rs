@@ -124,6 +124,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
 }
 
 #[derive(PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub struct AnalysisReport {
     /// `true` if and only if all [`REQUIRED_IBC_EXPORTS`] exist as exported functions.
     /// This does not guarantee they are functional or even have the correct signatures.
