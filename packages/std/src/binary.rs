@@ -214,7 +214,11 @@ impl Serialize for Binary {
     where
         S: ser::Serializer,
     {
-        serializer.serialize_str(&self.to_base64())
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_base64())
+        } else {
+            panic!("Binary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+        }
     }
 }
 
@@ -224,7 +228,11 @@ impl<'de> Deserialize<'de> for Binary {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(Base64Visitor)
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_str(Base64Visitor)
+        } else {
+            panic!("Binary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+        }
     }
 }
 

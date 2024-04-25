@@ -30,10 +30,13 @@ and this project adheres to
   afterwards ([#2005])
 - cosmwasm-std: Let `Timestamp::plus_nanos`/`::minus_nanos` use
   `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
+- cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`
+  ([#2127])
 
 [#2005]: https://github.com/CosmWasm/cosmwasm/pull/2005
 [#2098]: https://github.com/CosmWasm/cosmwasm/pull/2098
 [#2107]: https://github.com/CosmWasm/cosmwasm/pull/2107
+[#2127]: https://github.com/CosmWasm/cosmwasm/pull/2127
 
 ## [1.4.3] - 2024-01-18
 
