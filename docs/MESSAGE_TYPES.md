@@ -1,7 +1,7 @@
 ## CosmWasm message types
 
-CosmWasm uses JSON for sending data from the host to the Wasm contract and
-results out of the Wasm contract. Such JSON messages are created in the client,
+CosmWasm uses JSON to send data from the host to the Wasm contract and to handle results from the Wasm contract. 
+Such JSON messages are created in the client,
 typically some JavaScript-based application. There the usage of JSON feels very
 natural for developers. However, JSON has significant limitations such as the
 lack of a native binary type and inconsistent support for integers > 53 bit. For
