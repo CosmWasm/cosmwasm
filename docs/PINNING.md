@@ -5,7 +5,7 @@ a previously stored compiled contract code (module) is started from a dedicated
 in-memory cache. Starting a module from memory takes ~45µs compared to 1.5ms
 when loaded from disk (33x faster).
 
-In contast to the node specific Least recently used (LRU) memory cache, pinning
+In contrast to the node-specific Least recently used (LRU) memory cache, pinning
 **guarantees** this performance boost across the network. As a consequence wasmd
 can charge discounted gas cost[^1].
 
