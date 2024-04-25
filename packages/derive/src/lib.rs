@@ -136,8 +136,14 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
         }
 
         let version: syn::LitInt = attribute.parse_args()?;
-        // Enforce that the version is in range of a u64
-        version.base10_parse::<u64>()?;
+        // Enforce that the version is a valid u64 and non-zero
+        if version.base10_parse::<u64>()? == 0 {
+            return Err(syn::Error::new_spanned(
+                version,
+                "please start versioning with 1",
+            ));
+        }
+
         let version = version.base10_digits();
 
         stream = quote! {
@@ -193,7 +199,24 @@ mod test {
     use crate::entry_point_impl;
 
     #[test]
-    fn contract_state_version_on_non_migratee() {
+    fn contract_state_zero_not_allowed() {
+        let code = quote! {
+            #[state_version(0)]
+            fn migrate() -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = entry_point_impl(TokenStream::new(), code);
+        let expected = quote! {
+            ::core::compile_error! { "please start versioning with 1" }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn contract_state_version_on_non_migrate() {
         let code = quote! {
             #[state_version(42)]
             fn anything_else() -> Response {
