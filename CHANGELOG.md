@@ -6,6 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`,
+  `Checksum` ([#2128])
+
+[#2128]: https://github.com/CosmWasm/cosmwasm/pull/2128
+
 ## [2.0.2] - 2024-04-24
 
 ### Fixed
