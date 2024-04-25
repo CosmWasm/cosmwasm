@@ -136,6 +136,8 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
         }
 
         let version: syn::LitInt = attribute.parse_args()?;
+        // Enforce that the version is in range of a u64
+        version.base10_parse::<u64>()?;
         let version = version.base10_digits();
 
         stream = quote! {
@@ -189,6 +191,23 @@ mod test {
     use quote::quote;
 
     use crate::entry_point_impl;
+
+    #[test]
+    fn contract_state_version_in_u64() {
+        let code = quote! {
+            #[set_state_version(0xDEAD_BEEF_FFFF_DEAD_2BAD)]
+            fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = entry_point_impl(TokenStream::new(), code);
+        let expected = quote! {
+            ::core::compile_error! { "number too large to fit in target type" }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
 
     #[test]
     fn contract_state_version_expansion() {
