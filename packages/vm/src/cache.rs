@@ -585,6 +585,7 @@ mod tests {
     use crate::capabilities::capabilities_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
+    use std::borrow::Cow;
     use std::fs::{create_dir_all, remove_dir_all};
     use tempfile::TempDir;
     use wasm_encoder::ComponentSection;
@@ -1450,8 +1451,8 @@ mod tests {
 
         let mut wasm_with_version = EMPTY_CONTRACT.to_vec();
         let custom_section = wasm_encoder::CustomSection {
-            name: "cw_state_version".into(),
-            data: b"21".into(),
+            name: Cow::Borrowed("cw_state_version"),
+            data: Cow::Borrowed(b"21"),
         };
         custom_section.append_to_component(&mut wasm_with_version);
 
