@@ -48,7 +48,7 @@ in the pinned memory cache[^2].
 
 Pinning contracts is a balance between increasing memory usage and boosting
 execution speed. Contracts that are known to be heavily used should be pinned.
-This can includes contracts that are executed as part of begin/end block or the
+This can include contracts that are executed as part of begin/end block or the
 IBC light client implementations of the Wasm Light Client ([08-wasm]). If a
 chain is permissioned and runs on a small number of well known contracts, they
 can all be pinned. A permissionless chain might select certain contracts of
