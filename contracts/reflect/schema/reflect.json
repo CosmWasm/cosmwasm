@@ -486,6 +486,29 @@
           }
         ]
       },
+      "IbcFullAcknowledgement": {
+        "description": "The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.",
+        "type": "object",
+        "required": [
+          "data",
+          "success"
+        ],
+        "properties": {
+          "data": {
+            "description": "The acknowledgement data returned by the module.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Binary"
+              }
+            ]
+          },
+          "success": {
+            "description": "Whether the acknowledgement was successful or not.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "IbcMsg": {
         "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
         "oneOf": [
@@ -570,6 +593,45 @@
                         "$ref": "#/definitions/IbcTimeout"
                       }
                     ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Acknowledges a packet that this contract received over IBC. This allows acknowledging a packet that was not acknowledged yet in the `ibc_packet_receive` call.",
+            "type": "object",
+            "required": [
+              "write_acknowledgement"
+            ],
+            "properties": {
+              "write_acknowledgement": {
+                "type": "object",
+                "required": [
+                  "ack",
+                  "channel_id",
+                  "packet_sequence"
+                ],
+                "properties": {
+                  "ack": {
+                    "description": "The acknowledgement to send back",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/IbcFullAcknowledgement"
+                      }
+                    ]
+                  },
+                  "channel_id": {
+                    "description": "Existing channel where the packet was received",
+                    "type": "string"
+                  },
+                  "packet_sequence": {
+                    "description": "Sequence number of the packet that was received",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
                   }
                 },
                 "additionalProperties": false
