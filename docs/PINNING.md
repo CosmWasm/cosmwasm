@@ -5,7 +5,7 @@ a previously stored compiled contract code (module) is started from a dedicated
 in-memory cache. Starting a module from memory takes ~45µs compared to 1.5ms
 when loaded from disk (33x faster).
 
-In contast to the node specific Least recently used (LRU) memory cache, pinning
+In contrast to the node-specific Least recently used (LRU) memory cache, pinning
 **guarantees** this performance boost across the network. As a consequence wasmd
 can charge discounted gas cost[^1].
 
@@ -40,7 +40,7 @@ At the chain level pinning and unpinning is done via governance proposals. See
 
 When contracts are migrated from one code to another, there is no automatic
 pinning or unpinning. This is primarily since the migration of a single instance
-does not means all instances of the same code become unused. In the future we
+does not mean all instances of the same code become unused. In the future we
 want to provide hit stats for each checksum in order to easily find unused codes
 in the pinned memory cache[^2].
 
@@ -48,7 +48,7 @@ in the pinned memory cache[^2].
 
 Pinning contracts is a balance between increasing memory usage and boosting
 execution speed. Contracts that are known to be heavily used should be pinned.
-This can includes contracts that are executed as part of begin/end block or the
+This can include contracts that are executed as part of begin/end block or the
 IBC light client implementations of the Wasm Light Client ([08-wasm]). If a
 chain is permissioned and runs on a small number of well known contracts, they
 can all be pinned. A permissionless chain might select certain contracts of

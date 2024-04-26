@@ -6,7 +6,7 @@ more complex logic upon.
 
 ## Functionality
 
-One one side, this acts as a simplified ERC20-like token, holding a list of
+On one side, this acts as a simplified ERC20-like token, holding a list of
 balances for multiple addresses, and exposing queries and transfers (no
 allowances and "transfer from" to focus the logic on the staking stuff).
 However, it has no initial balance. Instead, it mints and burns them based on
