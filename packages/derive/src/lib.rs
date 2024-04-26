@@ -98,7 +98,7 @@ impl Parse for Options {
 ///
 /// The VM will use this as a hint whether it needs to run the migrate function of your contract or not.
 ///
-/// ```
+/// ```no_run
 /// # use cosmwasm_std::{
 /// #     DepsMut, entry_point, Env,
 /// #     Response, StdResult,
