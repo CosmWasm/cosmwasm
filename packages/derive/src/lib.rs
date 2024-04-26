@@ -98,7 +98,7 @@ impl Parse for Options {
 ///
 /// The VM will use this as a hint whether it needs to run the migrate function of your contract or not.
 ///
-/// ```no_run
+/// ```
 /// # use cosmwasm_std::{
 /// #     DepsMut, entry_point, Env,
 /// #     Response, StdResult,
@@ -151,6 +151,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
 
             #[allow(unused)]
             #[doc(hidden)]
+            #[cfg(target_arch = "wasm32")]
             #[link_section = "cw_state_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
@@ -262,6 +263,7 @@ mod test {
         let expected = quote! {
             #[allow(unused)]
             #[doc(hidden)]
+            #[cfg(target_arch = "wasm32")]
             #[link_section = "cw_state_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
