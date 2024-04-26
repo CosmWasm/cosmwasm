@@ -55,7 +55,7 @@ measurements is considered safe.
 
 Cosmos SDK gas uses values that are smaller by a factor of 150, so those don't
 overflow as well. Since no Cosmos SDK gas values are processed inside of this
-repository, this is not our main concern. However, its good to know that we can
+repository, this is not our main concern. However, it's good to know that we can
 safely pass them in uint64 fields, as long as the full range is supported. This
 is the case for the C API as well as [JSON numbers](https://www.json.org/) as
 long as both sides support integers in their JSON implementation. Go and Rust do
