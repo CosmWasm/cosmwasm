@@ -17,7 +17,7 @@ fn rootberg_ecdsa_secp256k1_sha256() {
     for test in tests {
         assert_eq!(test.public_key_uncompressed.len(), 65);
 
-        // eprintln!("Test case ID: {}", test.tc_id);
+        eprintln!("Test case ID: {}", test.tc_id);
         let message_hash = hashers::sha256(&test.msg);
 
         let signature = combine_signature(&test.sig);
@@ -45,7 +45,7 @@ fn rootberg_ecdsa_secp256k1_keccak256() {
     for test in tests {
         assert_eq!(test.public_key_uncompressed.len(), 65);
 
-        // eprintln!("Test case ID: {}", test.tc_id);
+        eprintln!("Test case ID: {}", test.tc_id);
         let message_hash = hashers::keccak_256(&test.msg);
 
         let signature = combine_signature(&test.sig);
