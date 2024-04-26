@@ -10,20 +10,37 @@ type SendPacketMsg struct {
 	Data      []byte     `json:"data"`
 	Timeout   IBCTimeout `json:"timeout"`
 }
+type WriteAcknowledgementMsg struct {
+	// The acknowledgement to send back
+	Ack IBCFullAcknowledgement `json:"ack"`
+	// Existing channel where the packet was received
+	ChannelID string `json:"channel_id"`
+	// Sequence number of the packet that was received
+	PacketSequence uint64 `json:"packet_sequence"`
+}
 type CloseChannelMsg struct {
 	ChannelID string `json:"channel_id"`
 }
 
 type IBCMsg struct {
-	Transfer     *TransferMsg     `json:"transfer,omitempty"`
-	SendPacket   *SendPacketMsg   `json:"send_packet,omitempty"`
-	CloseChannel *CloseChannelMsg `json:"close_channel,omitempty"`
+	Transfer             *TransferMsg             `json:"transfer,omitempty"`
+	SendPacket           *SendPacketMsg           `json:"send_packet,omitempty"`
+	WriteAcknowledgement *WriteAcknowledgementMsg `json:"write_acknowledgement,omitempty"`
+	CloseChannel         *CloseChannelMsg         `json:"close_channel,omitempty"`
 }
 
 // Coin is a string representation of the sdk.Coin type (more portable than sdk.Int)
 type Coin struct {
 	Amount string `json:"amount"` // string encoing of decimal value, eg. "12.3456"
 	Denom  string `json:"denom"`  // type, eg. "ATOM"
+}
+
+// The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.
+type IBCFullAcknowledgement struct {
+	// The acknowledgement data returned by the module.
+	Data []byte `json:"data"`
+	// Whether the acknowledgement was successful or not.
+	Success bool `json:"success"`
 }
 
 // IBCTimeout is the timeout for an IBC packet. At least one of block and timestamp is required.
