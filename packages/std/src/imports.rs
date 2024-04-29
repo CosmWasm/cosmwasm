@@ -71,9 +71,6 @@ extern "C" {
     #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_hash_to_g2(hash_function: u32, msg_ptr: u32, dst_ptr: u32, out_ptr: u32) -> u32;
 
-    #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_pairing_equality(p_ptr: u32, q_ptr: u32, r_ptr: u32, s_ptr: u32) -> u32;
-
     /// Verifies message hashes against a signature with a public key, using the
     /// secp256k1 ECDSA parametrization.
     /// Returns 0 on verification success, 1 on verification failure, and values
@@ -533,35 +530,6 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(point),
             9 => Err(VerificationError::UnknownHashFunction),
-            error_code => Err(VerificationError::unknown_err(error_code)),
-        }
-    }
-
-    #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_pairing_equality(
-        &self,
-        p: &[u8],
-        q: &[u8],
-        r: &[u8],
-        s: &[u8],
-    ) -> Result<bool, VerificationError> {
-        let send_p = build_region(p);
-        let send_q = build_region(q);
-        let send_r = build_region(r);
-        let send_s = build_region(s);
-
-        let send_p_ptr = &*send_p as *const Region as u32;
-        let send_q_ptr = &*send_q as *const Region as u32;
-        let send_r_ptr = &*send_r as *const Region as u32;
-        let send_s_ptr = &*send_s as *const Region as u32;
-
-        let result =
-            unsafe { bls12_381_pairing_equality(send_p_ptr, send_q_ptr, send_r_ptr, send_s_ptr) };
-        match result {
-            0 => Ok(true),
-            1 => Ok(false),
-            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
-            8 => Err(VerificationError::InvalidPoint),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }

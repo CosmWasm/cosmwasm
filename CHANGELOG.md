@@ -38,9 +38,9 @@ and this project adheres to
 - cosmwasm-vm: Read the state version from Wasm modules and return them as part
   of `AnalyzeReport` ([#2129])
 - cosmwasm-vm: Add `bls12_381_aggregate_g1`, `bls12_381_aggregate_g2`,
-  `bls12_381_aggregate_pairing_equality`, `bls12_381_hash_to_g1`,
-  `bls12_381_hash_to_g1`, and `bls12_381_pairing_equality` to enable BLS12-381
-  curve operations, such as verifying pairing equalities ([#2106])
+  `bls12_381_aggregate_pairing_equality`, `bls12_381_hash_to_g1`, and
+  `bls12_381_hash_to_g1` to enable BLS12-381 curve operations, such as verifying
+  pairing equalities ([#2106])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057

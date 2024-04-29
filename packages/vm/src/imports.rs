@@ -5,9 +5,9 @@ use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_aggregate_pairing_equality,
-    bls12_381_hash_to_g1, bls12_381_hash_to_g2, bls12_381_pairing_equality, ed25519_batch_verify,
-    ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, secp256r1_recover_pubkey,
-    secp256r1_verify, CryptoError, HashFunction, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
+    bls12_381_hash_to_g1, bls12_381_hash_to_g2, ed25519_batch_verify, ed25519_verify,
+    secp256k1_recover_pubkey, secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify,
+    CryptoError, HashFunction, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -456,49 +456,6 @@ pub fn do_bls12_381_hash_to_g2<
     write_region(&memory, out_ptr, &point)?;
 
     Ok(0)
-}
-
-pub fn do_bls12_381_pairing_equality<
-    A: BackendApi + 'static,
-    S: Storage + 'static,
-    Q: Querier + 'static,
->(
-    mut env: FunctionEnvMut<Environment<A, S, Q>>,
-    p_ptr: u32,
-    q_ptr: u32,
-    r_ptr: u32,
-    s_ptr: u32,
-) -> VmResult<u32> {
-    let (data, mut store) = env.data_and_store_mut();
-    let memory = data.memory(&store);
-
-    let p = read_region(&memory, p_ptr, BLS12_381_G1_POINT_LEN)?;
-    let q = read_region(&memory, q_ptr, BLS12_381_G2_POINT_LEN)?;
-    let r = read_region(&memory, r_ptr, BLS12_381_G1_POINT_LEN)?;
-    let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
-
-    let gas_info = GasInfo::with_cost(data.gas_config.bls12_381_pairing_equality_cost);
-    process_gas_info(data, &mut store, gas_info)?;
-
-    let code = match bls12_381_pairing_equality(&p, &q, &r, &s) {
-        Ok(true) => BLS12_381_VALID_PAIRING,
-        Ok(false) => BLS12_381_INVALID_PAIRING,
-        Err(err) => match err {
-            CryptoError::InvalidPoint { .. } => err.code(),
-            CryptoError::AggregationPairingEquality { .. }
-            | CryptoError::BatchErr { .. }
-            | CryptoError::GenericErr { .. }
-            | CryptoError::InvalidHashFormat { .. }
-            | CryptoError::InvalidPubkeyFormat { .. }
-            | CryptoError::InvalidRecoveryParam { .. }
-            | CryptoError::InvalidSignatureFormat { .. }
-            | CryptoError::UnknownHashFunction { .. } => {
-                panic!("Error must not happen for this call")
-            }
-        },
-    };
-
-    Ok(code)
 }
 
 pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
