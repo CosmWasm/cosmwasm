@@ -25,7 +25,6 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.bls12_381_aggregate_pairing_equality",
     "env.bls12_381_hash_to_g1",
     "env.bls12_381_hash_to_g2",
-    "env.bls12_381_pairing_equality",
     "env.secp256k1_verify",
     "env.secp256k1_recover_pubkey",
     "env.secp256r1_verify",

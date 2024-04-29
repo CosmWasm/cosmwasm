@@ -16,10 +16,9 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::imports::{
     do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_bls12_381_aggregate_g1,
     do_bls12_381_aggregate_g2, do_bls12_381_aggregate_pairing_equality, do_bls12_381_hash_to_g1,
-    do_bls12_381_hash_to_g2, do_bls12_381_pairing_equality, do_db_read, do_db_remove, do_db_write,
-    do_debug, do_ed25519_batch_verify, do_ed25519_verify, do_query_chain,
-    do_secp256k1_recover_pubkey, do_secp256k1_verify, do_secp256r1_recover_pubkey,
-    do_secp256r1_verify,
+    do_bls12_381_hash_to_g2, do_db_read, do_db_remove, do_db_write, do_debug,
+    do_ed25519_batch_verify, do_ed25519_verify, do_query_chain, do_secp256k1_recover_pubkey,
+    do_secp256k1_verify, do_secp256r1_recover_pubkey, do_secp256r1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_db_next, do_db_next_key, do_db_next_value, do_db_scan};
@@ -185,14 +184,6 @@ where
         env_imports.insert(
             "bls12_381_hash_to_g2",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_hash_to_g2),
-        );
-
-        // Four parameters, "p", "q", "r", "s", which all represent elements on the BLS12-381 curve (where "p" and "r" are elements of the G1 subgroup, and "q" and "s" elements of G2).
-        // Returns a single u32 which signifies the validity of the pairing equality.
-        // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
-        env_imports.insert(
-            "bls12_381_pairing_equality",
-            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_pairing_equality),
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.

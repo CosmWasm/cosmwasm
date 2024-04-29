@@ -196,16 +196,6 @@ impl Api for MockApi {
         ))
     }
 
-    fn bls12_381_pairing_equality(
-        &self,
-        p: &[u8],
-        q: &[u8],
-        r: &[u8],
-        s: &[u8],
-    ) -> Result<bool, VerificationError> {
-        cosmwasm_crypto::bls12_381_pairing_equality(p, q, r, s).map_err(Into::into)
-    }
-
     fn secp256k1_verify(
         &self,
         message_hash: &[u8],
@@ -1449,7 +1439,12 @@ mod tests {
 
         let g1_generator = cosmwasm_crypto::bls12_381_g1_generator();
         let is_valid = api
-            .bls12_381_pairing_equality(&g1_generator, &signature, &PK_LEO_MAINNET, &msg_point)
+            .bls12_381_aggregate_pairing_equality(
+                &g1_generator,
+                &signature,
+                &PK_LEO_MAINNET,
+                &msg_point,
+            )
             .unwrap();
 
         assert!(is_valid);

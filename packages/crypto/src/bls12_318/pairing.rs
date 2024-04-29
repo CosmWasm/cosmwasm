@@ -64,33 +64,6 @@ pub fn bls12_381_aggregate_pairing_equality(
     Ok(Bls12_381::multi_pairing(ps, qs).is_zero())
 }
 
-/// Check whether the following condition holds true:
-///
-/// $$
-/// e(p, q) = e(r, s)
-/// $$
-pub fn bls12_381_pairing_equality(
-    p: &[u8],
-    q: &[u8],
-    r: &[u8],
-    s: &[u8],
-) -> Result<bool, CryptoError> {
-    let (p, q, r, s) = (
-        g1_from_variable(p)?,
-        g2_from_variable(q)?,
-        g1_from_variable(r)?,
-        g2_from_variable(s)?,
-    );
-
-    let p_neg = -p;
-
-    Ok(Bls12_381::multi_pairing(
-        [G1Prepared::from(p_neg.0), G1Prepared::from(r.0)],
-        [G2Prepared::from(q.0), G2Prepared::from(s.0)],
-    )
-    .is_zero())
-}
-
 #[cfg(test)]
 mod test {
     use hex_literal::hex;
@@ -98,7 +71,7 @@ mod test {
 
     use crate::{
         bls12_318::points::{g1_from_fixed, g2_from_fixed, g2_from_variable, G1},
-        bls12_381_aggregate_pairing_equality, bls12_381_hash_to_g2, bls12_381_pairing_equality,
+        bls12_381_aggregate_pairing_equality, bls12_381_hash_to_g2,
         AggregationPairingEqualityError, CryptoError, HashFunction,
     };
 
@@ -131,7 +104,7 @@ mod test {
         let msg = build_message(round, &previous_signature);
         let g2_msg = bls12_381_hash_to_g2(HashFunction::Sha256, msg.as_slice(), DOMAIN_HASH_TO_G2);
 
-        assert!(bls12_381_pairing_equality(
+        assert!(bls12_381_aggregate_pairing_equality(
             &g1.to_compressed(),
             &sigma.to_compressed(),
             &PK_LEO_MAINNET,
@@ -147,7 +120,7 @@ mod test {
             let g2_msg =
                 bls12_381_hash_to_g2(HashFunction::Sha256, msg.as_slice(), DOMAIN_HASH_TO_G2);
 
-            assert!(!bls12_381_pairing_equality(
+            assert!(!bls12_381_aggregate_pairing_equality(
                 &g1.to_compressed(),
                 &sigma.to_compressed(),
                 &PK_LEO_MAINNET,
@@ -175,7 +148,7 @@ mod test {
             ))
             .unwrap();
 
-        assert!(bls12_381_pairing_equality(
+        assert!(bls12_381_aggregate_pairing_equality(
             &aggregated_g1.to_compressed(),
             &aggregated_sigma.to_compressed(),
             &aggregated_key.to_compressed(),
