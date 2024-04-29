@@ -12,7 +12,7 @@ use crate::{Addr, IbcAcknowledgement, IbcPacket, Uint64};
 /// The specific field and format to send it in can vary depending on the IBC message,
 /// but is usually the `memo` field by convention.
 ///
-/// See [`IbcSourceChainCallback`] for more details.
+/// See [`IbcSourceChainCallbackMsg`] and [`IbcDestinationChainCallbackMsg`] for more details.
 ///
 /// # Example
 ///
@@ -94,9 +94,9 @@ pub struct IbcDstCallback {
 /// The type of IBC source chain callback that is being called.
 ///
 /// IBC source chain callbacks are needed for cases where your contract triggers the sending of an
-/// IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and needs to
+/// IBC packet through some other message (i.e. not through [`crate::IbcMsg::SendPacket`]) and needs to
 /// know whether or not the packet was successfully received on the other chain.
-/// A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know
+/// A prominent example is the [`crate::IbcMsg::Transfer`] message. Without callbacks, you cannot know
 /// whether the transfer was successful or not.
 ///
 /// Note that there are some prerequisites that need to be fulfilled to receive source chain callbacks:
@@ -150,9 +150,9 @@ impl IbcTimeoutCallbackMsg {
 /// The message type of the IBC destination chain callback.
 ///
 /// The IBC destination chain callback is needed for cases where someone triggers the sending of an
-/// IBC packet through some other message (i.e. not through [`IbcMsg::SendPacket`]) and
+/// IBC packet through some other message (i.e. not through [`crate::IbcMsg::SendPacket`]) and
 /// your contract needs to know that it received this.
-/// A prominent example is the [`IbcMsg::Transfer`] message. Without callbacks, you cannot know
+/// A prominent example is the [`crate::IbcMsg::Transfer`] message. Without callbacks, you cannot know
 /// that someone sent you IBC coins.
 ///
 /// The callback is called after the packet was acknowledged on the destination chain, as follows:
