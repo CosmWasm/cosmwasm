@@ -109,7 +109,7 @@ pub mod testing;
 pub use cosmwasm_core::CoreError as StdError;
 pub use cosmwasm_core::CoreResult as StdResult;
 pub use cosmwasm_core::{
-    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr,
+    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, AggregationError,
     AggregationPairingEqualityError, Binary, CanonicalAddr, CheckedFromRatioError,
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, CoinFromStrError, CoinsError,
     ConversionOverflowError, Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded,
