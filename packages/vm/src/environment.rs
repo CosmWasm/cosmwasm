@@ -57,7 +57,7 @@ pub struct GasConfig {
     pub bls12_381_pairing_equality_cost: u64,
     /// bls12-381 aggregated pairing equality check cost per point
     /// (added on top of the base pairing equality check cost)
-    pub bls12_381_aggregated_pairing_equality_cost_per_point: u64,
+    pub bls12_381_aggregated_pairing_equality_cost_per_pair: u64,
 }
 
 impl Default for GasConfig {
@@ -85,8 +85,8 @@ impl Default for GasConfig {
             bls12_381_hash_to_g1_cost: 324 * GAS_PER_US,
             bls12_381_hash_to_g2_cost: 528 * GAS_PER_US,
             // god i wish i was lying
-            bls12_381_pairing_equality_cost: 1318 * GAS_PER_US,
-            bls12_381_aggregated_pairing_equality_cost_per_point: 109 * GAS_PER_US,
+            bls12_381_pairing_equality_cost: 1254 * GAS_PER_US,
+            bls12_381_aggregated_pairing_equality_cost_per_pair: 108 * GAS_PER_US,
         }
     }
 }
