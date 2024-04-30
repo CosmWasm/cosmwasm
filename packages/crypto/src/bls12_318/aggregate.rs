@@ -94,7 +94,7 @@ pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], CryptoError> {
 /// This is fast since math is done on projective points. Parallelization does not help here
 /// for ~500 elements.
 #[inline]
-pub fn g1_sum(elements: &[G1]) -> G1 {
+fn g1_sum(elements: &[G1]) -> G1 {
     elements.iter().sum()
 }
 
@@ -103,7 +103,7 @@ pub fn g1_sum(elements: &[G1]) -> G1 {
 /// This is fast since math is done on projective points. Parallelization does not help here
 /// for ~500 elements.
 #[inline]
-pub fn g2_sum(elements: &[G2]) -> G2 {
+fn g2_sum(elements: &[G2]) -> G2 {
     elements.iter().sum()
 }
 
