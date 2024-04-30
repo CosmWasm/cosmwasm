@@ -1,7 +1,4 @@
-use crate::{
-    errors::{Aggregation, InvalidPoint},
-    CryptoError,
-};
+use crate::{errors::Aggregation, CryptoError};
 
 use super::points::{g1_from_fixed, g2_from_fixed, G1, G2};
 
