@@ -1,3 +1,5 @@
+use core::ops::Neg;
+
 use crate::{
     errors::AggregationPairingEquality, CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
@@ -9,7 +11,10 @@ use ark_ec::{
     pairing::Pairing,
 };
 use num_traits::Zero;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::{
+    iter::{IndexedParallelIterator, ParallelIterator},
+    slice::ParallelSlice,
+};
 
 pub fn bls12_381_aggregate_pairing_equality(
     ps: &[u8],
@@ -39,27 +44,24 @@ pub fn bls12_381_aggregate_pairing_equality(
         .into());
     }
 
-    let pq_pairs: Vec<_> = ps
-        .chunks_exact(BLS12_381_G1_POINT_LEN)
-        .zip(qs.chunks_exact(BLS12_381_G2_POINT_LEN))
-        // From here on parallelism is fine since the miller loop runs over
-        // a sum of the pairings and is therefore a commutative operation
-        .par_bridge()
-        .map(|(p, q)| {
-            let g1 = g1_from_variable(p)?;
-            let g2 = g2_from_variable(q)?;
+    let p_iter = ps
+        .par_chunks_exact(BLS12_381_G1_POINT_LEN)
+        .map(g1_from_variable)
+        .chain([g1_from_variable(r).map(Neg::neg)])
+        .map(|g1_res| g1_res.map(|g1| G1Prepared::from(g1.0)));
 
-            Ok((G1Prepared::from(g1.0), G2Prepared::from(g2.0)))
-        })
+    let q_iter = qs
+        .par_chunks_exact(BLS12_381_G2_POINT_LEN)
+        .map(g2_from_variable)
+        .chain([g2_from_variable(s)])
+        .map(|g2_res| g2_res.map(|g2| G2Prepared::from(g2.0)));
+
+    let pq_pairs: Vec<_> = p_iter
+        .zip_eq(q_iter)
+        .map(|(p_res, q_res)| Ok((p_res?, q_res?)))
         .collect::<Result<_, CryptoError>>()?;
 
-    let r = g1_from_variable(r)?;
-    let s = g2_from_variable(s)?;
-
-    let r_neg = G1Prepared::from(-r.0);
-    let s_prepared = G2Prepared::from(s.0);
-
-    let (ps, qs): (Vec<_>, Vec<_>) = pq_pairs.into_iter().chain([(r_neg, s_prepared)]).unzip();
+    let (ps, qs): (Vec<_>, Vec<_>) = pq_pairs.into_iter().unzip();
 
     Ok(Bls12_381::multi_pairing(ps, qs).is_zero())
 }
