@@ -365,10 +365,11 @@ pub fn do_bls12_381_aggregate_pairing_equality<
 
     let gas_info = GasInfo::with_cost(
         data.gas_config.bls12_381_pairing_equality_cost
+            // Subtract one since the base benchmark of the pairing equality cost includes a single pair already
             + (data
                 .gas_config
-                .bls12_381_aggregated_pairing_equality_cost_per_point
-                * (ps.len() / BLS12_381_G1_POINT_LEN) as u64),
+                .bls12_381_aggregated_pairing_equality_cost_per_pair
+                * (ps.len() / BLS12_381_G1_POINT_LEN) as u64).saturating_sub(1),
     );
     process_gas_info(data, &mut store, gas_info)?;
 
