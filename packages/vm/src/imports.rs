@@ -283,7 +283,7 @@ pub fn do_bls12_381_aggregate_g1<
             0
         }
         Err(err) => match err {
-            CryptoError::InvalidPoint { .. } => err.code(),
+            CryptoError::InvalidPoint { .. } | CryptoError::Aggregation { .. } => err.code(),
             CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::GenericErr { .. }
@@ -327,7 +327,7 @@ pub fn do_bls12_381_aggregate_g2<
             0
         }
         Err(err) => match err {
-            CryptoError::InvalidPoint { .. } => err.code(),
+            CryptoError::InvalidPoint { .. } | CryptoError::Aggregation { .. } => err.code(),
             CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::GenericErr { .. }
@@ -380,7 +380,8 @@ pub fn do_bls12_381_aggregate_pairing_equality<
             CryptoError::AggregationPairingEquality { .. } | CryptoError::InvalidPoint { .. } => {
                 err.code()
             }
-            CryptoError::BatchErr { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::BatchErr { .. }
             | CryptoError::GenericErr { .. }
             | CryptoError::InvalidHashFormat { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
@@ -487,7 +488,8 @@ pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::AggregationPairingEquality { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidRecoveryParam { .. }
@@ -531,7 +533,8 @@ pub fn do_secp256k1_recover_pubkey<
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::AggregationPairingEquality { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
@@ -576,7 +579,8 @@ pub fn do_secp256r1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::AggregationPairingEquality { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidRecoveryParam { .. }
@@ -620,7 +624,8 @@ pub fn do_secp256r1_recover_pubkey<
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::AggregationPairingEquality { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
@@ -672,7 +677,8 @@ pub fn do_ed25519_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Queri
             CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::AggregationPairingEquality { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::AggregationPairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidHashFormat { .. }
@@ -738,7 +744,8 @@ pub fn do_ed25519_batch_verify<
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::AggregationPairingEquality { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::AggregationPairingEquality { .. }
             | CryptoError::InvalidHashFormat { .. }
             | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidRecoveryParam { .. }

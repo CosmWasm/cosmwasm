@@ -162,6 +162,12 @@ fn bls12_381_aggregate_g2_works() {
         let test = read_aggregate_test(json);
         let signatures: Vec<&[u8]> = test.input.iter().map(|m| m.as_slice()).collect();
         let signatures_combined: Vec<u8> = signatures.concat();
+
+        // Skip empty signatures since we explicitly error on empty inputs
+        if signatures_combined.is_empty() {
+            continue;
+        }
+
         let sum = bls12_381_aggregate_g2(&signatures_combined).unwrap();
         match test.output {
             Some(expected) => assert_eq!(sum.as_slice(), expected),
@@ -388,6 +394,14 @@ fn bls12_381_fast_aggregate_verify_works() {
                 pubkeys.extend(pubkey);
             }
 
+            // Reject cases with empty public keys since the aggregation will:
+            //
+            // 1. error out with our implementation specifically
+            // 2. if it wouldn't error out, it would return the identity element of G1, making the
+            //    signature validation return invalid anyway
+            if pubkeys.is_empty() {
+                return Ok(false);
+            }
             let pubkey = bls12_381_aggregate_g1(&pubkeys).unwrap();
 
             if bls12_381_g2_is_identity(&signature)? {

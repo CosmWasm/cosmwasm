@@ -8,6 +8,15 @@ use cosmwasm_crypto::CryptoError;
 
 #[derive(Display, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum AggregationError {
+    #[display("List of points is empty")]
+    Empty,
+    #[display("List is not an expected multiple")]
+    NotMultiple,
+}
+
+#[derive(Display, Debug, PartialEq)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum AggregationPairingEqualityError {
     #[display("List of G1 points is empty")]
     EmptyG1,
@@ -24,6 +33,8 @@ pub enum AggregationPairingEqualityError {
 #[derive(Display, Debug)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum VerificationError {
+    #[display("Aggregation error: {source}")]
+    Aggregation { source: AggregationError },
     #[display("Aggregation pairing equality error: {source}")]
     AggregationPairingEquality {
         source: AggregationPairingEqualityError,
@@ -61,6 +72,9 @@ impl VerificationError {
 impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {
         match self {
+            VerificationError::Aggregation { source: lhs_source } => {
+                matches!(rhs, VerificationError::Aggregation { source: rhs_source } if rhs_source == lhs_source)
+            }
             VerificationError::AggregationPairingEquality { source: lhs_source } => {
                 matches!(rhs, VerificationError::AggregationPairingEquality { source: rhs_source } if rhs_source == lhs_source)
             }
@@ -101,6 +115,18 @@ impl PartialEq<VerificationError> for VerificationError {
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
+            CryptoError::Aggregation {
+                source: cosmwasm_crypto::AggregationError::Empty,
+                ..
+            } => VerificationError::Aggregation {
+                source: AggregationError::Empty,
+            },
+            CryptoError::Aggregation {
+                source: cosmwasm_crypto::AggregationError::NotMultiple { .. },
+                ..
+            } => VerificationError::Aggregation {
+                source: AggregationError::NotMultiple,
+            },
             CryptoError::AggregationPairingEquality {
                 source: cosmwasm_crypto::AggregationPairingEqualityError::EmptyG1,
                 ..

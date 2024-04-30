@@ -8,6 +8,18 @@ pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
 #[derive(Debug, Display)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum Aggregation {
+    #[display("List of points is empty")]
+    Empty,
+    #[display("List is not a multiple of {expected_multiple}. Remainder: {remainder}")]
+    NotMultiple {
+        expected_multiple: usize,
+        remainder: usize,
+    },
+}
+
+#[derive(Debug, Display)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum AggregationPairingEquality {
     #[display("List of G1 points is empty")]
     EmptyG1,
@@ -33,6 +45,8 @@ pub enum InvalidPoint {
 #[derive(Display, Debug)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CryptoError {
+    #[display("Point aggregation error: {source}")]
+    Aggregation { source: Aggregation, backtrace: BT },
     #[display("Aggregation pairing equality error: {source}")]
     AggregationPairingEquality {
         source: AggregationPairingEquality,
@@ -133,6 +147,24 @@ impl CryptoError {
                 source: AggregationPairingEquality::EmptyG2 { .. },
                 ..
             } => 15,
+            CryptoError::Aggregation {
+                source: Aggregation::Empty,
+                ..
+            } => 16,
+            CryptoError::Aggregation {
+                source: Aggregation::NotMultiple { .. },
+                ..
+            } => 17,
+        }
+    }
+}
+
+impl From<Aggregation> for CryptoError {
+    #[track_caller]
+    fn from(value: Aggregation) -> Self {
+        Self::Aggregation {
+            source: value,
+            backtrace: BT::capture(),
         }
     }
 }

@@ -1,4 +1,7 @@
-use crate::{errors::InvalidPoint, CryptoError};
+use crate::{
+    errors::{Aggregation, InvalidPoint},
+    CryptoError,
+};
 
 use super::points::{g1_from_fixed, g2_from_fixed, G1, G2};
 
@@ -10,8 +13,14 @@ const G2_POINT_SIZE: usize = 96;
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
 pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
-    if points.len() % G1_POINT_SIZE != 0 {
-        return Err(InvalidPoint::DecodingError {}.into());
+    if points.is_empty() {
+        return Err(Aggregation::Empty.into());
+    } else if points.len() % G1_POINT_SIZE != 0 {
+        return Err(Aggregation::NotMultiple {
+            expected_multiple: G1_POINT_SIZE,
+            remainder: points.len() % G1_POINT_SIZE,
+        }
+        .into());
     }
 
     let points_count = points.len() / G1_POINT_SIZE;
@@ -46,8 +55,14 @@ pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
 /// This is like Aggregate from <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-bls-signature-05>
 /// but works for signatures as well as public keys.
 pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], CryptoError> {
-    if points.len() % G2_POINT_SIZE != 0 {
-        return Err(InvalidPoint::DecodingError {}.into());
+    if points.is_empty() {
+        return Err(Aggregation::Empty.into());
+    } else if points.len() % G2_POINT_SIZE != 0 {
+        return Err(Aggregation::NotMultiple {
+            expected_multiple: G2_POINT_SIZE,
+            remainder: points.len() % G2_POINT_SIZE,
+        }
+        .into());
     }
 
     let points_count = points.len() / G2_POINT_SIZE;
@@ -138,15 +153,15 @@ mod tests {
     }
 
     #[test]
-    fn bls12_318_aggregate_g1_works() {
-        let sum = bls12_381_aggregate_g1(b"").unwrap();
-        assert_eq!(sum, G1::identity().to_compressed());
+    fn bls12_318_aggregate_g1_empty_err() {
+        let res = bls12_381_aggregate_g1(b"");
+        assert!(res.is_err());
     }
 
     #[test]
-    fn bls12_318_aggregate_g2_works() {
-        let sum = bls12_381_aggregate_g2(b"").unwrap();
-        assert_eq!(sum, G2::identity().to_compressed());
+    fn bls12_318_aggregate_g2_empty_err() {
+        let res = bls12_381_aggregate_g2(b"");
+        assert!(res.is_err());
     }
 
     #[test]
