@@ -11,7 +11,6 @@ extern crate alloc;
 extern crate std; // allow for file I/O during tests
 
 mod backtrace;
-#[cfg(feature = "std")]
 mod bls12_318;
 mod ecdsa;
 mod ed25519;
@@ -25,8 +24,13 @@ mod secp256r1;
 pub use crate::bls12_318::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_is_identity,
     bls12_381_g2_is_identity, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
-    bls12_381_pairing_equality, HashFunction, BLS12_381_G1_GENERATOR_COMPRESSED,
-    BLS12_381_G1_POINT_LEN, BLS12_381_G2_GENERATOR_COMPRESSED, BLS12_381_G2_POINT_LEN,
+    bls12_381_pairing_equality, HashFunction,
+};
+
+#[doc(hidden)]
+pub use crate::bls12_318::{
+    BLS12_381_G1_GENERATOR_COMPRESSED, BLS12_381_G1_POINT_LEN, BLS12_381_G2_GENERATOR_COMPRESSED,
+    BLS12_381_G2_POINT_LEN,
 };
 #[doc(hidden)]
 pub use crate::ecdsa::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};

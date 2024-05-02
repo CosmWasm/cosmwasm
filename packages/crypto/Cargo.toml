@@ -29,6 +29,7 @@ ark-bls12-381 = { version = "0.4.0", optional = true }
 ark-ec = { version = "0.4.2", features = ["parallel"], optional = true }
 ark-ff = { version = "0.4.2", features = ["asm", "parallel"], optional = true }
 ark-serialize = { version = "0.4.2", optional = true }
+cfg-if = "1.0.0"
 derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["display", "from"] }
 digest = "0.10"
 ecdsa = "0.16.2" # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
