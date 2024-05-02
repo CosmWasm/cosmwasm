@@ -22,7 +22,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.addr_humanize",
     "env.bls12_381_aggregate_g1",
     "env.bls12_381_aggregate_g2",
-    "env.bls12_381_aggregate_pairing_equality",
+    "env.bls12_381_pairing_equality",
     "env.bls12_381_hash_to_g1",
     "env.bls12_381_hash_to_g2",
     "env.secp256k1_verify",

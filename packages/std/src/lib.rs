@@ -109,14 +109,14 @@ pub mod testing;
 pub use cosmwasm_core::CoreError as StdError;
 pub use cosmwasm_core::CoreResult as StdResult;
 pub use cosmwasm_core::{
-    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, AggregationError,
-    AggregationPairingEqualityError, Binary, CanonicalAddr, CheckedFromRatioError,
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, CoinFromStrError, CoinsError,
-    ConversionOverflowError, Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded,
-    DivideByZeroError, DivisionError, Fraction, HexBinary, Instantiate2AddressError, Int128,
-    Int256, Int512, Int64, Isqrt, OverflowError, OverflowOperation, RecoverPubkeyError,
-    SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded,
-    SystemError, Timestamp, Uint128, Uint256, Uint512, Uint64, VerificationError,
+    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, AggregationError, Binary,
+    CanonicalAddr, CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    CoinFromStrError, CoinsError, ConversionOverflowError, Decimal, Decimal256,
+    Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
+    HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
+    OverflowOperation, PairingEqualityError, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
+    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Timestamp, Uint128,
+    Uint256, Uint512, Uint64, VerificationError,
 };
 
 #[cfg(not(target_arch = "wasm32"))]

@@ -1,8 +1,6 @@
 use core::ops::Neg;
 
-use crate::{
-    errors::AggregationPairingEquality, CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
-};
+use crate::{errors::PairingEquality, CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 
 use super::points::{g1_from_variable, g2_from_variable};
 use ark_bls12_381::Bls12_381;
@@ -16,28 +14,28 @@ use rayon::{
     slice::ParallelSlice,
 };
 
-pub fn bls12_381_aggregate_pairing_equality(
+pub fn bls12_381_pairing_equality(
     ps: &[u8],
     qs: &[u8],
     r: &[u8],
     s: &[u8],
 ) -> Result<bool, CryptoError> {
     if ps.is_empty() {
-        return Err(AggregationPairingEquality::EmptyG1.into());
+        return Err(PairingEquality::EmptyG1.into());
     } else if qs.is_empty() {
-        return Err(AggregationPairingEquality::EmptyG2.into());
+        return Err(PairingEquality::EmptyG2.into());
     } else if ps.len() % BLS12_381_G1_POINT_LEN != 0 {
-        return Err(AggregationPairingEquality::NotMultipleG1 {
+        return Err(PairingEquality::NotMultipleG1 {
             remainder: ps.len() % BLS12_381_G1_POINT_LEN,
         }
         .into());
     } else if qs.len() % BLS12_381_G2_POINT_LEN != 0 {
-        return Err(AggregationPairingEquality::NotMultipleG2 {
+        return Err(PairingEquality::NotMultipleG2 {
             remainder: qs.len() % BLS12_381_G2_POINT_LEN,
         }
         .into());
     } else if (ps.len() / BLS12_381_G1_POINT_LEN) != (qs.len() / BLS12_381_G2_POINT_LEN) {
-        return Err(AggregationPairingEquality::UnequalPointAmount {
+        return Err(PairingEquality::UnequalPointAmount {
             left: ps.len() / BLS12_381_G1_POINT_LEN,
             right: qs.len() / BLS12_381_G2_POINT_LEN,
         }
@@ -73,8 +71,8 @@ mod test {
 
     use crate::{
         bls12_318::points::{g1_from_fixed, g2_from_fixed, g2_from_variable, G1},
-        bls12_381_aggregate_pairing_equality, bls12_381_hash_to_g2,
-        AggregationPairingEqualityError, CryptoError, HashFunction,
+        bls12_381_hash_to_g2, bls12_381_pairing_equality, CryptoError, HashFunction,
+        PairingEqualityError,
     };
 
     // Let's directly go for something really cool and advanced:
@@ -106,7 +104,7 @@ mod test {
         let msg = build_message(round, &previous_signature);
         let g2_msg = bls12_381_hash_to_g2(HashFunction::Sha256, msg.as_slice(), DOMAIN_HASH_TO_G2);
 
-        assert!(bls12_381_aggregate_pairing_equality(
+        assert!(bls12_381_pairing_equality(
             &g1.to_compressed(),
             &sigma.to_compressed(),
             &PK_LEO_MAINNET,
@@ -122,7 +120,7 @@ mod test {
             let g2_msg =
                 bls12_381_hash_to_g2(HashFunction::Sha256, msg.as_slice(), DOMAIN_HASH_TO_G2);
 
-            assert!(!bls12_381_aggregate_pairing_equality(
+            assert!(!bls12_381_pairing_equality(
                 &g1.to_compressed(),
                 &sigma.to_compressed(),
                 &PK_LEO_MAINNET,
@@ -150,7 +148,7 @@ mod test {
             ))
             .unwrap();
 
-        assert!(bls12_381_aggregate_pairing_equality(
+        assert!(bls12_381_pairing_equality(
             &aggregated_g1.to_compressed(),
             &aggregated_sigma.to_compressed(),
             &aggregated_key.to_compressed(),
@@ -160,48 +158,48 @@ mod test {
     }
 
     #[test]
-    fn aggregate_pairing_equality_error_cases_work() {
-        let result = bls12_381_aggregate_pairing_equality(&[], &[12], &[12], &[12]);
+    fn pairing_equality_error_cases_work() {
+        let result = bls12_381_pairing_equality(&[], &[12], &[12], &[12]);
         assert!(matches!(
             result,
-            Err(CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::EmptyG1,
+            Err(CryptoError::PairingEquality {
+                source: PairingEqualityError::EmptyG1,
                 ..
             })
         ));
 
-        let result = bls12_381_aggregate_pairing_equality(&[12], &[], &[12], &[12]);
+        let result = bls12_381_pairing_equality(&[12], &[], &[12], &[12]);
         assert!(matches!(
             result,
-            Err(CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::EmptyG2,
+            Err(CryptoError::PairingEquality {
+                source: PairingEqualityError::EmptyG2,
                 ..
             })
         ));
 
-        let result = bls12_381_aggregate_pairing_equality(&[12], &[0; 96], &[12], &[12]);
+        let result = bls12_381_pairing_equality(&[12], &[0; 96], &[12], &[12]);
         assert!(matches!(
             result,
-            Err(CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::NotMultipleG1 { remainder: 1 },
+            Err(CryptoError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG1 { remainder: 1 },
                 ..
             })
         ));
 
-        let result = bls12_381_aggregate_pairing_equality(&[0; 48], &[12], &[12], &[12]);
+        let result = bls12_381_pairing_equality(&[0; 48], &[12], &[12], &[12]);
         assert!(matches!(
             result,
-            Err(CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::NotMultipleG2 { remainder: 1 },
+            Err(CryptoError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG2 { remainder: 1 },
                 ..
             })
         ));
 
-        let result = bls12_381_aggregate_pairing_equality(&[0; 96], &[0; 96], &[12], &[12]);
+        let result = bls12_381_pairing_equality(&[0; 96], &[0; 96], &[12], &[12]);
         assert!(matches!(
             result,
-            Err(CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::UnequalPointAmount { left: 2, right: 1 },
+            Err(CryptoError::PairingEquality {
+                source: PairingEqualityError::UnequalPointAmount { left: 2, right: 1 },
                 ..
             })
         ));

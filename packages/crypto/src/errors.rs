@@ -20,7 +20,7 @@ pub enum Aggregation {
 
 #[derive(Debug, Display)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
-pub enum AggregationPairingEquality {
+pub enum PairingEquality {
     #[display("List of G1 points is empty")]
     EmptyG1,
     #[display("List of G2 points is empty")]
@@ -47,11 +47,6 @@ pub enum InvalidPoint {
 pub enum CryptoError {
     #[display("Point aggregation error: {source}")]
     Aggregation { source: Aggregation, backtrace: BT },
-    #[display("Aggregation pairing equality error: {source}")]
-    AggregationPairingEquality {
-        source: AggregationPairingEquality,
-        backtrace: BT,
-    },
     #[display("Batch verify error: {msg}")]
     BatchErr { msg: String, backtrace: BT },
     #[display("Crypto error: {msg}")]
@@ -66,6 +61,11 @@ pub enum CryptoError {
     InvalidRecoveryParam { backtrace: BT },
     #[display("Invalid point: {source}")]
     InvalidPoint { source: InvalidPoint, backtrace: BT },
+    #[display("Pairing equality error: {source}")]
+    PairingEquality {
+        source: PairingEquality,
+        backtrace: BT,
+    },
     #[display("Unknown hash function")]
     UnknownHashFunction { backtrace: BT },
 }
@@ -127,24 +127,24 @@ impl CryptoError {
             CryptoError::InvalidPoint { .. } => 8,
             CryptoError::UnknownHashFunction { .. } => 9,
             CryptoError::GenericErr { .. } => 10,
-            CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEquality::NotMultipleG1 { .. },
+            CryptoError::PairingEquality {
+                source: PairingEquality::NotMultipleG1 { .. },
                 ..
             } => 11,
-            CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEquality::NotMultipleG2 { .. },
+            CryptoError::PairingEquality {
+                source: PairingEquality::NotMultipleG2 { .. },
                 ..
             } => 12,
-            CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEquality::UnequalPointAmount { .. },
+            CryptoError::PairingEquality {
+                source: PairingEquality::UnequalPointAmount { .. },
                 ..
             } => 13,
-            CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEquality::EmptyG1 { .. },
+            CryptoError::PairingEquality {
+                source: PairingEquality::EmptyG1 { .. },
                 ..
             } => 14,
-            CryptoError::AggregationPairingEquality {
-                source: AggregationPairingEquality::EmptyG2 { .. },
+            CryptoError::PairingEquality {
+                source: PairingEquality::EmptyG2 { .. },
                 ..
             } => 15,
             CryptoError::Aggregation {
@@ -169,10 +169,10 @@ impl From<Aggregation> for CryptoError {
     }
 }
 
-impl From<AggregationPairingEquality> for CryptoError {
+impl From<PairingEquality> for CryptoError {
     #[track_caller]
-    fn from(value: AggregationPairingEquality) -> Self {
-        Self::AggregationPairingEquality {
+    fn from(value: PairingEquality) -> Self {
+        Self::PairingEquality {
             source: value,
             backtrace: BT::capture(),
         }
