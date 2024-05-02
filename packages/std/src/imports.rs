@@ -9,17 +9,14 @@ use crate::sections::decode_sections2;
 use crate::sections::encode_sections;
 use crate::serde::from_json;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
-#[cfg(feature = "cosmwasm_2_1")]
-use crate::HashFunction;
 #[cfg(feature = "iterator")]
 use crate::{
     iterator::{Order, Record},
     memory::get_optional_region_address,
 };
-use crate::{
-    AggregationError, PairingEqualityError, RecoverPubkeyError, StdError, StdResult, SystemError,
-    VerificationError,
-};
+#[cfg(feature = "cosmwasm_2_1")]
+use crate::{AggregationError, HashFunction, PairingEqualityError};
+use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 64;
