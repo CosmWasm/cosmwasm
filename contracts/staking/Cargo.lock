@@ -340,6 +340,7 @@ dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-serialize",
+ "cfg-if",
  "derive_more",
  "digest",
  "ecdsa",
