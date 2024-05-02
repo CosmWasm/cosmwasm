@@ -1,14 +1,28 @@
-use cosmwasm_std::{Api, HashFunction, StdResult};
+use cosmwasm_std::{
+    Api, HashFunction, StdResult, BLS12_381_G1_GENERATOR_COMPRESSED,
+    BLS12_381_G2_GENERATOR_COMPRESSED,
+};
 
-pub fn verify(
+pub fn verify_g1(
     api: &dyn Api,
-    p: &[u8],
-    q: &[u8],
-    r: &[u8],
+    signature: &[u8],
+    pubkey: &[u8],
     msg: &[u8],
     dst: &[u8],
 ) -> StdResult<bool> {
     let s = api.bls12_381_hash_to_g2(HashFunction::Sha256, msg, dst)?;
-    api.bls12_381_pairing_equality(p, q, r, &s)
+    api.bls12_381_pairing_equality(&BLS12_381_G1_GENERATOR_COMPRESSED, signature, pubkey, &s)
+        .map_err(Into::into)
+}
+
+pub fn verify_g2(
+    api: &dyn Api,
+    signature: &[u8],
+    pubkey: &[u8],
+    msg: &[u8],
+    dst: &[u8],
+) -> StdResult<bool> {
+    let s = api.bls12_381_hash_to_g1(HashFunction::Sha256, msg, dst)?;
+    api.bls12_381_pairing_equality(signature, &BLS12_381_G2_GENERATOR_COMPRESSED, &s, pubkey)
         .map_err(Into::into)
 }

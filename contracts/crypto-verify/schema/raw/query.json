@@ -377,20 +377,19 @@
       "additionalProperties": false
     },
     {
-      "description": "BLS12-381 pairing equality verification",
+      "description": "BLS12-381 pairing equality verification (where the key is an element of G1)",
       "type": "object",
       "required": [
-        "verify_bls12_pairing_equality"
+        "verify_bls12_pairing_equality_g1"
       ],
       "properties": {
-        "verify_bls12_pairing_equality": {
+        "verify_bls12_pairing_equality_g1": {
           "type": "object",
           "required": [
             "dst",
             "msg",
-            "p",
-            "q",
-            "r"
+            "pubkey",
+            "signature"
           ],
           "properties": {
             "dst": {
@@ -409,24 +408,70 @@
                 }
               ]
             },
-            "p": {
-              "description": "The point $p$ in its compressed format (element of G1)",
+            "pubkey": {
+              "description": "The public key point in its compressed format (element of G1)",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
                 }
               ]
             },
-            "q": {
-              "description": "The point $q$ in its compressed format (element of G2)",
+            "signature": {
+              "description": "The signature point in its compressed format (element of G2)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "BLS12-381 pairing equality verification (where the key is an element of G2)",
+      "type": "object",
+      "required": [
+        "verify_bls12_pairing_equality_g2"
+      ],
+      "properties": {
+        "verify_bls12_pairing_equality_g2": {
+          "type": "object",
+          "required": [
+            "dst",
+            "msg",
+            "pubkey",
+            "signature"
+          ],
+          "properties": {
+            "dst": {
+              "description": "The `dst` component used to hash the message to the curve",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
                 }
               ]
             },
-            "r": {
-              "description": "The point $r$ in its compressed format (element of G1)",
+            "msg": {
+              "description": "The message that should be verified",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "pubkey": {
+              "description": "The public key point in its compressed format (element of G2)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signature": {
+              "description": "The signature point in its compressed format (element of G1)",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
