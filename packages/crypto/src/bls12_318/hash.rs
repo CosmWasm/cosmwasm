@@ -1,3 +1,23 @@
+//!
+//! Note about the usage of `.unwrap()` here:
+//! 
+//! Since the underlying curve implementation, when implemented sanely, should never request 255 curve elements at the same time,
+//! the expansion will always finish without exiting with an error (since that is the only "ABORT" condition).
+//!
+//! Therefore we can conclude, if the implementation is done as defined in the IETF publication, won't ever error out.
+//! 
+//! IETF doc in question: <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-12#section-5.4.1>
+//! 
+//! In addition to that I (@aumetra) skimmed through the tree of traits making up our hash-to-curve configuration,
+//! and I have not found a condition where an error is returned.
+//! 
+//! ark crate versions that I looked at:
+//! 
+//! - ark-bls12-381 v0.4.0
+//! - ark-ec v0.4.2
+//! - ark-ff v0.4.2
+//! 
+
 use ark_bls12_381::{g1, g2};
 use ark_ec::{
     hashing::{
