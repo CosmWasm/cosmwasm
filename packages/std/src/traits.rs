@@ -198,7 +198,7 @@ pub trait Api {
     }
 
     #[allow(unused_variables)]
-    fn bls12_381_aggregate_pairing_equality(
+    fn bls12_381_pairing_equality(
         &self,
         ps: &[u8],
         qs: &[u8],

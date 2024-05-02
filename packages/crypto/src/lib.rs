@@ -23,9 +23,9 @@ mod secp256r1;
 #[cfg(feature = "std")]
 #[doc(hidden)]
 pub use crate::bls12_318::{
-    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_aggregate_pairing_equality,
-    bls12_381_g1_generator, bls12_381_g1_is_identity, bls12_381_g2_generator,
-    bls12_381_g2_is_identity, bls12_381_hash_to_g1, bls12_381_hash_to_g2, HashFunction,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_generator,
+    bls12_381_g1_is_identity, bls12_381_g2_generator, bls12_381_g2_is_identity,
+    bls12_381_hash_to_g1, bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
     BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 #[doc(hidden)]
@@ -36,8 +36,8 @@ pub use crate::ed25519::EDDSA_PUBKEY_LEN;
 pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
 #[doc(hidden)]
 pub use crate::errors::{
-    Aggregation as AggregationError, AggregationPairingEquality as AggregationPairingEqualityError,
-    CryptoError, CryptoResult,
+    Aggregation as AggregationError, CryptoError, CryptoResult,
+    PairingEquality as PairingEqualityError,
 };
 #[doc(hidden)]
 pub use crate::secp256k1::{secp256k1_recover_pubkey, secp256k1_verify};

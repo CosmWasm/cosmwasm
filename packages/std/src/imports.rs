@@ -17,8 +17,8 @@ use crate::{
     memory::get_optional_region_address,
 };
 use crate::{
-    AggregationError, AggregationPairingEqualityError, RecoverPubkeyError, StdError, StdResult,
-    SystemError, VerificationError,
+    AggregationError, PairingEqualityError, RecoverPubkeyError, StdError, StdResult, SystemError,
+    VerificationError,
 };
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
@@ -58,12 +58,7 @@ extern "C" {
     fn bls12_381_aggregate_g2(g2s_ptr: u32, out_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_aggregate_pairing_equality(
-        ps_ptr: u32,
-        qs_ptr: u32,
-        r_ptr: u32,
-        s_ptr: u32,
-    ) -> u32;
+    fn bls12_381_pairing_equality(ps_ptr: u32, qs_ptr: u32, r_ptr: u32, s_ptr: u32) -> u32;
 
     #[cfg(feature = "cosmwasm_2_1")]
     fn bls12_381_hash_to_g1(hash_function: u32, msg_ptr: u32, dst_ptr: u32, out_ptr: u32) -> u32;
@@ -439,7 +434,7 @@ impl Api for ExternalApi {
     }
 
     #[cfg(feature = "cosmwasm_2_1")]
-    fn bls12_381_aggregate_pairing_equality(
+    fn bls12_381_pairing_equality(
         &self,
         ps: &[u8],
         qs: &[u8],
@@ -456,27 +451,26 @@ impl Api for ExternalApi {
         let send_r_ptr = &*send_r as *const Region as u32;
         let send_s_ptr = &*send_s as *const Region as u32;
 
-        let result = unsafe {
-            bls12_381_aggregate_pairing_equality(send_ps_ptr, send_qs_ptr, send_r_ptr, send_s_ptr)
-        };
+        let result =
+            unsafe { bls12_381_pairing_equality(send_ps_ptr, send_qs_ptr, send_r_ptr, send_s_ptr) };
         match result {
             0 => Ok(true),
             1 => Ok(false),
             8 => Err(VerificationError::InvalidPoint),
-            11 => Err(VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::NotMultipleG1,
+            11 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG1,
             }),
-            12 => Err(VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::NotMultipleG2,
+            12 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG2,
             }),
-            13 => Err(VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::UnequalPointAmount,
+            13 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::UnequalPointAmount,
             }),
-            14 => Err(VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::EmptyG1,
+            14 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::EmptyG1,
             }),
-            15 => Err(VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::EmptyG2,
+            15 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::EmptyG2,
             }),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }

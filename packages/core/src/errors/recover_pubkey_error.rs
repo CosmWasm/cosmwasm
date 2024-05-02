@@ -66,7 +66,7 @@ impl From<CryptoError> for RecoverPubkeyError {
             CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
             CryptoError::Aggregation { .. }
-            | CryptoError::AggregationPairingEquality { .. }
+            | CryptoError::PairingEquality { .. }
             | CryptoError::BatchErr { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidPoint { .. }

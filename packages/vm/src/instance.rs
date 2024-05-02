@@ -15,8 +15,8 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::imports::{
     do_abort, do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_bls12_381_aggregate_g1,
-    do_bls12_381_aggregate_g2, do_bls12_381_aggregate_pairing_equality, do_bls12_381_hash_to_g1,
-    do_bls12_381_hash_to_g2, do_db_read, do_db_remove, do_db_write, do_debug,
+    do_bls12_381_aggregate_g2, do_bls12_381_hash_to_g1, do_bls12_381_hash_to_g2,
+    do_bls12_381_pairing_equality, do_db_read, do_db_remove, do_db_write, do_debug,
     do_ed25519_batch_verify, do_ed25519_verify, do_query_chain, do_secp256k1_recover_pubkey,
     do_secp256k1_verify, do_secp256r1_recover_pubkey, do_secp256r1_verify,
 };
@@ -164,8 +164,8 @@ where
         // Returns a single u32 which signifies the validity of the pairing equality.
         // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
         env_imports.insert(
-            "bls12_381_aggregate_pairing_equality",
-            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_aggregate_pairing_equality),
+            "bls12_381_pairing_equality",
+            Function::new_typed_with_env(&mut store, &fe, do_bls12_381_pairing_equality),
         );
 
         // Three parameters, "hash_function" and "msg" and "dst", are passed down which are both arbitrary octet strings.

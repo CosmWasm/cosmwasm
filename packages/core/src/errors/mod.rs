@@ -13,6 +13,4 @@ pub use core_error::{
 };
 pub use recover_pubkey_error::RecoverPubkeyError;
 pub use system_error::SystemError;
-pub use verification_error::{
-    AggregationError, AggregationPairingEqualityError, VerificationError,
-};
+pub use verification_error::{AggregationError, PairingEqualityError, VerificationError};
