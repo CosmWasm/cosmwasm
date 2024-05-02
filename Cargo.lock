@@ -581,6 +581,7 @@ dependencies = [
  "ark-serialize",
  "base64 0.22.0",
  "base64-serde",
+ "cfg-if",
  "criterion",
  "derive_more",
  "digest",
