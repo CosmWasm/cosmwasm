@@ -122,4 +122,6 @@ pub use cosmwasm_core::{
 #[cfg(not(target_arch = "wasm32"))]
 pub use cosmwasm_core::assert_approx_eq;
 
+pub use cosmwasm_crypto::{BLS12_381_G1_GENERATOR_COMPRESSED, BLS12_381_G2_GENERATOR_COMPRESSED};
+
 pub use cosmwasm_derive::entry_point;
