@@ -84,7 +84,7 @@ const DOMAIN_HASH_TO_G2: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
 /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
 const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
 
-fn build_bls_message(round: u64, previous_signature: &[u8]) -> Vec<u8> {
+fn build_drand_message(round: u64, previous_signature: &[u8]) -> Vec<u8> {
     Sha256::new()
         .chain_update(previous_signature)
         .chain_update(round.to_be_bytes())
