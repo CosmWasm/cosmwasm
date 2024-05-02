@@ -197,6 +197,32 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Checks the following pairing equality:
+    ///
+    /// e(p_1, q_1) × e(p_2, q_2) × … × e(p_n, q_n) = e(s, q)
+    ///
+    /// The argument `ps` contain the points p_1, ..., p_n ∈ G1 as a concatenation of 48 byte elements.
+    /// The argument `qs` contain the points q_1, ..., q_n ∈ G2 as a concatenation of 96 byte elements.
+    ///
+    /// ## Examples
+    ///
+    /// A simple signature check with one pairing on the left hand side (e(p, q) = e(s, q)):
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Api, HashFunction, StdResult};
+    /// pub fn verify(
+    ///     api: &dyn Api,
+    ///     g1_generator: &[u8],
+    ///     signature: &[u8],
+    ///     pubkey: &[u8],
+    ///     msg: &[u8],
+    ///     dst: &[u8],
+    /// ) -> StdResult<bool> {
+    ///     let msg_hashed = api.bls12_381_hash_to_g2(HashFunction::Sha256, msg, dst)?;
+    ///     api.bls12_381_pairing_equality(g1_generator, signature, pubkey, &msg_hashed)
+    ///         .map_err(Into::into)
+    /// }
+    /// ```
     #[allow(unused_variables)]
     fn bls12_381_pairing_equality(
         &self,
