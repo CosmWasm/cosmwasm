@@ -160,14 +160,14 @@ impl Api for MockApi {
         cosmwasm_crypto::bls12_381_aggregate_g2(g2s).map_err(Into::into)
     }
 
-    fn bls12_381_aggregate_pairing_equality(
+    fn bls12_381_pairing_equality(
         &self,
         ps: &[u8],
         qs: &[u8],
         r: &[u8],
         s: &[u8],
     ) -> Result<bool, VerificationError> {
-        cosmwasm_crypto::bls12_381_aggregate_pairing_equality(ps, qs, r, s).map_err(Into::into)
+        cosmwasm_crypto::bls12_381_pairing_equality(ps, qs, r, s).map_err(Into::into)
     }
 
     fn bls12_381_hash_to_g1(
@@ -1357,7 +1357,7 @@ mod tests {
     }
 
     #[test]
-    fn bls12_381_aggregate_pairing_equality_works() {
+    fn bls12_381_pairing_equality_works() {
         let api = MockApi::default();
 
         let dst = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
@@ -1377,7 +1377,7 @@ mod tests {
         let s = hex!("9104e74b9dfd3ad502f25d6a5ef57db0ed7d9a0e00f3500586d8ce44231212542fcfaf87840539b398bf07626705cf1105d246ca1062c6c2e1a53029a0f790ed5e3cb1f52f8234dc5144c45fc847c0cd37a92d68e7c5ba7c648a8a339f171244");
 
         let is_valid = api
-            .bls12_381_aggregate_pairing_equality(&ps, &qs, &g1_generator, &s)
+            .bls12_381_pairing_equality(&ps, &qs, &g1_generator, &s)
             .unwrap();
         assert!(is_valid);
     }
@@ -1439,12 +1439,7 @@ mod tests {
 
         let g1_generator = cosmwasm_crypto::bls12_381_g1_generator();
         let is_valid = api
-            .bls12_381_aggregate_pairing_equality(
-                &g1_generator,
-                &signature,
-                &PK_LEO_MAINNET,
-                &msg_point,
-            )
+            .bls12_381_pairing_equality(&g1_generator, &signature, &PK_LEO_MAINNET, &msg_point)
             .unwrap();
 
         assert!(is_valid);

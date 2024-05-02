@@ -9,6 +9,6 @@ pub fn verify(
     dst: &[u8],
 ) -> StdResult<bool> {
     let s = api.bls12_381_hash_to_g2(HashFunction::Sha256, msg, dst)?;
-    api.bls12_381_aggregate_pairing_equality(p, q, r, &s)
+    api.bls12_381_pairing_equality(p, q, r, &s)
         .map_err(Into::into)
 }

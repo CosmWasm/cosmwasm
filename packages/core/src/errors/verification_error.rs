@@ -17,7 +17,7 @@ pub enum AggregationError {
 
 #[derive(Display, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
-pub enum AggregationPairingEqualityError {
+pub enum PairingEqualityError {
     #[display("List of G1 points is empty")]
     EmptyG1,
     #[display("List of G2 points is empty")]
@@ -35,10 +35,6 @@ pub enum AggregationPairingEqualityError {
 pub enum VerificationError {
     #[display("Aggregation error: {source}")]
     Aggregation { source: AggregationError },
-    #[display("Aggregation pairing equality error: {source}")]
-    AggregationPairingEquality {
-        source: AggregationPairingEqualityError,
-    },
     #[display("Batch error")]
     BatchErr,
     #[display("Generic error")]
@@ -55,6 +51,8 @@ pub enum VerificationError {
     InvalidPoint,
     #[display("Unknown hash function")]
     UnknownHashFunction,
+    #[display("Aggregation pairing equality error: {source}")]
+    PairingEquality { source: PairingEqualityError },
     #[display("Unknown error: {error_code}")]
     UnknownErr { error_code: u32, backtrace: BT },
 }
@@ -75,8 +73,8 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::Aggregation { source: lhs_source } => {
                 matches!(rhs, VerificationError::Aggregation { source: rhs_source } if rhs_source == lhs_source)
             }
-            VerificationError::AggregationPairingEquality { source: lhs_source } => {
-                matches!(rhs, VerificationError::AggregationPairingEquality { source: rhs_source } if rhs_source == lhs_source)
+            VerificationError::PairingEquality { source: lhs_source } => {
+                matches!(rhs, VerificationError::PairingEquality { source: rhs_source } if rhs_source == lhs_source)
             }
             VerificationError::BatchErr => matches!(rhs, VerificationError::BatchErr),
             VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
@@ -127,35 +125,35 @@ impl From<CryptoError> for VerificationError {
             } => VerificationError::Aggregation {
                 source: AggregationError::NotMultiple,
             },
-            CryptoError::AggregationPairingEquality {
-                source: cosmwasm_crypto::AggregationPairingEqualityError::EmptyG1,
+            CryptoError::PairingEquality {
+                source: cosmwasm_crypto::PairingEqualityError::EmptyG1,
                 ..
-            } => VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::EmptyG1,
+            } => VerificationError::PairingEquality {
+                source: PairingEqualityError::EmptyG1,
             },
-            CryptoError::AggregationPairingEquality {
-                source: cosmwasm_crypto::AggregationPairingEqualityError::EmptyG2,
+            CryptoError::PairingEquality {
+                source: cosmwasm_crypto::PairingEqualityError::EmptyG2,
                 ..
-            } => VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::EmptyG2,
+            } => VerificationError::PairingEquality {
+                source: PairingEqualityError::EmptyG2,
             },
-            CryptoError::AggregationPairingEquality {
-                source: cosmwasm_crypto::AggregationPairingEqualityError::NotMultipleG1 { .. },
+            CryptoError::PairingEquality {
+                source: cosmwasm_crypto::PairingEqualityError::NotMultipleG1 { .. },
                 ..
-            } => VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::NotMultipleG1,
+            } => VerificationError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG1,
             },
-            CryptoError::AggregationPairingEquality {
-                source: cosmwasm_crypto::AggregationPairingEqualityError::NotMultipleG2 { .. },
+            CryptoError::PairingEquality {
+                source: cosmwasm_crypto::PairingEqualityError::NotMultipleG2 { .. },
                 ..
-            } => VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::NotMultipleG2,
+            } => VerificationError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG2,
             },
-            CryptoError::AggregationPairingEquality {
-                source: cosmwasm_crypto::AggregationPairingEqualityError::UnequalPointAmount { .. },
+            CryptoError::PairingEquality {
+                source: cosmwasm_crypto::PairingEqualityError::UnequalPointAmount { .. },
                 ..
-            } => VerificationError::AggregationPairingEquality {
-                source: AggregationPairingEqualityError::UnequalPointAmount,
+            } => VerificationError::PairingEquality {
+                source: PairingEqualityError::UnequalPointAmount,
             },
             CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
             CryptoError::InvalidPubkeyFormat { .. } => VerificationError::InvalidPubkeyFormat,
