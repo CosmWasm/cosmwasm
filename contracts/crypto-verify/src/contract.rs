@@ -112,9 +112,22 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &r,
             &s,
         )?),
-        QueryMsg::VerifyBls12PairingEquality { p, q, r, msg, dst } => {
-            to_json_binary(&query_verify_bls12_pairing(deps, &p, &q, &r, &msg, &dst)?)
-        }
+        QueryMsg::VerifyBls12PairingEqualityG1 {
+            signature,
+            pubkey,
+            msg,
+            dst,
+        } => to_json_binary(&query_verify_bls12_pairing_g1(
+            deps, &signature, &pubkey, &msg, &dst,
+        )?),
+        QueryMsg::VerifyBls12PairingEqualityG2 {
+            signature,
+            pubkey,
+            msg,
+            dst,
+        } => to_json_binary(&query_verify_bls12_pairing_g2(
+            deps, &signature, &pubkey, &msg, &dst,
+        )?),
     }
 }
 
@@ -285,15 +298,25 @@ pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsRespon
     })
 }
 
-pub fn query_verify_bls12_pairing(
+pub fn query_verify_bls12_pairing_g1(
     deps: Deps,
-    p: &[u8],
-    q: &[u8],
-    r: &[u8],
+    signature: &[u8],
+    pubkey: &[u8],
     msg: &[u8],
     dst: &[u8],
 ) -> StdResult<VerifyResponse> {
-    let verifies = crate::bls12_381::verify(deps.api, p, q, r, msg, dst)?;
+    let verifies = crate::bls12_381::verify_g1(deps.api, signature, pubkey, msg, dst)?;
+    Ok(VerifyResponse { verifies })
+}
+
+pub fn query_verify_bls12_pairing_g2(
+    deps: Deps,
+    signature: &[u8],
+    pubkey: &[u8],
+    msg: &[u8],
+    dst: &[u8],
+) -> StdResult<VerifyResponse> {
+    let verifies = crate::bls12_381::verify_g2(deps.api, signature, pubkey, msg, dst)?;
     Ok(VerifyResponse { verifies })
 }
 
