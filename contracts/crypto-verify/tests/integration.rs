@@ -19,10 +19,7 @@
 //! 5. Anywhere you see query(deps.as_ref(), ...) you must replace it with query(&mut deps, ...)
 //! (Use cosmwasm_vm::testing::{init, execute, query}, instead of the contract variants).
 
-use ark_bls12_381::G1Affine;
-use ark_ec::AffineRepr;
-use ark_serialize::CanonicalSerialize;
-use cosmwasm_std::{Binary, Response, Uint128};
+use cosmwasm_std::{Binary, Response, Uint128, BLS12_381_G1_GENERATOR_COMPRESSED};
 use cosmwasm_vm::testing::{
     instantiate, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
@@ -118,13 +115,8 @@ fn bls12_381_verifies() {
 
     let msg = build_drand_message(round, &previous_signature);
 
-    let mut serialized = [0; 48];
-    G1Affine::generator()
-        .serialize_compressed(&mut serialized[..])
-        .unwrap();
-
     let verify_msg = QueryMsg::VerifyBls12PairingEquality {
-        p: serialized.into(),
+        p: BLS12_381_G1_GENERATOR_COMPRESSED.into(),
         q: signature.into(),
         r: PK_LEO_MAINNET.into(),
         msg: msg.into(),
@@ -149,13 +141,8 @@ fn bls12_381_errors() {
 
     let msg = build_drand_message(round, &previous_signature);
 
-    let mut serialized = [0; 48];
-    G1Affine::generator()
-        .serialize_compressed(&mut serialized[..])
-        .unwrap();
-
     let verify_msg = QueryMsg::VerifyBls12PairingEquality {
-        p: serialized.into(),
+        p: BLS12_381_G1_GENERATOR_COMPRESSED.into(),
         q: signature.into(),
         r: PK_LEO_MAINNET.into(),
         msg: msg.into(),
