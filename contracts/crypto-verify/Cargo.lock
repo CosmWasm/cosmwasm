@@ -603,7 +603,6 @@ dependencies = [
 name = "crypto-verify"
 version = "0.0.0"
 dependencies = [
- "ark-bls12-381",
  "base64",
  "cosmwasm-schema",
  "cosmwasm-std",

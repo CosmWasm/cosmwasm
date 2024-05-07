@@ -30,7 +30,6 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 base64 = "0.22.0"
-ark-bls12-381 = { version = "0.4.0", default-features = false }
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_2_1", "iterator"] }
 hex = "0.4"
