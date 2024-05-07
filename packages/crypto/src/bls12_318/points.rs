@@ -125,7 +125,7 @@ pub fn g1_from_variable(data: &[u8]) -> Result<G1, CryptoError> {
     }
 
     let mut buf = [0u8; BLS12_381_G1_POINT_LEN];
-    buf[..].clone_from_slice(data);
+    buf[..].copy_from_slice(data);
     g1_from_fixed(&buf)
 }
 
@@ -149,7 +149,7 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2, CryptoError> {
     }
 
     let mut buf = [0u8; BLS12_381_G2_POINT_LEN];
-    buf[..].clone_from_slice(data);
+    buf[..].copy_from_slice(data);
     g2_from_fixed(&buf)
 }
 
