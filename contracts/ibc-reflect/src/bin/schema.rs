@@ -4,14 +4,15 @@ use cosmwasm_schema::{export_schema, export_schema_with_title, schema_for, write
 use cosmwasm_std::Empty;
 
 use ibc_reflect::msg::{
-    AcknowledgementMsg, BalancesResponse, DispatchResponse, InstantiateMsg, PacketMsg, QueryMsg,
-    WhoAmIResponse,
+    AcknowledgementMsg, BalancesResponse, DispatchResponse, ExecuteMsg, InstantiateMsg, PacketMsg,
+    QueryMsg, WhoAmIResponse,
 };
 
 fn main() {
     // Clear & write standard API
     write_api! {
         instantiate: InstantiateMsg,
+        execute: ExecuteMsg,
         query: QueryMsg,
         migrate: Empty,
     }

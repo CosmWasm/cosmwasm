@@ -1,15 +1,15 @@
 use cosmwasm_std::{
     entry_point, from_json, to_json_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps,
     DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcOrder, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Never,
-    QueryResponse, Reply, Response, StdError, StdResult, SubMsg, SubMsgResponse, SubMsgResult,
-    WasmMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcFullAcknowledgement,
+    IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse, MessageInfo, Never, QueryResponse, Reply, Response, StdError, StdResult,
+    SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 
 use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
-    InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
+    ExecuteMsg, InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
     ReturnMsgsResponse, WhoAmIResponse,
 };
 use crate::state::{
@@ -35,6 +35,34 @@ pub fn instantiate(
     save_item(deps.storage, KEY_CONFIG, &cfg)?;
 
     Ok(Response::new().add_attribute("action", "instantiate"))
+}
+
+#[entry_point]
+pub fn execute(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: ExecuteMsg,
+) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::AsyncAck {
+            channel_id,
+            packet_sequence,
+            ack,
+        } => execute_async_ack(channel_id, packet_sequence.u64(), ack),
+    }
+}
+
+fn execute_async_ack(
+    channel_id: String,
+    packet_sequence: u64,
+    ack: IbcFullAcknowledgement,
+) -> StdResult<Response> {
+    Ok(Response::new().add_message(IbcMsg::WriteAcknowledgement {
+        channel_id,
+        packet_sequence,
+        ack,
+    }))
 }
 
 #[entry_point]
@@ -249,6 +277,7 @@ pub fn ibc_packet_receive(
             PacketMsg::Panic {} => execute_panic(),
             PacketMsg::ReturnErr { text } => execute_error(text),
             PacketMsg::ReturnMsgs { msgs } => execute_return_msgs(msgs),
+            PacketMsg::NoAck {} => Ok(IbcReceiveResponse::without_ack()),
         }
     })()
     .or_else(|e| {
