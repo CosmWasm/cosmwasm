@@ -247,6 +247,12 @@ const BLS12_381_VALID_PAIRING: u32 = 0;
 /// Return code (error code) for an invalid pairing
 const BLS12_381_INVALID_PAIRING: u32 = 1;
 
+/// Return code (error code) if the aggregating the points on curve was successful
+const BLS12_381_AGGREGATE_SUCCESS: u32 = 0;
+
+/// Return code (error code) for success when hashing to the curve
+const BLS12_381_HASH_TO_CURVE_SUCCESS: u32 = 0;
+
 /// Maximum size of continous points passed to aggregate functions
 const BLS12_381_MAX_AGGREGATE_SIZE: usize = 2 * MI;
 
@@ -280,7 +286,7 @@ pub fn do_bls12_381_aggregate_g1<
         Ok(point) => {
             let memory = data.memory(&store);
             write_region(&memory, out_ptr, &point)?;
-            0
+            BLS12_381_AGGREGATE_SUCCESS
         }
         Err(err) => match err {
             CryptoError::InvalidPoint { .. } | CryptoError::Aggregation { .. } => err.code(),
@@ -324,7 +330,7 @@ pub fn do_bls12_381_aggregate_g2<
         Ok(point) => {
             let memory = data.memory(&store);
             write_region(&memory, out_ptr, &point)?;
-            0
+            BLS12_381_AGGREGATE_SUCCESS
         }
         Err(err) => match err {
             CryptoError::InvalidPoint { .. } | CryptoError::Aggregation { .. } => err.code(),
@@ -423,7 +429,7 @@ pub fn do_bls12_381_hash_to_g1<
     let memory = data.memory(&store);
     write_region(&memory, out_ptr, &point)?;
 
-    Ok(0)
+    Ok(BLS12_381_HASH_TO_CURVE_SUCCESS)
 }
 
 pub fn do_bls12_381_hash_to_g2<
@@ -455,7 +461,7 @@ pub fn do_bls12_381_hash_to_g2<
     let memory = data.memory(&store);
     write_region(&memory, out_ptr, &point)?;
 
-    Ok(0)
+    Ok(BLS12_381_HASH_TO_CURVE_SUCCESS)
 }
 
 pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
