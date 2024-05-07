@@ -20,7 +20,7 @@ use crate::ibc::{
 };
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
-use crate::memory::{alloc, consume_region, release_buffer, Region};
+use crate::memory::{Owned, Region};
 #[cfg(feature = "abort")]
 use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
@@ -75,7 +75,7 @@ extern "C" fn interface_version_8() -> () {}
 /// and should be accompanied by a corresponding deallocate
 #[no_mangle]
 extern "C" fn allocate(size: usize) -> u32 {
-    alloc(size) as u32
+    Region::with_capacity(size).to_heap_ptr() as u32
 }
 
 /// deallocate expects a pointer to a Region created with allocate.
@@ -83,7 +83,7 @@ extern "C" fn allocate(size: usize) -> u32 {
 #[no_mangle]
 extern "C" fn deallocate(pointer: u32) {
     // auto-drop Region on function end
-    let _ = unsafe { consume_region(pointer as *mut Region) };
+    let _ = unsafe { Region::from_heap_ptr(pointer as *mut Region<Owned>) };
 }
 
 // TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
@@ -123,12 +123,12 @@ where
     install_panic_handler();
     let res = _do_instantiate(
         instantiate_fn,
-        env_ptr as *mut Region,
-        info_ptr as *mut Region,
-        msg_ptr as *mut Region,
+        env_ptr as *mut Region<Owned>,
+        info_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_execute should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -153,12 +153,12 @@ where
     install_panic_handler();
     let res = _do_execute(
         execute_fn,
-        env_ptr as *mut Region,
-        info_ptr as *mut Region,
-        msg_ptr as *mut Region,
+        env_ptr as *mut Region<Owned>,
+        info_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_migrate should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -180,9 +180,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_migrate(
+        migrate_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_sudo should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -204,9 +208,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_sudo(sudo_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_sudo(
+        sudo_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_reply should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -227,9 +235,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_reply(reply_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_reply(
+        reply_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -249,9 +261,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_query(query_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_query(
+        query_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_channel_open is designed for use with #[entry_point] to make a "C" extern
@@ -272,9 +288,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_channel_open(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_ibc_channel_open(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_channel_connect is designed for use with #[entry_point] to make a "C" extern
@@ -297,9 +317,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_channel_connect(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_ibc_channel_connect(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_channel_close is designed for use with #[entry_point] to make a "C" extern
@@ -322,9 +346,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_channel_close(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_ibc_channel_close(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_packet_receive is designed for use with #[entry_point] to make a "C" extern
@@ -348,9 +376,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_packet_receive(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_ibc_packet_receive(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_packet_ack is designed for use with #[entry_point] to make a "C" extern
@@ -374,9 +406,13 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_packet_ack(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_ibc_packet_ack(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_packet_timeout is designed for use with #[entry_point] to make a "C" extern
@@ -401,16 +437,20 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_packet_timeout(contract_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_ibc_packet_timeout(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
     let v = to_json_vec(&res).unwrap();
-    release_buffer(v) as u32
+    Region::from_data(v).to_heap_ptr() as u32
 }
 
 fn _do_instantiate<Q, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
-    env_ptr: *mut Region,
-    info_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    info_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
@@ -418,9 +458,9 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let info: MessageInfo = try_into_contract_result!(from_json(info));
@@ -432,9 +472,9 @@ where
 
 fn _do_execute<Q, M, C, E>(
     execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
-    env_ptr: *mut Region,
-    info_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    info_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
@@ -442,9 +482,9 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let info: MessageInfo = try_into_contract_result!(from_json(info));
@@ -456,8 +496,8 @@ where
 
 fn _do_migrate<Q, M, C, E>(
     migrate_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
@@ -465,8 +505,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -477,8 +517,8 @@ where
 
 fn _do_sudo<Q, M, C, E>(
     sudo_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
@@ -486,8 +526,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -498,16 +538,16 @@ where
 
 fn _do_reply<Q, C, E>(
     reply_fn: &dyn Fn(DepsMut<Q>, Env, Reply) -> Result<Response<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<Response<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Reply = try_into_contract_result!(from_json(msg));
@@ -518,16 +558,16 @@ where
 
 fn _do_query<Q, M, E>(
     query_fn: &dyn Fn(Deps<Q>, Env, M) -> Result<QueryResponse, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<QueryResponse>
 where
     Q: CustomQuery,
     M: DeserializeOwned,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -538,15 +578,15 @@ where
 
 fn _do_ibc_channel_open<Q, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelOpenMsg) -> Result<IbcChannelOpenResponse, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcChannelOpenResponse>
 where
     Q: CustomQuery,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelOpenMsg = try_into_contract_result!(from_json(msg));
@@ -558,16 +598,16 @@ where
 #[cfg(feature = "stargate")]
 fn _do_ibc_channel_connect<Q, C, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelConnectMsg = try_into_contract_result!(from_json(msg));
@@ -579,16 +619,16 @@ where
 #[cfg(feature = "stargate")]
 fn _do_ibc_channel_close<Q, C, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelCloseMsg = try_into_contract_result!(from_json(msg));
@@ -600,16 +640,16 @@ where
 #[cfg(feature = "stargate")]
 fn _do_ibc_packet_receive<Q, C, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcReceiveResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_json(msg));
@@ -621,16 +661,16 @@ where
 #[cfg(feature = "stargate")]
 fn _do_ibc_packet_ack<Q, C, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketAckMsg = try_into_contract_result!(from_json(msg));
@@ -642,16 +682,16 @@ where
 #[cfg(feature = "stargate")]
 fn _do_ibc_packet_timeout<Q, C, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
-    env_ptr: *mut Region,
-    msg_ptr: *mut Region,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcBasicResponse<C>>
 where
     Q: CustomQuery,
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json(msg));

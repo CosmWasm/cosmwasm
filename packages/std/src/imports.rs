@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use cosmwasm_core::{Addr, CanonicalAddr};
 
 use crate::import_helpers::{from_high_half, from_low_half};
-use crate::memory::{alloc, build_region, consume_region, Region};
+use crate::memory::{Owned, Region};
 use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
 use crate::sections::decode_sections2;
@@ -106,8 +106,8 @@ impl ExternalStorage {
 
 impl Storage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        let key = build_region(key);
-        let key_ptr = &*key as *const Region as u32;
+        let key = Region::from_data(key);
+        let key_ptr = key.as_ptr() as u32;
 
         let read = unsafe { db_read(key_ptr) };
         if read == 0 {
@@ -115,9 +115,10 @@ impl Storage for ExternalStorage {
             return None;
         }
 
-        let value_ptr = read as *mut Region;
-        let data = unsafe { consume_region(value_ptr) };
-        Some(data)
+        let value_ptr = read as *mut Region<Owned>;
+        let data = unsafe { Region::from_heap_ptr(value_ptr) };
+
+        Some(data.into_inner())
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
@@ -125,18 +126,19 @@ impl Storage for ExternalStorage {
             panic!("TL;DR: Value must not be empty in Storage::set but in most cases you can use Storage::remove instead. Long story: Getting empty values from storage is not well supported at the moment. Some of our internal interfaces cannot differentiate between a non-existent key and an empty value. Right now, you cannot rely on the behaviour of empty values. To protect you from trouble later on, we stop here. Sorry for the inconvenience! We highly welcome you to contribute to CosmWasm, making this more solid one way or the other.");
         }
 
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
-        let key = build_region(key);
-        let key_ptr = &*key as *const Region as u32;
-        let mut value = build_region(value);
-        let value_ptr = &mut *value as *mut Region as u32;
+        let key = Region::from_data(key);
+        let key_ptr = key.as_ptr() as u32;
+
+        let value = Region::from_data(value);
+        let value_ptr = value.as_ptr() as u32;
+
         unsafe { db_write(key_ptr, value_ptr) };
     }
 
     fn remove(&mut self, key: &[u8]) {
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
-        let key = build_region(key);
-        let key_ptr = &*key as *const Region as u32;
+        let key = Region::from_data(key);
+        let key_ptr = key.as_ptr() as u32;
+
         unsafe { db_remove(key_ptr) };
     }
 
@@ -187,8 +189,8 @@ impl Storage for ExternalStorage {
 fn create_iter(start: Option<&[u8]>, end: Option<&[u8]>, order: Order) -> u32 {
     // There is lots of gotchas on turning options into regions for FFI, thus this design
     // See: https://github.com/CosmWasm/cosmwasm/pull/509
-    let start_region = start.map(build_region);
-    let end_region = end.map(build_region);
+    let start_region = start.map(Region::from_data);
+    let end_region = end.map(Region::from_data);
     let start_region_addr = get_optional_region_address(&start_region.as_ref());
     let end_region_addr = get_optional_region_address(&end_region.as_ref());
     unsafe { db_scan(start_region_addr, end_region_addr, order as i32) }
@@ -235,9 +237,10 @@ impl Iterator for ExternalPartialIterator {
             return None;
         }
 
-        let data_region = next_result as *mut Region;
-        let data = unsafe { consume_region(data_region) };
-        Some(data)
+        let data_region = next_result as *mut Region<Owned>;
+        let data = unsafe { Region::from_heap_ptr(data_region) };
+
+        Some(data.into_inner())
     }
 }
 
@@ -263,9 +266,11 @@ impl Iterator for ExternalIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
-        let kv_region_ptr = next_result as *mut Region;
-        let kv = unsafe { consume_region(kv_region_ptr) };
-        let (key, value) = decode_sections2(kv);
+        let kv_region_ptr = next_result as *mut Region<Owned>;
+        let kv = unsafe { Region::from_heap_ptr(kv_region_ptr) };
+
+        let (key, value) = decode_sections2(kv.into_inner());
+
         if key.len() == 0 {
             None
         } else {
@@ -283,8 +288,9 @@ fn skip_iter(iter_id: u32, count: usize) {
             // early return
             return;
         }
+
         // just deallocate the region
-        unsafe { consume_region(region as *mut Region) };
+        unsafe { Region::from_heap_ptr(region as *mut Region<Owned>) };
     }
 }
 
@@ -307,12 +313,13 @@ impl Api for ExternalApi {
             // Stop here to allow handling the error in the contract.
             return Err(StdError::generic_err("input too long for addr_validate"));
         }
-        let source = build_region(input_bytes);
-        let source_ptr = &*source as *const Region as u32;
+        let source = Region::from_data(input_bytes);
+        let source_ptr = source.as_ptr() as u32;
 
         let result = unsafe { addr_validate(source_ptr) };
         if result != 0 {
-            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
+            let error =
+                unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
             return Err(StdError::generic_err(format!(
                 "addr_validate errored: {}",
                 error
@@ -332,38 +339,41 @@ impl Api for ExternalApi {
                 "input too long for addr_canonicalize",
             ));
         }
-        let send = build_region(input_bytes);
-        let send_ptr = &*send as *const Region as u32;
-        let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
+        let send = Region::from_data(input_bytes);
+        let send_ptr = send.as_ptr() as u32;
+        let canon = Region::with_capacity(CANONICAL_ADDRESS_BUFFER_LENGTH);
 
-        let result = unsafe { addr_canonicalize(send_ptr, canon as u32) };
+        let result = unsafe { addr_canonicalize(send_ptr, canon.as_ptr() as u32) };
         if result != 0 {
-            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
+            let error =
+                unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
             return Err(StdError::generic_err(format!(
                 "addr_canonicalize errored: {}",
                 error
             )));
         }
 
-        let out = unsafe { consume_region(canon) };
-        Ok(CanonicalAddr::from(out))
+        Ok(CanonicalAddr::from(canon.into_inner()))
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
-        let send = build_region(canonical.as_slice());
-        let send_ptr = &*send as *const Region as u32;
-        let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
+        let send = Region::from_data(canonical.as_slice());
+        let send_ptr = send.as_ptr() as u32;
+        let human = Region::with_capacity(HUMAN_ADDRESS_BUFFER_LENGTH);
 
-        let result = unsafe { addr_humanize(send_ptr, human as u32) };
+        let result = unsafe { addr_humanize(send_ptr, human.as_ptr() as u32) };
         if result != 0 {
-            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
+            let error =
+                unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
             return Err(StdError::generic_err(format!(
                 "addr_humanize errored: {}",
                 error
             )));
         }
 
-        let address = unsafe { consume_string_region_written_by_vm(human) };
+        // TODO: Optimize this heap allocation away?
+        // I mean technically we save a bunch of heap allocation now anyway, but we can optimize this, too!
+        let address = unsafe { consume_string_region_written_by_vm(human.to_heap_ptr()) };
         Ok(Addr::unchecked(address))
     }
 
@@ -373,12 +383,12 @@ impl Api for ExternalApi {
         signature: &[u8],
         public_key: &[u8],
     ) -> Result<bool, VerificationError> {
-        let hash_send = build_region(message_hash);
-        let hash_send_ptr = &*hash_send as *const Region as u32;
-        let sig_send = build_region(signature);
-        let sig_send_ptr = &*sig_send as *const Region as u32;
-        let pubkey_send = build_region(public_key);
-        let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
+        let hash_send = Region::from_data(message_hash);
+        let hash_send_ptr = hash_send.as_ptr() as u32;
+        let sig_send = Region::from_data(signature);
+        let sig_send_ptr = sig_send.as_ptr() as u32;
+        let pubkey_send = Region::from_data(public_key);
+        let pubkey_send_ptr = pubkey_send.as_ptr() as u32;
 
         let result = unsafe { secp256k1_verify(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
         match result {
@@ -399,10 +409,10 @@ impl Api for ExternalApi {
         signature: &[u8],
         recover_param: u8,
     ) -> Result<Vec<u8>, RecoverPubkeyError> {
-        let hash_send = build_region(message_hash);
-        let hash_send_ptr = &*hash_send as *const Region as u32;
-        let sig_send = build_region(signature);
-        let sig_send_ptr = &*sig_send as *const Region as u32;
+        let hash_send = Region::from_data(message_hash);
+        let hash_send_ptr = hash_send.as_ptr() as u32;
+        let sig_send = Region::from_data(signature);
+        let sig_send_ptr = sig_send.as_ptr() as u32;
 
         let result =
             unsafe { secp256k1_recover_pubkey(hash_send_ptr, sig_send_ptr, recover_param.into()) };
@@ -410,7 +420,8 @@ impl Api for ExternalApi {
         let pubkey_ptr = from_low_half(result);
         match error_code {
             0 => {
-                let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
+                let pubkey =
+                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_inner() };
                 Ok(pubkey)
             }
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
@@ -428,12 +439,12 @@ impl Api for ExternalApi {
         signature: &[u8],
         public_key: &[u8],
     ) -> Result<bool, VerificationError> {
-        let hash_send = build_region(message_hash);
-        let hash_send_ptr = &*hash_send as *const Region as u32;
-        let sig_send = build_region(signature);
-        let sig_send_ptr = &*sig_send as *const Region as u32;
-        let pubkey_send = build_region(public_key);
-        let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
+        let hash_send = Region::from_data(message_hash);
+        let hash_send_ptr = hash_send.as_ptr() as u32;
+        let sig_send = Region::from_data(signature);
+        let sig_send_ptr = sig_send.as_ptr() as u32;
+        let pubkey_send = Region::from_data(public_key);
+        let pubkey_send_ptr = pubkey_send.as_ptr() as u32;
 
         let result = unsafe { secp256r1_verify(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
         match result {
@@ -455,10 +466,10 @@ impl Api for ExternalApi {
         signature: &[u8],
         recover_param: u8,
     ) -> Result<Vec<u8>, RecoverPubkeyError> {
-        let hash_send = build_region(message_hash);
-        let hash_send_ptr = &*hash_send as *const Region as u32;
-        let sig_send = build_region(signature);
-        let sig_send_ptr = &*sig_send as *const Region as u32;
+        let hash_send = Region::from_data(message_hash);
+        let hash_send_ptr = hash_send.as_ptr() as u32;
+        let sig_send = Region::from_data(signature);
+        let sig_send_ptr = sig_send.as_ptr() as u32;
 
         let result =
             unsafe { secp256r1_recover_pubkey(hash_send_ptr, sig_send_ptr, recover_param.into()) };
@@ -466,7 +477,8 @@ impl Api for ExternalApi {
         let pubkey_ptr = from_low_half(result);
         match error_code {
             0 => {
-                let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
+                let pubkey =
+                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_inner() };
                 Ok(pubkey)
             }
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
@@ -483,12 +495,12 @@ impl Api for ExternalApi {
         signature: &[u8],
         public_key: &[u8],
     ) -> Result<bool, VerificationError> {
-        let msg_send = build_region(message);
-        let msg_send_ptr = &*msg_send as *const Region as u32;
-        let sig_send = build_region(signature);
-        let sig_send_ptr = &*sig_send as *const Region as u32;
-        let pubkey_send = build_region(public_key);
-        let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
+        let msg_send = Region::from_data(message);
+        let msg_send_ptr = msg_send.as_ptr() as u32;
+        let sig_send = Region::from_data(signature);
+        let sig_send_ptr = sig_send.as_ptr() as u32;
+        let pubkey_send = Region::from_data(public_key);
+        let pubkey_send_ptr = pubkey_send.as_ptr() as u32;
 
         let result = unsafe { ed25519_verify(msg_send_ptr, sig_send_ptr, pubkey_send_ptr) };
         match result {
@@ -510,16 +522,16 @@ impl Api for ExternalApi {
         public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError> {
         let msgs_encoded = encode_sections(messages);
-        let msgs_send = build_region(&msgs_encoded);
-        let msgs_send_ptr = &*msgs_send as *const Region as u32;
+        let msgs_send = Region::from_data(msgs_encoded);
+        let msgs_send_ptr = msgs_send.as_ptr() as u32;
 
         let sigs_encoded = encode_sections(signatures);
-        let sig_sends = build_region(&sigs_encoded);
-        let sigs_send_ptr = &*sig_sends as *const Region as u32;
+        let sig_sends = Region::from_data(sigs_encoded);
+        let sigs_send_ptr = sig_sends.as_ptr() as u32;
 
         let pubkeys_encoded = encode_sections(public_keys);
-        let pubkeys_send = build_region(&pubkeys_encoded);
-        let pubkeys_send_ptr = &*pubkeys_send as *const Region as u32;
+        let pubkeys_send = Region::from_data(pubkeys_encoded);
+        let pubkeys_send_ptr = pubkeys_send.as_ptr() as u32;
 
         let result =
             unsafe { ed25519_batch_verify(msgs_send_ptr, sigs_send_ptr, pubkeys_send_ptr) };
@@ -536,17 +548,17 @@ impl Api for ExternalApi {
     }
 
     fn debug(&self, message: &str) {
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
-        let region = build_region(message.as_bytes());
-        let region_ptr = region.as_ref() as *const Region as u32;
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as Region::from_data)
+        let region = Region::from_data(message.as_bytes());
+        let region_ptr = region.as_ptr() as u32;
         unsafe { debug(region_ptr) };
     }
 }
 
 /// Takes a pointer to a Region and reads the data into a String.
 /// This is for trusted string sources only.
-unsafe fn consume_string_region_written_by_vm(from: *mut Region) -> String {
-    let data = consume_region(from);
+unsafe fn consume_string_region_written_by_vm(from: *mut Region<Owned>) -> String {
+    let data = Region::from_heap_ptr(from).into_inner();
     // We trust the VM/chain to return correct UTF-8, so let's save some gas
     String::from_utf8_unchecked(data)
 }
@@ -562,11 +574,12 @@ impl ExternalQuerier {
 
 impl Querier for ExternalQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let req = build_region(bin_request);
-        let request_ptr = &*req as *const Region as u32;
+        let req = Region::from_data(bin_request);
+        let request_ptr = req.as_ptr() as u32;
 
         let response_ptr = unsafe { query_chain(request_ptr) };
-        let response = unsafe { consume_region(response_ptr as *mut Region) };
+        let response =
+            unsafe { Region::from_heap_ptr(response_ptr as *mut Region<Owned>).into_inner() };
 
         from_json(&response).unwrap_or_else(|parsing_err| {
             SystemResult::Err(SystemError::InvalidResponse {
@@ -579,8 +592,7 @@ impl Querier for ExternalQuerier {
 
 #[cfg(feature = "abort")]
 pub fn handle_panic(message: &str) {
-    // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
-    let region = build_region(message.as_bytes());
-    let region_ptr = region.as_ref() as *const Region as u32;
+    let region = Region::from_data(message.as_bytes());
+    let region_ptr = region.as_ptr() as u32;
     unsafe { abort(region_ptr) };
 }

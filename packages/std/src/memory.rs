@@ -1,75 +1,7 @@
 use alloc::vec::Vec;
-use core::mem;
+use core::{any::TypeId, marker::PhantomData, mem, ops::Deref, slice};
 
-/// Describes some data allocated in Wasm's linear memory.
-/// A pointer to an instance of this can be returned over FFI boundaries.
-///
-/// This struct is crate internal since the cosmwasm-vm defines the same type independently.
-#[repr(C)]
-pub struct Region {
-    /// The beginning of the region expressed as bytes from the beginning of the linear memory
-    pub offset: u32,
-    /// The number of bytes available in this region
-    pub capacity: u32,
-    /// The number of bytes used in this region
-    pub length: u32,
-}
-
-/// Creates a memory region of capacity `size` and length 0. Returns a pointer to the Region.
-/// This is the same as the `allocate` export, but designed to be called internally.
-pub fn alloc(size: usize) -> *mut Region {
-    let data: Vec<u8> = Vec::with_capacity(size);
-    let data_ptr = data.as_ptr() as usize;
-
-    let region = build_region_from_components(
-        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
-        u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
-        0,
-    );
-    mem::forget(data);
-    Box::into_raw(region)
-}
-
-/// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
-/// a pointer to the Region (preventing the memory from being freed until explicitly called later).
-///
-/// The resulting Region spans the entire region allocated by the vector, preserving the length and capacity components.
-pub fn release_buffer(buffer: Vec<u8>) -> *mut Region {
-    let region = build_region(&buffer);
-    mem::forget(buffer);
-    Box::into_raw(region)
-}
-
-/// Return the data referenced by the Region and
-/// deallocates the Region (and the vector when finished).
-/// Warning: only use this when you are sure the caller will never use (or free) the Region later
-///
-/// # Safety
-///
-/// The ptr must refer to a valid Region, which was previously returned by alloc,
-/// and not yet deallocated. This call will deallocate the Region and return an owner vector
-/// to the caller containing the referenced data.
-///
-/// Naturally, calling this function twice on the same pointer will double deallocate data
-/// and lead to a crash. Make sure to call it exactly once (either consuming the input in
-/// the wasm code OR deallocating the buffer from the caller).
-pub unsafe fn consume_region(ptr: *mut Region) -> Vec<u8> {
-    assert!(!ptr.is_null(), "Region pointer is null");
-    let region = Box::from_raw(ptr);
-
-    let region_start = region.offset as *mut u8;
-    // This case is explicitely disallowed by Vec
-    // "The pointer will never be null, so this type is null-pointer-optimized."
-    assert!(!region_start.is_null(), "Region starts at null pointer");
-
-    Vec::from_raw_parts(
-        region_start,
-        region.length as usize,
-        region.capacity as usize,
-    )
-}
-
-/// Element that can be used to construct a new `Box<Region>`
+/// Element that can be used to construct a new `Region`
 ///
 /// # Safety
 ///
@@ -83,12 +15,16 @@ pub unsafe fn consume_region(ptr: *mut Region) -> Vec<u8> {
 ///
 /// See: <https://doc.rust-lang.org/stable/alloc/alloc/trait.GlobalAlloc.html#safety-2>
 pub unsafe trait RegionSource {
+    type Ownership: Ownership;
+
     fn ptr(&self) -> *const u8;
     fn len(&self) -> usize;
     fn capacity(&self) -> usize;
 }
 
 unsafe impl RegionSource for &[u8] {
+    type Ownership = Borrowed;
+
     fn ptr(&self) -> *const u8 {
         self.as_ptr()
     }
@@ -103,6 +39,8 @@ unsafe impl RegionSource for &[u8] {
 }
 
 unsafe impl RegionSource for Vec<u8> {
+    type Ownership = Owned;
+
     fn ptr(&self) -> *const u8 {
         self.as_ptr()
     }
@@ -116,55 +54,148 @@ unsafe impl RegionSource for Vec<u8> {
     }
 }
 
-unsafe impl<T: ?Sized> RegionSource for &T
-where
-    T: RegionSource,
-{
-    fn ptr(&self) -> *const u8 {
-        (**self).ptr()
+mod sealed {
+    pub trait Sealed: 'static {}
+
+    impl Sealed for super::Owned {}
+
+    impl Sealed for super::Borrowed {}
+}
+
+pub trait Ownership: sealed::Sealed + 'static {}
+
+impl<T> Ownership for T where T: sealed::Sealed {}
+
+pub struct Owned {}
+
+pub struct Borrowed {}
+
+/// Describes some data allocated in Wasm's linear memory.
+/// A pointer to an instance of this can be returned over FFI boundaries.
+///
+/// This struct is crate internal since the cosmwasm-vm defines the same type independently.
+#[repr(C)]
+pub struct Region<T: Ownership> {
+    /// The beginning of the region expressed as bytes from the beginning of the linear memory
+    pub offset: u32,
+    /// The number of bytes available in this region
+    pub capacity: u32,
+    /// The number of bytes used in this region
+    pub length: u32,
+
+    _marker: PhantomData<T>,
+}
+
+impl Region<Owned> {
+    pub unsafe fn from_heap_ptr(ptr: *mut Self) -> Box<Self> {
+        assert!(!ptr.is_null(), "Region pointer is null");
+        Box::from_raw(ptr)
     }
 
-    fn len(&self) -> usize {
-        (**self).len()
+    pub fn with_capacity(cap: usize) -> Self {
+        let data = Vec::with_capacity(cap);
+        let region = Self::from_data(data);
+        region
     }
 
-    fn capacity(&self) -> usize {
-        (**self).capacity()
+    pub fn into_inner(self) -> Vec<u8> {
+        let vector = unsafe {
+            Vec::from_raw_parts(
+                self.offset as *mut u8,
+                self.length as usize,
+                self.capacity as usize,
+            )
+        };
+        mem::forget(self);
+        vector
     }
 }
 
-/// Returns a box of a Region, which can be sent over a call to extern
-/// note that this DOES NOT take ownership of the data, and we MUST NOT consume_region
-/// the resulting data.
-/// The Box must be dropped (with scope), but not the data
-pub fn build_region<S>(data: S) -> Box<Region>
+impl<O> Region<O>
 where
-    S: RegionSource,
+    O: Ownership,
 {
-    // Well, this technically violates pointer provenance rules.
-    // But there isn't a stable API for it, so that's the best we can do, I guess.
-    build_region_from_components(
-        u32::try_from(data.ptr() as usize).expect("pointer doesn't fit in u32"),
-        u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
-        u32::try_from(data.len()).expect("length doesn't fit in u32"),
-    )
+    pub fn from_data<S>(data: S) -> Self
+    where
+        S: RegionSource<Ownership = O>,
+    {
+        // Well, this technically violates pointer provenance rules.
+        // But there isn't a stable API for it, so that's the best we can do, I guess.
+        let region = Region {
+            offset: u32::try_from(data.ptr() as usize).expect("pointer doesn't fit in u32"),
+            capacity: u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
+            length: u32::try_from(data.len()).expect("length doesn't fit in u32"),
+
+            _marker: PhantomData,
+        };
+
+        // We gonna forget this.. as a safety measure..
+        // If we didn't do this and the `RegionSource` was a `Vec` we would deallocate it and that's BAD
+        mem::forget(data);
+
+        region
+    }
 }
 
-fn build_region_from_components(offset: u32, capacity: u32, length: u32) -> Box<Region> {
-    Box::new(Region {
-        offset,
-        capacity,
-        length,
-    })
+impl<T> Region<T>
+where
+    T: Ownership,
+{
+    pub fn as_bytes(&self) -> &[u8] {
+        unsafe { slice::from_raw_parts(self.offset as *const u8, self.length as usize) }
+    }
+
+    pub fn as_ptr(&self) -> *const Self {
+        self
+    }
+
+    pub fn to_heap_ptr(self) -> *mut Self {
+        let boxed = Box::new(self);
+        Box::into_raw(boxed)
+    }
+}
+
+impl<T> Deref for Region<T>
+where
+    T: Ownership,
+{
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_bytes()
+    }
+}
+
+impl<T> Drop for Region<T>
+where
+    T: Ownership,
+{
+    fn drop(&mut self) {
+        // Since we can't specialize the drop impl we need to perform a runtime check
+        if TypeId::of::<T>() == TypeId::of::<Owned>() {
+            let region_start = self.offset as *mut u8;
+
+            // This case is explicitely disallowed by Vec
+            // "The pointer will never be null, so this type is null-pointer-optimized."
+            assert!(!region_start.is_null(), "Region starts at null pointer");
+
+            unsafe {
+                let data =
+                    Vec::from_raw_parts(region_start, self.length as usize, self.capacity as usize);
+
+                drop(data);
+            }
+        }
+    }
 }
 
 /// Returns the address of the optional Region as an offset in linear memory,
 /// or zero if not present
 #[cfg(feature = "iterator")]
-pub fn get_optional_region_address(region: &Option<&Box<Region>>) -> u32 {
+pub fn get_optional_region_address<O: Ownership>(region: &Option<&Region<O>>) -> u32 {
     /// Returns the address of the Region as an offset in linear memory
-    fn get_region_address(region: &Box<Region>) -> u32 {
-        region.as_ref() as *const Region as u32
+    fn get_region_address<O: Ownership>(region: &Region<O>) -> u32 {
+        region.as_ptr() as u32
     }
 
     region.map(get_region_address).unwrap_or(0)
