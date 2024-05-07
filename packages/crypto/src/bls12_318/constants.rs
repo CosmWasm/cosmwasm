@@ -23,7 +23,7 @@ pub const BLS12_381_G2_GENERATOR: [u8; BLS12_381_G2_POINT_LEN] = [
     5, 187, 239, 212, 128, 86, 200, 193, 33, 189, 184,
 ];
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod test {
     use ark_bls12_381::{G1Affine, G2Affine};
     use ark_ec::AffineRepr;
