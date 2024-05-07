@@ -21,10 +21,6 @@ pub enum Aggregation {
 #[derive(Debug, Display)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum PairingEquality {
-    #[display("List of G1 points is empty")]
-    EmptyG1,
-    #[display("List of G2 points is empty")]
-    EmptyG2,
     #[display("List is not a multiple of 48. Remainder: {remainder}")]
     NotMultipleG1 { remainder: usize },
     #[display("List is not a multiple of 96. Remainder: {remainder}")]
@@ -139,22 +135,14 @@ impl CryptoError {
                 source: PairingEquality::UnequalPointAmount { .. },
                 ..
             } => 13,
-            CryptoError::PairingEquality {
-                source: PairingEquality::EmptyG1 { .. },
-                ..
-            } => 14,
-            CryptoError::PairingEquality {
-                source: PairingEquality::EmptyG2 { .. },
-                ..
-            } => 15,
             CryptoError::Aggregation {
                 source: Aggregation::Empty,
                 ..
-            } => 16,
+            } => 14,
             CryptoError::Aggregation {
                 source: Aggregation::NotMultiple { .. },
                 ..
-            } => 17,
+            } => 15,
         }
     }
 }

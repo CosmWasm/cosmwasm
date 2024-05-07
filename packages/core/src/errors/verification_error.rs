@@ -18,10 +18,6 @@ pub enum AggregationError {
 #[derive(Display, Debug, PartialEq)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum PairingEqualityError {
-    #[display("List of G1 points is empty")]
-    EmptyG1,
-    #[display("List of G2 points is empty")]
-    EmptyG2,
     #[display("List is not a multiple of 48")]
     NotMultipleG1,
     #[display("List is not a multiple of 96")]
@@ -124,18 +120,6 @@ impl From<CryptoError> for VerificationError {
                 ..
             } => VerificationError::Aggregation {
                 source: AggregationError::NotMultiple,
-            },
-            CryptoError::PairingEquality {
-                source: cosmwasm_crypto::PairingEqualityError::EmptyG1,
-                ..
-            } => VerificationError::PairingEquality {
-                source: PairingEqualityError::EmptyG1,
-            },
-            CryptoError::PairingEquality {
-                source: cosmwasm_crypto::PairingEqualityError::EmptyG2,
-                ..
-            } => VerificationError::PairingEquality {
-                source: PairingEqualityError::EmptyG2,
             },
             CryptoError::PairingEquality {
                 source: cosmwasm_crypto::PairingEqualityError::NotMultipleG1 { .. },

@@ -428,10 +428,10 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(point),
             8 => Err(VerificationError::InvalidPoint),
-            16 => Err(VerificationError::Aggregation {
+            14 => Err(VerificationError::Aggregation {
                 source: AggregationError::Empty,
             }),
-            17 => Err(VerificationError::Aggregation {
+            15 => Err(VerificationError::Aggregation {
                 source: AggregationError::NotMultiple,
             }),
             error_code => Err(VerificationError::unknown_err(error_code)),
@@ -470,12 +470,6 @@ impl Api for ExternalApi {
             }),
             13 => Err(VerificationError::PairingEquality {
                 source: PairingEqualityError::UnequalPointAmount,
-            }),
-            14 => Err(VerificationError::PairingEquality {
-                source: PairingEqualityError::EmptyG1,
-            }),
-            15 => Err(VerificationError::PairingEquality {
-                source: PairingEqualityError::EmptyG2,
             }),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
