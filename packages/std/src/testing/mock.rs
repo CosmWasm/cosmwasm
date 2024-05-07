@@ -1168,7 +1168,7 @@ mod tests {
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use base64::{engine::general_purpose, Engine};
-    use cosmwasm_crypto::BLS12_381_G1_GENERATOR_COMPRESSED;
+    use cosmwasm_crypto::BLS12_381_G1_GENERATOR;
     use hex_literal::hex;
     use serde::Deserialize;
 
@@ -1377,7 +1377,7 @@ mod tests {
         let s = hex!("9104e74b9dfd3ad502f25d6a5ef57db0ed7d9a0e00f3500586d8ce44231212542fcfaf87840539b398bf07626705cf1105d246ca1062c6c2e1a53029a0f790ed5e3cb1f52f8234dc5144c45fc847c0cd37a92d68e7c5ba7c648a8a339f171244");
 
         let is_valid = api
-            .bls12_381_pairing_equality(&ps, &qs, &BLS12_381_G1_GENERATOR_COMPRESSED, &s)
+            .bls12_381_pairing_equality(&ps, &qs, &BLS12_381_G1_GENERATOR, &s)
             .unwrap();
         assert!(is_valid);
     }
@@ -1439,7 +1439,7 @@ mod tests {
 
         let is_valid = api
             .bls12_381_pairing_equality(
-                &BLS12_381_G1_GENERATOR_COMPRESSED,
+                &BLS12_381_G1_GENERATOR,
                 &signature,
                 &PK_LEO_MAINNET,
                 &msg_point,
