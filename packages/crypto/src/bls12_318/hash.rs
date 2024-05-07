@@ -37,7 +37,7 @@ type HashToCurve<CurveConfig, Hash> =
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum HashFunction {
-    Sha256,
+    Sha256 = 0,
 }
 
 #[doc(hidden)]
