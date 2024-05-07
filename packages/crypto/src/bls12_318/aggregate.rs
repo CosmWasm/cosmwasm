@@ -28,7 +28,7 @@ pub fn bls12_381_aggregate_g1(points: &[u8]) -> Result<[u8; 48], CryptoError> {
         .chunks_exact(G1_POINT_SIZE)
         .map(|data| {
             let mut buf = [0u8; 48];
-            buf[..].clone_from_slice(data);
+            buf[..].copy_from_slice(data);
             buf
         })
         .collect();
@@ -70,7 +70,7 @@ pub fn bls12_381_aggregate_g2(points: &[u8]) -> Result<[u8; 96], CryptoError> {
         .chunks_exact(G2_POINT_SIZE)
         .map(|data| {
             let mut buf = [0u8; 96];
-            buf[..].clone_from_slice(data);
+            buf[..].copy_from_slice(data);
             buf
         })
         .collect();
