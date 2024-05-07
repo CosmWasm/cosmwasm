@@ -195,7 +195,7 @@ pub fn bls12_381_g2_is_identity(g2: &[u8; BLS12_381_G2_POINT_LEN]) -> Result<boo
 
 #[cfg(test)]
 mod tests {
-    use crate::{BLS12_381_G1_GENERATOR_COMPRESSED, BLS12_381_G2_GENERATOR_COMPRESSED};
+    use crate::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 
     use super::*;
     use hex_literal::hex;
@@ -203,13 +203,13 @@ mod tests {
     #[test]
     fn g1_generator_works() {
         let generator = G1::generator();
-        assert_eq!(generator.to_compressed(), BLS12_381_G1_GENERATOR_COMPRESSED);
+        assert_eq!(generator.to_compressed(), BLS12_381_G1_GENERATOR);
     }
 
     #[test]
     fn g2_generator_works() {
         let generator = G2::generator();
-        assert_eq!(generator.to_compressed(), BLS12_381_G2_GENERATOR_COMPRESSED);
+        assert_eq!(generator.to_compressed(), BLS12_381_G2_GENERATOR);
     }
 
     #[test]

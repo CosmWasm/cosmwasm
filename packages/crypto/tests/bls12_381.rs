@@ -8,7 +8,7 @@ use base64_serde::base64_serde_type;
 use cosmwasm_crypto::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_is_identity,
     bls12_381_g2_is_identity, bls12_381_hash_to_g2, bls12_381_pairing_equality, HashFunction,
-    BLS12_381_G1_GENERATOR_COMPRESSED, BLS12_381_G2_POINT_LEN,
+    BLS12_381_G1_GENERATOR, BLS12_381_G2_POINT_LEN,
 };
 
 const PROOF_OF_POSSESSION_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
@@ -261,7 +261,7 @@ fn bls12_381_verify_works() {
             let bool_result = bls12_381_pairing_equality(
                 &pubkey,
                 &message_point,
-                &BLS12_381_G1_GENERATOR_COMPRESSED,
+                &BLS12_381_G1_GENERATOR,
                 &signature,
             )?;
 
@@ -337,7 +337,7 @@ fn bls12_381_aggregate_verify_works() {
             let bool_result = bls12_381_pairing_equality(
                 &pubkeys,
                 &messages,
-                &BLS12_381_G1_GENERATOR_COMPRESSED,
+                &BLS12_381_G1_GENERATOR,
                 &signature,
             )?;
 
@@ -412,7 +412,7 @@ fn bls12_381_fast_aggregate_verify_works() {
             let bool_result = bls12_381_pairing_equality(
                 &pubkey,
                 &message_point,
-                &BLS12_381_G1_GENERATOR_COMPRESSED,
+                &BLS12_381_G1_GENERATOR,
                 &signature,
             )?;
 

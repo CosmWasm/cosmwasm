@@ -19,7 +19,7 @@ use cosmwasm_crypto::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
     bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey,
     secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify, HashFunction,
-    BLS12_381_G1_GENERATOR_COMPRESSED, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
+    BLS12_381_G1_GENERATOR, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 use std::cmp::min;
 
@@ -192,7 +192,7 @@ where
                     let is_valid = black_box(bls12_381_pairing_equality(
                         &serialized_pubkeys,
                         &serialized_messages,
-                        &BLS12_381_G1_GENERATOR_COMPRESSED,
+                        &BLS12_381_G1_GENERATOR,
                         &serialized_signature,
                     ))
                     .unwrap();
@@ -224,7 +224,7 @@ where
     });
 
     group.bench_function("bls12_381_verify", |b| {
-        let generator = BLS12_381_G1_GENERATOR_COMPRESSED;
+        let generator = BLS12_381_G1_GENERATOR;
         let message = bls12_381_hash_to_g2(HashFunction::Sha256, &BLS_MESSAGE, BLS_DST);
 
         b.iter(|| {
