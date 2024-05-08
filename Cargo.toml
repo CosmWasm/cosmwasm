@@ -5,3 +5,11 @@ exclude = ["contracts"]
 # Resolver has to be set explicitely in workspaces
 # due to https://github.com/rust-lang/cargo/issues/9956
 resolver = "2"
+
+[workspace.package]
+version = "2.0.2"
+
+[workspace.metadata.release]
+shared-version = true
+tag-message = "chore: Release cosmwasm v{{version}}"
+tag-name = "v{{version}}"
