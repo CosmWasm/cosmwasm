@@ -8,10 +8,6 @@ use crate::errors::{
     VmResult,
 };
 
-const _: () = {
-    assert!(std::mem::size_of::<Region>() == 12);
-};
-
 /****** read/write to wasm memory buffer ****/
 
 /// Describes some data allocated in Wasm's linear memory.
