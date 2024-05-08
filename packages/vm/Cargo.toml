@@ -7,6 +7,18 @@ description = "VM bindings to run cosmwams contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
 
+[package.metadata.release]
+pre-release-hook = [
+    "../../devtools/release_checks.sh"
+]
+pre-release-replacements = [
+    { file="../../CHANGELOG.md", search="## \\[Unreleased\\]", replace="## [{{version}}] - {{date}}", exactly=1 },
+    { file="../../CHANGELOG.md", search="(U|u)nreleased", replace="{{version}}" },
+    { file="../../CHANGELOG.md", search="<!-- next-header -->", replace="<!-- next-header -->\n\n## [Unreleased]", exactly=1 },
+    { file="../../CHANGELOG.md", search="\\.\\.\\.HEAD", replace="...{{tag_name}}", exactly=1 },
+    { file="../../CHANGELOG.md", search="<!-- next-url -->\n", replace="<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly=1 },
+]
+
 [features]
 default = ["staking", "iterator"]
 # backtraces provides much better context at runtime errors (in non-wasm code)
