@@ -66,9 +66,9 @@ pub trait Ownership: sealed::Sealed + 'static {}
 
 impl<T> Ownership for T where T: sealed::Sealed {}
 
-pub struct Owned {}
+pub struct Owned;
 
-pub struct Borrowed {}
+pub struct Borrowed;
 
 /// Describes some data allocated in Wasm's linear memory.
 /// A pointer to an instance of this can be returned over FFI boundaries.
