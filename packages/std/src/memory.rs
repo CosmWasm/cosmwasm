@@ -22,7 +22,7 @@ pub struct Borrowed;
 ///
 /// This struct is crate internal since the cosmwasm-vm defines the same type independently.
 #[repr(C)]
-pub struct Region<T: Ownership> {
+pub struct Region<O: Ownership> {
     /// The beginning of the region expressed as bytes from the beginning of the linear memory
     pub offset: u32,
     /// The number of bytes available in this region
@@ -30,7 +30,7 @@ pub struct Region<T: Ownership> {
     /// The number of bytes used in this region
     pub length: u32,
 
-    _marker: PhantomData<T>,
+    _marker: PhantomData<O>,
 }
 
 impl Region<Borrowed> {
@@ -81,9 +81,9 @@ impl Region<Owned> {
     }
 }
 
-impl<T> Region<T>
+impl<O> Region<O>
 where
-    T: Ownership,
+    O: Ownership,
 {
     unsafe fn from_parts(ptr: *const u8, capacity: usize, length: usize) -> Self {
         // Well, this technically violates pointer provenance rules.
@@ -119,9 +119,9 @@ where
     }
 }
 
-impl<T> Deref for Region<T>
+impl<O> Deref for Region<O>
 where
-    T: Ownership,
+    O: Ownership,
 {
     type Target = [u8];
 
@@ -130,13 +130,13 @@ where
     }
 }
 
-impl<T> Drop for Region<T>
+impl<O> Drop for Region<O>
 where
-    T: Ownership,
+    O: Ownership,
 {
     fn drop(&mut self) {
         // Since we can't specialize the drop impl we need to perform a runtime check
-        if TypeId::of::<T>() == TypeId::of::<Owned>() {
+        if TypeId::of::<O>() == TypeId::of::<Owned>() {
             let region_start = self.offset as *mut u8;
 
             // This case is explicitely disallowed by Vec
