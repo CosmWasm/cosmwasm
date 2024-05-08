@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!-- next-header -->
+
 ## [Unreleased]
 
 ## [1.5.4]
@@ -656,6 +658,8 @@ and this project adheres to
 
 The CHANGELOG for versions before 1.0.0 was moved to
 [CHANGELOG-pre1.0.0.md](./CHANGELOG-pre1.0.0.md).
+
+<!-- next-url -->
 
 [unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.4...HEAD
 [1.5.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.3...v1.5.4

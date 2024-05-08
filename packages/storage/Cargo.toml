@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-storage"
-version = "1.5.4"
+version.workspace = true
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "CosmWasm library with useful helpers for Storage patterns"
