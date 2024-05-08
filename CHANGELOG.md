@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!-- next-header -->
+
 ## [Unreleased]
 
 ## [1.4.4]
@@ -1929,6 +1931,8 @@ Some main points:
 - JSON Schema output works
 
 All future Changelog entries will reference this base
+
+<!-- next-url -->
 
 [unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.4...HEAD
 [1.4.4]: https://github.com/CosmWasm/cosmwasm/compare/v1.4.3...v1.4.4

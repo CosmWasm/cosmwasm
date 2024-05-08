@@ -8,3 +8,8 @@ resolver = "2"
 
 [workspace.package]
 version = "1.4.4"
+
+[workspace.metadata.release]
+shared-version = true
+tag-message = "chore: Release cosmwasm v{{version}}"
+tag-name = "v{{version}}"
