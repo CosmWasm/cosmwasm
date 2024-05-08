@@ -458,9 +458,9 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let info: MessageInfo = try_into_contract_result!(from_json(info));
@@ -482,9 +482,9 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let info: MessageInfo = try_into_contract_result!(from_json(info));
@@ -505,8 +505,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -526,8 +526,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -546,8 +546,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Reply = try_into_contract_result!(from_json(msg));
@@ -566,8 +566,8 @@ where
     M: DeserializeOwned,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -585,8 +585,8 @@ where
     Q: CustomQuery,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelOpenMsg = try_into_contract_result!(from_json(msg));
@@ -606,8 +606,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelConnectMsg = try_into_contract_result!(from_json(msg));
@@ -627,8 +627,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelCloseMsg = try_into_contract_result!(from_json(msg));
@@ -648,8 +648,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_json(msg));
@@ -669,8 +669,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketAckMsg = try_into_contract_result!(from_json(msg));
@@ -690,8 +690,8 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_inner() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_inner() };
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json(msg));

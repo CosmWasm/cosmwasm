@@ -108,7 +108,7 @@ impl Region<Owned> {
         region
     }
 
-    pub fn into_inner(self) -> Vec<u8> {
+    pub fn into_vec(self) -> Vec<u8> {
         let vector = unsafe {
             Vec::from_raw_parts(
                 self.offset as *mut u8,

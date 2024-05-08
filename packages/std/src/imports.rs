@@ -118,7 +118,7 @@ impl Storage for ExternalStorage {
         let value_ptr = read as *mut Region<Owned>;
         let data = unsafe { Region::from_heap_ptr(value_ptr) };
 
-        Some(data.into_inner())
+        Some(data.into_vec())
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
@@ -240,7 +240,7 @@ impl Iterator for ExternalPartialIterator {
         let data_region = next_result as *mut Region<Owned>;
         let data = unsafe { Region::from_heap_ptr(data_region) };
 
-        Some(data.into_inner())
+        Some(data.into_vec())
     }
 }
 
@@ -269,7 +269,7 @@ impl Iterator for ExternalIterator {
         let kv_region_ptr = next_result as *mut Region<Owned>;
         let kv = unsafe { Region::from_heap_ptr(kv_region_ptr) };
 
-        let (key, value) = decode_sections2(kv.into_inner());
+        let (key, value) = decode_sections2(kv.into_vec());
 
         if key.len() == 0 {
             None
@@ -353,7 +353,7 @@ impl Api for ExternalApi {
             )));
         }
 
-        Ok(CanonicalAddr::from(canon.into_inner()))
+        Ok(CanonicalAddr::from(canon.into_vec()))
     }
 
     fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
@@ -421,7 +421,7 @@ impl Api for ExternalApi {
         match error_code {
             0 => {
                 let pubkey =
-                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_inner() };
+                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_vec() };
                 Ok(pubkey)
             }
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
@@ -478,7 +478,7 @@ impl Api for ExternalApi {
         match error_code {
             0 => {
                 let pubkey =
-                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_inner() };
+                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_vec() };
                 Ok(pubkey)
             }
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
@@ -558,7 +558,7 @@ impl Api for ExternalApi {
 /// Takes a pointer to a Region and reads the data into a String.
 /// This is for trusted string sources only.
 unsafe fn consume_string_region_written_by_vm(from: *mut Region<Owned>) -> String {
-    let data = Region::from_heap_ptr(from).into_inner();
+    let data = Region::from_heap_ptr(from).into_vec();
     // We trust the VM/chain to return correct UTF-8, so let's save some gas
     String::from_utf8_unchecked(data)
 }
@@ -579,7 +579,7 @@ impl Querier for ExternalQuerier {
 
         let response_ptr = unsafe { query_chain(request_ptr) };
         let response =
-            unsafe { Region::from_heap_ptr(response_ptr as *mut Region<Owned>).into_inner() };
+            unsafe { Region::from_heap_ptr(response_ptr as *mut Region<Owned>).into_vec() };
 
         from_json(&response).unwrap_or_else(|parsing_err| {
             SystemResult::Err(SystemError::InvalidResponse {
