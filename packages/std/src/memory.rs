@@ -1,59 +1,6 @@
 use alloc::vec::Vec;
 use core::{any::TypeId, marker::PhantomData, mem, ops::Deref, slice};
 
-/// Element that can be used to construct a new `Region`
-///
-/// # Safety
-///
-/// The following invariant must be upheld:
-///
-/// - full allocated capacity == value returned by capacity
-///
-/// This is important to uphold the safety invariant of the `dealloc` method, which requires us to pass the same Layout
-/// into it as was used to allocate a memory region.
-/// And since `size` is one of the parameters, it is important to pass in the exact same capacity.
-///
-/// See: <https://doc.rust-lang.org/stable/alloc/alloc/trait.GlobalAlloc.html#safety-2>
-pub unsafe trait RegionSource {
-    type Ownership: Ownership;
-
-    fn ptr(&self) -> *const u8;
-    fn len(&self) -> usize;
-    fn capacity(&self) -> usize;
-}
-
-unsafe impl RegionSource for &[u8] {
-    type Ownership = Borrowed;
-
-    fn ptr(&self) -> *const u8 {
-        self.as_ptr()
-    }
-
-    fn len(&self) -> usize {
-        (*self).len()
-    }
-
-    fn capacity(&self) -> usize {
-        self.len()
-    }
-}
-
-unsafe impl RegionSource for Vec<u8> {
-    type Ownership = Owned;
-
-    fn ptr(&self) -> *const u8 {
-        self.as_ptr()
-    }
-
-    fn len(&self) -> usize {
-        self.len()
-    }
-
-    fn capacity(&self) -> usize {
-        self.capacity()
-    }
-}
-
 mod sealed {
     pub trait Sealed: 'static {}
 
@@ -86,7 +33,20 @@ pub struct Region<T: Ownership> {
     _marker: PhantomData<T>,
 }
 
+impl Region<Borrowed> {
+    pub fn from_slice(slice: &[u8]) -> Self {
+        unsafe { Self::from_parts(slice.as_ptr(), slice.len(), slice.len()) }
+    }
+}
+
 impl Region<Owned> {
+    /// Construct a region from an existing vector
+    pub fn from_vec(vec: Vec<u8>) -> Self {
+        let region = unsafe { Self::from_parts(vec.as_ptr(), vec.capacity(), vec.len()) };
+        mem::forget(vec);
+        region
+    }
+
     /// Reconstruct a region from a raw pointer pointing to a `Box<Region>`.
     /// You'll want to use this when you received a region from the VM and want to dereference its contents.
     ///
@@ -104,7 +64,7 @@ impl Region<Owned> {
     /// Construct a new empty region with *at least* a capacity of what you passed in and a length of 0
     pub fn with_capacity(cap: usize) -> Self {
         let data = Vec::with_capacity(cap);
-        let region = Self::from_data(data);
+        let region = Self::from_vec(data);
         region
     }
 
@@ -121,37 +81,22 @@ impl Region<Owned> {
     }
 }
 
-impl<O> Region<O>
-where
-    O: Ownership,
-{
-    /// Construct a new region from any kind of data that can be turned into a region
-    pub fn from_data<S>(data: S) -> Self
-    where
-        S: RegionSource<Ownership = O>,
-    {
-        // Well, this technically violates pointer provenance rules.
-        // But there isn't a stable API for it, so that's the best we can do, I guess.
-        let region = Region {
-            offset: u32::try_from(data.ptr() as usize).expect("pointer doesn't fit in u32"),
-            capacity: u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
-            length: u32::try_from(data.len()).expect("length doesn't fit in u32"),
-
-            _marker: PhantomData,
-        };
-
-        // We gonna forget this.. as a safety measure..
-        // If we didn't do this and the `RegionSource` was a `Vec` we would deallocate it and that's BAD
-        mem::forget(data);
-
-        region
-    }
-}
-
 impl<T> Region<T>
 where
     T: Ownership,
 {
+    unsafe fn from_parts(ptr: *const u8, capacity: usize, length: usize) -> Self {
+        // Well, this technically violates pointer provenance rules.
+        // But there isn't a stable API for it, so that's the best we can do, I guess.
+        Region {
+            offset: u32::try_from(ptr as usize).expect("pointer doesn't fit in u32"),
+            capacity: u32::try_from(capacity).expect("capacity doesn't fit in u32"),
+            length: u32::try_from(length).expect("length doesn't fit in u32"),
+
+            _marker: PhantomData,
+        }
+    }
+
     /// Access the memory region this region points to in form of a byte slice
     pub fn as_bytes(&self) -> &[u8] {
         unsafe { slice::from_raw_parts(self.offset as *const u8, self.length as usize) }

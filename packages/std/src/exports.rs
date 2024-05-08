@@ -128,7 +128,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_execute should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -158,7 +158,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_migrate should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -186,7 +186,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_sudo should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -214,7 +214,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_reply should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -241,7 +241,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -267,7 +267,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_channel_open is designed for use with #[entry_point] to make a "C" extern
@@ -294,7 +294,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_channel_connect is designed for use with #[entry_point] to make a "C" extern
@@ -323,7 +323,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_channel_close is designed for use with #[entry_point] to make a "C" extern
@@ -352,7 +352,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_packet_receive is designed for use with #[entry_point] to make a "C" extern
@@ -382,7 +382,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_packet_ack is designed for use with #[entry_point] to make a "C" extern
@@ -412,7 +412,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 /// do_ibc_packet_timeout is designed for use with #[entry_point] to make a "C" extern
@@ -443,7 +443,7 @@ where
         msg_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
-    Region::from_data(v).to_heap_ptr() as u32
+    Region::from_vec(v).to_heap_ptr() as u32
 }
 
 fn _do_instantiate<Q, M, C, E>(
