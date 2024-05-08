@@ -33,6 +33,11 @@ pub struct Region<O: Ownership> {
     _marker: PhantomData<O>,
 }
 
+const _: () = {
+    assert!(mem::size_of::<Region<Borrowed>>() == 12);
+    assert!(mem::size_of::<Region<Owned>>() == 12);
+};
+
 impl Region<Borrowed> {
     pub fn from_slice(slice: &[u8]) -> Self {
         unsafe { Self::from_parts(slice.as_ptr(), slice.len(), slice.len()) }
