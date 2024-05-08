@@ -87,11 +87,21 @@ pub struct Region<T: Ownership> {
 }
 
 impl Region<Owned> {
+    /// Reconstruct a region from a raw pointer pointing to a `Box<Region>`.
+    /// You'll want to use this when you received a region from the VM and want to dereference its contents.
+    ///
+    /// # Safety
+    ///
+    /// - The pointer must not be null
+    /// - The pointer must be heap allocated
+    /// - This region must point to a valid memory region
+    /// - The memory region this region points to must be heap allocated as well
     pub unsafe fn from_heap_ptr(ptr: *mut Self) -> Box<Self> {
         assert!(!ptr.is_null(), "Region pointer is null");
         Box::from_raw(ptr)
     }
 
+    /// Construct a new empty region with *at least* a capacity of what you passed in and a length of 0
     pub fn with_capacity(cap: usize) -> Self {
         let data = Vec::with_capacity(cap);
         let region = Self::from_data(data);
@@ -115,6 +125,7 @@ impl<O> Region<O>
 where
     O: Ownership,
 {
+    /// Construct a new region from any kind of data that can be turned into a region
     pub fn from_data<S>(data: S) -> Self
     where
         S: RegionSource<Ownership = O>,
@@ -141,14 +152,22 @@ impl<T> Region<T>
 where
     T: Ownership,
 {
+    /// Access the memory region this region points to in form of a byte slice
     pub fn as_bytes(&self) -> &[u8] {
         unsafe { slice::from_raw_parts(self.offset as *const u8, self.length as usize) }
     }
 
+    /// Obtain the pointer to the region
+    ///
+    /// This is nothing but `&self as *const Region<T>` but makes sure the correct generic parameter is used
     pub fn as_ptr(&self) -> *const Self {
         self
     }
 
+    /// Transform the region into an unmanaged mutable pointer
+    ///
+    /// This means we move this regions onto the heap (note, only the *structure* of the region, not the *contents of the pointer* we manage internally).
+    /// To then deallocate this structure, you'll have to reconstruct the region via [`Region::from_heap_ptr`] and drop it.
     pub fn to_heap_ptr(self) -> *mut Self {
         let boxed = Box::new(self);
         Box::into_raw(boxed)
