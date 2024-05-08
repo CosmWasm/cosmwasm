@@ -1,17 +1,11 @@
 use alloc::vec::Vec;
 use core::{any::TypeId, marker::PhantomData, mem, ops::Deref, slice};
 
-mod sealed {
-    pub trait Sealed: 'static {}
+pub trait Ownership: 'static {}
 
-    impl Sealed for super::Owned {}
+impl Ownership for Borrowed {}
 
-    impl Sealed for super::Borrowed {}
-}
-
-pub trait Ownership: sealed::Sealed + 'static {}
-
-impl<T> Ownership for T where T: sealed::Sealed {}
+impl Ownership for Owned {}
 
 pub struct Owned;
 
