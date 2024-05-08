@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "1.5.4"
+version.workspace = true
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "VM bindings to run cosmwams contracts"
