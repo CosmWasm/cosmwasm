@@ -1,15 +1,18 @@
 use alloc::vec::Vec;
 use core::{any::TypeId, marker::PhantomData, mem, ops::Deref, slice};
 
+/// This trait is used to indicate whether a region is borrowed or owned
 pub trait Ownership: 'static {}
 
 impl Ownership for Borrowed {}
 
 impl Ownership for Owned {}
 
-pub struct Owned;
-
+/// This type is used to indicate that the region is borrowed and must not be deallocated
 pub struct Borrowed;
+
+/// This type is used to indicate that the region is owned by the region and must be deallocated
+pub struct Owned;
 
 /// Describes some data allocated in Wasm's linear memory.
 /// A pointer to an instance of this can be returned over FFI boundaries.
@@ -67,6 +70,7 @@ impl Region<Owned> {
         region
     }
 
+    /// Transform the region into a vector
     pub fn into_vec(self) -> Vec<u8> {
         let vector = unsafe {
             Vec::from_raw_parts(
