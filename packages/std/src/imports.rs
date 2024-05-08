@@ -371,9 +371,7 @@ impl Api for ExternalApi {
             )));
         }
 
-        // TODO: Optimize this heap allocation away?
-        // I mean technically we save a bunch of heap allocation now anyway, but we can optimize this, too!
-        let address = unsafe { consume_string_region_written_by_vm(human.to_heap_ptr()) };
+        let address = unsafe { String::from_utf8_unchecked(human.into_vec()) };
         Ok(Addr::unchecked(address))
     }
 

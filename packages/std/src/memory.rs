@@ -162,10 +162,5 @@ where
 /// or zero if not present
 #[cfg(feature = "iterator")]
 pub fn get_optional_region_address<O: Ownership>(region: &Option<&Region<O>>) -> u32 {
-    /// Returns the address of the Region as an offset in linear memory
-    fn get_region_address<O: Ownership>(region: &Region<O>) -> u32 {
-        region.as_ptr() as u32
-    }
-
-    region.map(get_region_address).unwrap_or(0)
+    region.map(|r| r.as_ptr() as u32).unwrap_or(0)
 }
