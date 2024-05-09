@@ -123,4 +123,68 @@ mod tests {
         let deserialized: SomeMsg = from_msgpack(serialized).unwrap();
         assert_eq!(deserialized, msg);
     }
+
+    #[test]
+    #[should_panic(expected = "invalid type: string \\\"foo\\\", expected u32")]
+    fn deserialize_different_field_order_unsupported() {
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct TestV1 {
+            a: String,
+            b: u32,
+            c: u64,
+        }
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct TestV2 {
+            b: u32,
+            c: u64,
+            a: String,
+        }
+
+        let v1 = TestV1 {
+            a: "foo".to_string(),
+            b: 42,
+            c: 18446744073709551615,
+        };
+
+        let v2: TestV2 = from_msgpack(to_msgpack_vec(&v1).unwrap()).unwrap();
+        assert_eq!(
+            v2,
+            TestV2 {
+                b: 42,
+                c: 18446744073709551615,
+                a: "foo".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn deserialize_new_fields() {
+        // fields can be added, but only to the end of the struct
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct TestV1 {
+            a: String,
+        }
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct TestV2 {
+            a: String,
+            #[serde(default)]
+            b: u32,
+        }
+
+        let v1 = TestV1 {
+            a: "foo".to_string(),
+        };
+        let v2: TestV2 = from_msgpack(to_msgpack_vec(&v1).unwrap()).unwrap();
+
+        assert_eq!(
+            v2,
+            TestV2 {
+                a: "foo".to_string(),
+                b: 0
+            }
+        );
+    }
 }
