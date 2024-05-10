@@ -41,7 +41,7 @@
                 "description": "The acknowledgement to send back",
                 "allOf": [
                   {
-                    "$ref": "#/definitions/IbcFullAcknowledgement"
+                    "$ref": "#/definitions/IbcAcknowledgement"
                   }
                 ]
               },
@@ -69,25 +69,14 @@
         "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
         "type": "string"
       },
-      "IbcFullAcknowledgement": {
-        "description": "The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.",
+      "IbcAcknowledgement": {
         "type": "object",
         "required": [
-          "data",
-          "success"
+          "data"
         ],
         "properties": {
           "data": {
-            "description": "The acknowledgement data returned by the module.",
-            "allOf": [
-              {
-                "$ref": "#/definitions/Binary"
-              }
-            ]
-          },
-          "success": {
-            "description": "Whether the acknowledgement was successful or not.",
-            "type": "boolean"
+            "$ref": "#/definitions/Binary"
           }
         },
         "additionalProperties": false
