@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.3] - 2024-05-10
+
 ### Changed
 
 - cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`,
@@ -802,7 +804,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.2...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.3...HEAD
+[2.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0
