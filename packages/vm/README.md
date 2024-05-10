@@ -43,7 +43,7 @@ compatibility list:
 There are demo files in `testdata/*.wasm`. Those are compiled and optimized
 versions of
 [contracts/\*](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/) run
-through [rust-optimizer](https://github.com/CosmWasm/rust-optimizer).
+through [cosmwasm/optimizer](https://github.com/CosmWasm/optimizer).
 
 To rebuild the test contracts, go to the repo root and do
 
