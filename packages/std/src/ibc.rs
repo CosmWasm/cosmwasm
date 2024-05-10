@@ -69,7 +69,7 @@ pub enum IbcMsg {
         /// Sequence number of the packet that was received
         packet_sequence: u64,
         /// The acknowledgement to send back
-        ack: IbcFullAcknowledgement,
+        ack: IbcAcknowledgement,
     },
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contract's IBC port

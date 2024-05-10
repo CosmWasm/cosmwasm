@@ -402,25 +402,14 @@
           }
         ]
       },
-      "IbcFullAcknowledgement": {
-        "description": "The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.",
+      "IbcAcknowledgement": {
         "type": "object",
         "required": [
-          "data",
-          "success"
+          "data"
         ],
         "properties": {
           "data": {
-            "description": "The acknowledgement data returned by the module.",
-            "allOf": [
-              {
-                "$ref": "#/definitions/Binary"
-              }
-            ]
-          },
-          "success": {
-            "description": "Whether the acknowledgement was successful or not.",
-            "type": "boolean"
+            "$ref": "#/definitions/Binary"
           }
         },
         "additionalProperties": false
@@ -535,7 +524,7 @@
                     "description": "The acknowledgement to send back",
                     "allOf": [
                       {
-                        "$ref": "#/definitions/IbcFullAcknowledgement"
+                        "$ref": "#/definitions/IbcAcknowledgement"
                       }
                     ]
                   },

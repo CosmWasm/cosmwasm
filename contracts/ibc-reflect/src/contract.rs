@@ -1,10 +1,10 @@
 use cosmwasm_std::{
     entry_point, from_json, to_json_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps,
-    DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcFullAcknowledgement,
-    IbcMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, MessageInfo, Never, QueryResponse, Reply, Response, StdError, StdResult,
-    SubMsg, SubMsgResponse, SubMsgResult, WasmMsg,
+    DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
+    IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    MessageInfo, Never, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
+    SubMsgResponse, SubMsgResult, WasmMsg,
 };
 
 use crate::msg::{
@@ -56,7 +56,7 @@ pub fn execute(
 fn execute_async_ack(
     channel_id: String,
     packet_sequence: u64,
-    ack: IbcFullAcknowledgement,
+    ack: IbcAcknowledgement,
 ) -> StdResult<Response> {
     Ok(Response::new().add_message(IbcMsg::WriteAcknowledgement {
         channel_id,
