@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 use serde::de::DeserializeOwned;
 
 use crate::deps::OwnedDeps;
-use crate::ibc::{IbcBasicResponse, IbcDestinationChainCallbackMsg, IbcSourceChainCallbackMsg};
+use crate::ibc::{IbcBasicResponse, IbcDestinationCallbackMsg, IbcSourceCallbackMsg};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcPacketAckMsg, IbcPacketReceiveMsg,
@@ -447,12 +447,8 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
-pub fn do_ibc_source_chain_callback<Q, C, E>(
-    contract_fn: &dyn Fn(
-        DepsMut<Q>,
-        Env,
-        IbcSourceChainCallbackMsg,
-    ) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_source_callback<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcSourceCallbackMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -472,11 +468,11 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
-pub fn do_ibc_destination_chain_callback<Q, C, E>(
+pub fn do_ibc_destination_callback<Q, C, E>(
     contract_fn: &dyn Fn(
         DepsMut<Q>,
         Env,
-        IbcDestinationChainCallbackMsg,
+        IbcDestinationCallbackMsg,
     ) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
@@ -488,7 +484,7 @@ where
 {
     #[cfg(feature = "abort")]
     install_panic_handler();
-    let res = _do_ibc_destination_chain_callback(
+    let res = _do_ibc_destination_callback(
         contract_fn,
         env_ptr as *mut Region<Owned>,
         msg_ptr as *mut Region<Owned>,
@@ -751,12 +747,8 @@ where
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_ibc_source_chain_callback<Q, C, E>(
-    contract_fn: &dyn Fn(
-        DepsMut<Q>,
-        Env,
-        IbcSourceChainCallbackMsg,
-    ) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_source_callback<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcSourceCallbackMsg) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
 ) -> ContractResult<IbcBasicResponse<C>>
@@ -769,17 +761,17 @@ where
     let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
-    let msg: IbcSourceChainCallbackMsg = try_into_contract_result!(from_json(msg));
+    let msg: IbcSourceCallbackMsg = try_into_contract_result!(from_json(msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_ibc_destination_chain_callback<Q, C, E>(
+fn _do_ibc_destination_callback<Q, C, E>(
     contract_fn: &dyn Fn(
         DepsMut<Q>,
         Env,
-        IbcDestinationChainCallbackMsg,
+        IbcDestinationCallbackMsg,
     ) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
@@ -793,7 +785,7 @@ where
     let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
-    let msg: IbcDestinationChainCallbackMsg = try_into_contract_result!(from_json(msg));
+    let msg: IbcDestinationCallbackMsg = try_into_contract_result!(from_json(msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

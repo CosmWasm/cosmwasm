@@ -1,8 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, to_json_string, Binary, Deps, DepsMut, Empty, Env,
-    IbcBasicResponse, IbcCallbackRequest, IbcDestinationChainCallbackMsg, IbcDstCallback, IbcMsg,
-    IbcSourceChainCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo, Response, StdError,
-    StdResult,
+    IbcBasicResponse, IbcCallbackRequest, IbcDestinationCallbackMsg, IbcDstCallback, IbcMsg,
+    IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo, Response, StdError, StdResult,
 };
 
 use crate::msg::{CallbackType, ExecuteMsg, QueryMsg};
@@ -74,19 +73,19 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 /// This is the entrypoint that is called by the source chain when a callbacks-enabled IBC message
 /// is acknowledged or times out.
 #[entry_point]
-pub fn ibc_source_chain_callback(
+pub fn ibc_source_callback(
     deps: DepsMut,
     _env: Env,
-    msg: IbcSourceChainCallbackMsg,
+    msg: IbcSourceCallbackMsg,
 ) -> StdResult<IbcBasicResponse> {
     let mut counts = load_stats(deps.storage)?;
 
     match msg {
-        IbcSourceChainCallbackMsg::Acknowledgement(ack) => {
+        IbcSourceCallbackMsg::Acknowledgement(ack) => {
             // save the ack
             counts.ibc_ack_callbacks.push(ack);
         }
-        IbcSourceChainCallbackMsg::Timeout(timeout) => {
+        IbcSourceCallbackMsg::Timeout(timeout) => {
             // save the timeout
             counts.ibc_timeout_callbacks.push(timeout);
         }
@@ -94,14 +93,14 @@ pub fn ibc_source_chain_callback(
 
     save_stats(deps.storage, &counts)?;
 
-    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_source_chain_callback"))
+    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_source_callback"))
 }
 
 #[entry_point]
-pub fn ibc_destination_chain_callback(
+pub fn ibc_destination_callback(
     deps: DepsMut,
     _env: Env,
-    msg: IbcDestinationChainCallbackMsg,
+    msg: IbcDestinationCallbackMsg,
 ) -> StdResult<IbcBasicResponse> {
     let mut counts = load_stats(deps.storage)?;
 
@@ -110,5 +109,5 @@ pub fn ibc_destination_chain_callback(
 
     save_stats(deps.storage, &counts)?;
 
-    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_destination_chain_callback"))
+    Ok(IbcBasicResponse::new().add_attribute("action", "ibc_destination_callback"))
 }

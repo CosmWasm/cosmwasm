@@ -115,7 +115,7 @@
         "ibc_destination_callbacks": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/IbcDestinationChainCallbackMsg"
+            "$ref": "#/definitions/IbcDestinationCallbackMsg"
           }
         },
         "ibc_timeout_callbacks": {
@@ -167,8 +167,8 @@
           },
           "additionalProperties": false
         },
-        "IbcDestinationChainCallbackMsg": {
-          "description": "The message type of the IBC destination chain callback.\n\nThe IBC destination chain callback is needed for cases where someone triggers the sending of an IBC packet through some other message (i.e. not through [`crate::IbcMsg::SendPacket`]) and your contract needs to know that it received this. A prominent example is the [`crate::IbcMsg::Transfer`] message. Without callbacks, you cannot know that someone sent you IBC coins.\n\nThe callback is called after the packet was acknowledged on the destination chain, as follows: - If the acknowledgement is synchronous (i.e. returned immediately when the packet is received), the callback is called only if the acknowledgement was successful. - If the acknowledgement is asynchronous (i.e. written later using `WriteAcknowledgement`), the callback is called regardless of the success of the acknowledgement.\n\nNote that there are some prerequisites that need to be fulfilled to receive source chain callbacks: - The contract must implement the `ibc_destination_chain_callback` entrypoint. - The IBC application in the destination chain must have support for the callbacks middleware. - You have to add serialized [`IbcCallbackRequest`] to a specific field of the message. For `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.",
+        "IbcDestinationCallbackMsg": {
+          "description": "The message type of the IBC destination callback.\n\nThe IBC destination callback is needed for cases where someone triggers the sending of an IBC packet through some other message (i.e. not through [`crate::IbcMsg::SendPacket`]) and your contract needs to know that it received this. A prominent example is the [`crate::IbcMsg::Transfer`] message. Without callbacks, you cannot know that someone sent you IBC coins.\n\nThe callback is called after the packet was acknowledged on the destination chain, as follows: - If the acknowledgement is synchronous (i.e. returned immediately when the packet is received), the callback is called only if the acknowledgement was successful. - If the acknowledgement is asynchronous (i.e. written later using `WriteAcknowledgement`), the callback is called regardless of the success of the acknowledgement.\n\nNote that there are some prerequisites that need to be fulfilled to receive source callbacks: - The contract must implement the `ibc_destination_callback` entrypoint. - The IBC application in the destination chain must have support for the callbacks middleware. - You have to add serialized [`IbcCallbackRequest`] to a specific field of the message. For `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.",
           "type": "object",
           "required": [
             "ack",

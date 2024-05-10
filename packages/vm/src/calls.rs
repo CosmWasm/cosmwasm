@@ -2,8 +2,8 @@ use serde::de::DeserializeOwned;
 use wasmer::Value;
 
 use cosmwasm_std::{
-    ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationChainCallbackMsg,
-    IbcSourceChainCallbackMsg, MessageInfo, QueryResponse, Reply, Response,
+    ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationCallbackMsg,
+    IbcSourceCallbackMsg, MessageInfo, QueryResponse, Reply, Response,
 };
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
@@ -56,10 +56,10 @@ mod read_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_source_chain_callback call.
-    pub const RESULT_IBC_SOURCE_CHAIN_CALLBACK: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc_destination_chain_callback call.
-    pub const RESULT_IBC_DESTINATION_CHAIN_CALLBACK: usize = 64 * MI;
+    /// Max length (in bytes) of the result data from a ibc_source_callback call.
+    pub const RESULT_IBC_SOURCE_CALLBACK: usize = 64 * MI;
+    /// Max length (in bytes) of the result data from a ibc_destination_callback call.
+    pub const RESULT_IBC_DESTINATION_CALLBACK: usize = 64 * MI;
 }
 
 /// The limits for the JSON deserialization.
@@ -99,10 +99,10 @@ mod deserialization_limits {
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_source_chain_callback call.
-    pub const RESULT_IBC_SOURCE_CHAIN_CALLBACK: usize = 256 * KI;
-    /// Max length (in bytes) of the result data from a ibc_destination_chain_callback call.
-    pub const RESULT_IBC_DESTINATION_CHAIN_CALLBACK: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_source_callback call.
+    pub const RESULT_IBC_SOURCE_CALLBACK: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_destination_callback call.
+    pub const RESULT_IBC_DESTINATION_CALLBACK: usize = 256 * KI;
 }
 
 pub fn call_instantiate<A, S, Q, U>(
@@ -337,10 +337,10 @@ where
     Ok(result)
 }
 
-pub fn call_ibc_source_chain_callback<A, S, Q, U>(
+pub fn call_ibc_source_callback<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    msg: &IbcSourceChainCallbackMsg,
+    msg: &IbcSourceCallbackMsg,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -350,18 +350,15 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_source_chain_callback_raw(instance, &env, &msg)?;
-    let result = from_slice(
-        &data,
-        deserialization_limits::RESULT_IBC_SOURCE_CHAIN_CALLBACK,
-    )?;
+    let data = call_ibc_source_callback_raw(instance, &env, &msg)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_SOURCE_CALLBACK)?;
     Ok(result)
 }
 
-pub fn call_ibc_destination_chain_callback<A, S, Q, U>(
+pub fn call_ibc_destination_callback<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    msg: &IbcDestinationChainCallbackMsg,
+    msg: &IbcDestinationCallbackMsg,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -371,10 +368,10 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibc_destination_chain_callback_raw(instance, &env, &msg)?;
+    let data = call_ibc_destination_callback_raw(instance, &env, &msg)?;
     let result = from_slice(
         &data,
-        deserialization_limits::RESULT_IBC_DESTINATION_CHAIN_CALLBACK,
+        deserialization_limits::RESULT_IBC_DESTINATION_CALLBACK,
     )?;
     Ok(result)
 }
@@ -612,7 +609,7 @@ where
     )
 }
 
-pub fn call_ibc_source_chain_callback_raw<A, S, Q>(
+pub fn call_ibc_source_callback_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -625,13 +622,13 @@ where
     instance.set_storage_readonly(false);
     call_raw(
         instance,
-        "ibc_source_chain_callback",
+        "ibc_source_callback",
         &[env, msg],
-        read_limits::RESULT_IBC_SOURCE_CHAIN_CALLBACK,
+        read_limits::RESULT_IBC_SOURCE_CALLBACK,
     )
 }
 
-pub fn call_ibc_destination_chain_callback_raw<A, S, Q>(
+pub fn call_ibc_destination_callback_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -644,9 +641,9 @@ where
     instance.set_storage_readonly(false);
     call_raw(
         instance,
-        "ibc_destination_chain_callback",
+        "ibc_destination_callback",
         &[env, msg],
-        read_limits::RESULT_IBC_DESTINATION_CHAIN_CALLBACK,
+        read_limits::RESULT_IBC_DESTINATION_CALLBACK,
     )
 }
 
@@ -1071,7 +1068,7 @@ mod tests {
         }
 
         #[test]
-        fn call_ibc_source_chain_callback_works() {
+        fn call_ibc_source_callback_works() {
             let mut instance = mock_instance(IBC_CALLBACKS, &[]);
 
             // init
@@ -1091,12 +1088,12 @@ mod tests {
             // send ack callback
             let ack = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, IbcAcknowledgement::new(br#"{}"#))
                 .unwrap();
-            let msg = IbcSourceChainCallbackMsg::Acknowledgement(IbcAckCallbackMsg::new(
+            let msg = IbcSourceCallbackMsg::Acknowledgement(IbcAckCallbackMsg::new(
                 ack.acknowledgement,
                 ack.original_packet,
                 ack.relayer,
             ));
-            call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
             // query the CallbackStats
@@ -1111,11 +1108,11 @@ mod tests {
 
             // send timeout callback
             let timeout = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
-            let msg = IbcSourceChainCallbackMsg::Timeout(IbcTimeoutCallbackMsg::new(
+            let msg = IbcSourceCallbackMsg::Timeout(IbcTimeoutCallbackMsg::new(
                 timeout.packet,
                 timeout.relayer,
             ));
-            call_ibc_source_chain_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
             // query the CallbackStats
