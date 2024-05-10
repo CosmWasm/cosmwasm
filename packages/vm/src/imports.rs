@@ -276,9 +276,9 @@ pub fn do_bls12_381_aggregate_g1<
 
     let g1s = read_region(&memory, g1s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
 
+    let estimated_point_count = (g1s.len() / BLS12_381_G1_POINT_LEN) as u64;
     let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_aggregate_g1_per_point
-            * (g1s.len() / BLS12_381_G1_POINT_LEN) as u64,
+        data.gas_config.bls12_381_aggregate_g1_per_point * estimated_point_count,
     );
     process_gas_info(data, &mut store, gas_info)?;
 
@@ -320,9 +320,9 @@ pub fn do_bls12_381_aggregate_g2<
 
     let g2s = read_region(&memory, g2s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
 
+    let estimated_point_count = (g2s.len() / BLS12_381_G2_POINT_LEN) as u64;
     let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_aggregate_g2_per_point
-            * (g2s.len() / BLS12_381_G2_POINT_LEN) as u64,
+        data.gas_config.bls12_381_aggregate_g2_per_point * estimated_point_count,
     );
     process_gas_info(data, &mut store, gas_info)?;
 
@@ -369,14 +369,15 @@ pub fn do_bls12_381_pairing_equality<
     let r = read_region(&memory, r_ptr, BLS12_381_G1_POINT_LEN)?;
     let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
 
-    let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_pairing_equality_cost
-            // Subtract one since the base benchmark of the pairing equality cost includes a single pair already
-            + (data
-                .gas_config
-                .bls12_381_aggregated_pairing_equality_cost_per_pair
-                * (ps.len() / BLS12_381_G1_POINT_LEN) as u64).saturating_sub(1),
-    );
+    let estimated_point_count = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
+    let additional_cost = data
+        .gas_config
+        .bls12_381_aggregated_pairing_equality_cost_per_pair
+        // Add one since we do not include any pairs in the base benchmark, and we always need to add one for the `r` and `s` pair.
+        * (estimated_point_count  + 1);
+
+    let gas_info =
+        GasInfo::with_cost(data.gas_config.bls12_381_pairing_equality_cost + additional_cost);
     process_gas_info(data, &mut store, gas_info)?;
 
     let code = match bls12_381_pairing_equality(&ps, &qs, &r, &s) {
