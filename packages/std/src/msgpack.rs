@@ -187,4 +187,38 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn deserialize_new_fields_in_the_middle() {
+        // fields can be added, but only to the end of the struct
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct TestV1 {
+            a: String,
+            b: u32,
+        }
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        struct TestV2 {
+            a: String,
+            #[serde(default)]
+            c: u8,
+            b: u32,
+        }
+
+        let v1 = TestV1 {
+            a: "foo".to_string(),
+            b: 999999,
+        };
+        let v2: TestV2 = from_msgpack(to_msgpack_vec(&v1).unwrap()).unwrap();
+
+        assert_eq!(
+            v2,
+            TestV2 {
+                a: "foo".to_string(),
+                c: 0,
+                b: 999999,
+            }
+        );
+    }
 }
