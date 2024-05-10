@@ -21,7 +21,7 @@ pub fn to_msgpack_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    rmp_serde::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    rmp_serde::to_vec_named(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as MessagePack bytes.
@@ -54,7 +54,7 @@ mod tests {
 
     fn refund_test_vector() -> (SomeMsg, &'static [u8]) {
         let msg = SomeMsg::Refund {};
-        let serialized = &[129, 166, 114, 101, 102, 117, 110, 100, 144];
+        let serialized = &[129, 166, 114, 101, 102, 117, 110, 100, 128];
         (msg, serialized)
     }
 
@@ -66,8 +66,9 @@ mod tests {
             karma: -17,
         };
         let serialized = &[
-            129, 171, 114, 101, 108, 101, 97, 115, 101, 95, 97, 108, 108, 148, 163, 102, 111, 111,
-            42, 207, 255, 255, 255, 255, 255, 255, 255, 255, 239,
+            129, 171, 114, 101, 108, 101, 97, 115, 101, 95, 97, 108, 108, 132, 165, 105, 109, 97,
+            103, 101, 163, 102, 111, 111, 166, 97, 109, 111, 117, 110, 116, 42, 164, 116, 105, 109,
+            101, 207, 255, 255, 255, 255, 255, 255, 255, 255, 165, 107, 97, 114, 109, 97, 239,
         ];
         (msg, serialized)
     }
@@ -125,8 +126,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "invalid type: string \\\"foo\\\", expected u32")]
-    fn deserialize_different_field_order_unsupported() {
+    fn deserialize_modified_field_order() {
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
         struct TestV1 {
             a: String,
