@@ -396,11 +396,11 @@ impl Api for ExternalApi {
     fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
         let point = [0_u8; 48];
 
-        let send = build_region(g1s);
-        let send_ptr = &*send as *const Region as u32;
+        let send = Region::from_slice(g1s);
+        let send_ptr = send.as_ptr() as u32;
 
-        let out = build_region(&point[..]);
-        let out_ptr = &*out as *const Region as u32;
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
         let result = unsafe { bls12_381_aggregate_g1(send_ptr, out_ptr) };
         match result {
             0 => Ok(point),
@@ -419,11 +419,11 @@ impl Api for ExternalApi {
     fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
         let point = [0_u8; 96];
 
-        let send = build_region(g2s);
-        let send_ptr = &*send as *const Region as u32;
+        let send = Region::from_slice(g2s);
+        let send_ptr = send.as_ptr() as u32;
 
-        let out = build_region(&point[..]);
-        let out_ptr = &*out as *const Region as u32;
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
         let result = unsafe { bls12_381_aggregate_g2(send_ptr, out_ptr) };
         match result {
             0 => Ok(point),
@@ -446,15 +446,15 @@ impl Api for ExternalApi {
         r: &[u8],
         s: &[u8],
     ) -> Result<bool, VerificationError> {
-        let send_ps = build_region(ps);
-        let send_qs = build_region(qs);
-        let send_r = build_region(r);
-        let send_s = build_region(s);
+        let send_ps = Region::from_slice(ps);
+        let send_qs = Region::from_slice(qs);
+        let send_r = Region::from_slice(r);
+        let send_s = Region::from_slice(s);
 
-        let send_ps_ptr = &*send_ps as *const Region as u32;
-        let send_qs_ptr = &*send_qs as *const Region as u32;
-        let send_r_ptr = &*send_r as *const Region as u32;
-        let send_s_ptr = &*send_s as *const Region as u32;
+        let send_ps_ptr = send_ps.as_ptr() as u32;
+        let send_qs_ptr = send_qs.as_ptr() as u32;
+        let send_r_ptr = send_r.as_ptr() as u32;
+        let send_s_ptr = send_s.as_ptr() as u32;
 
         let result =
             unsafe { bls12_381_pairing_equality(send_ps_ptr, send_qs_ptr, send_r_ptr, send_s_ptr) };
@@ -484,14 +484,14 @@ impl Api for ExternalApi {
     ) -> Result<[u8; 48], VerificationError> {
         let point = [0_u8; 48];
 
-        let send_msg = build_region(msg);
-        let send_msg_ptr = &*send_msg as *const Region as u32;
+        let send_msg = Region::from_slice(msg);
+        let send_msg_ptr = send_msg.as_ptr() as u32;
 
-        let send_dst = build_region(dst);
-        let send_dst_ptr = &*send_dst as *const Region as u32;
+        let send_dst = Region::from_slice(dst);
+        let send_dst_ptr = send_dst.as_ptr() as u32;
 
-        let out = build_region(&point[..]);
-        let out_ptr = &*out as *const Region as u32;
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
         let result = unsafe {
             bls12_381_hash_to_g1(hash_function as u32, send_msg_ptr, send_dst_ptr, out_ptr)
         };
@@ -512,14 +512,14 @@ impl Api for ExternalApi {
     ) -> Result<[u8; 96], VerificationError> {
         let point = [0_u8; 96];
 
-        let send_msg = build_region(msg);
-        let send_msg_ptr = &*send_msg as *const Region as u32;
+        let send_msg = Region::from_slice(msg);
+        let send_msg_ptr = send_msg.as_ptr() as u32;
 
-        let send_dst = build_region(dst);
-        let send_dst_ptr = &*send_dst as *const Region as u32;
+        let send_dst = Region::from_slice(dst);
+        let send_dst_ptr = send_dst.as_ptr() as u32;
 
-        let out = build_region(&point[..]);
-        let out_ptr = &*out as *const Region as u32;
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
         let result = unsafe {
             bls12_381_hash_to_g2(hash_function as u32, send_msg_ptr, send_dst_ptr, out_ptr)
         };
