@@ -12,7 +12,7 @@ type SendPacketMsg struct {
 }
 type WriteAcknowledgementMsg struct {
 	// The acknowledgement to send back
-	Ack IBCFullAcknowledgement `json:"ack"`
+	Ack IBCAcknowledgement `json:"ack"`
 	// Existing channel where the packet was received
 	ChannelID string `json:"channel_id"`
 	// Sequence number of the packet that was received
@@ -35,12 +35,8 @@ type Coin struct {
 	Denom  string `json:"denom"`  // type, eg. "ATOM"
 }
 
-// The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.
-type IBCFullAcknowledgement struct {
-	// The acknowledgement data returned by the module.
+type IBCAcknowledgement struct {
 	Data []byte `json:"data"`
-	// Whether the acknowledgement was successful or not.
-	Success bool `json:"success"`
 }
 
 // IBCTimeout is the timeout for an IBC packet. At least one of block and timestamp is required.
