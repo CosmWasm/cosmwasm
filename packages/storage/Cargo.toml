@@ -7,7 +7,9 @@ description = "CosmWasm library with useful helpers for Storage patterns"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage"
 license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# This crate is not maintained anymore, so we don't want to release it
+[package.metadata.release]
+release = false
 
 [features]
 default = ["iterator"]
