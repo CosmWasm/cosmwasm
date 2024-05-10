@@ -81,6 +81,24 @@ mod test {
     /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
     const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
 
+    /// The identity of G1 (the point at infinity).
+    ///
+    /// See https://docs.rs/bls12_381/latest/bls12_381/notes/serialization/index.html for encoding info.
+    const G1_IDENTITY: [u8; 48] = [
+        0b11000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+
+    /// The identity of G2 (the point at infinity).
+    ///
+    /// See https://docs.rs/bls12_381/latest/bls12_381/notes/serialization/index.html for encoding info.
+    const G2_IDENTITY: [u8; 96] = [
+        0b11000000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+
     fn build_message(round: u64, previous_signature: &[u8]) -> digest::Output<Sha256> {
         Sha256::new()
             .chain_update(previous_signature)
@@ -151,6 +169,36 @@ mod test {
             &aggregated_msg.to_compressed()
         )
         .unwrap());
+    }
+
+    /// This tests 1 == e(a, b) as there is no term on the left-hand side.
+    /// This is true for `a` or `b` being the point at infinity. See
+    /// https://eips.ethereum.org/EIPS/eip-2537#test-cases
+    #[test]
+    fn pairing_equality_works_for_empty_lhs() {
+        // a and b not point at infinity (Non-degeneracy)
+        let a = PK_LEO_MAINNET;
+        let b = bls12_381_hash_to_g2(HashFunction::Sha256, b"blub", DOMAIN_HASH_TO_G2);
+        let equal = bls12_381_pairing_equality(&[], &[], &a, &b).unwrap();
+        assert!(!equal);
+
+        // a point at infinity
+        let a = G1_IDENTITY;
+        let b = bls12_381_hash_to_g2(HashFunction::Sha256, b"blub", DOMAIN_HASH_TO_G2);
+        let equal = bls12_381_pairing_equality(&[], &[], &a, &b).unwrap();
+        assert!(equal);
+
+        // b point at infinity
+        let a = PK_LEO_MAINNET;
+        let b = G2_IDENTITY;
+        let equal = bls12_381_pairing_equality(&[], &[], &a, &b).unwrap();
+        assert!(equal);
+
+        // a and b point at infinity
+        let a = G1_IDENTITY;
+        let b = G2_IDENTITY;
+        let equal = bls12_381_pairing_equality(&[], &[], &a, &b).unwrap();
+        assert!(equal);
     }
 
     #[test]
