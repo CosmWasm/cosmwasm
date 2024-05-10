@@ -37,25 +37,27 @@ pub fn execute(
         address: msg.to_address.clone(),
         gas_limit: None,
     };
-    let transfer_msg = match &*info.funds {
-        [coin] if !coin.amount.is_zero() => IbcMsg::Transfer {
-            to_address: msg.to_address,
-            timeout: IbcTimeout::with_timestamp(
-                env.block.time.plus_seconds(msg.timeout_seconds as u64),
-            ),
-            channel_id: msg.channel_id,
-            amount: coin.clone(),
-            memo: Some(to_json_string(&match msg.callback_type {
-                CallbackType::Both => IbcCallbackRequest::both(src_callback, dst_callback),
-                CallbackType::Src => IbcCallbackRequest::source(src_callback),
-                CallbackType::Dst => IbcCallbackRequest::destination(dst_callback),
-            })?),
-        },
+    let coin = match &*info.funds {
+        [coin] if !coin.amount.is_zero() => coin,
         _ => {
             return Err(StdError::generic_err(
                 "Must send exactly one denom to trigger ics-20 transfer",
             ))
         }
+    };
+
+    let transfer_msg = IbcMsg::Transfer {
+        to_address: msg.to_address,
+        timeout: IbcTimeout::with_timestamp(
+            env.block.time.plus_seconds(msg.timeout_seconds as u64),
+        ),
+        channel_id: msg.channel_id,
+        amount: coin.clone(),
+        memo: Some(to_json_string(&match msg.callback_type {
+            CallbackType::Both => IbcCallbackRequest::both(src_callback, dst_callback),
+            CallbackType::Src => IbcCallbackRequest::source(src_callback),
+            CallbackType::Dst => IbcCallbackRequest::destination(dst_callback),
+        })?),
     };
 
     Ok(Response::new()
