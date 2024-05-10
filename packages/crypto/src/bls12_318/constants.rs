@@ -53,6 +53,14 @@ mod test {
         point
     }
 
+    // Note about the bitwise OR operation on the X coordinates:
+    //
+    // The first bit of the x-coordinate sets the "compression" flag. The most significant three bits of a G1/G2 coordinate are used for storing some information.
+    // If we didn't do that to the output, the constants wouldn't check out due to the constants being constructed by a standard adhereing BLS library,
+    // where it set the compression flag since it's the standard way of serializing the points.
+    //
+    // Ref: https://github.com/zcash/librustzcash/blob/6e0364cd42a2b3d2b958a54771ef51a8db79dd29/pairing/src/bls12_381/README.md#serialization
+
     #[test]
     fn g1_generator_correct() {
         // Source: <https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-pairing-friendly-curves-02#section-4.3.2>
