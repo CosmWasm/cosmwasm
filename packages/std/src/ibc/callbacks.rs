@@ -1,7 +1,6 @@
 //! This module contains types for the IBC callbacks defined in
 //! [ADR-8](https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-008-app-caller-cbs.md).
 
-use cosmwasm_core::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -169,17 +168,7 @@ impl IbcTimeoutCallbackMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcDestinationCallbackMsg {
     pub packet: IbcPacket,
-    pub ack: IbcFullAcknowledgement,
-}
-
-/// The acknowledgement written by the module on the destination chain.
-/// It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct IbcFullAcknowledgement {
-    /// The acknowledgement data returned by the module.
-    pub data: Binary,
-    /// Whether the acknowledgement was successful or not.
-    pub success: bool,
+    pub ack: IbcAcknowledgement,
 }
 
 #[cfg(test)]

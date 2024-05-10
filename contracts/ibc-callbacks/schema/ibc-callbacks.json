@@ -176,7 +176,7 @@
           ],
           "properties": {
             "ack": {
-              "$ref": "#/definitions/IbcFullAcknowledgement"
+              "$ref": "#/definitions/IbcAcknowledgement"
             },
             "packet": {
               "$ref": "#/definitions/IbcPacket"
@@ -196,29 +196,6 @@
             },
             "port_id": {
               "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        "IbcFullAcknowledgement": {
-          "description": "The acknowledgement written by the module on the destination chain. It is different from the [`crate::IbcAcknowledgement`] as it can be unsuccessful.",
-          "type": "object",
-          "required": [
-            "data",
-            "success"
-          ],
-          "properties": {
-            "data": {
-              "description": "The acknowledgement data returned by the module.",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Binary"
-                }
-              ]
-            },
-            "success": {
-              "description": "Whether the acknowledgement was successful or not.",
-              "type": "boolean"
             }
           },
           "additionalProperties": false
