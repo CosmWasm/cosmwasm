@@ -29,12 +29,37 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::Transfer {
+            to_address,
+            channel_id,
+            timeout_seconds,
+            callback_type,
+        } => execute_transfer(
+            env,
+            info,
+            to_address,
+            channel_id,
+            timeout_seconds,
+            callback_type,
+        ),
+    }
+}
+
+fn execute_transfer(
+    env: Env,
+    info: MessageInfo,
+    to_address: String,
+    channel_id: String,
+    timeout_seconds: u32,
+    callback_type: CallbackType,
+) -> StdResult<Response> {
     let src_callback = IbcSrcCallback {
         address: env.contract.address,
         gas_limit: None,
     };
     let dst_callback = IbcDstCallback {
-        address: msg.to_address.clone(),
+        address: to_address.clone(),
         gas_limit: None,
     };
     let coin = match &*info.funds {
@@ -47,13 +72,11 @@ pub fn execute(
     };
 
     let transfer_msg = IbcMsg::Transfer {
-        to_address: msg.to_address,
-        timeout: IbcTimeout::with_timestamp(
-            env.block.time.plus_seconds(msg.timeout_seconds as u64),
-        ),
-        channel_id: msg.channel_id,
+        to_address,
+        timeout: IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
+        channel_id,
         amount: coin.clone(),
-        memo: Some(to_json_string(&match msg.callback_type {
+        memo: Some(to_json_string(&match callback_type {
             CallbackType::Both => IbcCallbackRequest::both(src_callback, dst_callback),
             CallbackType::Src => IbcCallbackRequest::source(src_callback),
             CallbackType::Dst => IbcCallbackRequest::destination(dst_callback),

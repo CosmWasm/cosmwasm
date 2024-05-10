@@ -9,16 +9,18 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct ExecuteMsg {
-    /// Address on the destination chain
-    pub to_address: String,
-    /// The channel to send the packet through
-    pub channel_id: String,
-    /// The amount of seconds from now the transfer should timeout at
-    pub timeout_seconds: u32,
-    /// Who should receive callbacks for the message
-    #[serde(default)]
-    pub callback_type: CallbackType,
+pub enum ExecuteMsg {
+    Transfer {
+        /// Address on the destination chain
+        to_address: String,
+        /// The channel to send the packet through
+        channel_id: String,
+        /// The amount of seconds from now the transfer should timeout at
+        timeout_seconds: u32,
+        /// Who should receive callbacks for the message
+        #[serde(default)]
+        callback_type: CallbackType,
+    },
 }
 
 #[cw_serde]
