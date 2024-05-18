@@ -1,4 +1,4 @@
-name: Contract Development
+name: Contract
 
 # Pushes to long living branches and all PRs
 on:
