@@ -1,6 +1,10 @@
+use ark_bls12_381::{G1Affine, G2Affine, G2Projective};
+use ark_ec::AffineRepr;
+use ark_ff::UniformRand;
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
 use rand_core::OsRng;
-use std::time::Duration;
+use std::{hint::black_box, io, time::Duration};
 
 use english_numbers::convert_no_fmt;
 use hex_literal::hex;
@@ -12,8 +16,10 @@ use k256::ecdsa::SigningKey; // type alias
 use sha2::Sha256;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_recover_pubkey, secp256r1_verify,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
+    bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey,
+    secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify, HashFunction,
+    BLS12_381_G1_GENERATOR, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 use std::cmp::min;
 
@@ -34,6 +40,14 @@ const COSMOS_ED25519_PUBLIC_KEY_HEX: &str =
 
 // Test data from https://tools.ietf.org/html/rfc8032#section-7.1
 const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
+
+// BLS test vector
+// Path: "packages/crypto/testdata/bls-tests/verify/verify_valid_case_2ea479adf8c40300.json"
+const BLS_PUBKEY: [u8; 48] = hex!("a491d1b0ecd9bb917989f0e74f0dea0422eac4a873e5e2644f368dffb9a6e20fd6e10c1b77654d067c0618f6e5a7f79a");
+const BLS_MESSAGE: [u8; 32] =
+    hex!("5656565656565656565656565656565656565656565656565656565656565656");
+const BLS_DST: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+const BLS_SIGNATURE: [u8; 96] = hex!("882730e5d03f6b42c3abc26d3372625034e1d871b65a8a6b900a56dae22da98abbe1b68f85e49fe7652a55ec3d0591c20767677e33e5cbb1207315c41a9ac03be39c2e7668edc043d6cb1d9fd93033caa8a1c5b0e84bedaeb6c64972503a43eb");
 
 #[derive(Deserialize, Debug)]
 struct Encoded {
@@ -77,6 +91,154 @@ fn read_decode_cosmos_sigs() -> (Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<Vec<u8>>) {
     }
 
     (messages, signatures, public_keys)
+}
+
+fn bench_bls<M>(group: &mut criterion::BenchmarkGroup<'_, M>)
+where
+    M: criterion::measurement::Measurement,
+{
+    let two_pow_max = 8;
+    let num_random_points = 2_usize.pow(two_pow_max);
+
+    {
+        let random_points_g1: Vec<G1Affine> = (0..num_random_points)
+            .map(|_| G1Affine::rand(&mut OsRng))
+            .collect();
+        let mut g1_serialized = io::Cursor::new(Vec::new());
+        random_points_g1
+            .serialize_compressed(&mut g1_serialized)
+            .unwrap();
+        let g1_serialized = &g1_serialized.into_inner()[8..];
+
+        let random_points_g2: Vec<G2Affine> = (0..num_random_points)
+            .map(|_| G2Affine::rand(&mut OsRng))
+            .collect();
+        let mut g2_serialized = io::Cursor::new(Vec::new());
+        random_points_g2
+            .serialize_compressed(&mut g2_serialized)
+            .unwrap();
+        let g2_serialized = &g2_serialized.into_inner()[8..];
+
+        for i in 1..=two_pow_max {
+            let num_points = 2_usize.pow(i);
+            let points_to_aggregate_g1 = &g1_serialized[..num_points * BLS12_381_G1_POINT_LEN];
+            group.bench_function(format!("bls12_381_aggregate_g1_{num_points}"), |b| {
+                b.iter(|| bls12_381_aggregate_g1(points_to_aggregate_g1).unwrap());
+            });
+        }
+
+        for i in 1..=two_pow_max {
+            let num_points = 2_usize.pow(i);
+            let points_to_aggregate_g2 = &g2_serialized[..num_points * BLS12_381_G2_POINT_LEN];
+            group.bench_function(format!("bls12_381_aggregate_g2_{num_points}"), |b| {
+                b.iter(|| bls12_381_aggregate_g2(points_to_aggregate_g2).unwrap());
+            });
+        }
+    }
+
+    {
+        const MESSAGE: &[u8] = b"message";
+        const DST: &[u8] = b"dst";
+        let secret_keys: Vec<ark_bls12_381::Fr> = (0..num_random_points)
+            .map(|_| ark_bls12_381::Fr::rand(&mut OsRng))
+            .collect();
+        let public_keys: Vec<G1Affine> = secret_keys
+            .iter()
+            .map(|secret_key| G1Affine::generator() * secret_key)
+            .map(Into::into)
+            .collect();
+        let messages: Vec<G2Affine> = (0..num_random_points)
+            .map(|_| bls12_381_hash_to_g2(HashFunction::Sha256, MESSAGE, DST))
+            .map(|bytes| G2Affine::deserialize_compressed(&bytes[..]).unwrap())
+            .collect();
+        let signatures: Vec<G2Projective> = secret_keys
+            .iter()
+            .zip(messages.iter())
+            .map(|(secret_key, message)| *message * secret_key)
+            .collect();
+
+        for i in 1..=two_pow_max {
+            let num_points = 2_usize.pow(i);
+            let messages = &messages[..num_points];
+            let keys = &public_keys[..num_points];
+            let aggregated_signature: G2Affine =
+                signatures[..num_points].iter().sum::<G2Projective>().into();
+
+            let serialized_pubkeys: Vec<u8> = keys
+                .iter()
+                .flat_map(|key| {
+                    let mut serialized = [0_u8; 48];
+                    key.serialize_compressed(&mut serialized[..]).unwrap();
+                    serialized
+                })
+                .collect();
+
+            let serialized_messages: Vec<u8> = messages
+                .iter()
+                .flat_map(|message| {
+                    let mut serialized = [0_u8; 96];
+                    message.serialize_compressed(&mut serialized[..]).unwrap();
+                    serialized
+                })
+                .collect();
+
+            let mut serialized_signature = [0_u8; 96];
+            aggregated_signature
+                .serialize_compressed(&mut serialized_signature[..])
+                .unwrap();
+
+            group.bench_function(format!("bls12_381_pairing_equality_{num_points}"), |b| {
+                b.iter(|| {
+                    let is_valid = black_box(bls12_381_pairing_equality(
+                        &serialized_pubkeys,
+                        &serialized_messages,
+                        &BLS12_381_G1_GENERATOR,
+                        &serialized_signature,
+                    ))
+                    .unwrap();
+
+                    assert!(is_valid);
+                });
+            });
+        }
+    }
+
+    group.bench_function("bls12_381_hash_to_g1", |b| {
+        b.iter(|| {
+            bls12_381_hash_to_g1(
+                black_box(HashFunction::Sha256),
+                black_box(&BLS_MESSAGE),
+                black_box(BLS_DST),
+            )
+        });
+    });
+
+    group.bench_function("bls12_381_hash_to_g2", |b| {
+        b.iter(|| {
+            bls12_381_hash_to_g2(
+                black_box(HashFunction::Sha256),
+                black_box(&BLS_MESSAGE),
+                black_box(BLS_DST),
+            )
+        });
+    });
+
+    group.bench_function("bls12_381_verify", |b| {
+        let generator = BLS12_381_G1_GENERATOR;
+        let message = bls12_381_hash_to_g2(HashFunction::Sha256, &BLS_MESSAGE, BLS_DST);
+
+        b.iter(|| {
+            let is_equal = bls12_381_pairing_equality(
+                black_box(&BLS_PUBKEY),
+                &message,
+                &generator,
+                black_box(&BLS_SIGNATURE),
+            )
+            .unwrap();
+
+            assert!(is_equal);
+        });
+    });
 }
 
 fn bench_crypto(c: &mut Criterion) {
@@ -136,6 +298,8 @@ fn bench_crypto(c: &mut Criterion) {
             assert_eq!(pubkey, expected);
         });
     });
+
+    bench_bls(&mut group);
 
     group.bench_function("ed25519_verify", |b| {
         let message = hex::decode(COSMOS_ED25519_MSG_HEX).unwrap();

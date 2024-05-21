@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::HashFunction;
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -149,6 +150,50 @@ impl Api for MockApi {
         encode::<Bech32>(prefix, canonical.as_slice())
             .map(Addr::unchecked)
             .map_err(|_| StdError::generic_err("Bech32 encoding error"))
+    }
+
+    fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
+        cosmwasm_crypto::bls12_381_aggregate_g1(g1s).map_err(Into::into)
+    }
+
+    fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
+        cosmwasm_crypto::bls12_381_aggregate_g2(g2s).map_err(Into::into)
+    }
+
+    fn bls12_381_pairing_equality(
+        &self,
+        ps: &[u8],
+        qs: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        cosmwasm_crypto::bls12_381_pairing_equality(ps, qs, r, s).map_err(Into::into)
+    }
+
+    fn bls12_381_hash_to_g1(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 48], VerificationError> {
+        Ok(cosmwasm_crypto::bls12_381_hash_to_g1(
+            hash_function.into(),
+            msg,
+            dst,
+        ))
+    }
+
+    fn bls12_381_hash_to_g2(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 96], VerificationError> {
+        Ok(cosmwasm_crypto::bls12_381_hash_to_g2(
+            hash_function.into(),
+            msg,
+            dst,
+        ))
     }
 
     fn secp256k1_verify(
@@ -1122,6 +1167,8 @@ mod tests {
     use crate::{coin, coins, instantiate2_address, ContractInfoResponse, HexBinary, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
+    use base64::{engine::general_purpose, Engine};
+    use cosmwasm_crypto::BLS12_381_G1_GENERATOR;
     use hex_literal::hex;
     use serde::Deserialize;
 
@@ -1139,6 +1186,16 @@ mod tests {
     const ED25519_SIG_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
     const ED25519_PUBKEY_HEX: &str =
         "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
+
+    // See https://github.com/drand/kyber-bls12381/issues/22 and
+    // https://github.com/drand/drand/pull/1249
+    const DOMAIN_HASH_TO_G2: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
+
+    /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
+    const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
+
+    const ETH_BLOCK_HEADER: &[u8] =
+        include_bytes!("../../../crypto/testdata/eth-headers/1699693797.394876721s.json");
 
     #[test]
     fn mock_info_works() {
@@ -1255,6 +1312,141 @@ mod tests {
             api.addr_humanize(&input).unwrap_err(),
             StdError::generic_err("Invalid canonical address length")
         );
+    }
+
+    #[test]
+    fn bls12_381_aggregate_g1_works() {
+        #[derive(serde::Deserialize)]
+        struct EthHeader {
+            public_keys: Vec<String>,
+            aggregate_pubkey: String,
+        }
+
+        let api = MockApi::default();
+        let header: EthHeader = serde_json::from_slice(ETH_BLOCK_HEADER).unwrap();
+        let expected = general_purpose::STANDARD
+            .decode(header.aggregate_pubkey)
+            .unwrap();
+
+        let pubkeys: Vec<u8> = header
+            .public_keys
+            .into_iter()
+            .flat_map(|key| general_purpose::STANDARD.decode(key).unwrap())
+            .collect();
+        let sum = api.bls12_381_aggregate_g1(&pubkeys).unwrap();
+
+        assert_eq!(expected, sum);
+    }
+
+    #[test]
+    fn bls12_381_aggregate_g2_works() {
+        let api = MockApi::default();
+
+        let points: Vec<u8> = [
+            hex!("b6ed936746e01f8ecf281f020953fbf1f01debd5657c4a383940b020b26507f6076334f91e2366c96e9ab279fb5158090352ea1c5b0c9274504f4f0e7053af24802e51e4568d164fe986834f41e55c8e850ce1f98458c0cfc9ab380b55285a55"),
+            hex!("b23c46be3a001c63ca711f87a005c200cc550b9429d5f4eb38d74322144f1b63926da3388979e5321012fb1a0526bcd100b5ef5fe72628ce4cd5e904aeaa3279527843fae5ca9ca675f4f51ed8f83bbf7155da9ecc9663100a885d5dc6df96d9"),
+            hex!("948a7cb99f76d616c2c564ce9bf4a519f1bea6b0a624a02276443c245854219fabb8d4ce061d255af5330b078d5380681751aa7053da2c98bae898edc218c75f07e24d8802a17cd1f6833b71e58f5eb5b94208b4d0bb3848cecb075ea21be115"),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
+
+        let expected = hex!("9683b3e6701f9a4b706709577963110043af78a5b41991b998475a3d3fd62abf35ce03b33908418efc95a058494a8ae504354b9f626231f6b3f3c849dfdeaf5017c4780e2aee1850ceaf4b4d9ce70971a3d2cfcd97b7e5ecf6759f8da5f76d31");
+        let sum = api.bls12_381_aggregate_g2(&points).unwrap();
+
+        assert_eq!(sum, expected);
+    }
+
+    #[test]
+    fn bls12_381_pairing_equality_works() {
+        let api = MockApi::default();
+
+        let dst = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+        let ps = hex!("a491d1b0ecd9bb917989f0e74f0dea0422eac4a873e5e2644f368dffb9a6e20fd6e10c1b77654d067c0618f6e5a7f79ab301803f8b5ac4a1133581fc676dfedc60d891dd5fa99028805e5ea5b08d3491af75d0707adab3b70c6a6a580217bf81b53d21a4cfd562c469cc81514d4ce5a6b577d8403d32a394dc265dd190b47fa9f829fdd7963afdf972e5e77854051f6f");
+        let qs: Vec<u8> = [
+            hex!("0000000000000000000000000000000000000000000000000000000000000000"),
+            hex!("5656565656565656565656565656565656565656565656565656565656565656"),
+            hex!("abababababababababababababababababababababababababababababababab"),
+        ]
+        .into_iter()
+        .flat_map(|msg| {
+            api.bls12_381_hash_to_g2(HashFunction::Sha256, &msg, dst)
+                .unwrap()
+        })
+        .collect();
+        let s = hex!("9104e74b9dfd3ad502f25d6a5ef57db0ed7d9a0e00f3500586d8ce44231212542fcfaf87840539b398bf07626705cf1105d246ca1062c6c2e1a53029a0f790ed5e3cb1f52f8234dc5144c45fc847c0cd37a92d68e7c5ba7c648a8a339f171244");
+
+        let is_valid = api
+            .bls12_381_pairing_equality(&ps, &qs, &BLS12_381_G1_GENERATOR, &s)
+            .unwrap();
+        assert!(is_valid);
+    }
+
+    #[test]
+    fn bls12_381_hash_to_g1_works() {
+        // See: <https://datatracker.ietf.org/doc/rfc9380/>; Section J.9.1
+
+        let api = MockApi::default();
+        let msg = b"abc";
+        let dst = b"QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_";
+
+        let hashed_point = api
+            .bls12_381_hash_to_g1(HashFunction::Sha256, msg, dst)
+            .unwrap();
+        let mut serialized_expected_compressed = hex!("03567bc5ef9c690c2ab2ecdf6a96ef1c139cc0b2f284dca0a9a7943388a49a3aee664ba5379a7655d3c68900be2f6903");
+        // Set the compression tag
+        serialized_expected_compressed[0] |= 0b1000_0000;
+
+        assert_eq!(hashed_point, serialized_expected_compressed);
+    }
+
+    #[test]
+    fn bls12_381_hash_to_g2_works() {
+        let api = MockApi::default();
+        let msg = b"abc";
+        let dst = b"QUUX-V01-CS02-with-BLS12381G2_XMD:SHA-256_SSWU_RO_";
+
+        let hashed_point = api
+            .bls12_381_hash_to_g2(HashFunction::Sha256, msg, dst)
+            .unwrap();
+        let mut serialized_expected_compressed = hex!("139cddbccdc5e91b9623efd38c49f81a6f83f175e80b06fc374de9eb4b41dfe4ca3a230ed250fbe3a2acf73a41177fd802c2d18e033b960562aae3cab37a27ce00d80ccd5ba4b7fe0e7a210245129dbec7780ccc7954725f4168aff2787776e6");
+        // Set the compression tag
+        serialized_expected_compressed[0] |= 0b1000_0000;
+
+        assert_eq!(hashed_point, serialized_expected_compressed);
+    }
+
+    #[test]
+    fn bls12_318_pairing_equality_works() {
+        fn build_bls_message(round: u64, previous_signature: &[u8]) -> Vec<u8> {
+            Sha256::new()
+                .chain_update(previous_signature)
+                .chain_update(round.to_be_bytes())
+                .finalize()
+                .to_vec()
+        }
+
+        let api = MockApi::default();
+
+        let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
+        let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
+        let round: u64 = 72785;
+
+        let msg = build_bls_message(round, &previous_signature);
+        let msg_point = api
+            .bls12_381_hash_to_g2(HashFunction::Sha256, &msg, DOMAIN_HASH_TO_G2)
+            .unwrap();
+
+        let is_valid = api
+            .bls12_381_pairing_equality(
+                &BLS12_381_G1_GENERATOR,
+                &signature,
+                &PK_LEO_MAINNET,
+                &msg_point,
+            )
+            .unwrap();
+
+        assert!(is_valid);
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)

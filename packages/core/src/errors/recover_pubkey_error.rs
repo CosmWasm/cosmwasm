@@ -60,13 +60,17 @@ impl From<CryptoError> for RecoverPubkeyError {
     fn from(original: CryptoError) -> Self {
         match original {
             CryptoError::InvalidHashFormat { .. } => RecoverPubkeyError::InvalidHashFormat,
-            CryptoError::InvalidPubkeyFormat { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidSignatureFormat { .. } => {
                 RecoverPubkeyError::InvalidSignatureFormat
             }
             CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
-            CryptoError::BatchErr { .. } => panic!("Conversion not supported"),
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidPoint { .. }
+            | CryptoError::UnknownHashFunction { .. } => panic!("Conversion not supported"),
         }
     }
 }

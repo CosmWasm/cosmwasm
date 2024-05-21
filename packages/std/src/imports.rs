@@ -14,6 +14,8 @@ use crate::{
     iterator::{Order, Record},
     memory::get_optional_region_address,
 };
+#[cfg(feature = "cosmwasm_2_1")]
+use crate::{AggregationError, HashFunction, PairingEqualityError};
 use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
@@ -45,6 +47,21 @@ extern "C" {
     fn addr_validate(source_ptr: u32) -> u32;
     fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
     fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_aggregate_g1(g1s_ptr: u32, out_ptr: u32) -> u32;
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_aggregate_g2(g2s_ptr: u32, out_ptr: u32) -> u32;
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_pairing_equality(ps_ptr: u32, qs_ptr: u32, r_ptr: u32, s_ptr: u32) -> u32;
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_hash_to_g1(hash_function: u32, msg_ptr: u32, dst_ptr: u32, out_ptr: u32) -> u32;
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_hash_to_g2(hash_function: u32, msg_ptr: u32, dst_ptr: u32, out_ptr: u32) -> u32;
 
     /// Verifies message hashes against a signature with a public key, using the
     /// secp256k1 ECDSA parametrization.
@@ -373,6 +390,145 @@ impl Api for ExternalApi {
 
         let address = unsafe { String::from_utf8_unchecked(human.into_vec()) };
         Ok(Addr::unchecked(address))
+    }
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
+        let point = [0_u8; 48];
+
+        let send = Region::from_slice(g1s);
+        let send_ptr = send.as_ptr() as u32;
+
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
+        let result = unsafe { bls12_381_aggregate_g1(send_ptr, out_ptr) };
+        match result {
+            0 => Ok(point),
+            8 => Err(VerificationError::InvalidPoint),
+            16 => Err(VerificationError::Aggregation {
+                source: AggregationError::Empty,
+            }),
+            17 => Err(VerificationError::Aggregation {
+                source: AggregationError::NotMultiple,
+            }),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
+        let point = [0_u8; 96];
+
+        let send = Region::from_slice(g2s);
+        let send_ptr = send.as_ptr() as u32;
+
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
+        let result = unsafe { bls12_381_aggregate_g2(send_ptr, out_ptr) };
+        match result {
+            0 => Ok(point),
+            8 => Err(VerificationError::InvalidPoint),
+            14 => Err(VerificationError::Aggregation {
+                source: AggregationError::Empty,
+            }),
+            15 => Err(VerificationError::Aggregation {
+                source: AggregationError::NotMultiple,
+            }),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_pairing_equality(
+        &self,
+        ps: &[u8],
+        qs: &[u8],
+        r: &[u8],
+        s: &[u8],
+    ) -> Result<bool, VerificationError> {
+        let send_ps = Region::from_slice(ps);
+        let send_qs = Region::from_slice(qs);
+        let send_r = Region::from_slice(r);
+        let send_s = Region::from_slice(s);
+
+        let send_ps_ptr = send_ps.as_ptr() as u32;
+        let send_qs_ptr = send_qs.as_ptr() as u32;
+        let send_r_ptr = send_r.as_ptr() as u32;
+        let send_s_ptr = send_s.as_ptr() as u32;
+
+        let result =
+            unsafe { bls12_381_pairing_equality(send_ps_ptr, send_qs_ptr, send_r_ptr, send_s_ptr) };
+        match result {
+            0 => Ok(true),
+            1 => Ok(false),
+            8 => Err(VerificationError::InvalidPoint),
+            11 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG1,
+            }),
+            12 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::NotMultipleG2,
+            }),
+            13 => Err(VerificationError::PairingEquality {
+                source: PairingEqualityError::UnequalPointAmount,
+            }),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_hash_to_g1(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 48], VerificationError> {
+        let point = [0_u8; 48];
+
+        let send_msg = Region::from_slice(msg);
+        let send_msg_ptr = send_msg.as_ptr() as u32;
+
+        let send_dst = Region::from_slice(dst);
+        let send_dst_ptr = send_dst.as_ptr() as u32;
+
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
+        let result = unsafe {
+            bls12_381_hash_to_g1(hash_function as u32, send_msg_ptr, send_dst_ptr, out_ptr)
+        };
+
+        match result {
+            0 => Ok(point),
+            9 => Err(VerificationError::UnknownHashFunction),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    #[cfg(feature = "cosmwasm_2_1")]
+    fn bls12_381_hash_to_g2(
+        &self,
+        hash_function: HashFunction,
+        msg: &[u8],
+        dst: &[u8],
+    ) -> Result<[u8; 96], VerificationError> {
+        let point = [0_u8; 96];
+
+        let send_msg = Region::from_slice(msg);
+        let send_msg_ptr = send_msg.as_ptr() as u32;
+
+        let send_dst = Region::from_slice(dst);
+        let send_dst_ptr = send_dst.as_ptr() as u32;
+
+        let out = Region::from_slice(&point);
+        let out_ptr = out.as_ptr() as u32;
+        let result = unsafe {
+            bls12_381_hash_to_g2(hash_function as u32, send_msg_ptr, send_dst_ptr, out_ptr)
+        };
+
+        match result {
+            0 => Ok(point),
+            9 => Err(VerificationError::UnknownHashFunction),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
     }
 
     fn secp256k1_verify(

@@ -6,9 +6,43 @@ use crate::BT;
 
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
+#[derive(Debug, Display)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum Aggregation {
+    #[display("List of points is empty")]
+    Empty,
+    #[display("List is not a multiple of {expected_multiple}. Remainder: {remainder}")]
+    NotMultiple {
+        expected_multiple: usize,
+        remainder: usize,
+    },
+}
+
+#[derive(Debug, Display)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum PairingEquality {
+    #[display("List is not a multiple of 48. Remainder: {remainder}")]
+    NotMultipleG1 { remainder: usize },
+    #[display("List is not a multiple of 96. Remainder: {remainder}")]
+    NotMultipleG2 { remainder: usize },
+    #[display("Not the same amount of points passed. Left: {left}, Right: {right}")]
+    UnequalPointAmount { left: usize, right: usize },
+}
+
+#[derive(Debug, Display)]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
+pub enum InvalidPoint {
+    #[display("Invalid input length for point (must be in compressed format): Expected {expected}, actual: {actual}")]
+    InvalidLength { expected: usize, actual: usize },
+    #[display("Invalid point")]
+    DecodingError {},
+}
+
 #[derive(Display, Debug)]
 #[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum CryptoError {
+    #[display("Point aggregation error: {source}")]
+    Aggregation { source: Aggregation, backtrace: BT },
     #[display("Batch verify error: {msg}")]
     BatchErr { msg: String, backtrace: BT },
     #[display("Crypto error: {msg}")]
@@ -21,6 +55,15 @@ pub enum CryptoError {
     InvalidSignatureFormat { backtrace: BT },
     #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam { backtrace: BT },
+    #[display("Invalid point: {source}")]
+    InvalidPoint { source: InvalidPoint, backtrace: BT },
+    #[display("Pairing equality error: {source}")]
+    PairingEquality {
+        source: PairingEquality,
+        backtrace: BT,
+    },
+    #[display("Unknown hash function")]
+    UnknownHashFunction { backtrace: BT },
 }
 
 impl CryptoError {
@@ -62,6 +105,12 @@ impl CryptoError {
         }
     }
 
+    pub fn unknown_hash_function() -> Self {
+        CryptoError::UnknownHashFunction {
+            backtrace: BT::capture(),
+        }
+    }
+
     /// Numeric error code that can easily be passed over the
     /// contract VM boundary.
     pub fn code(&self) -> u32 {
@@ -71,7 +120,59 @@ impl CryptoError {
             CryptoError::InvalidPubkeyFormat { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::BatchErr { .. } => 7,
+            CryptoError::InvalidPoint { .. } => 8,
+            CryptoError::UnknownHashFunction { .. } => 9,
             CryptoError::GenericErr { .. } => 10,
+            CryptoError::PairingEquality {
+                source: PairingEquality::NotMultipleG1 { .. },
+                ..
+            } => 11,
+            CryptoError::PairingEquality {
+                source: PairingEquality::NotMultipleG2 { .. },
+                ..
+            } => 12,
+            CryptoError::PairingEquality {
+                source: PairingEquality::UnequalPointAmount { .. },
+                ..
+            } => 13,
+            CryptoError::Aggregation {
+                source: Aggregation::Empty,
+                ..
+            } => 14,
+            CryptoError::Aggregation {
+                source: Aggregation::NotMultiple { .. },
+                ..
+            } => 15,
+        }
+    }
+}
+
+impl From<Aggregation> for CryptoError {
+    #[track_caller]
+    fn from(value: Aggregation) -> Self {
+        Self::Aggregation {
+            source: value,
+            backtrace: BT::capture(),
+        }
+    }
+}
+
+impl From<PairingEquality> for CryptoError {
+    #[track_caller]
+    fn from(value: PairingEquality) -> Self {
+        Self::PairingEquality {
+            source: value,
+            backtrace: BT::capture(),
+        }
+    }
+}
+
+impl From<InvalidPoint> for CryptoError {
+    #[track_caller]
+    fn from(value: InvalidPoint) -> Self {
+        Self::InvalidPoint {
+            source: value,
+            backtrace: BT::capture(),
         }
     }
 }

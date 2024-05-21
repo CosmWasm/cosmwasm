@@ -77,7 +77,7 @@ pub use crate::serde::{
 };
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
-pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
+pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 
 // Exposed in wasm build only
@@ -109,17 +109,19 @@ pub mod testing;
 pub use cosmwasm_core::CoreError as StdError;
 pub use cosmwasm_core::CoreResult as StdResult;
 pub use cosmwasm_core::{
-    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, Binary, CanonicalAddr,
-    CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
+    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, AggregationError, Binary,
+    CanonicalAddr, CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
     CoinFromStrError, CoinsError, ConversionOverflowError, Decimal, Decimal256,
     Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
     HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
-    OverflowOperation, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
+    OverflowOperation, PairingEqualityError, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
     SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Timestamp, Uint128,
     Uint256, Uint512, Uint64, VerificationError,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use cosmwasm_core::assert_approx_eq;
+
+pub use cosmwasm_crypto::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 
 pub use cosmwasm_derive::entry_point;

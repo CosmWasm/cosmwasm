@@ -101,6 +101,7 @@ workflows:
                 - main
                 - /^[0-9]+\.[0-9]+$/
                 # Add your branch here if benchmarking matters to your work
+                - bls12_381
                 - secp256r1-support
       - coverage
   deploy:
@@ -248,13 +249,17 @@ jobs:
           keys:
             - cargocache-v2-package_crypto-rust:1.73-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build
+          name: Build (no features)
           working_directory: ~/project/packages/crypto
-          command: cargo build --locked
+          command: cargo build --locked --no-default-features
+      - run:
+          name: Build (all features)
+          working_directory: ~/project/packages/crypto
+          command: cargo build --locked --features std
       - run:
           name: Run tests
           working_directory: ~/project/packages/crypto
-          command: cargo test --locked
+          command: cargo test --locked --features std
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -1039,7 +1044,7 @@ jobs:
       - run:
           name: Run crypto benchmarks
           working_directory: ~/project/packages/crypto
-          command: cargo bench -- --color never --save-baseline crypto
+          command: cargo bench --features std -- --color never --save-baseline crypto
       - save_cache:
           paths:
             - /usr/local/cargo/registry

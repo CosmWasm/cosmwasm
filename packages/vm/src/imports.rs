@@ -4,8 +4,10 @@ use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
-    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
-    secp256r1_recover_pubkey, secp256r1_verify, CryptoError,
+    bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
+    bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey,
+    secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify, CryptoError, HashFunction,
+    BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
@@ -239,6 +241,230 @@ const SECP256K1_VERIFY_CODE_VALID: u32 = 0;
 /// Return code (error code) for an invalid signature
 const SECP256K1_VERIFY_CODE_INVALID: u32 = 1;
 
+/// Return code (error code) for a valid pairing
+const BLS12_381_VALID_PAIRING: u32 = 0;
+
+/// Return code (error code) for an invalid pairing
+const BLS12_381_INVALID_PAIRING: u32 = 1;
+
+/// Return code (error code) if the aggregating the points on curve was successful
+const BLS12_381_AGGREGATE_SUCCESS: u32 = 0;
+
+/// Return code (error code) for success when hashing to the curve
+const BLS12_381_HASH_TO_CURVE_SUCCESS: u32 = 0;
+
+/// Maximum size of continous points passed to aggregate functions
+const BLS12_381_MAX_AGGREGATE_SIZE: usize = 2 * MI;
+
+/// Maximum size of the message passed to the hash-to-curve functions
+const BLS12_381_MAX_MESSAGE_SIZE: usize = 5 * MI;
+
+/// Maximum size of the destination passed to the hash-to-curve functions
+const BLS12_381_MAX_DST_SIZE: usize = 5 * KI;
+
+pub fn do_bls12_381_aggregate_g1<
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    g1s_ptr: u32,
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+    let memory = data.memory(&store);
+
+    let g1s = read_region(&memory, g1s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
+
+    let estimated_point_count = (g1s.len() / BLS12_381_G1_POINT_LEN) as u64;
+    let gas_info = GasInfo::with_cost(
+        data.gas_config.bls12_381_aggregate_g1_per_point * estimated_point_count,
+    );
+    process_gas_info(data, &mut store, gas_info)?;
+
+    let code = match bls12_381_aggregate_g1(&g1s) {
+        Ok(point) => {
+            let memory = data.memory(&store);
+            write_region(&memory, out_ptr, &point)?;
+            BLS12_381_AGGREGATE_SUCCESS
+        }
+        Err(err) => match err {
+            CryptoError::InvalidPoint { .. } | CryptoError::Aggregation { .. } => err.code(),
+            CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::GenericErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    };
+
+    Ok(code)
+}
+
+pub fn do_bls12_381_aggregate_g2<
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    g2s_ptr: u32,
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+    let memory = data.memory(&store);
+
+    let g2s = read_region(&memory, g2s_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
+
+    let estimated_point_count = (g2s.len() / BLS12_381_G2_POINT_LEN) as u64;
+    let gas_info = GasInfo::with_cost(
+        data.gas_config.bls12_381_aggregate_g2_per_point * estimated_point_count,
+    );
+    process_gas_info(data, &mut store, gas_info)?;
+
+    let code = match bls12_381_aggregate_g2(&g2s) {
+        Ok(point) => {
+            let memory = data.memory(&store);
+            write_region(&memory, out_ptr, &point)?;
+            BLS12_381_AGGREGATE_SUCCESS
+        }
+        Err(err) => match err {
+            CryptoError::InvalidPoint { .. } | CryptoError::Aggregation { .. } => err.code(),
+            CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::GenericErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    };
+
+    Ok(code)
+}
+
+pub fn do_bls12_381_pairing_equality<
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    ps_ptr: u32,
+    qs_ptr: u32,
+    r_ptr: u32,
+    s_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+    let memory = data.memory(&store);
+
+    let ps = read_region(&memory, ps_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
+    let qs = read_region(&memory, qs_ptr, BLS12_381_MAX_AGGREGATE_SIZE)?;
+    let r = read_region(&memory, r_ptr, BLS12_381_G1_POINT_LEN)?;
+    let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
+
+    let estimated_point_count = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
+    let additional_cost = data
+        .gas_config
+        .bls12_381_aggregated_pairing_equality_cost_per_pair
+        // Add one since we do not include any pairs in the base benchmark, and we always need to add one for the `r` and `s` pair.
+        * (estimated_point_count  + 1);
+
+    let gas_info =
+        GasInfo::with_cost(data.gas_config.bls12_381_pairing_equality_cost + additional_cost);
+    process_gas_info(data, &mut store, gas_info)?;
+
+    let code = match bls12_381_pairing_equality(&ps, &qs, &r, &s) {
+        Ok(true) => BLS12_381_VALID_PAIRING,
+        Ok(false) => BLS12_381_INVALID_PAIRING,
+        Err(err) => match err {
+            CryptoError::PairingEquality { .. } | CryptoError::InvalidPoint { .. } => err.code(),
+            CryptoError::Aggregation { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::GenericErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    };
+
+    Ok(code)
+}
+
+pub fn do_bls12_381_hash_to_g1<
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    hash_function: u32,
+    msg_ptr: u32,
+    dst_ptr: u32,
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+    let memory = data.memory(&store);
+
+    let msg = read_region(&memory, msg_ptr, BLS12_381_MAX_MESSAGE_SIZE)?;
+    let dst = read_region(&memory, dst_ptr, BLS12_381_MAX_DST_SIZE)?;
+
+    let gas_info = GasInfo::with_cost(data.gas_config.bls12_381_hash_to_g1_cost);
+    process_gas_info(data, &mut store, gas_info)?;
+
+    let hash_function = match HashFunction::from_u32(hash_function) {
+        Ok(func) => func,
+        Err(error) => return Ok(error.code()),
+    };
+    let point = bls12_381_hash_to_g1(hash_function, &msg, &dst);
+
+    let memory = data.memory(&store);
+    write_region(&memory, out_ptr, &point)?;
+
+    Ok(BLS12_381_HASH_TO_CURVE_SUCCESS)
+}
+
+pub fn do_bls12_381_hash_to_g2<
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+>(
+    mut env: FunctionEnvMut<Environment<A, S, Q>>,
+    hash_function: u32,
+    msg_ptr: u32,
+    dst_ptr: u32,
+    out_ptr: u32,
+) -> VmResult<u32> {
+    let (data, mut store) = env.data_and_store_mut();
+    let memory = data.memory(&store);
+
+    let msg = read_region(&memory, msg_ptr, BLS12_381_MAX_MESSAGE_SIZE)?;
+    let dst = read_region(&memory, dst_ptr, BLS12_381_MAX_DST_SIZE)?;
+
+    let gas_info = GasInfo::with_cost(data.gas_config.bls12_381_hash_to_g2_cost);
+    process_gas_info(data, &mut store, gas_info)?;
+
+    let hash_function = match HashFunction::from_u32(hash_function) {
+        Ok(func) => func,
+        Err(error) => return Ok(error.code()),
+    };
+    let point = bls12_381_hash_to_g2(hash_function, &msg, &dst);
+
+    let memory = data.memory(&store);
+    write_region(&memory, out_ptr, &point)?;
+
+    Ok(BLS12_381_HASH_TO_CURVE_SUCCESS)
+}
+
 pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     hash_ptr: u32,
@@ -267,7 +493,12 @@ pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPoint { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -307,7 +538,12 @@ pub fn do_secp256k1_recover_pubkey<
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPoint { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -348,7 +584,12 @@ pub fn do_secp256r1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPoint { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -388,7 +629,12 @@ pub fn do_secp256r1_recover_pubkey<
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPoint { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -436,9 +682,13 @@ pub fn do_ed25519_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Queri
             CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. }
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::BatchErr { .. }
+            | CryptoError::InvalidPoint { .. }
             | CryptoError::InvalidHashFormat { .. }
-            | CryptoError::InvalidRecoveryParam { .. } => {
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -499,7 +749,12 @@ pub fn do_ed25519_batch_verify<
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::InvalidHashFormat { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::Aggregation { .. }
+            | CryptoError::PairingEquality { .. }
+            | CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPoint { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::UnknownHashFunction { .. } => {
                 panic!("Error must not happen for this call")
             }
         },

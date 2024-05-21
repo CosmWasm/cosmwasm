@@ -25,6 +25,7 @@ use cosmwasm_vm::testing::{
 };
 use cosmwasm_vm::{from_slice, Instance};
 use hex_literal::hex;
+use sha2::{Digest, Sha256};
 
 use crypto_verify::msg::{InstantiateMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
 
@@ -73,6 +74,25 @@ const WEBAUTHN_SIGNATURE_R: &[u8] =
 const WEBAUTHN_SIGNATURE_S: &[u8] =
     &hex!("7a4fef4d0b11187f95f69eefbb428df8ac799bbd9305066b1e9c9fe9a5bcf8c4");
 
+// See https://github.com/drand/kyber-bls12381/issues/22 and
+// https://github.com/drand/drand/pull/1249
+const DOMAIN_HASH_TO_G1: &[u8] = b"BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_";
+const DOMAIN_HASH_TO_G2: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
+
+/// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
+const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
+
+// Tests from quicknet (https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/info)
+const PK_QUICKNET: [u8; 96] = hex!("83cf0f2896adee7eb8b5f01fcad3912212c437e0073e911fb90022d3e760183c8c4b450b6a0a6c3ac6a5776a2d1064510d1fec758c921cc22b0e17e63aaf4bcb5ed66304de9cf809bd274ca73bab4af5a6e9c76a4bc09e76eae8991ef5ece45a");
+
+fn build_drand_message(round: u64, previous_signature: &[u8]) -> Vec<u8> {
+    Sha256::new()
+        .chain_update(previous_signature)
+        .chain_update(round.to_be_bytes())
+        .finalize()
+        .to_vec()
+}
+
 const DESERIALIZATION_LIMIT: usize = 20_000;
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
@@ -87,6 +107,76 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 #[test]
 fn instantiate_works() {
     setup();
+}
+
+#[test]
+fn bls12_381_verifies_g1() {
+    let mut deps = setup();
+
+    let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
+    let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
+    let round: u64 = 72785;
+
+    let msg = build_drand_message(round, &previous_signature);
+
+    let verify_msg = QueryMsg::VerifyBls12PairingEqualityG1 {
+        signature: signature.into(),
+        pubkey: PK_LEO_MAINNET.into(),
+        msg: msg.into(),
+        dst: DOMAIN_HASH_TO_G2.into(),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: true });
+}
+
+#[test]
+fn bls12_381_verifies_g2() {
+    let mut deps = setup();
+
+    let signature = hex::decode("b75c69d0b72a5d906e854e808ba7e2accb1542ac355ae486d591aa9d43765482e26cd02df835d3546d23c4b13e0dfc92").unwrap();
+    let round: u64 = 123;
+
+    let msg = build_drand_message(round, b"");
+
+    let verify_msg = QueryMsg::VerifyBls12PairingEqualityG2 {
+        signature: signature.into(),
+        pubkey: PK_QUICKNET.into(),
+        msg: msg.into(),
+        dst: DOMAIN_HASH_TO_G1.into(),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: true });
+}
+
+#[test]
+fn bls12_381_errors() {
+    let mut deps = setup();
+
+    let mut previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
+    let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
+    let round: u64 = 72785;
+
+    previous_signature[0] ^= 0x3;
+
+    let msg = build_drand_message(round, &previous_signature);
+
+    let verify_msg = QueryMsg::VerifyBls12PairingEqualityG1 {
+        signature: signature.into(),
+        pubkey: PK_LEO_MAINNET.into(),
+        msg: msg.into(),
+        dst: DOMAIN_HASH_TO_G2.into(),
+    };
+
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: false });
 }
 
 #[test]
