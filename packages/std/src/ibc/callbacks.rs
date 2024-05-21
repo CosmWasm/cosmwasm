@@ -154,13 +154,16 @@ impl IbcTimeoutCallbackMsg {
 /// A prominent example is the [`crate::IbcMsg::Transfer`] message. Without callbacks, you cannot know
 /// that someone sent you IBC coins.
 ///
+/// It is important to validate that the packet and acknowledgement are what you expect them to be.
+/// For example for a transfer message, the receiver is not necessarily the contract itself.
+///
 /// The callback is called after the packet was acknowledged on the destination chain, as follows:
 /// - If the acknowledgement is synchronous (i.e. returned immediately when the packet is received),
 ///   the callback is called only if the acknowledgement was successful.
 /// - If the acknowledgement is asynchronous (i.e. written later using `WriteAcknowledgement`),
 ///   the callback is called regardless of the success of the acknowledgement.
 ///
-/// Note that there are some prerequisites that need to be fulfilled to receive source callbacks:
+/// Note that there are some prerequisites that need to be fulfilled to receive destination callbacks:
 /// - The contract must implement the `ibc_destination_callback` entrypoint.
 /// - The IBC application in the destination chain must have support for the callbacks middleware.
 /// - You have to add serialized [`IbcCallbackRequest`] to a specific field of the message.
