@@ -41,8 +41,13 @@ and this project adheres to
   `bls12_381_pairing_equality`, `bls12_381_hash_to_g1`, and
   `bls12_381_hash_to_g2` to enable BLS12-381 curve operations, such as verifying
   pairing equalities ([#2106])
+- cosmwasm-std: Add IBC Callbacks support, including two new entrypoints
+  `ibc_source_callback` and `ibc_destination_callback`, as well as the
+  `IbcCallbackRequest` type. ([#2025])
+- cosmwasm-vm: Add support for the two new IBC Callbacks entrypoints. ([#2025])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
+[#2025]: https://github.com/CosmWasm/cosmwasm/pull/2025
 [#2057]: https://github.com/CosmWasm/cosmwasm/pull/2057
 [#2058]: https://github.com/CosmWasm/cosmwasm/pull/2058
 [#2068]: https://github.com/CosmWasm/cosmwasm/pull/2068

@@ -12,6 +12,9 @@ use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::StdResult;
 use crate::{to_json_binary, Binary};
 
+mod callbacks;
+pub use callbacks::*;
+
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
 #[non_exhaustive]

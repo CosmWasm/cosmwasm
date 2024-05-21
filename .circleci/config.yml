@@ -77,6 +77,7 @@ workflows:
       - contract_empty
       # - contract_floaty # This contract needs nightly Rust to compile
       - contract_hackatom
+      - contract_ibc_callbacks
       - contract_ibc_reflect
       - contract_ibc_reflect_send
       - contract_queue
@@ -652,6 +653,36 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_hackatom-rust:1.73-{{ checksum "Cargo.lock" }}
+
+  contract_ibc_callbacks:
+    docker:
+      - image: rust:1.73
+    environment:
+      RUST_BACKTRACE: 1
+    working_directory: ~/cosmwasm/contracts/ibc-callbacks
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_ibc_callbacks-rust:1.73-{{ checksum "Cargo.lock" }}
+      # TODO: Enable this once 2.1 has been released to crates.io
+      - check_contract:
+          min_version: "2.1"
+          skip_cosmwasm_check: true
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_ibc_callbacks-rust:1.73-{{ checksum "Cargo.lock" }}
 
   contract_ibc_reflect:
     docker:

@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "transfer"
+      ],
+      "properties": {
+        "transfer": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "timeout_seconds",
+            "to_address"
+          ],
+          "properties": {
+            "callback_type": {
+              "description": "Who should receive callbacks for the message",
+              "default": "both",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/CallbackType"
+                }
+              ]
+            },
+            "channel_id": {
+              "description": "The channel to send the packet through",
+              "type": "string"
+            },
+            "timeout_seconds": {
+              "description": "The amount of seconds from now the transfer should timeout at",
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "to_address": {
+              "description": "Address on the destination chain",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "CallbackType": {
+      "oneOf": [
+        {
+          "description": "Only this contract on the source chain should receive callbacks",
+          "type": "string",
+          "enum": [
+            "src"
+          ]
+        },
+        {
+          "description": "Only the destination address should receive callbacks",
+          "type": "string",
+          "enum": [
+            "dst"
+          ]
+        },
+        {
+          "description": "Both the source contract and the destination address should receive callbacks",
+          "type": "string",
+          "enum": [
+            "both"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -27,9 +27,10 @@ pub use crate::cache::{
     AnalysisReport, Cache, CacheOptions, Metrics, PerModuleMetrics, PinnedMetrics, Stats,
 };
 pub use crate::calls::{
-    call_execute, call_execute_raw, call_instantiate, call_instantiate_raw, call_migrate,
-    call_migrate_raw, call_query, call_query_raw, call_reply, call_reply_raw, call_sudo,
-    call_sudo_raw,
+    call_execute, call_execute_raw, call_ibc_destination_callback,
+    call_ibc_destination_callback_raw, call_ibc_source_callback, call_ibc_source_callback_raw,
+    call_instantiate, call_instantiate_raw, call_migrate, call_migrate_raw, call_query,
+    call_query_raw, call_reply, call_reply_raw, call_sudo, call_sudo_raw,
 };
 #[cfg(feature = "stargate")]
 pub use crate::calls::{
