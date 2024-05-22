@@ -1097,6 +1097,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install mold
+          command: |
+            apt update
+            apt install -y mold
+      - run:
           name: Install grcov
           command: |
             rustup component add llvm-tools-preview
@@ -1114,7 +1119,7 @@ jobs:
             grcov . -s packages/std --binary-path ./target/debug -t lcov -o ./reports/std.info
             grcov . -s packages/vm --binary-path ./target/debug -t lcov -o ./reports/vm.info
           environment:
-            RUSTFLAGS: "-Cinstrument-coverage"
+            RUSTFLAGS: "-Clink-arg=-fuse-ld=/usr/bin/mold -Cinstrument-coverage"
             LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
       - codecov/upload:
           file: reports/core.info
