@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3.2.5
+  codecov: codecov/codecov@4.1.0
   win: circleci/windows@5.0
 
 commands:
@@ -1121,6 +1121,9 @@ jobs:
           environment:
             RUSTFLAGS: "-Cinstrument-coverage"
             LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
+      - run:
+          name: Quick fix for GPG error in Codecov
+          command: mkdir -p ~/.gnupg
       - codecov/upload:
           file: reports/core.info
           flags: cosmwasm-core
