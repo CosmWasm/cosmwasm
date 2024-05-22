@@ -35,7 +35,7 @@ The VM does not persist pinned memory entries. I.e. you need to call `Pin` every
 time you start the process. This is implemented in [`InitializePinnedCodes` in
 wasmd][initializepinnedcodes].
 
-At the chain level pinning and unpinning is done via governance proposals. See
+At the chain level pinning and unpinning are done via governance proposals. See
 `MsgPinCodes`/`MsgUnpinCodes` in wasmd.
 
 When contracts are migrated from one code to another, there is no automatic
