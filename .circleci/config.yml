@@ -1090,6 +1090,9 @@ jobs:
   coverage:
     docker:
       - image: rust:1.74.0
+    environment:
+      # Limit the number of parallel jobs to avoid OOM crashes during doc testing
+      RUST_TEST_THREADS: 8
     resource_class: medium+
     steps:
       - checkout
