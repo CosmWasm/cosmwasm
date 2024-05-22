@@ -64,7 +64,7 @@ case would. This has two major implications:
 1. Application specific errors (especially those which can be triggered by
    untrusted users) should create contract errors and no panics. This ensures
    that error acknowledgements are written and relayer transactions don't fail.
-2. Using panics allow the contract developer to make the transaction fail
+2. Using panics allows the contract developer to make the transaction fail
    without writing an acknowledgement. This can be handy e.g. for allowlisting
    relayer addresses.
 
