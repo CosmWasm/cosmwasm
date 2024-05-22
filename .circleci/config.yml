@@ -1097,6 +1097,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install necessary packages
+          command: |
+            apk update
+            apk add mold clang curl coreutils gnupg
+      - run:
           name: Install grcov
           command: |
             rustup component add llvm-tools-preview
