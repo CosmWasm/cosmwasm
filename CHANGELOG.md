@@ -74,6 +74,7 @@ and this project adheres to
 - cosmwasm-std: Improve performance of `Uint{64,128,256,512}::isqrt` ([#2108])
 - cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`,
   `Checksum` ([#2125])
+- cosmwasm-vm: Update wasmer to 4.3.0 ([#2147])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
@@ -83,6 +84,7 @@ and this project adheres to
 [#2080]: https://github.com/CosmWasm/cosmwasm/pull/2080
 [#2108]: https://github.com/CosmWasm/cosmwasm/pull/2108
 [#2125]: https://github.com/CosmWasm/cosmwasm/pull/2125
+[#2147]: https://github.com/CosmWasm/cosmwasm/pull/2147
 
 ## [2.0.1] - 2024-04-03
 
