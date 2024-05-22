@@ -33,7 +33,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.73.0
+          toolchain: 1.74.0
           targets: wasm32-unknown-unknown
       - name: Build hackatom wasm
         run: cargo wasm --locked
