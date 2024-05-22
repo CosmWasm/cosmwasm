@@ -1089,7 +1089,7 @@ jobs:
 
   coverage:
     docker:
-      - image: rust:1.74.0
+      - image: rust:1.78.0-alpine3.19
     environment:
       # Limit the number of parallel jobs to avoid OOM crashes during doc testing
       RUST_TEST_THREADS: 8
@@ -1097,10 +1097,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install mold
+          name: Install mold & clang
           command: |
-            apt update
-            apt install -y mold
+            apk update
+            apk add mold
+            apk add clang
       - run:
           name: Install grcov
           command: |
