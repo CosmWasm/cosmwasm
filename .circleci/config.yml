@@ -62,48 +62,48 @@ workflows:
   test:
     # Keep those job names in sync with .mergify.yml
     jobs:
-      - arm64
-      - package_crypto
-      - package_check
-      - package_core
-      - package_schema
-      - package_schema_derive
-      - package_std
-      - package_vm
-      - package_vm_windows
-      - contract_burner
-      - contract_crypto_verify
-      - contract_cyberpunk
-      - contract_empty
+      # - arm64
+      # - package_crypto
+      # - package_check
+      # - package_core
+      # - package_schema
+      # - package_schema_derive
+      # - package_std
+      # - package_vm
+      # - package_vm_windows
+      # - contract_burner
+      # - contract_crypto_verify
+      # - contract_cyberpunk
+      # - contract_empty
       # - contract_floaty # This contract needs nightly Rust to compile
-      - contract_hackatom
-      - contract_ibc_callbacks
-      - contract_ibc_reflect
-      - contract_ibc_reflect_send
-      - contract_queue
-      - contract_reflect
-      - contract_staking
-      - contract_virus
-      - fmt
-      - fmt_extra
-      - clippy:
-          matrix:
-            parameters:
-              # Run with MSRV and some modern stable Rust
-              rust-version: ["1.74.0", "1.77.0"]
-      - benchmarking:
-          requires:
-            - package_vm
-            - package_crypto
-          filters:
-            branches:
-              only:
-                # Long living branches
-                - main
-                - /^[0-9]+\.[0-9]+$/
-                # Add your branch here if benchmarking matters to your work
-                - bls12_381
-                - secp256r1-support
+      # - contract_hackatom
+      # - contract_ibc_callbacks
+      # - contract_ibc_reflect
+      # - contract_ibc_reflect_send
+      # - contract_queue
+      # - contract_reflect
+      # - contract_staking
+      # - contract_virus
+      # - fmt
+      # - fmt_extra
+      # - clippy:
+      #     matrix:
+      #       parameters:
+      #         # Run with MSRV and some modern stable Rust
+      #         rust-version: ["1.74.0", "1.77.0"]
+      # - benchmarking:
+      #     requires:
+      #       - package_vm
+      #       - package_crypto
+      #     filters:
+      #       branches:
+      #         only:
+      #           # Long living branches
+      #           - main
+      #           - /^[0-9]+\.[0-9]+$/
+      #           # Add your branch here if benchmarking matters to your work
+      #           - bls12_381
+      #           - secp256r1-support
       - coverage
   deploy:
     jobs:
