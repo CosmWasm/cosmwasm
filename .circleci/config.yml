@@ -1119,7 +1119,7 @@ jobs:
             grcov . -s packages/std --binary-path ./target/debug -t lcov -o ./reports/std.info
             grcov . -s packages/vm --binary-path ./target/debug -t lcov -o ./reports/vm.info
           environment:
-            RUSTFLAGS: "-Clink-arg=-fuse-ld=/usr/bin/mold -Cinstrument-coverage"
+            RUSTFLAGS: "-Clinker=clang -Clink-arg=-fuse-ld=/usr/bin/mold -Cinstrument-coverage"
             LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
       - codecov/upload:
           file: reports/core.info
