@@ -476,18 +476,6 @@
         }
       ]
     },
-    "IbcAcknowledgement": {
-      "type": "object",
-      "required": [
-        "data"
-      ],
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/Binary"
-        }
-      },
-      "additionalProperties": false
-    },
     "IbcMsg": {
       "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
       "oneOf": [
@@ -572,45 +560,6 @@
                       "$ref": "#/definitions/IbcTimeout"
                     }
                   ]
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Acknowledges a packet that this contract received over IBC. This allows acknowledging a packet that was not acknowledged yet in the `ibc_packet_receive` call.",
-          "type": "object",
-          "required": [
-            "write_acknowledgement"
-          ],
-          "properties": {
-            "write_acknowledgement": {
-              "type": "object",
-              "required": [
-                "ack",
-                "channel_id",
-                "packet_sequence"
-              ],
-              "properties": {
-                "ack": {
-                  "description": "The acknowledgement to send back",
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/IbcAcknowledgement"
-                    }
-                  ]
-                },
-                "channel_id": {
-                  "description": "Existing channel where the packet was received",
-                  "type": "string"
-                },
-                "packet_sequence": {
-                  "description": "Sequence number of the packet that was received",
-                  "type": "integer",
-                  "format": "uint64",
-                  "minimum": 0.0
                 }
               },
               "additionalProperties": false
