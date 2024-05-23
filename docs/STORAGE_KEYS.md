@@ -64,7 +64,7 @@ good reason to preserve the single component version.
 
 ## 2023 updates
 
-With the deprecation if cosmwasm-storage and the adoption of the system in
+With the deprecation of cosmwasm-storage and the adoption of the system in
 cw-storage-plus, it is time to do a few changes to the Length-prefixed keys
 standard, without breaking existing users.
 
