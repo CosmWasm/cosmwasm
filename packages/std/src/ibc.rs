@@ -63,6 +63,7 @@ pub enum IbcMsg {
     },
     /// Acknowledges a packet that this contract received over IBC.
     /// This allows acknowledging a packet that was not acknowledged yet in the `ibc_packet_receive` call.
+    #[cfg(feature = "cosmwasm_2_1")]
     WriteAcknowledgement {
         /// Existing channel where the packet was received
         channel_id: String,
