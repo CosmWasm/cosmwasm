@@ -15,6 +15,7 @@ mod secp256k1;
 mod secp256r1;
 
 #[doc(hidden)]
+#[cfg(not(target_arch = "wasm32"))]
 pub use crate::bls12_318::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_is_identity,
     bls12_381_g2_is_identity, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
