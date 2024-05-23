@@ -25,5 +25,5 @@ might define others.
   `1.4.0` or higher support this.
 - `cosmwasm_2_0` enables `CosmosMsg::Any` and `QueryRequest::Grpc`. Only chains
   running CosmWasm `2.0.0` or higher support this.
-- `cosmwasm_2_1` enables secp256r1 and BLS12-381 signature verification. Only
-  chains running CosmWasm `2.1.0` or higher support this.
+- `cosmwasm_2_1` enables `IbcMsg::WriteAcknowledgement`. Only chains running
+  CosmWasm `2.1.0` or higher support this.
