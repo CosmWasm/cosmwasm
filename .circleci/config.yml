@@ -245,17 +245,13 @@ jobs:
           keys:
             - cargocache-v2-package_crypto-rust:1.74-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build (no features)
+          name: Build
           working_directory: ~/project/packages/crypto
-          command: cargo build --locked --no-default-features
-      - run:
-          name: Build (all features)
-          working_directory: ~/project/packages/crypto
-          command: cargo build --locked --features std
+          command: cargo build --locked
       - run:
           name: Run tests
           working_directory: ~/project/packages/crypto
-          command: cargo test --locked --features std
+          command: cargo test --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
