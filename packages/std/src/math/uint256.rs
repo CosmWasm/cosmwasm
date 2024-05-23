@@ -8,13 +8,13 @@ use core::str::FromStr;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError, CoreError,
-    DivideByZeroError, OverflowError, OverflowOperation,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
+    DivideByZeroError, OverflowError, OverflowOperation, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
-    Uint512, Uint64,
+    __internal::forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64,
+    Uint128, Uint512, Uint64,
 };
 
 /// Used internally - we don't want to leak this type since we might change
@@ -44,9 +44,8 @@ use super::num_consts::NumConsts;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Uint256(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) U256);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
 
 forward_ref_partial_eq!(Uint256, Uint256);
 
@@ -437,7 +436,7 @@ try_from_int_to_uint!(Int256, Uint256);
 try_from_int_to_uint!(Int512, Uint256);
 
 impl TryFrom<&str> for Uint256 {
-    type Error = CoreError;
+    type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -445,18 +444,16 @@ impl TryFrom<&str> for Uint256 {
 }
 
 impl FromStr for Uint256 {
-    type Err = CoreError;
+    type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.is_empty() {
-            return Err(CoreError::generic_err(
-                "Parsing u256: received empty string",
-            ));
+            return Err(StdError::generic_err("Parsing u256: received empty string"));
         }
 
         match U256::from_str_radix(s, 10) {
             Ok(u) => Ok(Uint256(u)),
-            Err(e) => Err(CoreError::generic_err(format!("Parsing u256: {e}"))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u256: {e}"))),
         }
     }
 }

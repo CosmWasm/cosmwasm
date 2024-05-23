@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::HashFunction;
+use crate::{Addr, CanonicalAddr, Timestamp};
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -8,7 +9,6 @@ use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
-use cosmwasm_core::{Addr, CanonicalAddr, Timestamp};
 use rand_core::OsRng;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]

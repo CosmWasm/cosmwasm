@@ -1,18 +1,33 @@
+#[cfg(not(feature = "std"))]
+core::compile_error!(
+    r#"Please enable `cosmwasm-std`'s `std` feature, as we might move existing functionality to that feature in the future.
+Builds without the std feature are currently not expected to work. If you need no_std support see #1484.
+"#
+);
+
 #[macro_use]
 extern crate alloc;
 
 // Exposed on all platforms
 
+mod __internal;
+mod addresses;
 mod assertions;
+mod binary;
 mod checksum;
 mod coin;
 mod coins;
 mod conversion;
 mod deps;
+mod encoding;
+mod errors;
+mod forward_ref;
+mod hex_binary;
 mod ibc;
 mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
+mod math;
 mod metadata;
 mod never;
 mod pagination;
@@ -23,6 +38,7 @@ mod sections;
 mod serde;
 mod stdack;
 mod storage;
+mod timestamp;
 mod traits;
 mod types;
 
@@ -34,10 +50,21 @@ pub(crate) mod prelude;
 /// contract devs to use it directly.
 pub mod storage_keys;
 
+pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
+pub use crate::binary::Binary;
 pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
 pub use crate::coins::Coins;
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
+pub use crate::encoding::{from_base64, from_hex, to_base64, to_hex};
+pub use crate::errors::{
+    AggregationError, CheckedFromRatioError, CheckedMultiplyFractionError,
+    CheckedMultiplyRatioError, CoinFromStrError, CoinsError, ConversionOverflowError,
+    DivideByZeroError, DivisionError, OverflowError, OverflowOperation, PairingEqualityError,
+    RecoverPubkeyError, RoundDownOverflowError, RoundUpOverflowError, StdError, StdResult,
+    SystemError, VerificationError,
+};
+pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
@@ -48,6 +75,11 @@ pub use crate::ibc::{
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
+pub use crate::math::{
+    Decimal, Decimal256, Decimal256RangeExceeded, DecimalRangeExceeded, Fraction, Int128, Int256,
+    Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
+    SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
+};
 pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
@@ -78,6 +110,7 @@ pub use crate::serde::{
 };
 pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
+pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 
@@ -107,24 +140,6 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 /// Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing;
-
-// Re-exports
-
-pub use cosmwasm_core::CoreError as StdError;
-pub use cosmwasm_core::CoreResult as StdResult;
-pub use cosmwasm_core::{
-    from_base64, from_hex, instantiate2_address, to_base64, to_hex, Addr, AggregationError, Binary,
-    CanonicalAddr, CheckedFromRatioError, CheckedMultiplyFractionError, CheckedMultiplyRatioError,
-    CoinFromStrError, CoinsError, ConversionOverflowError, Decimal, Decimal256,
-    Decimal256RangeExceeded, DecimalRangeExceeded, DivideByZeroError, DivisionError, Fraction,
-    HexBinary, Instantiate2AddressError, Int128, Int256, Int512, Int64, Isqrt, OverflowError,
-    OverflowOperation, PairingEqualityError, RecoverPubkeyError, SignedDecimal, SignedDecimal256,
-    SignedDecimal256RangeExceeded, SignedDecimalRangeExceeded, SystemError, Timestamp, Uint128,
-    Uint256, Uint512, Uint64, VerificationError,
-};
-
-#[cfg(not(target_arch = "wasm32"))]
-pub use cosmwasm_core::assert_approx_eq;
 
 pub use cosmwasm_crypto::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 

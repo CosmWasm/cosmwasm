@@ -1,68 +1,63 @@
 use alloc::string::String;
 use core::fmt::Debug;
-use derive_more::Display;
 
 use crate::BT;
 
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
-#[derive(Debug, Display)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, thiserror::Error)]
 pub enum Aggregation {
-    #[display("List of points is empty")]
+    #[error("List of points is empty")]
     Empty,
-    #[display("List is not a multiple of {expected_multiple}. Remainder: {remainder}")]
+    #[error("List is not a multiple of {expected_multiple}. Remainder: {remainder}")]
     NotMultiple {
         expected_multiple: usize,
         remainder: usize,
     },
 }
 
-#[derive(Debug, Display)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, thiserror::Error)]
 pub enum PairingEquality {
-    #[display("List is not a multiple of 48. Remainder: {remainder}")]
+    #[error("List is not a multiple of 48. Remainder: {remainder}")]
     NotMultipleG1 { remainder: usize },
-    #[display("List is not a multiple of 96. Remainder: {remainder}")]
+    #[error("List is not a multiple of 96. Remainder: {remainder}")]
     NotMultipleG2 { remainder: usize },
-    #[display("Not the same amount of points passed. Left: {left}, Right: {right}")]
+    #[error("Not the same amount of points passed. Left: {left}, Right: {right}")]
     UnequalPointAmount { left: usize, right: usize },
 }
 
-#[derive(Debug, Display)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, thiserror::Error)]
 pub enum InvalidPoint {
-    #[display("Invalid input length for point (must be in compressed format): Expected {expected}, actual: {actual}")]
+    #[error("Invalid input length for point (must be in compressed format): Expected {expected}, actual: {actual}")]
     InvalidLength { expected: usize, actual: usize },
-    #[display("Invalid point")]
+    #[error("Invalid point")]
     DecodingError {},
 }
 
-#[derive(Display, Debug)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, thiserror::Error)]
 pub enum CryptoError {
-    #[display("Point aggregation error: {source}")]
+    #[error("Point aggregation error: {source}")]
     Aggregation { source: Aggregation, backtrace: BT },
-    #[display("Batch verify error: {msg}")]
+    #[error("Batch verify error: {msg}")]
     BatchErr { msg: String, backtrace: BT },
-    #[display("Crypto error: {msg}")]
+    #[error("Crypto error: {msg}")]
     GenericErr { msg: String, backtrace: BT },
-    #[display("Invalid hash format")]
+    #[error("Invalid hash format")]
     InvalidHashFormat { backtrace: BT },
-    #[display("Invalid public key format")]
+    #[error("Invalid public key format")]
     InvalidPubkeyFormat { backtrace: BT },
-    #[display("Invalid signature format")]
+    #[error("Invalid signature format")]
     InvalidSignatureFormat { backtrace: BT },
-    #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam { backtrace: BT },
-    #[display("Invalid point: {source}")]
+    #[error("Invalid point: {source}")]
     InvalidPoint { source: InvalidPoint, backtrace: BT },
-    #[display("Pairing equality error: {source}")]
+    #[error("Pairing equality error: {source}")]
     PairingEquality {
         source: PairingEquality,
         backtrace: BT,
     },
-    #[display("Unknown hash function")]
+    #[error("Unknown hash function")]
     UnknownHashFunction { backtrace: BT },
 }
 

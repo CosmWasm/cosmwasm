@@ -7,13 +7,11 @@ use core::ops::{
 use core::str::FromStr;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{
-    CoreError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
-};
+use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int512, Int64, Uint128, Uint256,
-    Uint512, Uint64,
+    CheckedMultiplyRatioError, Int128, Int512, Int64, Uint128, Uint256, Uint512, Uint64,
+    __internal::forward_ref_partial_eq,
 };
 
 /// Used internally - we don't want to leak this type since we might change
@@ -43,9 +41,8 @@ use super::num_consts::NumConsts;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Int256(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) I256);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct Int256(#[schemars(with = "String")] pub(crate) I256);
 
 forward_ref_partial_eq!(Int256, Int256);
 
@@ -449,7 +446,7 @@ impl From<i8> for Int256 {
 }
 
 impl TryFrom<&str> for Int256 {
-    type Error = CoreError;
+    type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -457,12 +454,12 @@ impl TryFrom<&str> for Int256 {
 }
 
 impl FromStr for Int256 {
-    type Err = CoreError;
+    type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match I256::from_str_radix(s, 10) {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(CoreError::generic_err(format!("Parsing Int256: {e}"))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int256: {e}"))),
         }
     }
 }

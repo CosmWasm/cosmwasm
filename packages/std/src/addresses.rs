@@ -8,7 +8,7 @@ use sha2::{
 };
 
 use crate::Binary;
-use crate::{forward_ref_partial_eq, HexBinary};
+use crate::{HexBinary, __internal::forward_ref_partial_eq};
 
 /// A human readable address.
 ///
@@ -26,8 +26,7 @@ use crate::{forward_ref_partial_eq, HexBinary};
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, schemars::JsonSchema)]
 pub struct Addr(String);
 
 forward_ref_partial_eq!(Addr, Addr);
@@ -127,8 +126,7 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 /// addition to that there are many unsafe ways to convert any binary data into an instance.
 /// So the type should be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, schemars::JsonSchema)]
 pub struct CanonicalAddr(Binary);
 
 /// Implement `CanonicalAddr == Binary`
@@ -249,8 +247,7 @@ impl fmt::Display for CanonicalAddr {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum Instantiate2AddressError {
     /// Checksum must be 32 bytes
     InvalidChecksumLength,

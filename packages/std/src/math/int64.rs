@@ -7,13 +7,11 @@ use core::ops::{
 use core::str::FromStr;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{
-    CoreError, DivideByZeroError, DivisionError, OverflowError, OverflowOperation,
-};
+use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    forward_ref_partial_eq, CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256,
-    Uint512, Uint64,
+    CheckedMultiplyRatioError, Int128, Int256, Int512, Uint128, Uint256, Uint512, Uint64,
+    __internal::forward_ref_partial_eq,
 };
 
 use super::conversion::{forward_try_from, try_from_int_to_int};
@@ -32,9 +30,8 @@ use super::num_consts::NumConsts;
 /// let a = Int64::from(258i64);
 /// assert_eq!(a.i64(), 258);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Int64(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) i64);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct Int64(#[schemars(with = "String")] pub(crate) i64);
 
 forward_ref_partial_eq!(Int64, Int64);
 
@@ -353,7 +350,7 @@ forward_try_from!(Uint256, Int64);
 forward_try_from!(Uint512, Int64);
 
 impl TryFrom<&str> for Int64 {
-    type Error = CoreError;
+    type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -361,12 +358,12 @@ impl TryFrom<&str> for Int64 {
 }
 
 impl FromStr for Int64 {
-    type Err = CoreError;
+    type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<i64>() {
             Ok(u) => Ok(Self(u)),
-            Err(e) => Err(CoreError::generic_err(format!("Parsing Int64: {e}"))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing Int64: {e}"))),
         }
     }
 }

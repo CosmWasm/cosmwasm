@@ -2,7 +2,6 @@
 // The rest of the IBC related functionality is defined here
 
 use core::cmp::{Ord, Ordering, PartialOrd};
-use cosmwasm_core::{Addr, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +10,7 @@ use crate::prelude::*;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::StdResult;
 use crate::{to_json_binary, Binary};
+use crate::{Addr, Timestamp};
 
 mod callbacks;
 pub use callbacks::*;

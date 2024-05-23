@@ -1,9 +1,9 @@
-use cosmwasm_core::{Addr, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
 use crate::prelude::*;
+use crate::{Addr, Timestamp};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
