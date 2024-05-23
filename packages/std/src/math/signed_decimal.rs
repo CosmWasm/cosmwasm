@@ -3095,7 +3095,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "std")]
     fn signed_decimal_has_defined_json_schema() {
         let schema = schemars::schema_for!(SignedDecimal);
         assert_eq!(

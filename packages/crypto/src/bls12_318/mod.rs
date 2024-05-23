@@ -5,7 +5,7 @@ pub use self::constants::{
 };
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "std")] {
+    if #[cfg(not(target_arch = "wasm32"))] {
         mod aggregate;
         mod hash;
         mod pairing;
