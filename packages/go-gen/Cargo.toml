@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-cosmwasm-std = { version = "2.0.1", path = "../std", features = ["cosmwasm_2_0", "staking", "stargate"] }
+cosmwasm-std = { version = "2.0.1", path = "../std", features = ["cosmwasm_2_1", "staking", "stargate"] }
 cosmwasm-schema = { version = "2.0.1", path = "../schema" }
 anyhow = "1"
 Inflector = "0.11.4"
