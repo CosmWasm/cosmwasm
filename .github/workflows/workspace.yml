@@ -18,7 +18,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.73.0
+          toolchain: 1.74.0
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
       - name: Check workspace
@@ -33,7 +33,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.73.0
+          toolchain: 1.74.0
           components: rustfmt
       - name: Test workspace
         run: ./devtools/test_workspace.sh
