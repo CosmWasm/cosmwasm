@@ -253,7 +253,7 @@ const BLS12_381_AGGREGATE_SUCCESS: u32 = 0;
 /// Return code (error code) for success when hashing to the curve
 const BLS12_381_HASH_TO_CURVE_SUCCESS: u32 = 0;
 
-/// Maximum size of continous points passed to aggregate functions
+/// Maximum size of continuous points passed to aggregate functions
 const BLS12_381_MAX_AGGREGATE_SIZE: usize = 2 * MI;
 
 /// Maximum size of the message passed to the hash-to-curve functions
