@@ -11,8 +11,13 @@ use crate::backend::unwrap_or_return_with_gas;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmwasmcontract"; // TODO: use correct address
-const GAS_COST_HUMANIZE: u64 = 44; // TODO: these seem very low
-const GAS_COST_CANONICALIZE: u64 = 55;
+/// Default gas multiplier in wasmd.
+/// See https://github.com/CosmWasm/wasmd/blob/v0.51.0/x/wasm/types/gas_register.go#L34
+const WASMD_GAS_MULTIPLIER: u64 = 140_000;
+/// See https://github.com/CosmWasm/wasmd/blob/v0.51.0/x/wasm/keeper/api.go#L27
+const GAS_COST_HUMANIZE: u64 = 4 * WASMD_GAS_MULTIPLIER;
+/// See https://github.com/CosmWasm/wasmd/blob/v0.51.0/x/wasm/keeper/api.go#L28
+const GAS_COST_CANONICALIZE: u64 = 5 * WASMD_GAS_MULTIPLIER;
 
 /// Default prefix used when creating Bech32 encoded address.
 const BECH32_PREFIX: &str = "cosmwasm";
