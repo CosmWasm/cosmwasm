@@ -1,6 +1,5 @@
 //! Import implementations
 
-use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
@@ -737,12 +736,7 @@ pub fn do_ed25519_batch_verify<
     } else {
         &data.gas_config.ed25519_batch_verify_cost
     };
-    let gas_info = GasInfo::with_cost(max(
-        // charge for each signature
-        gas_cost.total_cost(signatures.len() as u64),
-        // but ensure we charge something even if there are no signatures
-        data.gas_config.ed25519_verify_cost,
-    ));
+    let gas_info = GasInfo::with_cost(gas_cost.total_cost(signatures.len() as u64));
     process_gas_info(data, &mut store, gas_info)?;
     let result = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
     let code = match result {
