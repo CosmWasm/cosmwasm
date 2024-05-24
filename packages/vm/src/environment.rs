@@ -45,19 +45,16 @@ pub struct GasConfig {
     pub ed25519_batch_verify_cost: LinearGasCost,
     /// ed25519 batch signature verification cost (single public key)
     pub ed25519_batch_verify_one_pubkey_cost: LinearGasCost,
-    /// bls12-381 aggregate cost per point (g1)
-    pub bls12_381_aggregate_g1_per_point: u64,
-    /// bls12-381 aggregate cost per point (g2)
-    pub bls12_381_aggregate_g2_per_point: u64,
+    /// bls12-381 aggregate cost (g1)
+    pub bls12_381_aggregate_g1_cost: LinearGasCost,
+    /// bls12-381 aggregate cost (g2)
+    pub bls12_381_aggregate_g2_cost: LinearGasCost,
     /// bls12-381 hash to g1 cost
     pub bls12_381_hash_to_g1_cost: u64,
     /// bls12-381 hash to g2 cost
     pub bls12_381_hash_to_g2_cost: u64,
     /// bls12-381 pairing equality check cost
-    pub bls12_381_pairing_equality_cost: u64,
-    /// bls12-381 aggregated pairing equality check cost per point
-    /// (added on top of the base pairing equality check cost)
-    pub bls12_381_aggregated_pairing_equality_cost_per_pair: u64,
+    pub bls12_381_pairing_equality_cost: LinearGasCost,
 }
 
 impl Default for GasConfig {
@@ -86,13 +83,20 @@ impl Default for GasConfig {
                 per_item: 10 * GAS_PER_US,
             },
             // just assume the production machines have more than 4 cores, so we can half that
-            bls12_381_aggregate_g1_per_point: 16 * GAS_PER_US / 2,
-            bls12_381_aggregate_g2_per_point: 33 * GAS_PER_US / 2,
-            bls12_381_hash_to_g1_cost: 324 * GAS_PER_US,
-            bls12_381_hash_to_g2_cost: 528 * GAS_PER_US,
-            // god i wish i was lying
-            bls12_381_pairing_equality_cost: 1038 * GAS_PER_US,
-            bls12_381_aggregated_pairing_equality_cost_per_pair: 108 * GAS_PER_US,
+            bls12_381_aggregate_g1_cost: LinearGasCost {
+                base: 136 * GAS_PER_US / 2,
+                per_item: 24 * GAS_PER_US / 2,
+            },
+            bls12_381_aggregate_g2_cost: LinearGasCost {
+                base: 207 * GAS_PER_US / 2,
+                per_item: 49 * GAS_PER_US / 2,
+            },
+            bls12_381_hash_to_g1_cost: 563 * GAS_PER_US,
+            bls12_381_hash_to_g2_cost: 871 * GAS_PER_US,
+            bls12_381_pairing_equality_cost: LinearGasCost {
+                base: 2281 * GAS_PER_US,
+                per_item: 163 * GAS_PER_US,
+            },
         }
     }
 }
