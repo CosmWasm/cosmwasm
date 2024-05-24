@@ -278,7 +278,9 @@ pub fn do_bls12_381_aggregate_g1<
 
     let estimated_point_count = (g1s.len() / BLS12_381_G1_POINT_LEN) as u64;
     let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_aggregate_g1_per_point * estimated_point_count,
+        data.gas_config
+            .bls12_381_aggregate_g1_cost
+            .total_cost(estimated_point_count),
     );
     process_gas_info(data, &mut store, gas_info)?;
 
@@ -322,7 +324,9 @@ pub fn do_bls12_381_aggregate_g2<
 
     let estimated_point_count = (g2s.len() / BLS12_381_G2_POINT_LEN) as u64;
     let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_aggregate_g2_per_point * estimated_point_count,
+        data.gas_config
+            .bls12_381_aggregate_g2_cost
+            .total_cost(estimated_point_count),
     );
     process_gas_info(data, &mut store, gas_info)?;
 
@@ -370,14 +374,14 @@ pub fn do_bls12_381_pairing_equality<
     let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
 
     let estimated_point_count = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
-    let additional_cost = data
-        .gas_config
-        .bls12_381_aggregated_pairing_equality_cost_per_pair
-        // Add one since we do not include any pairs in the base benchmark, and we always need to add one for the `r` and `s` pair.
-        * (estimated_point_count  + 1);
 
-    let gas_info =
-        GasInfo::with_cost(data.gas_config.bls12_381_pairing_equality_cost + additional_cost);
+    let gas_info = GasInfo::with_cost(
+        // Add one to the `estimated_point_count` since we do not include any pairs in the base
+        // benchmark, and we always need to add one for the `r` and `s` pair.
+        data.gas_config
+            .bls12_381_pairing_equality_cost
+            .total_cost(estimated_point_count + 1),
+    );
     process_gas_info(data, &mut store, gas_info)?;
 
     let code = match bls12_381_pairing_equality(&ps, &qs, &r, &s) {
