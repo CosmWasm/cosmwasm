@@ -29,6 +29,18 @@ gas and took 15ms on our CI system. The ideal cost per operation for this system
 is `10**12 / (96837752 / (15 / 1000))`: 154. This is rounded to 150 for
 simplicity.
 
+CosmWasm 2.1 update: All gas values were re-evaluated and adjusted to meet the 1
+Teragas/second target mentioned above. A rerun of the Argon2 test contract
+consumed 5270718300 gas with the previous cost of 150, so the operation count
+was `5270718300 / 150 = 35138122`. This took 6ms on our benchmark server, so the
+new cost per operation is `10**12 / (35138122 / (6 / 1000))`: 171. This is
+rounded to 170 for simplicity.
+
+Benchmarking system:
+
+- CPU: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz (4 cores, 8 threads)
+- RAM: 32GB DDR4 2133 MHz
+
 Each machine is different, we know that. But the above target helps us in
 multiple ways:
 
