@@ -42,8 +42,10 @@ pub struct GasConfig {
     /// ed25519 signature verification cost
     pub ed25519_verify_cost: u64,
     /// ed25519 batch signature verification cost
+    /// This is charged per signature.
     pub ed25519_batch_verify_cost: u64,
     /// ed25519 batch signature verification cost (single public key)
+    /// This is charged per signature.
     pub ed25519_batch_verify_one_pubkey_cost: u64,
     /// bls12-381 aggregate cost per point (g1)
     pub bls12_381_aggregate_g1_per_point: u64,
