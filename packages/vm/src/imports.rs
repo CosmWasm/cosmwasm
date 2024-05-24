@@ -728,14 +728,14 @@ pub fn do_ed25519_batch_verify<
     let signatures = decode_sections(&signatures);
     let public_keys = decode_sections(&public_keys);
 
-    let gas_cost_per_sig = if public_keys.len() == 1 {
-        data.gas_config.ed25519_batch_verify_one_pubkey_cost
+    let gas_cost = if public_keys.len() == 1 {
+        &data.gas_config.ed25519_batch_verify_one_pubkey_cost
     } else {
-        data.gas_config.ed25519_batch_verify_cost
+        &data.gas_config.ed25519_batch_verify_cost
     };
     let gas_info = GasInfo::with_cost(max(
         // charge for each signature
-        gas_cost_per_sig * (signatures.len() as u64),
+        gas_cost.total_cost(signatures.len() as u64),
         // but ensure we charge something even if there are no signatures
         data.gas_config.ed25519_verify_cost,
     ));
