@@ -21,7 +21,7 @@ and [cosmwasm-std](`https://crates.io/crates/cosmwasm-std`) crates.
 
 ```
 cd packages/crypto
-cargo bench
+cargo bench --features std
 ```
 
 ## License
