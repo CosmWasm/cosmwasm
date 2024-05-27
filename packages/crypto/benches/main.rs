@@ -160,8 +160,7 @@ where
         for i in 0..=two_pow_max {
             let n = 2_usize.pow(i); // the number of pairings on the left hand side
             let k = n + 1; // the number of pairings in total
-            let messages: &[ark_ec::short_weierstrass::Affine<ark_bls12_381::g2::Config>] =
-                &messages[..n];
+            let messages = &messages[..n];
             let keys = &public_keys[..n];
             let aggregated_signature: G2Affine =
                 signatures[..n].iter().sum::<G2Projective>().into();
