@@ -372,14 +372,19 @@ pub fn do_bls12_381_pairing_equality<
     let r = read_region(&memory, r_ptr, BLS12_381_G1_POINT_LEN)?;
     let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
 
-    let estimated_point_count = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
+    // The values here are only correct if ps and qs can be divided by the point size.
+    // They are good enough for gas since we error in `bls12_381_pairing_equality` if the inputs are
+    // not properly formatted.
+    let estimated_n = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
+    // The number of parings to compute (`n` on the left hand side and `k = n + 1` in total)
+    let estimated_k = estimated_n + 1;
 
     let gas_info = GasInfo::with_cost(
         // Add one to the `estimated_point_count` since we do not include any pairs in the base
         // benchmark, and we always need to add one for the `r` and `s` pair.
         data.gas_config
             .bls12_381_pairing_equality_cost
-            .total_cost(estimated_point_count + 1),
+            .total_cost(estimated_k),
     );
     process_gas_info(data, &mut store, gas_info)?;
 
