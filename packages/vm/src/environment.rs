@@ -94,7 +94,7 @@ impl Default for GasConfig {
             bls12_381_hash_to_g1_cost: 563 * GAS_PER_US,
             bls12_381_hash_to_g2_cost: 871 * GAS_PER_US,
             bls12_381_pairing_equality_cost: LinearGasCost {
-                base: 2281 * GAS_PER_US,
+                base: 2112 * GAS_PER_US,
                 per_item: 163 * GAS_PER_US,
             },
         }
