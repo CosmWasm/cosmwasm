@@ -380,8 +380,6 @@ pub fn do_bls12_381_pairing_equality<
     let estimated_k = estimated_n + 1;
 
     let gas_info = GasInfo::with_cost(
-        // Add one to the `estimated_point_count` since we do not include any pairs in the base
-        // benchmark, and we always need to add one for the `r` and `s` pair.
         data.gas_config
             .bls12_381_pairing_equality_cost
             .total_cost(estimated_k),
