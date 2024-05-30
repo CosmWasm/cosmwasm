@@ -181,6 +181,10 @@ pub struct Reply {
     pub payload: Binary,
     /// The amount of gas used by the submessage,
     /// measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
+    ///
+    /// This only contains a useful value on chains running CosmWasm 2.0 or higher.
+    /// On older chains, this field is always 0.
+    #[serde(default)]
     pub gas_used: u64,
     pub result: SubMsgResult,
 }
@@ -611,5 +615,30 @@ mod tests {
                 })
             }
         );
+    }
+
+    #[test]
+    fn reply_serialization_cosmwasm_1() {
+        // json coming from wasmvm 1.5.0
+        let json = r#"{"id":1234,"result":{"ok":{"events":[{"type":"message","attributes":[{"key":"signer","value":"caller-addr"}]}],"data":"Zm9vYmFy"}}}"#;
+
+        let reply: Reply = from_json(json).unwrap();
+        assert_eq!(reply.id, 1234);
+        assert_eq!(reply.payload, Binary::default());
+        assert_eq!(
+            reply.result,
+            SubMsgResult::Ok(SubMsgResponse {
+                data: Some(Binary::from_base64("Zm9vYmFy").unwrap()),
+                events: vec![Event {
+                    ty: "message".to_string(),
+                    attributes: vec![Attribute {
+                        key: "signer".to_string(),
+                        value: "caller-addr".to_string()
+                    }]
+                }],
+                msg_responses: vec![]
+            })
+        );
+        assert_eq!(reply.gas_used, 0);
     }
 }

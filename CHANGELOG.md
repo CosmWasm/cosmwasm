@@ -11,6 +11,9 @@ and this project adheres to
 ### Fixed
 
 - cosmwasm-std: Fix CWA-2024-002
+- cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2159])
+
+[#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
 
 ### Added
 
