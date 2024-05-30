@@ -83,7 +83,7 @@ fn cleanup(storage: &mut dyn Storage, mut limit: usize) -> usize {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,
+        message_info, mock_dependencies, mock_dependencies_with_balance, mock_env,
     };
     use cosmwasm_std::{coins, Attribute, StdError, Storage, SubMsg};
 
@@ -102,8 +102,10 @@ mod tests {
     fn instantiate_fails() {
         let mut deps = mock_dependencies();
 
+        let creator = deps.api.addr_make("creator");
+
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = message_info(&creator, &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
@@ -164,6 +166,8 @@ mod tests {
     fn execute_cleans_up_data() {
         let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
 
+        let anon = deps.api.addr_make("anon");
+
         // store some sample data
         deps.storage.set(b"foo", b"bar");
         deps.storage.set(b"key2", b"data2");
@@ -179,7 +183,7 @@ mod tests {
         let res = execute(
             deps.as_mut(),
             mock_env(),
-            mock_info("anon", &[]),
+            message_info(&anon, &[]),
             ExecuteMsg::Cleanup { limit: Some(2) },
         )
         .unwrap();
@@ -192,7 +196,7 @@ mod tests {
         let res = execute(
             deps.as_mut(),
             mock_env(),
-            mock_info("anon", &[]),
+            message_info(&anon, &[]),
             ExecuteMsg::Cleanup { limit: Some(2) },
         )
         .unwrap();

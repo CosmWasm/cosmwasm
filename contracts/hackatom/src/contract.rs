@@ -294,7 +294,8 @@ fn query_int() -> IntResponse {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
+        message_info, mock_dependencies, mock_dependencies_with_balances, mock_env,
+        MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
     use cosmwasm_std::{coins, Binary, Storage, SubMsg};
@@ -303,20 +304,21 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies();
 
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
-        let creator: String = deps.api.addr_make("creator").into();
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
+        let creator = deps.api.addr_make("creator");
+
         let expected_state = State {
-            verifier: deps.api.addr_validate(&verifier).unwrap(),
-            beneficiary: deps.api.addr_validate(&beneficiary).unwrap(),
-            funder: deps.api.addr_validate(&creator).unwrap(),
+            verifier: verifier.clone(),
+            beneficiary: beneficiary.clone(),
+            funder: creator.clone(),
         };
 
         let msg = InstantiateMsg {
-            verifier,
-            beneficiary,
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
-        let info = mock_info(creator.as_str(), &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes, [("Let the", "hacking begin")]);
@@ -331,34 +333,36 @@ mod tests {
     fn instantiate_and_query() {
         let mut deps = mock_dependencies();
 
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
-        let creator: String = deps.api.addr_make("creator").into();
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
+        let creator = deps.api.addr_make("creator");
+
         let msg = InstantiateMsg {
-            verifier: verifier.clone(),
-            beneficiary,
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
-        let info = mock_info(&creator, &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
         let query_response = query_verifier(deps.as_ref()).unwrap();
-        assert_eq!(query_response.verifier, verifier);
+        assert_eq!(query_response.verifier, verifier.as_str());
     }
 
     #[test]
     fn migrate_verifier() {
         let mut deps = mock_dependencies();
 
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
-        let creator: String = deps.api.addr_make("creator").into();
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
+        let creator = deps.api.addr_make("creator");
+
         let msg = InstantiateMsg {
-            verifier: verifier.clone(),
-            beneficiary,
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
-        let info = mock_info(&creator, &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -386,28 +390,35 @@ mod tests {
     fn sudo_can_steal_tokens() {
         let mut deps = mock_dependencies();
 
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
-        let creator: String = deps.api.addr_make("creator").into();
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
+        let creator = deps.api.addr_make("creator");
+
         let msg = InstantiateMsg {
-            verifier,
-            beneficiary,
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
-        let info = mock_info(&creator, &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // sudo takes any tax it wants
-        let to_address = String::from("community-pool");
+        let to_address = deps.api.addr_make("community-pool");
         let amount = coins(700, "gold");
         let sys_msg = SudoMsg::StealFunds {
-            recipient: to_address.clone(),
+            recipient: to_address.to_string(),
             amount: amount.clone(),
         };
         let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.first().expect("no message");
-        assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
+        assert_eq!(
+            msg,
+            &SubMsg::new(BankMsg::Send {
+                to_address: to_address.to_string(),
+                amount
+            })
+        );
     }
 
     #[test]
@@ -430,17 +441,17 @@ mod tests {
         let mut deps = mock_dependencies();
 
         // initialize the store
-        let creator: String = deps.api.addr_make("creator").into();
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
+        let creator = deps.api.addr_make("creator");
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
 
         let instantiate_msg = InstantiateMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
         let init_amount = coins(1000, "earth");
-        let init_info = mock_info(&creator, &init_amount);
-        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
+        let info = message_info(&creator, &init_amount);
+        let init_res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -449,7 +460,7 @@ mod tests {
             .update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary can release it
-        let execute_info = mock_info(verifier.as_str(), &[]);
+        let execute_info = message_info(&verifier, &[]);
         let execute_res = execute(
             deps.as_mut(),
             mock_env(),
@@ -462,13 +473,13 @@ mod tests {
         assert_eq!(
             msg,
             &SubMsg::new(BankMsg::Send {
-                to_address: beneficiary.clone(),
+                to_address: beneficiary.to_string(),
                 amount: coins(1000, "earth"),
             }),
         );
         assert_eq!(
             execute_res.attributes,
-            vec![("action", "release"), ("destination", &beneficiary)],
+            vec![("action", "release"), ("destination", beneficiary.as_str())],
         );
         assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
     }
@@ -478,17 +489,17 @@ mod tests {
         let mut deps = mock_dependencies();
 
         // initialize the store
-        let creator: String = deps.api.addr_make("creator").into();
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
+        let creator = deps.api.addr_make("creator");
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
 
         let instantiate_msg = InstantiateMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
         let init_amount = coins(1000, "earth");
-        let init_info = mock_info(&creator, &init_amount);
-        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
+        let info = message_info(&creator, &init_amount);
+        let init_res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -497,7 +508,7 @@ mod tests {
             .update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary cannot release it
-        let execute_info = mock_info(beneficiary.as_str(), &[]);
+        let execute_info = message_info(&beneficiary, &[]);
         let execute_res = execute(
             deps.as_mut(),
             mock_env(),
@@ -512,9 +523,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: Addr::unchecked(verifier),
-                beneficiary: Addr::unchecked(beneficiary),
-                funder: Addr::unchecked(creator),
+                verifier: verifier.clone(),
+                beneficiary: beneficiary.clone(),
+                funder: creator.clone(),
             }
         );
     }
@@ -525,19 +536,19 @@ mod tests {
         let mut deps = mock_dependencies();
 
         // initialize the store
-        let verifier: String = deps.api.addr_make("verifies").into();
-        let beneficiary: String = deps.api.addr_make("benefits").into();
-        let creator: String = deps.api.addr_make("creator").into();
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
+        let creator = deps.api.addr_make("creator");
 
         let instantiate_msg = InstantiateMsg {
-            verifier,
-            beneficiary: beneficiary.clone(),
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
         };
-        let init_info = mock_info(&creator, &coins(1000, "earth"));
-        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
+        let info = message_info(&creator, &coins(1000, "earth"));
+        let init_res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let execute_info = mock_info(&beneficiary, &[]);
+        let execute_info = message_info(&beneficiary, &[]);
         // this should panic
         let _ = execute(
             deps.as_mut(),
@@ -551,15 +562,20 @@ mod tests {
     fn execute_user_errors_in_api_calls() {
         let mut deps = mock_dependencies();
 
-        let instantiate_msg = InstantiateMsg {
-            verifier: deps.api.addr_make("verifies").into(),
-            beneficiary: deps.api.addr_make("benefits").into(),
-        };
-        let init_info = mock_info("creator", &coins(1000, "earth"));
-        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
+        let creator = deps.api.addr_make("creator");
+        let anyone = deps.api.addr_make("anyone");
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
 
-        let execute_info = mock_info("anyone", &[]);
+        let instantiate_msg = InstantiateMsg {
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
+        };
+        let info = message_info(&creator, &coins(1000, "earth"));
+        let response = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        assert_eq!(0, response.messages.len());
+
+        let execute_info = message_info(&anyone, &[]);
         execute(
             deps.as_mut(),
             mock_env(),

@@ -202,19 +202,20 @@ fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
 
     const CREATOR: &str = "creator";
 
     #[test]
     fn instantiate_works() {
         let mut deps = mock_dependencies();
+        let creator = deps.api.addr_make(CREATOR);
         let msg = InstantiateMsg {};
-        let info = mock_info(CREATOR, &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         let admin = query_admin(deps.as_ref()).unwrap();
-        assert_eq!(CREATOR, admin.admin.as_str());
+        assert_eq!(admin.admin.as_str(), creator.as_str());
     }
 }

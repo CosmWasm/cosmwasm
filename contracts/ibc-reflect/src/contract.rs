@@ -347,9 +347,10 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
-        mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
-        mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        message_info, mock_dependencies, mock_env, mock_ibc_channel_close_init,
+        mock_ibc_channel_connect_ack, mock_ibc_channel_open_init, mock_ibc_channel_open_try,
+        mock_ibc_packet_recv, mock_wasmd_attr, MockApi, MockQuerier, MockStorage,
+        MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{attr, coin, coins, from_json, BankMsg, OwnedDeps, WasmMsg};
 
@@ -361,12 +362,13 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
+        let creator = deps.api.addr_make(CREATOR);
         let msg = InstantiateMsg {
             reflect_code_id: REFLECT_ID,
         };
-        let info = mock_info(CREATOR, &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(res.messages.len(), 0);
         deps
     }
 
@@ -420,11 +422,12 @@ mod tests {
     #[test]
     fn instantiate_works() {
         let mut deps = mock_dependencies();
+        let creator = deps.api.addr_make(CREATOR);
 
         let msg = InstantiateMsg {
             reflect_code_id: 17,
         };
-        let info = mock_info("creator", &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len())
     }
