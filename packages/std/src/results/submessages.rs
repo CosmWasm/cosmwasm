@@ -167,6 +167,10 @@ pub struct Reply {
     pub payload: Binary,
     /// The amount of gas used by the submessage,
     /// measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
+    ///
+    /// This only contains a useful value on chains running CosmWasm 2.0 or higher.
+    /// On older chains, this field is always 0.
+    #[serde(default)]
     pub gas_used: u64,
     pub result: SubMsgResult,
 }
