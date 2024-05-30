@@ -179,14 +179,15 @@ fn query_open_iterators(deps: Deps, count: u32) -> Empty {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies_with_balance, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+        message_info, mock_dependencies_with_balance, mock_env, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{coins, from_json, OwnedDeps};
 
     /// Instantiates a contract with no elements
     fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies_with_balance(&coins(1000, "earth"));
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let creator = deps.api.addr_make("creator");
+        let info = message_info(&creator, &coins(1000, "earth"));
         let res = instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg {}).unwrap();
         assert_eq!(0, res.messages.len());
         (deps, info)

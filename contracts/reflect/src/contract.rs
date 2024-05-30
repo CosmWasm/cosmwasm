@@ -174,7 +174,7 @@ fn query_raw(deps: Deps<SpecialQuery>, contract: String, key: Binary) -> StdResu
 mod tests {
     use super::*;
     use crate::testing::mock_dependencies_with_custom_querier;
-    use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_json, AllBalanceResponse, BankMsg, BankQuery, Binary, Event, StakingMsg,
         StdError, SubMsgResponse, SubMsgResult,
@@ -183,9 +183,10 @@ mod tests {
     #[test]
     fn proper_instantialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let info = message_info(&creator, &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -193,15 +194,16 @@ mod tests {
 
         // it worked, let's query the state
         let value = query_owner(deps.as_ref()).unwrap();
-        assert_eq!("creator", value.owner.as_str());
+        assert_eq!(value.owner, creator.to_string());
     }
 
     #[test]
     fn reflect() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
@@ -213,7 +215,7 @@ mod tests {
         let msg = ExecuteMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let info = mock_info("creator", &[]);
+        let info = message_info(&creator, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
@@ -222,9 +224,11 @@ mod tests {
     #[test]
     fn reflect_requires_owner() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
+        let random = deps.api.addr_make("random");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // signer is not owner
@@ -235,7 +239,7 @@ mod tests {
         .into()];
         let msg = ExecuteMsg::ReflectMsg { msgs: payload };
 
-        let info = mock_info("random", &[]);
+        let info = message_info(&random, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { .. } => {}
@@ -246,12 +250,13 @@ mod tests {
     #[test]
     fn reflect_reject_empty_msgs() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        let info = mock_info("creator", &[]);
+        let info = message_info(&creator, &[]);
         let payload = vec![];
 
         let msg = ExecuteMsg::ReflectMsg { msgs: payload };
@@ -262,9 +267,10 @@ mod tests {
     #[test]
     fn reflect_multiple_messages() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![
@@ -286,7 +292,7 @@ mod tests {
         let msg = ExecuteMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let info = mock_info("creator", &[]);
+        let info = message_info(&creator, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
@@ -295,12 +301,13 @@ mod tests {
     #[test]
     fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        let info = mock_info("creator", &[]);
+        let info = message_info(&creator, &[]);
         let new_owner = deps.api.addr_make("friend");
         let msg = ExecuteMsg::ChangeOwner {
             owner: new_owner.to_string(),
@@ -316,23 +323,25 @@ mod tests {
     #[test]
     fn change_owner_requires_current_owner_as_sender() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
+        let random = deps.api.addr_make("random");
+        let friend = deps.api.addr_make("friend");
 
         let msg = InstantiateMsg {};
-        let creator = String::from("creator");
-        let info = mock_info(&creator, &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        let random = String::from("random");
-        let info = mock_info(&random, &[]);
-        let new_owner = String::from("friend");
-        let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
+        let info = message_info(&random, &[]);
+        let msg = ExecuteMsg::ChangeOwner {
+            owner: friend.to_string(),
+        };
 
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(
             err,
             ReflectError::NotCurrentOwner {
-                expected: creator,
-                actual: random
+                expected: creator.to_string(),
+                actual: random.to_string(),
             }
         );
     }
@@ -340,13 +349,13 @@ mod tests {
     #[test]
     fn change_owner_errors_for_invalid_new_address() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
-        let creator = String::from("creator");
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info(&creator, &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        let info = mock_info(&creator, &[]);
+        let info = message_info(&creator, &[]);
         let msg = ExecuteMsg::ChangeOwner {
             owner: String::from("x"),
         };
@@ -400,9 +409,10 @@ mod tests {
     #[test]
     fn reflect_subcall() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let id = 123u64;
@@ -417,7 +427,7 @@ mod tests {
         let msg = ExecuteMsg::ReflectSubMsg {
             msgs: vec![payload.clone()],
         };
-        let info = mock_info("creator", &[]);
+        let info = message_info(&creator, &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.pop().expect("must have a message");
@@ -428,9 +438,10 @@ mod tests {
     #[test]
     fn reply_and_query() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
+        let info = message_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let id = 123u64;
