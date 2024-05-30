@@ -3,13 +3,18 @@
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
 
+<<<<<<< HEAD
 mod assertions;
+=======
+mod message_info;
+>>>>>>> 70f880921 (Add message_info function)
 mod mock;
 
 pub use assertions::assert_approx_eq_impl;
 #[cfg(test)]
 pub use assertions::assert_hash_works_impl;
 
+pub use message_info::message_info;
 #[cfg(feature = "cosmwasm_1_3")]
 pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
