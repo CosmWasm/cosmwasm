@@ -157,12 +157,13 @@ where
             .map(|(secret_key, message)| *message * secret_key)
             .collect();
 
-        for i in 1..=two_pow_max {
-            let num_points = 2_usize.pow(i);
-            let messages = &messages[..num_points];
-            let keys = &public_keys[..num_points];
+        for i in 0..=two_pow_max {
+            let n = 2_usize.pow(i); // the number of pairings on the left hand side
+            let k = n + 1; // the number of pairings in total
+            let messages = &messages[..n];
+            let keys = &public_keys[..n];
             let aggregated_signature: G2Affine =
-                signatures[..num_points].iter().sum::<G2Projective>().into();
+                signatures[..n].iter().sum::<G2Projective>().into();
 
             let serialized_pubkeys: Vec<u8> = keys
                 .iter()
@@ -187,7 +188,7 @@ where
                 .serialize_compressed(&mut serialized_signature[..])
                 .unwrap();
 
-            group.bench_function(format!("bls12_381_pairing_equality_{num_points}"), |b| {
+            group.bench_function(format!("bls12_381_pairing_equality_k={k}"), |b| {
                 b.iter(|| {
                     let is_valid = black_box(bls12_381_pairing_equality(
                         &serialized_pubkeys,

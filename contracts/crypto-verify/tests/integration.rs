@@ -21,7 +21,8 @@
 
 use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{
-    instantiate, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
+    instantiate, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi, MockQuerier,
+    MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 use hex_literal::hex;
@@ -96,7 +97,7 @@ fn build_drand_message(round: u64, previous_signature: &[u8]) -> Vec<u8> {
 const DESERIALIZATION_LIMIT: usize = 20_000;
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
-    let mut deps = mock_instance(WASM, &[]);
+    let mut deps = mock_instance_with_gas_limit(WASM, 10_000_000_000);
     let msg = InstantiateMsg {};
     let info = mock_info(CREATOR, &[]);
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();

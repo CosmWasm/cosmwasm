@@ -1,6 +1,5 @@
 //! Import implementations
 
-use std::cmp::max;
 use std::marker::PhantomData;
 
 use cosmwasm_crypto::{
@@ -253,7 +252,7 @@ const BLS12_381_AGGREGATE_SUCCESS: u32 = 0;
 /// Return code (error code) for success when hashing to the curve
 const BLS12_381_HASH_TO_CURVE_SUCCESS: u32 = 0;
 
-/// Maximum size of continous points passed to aggregate functions
+/// Maximum size of continuous points passed to aggregate functions
 const BLS12_381_MAX_AGGREGATE_SIZE: usize = 2 * MI;
 
 /// Maximum size of the message passed to the hash-to-curve functions
@@ -278,7 +277,9 @@ pub fn do_bls12_381_aggregate_g1<
 
     let estimated_point_count = (g1s.len() / BLS12_381_G1_POINT_LEN) as u64;
     let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_aggregate_g1_per_point * estimated_point_count,
+        data.gas_config
+            .bls12_381_aggregate_g1_cost
+            .total_cost(estimated_point_count),
     );
     process_gas_info(data, &mut store, gas_info)?;
 
@@ -322,7 +323,9 @@ pub fn do_bls12_381_aggregate_g2<
 
     let estimated_point_count = (g2s.len() / BLS12_381_G2_POINT_LEN) as u64;
     let gas_info = GasInfo::with_cost(
-        data.gas_config.bls12_381_aggregate_g2_per_point * estimated_point_count,
+        data.gas_config
+            .bls12_381_aggregate_g2_cost
+            .total_cost(estimated_point_count),
     );
     process_gas_info(data, &mut store, gas_info)?;
 
@@ -369,15 +372,18 @@ pub fn do_bls12_381_pairing_equality<
     let r = read_region(&memory, r_ptr, BLS12_381_G1_POINT_LEN)?;
     let s = read_region(&memory, s_ptr, BLS12_381_G2_POINT_LEN)?;
 
-    let estimated_point_count = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
-    let additional_cost = data
-        .gas_config
-        .bls12_381_aggregated_pairing_equality_cost_per_pair
-        // Add one since we do not include any pairs in the base benchmark, and we always need to add one for the `r` and `s` pair.
-        * (estimated_point_count  + 1);
+    // The values here are only correct if ps and qs can be divided by the point size.
+    // They are good enough for gas since we error in `bls12_381_pairing_equality` if the inputs are
+    // not properly formatted.
+    let estimated_n = (ps.len() / BLS12_381_G1_POINT_LEN) as u64;
+    // The number of parings to compute (`n` on the left hand side and `k = n + 1` in total)
+    let estimated_k = estimated_n + 1;
 
-    let gas_info =
-        GasInfo::with_cost(data.gas_config.bls12_381_pairing_equality_cost + additional_cost);
+    let gas_info = GasInfo::with_cost(
+        data.gas_config
+            .bls12_381_pairing_equality_cost
+            .total_cost(estimated_k),
+    );
     process_gas_info(data, &mut store, gas_info)?;
 
     let code = match bls12_381_pairing_equality(&ps, &qs, &r, &s) {
@@ -729,11 +735,11 @@ pub fn do_ed25519_batch_verify<
     let public_keys = decode_sections(&public_keys);
 
     let gas_cost = if public_keys.len() == 1 {
-        data.gas_config.ed25519_batch_verify_one_pubkey_cost
+        &data.gas_config.ed25519_batch_verify_one_pubkey_cost
     } else {
-        data.gas_config.ed25519_batch_verify_cost
-    } * signatures.len() as u64;
-    let gas_info = GasInfo::with_cost(max(gas_cost, data.gas_config.ed25519_verify_cost));
+        &data.gas_config.ed25519_batch_verify_cost
+    };
+    let gas_info = GasInfo::with_cost(gas_cost.total_cost(signatures.len() as u64));
     process_gas_info(data, &mut store, gas_info)?;
     let result = ed25519_batch_verify(&mut OsRng, &messages, &signatures, &public_keys);
     let code = match result {

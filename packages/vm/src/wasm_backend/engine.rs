@@ -23,7 +23,7 @@ fn cost(_operator: &Operator) -> u64 {
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet
     // precise enough to derive insights from it.
-    150
+    170
 }
 
 /// Use Cranelift as the compiler backend if the feature is enabled
