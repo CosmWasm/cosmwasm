@@ -75,6 +75,8 @@ and this project adheres to
 - cosmwasm-std: Deprecate "compact" serialization of `Binary`, `HexBinary`,
   `Checksum` ([#2125])
 - cosmwasm-vm: Update wasmer to 4.3.1 ([#2147], [#2153])
+- cosmwasm-vm: Rebalance gas costs for cryptographic functions and wasm
+  instructions. ([#2152])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
@@ -85,6 +87,7 @@ and this project adheres to
 [#2108]: https://github.com/CosmWasm/cosmwasm/pull/2108
 [#2125]: https://github.com/CosmWasm/cosmwasm/pull/2125
 [#2147]: https://github.com/CosmWasm/cosmwasm/pull/2147
+[#2152]: https://github.com/CosmWasm/cosmwasm/pull/2152
 [#2153]: https://github.com/CosmWasm/cosmwasm/pull/2153
 
 ## [2.0.1] - 2024-04-03
