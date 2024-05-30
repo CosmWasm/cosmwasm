@@ -286,6 +286,7 @@ pub fn mock_env() -> Env {
 
 /// Just set sender and funds for the message.
 /// This is intended for use in test code only.
+#[deprecated(note = "This is inconvenient and unsafe. Use message_info instead.")]
 pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
     MessageInfo {
         sender: Addr::unchecked(sender),
@@ -1113,6 +1114,7 @@ mod tests {
 
     #[test]
     fn mock_info_works() {
+        #[allow(deprecated)]
         let info = mock_info("my name", &coins(100, "atom"));
         assert_eq!(
             info,
