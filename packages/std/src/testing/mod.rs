@@ -3,10 +3,12 @@
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
 
+mod message_info;
 mod mock;
 
 pub use cosmwasm_core::testing::*;
 
+pub use message_info::message_info;
 #[cfg(feature = "cosmwasm_1_3")]
 pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
