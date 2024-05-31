@@ -80,6 +80,7 @@ and this project adheres to
 - cosmwasm-vm: Update wasmer to 4.3.1 ([#2147], [#2153])
 - cosmwasm-vm: Rebalance gas costs for cryptographic functions and wasm
   instructions. ([#2152])
+- cosmwasm-std: Add message_info and deprecate mock_info ([#2160])
 
 [#2044]: https://github.com/CosmWasm/cosmwasm/pull/2044
 [#2051]: https://github.com/CosmWasm/cosmwasm/pull/2051
@@ -92,6 +93,7 @@ and this project adheres to
 [#2147]: https://github.com/CosmWasm/cosmwasm/pull/2147
 [#2152]: https://github.com/CosmWasm/cosmwasm/pull/2152
 [#2153]: https://github.com/CosmWasm/cosmwasm/pull/2153
+[#2160]: https://github.com/CosmWasm/cosmwasm/pull/2160
 
 ## [2.0.1] - 2024-04-03
 

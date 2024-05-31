@@ -3,17 +3,21 @@
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
 
+mod message_info;
 mod mock;
 
 pub use cosmwasm_core::testing::*;
 
+pub use message_info::message_info;
+#[allow(deprecated)]
+pub use mock::mock_info;
 #[cfg(feature = "cosmwasm_1_3")]
 pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
 pub use mock::StakingQuerier;
 pub use mock::{
     mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances, mock_env,
-    mock_info, mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
+    mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
     MockStorage, MOCK_CONTRACT_ADDR,
 };
 #[cfg(feature = "stargate")]
