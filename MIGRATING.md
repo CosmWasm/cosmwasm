@@ -4,7 +4,7 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 1.5.x -> 2.0.0
+## 1.5.x -> 2.0.x
 
 - Update `cosmwasm-*` dependencies in Cargo.toml (skip the ones you don't use):
 
@@ -261,6 +261,10 @@ major releases of `cosmwasm`. Note that you can also view the
   the `reply` entry point. This functionality is an optional addition introduced
   in 2.0. To keep the CosmWasm 1.x behaviour, just set payload to
   `Binary::default()`.
+
+- In test code, replace calls to `mock_info` with `message_info`. This takes a
+  `&Addr` as the first argument which you get by using owned `Addr` in the test
+  bodies.
 
 ## 1.4.x -> 1.5.0
 
