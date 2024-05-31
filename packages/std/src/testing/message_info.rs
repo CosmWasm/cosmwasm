@@ -2,8 +2,8 @@ use crate::{Addr, Coin, MessageInfo};
 
 /// A constructor function for [`MessageInfo`].
 ///
-/// This is optimized for writing testing contract. It
-/// lives in `cosmwasm_std::testing` because constructing MessageInfo
+/// This is designed for writing contract tests.
+/// It lives in `cosmwasm_std::testing` because constructing MessageInfo
 /// objects is not something that you usually need in contract code.
 ///
 /// ## Examples
