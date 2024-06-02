@@ -43,7 +43,7 @@ pub use wasm::*;
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryRequest<C> {
+pub enum QueryRequest<C = Empty> {
     Bank(BankQuery),
     Custom(C),
     #[cfg(feature = "staking")]
