@@ -76,6 +76,7 @@ pub struct TransferMsgBuilder<MemoData> {
 }
 
 impl TransferMsgBuilder<EmptyMemo> {
+    /// Creates a new transfer message with the given parameters and no memo.
     pub fn new(
         channel_id: impl Into<String>,
         to_address: impl Into<String>,
@@ -91,6 +92,7 @@ impl TransferMsgBuilder<EmptyMemo> {
         }
     }
 
+    /// Adds a memo text to the transfer message.
     pub fn with_memo(self, memo: impl Into<String>) -> TransferMsgBuilder<WithMemo> {
         TransferMsgBuilder {
             channel_id: self.channel_id,
@@ -101,6 +103,10 @@ impl TransferMsgBuilder<EmptyMemo> {
         }
     }
 
+    /// Adds an IBC source callback entry to the memo field.
+    /// Use this if you want to receive IBC callbacks on the source chain.
+    ///
+    /// For more info check out [`crate::IbcSourceCallbackMsg`].
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
@@ -114,6 +120,10 @@ impl TransferMsgBuilder<EmptyMemo> {
         }
     }
 
+    /// Adds an IBC destination callback entry to the memo field.
+    /// Use this if you want to receive IBC callbacks on the destination chain.
+    ///
+    /// For more info check out [`crate::IbcDestinationCallbackMsg`].
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
@@ -129,6 +139,10 @@ impl TransferMsgBuilder<EmptyMemo> {
 }
 
 impl TransferMsgBuilder<WithSrcCallback> {
+    /// Adds an IBC destination callback entry to the memo field.
+    /// Use this if you want to receive IBC callbacks on the destination chain.
+    ///
+    /// For more info check out [`crate::IbcDestinationCallbackMsg`].
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
@@ -147,6 +161,10 @@ impl TransferMsgBuilder<WithSrcCallback> {
 }
 
 impl TransferMsgBuilder<WithDstCallback> {
+    /// Adds an IBC source callback entry to the memo field.
+    /// Use this if you want to receive IBC callbacks on the source chain.
+    ///
+    /// For more info check out [`crate::IbcSourceCallbackMsg`].
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
