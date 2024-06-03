@@ -133,8 +133,8 @@ pub struct AnalysisReport {
     pub entrypoints: BTreeSet<Entrypoint>,
     /// The set of capabilities the contract requires.
     pub required_capabilities: BTreeSet<String>,
-    /// The contract state version exported set by the contract developer
-    pub contract_state_version: Option<u64>,
+    /// The contract migrate version exported set by the contract developer
+    pub contract_migrate_version: Option<u64>,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -323,7 +323,7 @@ where
             required_capabilities: required_capabilities_from_module(&module)
                 .into_iter()
                 .collect(),
-            contract_state_version: module.contract_state_version,
+            contract_migrate_version: module.contract_migrate_version,
         })
     }
 
@@ -1416,7 +1416,7 @@ mod tests {
                     E::Query
                 ]),
                 required_capabilities: BTreeSet::new(),
-                contract_state_version: None,
+                contract_migrate_version: None,
             }
         );
 
@@ -1434,7 +1434,7 @@ mod tests {
                     "iterator".to_string(),
                     "stargate".to_string()
                 ]),
-                contract_state_version: None,
+                contract_migrate_version: None,
             }
         );
 
@@ -1446,13 +1446,13 @@ mod tests {
                 has_ibc_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
-                contract_state_version: None,
+                contract_migrate_version: None,
             }
         );
 
         let mut wasm_with_version = EMPTY_CONTRACT.to_vec();
         let custom_section = wasm_encoder::CustomSection {
-            name: Cow::Borrowed("cw_state_version"),
+            name: Cow::Borrowed("cw_migrate_version"),
             data: Cow::Borrowed(b"21"),
         };
         custom_section.append_to_component(&mut wasm_with_version);
@@ -1465,7 +1465,7 @@ mod tests {
                 has_ibc_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
-                contract_state_version: Some(21),
+                contract_migrate_version: Some(21),
             }
         );
     }

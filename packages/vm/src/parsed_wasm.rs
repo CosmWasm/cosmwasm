@@ -66,8 +66,8 @@ pub struct ParsedWasm<'a> {
     pub total_func_params: usize,
     /// Collections of functions that are potentially pending validation
     pub func_validator: FunctionValidator<'a>,
-    /// Contract state version as defined in a custom section
-    pub contract_state_version: Option<u64>,
+    /// Contract migrate version as defined in a custom section
+    pub contract_migrate_version: Option<u64>,
 }
 
 impl<'a> ParsedWasm<'a> {
@@ -110,7 +110,7 @@ impl<'a> ParsedWasm<'a> {
             max_func_results: 0,
             total_func_params: 0,
             func_validator: FunctionValidator::Pending(OpaqueDebug::default()),
-            contract_state_version: None,
+            contract_migrate_version: None,
         };
 
         for p in Parser::new(0).parse_all(wasm) {
@@ -182,12 +182,12 @@ impl<'a> ParsedWasm<'a> {
                 Payload::ExportSection(e) => {
                     this.exports = e.into_iter().collect::<Result<Vec<_>, _>>()?;
                 }
-                Payload::CustomSection(reader) if reader.name() == "cw_state_version" => {
+                Payload::CustomSection(reader) if reader.name() == "cw_migrate_version" => {
                     // This is supposed to be valid UTF-8
                     let raw_version = str::from_utf8(reader.data())
                         .map_err(|err| VmError::static_validation_err(err.to_string()))?;
 
-                    this.contract_state_version = Some(
+                    this.contract_migrate_version = Some(
                         raw_version
                             .parse::<u64>()
                             .map_err(|err| VmError::static_validation_err(err.to_string()))?,
@@ -234,18 +234,19 @@ mod test {
     use super::ParsedWasm;
 
     #[test]
-    fn read_state_version() {
+    fn read_migrate_version() {
         let wasm_data =
-            wat::parse_str(r#"( module ( @custom "cw_state_version" "42" ) )"#).unwrap();
+            wat::parse_str(r#"( module ( @custom "cw_migrate_version" "42" ) )"#).unwrap();
         let parsed = ParsedWasm::parse(&wasm_data).unwrap();
 
-        assert_eq!(parsed.contract_state_version, Some(42));
+        assert_eq!(parsed.contract_migrate_version, Some(42));
     }
 
     #[test]
-    fn read_state_version_fails() {
+    fn read_migrate_version_fails() {
         let wasm_data =
-            wat::parse_str(r#"( module ( @custom "cw_state_version" "not a number" ) )"#).unwrap();
+            wat::parse_str(r#"( module ( @custom "cw_migrate_version" "not a number" ) )"#)
+                .unwrap();
         assert!(ParsedWasm::parse(&wasm_data).is_err());
     }
 }
