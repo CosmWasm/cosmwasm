@@ -1,40 +1,60 @@
-use std::marker::PhantomData;
-
 use crate::{
     to_json_string, Coin, IbcCallbackRequest, IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout,
 };
 
-// these are the different states the TransferMsgBuilder can be in
+// these are the different memo types and at the same time the states
+// the TransferMsgBuilder can be in
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct EmptyMemo;
+pub struct EmptyMemo;
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct WithMemo;
+pub struct WithMemo {
+    memo: String,
+}
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct WithSrcCallback;
+pub struct WithSrcCallback {
+    src_callback: IbcSrcCallback,
+}
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct WithDstCallback;
+pub struct WithDstCallback {
+    dst_callback: IbcDstCallback,
+}
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct WithCallbacks;
-
-// TODO: use trait for MemoData and get rid of state?
-#[derive(Clone, Debug, PartialEq, Eq)]
-enum MemoData {
-    Empty,
-    Text(String),
-    IbcCallbacks(IbcCallbackRequest),
+pub struct WithCallbacks {
+    src_callback: IbcSrcCallback,
+    dst_callback: IbcDstCallback,
 }
 
-impl From<MemoData> for Option<String> {
-    fn from(memo: MemoData) -> Option<String> {
-        match memo {
-            MemoData::Empty => None,
-            MemoData::Text(text) => Some(text),
-            MemoData::IbcCallbacks(callbacks) => Some(to_json_string(&callbacks).unwrap()),
-        }
+impl From<EmptyMemo> for Option<String> {
+    fn from(_: EmptyMemo) -> Self {
+        None
     }
 }
 
-impl<T> TransferMsgBuilder<T> {
+impl From<WithMemo> for Option<String> {
+    fn from(m: WithMemo) -> Self {
+        Some(m.memo)
+    }
+}
+
+impl From<WithSrcCallback> for Option<String> {
+    fn from(s: WithSrcCallback) -> Self {
+        Some(to_json_string(&IbcCallbackRequest::source(s.src_callback)).unwrap())
+    }
+}
+
+impl From<WithDstCallback> for Option<String> {
+    fn from(d: WithDstCallback) -> Self {
+        Some(to_json_string(&IbcCallbackRequest::destination(d.dst_callback)).unwrap())
+    }
+}
+
+impl From<WithCallbacks> for Option<String> {
+    fn from(c: WithCallbacks) -> Self {
+        Some(to_json_string(&IbcCallbackRequest::both(c.src_callback, c.dst_callback)).unwrap())
+    }
+}
+
+impl<T: Into<Option<String>>> TransferMsgBuilder<T> {
     pub fn build(self) -> IbcMsg {
         IbcMsg::Transfer {
             channel_id: self.channel_id,
@@ -47,13 +67,12 @@ impl<T> TransferMsgBuilder<T> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TransferMsgBuilder<State> {
+pub struct TransferMsgBuilder<MemoData> {
     channel_id: String,
     to_address: String,
     amount: Coin,
     timeout: IbcTimeout,
     memo: MemoData,
-    _state: PhantomData<State>,
 }
 
 impl TransferMsgBuilder<EmptyMemo> {
@@ -68,8 +87,7 @@ impl TransferMsgBuilder<EmptyMemo> {
             to_address: to_address.into(),
             amount,
             timeout: timeout.into(),
-            memo: MemoData::Empty,
-            _state: PhantomData,
+            memo: EmptyMemo,
         }
     }
 
@@ -79,8 +97,7 @@ impl TransferMsgBuilder<EmptyMemo> {
             to_address: self.to_address,
             amount: self.amount,
             timeout: self.timeout,
-            memo: MemoData::Text(memo.into()),
-            _state: PhantomData,
+            memo: WithMemo { memo: memo.into() },
         }
     }
 
@@ -93,8 +110,7 @@ impl TransferMsgBuilder<EmptyMemo> {
             to_address: self.to_address,
             amount: self.amount,
             timeout: self.timeout,
-            memo: MemoData::IbcCallbacks(IbcCallbackRequest::source(src_callback)),
-            _state: PhantomData,
+            memo: WithSrcCallback { src_callback },
         }
     }
 
@@ -107,8 +123,7 @@ impl TransferMsgBuilder<EmptyMemo> {
             to_address: self.to_address,
             amount: self.amount,
             timeout: self.timeout,
-            memo: MemoData::IbcCallbacks(IbcCallbackRequest::destination(dst_callback)),
-            _state: PhantomData,
+            memo: WithDstCallback { dst_callback },
         }
     }
 }
@@ -123,14 +138,10 @@ impl TransferMsgBuilder<WithSrcCallback> {
             to_address: self.to_address,
             amount: self.amount,
             timeout: self.timeout,
-            memo: match self.memo {
-                MemoData::IbcCallbacks(IbcCallbackRequest {
-                    src_callback: Some(src_callback),
-                    ..
-                }) => MemoData::IbcCallbacks(IbcCallbackRequest::both(src_callback, dst_callback)),
-                _ => unreachable!(), // we know this never happens because of the WithSrcCallback state
+            memo: WithCallbacks {
+                src_callback: self.memo.src_callback,
+                dst_callback,
             },
-            _state: PhantomData,
         }
     }
 }
@@ -145,14 +156,10 @@ impl TransferMsgBuilder<WithDstCallback> {
             to_address: self.to_address,
             amount: self.amount,
             timeout: self.timeout,
-            memo: match self.memo {
-                MemoData::IbcCallbacks(IbcCallbackRequest {
-                    dest_callback: Some(dst_callback),
-                    ..
-                }) => MemoData::IbcCallbacks(IbcCallbackRequest::both(src_callback, dst_callback)),
-                _ => unreachable!(), // we know this never happens because of the WithDstCallback state
+            memo: WithCallbacks {
+                src_callback,
+                dst_callback: self.memo.dst_callback,
             },
-            _state: PhantomData,
         }
     }
 }
