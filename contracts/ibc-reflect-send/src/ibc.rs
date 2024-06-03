@@ -230,9 +230,9 @@ mod tests {
     use crate::msg::{AccountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel_connect_ack, mock_ibc_channel_open_init,
-        mock_ibc_channel_open_try, mock_ibc_packet_ack, mock_info, MockApi, MockQuerier,
-        MockStorage,
+        message_info, mock_dependencies, mock_env, mock_ibc_channel_connect_ack,
+        mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_ack, MockApi,
+        MockQuerier, MockStorage,
     };
     use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, IbcAcknowledgement, OwnedDeps};
 
@@ -240,8 +240,9 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
+        let creator = deps.api.addr_make(CREATOR);
         let msg = InstantiateMsg {};
-        let info = mock_info(CREATOR, &[]);
+        let info = message_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
@@ -337,6 +338,7 @@ mod tests {
 
         // init contract
         let mut deps = setup();
+        let creator = deps.api.addr_make(CREATOR);
         // channel handshake
         connect(deps.as_mut(), channel_id);
         // get feedback from WhoAmI packet
@@ -352,7 +354,7 @@ mod tests {
             channel_id: channel_id.into(),
             msgs: msgs_to_dispatch,
         };
-        let info = mock_info(CREATOR, &[]);
+        let info = message_info(&creator, &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = match res.messages.swap_remove(0).msg {
@@ -380,6 +382,7 @@ mod tests {
 
         // init contract
         let mut deps = setup();
+        let creator = deps.api.addr_make(CREATOR);
         // channel handshake
         connect(deps.as_mut(), reflect_channel_id);
         // get feedback from WhoAmI packet
@@ -390,7 +393,7 @@ mod tests {
             reflect_channel_id: "random-channel".into(),
             transfer_channel_id: transfer_channel_id.into(),
         };
-        let info = mock_info(CREATOR, &coins(12344, "utrgd"));
+        let info = message_info(&creator, &coins(12344, "utrgd"));
         execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
         // let's try with no sent funds in the message
@@ -398,7 +401,7 @@ mod tests {
             reflect_channel_id: reflect_channel_id.into(),
             transfer_channel_id: transfer_channel_id.into(),
         };
-        let info = mock_info(CREATOR, &[]);
+        let info = message_info(&creator, &[]);
         execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
         // 3rd times the charm
@@ -406,7 +409,7 @@ mod tests {
             reflect_channel_id: reflect_channel_id.into(),
             transfer_channel_id: transfer_channel_id.into(),
         };
-        let info = mock_info(CREATOR, &coins(12344, "utrgd"));
+        let info = message_info(&creator, &coins(12344, "utrgd"));
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
         match &res.messages[0].msg {

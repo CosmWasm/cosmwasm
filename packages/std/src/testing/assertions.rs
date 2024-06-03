@@ -170,6 +170,7 @@ mod tests {
     )]
     fn assert_approx_with_custom_panic_msg() {
         let adjective = "extra";
+        #[allow(dead_code)]
         #[derive(Debug)]
         struct Foo(u32);
         assert_approx_eq!(

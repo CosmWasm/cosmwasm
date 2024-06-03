@@ -14,6 +14,12 @@ and this project adheres to
 
 [#2158]: https://github.com/CosmWasm/cosmwasm/pull/2158
 
+### Changed
+
+- cosmwasm-std: Add message_info and deprecate mock_info ([#2160])
+
+[#2160]: https://github.com/CosmWasm/cosmwasm/pull/2160
+
 ## [2.0.3] - 2024-05-10
 
 ### Changed
