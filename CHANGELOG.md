@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.4] - 2024-06-03
+
 ### Fixed
 
 - cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2158])
@@ -816,7 +818,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.3...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.4...HEAD
+[2.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
