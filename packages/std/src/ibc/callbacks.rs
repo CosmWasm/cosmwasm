@@ -61,9 +61,9 @@ use crate::{Addr, IbcAcknowledgement, IbcPacket, Uint64};
 pub struct IbcCallbackRequest {
     // using private fields to force use of the constructors
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) src_callback: Option<IbcSrcCallback>,
+    src_callback: Option<IbcSrcCallback>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) dest_callback: Option<IbcDstCallback>,
+    dest_callback: Option<IbcDstCallback>,
 }
 
 impl IbcCallbackRequest {
