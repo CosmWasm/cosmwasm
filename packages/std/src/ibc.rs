@@ -13,7 +13,10 @@ use crate::StdResult;
 use crate::{to_json_binary, Binary};
 
 mod callbacks;
+mod transfer_msg_builder;
+
 pub use callbacks::*;
+pub use transfer_msg_builder::*;
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
