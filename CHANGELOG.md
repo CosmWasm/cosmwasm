@@ -33,8 +33,8 @@ and this project adheres to
   `Uint64::strict_add`/`::strict_sub` and document overflows. ([#2098], [#2107])
 - cosmwasm-std: Add `QuerierWrapper::query_grpc` helper for gRPC queries.
   ([#2120])
-- cosmwasm-derive: Add `state_version` attribute for `migrate` entrypoints
-  ([#2124])
+- cosmwasm-derive: Add `migrate_version` attribute for `migrate` entrypoints
+  ([#2124], [#2166])
 - cosmwasm-vm: Read the migrate version from Wasm modules and return them as
   part of `AnalyzeReport` ([#2129], [#2166])
 - cosmwasm-vm: Add `bls12_381_aggregate_g1`, `bls12_381_aggregate_g2`,
