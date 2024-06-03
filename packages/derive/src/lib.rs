@@ -106,7 +106,7 @@ impl Parse for Options {
 /// #
 /// # type MigrateMsg = ();
 /// #[entry_point]
-/// #[state_version(2)]
+/// #[migrate_version(2)]
 /// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
 ///     todo!();
 /// }
@@ -123,7 +123,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
     let attributes = std::mem::take(&mut func.attrs);
     let mut stream = TokenStream::new();
     for attribute in attributes {
-        if !attribute.path().is_ident("state_version") {
+        if !attribute.path().is_ident("migrate_version") {
             func.attrs.push(attribute);
             continue;
         }
@@ -152,10 +152,10 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
             #[allow(unused)]
             #[doc(hidden)]
             #[cfg(target_arch = "wasm32")]
-            #[link_section = "cw_state_version"]
+            #[link_section = "cw_migrate_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_STATE_VERSION: &str = #version;
+            static __CW_MIGRATE_VERSION: &str = #version;
         };
     }
 
@@ -202,7 +202,7 @@ mod test {
     #[test]
     fn contract_state_zero_not_allowed() {
         let code = quote! {
-            #[state_version(0)]
+            #[migrate_version(0)]
             fn migrate() -> Response {
                 // Logic here
             }
@@ -217,9 +217,9 @@ mod test {
     }
 
     #[test]
-    fn contract_state_version_on_non_migrate() {
+    fn contract_migrate_version_on_non_migrate() {
         let code = quote! {
-            #[state_version(42)]
+            #[migrate_version(42)]
             fn anything_else() -> Response {
                 // Logic here
             }
@@ -234,9 +234,9 @@ mod test {
     }
 
     #[test]
-    fn contract_state_version_in_u64() {
+    fn contract_migrate_version_in_u64() {
         let code = quote! {
-            #[state_version(0xDEAD_BEEF_FFFF_DEAD_2BAD)]
+            #[migrate_version(0xDEAD_BEEF_FFFF_DEAD_2BAD)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
             }
@@ -251,9 +251,9 @@ mod test {
     }
 
     #[test]
-    fn contract_state_version_expansion() {
+    fn contract_migrate_version_expansion() {
         let code = quote! {
-            #[state_version(2)]
+            #[migrate_version(2)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
             }
@@ -264,10 +264,10 @@ mod test {
             #[allow(unused)]
             #[doc(hidden)]
             #[cfg(target_arch = "wasm32")]
-            #[link_section = "cw_state_version"]
+            #[link_section = "cw_migrate_version"]
             /// This is an internal constant exported as a custom section denoting the contract state version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_STATE_VERSION: &str = "2";
+            static __CW_MIGRATE_VERSION: &str = "2";
 
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
