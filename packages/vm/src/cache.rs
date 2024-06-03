@@ -133,7 +133,7 @@ pub struct AnalysisReport {
     pub entrypoints: BTreeSet<Entrypoint>,
     /// The set of capabilities the contract requires.
     pub required_capabilities: BTreeSet<String>,
-    /// The contract state version exported set by the contract developer
+    /// The contract migrate version exported set by the contract developer
     pub contract_migrate_version: Option<u64>,
 }
 

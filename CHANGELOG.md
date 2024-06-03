@@ -35,8 +35,8 @@ and this project adheres to
   ([#2120])
 - cosmwasm-derive: Add `state_version` attribute for `migrate` entrypoints
   ([#2124])
-- cosmwasm-vm: Read the state version from Wasm modules and return them as part
-  of `AnalyzeReport` ([#2129])
+- cosmwasm-vm: Read the migrate version from Wasm modules and return them as
+  part of `AnalyzeReport` ([#2129], [#2166])
 - cosmwasm-vm: Add `bls12_381_aggregate_g1`, `bls12_381_aggregate_g2`,
   `bls12_381_pairing_equality`, `bls12_381_hash_to_g1`, and
   `bls12_381_hash_to_g2` to enable BLS12-381 curve operations, such as verifying
@@ -60,6 +60,7 @@ and this project adheres to
 [#2120]: https://github.com/CosmWasm/cosmwasm/pull/2120
 [#2124]: https://github.com/CosmWasm/cosmwasm/pull/2124
 [#2129]: https://github.com/CosmWasm/cosmwasm/pull/2129
+[#2166]: https://github.com/CosmWasm/cosmwasm/pull/2166
 
 ### Changed
 

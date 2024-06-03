@@ -66,7 +66,7 @@ pub struct ParsedWasm<'a> {
     pub total_func_params: usize,
     /// Collections of functions that are potentially pending validation
     pub func_validator: FunctionValidator<'a>,
-    /// Contract state version as defined in a custom section
+    /// Contract migrate version as defined in a custom section
     pub contract_migrate_version: Option<u64>,
 }
 
