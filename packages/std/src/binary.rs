@@ -6,7 +6,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::{
     encoding::{from_base64, to_base64},
-    errors::{CoreError, CoreResult},
+    errors::{StdError, StdResult},
 };
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
@@ -14,9 +14,8 @@ use crate::{
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Binary(#[cfg_attr(feature = "std", schemars(with = "String"))] Vec<u8>);
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct Binary(#[schemars(with = "String")] Vec<u8>);
 
 impl Binary {
     /// Creates a new `Binary` containing the given data.
@@ -26,7 +25,7 @@ impl Binary {
 
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
-    pub fn from_base64(encoded: &str) -> CoreResult<Self> {
+    pub fn from_base64(encoded: &str) -> StdResult<Self> {
         from_base64(encoded).map(Self::new)
     }
 
@@ -61,9 +60,9 @@ impl Binary {
     /// let num = u64::from_be_bytes(binary.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
     /// ```
-    pub fn to_array<const LENGTH: usize>(&self) -> CoreResult<[u8; LENGTH]> {
+    pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
         if self.len() != LENGTH {
-            return Err(CoreError::invalid_data_size(LENGTH, self.len()));
+            return Err(StdError::invalid_data_size(LENGTH, self.len()));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];
@@ -255,7 +254,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 mod tests {
     use super::*;
     use crate::assert_hash_works;
-    use crate::errors::CoreError;
+    use crate::errors::StdError;
 
     #[test]
     fn to_array_works() {
@@ -273,7 +272,7 @@ mod tests {
         let binary = Binary::from(&[1, 2, 3]);
         let error = binary.to_array::<8>().unwrap_err();
         match error {
-            CoreError::InvalidDataSize {
+            StdError::InvalidDataSize {
                 expected, actual, ..
             } => {
                 assert_eq!(expected, 8);
@@ -332,7 +331,7 @@ mod tests {
             ("cmFuZ", "Invalid input length: 5"),
         ] {
             match Binary::from_base64(invalid_base64) {
-                Err(CoreError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
+                Err(StdError::InvalidBase64 { msg, .. }) => assert_eq!(want, msg),
                 result => panic!("Unexpected result: {result:?}"),
             }
         }

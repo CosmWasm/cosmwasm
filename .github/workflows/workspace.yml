@@ -21,6 +21,8 @@ jobs:
           toolchain: 1.74.0
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
+      - name: "Cache build artifacts"
+        uses: Swatinem/rust-cache@v2
       - name: Check workspace
         run: ./devtools/check_workspace.sh
 
@@ -35,5 +37,7 @@ jobs:
         with:
           toolchain: 1.74.0
           components: rustfmt
+      - name: "Cache build artifacts"
+        uses: Swatinem/rust-cache@v2
       - name: Test workspace
         run: ./devtools/test_workspace.sh

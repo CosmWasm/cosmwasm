@@ -27,9 +27,10 @@ use ark_ec::{
 };
 use ark_ff::field_hashers::DefaultFieldHasher;
 use ark_serialize::CanonicalSerialize;
+use cosmwasm_core::{BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 use sha2::Sha256;
 
-use crate::{CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
+use crate::CryptoError;
 
 type HashToCurve<CurveConfig, Hash> =
     MapToCurveBasedHasher<Projective<CurveConfig>, DefaultFieldHasher<Hash>, WBMap<CurveConfig>>;

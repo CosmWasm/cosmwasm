@@ -19,7 +19,7 @@ use crate::identity_digest::Identity256;
 /// The signature and public key are in "Cosmos" format:
 /// - signature:  Serialized "compact" signature (64 bytes).
 /// - public key: [Serialized according to SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html)
-/// (33 or 65 bytes).
+///   (33 or 65 bytes).
 pub fn secp256r1_verify(
     message_hash: &[u8],
     signature: &[u8],

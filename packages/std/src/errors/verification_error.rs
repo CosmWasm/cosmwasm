@@ -1,55 +1,51 @@
 use core::fmt::Debug;
-use derive_more::Display;
 
 use super::BT;
 
 #[cfg(not(target_arch = "wasm32"))]
 use cosmwasm_crypto::CryptoError;
 
-#[derive(Display, Debug, PartialEq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, thiserror::Error)]
 pub enum AggregationError {
-    #[display("List of points is empty")]
+    #[error("List of points is empty")]
     Empty,
-    #[display("List is not an expected multiple")]
+    #[error("List is not an expected multiple")]
     NotMultiple,
 }
 
-#[derive(Display, Debug, PartialEq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, thiserror::Error)]
 pub enum PairingEqualityError {
-    #[display("List is not a multiple of 48")]
+    #[error("List is not a multiple of 48")]
     NotMultipleG1,
-    #[display("List is not a multiple of 96")]
+    #[error("List is not a multiple of 96")]
     NotMultipleG2,
-    #[display("Not the same amount of points passed")]
+    #[error("Not the same amount of points passed")]
     UnequalPointAmount,
 }
 
-#[derive(Display, Debug)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, thiserror::Error)]
 pub enum VerificationError {
-    #[display("Aggregation error: {source}")]
+    #[error("Aggregation error: {source}")]
     Aggregation { source: AggregationError },
-    #[display("Batch error")]
+    #[error("Batch error")]
     BatchErr,
-    #[display("Generic error")]
+    #[error("Generic error")]
     GenericErr,
-    #[display("Invalid hash format")]
+    #[error("Invalid hash format")]
     InvalidHashFormat,
-    #[display("Invalid signature format")]
+    #[error("Invalid signature format")]
     InvalidSignatureFormat,
-    #[display("Invalid public key format")]
+    #[error("Invalid public key format")]
     InvalidPubkeyFormat,
-    #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
-    #[display("Invalid point")]
+    #[error("Invalid point")]
     InvalidPoint,
-    #[display("Unknown hash function")]
+    #[error("Unknown hash function")]
     UnknownHashFunction,
-    #[display("Aggregation pairing equality error: {source}")]
+    #[error("Aggregation pairing equality error: {source}")]
     PairingEquality { source: PairingEqualityError },
-    #[display("Unknown error: {error_code}")]
+    #[error("Unknown error: {error_code}")]
     UnknownErr { error_code: u32, backtrace: BT },
 }
 

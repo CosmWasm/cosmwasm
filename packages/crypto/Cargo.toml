@@ -7,40 +7,26 @@ description = "Crypto bindings for cosmwasm contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto"
 license = "Apache-2.0"
 
-[features]
-default = []
-std = [
-    "dep:ark-bls12-381",
-    "dep:ark-ec",
-    "dep:ark-ff",
-    "dep:ark-serialize",
-    "dep:num-traits",
-    "dep:rayon",
-    "dep:sha2",
-    "dep:thiserror"
-]
-
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
 bench = false
 
 [dependencies]
-ark-bls12-381 = { version = "0.4.0", optional = true }
-ark-ec = { version = "0.4.2", features = ["parallel"], optional = true }
-ark-ff = { version = "0.4.2", features = ["asm", "parallel"], optional = true }
-ark-serialize = { version = "0.4.2", optional = true }
-cfg-if = "1.0.0"
-derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["display", "from"] }
+ark-bls12-381 = "0.4.0"
+ark-ec = { version = "0.4.2", features = ["parallel"] }
+ark-ff = { version = "0.4.2", features = ["asm", "parallel"] }
+ark-serialize = "0.4.2"
+cosmwasm-core = { version = "2.0.1", path = "../core" }
 digest = "0.10"
 ecdsa = "0.16.2" # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
 ed25519-zebra = { version = "4.0.3", default-features = false }
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-num-traits = { version = "0.2.18", optional = true }
+num-traits = "0.2.18"
 p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
 rand_core = "0.6"
-rayon = { version = "1.9.0", optional = true }
-sha2 = { version = "0.10", optional = true }
-thiserror = { version = "1.0.26", optional = true }
+rayon = "1.9.0"
+sha2 = "0.10"
+thiserror = "1.0.26"
 
 [dev-dependencies]
 base64 = "0.22.0"
@@ -55,6 +41,10 @@ hex = { version = "0.4", features = ["serde"] }
 hex-literal = "0.4.1"
 english-numbers = "0.3"
 glob = "0.3.1"
+
+[features]
+default = ["std"]
+std = []
 
 [[bench]]
 name = "main"

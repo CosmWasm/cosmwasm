@@ -1,9 +1,9 @@
-use cosmwasm_core::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 use crate::to_json_binary;
+use crate::Binary;
 
 /// This is a standard IBC acknowledgement type. IBC application are free
 /// to use any acknowledgement format they want. However, for compatibility

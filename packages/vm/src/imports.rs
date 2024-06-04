@@ -2,11 +2,11 @@
 
 use std::marker::PhantomData;
 
+use cosmwasm_core::{BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 use cosmwasm_crypto::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
     bls12_381_pairing_equality, ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey,
     secp256k1_verify, secp256r1_recover_pubkey, secp256r1_verify, CryptoError, HashFunction,
-    BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN,
 };
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,

@@ -6,7 +6,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::{
     encoding::{from_hex, to_hex},
-    Binary, CoreError, CoreResult,
+    Binary, StdError, StdResult,
 };
 
 /// This is a wrapper around Vec<u8> to add hex de/serialization
@@ -14,12 +14,11 @@ use crate::{
 ///
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct HexBinary(#[cfg_attr(feature = "std", schemars(with = "String"))] Vec<u8>);
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
 
 impl HexBinary {
-    pub fn from_hex(input: &str) -> CoreResult<Self> {
+    pub fn from_hex(input: &str) -> StdResult<Self> {
         from_hex(input).map(Self)
     }
 
@@ -52,9 +51,9 @@ impl HexBinary {
     /// let num = u64::from_be_bytes(data.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
     /// ```
-    pub fn to_array<const LENGTH: usize>(&self) -> CoreResult<[u8; LENGTH]> {
+    pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
         if self.len() != LENGTH {
-            return Err(CoreError::invalid_data_size(LENGTH, self.len()));
+            return Err(StdError::invalid_data_size(LENGTH, self.len()));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];
@@ -258,7 +257,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 mod tests {
     use super::*;
 
-    use crate::{assert_hash_works, CoreError};
+    use crate::{assert_hash_works, StdError};
 
     #[test]
     fn from_hex_works() {
@@ -278,21 +277,21 @@ mod tests {
 
         // odd
         match HexBinary::from_hex("123").unwrap_err() {
-            CoreError::InvalidHex { msg, .. } => {
+            StdError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Odd number of digits")
             }
             _ => panic!("Unexpected error type"),
         }
         // non-hex
         match HexBinary::from_hex("efgh").unwrap_err() {
-            CoreError::InvalidHex { msg, .. } => {
+            StdError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Invalid character 'g' at position 2")
             }
             _ => panic!("Unexpected error type"),
         }
         // 0x prefixed
         match HexBinary::from_hex("0xaa").unwrap_err() {
-            CoreError::InvalidHex { msg, .. } => {
+            StdError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Invalid character 'x' at position 1")
             }
             _ => panic!("Unexpected error type"),
@@ -300,19 +299,19 @@ mod tests {
         // spaces
         assert!(matches!(
             HexBinary::from_hex("aa ").unwrap_err(),
-            CoreError::InvalidHex { .. }
+            StdError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex(" aa").unwrap_err(),
-            CoreError::InvalidHex { .. }
+            StdError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex("a a").unwrap_err(),
-            CoreError::InvalidHex { .. }
+            StdError::InvalidHex { .. }
         ));
         assert!(matches!(
             HexBinary::from_hex(" aa ").unwrap_err(),
-            CoreError::InvalidHex { .. }
+            StdError::InvalidHex { .. }
         ));
     }
 
@@ -347,7 +346,7 @@ mod tests {
         let binary = HexBinary::from(&[1, 2, 3]);
         let error = binary.to_array::<8>().unwrap_err();
         match error {
-            CoreError::InvalidDataSize {
+            StdError::InvalidDataSize {
                 expected, actual, ..
             } => {
                 assert_eq!(expected, 8);

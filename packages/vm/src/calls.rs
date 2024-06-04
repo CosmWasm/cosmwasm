@@ -904,7 +904,7 @@ mod tests {
             for seed in 0..RUNS_PER_INSTRUCTION {
                 // query some input values for the instruction
                 let args: Vec<Value> = from_json(
-                    &call_query(
+                    call_query(
                         &mut instance,
                         &mock_env(),
                         format!(

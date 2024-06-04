@@ -12,14 +12,8 @@ readme = "README.md"
 features = ["abort", "stargate", "staking", "cosmwasm_2_1"]
 
 [features]
-default = ["iterator", "abort"]
+default = ["iterator", "abort", "std"]
 abort = []
-# LEGACY. REMOVE NEXT BREAKING RELEASE.
-#
-# This feature is unused. This library is not intended to run without the `std` library.
-# Use `cosmwasm-core` instead if you *really* need a `no_std` environment.
-#
-# If you need any types exclusive to `cosmwasm-std` in a `no_std` environment, open an issue to discuss moving it to `cosmwasm-core`.
 std = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
@@ -57,20 +51,21 @@ cosmwasm_2_1 = ["cosmwasm_2_0"]
 
 [dependencies]
 base64 = "0.22.0"
+bnum = "0.11.0"
+cosmwasm-core = { version = "2.0.1", path = "../core" }
 cosmwasm-derive = { version = "2.0.1", path = "../derive" }
-cosmwasm-core = { path = "../core", version = "2.0.1", features = ["std"] }
-cosmwasm-crypto = { version = "2.0.1", path = "../crypto" }
 derive_more = { version = "1.0.0-beta.6", default-features = false, features = ["debug"] }
 hex = "0.4"
 schemars = { workspace = true }
 sha2 = "0.10.3"
 serde = { workspace = true, features = ["std"] }
 serde-json-wasm = { version = "1.0.1", default-features = false, features = ["std"] }
+static_assertions = "1.1.0"
 thiserror = "1.0.26"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.11.0"
-cosmwasm-crypto = { version = "2.0.1", path = "../crypto", features = ["std"] }
+cosmwasm-crypto = { version = "2.0.1", path = "../crypto" }
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 
 [dev-dependencies]

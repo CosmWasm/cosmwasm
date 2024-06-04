@@ -438,18 +438,6 @@ dependencies = [
 [[package]]
 name = "cosmwasm-core"
 version = "2.0.1"
-dependencies = [
- "base64 0.22.0",
- "bnum",
- "cosmwasm-crypto",
- "derive_more",
- "hex",
- "schemars",
- "serde",
- "sha2",
- "static_assertions",
- "thiserror",
-]
 
 [[package]]
 name = "cosmwasm-crypto"
@@ -459,8 +447,7 @@ dependencies = [
  "ark-ec",
  "ark-ff",
  "ark-serialize",
- "cfg-if",
- "derive_more",
+ "cosmwasm-core",
  "digest",
  "ecdsa",
  "ed25519-zebra",
@@ -508,6 +495,7 @@ version = "2.0.1"
 dependencies = [
  "base64 0.22.0",
  "bech32",
+ "bnum",
  "cosmwasm-core",
  "cosmwasm-crypto",
  "cosmwasm-derive",
@@ -518,6 +506,7 @@ dependencies = [
  "serde",
  "serde-json-wasm",
  "sha2",
+ "static_assertions",
  "thiserror",
 ]
 
@@ -528,6 +517,7 @@ dependencies = [
  "bech32",
  "bytes",
  "clru",
+ "cosmwasm-core",
  "cosmwasm-crypto",
  "cosmwasm-std",
  "crc32fast",

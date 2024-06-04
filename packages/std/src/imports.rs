@@ -1,5 +1,4 @@
 use alloc::vec::Vec;
-use cosmwasm_core::{Addr, CanonicalAddr};
 
 use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{Owned, Region};
@@ -14,6 +13,7 @@ use crate::{
     iterator::{Order, Record},
     memory::get_optional_region_address,
 };
+use crate::{Addr, CanonicalAddr};
 #[cfg(feature = "cosmwasm_2_1")]
 use crate::{AggregationError, HashFunction, PairingEqualityError};
 use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
