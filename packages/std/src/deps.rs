@@ -126,7 +126,6 @@ mod tests {
 
     #[test]
     fn deps_implements_copy() {
-        #[allow(non_local_definitions)]
         impl CustomQuery for u64 {}
 
         // With C: Copy

@@ -489,7 +489,6 @@ mod tests {
         // should work with Into<AnyMsg>
         struct IntoAny;
 
-        #[allow(non_local_definitions)]
         impl From<IntoAny> for AnyMsg {
             fn from(_: IntoAny) -> Self {
                 AnyMsg {
