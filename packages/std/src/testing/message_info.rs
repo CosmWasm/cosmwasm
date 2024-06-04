@@ -49,9 +49,7 @@ pub fn message_info(sender: &Addr, funds: &[Coin]) -> MessageInfo {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_core::Uint128;
-
-    use crate::coins;
+    use crate::{coins, Uint128};
 
     use super::*;
 
