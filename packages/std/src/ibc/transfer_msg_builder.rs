@@ -24,44 +24,54 @@ pub struct WithCallbacks {
     dst_callback: IbcDstCallback,
 }
 
-impl From<EmptyMemo> for Option<String> {
-    fn from(_: EmptyMemo) -> Self {
+pub trait MemoSource {
+    fn into_memo(self) -> Option<String>;
+}
+
+impl MemoSource for EmptyMemo {
+    fn into_memo(self) -> Option<String> {
         None
     }
 }
 
-impl From<WithMemo> for Option<String> {
-    fn from(m: WithMemo) -> Self {
-        Some(m.memo)
+impl MemoSource for WithMemo {
+    fn into_memo(self) -> Option<String> {
+        Some(self.memo)
     }
 }
 
-impl From<WithSrcCallback> for Option<String> {
-    fn from(s: WithSrcCallback) -> Self {
-        Some(to_json_string(&IbcCallbackRequest::source(s.src_callback)).unwrap())
+impl MemoSource for WithSrcCallback {
+    fn into_memo(self) -> Option<String> {
+        Some(to_json_string(&IbcCallbackRequest::source(self.src_callback)).unwrap())
     }
 }
 
-impl From<WithDstCallback> for Option<String> {
-    fn from(d: WithDstCallback) -> Self {
-        Some(to_json_string(&IbcCallbackRequest::destination(d.dst_callback)).unwrap())
+impl MemoSource for WithDstCallback {
+    fn into_memo(self) -> Option<String> {
+        Some(to_json_string(&IbcCallbackRequest::destination(self.dst_callback)).unwrap())
     }
 }
 
-impl From<WithCallbacks> for Option<String> {
-    fn from(c: WithCallbacks) -> Self {
-        Some(to_json_string(&IbcCallbackRequest::both(c.src_callback, c.dst_callback)).unwrap())
+impl MemoSource for WithCallbacks {
+    fn into_memo(self) -> Option<String> {
+        Some(
+            to_json_string(&IbcCallbackRequest::both(
+                self.src_callback,
+                self.dst_callback,
+            ))
+            .unwrap(),
+        )
     }
 }
 
-impl<T: Into<Option<String>>> TransferMsgBuilder<T> {
+impl<M: MemoSource> TransferMsgBuilder<M> {
     pub fn build(self) -> IbcMsg {
         IbcMsg::Transfer {
             channel_id: self.channel_id,
             to_address: self.to_address,
             amount: self.amount,
             timeout: self.timeout,
-            memo: self.memo.into(),
+            memo: self.memo.into_memo(),
         }
     }
 }
