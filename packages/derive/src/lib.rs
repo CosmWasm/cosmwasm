@@ -145,6 +145,8 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
         }
 
         let version = version.base10_digits();
+        let n = version.len();
+        let version = proc_macro2::Literal::byte_string(version.as_bytes());
 
         stream = quote! {
             #stream
@@ -155,7 +157,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
             #[link_section = "cw_migrate_version"]
             /// This is an internal constant exported as a custom section denoting the contract migrate version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_MIGRATE_VERSION: &str = #version;
+            static __CW_MIGRATE_VERSION: [u8; #n] = *#version;
         };
     }
 
@@ -267,7 +269,7 @@ mod test {
             #[link_section = "cw_migrate_version"]
             /// This is an internal constant exported as a custom section denoting the contract migrate version.
             /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_MIGRATE_VERSION: &str = "2";
+            static __CW_MIGRATE_VERSION: [u8; 1usize] = *b"2";
 
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here
