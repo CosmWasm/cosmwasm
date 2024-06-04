@@ -36,6 +36,7 @@ pub fn instantiate(
 }
 
 #[entry_point]
+#[migrate_version(42)]
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
     let data = deps
         .storage
