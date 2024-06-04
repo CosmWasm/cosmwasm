@@ -15,16 +15,10 @@ mod secp256k1;
 mod secp256r1;
 
 #[doc(hidden)]
-#[cfg(not(target_arch = "wasm32"))]
 pub use crate::bls12_318::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_is_identity,
     bls12_381_g2_is_identity, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
     bls12_381_pairing_equality, HashFunction,
-};
-
-#[doc(hidden)]
-pub use crate::bls12_318::{
-    BLS12_381_G1_GENERATOR, BLS12_381_G1_POINT_LEN, BLS12_381_G2_GENERATOR, BLS12_381_G2_POINT_LEN,
 };
 #[doc(hidden)]
 pub use crate::ecdsa::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};

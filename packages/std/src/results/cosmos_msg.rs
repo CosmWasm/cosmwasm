@@ -165,6 +165,7 @@ pub struct AnyMsg {
     pub value: Binary,
 }
 
+#[allow(dead_code)]
 struct BinaryToStringEncoder<'a>(&'a Binary);
 
 impl fmt::Display for BinaryToStringEncoder<'_> {

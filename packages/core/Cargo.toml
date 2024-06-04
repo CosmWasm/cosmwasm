@@ -7,11 +7,4 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/core"
 license = "Apache-2.0"
 readme = "README.md"
 
-[package.metadata.release]
-release = false
-
 [dependencies]
-
-[features]
-
-[dev-dependencies]
