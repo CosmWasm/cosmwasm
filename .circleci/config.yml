@@ -277,15 +277,15 @@ jobs:
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/core
-          command: cargo build --locked --features std
+          command: cargo build --locked --all-features
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/core
-          command: cargo wasm --locked --features std
+          command: cargo wasm --locked --all-features
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/core
-          command: cargo test --locked --features std
+          command: cargo test --locked --all-features
       - save_cache:
           paths:
             - /usr/local/cargo/registry
