@@ -24,7 +24,7 @@ use crate::{Addr, IbcAcknowledgement, IbcPacket, Uint64};
 /// # use cosmwasm_std::testing::mock_env;
 /// # let env = mock_env();
 ///
-/// let _transfer = TransferMsgBuilder::new(
+/// let _msg = TransferMsgBuilder::new(
 ///     "channel-0".to_string(),
 ///     "cosmos1example".to_string(),
 ///     Coin::new(10u32, "ucoin"),
