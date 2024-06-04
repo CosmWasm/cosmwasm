@@ -1416,7 +1416,7 @@ mod tests {
                     E::Query
                 ]),
                 required_capabilities: BTreeSet::new(),
-                contract_migrate_version: None,
+                contract_migrate_version: Some(42),
             }
         );
 
