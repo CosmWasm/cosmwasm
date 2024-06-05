@@ -15,6 +15,7 @@ and this project adheres to
 - cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter `Empty`. ([#2165])
 
 [#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
+[#2165]: https://github.com/CosmWasm/cosmwasm/pull/2165
 
 ### Added
 
