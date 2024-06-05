@@ -3,12 +3,7 @@
 //! they might change frequently, or be removed in the future.
 //! This crate does not adhere to semantic versioning.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 extern crate alloc;
-
-#[cfg(test)]
-extern crate std; // allow for file I/O during tests
 
 mod backtrace;
 mod bls12_318;
@@ -19,17 +14,11 @@ mod identity_digest;
 mod secp256k1;
 mod secp256r1;
 
-#[cfg(feature = "std")]
 #[doc(hidden)]
 pub use crate::bls12_318::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_is_identity,
     bls12_381_g2_is_identity, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
     bls12_381_pairing_equality, HashFunction,
-};
-
-#[doc(hidden)]
-pub use crate::bls12_318::{
-    BLS12_381_G1_GENERATOR, BLS12_381_G1_POINT_LEN, BLS12_381_G2_GENERATOR, BLS12_381_G2_POINT_LEN,
 };
 #[doc(hidden)]
 pub use crate::ecdsa::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use crate::HashFunction;
+use crate::{Addr, CanonicalAddr, Timestamp};
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -8,7 +9,6 @@ use bech32::{encode, Bech32, Hrp};
 use core::marker::PhantomData;
 #[cfg(feature = "cosmwasm_1_3")]
 use core::ops::Bound;
-use cosmwasm_core::{Addr, CanonicalAddr, Timestamp};
 use rand_core::OsRng;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "stargate")]
@@ -1169,7 +1169,7 @@ mod tests {
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use base64::{engine::general_purpose, Engine};
-    use cosmwasm_crypto::BLS12_381_G1_GENERATOR;
+    use cosmwasm_core::BLS12_381_G1_GENERATOR;
     use hex_literal::hex;
     use serde::Deserialize;
 

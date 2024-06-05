@@ -1,13 +1,14 @@
 use core::ops::Neg;
 
-use crate::{errors::PairingEquality, CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
-
 use super::points::{g1_from_variable, g2_from_variable};
+use crate::{errors::PairingEquality, CryptoError};
+
 use ark_bls12_381::Bls12_381;
 use ark_ec::{
     bls12::{G1Prepared, G2Prepared},
     pairing::Pairing,
 };
+use cosmwasm_core::{BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 use num_traits::Zero;
 use rayon::{
     iter::{IndexedParallelIterator, ParallelIterator},

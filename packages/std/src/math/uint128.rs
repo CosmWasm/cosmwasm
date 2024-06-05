@@ -9,13 +9,13 @@ use core::str::FromStr;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, CoreError, DivideByZeroError,
-    OverflowError, OverflowOperation,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint256,
-    Uint64,
+    __internal::forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64,
+    Uint256, Uint64,
 };
 
 use super::conversion::forward_try_from;
@@ -40,9 +40,8 @@ use super::num_consts::NumConsts;
 /// let c = Uint128::from(70u32);
 /// assert_eq!(c.u128(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Uint128(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) u128);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct Uint128(#[schemars(with = "String")] pub(crate) u128);
 
 forward_ref_partial_eq!(Uint128, Uint128);
 
@@ -367,7 +366,7 @@ forward_try_from!(Int256, Uint128);
 forward_try_from!(Int512, Uint128);
 
 impl TryFrom<&str> for Uint128 {
-    type Error = CoreError;
+    type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         Self::from_str(val)
@@ -375,12 +374,12 @@ impl TryFrom<&str> for Uint128 {
 }
 
 impl FromStr for Uint128 {
-    type Err = CoreError;
+    type Err = StdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(CoreError::generic_err(format!("Parsing u128: {e}"))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {e}"))),
         }
     }
 }

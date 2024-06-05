@@ -18,7 +18,7 @@ use crate::identity_digest::Identity256;
 /// The signature and public key are in "Cosmos" format:
 /// - signature:  Serialized "compact" signature (64 bytes).
 /// - public key: [Serialized according to SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html)
-/// (33 or 65 bytes).
+///   (33 or 65 bytes).
 ///
 /// This implementation accepts both high-S and low-S signatures. Some applications
 /// including Ethereum transactions consider high-S signatures invalid in order to

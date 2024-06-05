@@ -1,4 +1,4 @@
-use cosmwasm_core::__internal::forward_ref_partial_eq;
+use crate::__internal::forward_ref_partial_eq;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

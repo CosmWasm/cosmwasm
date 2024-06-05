@@ -7,12 +7,13 @@ use core::ops::{
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedMultiplyFractionError, CheckedMultiplyRatioError, CoreError, DivideByZeroError,
-    OverflowError, OverflowOperation,
+    CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
 use crate::{
-    forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64, Uint128,
+    __internal::forward_ref_partial_eq, impl_mul_fraction, Fraction, Int128, Int256, Int512, Int64,
+    Uint128,
 };
 
 use super::conversion::forward_try_from;
@@ -34,9 +35,8 @@ use super::num_consts::NumConsts;
 /// let b = Uint64::from(70u32);
 /// assert_eq!(b.u64(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct Uint64(#[cfg_attr(feature = "std", schemars(with = "String"))] pub(crate) u64);
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);
 
@@ -348,12 +348,12 @@ forward_try_from!(Int256, Uint64);
 forward_try_from!(Int512, Uint64);
 
 impl TryFrom<&str> for Uint64 {
-    type Error = CoreError;
+    type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u64>() {
             Ok(u) => Ok(Uint64(u)),
-            Err(e) => Err(CoreError::generic_err(format!("Parsing u64: {e}"))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u64: {e}"))),
         }
     }
 }

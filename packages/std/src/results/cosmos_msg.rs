@@ -165,6 +165,7 @@ pub struct AnyMsg {
     pub value: Binary,
 }
 
+#[allow(dead_code)]
 struct BinaryToStringEncoder<'a>(&'a Binary);
 
 impl fmt::Display for BinaryToStringEncoder<'_> {
@@ -487,6 +488,7 @@ mod tests {
 
         // should work with Into<AnyMsg>
         struct IntoAny;
+
         impl From<IntoAny> for AnyMsg {
             fn from(_: IntoAny) -> Self {
                 AnyMsg {
@@ -495,6 +497,7 @@ mod tests {
                 }
             }
         }
+
         let msg: CosmosMsg = IntoAny.into();
         assert!(matches!(
             msg,

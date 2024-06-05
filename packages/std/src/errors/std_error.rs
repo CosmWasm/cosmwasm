@@ -1,6 +1,5 @@
 use alloc::string::{String, ToString};
 use core::fmt;
-use derive_more::{Display, From};
 
 use super::{impl_from_err, BT};
 
@@ -21,62 +20,61 @@ use crate::errors::{RecoverPubkeyError, VerificationError};
 /// Checklist for adding a new error:
 /// - Add enum case
 /// - Add creator function in std_error_helpers.rs
-#[derive(Display, Debug)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-pub enum CoreError {
-    #[display("Verification error: {source}")]
+#[derive(Debug, thiserror::Error)]
+pub enum StdError {
+    #[error("Verification error: {source}")]
     VerificationErr {
         source: VerificationError,
         backtrace: BT,
     },
-    #[display("Recover pubkey error: {source}")]
+    #[error("Recover pubkey error: {source}")]
     RecoverPubkeyErr {
         source: RecoverPubkeyError,
         backtrace: BT,
     },
     /// Whenever there is no specific error type available
-    #[display("Generic error: {msg}")]
+    #[error("Generic error: {msg}")]
     GenericErr { msg: String, backtrace: BT },
-    #[display("Invalid Base64 string: {msg}")]
+    #[error("Invalid Base64 string: {msg}")]
     InvalidBase64 { msg: String, backtrace: BT },
-    #[display("Invalid data size: expected={expected} actual={actual}")]
+    #[error("Invalid data size: expected={expected} actual={actual}")]
     InvalidDataSize {
         expected: u64,
         actual: u64,
         backtrace: BT,
     },
-    #[display("Invalid hex string: {msg}")]
+    #[error("Invalid hex string: {msg}")]
     InvalidHex { msg: String, backtrace: BT },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
-    #[display("Cannot decode UTF8 bytes into string: {msg}")]
+    #[error("Cannot decode UTF8 bytes into string: {msg}")]
     InvalidUtf8 { msg: String, backtrace: BT },
-    #[display("{kind} not found")]
+    #[error("{kind} not found")]
     NotFound { kind: String, backtrace: BT },
-    #[display("Error parsing into type {target_type}: {msg}")]
+    #[error("Error parsing into type {target_type}: {msg}")]
     ParseErr {
         /// the target type that was attempted
         target_type: String,
         msg: String,
         backtrace: BT,
     },
-    #[display("Error serializing type {source_type}: {msg}")]
+    #[error("Error serializing type {source_type}: {msg}")]
     SerializeErr {
         /// the source type that was attempted
         source_type: String,
         msg: String,
         backtrace: BT,
     },
-    #[display("Overflow: {source}")]
+    #[error("Overflow: {source}")]
     Overflow {
         source: OverflowError,
         backtrace: BT,
     },
-    #[display("Divide by zero: {source}")]
+    #[error("Divide by zero: {source}")]
     DivideByZero {
         source: DivideByZeroError,
         backtrace: BT,
     },
-    #[display("Conversion error: ")]
+    #[error("Conversion error: ")]
     ConversionOverflow {
         source: ConversionOverflowError,
         backtrace: BT,
@@ -85,41 +83,41 @@ pub enum CoreError {
 
 impl_from_err!(
     ConversionOverflowError,
-    CoreError,
-    CoreError::ConversionOverflow
+    StdError,
+    StdError::ConversionOverflow
 );
 
-impl CoreError {
+impl StdError {
     pub fn verification_err(source: VerificationError) -> Self {
-        CoreError::VerificationErr {
+        StdError::VerificationErr {
             source,
             backtrace: BT::capture(),
         }
     }
 
     pub fn recover_pubkey_err(source: RecoverPubkeyError) -> Self {
-        CoreError::RecoverPubkeyErr {
+        StdError::RecoverPubkeyErr {
             source,
             backtrace: BT::capture(),
         }
     }
 
     pub fn generic_err(msg: impl Into<String>) -> Self {
-        CoreError::GenericErr {
+        StdError::GenericErr {
             msg: msg.into(),
             backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_base64(msg: impl ToString) -> Self {
-        CoreError::InvalidBase64 {
+        StdError::InvalidBase64 {
             msg: msg.to_string(),
             backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_data_size(expected: usize, actual: usize) -> Self {
-        CoreError::InvalidDataSize {
+        StdError::InvalidDataSize {
             // Cast is safe because usize is 32 or 64 bit large in all environments we support
             expected: expected as u64,
             actual: actual as u64,
@@ -128,28 +126,28 @@ impl CoreError {
     }
 
     pub fn invalid_hex(msg: impl ToString) -> Self {
-        CoreError::InvalidHex {
+        StdError::InvalidHex {
             msg: msg.to_string(),
             backtrace: BT::capture(),
         }
     }
 
     pub fn invalid_utf8(msg: impl ToString) -> Self {
-        CoreError::InvalidUtf8 {
+        StdError::InvalidUtf8 {
             msg: msg.to_string(),
             backtrace: BT::capture(),
         }
     }
 
     pub fn not_found(kind: impl Into<String>) -> Self {
-        CoreError::NotFound {
+        StdError::NotFound {
             kind: kind.into(),
             backtrace: BT::capture(),
         }
     }
 
     pub fn parse_err(target: impl Into<String>, msg: impl ToString) -> Self {
-        CoreError::ParseErr {
+        StdError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),
             backtrace: BT::capture(),
@@ -157,7 +155,7 @@ impl CoreError {
     }
 
     pub fn serialize_err(source: impl Into<String>, msg: impl ToString) -> Self {
-        CoreError::SerializeErr {
+        StdError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),
             backtrace: BT::capture(),
@@ -165,28 +163,28 @@ impl CoreError {
     }
 
     pub fn overflow(source: OverflowError) -> Self {
-        CoreError::Overflow {
+        StdError::Overflow {
             source,
             backtrace: BT::capture(),
         }
     }
 
     pub fn divide_by_zero(source: DivideByZeroError) -> Self {
-        CoreError::DivideByZero {
+        StdError::DivideByZero {
             source,
             backtrace: BT::capture(),
         }
     }
 }
 
-impl PartialEq<CoreError> for CoreError {
-    fn eq(&self, rhs: &CoreError) -> bool {
+impl PartialEq<StdError> for StdError {
+    fn eq(&self, rhs: &StdError) -> bool {
         match self {
-            CoreError::VerificationErr {
+            StdError::VerificationErr {
                 source,
                 backtrace: _,
             } => {
-                if let CoreError::VerificationErr {
+                if let StdError::VerificationErr {
                     source: rhs_source,
                     backtrace: _,
                 } = rhs
@@ -196,11 +194,11 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::RecoverPubkeyErr {
+            StdError::RecoverPubkeyErr {
                 source,
                 backtrace: _,
             } => {
-                if let CoreError::RecoverPubkeyErr {
+                if let StdError::RecoverPubkeyErr {
                     source: rhs_source,
                     backtrace: _,
                 } = rhs
@@ -210,8 +208,8 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::GenericErr { msg, backtrace: _ } => {
-                if let CoreError::GenericErr {
+            StdError::GenericErr { msg, backtrace: _ } => {
+                if let StdError::GenericErr {
                     msg: rhs_msg,
                     backtrace: _,
                 } = rhs
@@ -221,8 +219,8 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::InvalidBase64 { msg, backtrace: _ } => {
-                if let CoreError::InvalidBase64 {
+            StdError::InvalidBase64 { msg, backtrace: _ } => {
+                if let StdError::InvalidBase64 {
                     msg: rhs_msg,
                     backtrace: _,
                 } = rhs
@@ -232,12 +230,12 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::InvalidDataSize {
+            StdError::InvalidDataSize {
                 expected,
                 actual,
                 backtrace: _,
             } => {
-                if let CoreError::InvalidDataSize {
+                if let StdError::InvalidDataSize {
                     expected: rhs_expected,
                     actual: rhs_actual,
                     backtrace: _,
@@ -248,8 +246,8 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::InvalidHex { msg, backtrace: _ } => {
-                if let CoreError::InvalidHex {
+            StdError::InvalidHex { msg, backtrace: _ } => {
+                if let StdError::InvalidHex {
                     msg: rhs_msg,
                     backtrace: _,
                 } = rhs
@@ -259,8 +257,8 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::InvalidUtf8 { msg, backtrace: _ } => {
-                if let CoreError::InvalidUtf8 {
+            StdError::InvalidUtf8 { msg, backtrace: _ } => {
+                if let StdError::InvalidUtf8 {
                     msg: rhs_msg,
                     backtrace: _,
                 } = rhs
@@ -270,8 +268,8 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::NotFound { kind, backtrace: _ } => {
-                if let CoreError::NotFound {
+            StdError::NotFound { kind, backtrace: _ } => {
+                if let StdError::NotFound {
                     kind: rhs_kind,
                     backtrace: _,
                 } = rhs
@@ -281,12 +279,12 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::ParseErr {
+            StdError::ParseErr {
                 target_type,
                 msg,
                 backtrace: _,
             } => {
-                if let CoreError::ParseErr {
+                if let StdError::ParseErr {
                     target_type: rhs_target_type,
                     msg: rhs_msg,
                     backtrace: _,
@@ -297,12 +295,12 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::SerializeErr {
+            StdError::SerializeErr {
                 source_type,
                 msg,
                 backtrace: _,
             } => {
-                if let CoreError::SerializeErr {
+                if let StdError::SerializeErr {
                     source_type: rhs_source_type,
                     msg: rhs_msg,
                     backtrace: _,
@@ -313,11 +311,11 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::Overflow {
+            StdError::Overflow {
                 source,
                 backtrace: _,
             } => {
-                if let CoreError::Overflow {
+                if let StdError::Overflow {
                     source: rhs_source,
                     backtrace: _,
                 } = rhs
@@ -327,11 +325,11 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::DivideByZero {
+            StdError::DivideByZero {
                 source,
                 backtrace: _,
             } => {
-                if let CoreError::DivideByZero {
+                if let StdError::DivideByZero {
                     source: rhs_source,
                     backtrace: _,
                 } = rhs
@@ -341,11 +339,11 @@ impl PartialEq<CoreError> for CoreError {
                     false
                 }
             }
-            CoreError::ConversionOverflow {
+            StdError::ConversionOverflow {
                 source,
                 backtrace: _,
             } => {
-                if let CoreError::ConversionOverflow {
+                if let StdError::ConversionOverflow {
                     source: rhs_source,
                     backtrace: _,
                 } = rhs
@@ -359,37 +357,37 @@ impl PartialEq<CoreError> for CoreError {
     }
 }
 
-impl From<core::str::Utf8Error> for CoreError {
+impl From<core::str::Utf8Error> for StdError {
     fn from(source: core::str::Utf8Error) -> Self {
         Self::invalid_utf8(source)
     }
 }
 
-impl From<alloc::string::FromUtf8Error> for CoreError {
+impl From<alloc::string::FromUtf8Error> for StdError {
     fn from(source: alloc::string::FromUtf8Error) -> Self {
         Self::invalid_utf8(source)
     }
 }
 
-impl From<VerificationError> for CoreError {
+impl From<VerificationError> for StdError {
     fn from(source: VerificationError) -> Self {
         Self::verification_err(source)
     }
 }
 
-impl From<RecoverPubkeyError> for CoreError {
+impl From<RecoverPubkeyError> for StdError {
     fn from(source: RecoverPubkeyError) -> Self {
         Self::recover_pubkey_err(source)
     }
 }
 
-impl From<OverflowError> for CoreError {
+impl From<OverflowError> for StdError {
     fn from(source: OverflowError) -> Self {
         Self::overflow(source)
     }
 }
 
-impl From<DivideByZeroError> for CoreError {
+impl From<DivideByZeroError> for StdError {
     fn from(source: DivideByZeroError) -> Self {
         Self::divide_by_zero(source)
     }
@@ -400,7 +398,7 @@ impl From<DivideByZeroError> for CoreError {
 ///
 /// The prefix "Core"/"Std" means "the standard result within the core/standard library". This is not the only
 /// result/error type in cosmwasm-core/cosmwasm-std.
-pub type CoreResult<T> = core::result::Result<T, CoreError>;
+pub type StdResult<T> = core::result::Result<T, StdError>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum OverflowOperation {
@@ -418,9 +416,8 @@ impl fmt::Display for OverflowOperation {
     }
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[display("Cannot {operation} with given operands")]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[error("Cannot {operation} with given operands")]
 pub struct OverflowError {
     pub operation: OverflowOperation,
 }
@@ -437,9 +434,8 @@ impl OverflowError {
 /// [`TryFrom`]: core::convert::TryFrom
 /// [`Uint256`]: crate::Uint256
 /// [`Uint128`]: crate::Uint128
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[display("Error converting {source_type} to {target_type}")]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[error("Error converting {source_type} to {target_type}")]
 pub struct ConversionOverflowError {
     pub source_type: &'static str,
     pub target_type: &'static str,
@@ -454,9 +450,8 @@ impl ConversionOverflowError {
     }
 }
 
-#[derive(Display, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[display("Cannot divide by zero")]
+#[derive(Debug, Default, PartialEq, Eq, thiserror::Error)]
+#[error("Cannot divide by zero")]
 pub struct DivideByZeroError;
 
 impl DivideByZeroError {
@@ -465,81 +460,72 @@ impl DivideByZeroError {
     }
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum DivisionError {
-    #[display("Divide by zero")]
+    #[error("Divide by zero")]
     DivideByZero,
 
-    #[display("Overflow in division")]
+    #[error("Overflow in division")]
     Overflow,
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[cfg_attr(not(feature = "std"), derive(From))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum CheckedMultiplyFractionError {
-    #[display("{_0}")]
+    #[error("{_0}")]
     DivideByZero(#[from] DivideByZeroError),
 
-    #[display("{_0}")]
+    #[error("{_0}")]
     ConversionOverflow(#[from] ConversionOverflowError),
 
-    #[display("{_0}")]
+    #[error("{_0}")]
     Overflow(#[from] OverflowError),
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum CheckedMultiplyRatioError {
-    #[display("Denominator must not be zero")]
+    #[error("Denominator must not be zero")]
     DivideByZero,
 
-    #[display("Multiplication overflow")]
+    #[error("Multiplication overflow")]
     Overflow,
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum CheckedFromRatioError {
-    #[display("Denominator must not be zero")]
+    #[error("Denominator must not be zero")]
     DivideByZero,
 
-    #[display("Overflow")]
+    #[error("Overflow")]
     Overflow,
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[display("Round up operation failed because of overflow")]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[error("Round up operation failed because of overflow")]
 pub struct RoundUpOverflowError;
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[display("Round down operation failed because of overflow")]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[error("Round down operation failed because of overflow")]
 pub struct RoundDownOverflowError;
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum CoinsError {
-    #[display("Duplicate denom")]
+    #[error("Duplicate denom")]
     DuplicateDenom,
 }
 
-impl From<CoinsError> for CoreError {
+impl From<CoinsError> for StdError {
     fn from(value: CoinsError) -> Self {
         Self::generic_err(format!("Creating Coins: {value}"))
     }
 }
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum CoinFromStrError {
-    #[display("Missing denominator")]
+    #[error("Missing denominator")]
     MissingDenom,
-    #[display("Missing amount or non-digit characters in amount")]
+    #[error("Missing amount or non-digit characters in amount")]
     MissingAmount,
-    #[display("Invalid amount: {_0}")]
+    #[error("Invalid amount: {_0}")]
     InvalidAmount(core::num::ParseIntError),
 }
 
@@ -549,7 +535,7 @@ impl From<core::num::ParseIntError> for CoinFromStrError {
     }
 }
 
-impl From<CoinFromStrError> for CoreError {
+impl From<CoinFromStrError> for StdError {
     fn from(value: CoinFromStrError) -> Self {
         Self::generic_err(format!("Parsing Coin: {value}"))
     }
@@ -566,9 +552,9 @@ mod tests {
     #[test]
     fn generic_err_owned() {
         let guess = 7;
-        let error = CoreError::generic_err(format!("{guess} is too low"));
+        let error = StdError::generic_err(format!("{guess} is too low"));
         match error {
-            CoreError::GenericErr { msg, .. } => {
+            StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, String::from("7 is too low"));
             }
             e => panic!("unexpected error, {e:?}"),
@@ -578,18 +564,18 @@ mod tests {
     // example of reporting static contract errors
     #[test]
     fn generic_err_ref() {
-        let error = CoreError::generic_err("not implemented");
+        let error = StdError::generic_err("not implemented");
         match error {
-            CoreError::GenericErr { msg, .. } => assert_eq!(msg, "not implemented"),
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "not implemented"),
             e => panic!("unexpected error, {e:?}"),
         }
     }
 
     #[test]
     fn invalid_base64_works_for_strings() {
-        let error = CoreError::invalid_base64("my text");
+        let error = StdError::invalid_base64("my text");
         match error {
-            CoreError::InvalidBase64 { msg, .. } => {
+            StdError::InvalidBase64 { msg, .. } => {
                 assert_eq!(msg, "my text");
             }
             _ => panic!("expect different error"),
@@ -599,9 +585,9 @@ mod tests {
     #[test]
     fn invalid_base64_works_for_errors() {
         let original = base64::DecodeError::InvalidLength(10);
-        let error = CoreError::invalid_base64(original);
+        let error = StdError::invalid_base64(original);
         match error {
-            CoreError::InvalidBase64 { msg, .. } => {
+            StdError::InvalidBase64 { msg, .. } => {
                 assert_eq!(msg, "Invalid input length: 10");
             }
             _ => panic!("expect different error"),
@@ -610,9 +596,9 @@ mod tests {
 
     #[test]
     fn invalid_data_size_works() {
-        let error = CoreError::invalid_data_size(31, 14);
+        let error = StdError::invalid_data_size(31, 14);
         match error {
-            CoreError::InvalidDataSize {
+            StdError::InvalidDataSize {
                 expected, actual, ..
             } => {
                 assert_eq!(expected, 31);
@@ -624,9 +610,9 @@ mod tests {
 
     #[test]
     fn invalid_hex_works_for_strings() {
-        let error = CoreError::invalid_hex("my text");
+        let error = StdError::invalid_hex("my text");
         match error {
-            CoreError::InvalidHex { msg, .. } => {
+            StdError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "my text");
             }
             _ => panic!("expect different error"),
@@ -636,9 +622,9 @@ mod tests {
     #[test]
     fn invalid_hex_works_for_errors() {
         let original = hex::FromHexError::OddLength;
-        let error = CoreError::invalid_hex(original);
+        let error = StdError::invalid_hex(original);
         match error {
-            CoreError::InvalidHex { msg, .. } => {
+            StdError::InvalidHex { msg, .. } => {
                 assert_eq!(msg, "Odd number of digits");
             }
             _ => panic!("expect different error"),
@@ -647,9 +633,9 @@ mod tests {
 
     #[test]
     fn invalid_utf8_works_for_strings() {
-        let error = CoreError::invalid_utf8("my text");
+        let error = StdError::invalid_utf8("my text");
         match error {
-            CoreError::InvalidUtf8 { msg, .. } => {
+            StdError::InvalidUtf8 { msg, .. } => {
                 assert_eq!(msg, "my text");
             }
             _ => panic!("expect different error"),
@@ -659,9 +645,9 @@ mod tests {
     #[test]
     fn invalid_utf8_works_for_errors() {
         let original = String::from_utf8(vec![0x80]).unwrap_err();
-        let error = CoreError::invalid_utf8(original);
+        let error = StdError::invalid_utf8(original);
         match error {
-            CoreError::InvalidUtf8 { msg, .. } => {
+            StdError::InvalidUtf8 { msg, .. } => {
                 assert_eq!(msg, "invalid utf-8 sequence of 1 bytes from index 0");
             }
             _ => panic!("expect different error"),
@@ -670,18 +656,18 @@ mod tests {
 
     #[test]
     fn not_found_works() {
-        let error = CoreError::not_found("gold");
+        let error = StdError::not_found("gold");
         match error {
-            CoreError::NotFound { kind, .. } => assert_eq!(kind, "gold"),
+            StdError::NotFound { kind, .. } => assert_eq!(kind, "gold"),
             _ => panic!("expect different error"),
         }
     }
 
     #[test]
     fn parse_err_works() {
-        let error = CoreError::parse_err("Book", "Missing field: title");
+        let error = StdError::parse_err("Book", "Missing field: title");
         match error {
-            CoreError::ParseErr {
+            StdError::ParseErr {
                 target_type, msg, ..
             } => {
                 assert_eq!(target_type, "Book");
@@ -693,9 +679,9 @@ mod tests {
 
     #[test]
     fn serialize_err_works() {
-        let error = CoreError::serialize_err("Book", "Content too long");
+        let error = StdError::serialize_err("Book", "Content too long");
         match error {
-            CoreError::SerializeErr {
+            StdError::SerializeErr {
                 source_type, msg, ..
             } => {
                 assert_eq!(source_type, "Book");
@@ -707,10 +693,10 @@ mod tests {
 
     #[test]
     fn underflow_works_for_u128() {
-        let error = CoreError::overflow(OverflowError::new(OverflowOperation::Sub));
+        let error = StdError::overflow(OverflowError::new(OverflowOperation::Sub));
         assert!(matches!(
             error,
-            CoreError::Overflow {
+            StdError::Overflow {
                 source: OverflowError {
                     operation: OverflowOperation::Sub
                 },
@@ -721,10 +707,10 @@ mod tests {
 
     #[test]
     fn overflow_works_for_i64() {
-        let error = CoreError::overflow(OverflowError::new(OverflowOperation::Sub));
+        let error = StdError::overflow(OverflowError::new(OverflowOperation::Sub));
         assert!(matches!(
             error,
-            CoreError::Overflow {
+            StdError::Overflow {
                 source: OverflowError {
                     operation: OverflowOperation::Sub
                 },
@@ -735,10 +721,10 @@ mod tests {
 
     #[test]
     fn divide_by_zero_works() {
-        let error = CoreError::divide_by_zero(DivideByZeroError);
+        let error = StdError::divide_by_zero(DivideByZeroError);
         assert!(matches!(
             error,
-            CoreError::DivideByZero {
+            StdError::DivideByZero {
                 source: DivideByZeroError,
                 ..
             }
@@ -747,7 +733,7 @@ mod tests {
 
     #[test]
     fn implements_debug() {
-        let error: CoreError = CoreError::from(OverflowError::new(OverflowOperation::Sub));
+        let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Debug: {error:?}");
         let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub }, backtrace: <disabled> }"#;
         assert_eq!(embedded, expected);
@@ -755,7 +741,7 @@ mod tests {
 
     #[test]
     fn implements_display() {
-        let error: CoreError = CoreError::from(OverflowError::new(OverflowOperation::Sub));
+        let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Display: {error}");
         assert_eq!(
             embedded,
@@ -765,11 +751,11 @@ mod tests {
 
     #[test]
     fn implements_partial_eq() {
-        let u1 = CoreError::from(OverflowError::new(OverflowOperation::Sub));
-        let u2 = CoreError::from(OverflowError::new(OverflowOperation::Sub));
-        let s1 = CoreError::serialize_err("Book", "Content too long");
-        let s2 = CoreError::serialize_err("Book", "Content too long");
-        let s3 = CoreError::serialize_err("Book", "Title too long");
+        let u1 = StdError::from(OverflowError::new(OverflowOperation::Sub));
+        let u2 = StdError::from(OverflowError::new(OverflowOperation::Sub));
+        let s1 = StdError::serialize_err("Book", "Content too long");
+        let s2 = StdError::serialize_err("Book", "Content too long");
+        let s3 = StdError::serialize_err("Book", "Title too long");
         assert_eq!(u1, u2);
         assert_ne!(u1, s1);
         assert_eq!(s1, s2);
@@ -779,9 +765,9 @@ mod tests {
     #[test]
     fn from_std_str_utf8error_works() {
         let broken = Vec::from(b"Hello \xF0\x90\x80World" as &[u8]);
-        let error: CoreError = str::from_utf8(&broken).unwrap_err().into();
+        let error: StdError = str::from_utf8(&broken).unwrap_err().into();
         match error {
-            CoreError::InvalidUtf8 { msg, .. } => {
+            StdError::InvalidUtf8 { msg, .. } => {
                 assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
             }
             err => panic!("Unexpected error: {err:?}"),
@@ -790,11 +776,11 @@ mod tests {
 
     #[test]
     fn from_std_string_from_utf8error_works() {
-        let error: CoreError = String::from_utf8(b"Hello \xF0\x90\x80World".to_vec())
+        let error: StdError = String::from_utf8(b"Hello \xF0\x90\x80World".to_vec())
             .unwrap_err()
             .into();
         match error {
-            CoreError::InvalidUtf8 { msg, .. } => {
+            StdError::InvalidUtf8 { msg, .. } => {
                 assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
             }
             err => panic!("Unexpected error: {err:?}"),

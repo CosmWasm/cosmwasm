@@ -63,9 +63,9 @@ workflows:
     # Keep those job names in sync with .mergify.yml
     jobs:
       - arm64
+      - package_core
       - package_crypto
       - package_check
-      - package_core
       - package_schema
       - package_schema_derive
       - package_std
@@ -238,64 +238,6 @@ jobs:
             - contracts/staking/target/wasm32-unknown-unknown/release/build
             - contracts/staking/target/wasm32-unknown-unknown/release/deps
 
-  package_crypto:
-    docker:
-      - image: rust:1.74
-    steps:
-      - checkout
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_crypto-rust:1.74-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Build (no features)
-          working_directory: ~/project/packages/crypto
-          command: cargo build --locked --no-default-features
-      - run:
-          name: Build (all features)
-          working_directory: ~/project/packages/crypto
-          command: cargo build --locked --features std
-      - run:
-          name: Run tests
-          working_directory: ~/project/packages/crypto
-          command: cargo test --locked --features std
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_crypto-rust:1.74-{{ checksum "Cargo.lock" }}
-
-  package_check:
-    docker:
-      - image: rust:1.74
-    steps:
-      - checkout
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_check-rust:1.74-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Build
-          working_directory: ~/project/packages/check
-          command: cargo build --locked
-      - run:
-          name: Run tests
-          working_directory: ~/project/packages/check
-          command: cargo test --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_check-rust:1.74-{{ checksum "Cargo.lock" }}
-
   package_core:
     docker:
       - image: rust:1.74
@@ -335,15 +277,15 @@ jobs:
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/core
-          command: cargo build --locked --features std
+          command: cargo build --locked --all-features
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/core
-          command: cargo wasm --locked --features std
+          command: cargo wasm --locked --all-features
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/core
-          command: cargo test --locked --features std
+          command: cargo test --locked --all-features
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -351,6 +293,60 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_core-rust:1.74-{{ checksum "Cargo.lock" }}
+
+  package_crypto:
+    docker:
+      - image: rust:1.74
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_crypto-rust:1.74-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/crypto
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/crypto
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_crypto-rust:1.74-{{ checksum "Cargo.lock" }}
+
+  package_check:
+    docker:
+      - image: rust:1.74
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_check-rust:1.74-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/check
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/check
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_check-rust:1.74-{{ checksum "Cargo.lock" }}
 
   package_schema:
     docker:
@@ -1007,6 +1003,14 @@ jobs:
       # Workspace packages
       #
       - run:
+          name: Clippy linting on core (no feature flags)
+          working_directory: ~/project/packages/core
+          command: cargo clippy --all-targets -- -D warnings
+      - run:
+          name: Clippy linting on core (all feature flags)
+          working_directory: ~/project/packages/core
+          command: cargo clippy --all-features --all-targets -- -D warnings
+      - run:
           name: Clippy linting on crypto
           working_directory: ~/project/packages/crypto
           command: cargo clippy --all-targets --tests -- -D warnings
@@ -1022,14 +1026,6 @@ jobs:
           name: Clippy linting on schema-derive
           working_directory: ~/project/packages/schema-derive
           command: cargo clippy --all-targets --tests -- -D warnings
-      - run:
-          name: Clippy linting on core (no feature flags)
-          working_directory: ~/project/packages/core
-          command: cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on core (all feature flags)
-          working_directory: ~/project/packages/core
-          command: cargo clippy --all-features --all-targets -- -D warnings
       - run:
           name: Clippy linting on std (no feature flags)
           working_directory: ~/project/packages/std

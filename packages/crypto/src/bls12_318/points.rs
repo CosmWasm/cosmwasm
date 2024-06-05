@@ -7,10 +7,10 @@ use core::{fmt, ops::Neg};
 
 use ark_bls12_381::{G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::AffineRepr;
+use cosmwasm_core::{BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
 use num_traits::Zero;
 
-use crate::errors::InvalidPoint;
-use crate::{CryptoError, BLS12_381_G1_POINT_LEN, BLS12_381_G2_POINT_LEN};
+use crate::{errors::InvalidPoint, CryptoError};
 
 /// Point on G1
 #[derive(Debug, PartialEq, Clone)]
@@ -195,9 +195,9 @@ pub fn bls12_381_g2_is_identity(g2: &[u8; BLS12_381_G2_POINT_LEN]) -> Result<boo
 
 #[cfg(test)]
 mod tests {
-    use crate::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
-
     use super::*;
+
+    use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
     use hex_literal::hex;
 
     #[test]

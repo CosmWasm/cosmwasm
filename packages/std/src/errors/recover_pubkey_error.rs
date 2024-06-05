@@ -1,20 +1,18 @@
 use core::fmt::Debug;
 #[cfg(not(target_arch = "wasm32"))]
 use cosmwasm_crypto::CryptoError;
-use derive_more::Display;
 
 use super::BT;
 
-#[derive(Display, Debug)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
+#[derive(Debug, thiserror::Error)]
 pub enum RecoverPubkeyError {
-    #[display("Invalid hash format")]
+    #[error("Invalid hash format")]
     InvalidHashFormat,
-    #[display("Invalid signature format")]
+    #[error("Invalid signature format")]
     InvalidSignatureFormat,
-    #[display("Invalid recovery parameter. Supported values: 0 and 1.")]
+    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
-    #[display("Unknown error: {error_code}")]
+    #[error("Unknown error: {error_code}")]
     UnknownErr { error_code: u32, backtrace: BT },
 }
 

@@ -5,15 +5,14 @@ use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use derive_more::Display;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
-    CheckedFromRatioError, CheckedMultiplyRatioError, CoreError, DivideByZeroError, OverflowError,
-    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError,
+    CheckedFromRatioError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
+    OverflowOperation, RoundDownOverflowError, RoundUpOverflowError, StdError,
 };
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
-use crate::{forward_ref_partial_eq, Decimal, Decimal256, Int256, SignedDecimal256};
+use crate::{Decimal, Decimal256, Int256, SignedDecimal256, __internal::forward_ref_partial_eq};
 
 use super::Fraction;
 use super::Int128;
@@ -22,15 +21,13 @@ use super::Int128;
 ///
 /// The greatest possible value that can be represented is 170141183460469231731.687303715884105727 (which is (2^127 - 1) / 10^18)
 /// and the smallest is -170141183460469231731.687303715884105728 (which is -2^127 / 10^18).
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
-pub struct SignedDecimal(#[cfg_attr(feature = "std", schemars(with = "String"))] Int128);
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+pub struct SignedDecimal(#[schemars(with = "String")] Int128);
 
 forward_ref_partial_eq!(SignedDecimal, SignedDecimal);
 
-#[derive(Display, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(thiserror::Error))]
-#[display("SignedDecimal range exceeded")]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[error("SignedDecimal range exceeded")]
 pub struct SignedDecimalRangeExceeded;
 
 impl SignedDecimal {
@@ -649,7 +646,7 @@ impl TryFrom<Int128> for SignedDecimal {
 }
 
 impl FromStr for SignedDecimal {
-    type Err = CoreError;
+    type Err = StdError;
 
     /// Converts the decimal string to a SignedDecimal
     /// Possible inputs: "1.23", "1", "000012", "1.123000000", "-1.12300"
@@ -665,18 +662,18 @@ impl FromStr for SignedDecimal {
 
         let whole = whole_part
             .parse::<Int128>()
-            .map_err(|_| CoreError::generic_err("Error parsing whole"))?;
+            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
         let mut atomics = whole
             .checked_mul(Self::DECIMAL_FRACTIONAL)
-            .map_err(|_| CoreError::generic_err("Value too big"))?;
+            .map_err(|_| StdError::generic_err("Value too big"))?;
 
         if let Some(fractional_part) = parts_iter.next() {
             let fractional = fractional_part
                 .parse::<u64>() // u64 is enough for 18 decimal places
-                .map_err(|_| CoreError::generic_err("Error parsing fractional"))?;
+                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
             let exp = (Self::DECIMAL_PLACES.checked_sub(fractional_part.len() as u32)).ok_or_else(
                 || {
-                    CoreError::generic_err(format!(
+                    StdError::generic_err(format!(
                         "Cannot parse more than {} fractional digits",
                         Self::DECIMAL_PLACES
                     ))
@@ -697,11 +694,11 @@ impl FromStr for SignedDecimal {
             } else {
                 atomics.checked_add(fractional_part)
             }
-            .map_err(|_| CoreError::generic_err("Value too big"))?;
+            .map_err(|_| StdError::generic_err("Value too big"))?;
         }
 
         if parts_iter.next().is_some() {
-            return Err(CoreError::generic_err("Unexpected number of dots"));
+            return Err(StdError::generic_err("Unexpected number of dots"));
         }
 
         Ok(SignedDecimal(atomics))
@@ -1358,7 +1355,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_broken_whole_part() {
-        let expected_err = CoreError::generic_err("Error parsing whole");
+        let expected_err = StdError::generic_err("Error parsing whole");
         assert_eq!(SignedDecimal::from_str("").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str(" ").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str("-").unwrap_err(), expected_err);
@@ -1366,7 +1363,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_broken_fractional_part() {
-        let expected_err = CoreError::generic_err("Error parsing fractional");
+        let expected_err = StdError::generic_err("Error parsing fractional");
         assert_eq!(SignedDecimal::from_str("1.").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str("1. ").unwrap_err(), expected_err);
         assert_eq!(SignedDecimal::from_str("1.e").unwrap_err(), expected_err);
@@ -1376,7 +1373,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_more_than_18_fractional_digits() {
-        let expected_err = CoreError::generic_err("Cannot parse more than 18 fractional digits");
+        let expected_err = StdError::generic_err("Cannot parse more than 18 fractional digits");
         assert_eq!(
             SignedDecimal::from_str("7.1234567890123456789").unwrap_err(),
             expected_err
@@ -1390,7 +1387,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_invalid_number_of_dots() {
-        let expected_err = CoreError::generic_err("Unexpected number of dots");
+        let expected_err = StdError::generic_err("Unexpected number of dots");
         assert_eq!(SignedDecimal::from_str("1.2.3").unwrap_err(), expected_err);
         assert_eq!(
             SignedDecimal::from_str("1.2.3.4").unwrap_err(),
@@ -1400,7 +1397,7 @@ mod tests {
 
     #[test]
     fn signed_decimal_from_str_errors_for_more_than_max_value() {
-        let expected_err = CoreError::generic_err("Value too big");
+        let expected_err = StdError::generic_err("Value too big");
         // Integer
         assert_eq!(
             SignedDecimal::from_str("170141183460469231732").unwrap_err(),
@@ -3098,7 +3095,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "std")]
     fn signed_decimal_has_defined_json_schema() {
         let schema = schemars::schema_for!(SignedDecimal);
         assert_eq!(
