@@ -12,7 +12,8 @@ and this project adheres to
 
 - cosmwasm-std: Fix CWA-2024-002
 - cosmwasm-std: Fix `Reply` deserialization on CosmWasm 1.x chains ([#2159])
-- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter `Empty`. ([#2165])
+- cosmwasm-std: Updated `QueryRequest` enum to use the default generic parameter
+  `Empty`. ([#2165])
 
 [#2159]: https://github.com/CosmWasm/cosmwasm/pull/2159
 [#2165]: https://github.com/CosmWasm/cosmwasm/pull/2165
