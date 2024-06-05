@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, to_json_string, Binary, Deps, DepsMut, Empty, Env,
-    IbcBasicResponse, IbcCallbackRequest, IbcDestinationCallbackMsg, IbcDstCallback, IbcMsg,
-    IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, MessageInfo, Response, StdError, StdResult,
+    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, IbcBasicResponse,
+    IbcDestinationCallbackMsg, IbcDstCallback, IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout,
+    MessageInfo, Response, StdError, StdResult, TransferMsgBuilder,
 };
 
 use crate::msg::{CallbackType, ExecuteMsg, QueryMsg};
@@ -71,16 +71,19 @@ fn execute_transfer(
         }
     };
 
-    let transfer_msg = IbcMsg::Transfer {
-        to_address,
-        timeout: IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
+    let builder = TransferMsgBuilder::new(
         channel_id,
-        amount: coin.clone(),
-        memo: Some(to_json_string(&match callback_type {
-            CallbackType::Both => IbcCallbackRequest::both(src_callback, dst_callback),
-            CallbackType::Src => IbcCallbackRequest::source(src_callback),
-            CallbackType::Dst => IbcCallbackRequest::destination(dst_callback),
-        })?),
+        to_address.clone(),
+        coin.clone(),
+        IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
+    );
+    let transfer_msg = match callback_type {
+        CallbackType::Both => builder
+            .with_src_callback(src_callback)
+            .with_dst_callback(dst_callback)
+            .build(),
+        CallbackType::Src => builder.with_src_callback(src_callback).build(),
+        CallbackType::Dst => builder.with_dst_callback(dst_callback).build(),
     };
 
     Ok(Response::new()

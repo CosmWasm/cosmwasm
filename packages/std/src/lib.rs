@@ -72,6 +72,7 @@ pub use crate::ibc::{
     IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
+    TransferMsgBuilder,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};

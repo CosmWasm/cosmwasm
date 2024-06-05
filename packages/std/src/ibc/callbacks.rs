@@ -15,12 +15,34 @@ use crate::{Addr, IbcAcknowledgement, IbcPacket, Uint64};
 ///
 /// # Example
 ///
+/// Using [`TransferMsgBuilder`](crate::TransferMsgBuilder):
+/// ```rust
+/// use cosmwasm_std::{
+///     to_json_string, Coin, IbcCallbackRequest, TransferMsgBuilder, IbcSrcCallback, IbcTimeout, Response,
+///     Timestamp,
+/// };
+/// # use cosmwasm_std::testing::mock_env;
+/// # let env = mock_env();
+///
+/// let _msg = TransferMsgBuilder::new(
+///     "channel-0".to_string(),
+///     "cosmos1example".to_string(),
+///     Coin::new(10u32, "ucoin"),
+///     Timestamp::from_seconds(12345),
+/// )
+/// .with_src_callback(IbcSrcCallback {
+///     address: env.contract.address,
+///     gas_limit: None,
+/// })
+/// .build();
+/// ```
+///
+/// Manual serialization:
 /// ```rust
 /// use cosmwasm_std::{
 ///     to_json_string, Coin, IbcCallbackRequest, IbcMsg, IbcSrcCallback, IbcTimeout, Response,
 ///     Timestamp,
 /// };
-///
 /// # use cosmwasm_std::testing::mock_env;
 /// # let env = mock_env();
 ///
