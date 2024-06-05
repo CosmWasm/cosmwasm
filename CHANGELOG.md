@@ -48,6 +48,9 @@ and this project adheres to
   `ibc_source_callback` and `ibc_destination_callback`, as well as the
   `IbcCallbackRequest` type. ([#2025])
 - cosmwasm-vm: Add support for the two new IBC Callbacks entrypoints. ([#2025])
+- cosmwasm-std: Add `TransferMsgBuilder` to more easily create an
+  `IbcMsg::Transfer` with different kinds of memo values, including IBC
+  Callbacks memo values. ([#2167])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2025]: https://github.com/CosmWasm/cosmwasm/pull/2025
@@ -64,6 +67,7 @@ and this project adheres to
 [#2124]: https://github.com/CosmWasm/cosmwasm/pull/2124
 [#2129]: https://github.com/CosmWasm/cosmwasm/pull/2129
 [#2166]: https://github.com/CosmWasm/cosmwasm/pull/2166
+[#2167]: https://github.com/CosmWasm/cosmwasm/pull/2167
 
 ### Changed
 
