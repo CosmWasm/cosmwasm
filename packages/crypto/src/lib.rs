@@ -6,7 +6,7 @@
 extern crate alloc;
 
 mod backtrace;
-mod bls12_318;
+mod bls12_381;
 mod ecdsa;
 mod ed25519;
 mod errors;
@@ -15,7 +15,7 @@ mod secp256k1;
 mod secp256r1;
 
 #[doc(hidden)]
-pub use crate::bls12_318::{
+pub use crate::bls12_381::{
     bls12_381_aggregate_g1, bls12_381_aggregate_g2, bls12_381_g1_is_identity,
     bls12_381_g2_is_identity, bls12_381_hash_to_g1, bls12_381_hash_to_g2,
     bls12_381_pairing_equality, HashFunction,

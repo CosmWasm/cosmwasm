@@ -67,7 +67,7 @@ mod test {
     use sha2::{Digest, Sha256};
 
     use crate::{
-        bls12_318::points::{g1_from_fixed, g2_from_fixed, g2_from_variable, G1},
+        bls12_381::points::{g1_from_fixed, g2_from_fixed, g2_from_variable, G1},
         bls12_381_hash_to_g2, bls12_381_pairing_equality, CryptoError, HashFunction,
         PairingEqualityError,
     };
