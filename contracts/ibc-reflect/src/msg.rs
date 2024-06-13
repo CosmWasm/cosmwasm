@@ -1,10 +1,22 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Coin, CosmosMsg};
+use cosmwasm_std::{Coin, CosmosMsg, IbcAcknowledgement, Uint64};
 
 /// Just needs to know the code_id of a reflect contract to spawn sub-accounts
 #[cw_serde]
 pub struct InstantiateMsg {
     pub reflect_code_id: u64,
+}
+
+#[cw_serde]
+pub enum ExecuteMsg {
+    AsyncAck {
+        /// Existing channel where the packet was received
+        channel_id: String,
+        /// Sequence number of the packet that was received
+        packet_sequence: Uint64,
+        /// The acknowledgement to send back
+        ack: IbcAcknowledgement,
+    },
 }
 
 #[cw_serde]
@@ -49,6 +61,7 @@ pub enum PacketMsg {
     Panic {},
     ReturnErr { text: String },
     ReturnMsgs { msgs: Vec<CosmosMsg> },
+    NoAck {},
 }
 
 /// A custom acknowledgement type.

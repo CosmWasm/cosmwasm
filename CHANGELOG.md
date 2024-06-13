@@ -54,6 +54,8 @@ and this project adheres to
 - cosmwasm-std: Add `TransferMsgBuilder` to more easily create an
   `IbcMsg::Transfer` with different kinds of memo values, including IBC
   Callbacks memo values. ([#2167])
+- cosmwasm-std: Add `IbcMsg::WriteAcknowledgement` for async IBC
+  acknowledgements ([#2130])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2025]: https://github.com/CosmWasm/cosmwasm/pull/2025
@@ -69,6 +71,7 @@ and this project adheres to
 [#2120]: https://github.com/CosmWasm/cosmwasm/pull/2120
 [#2124]: https://github.com/CosmWasm/cosmwasm/pull/2124
 [#2129]: https://github.com/CosmWasm/cosmwasm/pull/2129
+[#2130]: https://github.com/CosmWasm/cosmwasm/pull/2130
 [#2166]: https://github.com/CosmWasm/cosmwasm/pull/2166
 [#2167]: https://github.com/CosmWasm/cosmwasm/pull/2167
 

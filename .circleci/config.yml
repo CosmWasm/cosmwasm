@@ -695,8 +695,10 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_ibc_reflect-rust:1.74-{{ checksum "Cargo.lock" }}
+      # TODO: Enable this once 2.1 has been released to crates.io
       - check_contract:
-          min_version: "2.0"
+          min_version: "2.1"
+          skip_cosmwasm_check: true
       - save_cache:
           paths:
             - /usr/local/cargo/registry
