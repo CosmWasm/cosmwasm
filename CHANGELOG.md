@@ -56,6 +56,7 @@ and this project adheres to
   Callbacks memo values. ([#2167])
 - cosmwasm-std: Add `IbcMsg::WriteAcknowledgement` for async IBC
   acknowledgements ([#2130])
+- cosmwasm-std: Add derive attributes for `Order` ([#2174])
 
 [#1983]: https://github.com/CosmWasm/cosmwasm/pull/1983
 [#2025]: https://github.com/CosmWasm/cosmwasm/pull/2025
@@ -74,6 +75,7 @@ and this project adheres to
 [#2130]: https://github.com/CosmWasm/cosmwasm/pull/2130
 [#2166]: https://github.com/CosmWasm/cosmwasm/pull/2166
 [#2167]: https://github.com/CosmWasm/cosmwasm/pull/2167
+[#2174]: https://github.com/CosmWasm/cosmwasm/pull/2174
 
 ### Changed
 
