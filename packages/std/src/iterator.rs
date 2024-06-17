@@ -1,4 +1,6 @@
 use crate::StdError;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 /// A record of a key-value storage that is created through an iterator API.
 /// The first element (key) is always raw binary data. The second element
@@ -6,7 +8,8 @@ use crate::StdError;
 /// allows contracts to reuse the type when deserializing database records.
 pub type Record<V = Vec<u8>> = (Vec<u8>, V);
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
 pub enum Order {
     Ascending = 1,
