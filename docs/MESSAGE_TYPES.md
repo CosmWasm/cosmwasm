@@ -31,6 +31,7 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
 | [Binary]            | string containing base64 data             | `"MTIzCg=="`                                                                      |                                                                                                                                                                                                                                                                                |
 | [HexBinary]         | string containing hex data                | `"b5d7d24e428c"`                                                                  |                                                                                                                                                                                                                                                                                |
 | [Timestamp]         | string containing nanoseconds since epoch | `"1677687687000000000"`                                                           |                                                                                                                                                                                                                                                                                |
+| [Order]             | string containing order variant           | `"ascending"` or `"descending"`                                                   |                                                                                                                                                                                                                                                                                |
 
 [uint64]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Uint64.html
 [uint128]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Uint128.html
@@ -48,6 +49,8 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
   https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.HexBinary.html
 [timestamp]:
   https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Timestamp.html
+[order]:
+  https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/enum.Order.html
 [dev-note-4]:
   https://medium.com/cosmwasm/dev-note-4-u128-i128-serialization-in-cosmwasm-90cb76784d44
 
