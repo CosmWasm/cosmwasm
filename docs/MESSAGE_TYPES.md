@@ -49,8 +49,7 @@ Rust types as well as `cosmwasm_std` types and how they are encoded in JSON.
   https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.HexBinary.html
 [timestamp]:
   https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/struct.Timestamp.html
-[order]:
-  https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/enum.Order.html
+[order]: https://docs.rs/cosmwasm-std/1.3.3/cosmwasm_std/enum.Order.html
 [dev-note-4]:
   https://medium.com/cosmwasm/dev-note-4-u128-i128-serialization-in-cosmwasm-90cb76784d44
 
