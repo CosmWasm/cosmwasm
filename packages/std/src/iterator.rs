@@ -36,6 +36,8 @@ impl From<Order> for i32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::{from_json, to_json_vec};
+
     use super::*;
 
     #[test]
@@ -43,22 +45,16 @@ mod tests {
         let ascending_bytes = br#""ascending""#;
         let descending_bytes = br#""descending""#;
 
-        assert_eq!(
-            serde_json::to_vec(&Order::Ascending).unwrap(),
-            ascending_bytes
-        );
-        assert_eq!(
-            serde_json::to_vec(&Order::Descending).unwrap(),
-            descending_bytes
-        );
+        assert_eq!(to_json_vec(&Order::Ascending).unwrap(), ascending_bytes);
+        assert_eq!(to_json_vec(&Order::Descending).unwrap(), descending_bytes);
 
         assert_eq!(
-            serde_json::from_slice::<Order>(ascending_bytes).unwrap(),
+            from_json::<Order>(ascending_bytes).unwrap(),
             Order::Ascending
         );
 
         assert_eq!(
-            serde_json::from_slice::<Order>(descending_bytes).unwrap(),
+            from_json::<Order>(descending_bytes).unwrap(),
             Order::Descending
         );
     }
