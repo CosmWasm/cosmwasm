@@ -66,7 +66,12 @@ pub struct PinnedMetrics {
     // It is *intentional* that this is only a vector
     // We don't need a potentially expensive hashing algorithm here
     // The checksums are sourced from a hashmap already, ensuring uniqueness of the checksums
-    pub per_module: Vec<(Checksum, PerModuleMetrics)>,
+    //
+    // Note that the left side represents a *checksum*. We have to use the byte type since we
+    // can't serialize the checksum into a non-human-readable format using `serde`.
+    //
+    // TODO: Store Checksum again as soon as we have a good wire format for them
+    pub per_module: Vec<([u8; 32], PerModuleMetrics)>,
 }
 
 #[derive(Clone, Debug)]
@@ -212,7 +217,7 @@ where
                     size: module.module.size_estimate,
                 };
 
-                (*checksum, metrics)
+                (*checksum.as_ref(), metrics)
             })
             .collect();
 
@@ -1479,7 +1484,7 @@ mod tests {
 
         let pinned_metrics = cache.pinned_metrics();
         assert_eq!(pinned_metrics.per_module.len(), 1);
-        assert_eq!(pinned_metrics.per_module[0].0, checksum);
+        assert_eq!(pinned_metrics.per_module[0].0, *checksum.as_ref());
         assert_eq!(pinned_metrics.per_module[0].1.hits, 0);
 
         let backend = mock_backend(&[]);
@@ -1489,7 +1494,7 @@ mod tests {
 
         let pinned_metrics = cache.pinned_metrics();
         assert_eq!(pinned_metrics.per_module.len(), 1);
-        assert_eq!(pinned_metrics.per_module[0].0, checksum);
+        assert_eq!(pinned_metrics.per_module[0].0, *checksum.as_ref());
         assert_eq!(pinned_metrics.per_module[0].1.hits, 1);
 
         let empty_checksum = cache.save_wasm(EMPTY_CONTRACT).unwrap();
@@ -1498,11 +1503,11 @@ mod tests {
         let pinned_metrics = cache.pinned_metrics();
         assert_eq!(pinned_metrics.per_module.len(), 2);
 
-        let get_module_hits = |checksum| {
+        let get_module_hits = |checksum: Checksum| {
             pinned_metrics
                 .per_module
                 .iter()
-                .find(|(iter_checksum, _module)| *iter_checksum == checksum)
+                .find(|(iter_checksum, _module)| iter_checksum == checksum.as_ref())
                 .map(|(_checksum, module)| module)
                 .cloned()
                 .unwrap()
