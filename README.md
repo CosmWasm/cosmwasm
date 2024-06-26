@@ -114,7 +114,7 @@ You can see some examples of contracts under the `contracts` directory, which
 you can look at. They are simple and self-contained, primarily meant for testing
 purposes, but that also makes them easier to understand.
 
-You can also look at [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus)
+You can also look at [cw-plus](https://github.com/CosmWasm/cw-plus)
 for examples and inspiration on more production-like contracts and also how we
 call one contract from another. If you are working on DeFi or Tokens, please
 look at the `cw20`, `cw721` and/or `cw1155` packages that define standard
@@ -128,11 +128,11 @@ along with tests, and a properly configured build environment. From there you
 can edit the code to add your desired logic and publish it as an independent
 repo.
 
-We also recommend you review our [documentation site](https://docs.cosmwasm.com)
+We also recommend you review our [documentation site](https://book.cosmwasm.com)
 which contains a few tutorials to guide you in building your first contracts. We
 also do public workshops on various topics about once a month. You can find
-[past recordings under the "Videos" section](https://cosmwasm.com/resources), or
-[join our Discord server](https://docs.cosmwasm.com/chat) to ask for help.
+past recordings on our [YouTube channel](https://www.youtube.com/channel/UCNslCTRZ0TrZg7rVDQFkMeQ), or
+[join our Discord server](https://chat.cosmwasm.com) to ask for help.
 
 ## Minimum Supported Rust Version (MSRV)
 
