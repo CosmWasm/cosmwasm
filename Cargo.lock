@@ -624,7 +624,6 @@ version = "2.1.0-rc.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
- "cosmwasm-std",
  "schemars",
  "semver",
  "serde",
