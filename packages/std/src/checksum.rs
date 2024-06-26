@@ -74,7 +74,7 @@ impl Serialize for Checksum {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_hex())
         } else {
-            panic!("Checksum is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            serializer.serialize_bytes(&self.0)
         }
     }
 }
@@ -88,7 +88,7 @@ impl<'de> Deserialize<'de> for Checksum {
         if deserializer.is_human_readable() {
             deserializer.deserialize_str(ChecksumVisitor)
         } else {
-            panic!("Checksum is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            deserializer.deserialize_bytes(ChecksumBytesVisitor)
         }
     }
 }
@@ -110,6 +110,23 @@ impl<'de> de::Visitor<'de> for ChecksumVisitor {
             Ok(data) => Ok(data),
             Err(_) => Err(E::custom(format!("invalid checksum: {v}"))),
         }
+    }
+}
+
+struct ChecksumBytesVisitor;
+
+impl<'de> de::Visitor<'de> for ChecksumBytesVisitor {
+    type Value = Checksum;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("32 byte checksum")
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Checksum::try_from(v).map_err(|ChecksumError| E::invalid_length(v.len(), &"32 bytes"))
     }
 }
 
@@ -233,6 +250,26 @@ mod tests {
         );
 
         let deserialized: Checksum = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, checksum);
+    }
+
+    #[test]
+    fn msgpack_works() {
+        // echo -n "hij" | sha256sum
+        let checksum =
+            Checksum::from_hex("722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104")
+                .unwrap();
+
+        let serialized = rmp_serde::to_vec(&checksum).unwrap();
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let expected = vec![
+            0xc4, 0x20, 0x72, 0x2c, 0x8c, 0x99, 0x3f, 0xd7, 0x5a, 0x76, 0x27, 0xd6, 0x9e, 0xd9,
+            0x41, 0x34, 0x4f, 0xe2, 0xa1, 0x42, 0x3a, 0x3e, 0x75, 0xef, 0xd3, 0xe6, 0x77, 0x8a,
+            0x14, 0x28, 0x84, 0x22, 0x71, 0x04,
+        ];
+        assert_eq!(serialized, expected);
+
+        let deserialized: Checksum = rmp_serde::from_slice(&serialized).unwrap();
         assert_eq!(deserialized, checksum);
     }
 }

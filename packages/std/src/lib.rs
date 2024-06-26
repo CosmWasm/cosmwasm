@@ -29,6 +29,7 @@ mod import_helpers;
 mod iterator;
 mod math;
 mod metadata;
+mod msgpack;
 mod never;
 mod pagination;
 mod panic;
@@ -82,6 +83,7 @@ pub use crate::math::{
     SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
 };
 pub use crate::metadata::{DenomMetadata, DenomUnit};
+pub use crate::msgpack::{from_msgpack, to_msgpack_binary, to_msgpack_vec};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
 pub use crate::query::{

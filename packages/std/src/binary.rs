@@ -211,7 +211,7 @@ impl Serialize for Binary {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_base64())
         } else {
-            panic!("Binary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            serializer.serialize_bytes(&self.0)
         }
     }
 }
@@ -225,7 +225,7 @@ impl<'de> Deserialize<'de> for Binary {
         if deserializer.is_human_readable() {
             deserializer.deserialize_str(Base64Visitor)
         } else {
-            panic!("Binary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            deserializer.deserialize_bytes(BytesVisitor)
         }
     }
 }
@@ -247,6 +247,23 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
             Ok(binary) => Ok(binary),
             Err(_) => Err(E::custom(format_args!("invalid base64: {v}"))),
         }
+    }
+}
+
+struct BytesVisitor;
+
+impl<'de> de::Visitor<'de> for BytesVisitor {
+    type Value = Binary;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("byte array")
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Binary(v.to_vec()))
     }
 }
 
@@ -448,7 +465,7 @@ mod tests {
     }
 
     #[test]
-    fn serialization_works() {
+    fn json_serialization_works() {
         let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
         let json = serde_json::to_vec(&binary).unwrap();
@@ -458,7 +475,7 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_from_valid_string() {
+    fn json_deserialize_from_valid_string() {
         let b64_str = "ALs9C/oA";
         // this is the binary behind above string
         let expected = vec![0u8, 187, 61, 11, 250, 0];
@@ -469,10 +486,36 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_from_invalid_string() {
+    fn json_deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
         let serialized = serde_json::to_vec(&invalid_str).unwrap();
         let res = serde_json::from_slice::<Binary>(&serialized);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn msgpack_serialization_works() {
+        let data = Binary(vec![0u8, 187, 61, 11, 250, 0]);
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let expected = [196, 6, 0, 187, 61, 11, 250, 0];
+
+        assert_eq!(rmp_serde::to_vec(&data).unwrap(), expected);
+    }
+
+    #[test]
+    fn msgpack_deserialize_from_valid_data() {
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let serialized = vec![196, 6, 0, 187, 61, 11, 250, 0];
+        let expected = vec![0u8, 187, 61, 11, 250, 0];
+
+        let deserialized: Binary = rmp_serde::from_slice(&serialized).unwrap();
+        assert_eq!(expected, deserialized.as_slice());
+    }
+
+    #[test]
+    fn msgpack_deserialize_from_invalid_data() {
+        let invalid_data = vec![0, 1, 2, 3, 4, 5];
+        let res = rmp_serde::from_slice::<Binary>(&invalid_data);
         assert!(res.is_err());
     }
 
