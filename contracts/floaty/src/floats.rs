@@ -126,54 +126,54 @@ pub fn random_subnormal_64(rng: &mut impl RngCore) -> u64 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Class {
-    Normal,
-    Subnormal,
-    Zero,
-    Infinite,
-    NaN,
-}
-
-pub trait Classifier {
-    fn classify(&self) -> Class;
-}
-
-impl Classifier for u32 {
-    fn classify(&self) -> Class {
-        let exponent = self & EXPONENT_MASK_32;
-        let mantissa = self & MANTISSA_MASK_32;
-
-        match (exponent, mantissa) {
-            (0, 0) => Class::Zero,
-            (0, _) => Class::Subnormal,
-            (EXPONENT_MASK_32, 0) => Class::Infinite,
-            (EXPONENT_MASK_32, _) => Class::NaN,
-            _ => Class::Normal,
-        }
-    }
-}
-
-impl Classifier for u64 {
-    fn classify(&self) -> Class {
-        let exponent = self & EXPONENT_MASK_64;
-        let mantissa = self & MANTISSA_MASK_64;
-
-        match (exponent, mantissa) {
-            (0, 0) => Class::Zero,
-            (0, _) => Class::Subnormal,
-            (EXPONENT_MASK_64, 0) => Class::Infinite,
-            (EXPONENT_MASK_64, _) => Class::NaN,
-            _ => Class::Normal,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use rand_chacha::rand_core::SeedableRng;
 
     use super::*;
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Class {
+        Normal,
+        Subnormal,
+        Zero,
+        Infinite,
+        NaN,
+    }
+
+    pub trait Classifier {
+        fn classify(&self) -> Class;
+    }
+
+    impl Classifier for u32 {
+        fn classify(&self) -> Class {
+            let exponent = self & EXPONENT_MASK_32;
+            let mantissa = self & MANTISSA_MASK_32;
+
+            match (exponent, mantissa) {
+                (0, 0) => Class::Zero,
+                (0, _) => Class::Subnormal,
+                (EXPONENT_MASK_32, 0) => Class::Infinite,
+                (EXPONENT_MASK_32, _) => Class::NaN,
+                _ => Class::Normal,
+            }
+        }
+    }
+
+    impl Classifier for u64 {
+        fn classify(&self) -> Class {
+            let exponent = self & EXPONENT_MASK_64;
+            let mantissa = self & MANTISSA_MASK_64;
+
+            match (exponent, mantissa) {
+                (0, 0) => Class::Zero,
+                (0, _) => Class::Subnormal,
+                (EXPONENT_MASK_64, 0) => Class::Infinite,
+                (EXPONENT_MASK_64, _) => Class::NaN,
+                _ => Class::Normal,
+            }
+        }
+    }
 
     #[test]
     fn test_constants() {
