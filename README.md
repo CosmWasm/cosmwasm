@@ -396,9 +396,8 @@ in our sample contract.
 
 You may also want to ensure the compiled contract interacts with the environment
 properly. To do so, you will want to create a canonical release build of the
-`<contract>.wasm` file and then write tests with the same VM tooling we will
-use in production. This is a bit more complicated but we added some tools to
-help in
+`<contract>.wasm` file and then write tests with the same VM tooling we will use
+in production. This is a bit more complicated but we added some tools to help in
 [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm) which
 can be added as a `dev-dependency`.
 
