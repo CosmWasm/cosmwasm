@@ -656,11 +656,23 @@ impl<T> IbcReceiveResponse<T> {
     /// ## Examples
     ///
     /// ```
-    /// use cosmwasm_std::{StdAck, IbcReceiveResponse};
+    /// # use cosmwasm_std::{
+    /// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+    /// #     Never, Response, QueryResponse, StdAck, IbcPacketReceiveMsg
+    /// # };
+    /// use cosmwasm_std::IbcReceiveResponse;
     ///
-    /// // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
-    /// let resp: IbcReceiveResponse = IbcReceiveResponse::new(StdAck::success(b"\x01"));
-    /// assert_eq!(resp.acknowledgement.unwrap(), b"{\"result\":\"AQ==\"}");
+    /// #[entry_point]
+    /// pub fn ibc_packet_receive(
+    ///     deps: DepsMut,
+    ///     env: Env,
+    ///     msg: IbcPacketReceiveMsg,
+    /// ) -> Result<IbcReceiveResponse, Never> {
+    ///     // ...
+    ///
+    ///     // 0x01 is a FungibleTokenPacketSuccess from ICS-20.
+    ///     Ok(IbcReceiveResponse::new(StdAck::success(b"\x01")))
+    /// }
     /// ```
     pub fn new(ack: impl Into<Binary>) -> Self {
         Self {
@@ -673,8 +685,30 @@ impl<T> IbcReceiveResponse<T> {
 
     /// Creates a new response without an acknowledgement.
     ///
-    /// This allows you to send the acknowledgement asynchronously later using [`IbcMsg::WriteAcknowledgement`].
+    /// This allows you to send the acknowledgement asynchronously later using
+    /// [`IbcMsg::WriteAcknowledgement`][self::IbcMsg#variant.WriteAcknowledgement].
     /// If you want to send the acknowledgement immediately, use [`IbcReceiveResponse::new`].
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{
+    /// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+    /// #     Never, Response, QueryResponse, StdAck, IbcPacketReceiveMsg
+    /// # };
+    /// use cosmwasm_std::IbcReceiveResponse;
+    ///
+    /// #[entry_point]
+    /// pub fn ibc_packet_receive(
+    ///     deps: DepsMut,
+    ///     env: Env,
+    ///     msg: IbcPacketReceiveMsg,
+    /// ) -> Result<IbcReceiveResponse, Never> {
+    ///     // ...
+    ///
+    ///     Ok(IbcReceiveResponse::without_ack())
+    /// }
+    /// ```
     pub fn without_ack() -> Self {
         Self {
             acknowledgement: None,
