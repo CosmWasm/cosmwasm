@@ -121,7 +121,7 @@ look at the `cw20`, `cw721` and/or `cw1155` packages that define standard
 interfaces as analogues to some popular ERC designs. (`cw20` is also inspired by
 `erc777`).
 
-If you want to get started building you own contract, the simplest way is to go
+If you want to get started building your own contract, the simplest way is to go
 to the [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template)
 repository and follow the instructions. This will give you a simple contract
 along with tests, and a properly configured build environment. From there you
@@ -202,7 +202,7 @@ The imports provided to give the contract access to the environment are:
 
 ```rust
 // This interface will compile into required Wasm imports.
-// A complete documentation those functions is available in the VM that provides them:
+// A complete documentation of those functions is available in the VM that provides them:
 // https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/packages/vm/src/instance.rs#L89-L206
 extern "C" {
     fn db_read(key: u32) -> u32;
@@ -271,7 +271,7 @@ extern "C" {
 
 You could actually implement a WebAssembly module in any language, and as long
 as you implement these functions, it will be interoperable, given the JSON data
-passed around is the proper format.
+passed around is in the proper format.
 
 Note that these u32 pointers refer to `Region` instances, containing the offset
 and length of some Wasm memory, to allow for safe access between the caller and
@@ -351,7 +351,7 @@ pub trait Storage {
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
-    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, no matter of the order.
     fn range<'a>(
         &'a self,
         start: Option<&[u8]>,
@@ -389,16 +389,15 @@ are only used in `#[cfg(test)]` blocks, they will never make it into the
 
 Note that for tests, you can use the `MockStorage` implementation which gives a
 generic in-memory hashtable in order to quickly test your logic. You can see a
-[simple example how to write a test](https://github.com/CosmWasm/cosmwasm/blob/81b6702d3994c8c34fb51c53176993b7e672860b/contracts/hackatom/src/contract.rs#L70-L88)
+[simple example of how to write a test](https://github.com/CosmWasm/cosmwasm/blob/81b6702d3994c8c34fb51c53176993b7e672860b/contracts/hackatom/src/contract.rs#L70-L88)
 in our sample contract.
 
 ## Testing the Smart Contract (wasm)
 
 You may also want to ensure the compiled contract interacts with the environment
 properly. To do so, you will want to create a canonical release build of the
-`<contract>.wasm` file and then write tests in with the same VM tooling we will
-use in production. This is a bit more complicated but we added some tools to
-help in
+`<contract>.wasm` file and then write tests with the same VM tooling we will use
+in production. This is a bit more complicated but we added some tools to help in
 [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm) which
 can be added as a `dev-dependency`.
 
