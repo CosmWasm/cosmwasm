@@ -78,12 +78,23 @@ const TABLE_SIZE_LIMIT: u32 = 2500; // entries
 /// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
 const MAX_IMPORTS: usize = 100;
 
+/// The maximum number of functions a contract can have.
+/// Any contract with more functions than this will be rejected during static validation.
 const MAX_FUNCTIONS: usize = 20_000;
 
+/// The maximum number of parameters a wasm function can have.
+/// Any contract with a function type with more parameters than this will be rejected
+/// during static validation.
 const MAX_FUNCTION_PARAMS: usize = 100;
 
+/// The maximum total number of parameters of all functions in the wasm.
+/// For each function in the wasm, take the number of parameters and sum all of these up.
+/// If that sum exceeds this limit, the wasm will be rejected during static validation.
 const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 
+/// The maximum number of results a wasm function can have.
+/// Any contract with a function type with more results than this will be rejected
+/// during static validation.
 const MAX_FUNCTION_RESULTS: usize = 1;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
@@ -932,6 +943,65 @@ mod tests {
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
             ),
+            _ => panic!("Got unexpected error"),
+        }
+    }
+
+    #[test]
+    fn check_wasm_fails_for_big_functions() {
+        // too many arguments
+        let args = " i32".repeat(MAX_FUNCTION_PARAMS + 1);
+        let wasm = wat::parse_str(format!(
+            r#"(module
+            (type (func (param {args})))
+            (func (type 0) nop)
+        )"#
+        ))
+        .unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+
+        match check_wasm_functions(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasm contract contains function with more than 100 parameters"
+            ),
+            _ => panic!("Got unexpected error"),
+        }
+
+        // too many returns
+        let return_types = " i32".repeat(MAX_FUNCTION_RESULTS + 1);
+        let returns = " i32.const 42".repeat(MAX_FUNCTION_RESULTS + 1);
+        let wasm = wat::parse_str(format!(
+            r#"(module
+            (type (func (result {return_types})))
+            (func (type 0) {returns})
+        )"#
+        ))
+        .unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+        match check_wasm_functions(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasm contract contains function with more than 1 results"
+            ),
+            _ => panic!("Got unexpected error"),
+        }
+
+        // too many functions
+        let functions = ["(func (type 0) nop)"; MAX_FUNCTIONS + 1];
+        let functions = functions.join("\n");
+        let wasm = wat::parse_str(format!(
+            r#"(module
+            (type (func))
+            {functions}
+        )"#
+        ))
+        .unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+        match check_wasm_functions(&module).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert_eq!(msg, "Wasm contract contains more than 20000 functions")
+            }
             _ => panic!("Got unexpected error"),
         }
     }
