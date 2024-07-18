@@ -11,4 +11,4 @@ while getopts c option; do
   esac
 done
 
-npx prettier@2.7.1 --$op "./**/*.yml"
+npx prettier@3.3.3 --$op "./**/*.yml"
