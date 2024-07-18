@@ -136,9 +136,9 @@ pub enum IbcSourceCallbackMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcAckCallbackMsg {
-    acknowledgement: IbcAcknowledgement,
-    original_packet: IbcPacket,
-    relayer: Addr,
+    pub acknowledgement: IbcAcknowledgement,
+    pub original_packet: IbcPacket,
+    pub relayer: Addr,
 }
 
 impl IbcAckCallbackMsg {
@@ -158,8 +158,8 @@ impl IbcAckCallbackMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcTimeoutCallbackMsg {
-    packet: IbcPacket,
-    relayer: Addr,
+    pub packet: IbcPacket,
+    pub relayer: Addr,
 }
 
 impl IbcTimeoutCallbackMsg {
