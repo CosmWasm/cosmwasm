@@ -249,4 +249,45 @@ mod test {
                 .unwrap();
         assert!(ParsedWasm::parse(&wasm_data).is_err());
     }
+
+    #[test]
+    fn parsed_wasm_counts_functions_correctly() {
+        let wasm = wat::parse_str(r#"(module)"#).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+        assert_eq!(module.function_count, 0);
+
+        let wasm = wat::parse_str(
+            r#"(module
+            (type (func))
+            (func (type 0) nop)
+            (func (type 0) nop)
+            (export "foo" (func 0))
+            (export "bar" (func 0))
+        )"#,
+        )
+        .unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+        assert_eq!(module.function_count, 2);
+    }
+
+    #[test]
+    fn parsed_wasm_counts_func_io_correctly() {
+        let wasm = wat::parse_str(r#"(module)"#).unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+        assert_eq!(module.max_func_params, 0);
+        assert_eq!(module.max_func_results, 0);
+
+        let wasm = wat::parse_str(
+            r#"(module
+            (type (func (param i32 i32 i32) (result i32)))
+            (type (func (param i32) (result i32 i32)))
+            (func (type 1) i32.const 42 i32.const 42)
+            (func (type 0) i32.const 42)
+        )"#,
+        )
+        .unwrap();
+        let module = ParsedWasm::parse(&wasm).unwrap();
+        assert_eq!(module.max_func_params, 3);
+        assert_eq!(module.max_func_results, 2);
+    }
 }
