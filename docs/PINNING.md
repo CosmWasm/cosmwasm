@@ -75,4 +75,5 @@ every block.
   https://github.com/CosmWasm/wasmd/blob/v0.50.0/x/wasm/keeper/keeper.go#L1011-L1028
 
 [^1]: https://github.com/CosmWasm/wasmd/pull/1799
+
 [^2]: https://github.com/CosmWasm/cosmwasm/issues/2034
