@@ -8,6 +8,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-std: Make fields of `IbcAckCallbackMsg` and `IbcTimeoutCallbackMsg`
+  public. ([#2191])
+
+[#2191]: https://github.com/CosmWasm/cosmwasm/pull/2191
+
 ## [2.1.0] - 2024-07-11
 
 ### Fixed
