@@ -75,6 +75,31 @@ pub enum IbcMsg {
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
+    PayPacketFee {
+        src: IbcEndpoint,
+        fee: IbcFee,
+        /// Allowlist of relayer addresses that can receive the fee.
+        /// This is currently not implemented and *must* be empty.
+        relayers: Vec<String>,
+    },
+    PayPacketFeeAsync {
+        src: IbcEndpoint,
+        sequence: u64,
+        fee: IbcFee,
+        /// Allowlist of relayer addresses that can receive the fee.
+        /// This is currently not implemented and *must* be empty.
+        relayers: Vec<String>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct IbcFee {
+    // the packet receive fee
+    pub recv_fee: Vec<Coin>,
+    // the packet acknowledgement fee
+    pub ack_fee: Vec<Coin>,
+    // the packet timeout fee
+    pub timeout_fee: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

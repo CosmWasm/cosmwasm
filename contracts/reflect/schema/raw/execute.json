@@ -476,6 +476,51 @@
         }
       ]
     },
+    "IbcEndpoint": {
+      "type": "object",
+      "required": [
+        "channel_id",
+        "port_id"
+      ],
+      "properties": {
+        "channel_id": {
+          "type": "string"
+        },
+        "port_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IbcFee": {
+      "type": "object",
+      "required": [
+        "ack_fee",
+        "recv_fee",
+        "timeout_fee"
+      ],
+      "properties": {
+        "ack_fee": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "recv_fee": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "timeout_fee": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "IbcMsg": {
       "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
       "oneOf": [
@@ -582,6 +627,78 @@
               "properties": {
                 "channel_id": {
                   "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "pay_packet_fee"
+          ],
+          "properties": {
+            "pay_packet_fee": {
+              "type": "object",
+              "required": [
+                "fee",
+                "relayers",
+                "src"
+              ],
+              "properties": {
+                "fee": {
+                  "$ref": "#/definitions/IbcFee"
+                },
+                "relayers": {
+                  "description": "Allowlist of relayer addresses that can receive the fee. This is currently not implemented and *must* be empty.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "src": {
+                  "$ref": "#/definitions/IbcEndpoint"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "pay_packet_fee_async"
+          ],
+          "properties": {
+            "pay_packet_fee_async": {
+              "type": "object",
+              "required": [
+                "fee",
+                "relayers",
+                "sequence",
+                "src"
+              ],
+              "properties": {
+                "fee": {
+                  "$ref": "#/definitions/IbcFee"
+                },
+                "relayers": {
+                  "description": "Allowlist of relayer addresses that can receive the fee. This is currently not implemented and *must* be empty.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "sequence": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                },
+                "src": {
+                  "$ref": "#/definitions/IbcEndpoint"
                 }
               },
               "additionalProperties": false
