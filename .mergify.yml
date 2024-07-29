@@ -1,6 +1,6 @@
 # See https://doc.mergify.io/configuration.html
 
-pull_request_rules   :
+pull_request_rules:
   - name: automerge to main with label automerge
     conditions:
       - "#approved-reviews-by>=1"
