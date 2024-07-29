@@ -1,0 +1,31 @@
+name: autofix.ci # needed to securely identify the workflow
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  autofix-text:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "oldstable"
+
+      - name: Install shfmt
+        run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
+      - name: Install npx (for prettier)
+        run: sudo apt install nodejs
+
+      - name: Format Markdown
+        run: ./devtools/format_md.sh
+      - name: Format YAML
+        run: ./devtools/format_yml.sh
+      - name: Format Shell
+        run: ./devtools/format_sh.sh
+
+      # Get latest version from https://autofix.ci/setup
+      - uses: autofix-ci/action@dd55f44df8f7cdb7a6bf74c78677eb8acd40cd0a
