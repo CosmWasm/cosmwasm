@@ -70,7 +70,7 @@ pub trait Storage {
     ) -> Box<dyn Iterator<Item = Record> + 'a> {
         // This default implementation is just to avoid breaking code when enabling the `iterator` feature.
         // Any actual `Storage` impl should override this method.
-        Box::new(std::iter::empty())
+        unimplemented!("This storage does not support ranging. Make sure to override the `range` method in your `Storage` implementation.")
     }
 
     /// Allows iteration over a set of keys, either forwards or backwards.
