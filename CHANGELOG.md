@@ -12,8 +12,11 @@ and this project adheres to
 
 - cosmwasm-std: Make fields of `IbcAckCallbackMsg` and `IbcTimeoutCallbackMsg`
   public. ([#2191])
+- cosmwasm-std: Add default implementation for `Storage::range` to make
+  `iterator` feature additive. ([#2197])
 
 [#2191]: https://github.com/CosmWasm/cosmwasm/pull/2191
+[#2197]: https://github.com/CosmWasm/cosmwasm/pull/2197
 
 ## [2.1.0] - 2024-07-11
 
