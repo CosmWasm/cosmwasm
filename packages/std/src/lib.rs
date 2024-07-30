@@ -70,7 +70,7 @@ pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
     IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
+    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
     TransferMsgBuilder,
