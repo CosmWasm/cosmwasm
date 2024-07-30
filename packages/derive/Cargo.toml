@@ -24,4 +24,4 @@ syn = { version = "2", features = ["full"] }
 # "What's even more fun, Cargo packages actually can have cyclic dependencies.
 # "(a package can have an indirect dev-dependency on itself)"
 # https://users.rust-lang.org/t/does-cargo-support-cyclic-dependencies/35666/3
-cosmwasm-std = { version = "2.1.0", path = "../std" }
+cosmwasm-std = { version = "2.1.1", path = "../std" }

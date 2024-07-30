@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.1.1] - 2024-07-30
+
 ### Fixed
 
 - cosmwasm-std: Make fields of `IbcAckCallbackMsg` and `IbcTimeoutCallbackMsg`
@@ -882,7 +884,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.0...v2.0.0
