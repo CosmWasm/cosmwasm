@@ -61,12 +61,17 @@ pub trait Storage {
     /// The bound `start` is inclusive and `end` is exclusive.
     /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
     #[cfg(feature = "iterator")]
+    #[allow(unused_variables)]
     fn range<'a>(
         &'a self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Record> + 'a>;
+    ) -> Box<dyn Iterator<Item = Record> + 'a> {
+        // This default implementation is just to avoid breaking code when enabling the `iterator` feature.
+        // Any actual `Storage` impl should override this method.
+        Box::new(std::iter::empty())
+    }
 
     /// Allows iteration over a set of keys, either forwards or backwards.
     ///
