@@ -139,13 +139,9 @@ fn bench_instance(c: &mut Criterion) {
         let medium_gas: InstanceOptions = InstanceOptions {
             gas_limit: MEDIUM_GAS_LIMIT,
         };
-        let mut instance = Instance::from_code(
-            CYBERPUNK,
-            backend,
-            medium_gas.clone(),
-            Some(DEFAULT_MEMORY_LIMIT),
-        )
-        .unwrap();
+        let mut instance =
+            Instance::from_code(CYBERPUNK, backend, medium_gas, Some(DEFAULT_MEMORY_LIMIT))
+                .unwrap();
 
         let info = mock_info("creator", &coins(1000, "earth"));
         let contract_result =
@@ -156,14 +152,13 @@ fn bench_instance(c: &mut Criterion) {
         b.iter_batched(
             || {
                 // setup new instance for each iteration because cpu loop will consume all gas
-                let instance = Instance::from_code(
+                Instance::from_code(
                     CYBERPUNK,
                     mock_backend(&[]),
-                    medium_gas.clone(),
+                    medium_gas,
                     Some(DEFAULT_MEMORY_LIMIT),
                 )
-                .unwrap();
-                instance
+                .unwrap()
             },
             |mut instance| {
                 let gas_before = instance.get_gas_left();
