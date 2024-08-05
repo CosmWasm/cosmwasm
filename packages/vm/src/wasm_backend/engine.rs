@@ -16,14 +16,27 @@ use super::limiting_tunables::LimitingTunables;
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
-fn cost(_operator: &Operator) -> u64 {
+fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
     //
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet
     // precise enough to derive insights from it.
-    170
+    const GAS_PER_OPERATION: u64 = 115;
+
+    match operator {
+        Operator::Loop { .. }
+        | Operator::End
+        | Operator::Else
+        | Operator::Br { .. }
+        | Operator::BrTable { .. }
+        | Operator::BrIf { .. }
+        | Operator::Call { .. }
+        | Operator::CallIndirect { .. }
+        | Operator::Return => GAS_PER_OPERATION * 14,
+        _ => GAS_PER_OPERATION,
+    }
 }
 
 /// Use Cranelift as the compiler backend if the feature is enabled
