@@ -8,6 +8,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Backport PR that changed the version pinned dependency
+  `k256 = { version = "=0.13.1", features = ["ecdsa"] }` to the open version
+  range ^0.13.3 by avoiding a normalization of the public key in
+  `secp256k1_recover_pubkey`. ([#2014], [#2198])
+
+[#2014]: https://github.com/CosmWasm/cosmwasm/pull/2014
+[#2198]: https://github.com/CosmWasm/cosmwasm/pull/2198
+
 ## [1.5.5] - 2024-05-10
 
 ### Changed
