@@ -127,6 +127,8 @@ mod tests {
 
     #[test]
     fn deserialize_modified_field_order() {
+        // field order doesn't matter since we encode field names
+
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
         struct TestV1 {
             a: String,
@@ -160,7 +162,7 @@ mod tests {
 
     #[test]
     fn deserialize_new_fields() {
-        // fields can be added, but only to the end of the struct
+        // new fields can be added at the end
 
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
         struct TestV1 {
@@ -190,8 +192,7 @@ mod tests {
 
     #[test]
     fn deserialize_new_fields_in_the_middle() {
-        // fields can be added, but only to the end of the struct
-
+        // fields can be added even in the middle
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
         struct TestV1 {
             a: String,
