@@ -469,6 +469,7 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(filepath)
         .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for writing: {e}")))?;
     file.write_all(wasm)
