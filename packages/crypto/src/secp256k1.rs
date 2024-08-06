@@ -105,18 +105,24 @@ pub fn secp256k1_recover_pubkey(
     let signature = read_signature(signature)?;
 
     // params other than 0 and 1 are explicitly not supported
-    let id = match recovery_param {
+    let mut id = match recovery_param {
         0 => RecoveryId::new(false, false),
         1 => RecoveryId::new(true, false),
         _ => return Err(CryptoError::invalid_recovery_param()),
     };
 
     // Compose extended signature
-    let signature = Signature::from_bytes(&signature.into())
+    let mut signature = Signature::from_bytes(&signature.into())
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     // Recover
     let message_digest = Identity256::new().chain(message_hash);
+
+    if let Some(normalized) = signature.normalize_s() {
+        signature = normalized;
+        id = RecoveryId::new(!id.is_y_odd(), id.is_x_reduced());
+    }
+
     let pubkey = VerifyingKey::recover_from_digest(message_digest, &signature, id)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
