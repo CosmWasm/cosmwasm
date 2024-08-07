@@ -48,6 +48,9 @@ cosmwasm_2_0 = ["cosmwasm_1_4"]
 # This enables functionality that is only available on 2.1 chains.
 # It adds verification and key recovery for the secp256r1 elliptic curve.
 cosmwasm_2_1 = ["cosmwasm_2_0"]
+# This enables functionality that is only available on 2.2 chains.
+# It adds `IbcMsg::PayPacketFee` and `IbcMsg::PayPacketFeeAsync`.
+cosmwasm_2_2 = ["cosmwasm_2_1"]
 
 [dependencies]
 base64 = "0.22.0"

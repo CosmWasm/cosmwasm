@@ -111,6 +111,7 @@ pub enum IbcMsg {
     ///     .add_message(CosmosMsg::Ibc(incentivize))
     ///     .add_message(CosmosMsg::Ibc(transfer));
     /// ```
+    #[cfg(feature = "cosmwasm_2_2")]
     PayPacketFee {
         src: IbcEndpoint,
         fee: IbcFee,
@@ -121,6 +122,7 @@ pub enum IbcMsg {
     /// Incentivizes the existing IBC packet with the given port, channel and sequence with a fee.
     /// Note that this does not necessarily have to be a packet sent by this contract.
     /// The fees are taken from the contract's balance immediately and locked until the packet is handled.
+    #[cfg(feature = "cosmwasm_2_2")]
     PayPacketFeeAsync {
         src: IbcEndpoint,
         sequence: u64,
