@@ -91,7 +91,7 @@ pub enum IbcMsg {
     ///     port_id: "transfer".to_string(),
     ///     channel_id: "source-channel".to_string(),
     ///     fee: IbcFee {
-    ///         recv_fee: coins(100, "token"),
+    ///         receive_fee: coins(100, "token"),
     ///         ack_fee: coins(201, "token"),
     ///         timeout_fee: coins(200, "token"),
     ///     },
@@ -118,12 +118,15 @@ pub enum IbcMsg {
         channel_id: String,
         fee: IbcFee,
         /// Allowlist of relayer addresses that can receive the fee.
+        /// An empty list means that any relayer can receive the fee.
+        ///
         /// This is currently not implemented and *must* be empty.
         relayers: Vec<String>,
     },
     /// Incentivizes the existing IBC packet with the given port, channel and sequence with a fee.
     /// Note that this does not necessarily have to be a packet sent by this contract.
     /// The fees are taken from the contract's balance immediately and locked until the packet is handled.
+    /// They are added to the existing fees on the packet.
     #[cfg(feature = "cosmwasm_2_2")]
     PayPacketFeeAsync {
         /// The port id on the chain where the packet is sent from (this chain).
@@ -134,6 +137,8 @@ pub enum IbcMsg {
         sequence: u64,
         fee: IbcFee,
         /// Allowlist of relayer addresses that can receive the fee.
+        /// An empty list means that any relayer can receive the fee.
+        ///
         /// This is currently not implemented and *must* be empty.
         relayers: Vec<String>,
     },
@@ -142,7 +147,7 @@ pub enum IbcMsg {
 #[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcFee {
     // the packet receive fee
-    pub recv_fee: Vec<Coin>,
+    pub receive_fee: Vec<Coin>,
     // the packet acknowledgement fee
     pub ack_fee: Vec<Coin>,
     // the packet timeout fee

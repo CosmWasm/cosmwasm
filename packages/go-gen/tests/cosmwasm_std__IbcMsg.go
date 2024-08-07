@@ -62,7 +62,7 @@ type IBCAcknowledgement struct {
 }
 type IBCFee struct {
 	AckFee     Array[Coin] `json:"ack_fee"`
-	RecvFee    Array[Coin] `json:"recv_fee"`
+	ReceiveFee Array[Coin] `json:"receive_fee"`
 	TimeoutFee Array[Coin] `json:"timeout_fee"`
 }
 
