@@ -5,7 +5,8 @@ use crate::ibc::IbcChannel;
 use crate::prelude::*;
 
 /// These are queries to the various IBC modules to see the state of the contract's
-/// IBC connection. These will return errors if the contract is not "ibc enabled"
+/// IBC connection.
+/// Most of these will return errors if the contract is not "ibc enabled"
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -28,7 +29,16 @@ pub enum IbcQuery {
         channel_id: String,
         port_id: Option<String>,
     },
-    // TODO: Add more
+    /// Queries whether the given channel supports IBC fees.
+    /// If port_id is omitted, it will default to the contract's own channel.
+    /// (To save a PortId{} call)
+    ///
+    /// Returns a `FeeEnabledChannelResponse`.
+    #[cfg(feature = "cosmwasm_2_2")]
+    FeeEnabledChannel {
+        port_id: Option<String>,
+        channel_id: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -54,3 +64,11 @@ pub struct ChannelResponse {
 }
 
 impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct FeeEnabledChannelResponse {
+    pub fee_enabled: bool,
+}
+
+impl_response_constructor!(FeeEnabledChannelResponse, fee_enabled: bool);

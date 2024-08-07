@@ -113,7 +113,10 @@ pub enum IbcMsg {
     /// ```
     #[cfg(feature = "cosmwasm_2_2")]
     PayPacketFee {
-        src: IbcEndpoint,
+        /// The port id on the chain where the packet is sent from (this chain).
+        port_id: String,
+        /// The channel id on the chain where the packet is sent from (this chain).
+        channel_id: String,
         fee: IbcFee,
         /// Allowlist of relayer addresses that can receive the fee.
         /// This is currently not implemented and *must* be empty.
@@ -124,7 +127,11 @@ pub enum IbcMsg {
     /// The fees are taken from the contract's balance immediately and locked until the packet is handled.
     #[cfg(feature = "cosmwasm_2_2")]
     PayPacketFeeAsync {
-        src: IbcEndpoint,
+        /// The port id on the chain where the packet is sent from (this chain).
+        port_id: String,
+        /// The channel id on the chain where the packet is sent from (this chain).
+        channel_id: String,
+        /// The sequence number of the packet that should be incentivized.
         sequence: u64,
         fee: IbcFee,
         /// Allowlist of relayer addresses that can receive the fee.

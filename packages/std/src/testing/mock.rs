@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::query::FeeEnabledChannelResponse;
 use crate::HashFunction;
 use crate::{Addr, CanonicalAddr, Timestamp};
 use alloc::collections::BTreeMap;
@@ -902,6 +903,11 @@ impl IbcQuerier {
                     port_id: self.port_id.clone(),
                 };
                 to_json_binary(&res).into()
+            }
+            #[cfg(feature = "cosmwasm_2_2")]
+            IbcQuery::FeeEnabledChannel { .. } => {
+                // for now, we always return true
+                to_json_binary(&FeeEnabledChannelResponse::new(true)).into()
             }
         };
         // system result is always ok in the mock implementation
