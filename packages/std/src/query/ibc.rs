@@ -6,7 +6,7 @@ use crate::prelude::*;
 
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection.
-/// Most of these will return errors if the contract is not "ibc enabled"
+/// Most of these will return errors if the contract is not "ibc enabled".
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
