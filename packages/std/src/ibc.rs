@@ -85,14 +85,15 @@ pub enum IbcMsg {
     /// [`IbcMsg::SendPacket`] or [`IbcMsg::Transfer`].
     ///
     /// ```rust
-    /// # use cosmwasm_std::{IbcMsg, IbcEndpoint, IbcFee, IbcTimeout, Coin, CosmosMsg, Response, Timestamp};
+    /// # use cosmwasm_std::{IbcMsg, IbcEndpoint, IbcFee, IbcTimeout, Coin, coins, CosmosMsg, Response, Timestamp};
     ///
     /// let incentivize = IbcMsg::PayPacketFee {
     ///     port_id: "transfer".to_string(),
     ///     channel_id: "source-channel".to_string(),
     ///     fee: IbcFee {
-    ///         recv_fee: vec![Coin::new(100u32, "token")],
-    ///         ..IbcFee::default()
+    ///         recv_fee: coins(100, "token"),
+    ///         ack_fee: coins(201, "token"),
+    ///         timeout_fee: coins(200, "token"),
     ///     },
     ///     relayers: vec![],
     /// };
