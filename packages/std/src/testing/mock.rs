@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use crate::query::FeeEnabledChannelResponse;
 use crate::HashFunction;
 use crate::{Addr, CanonicalAddr, Timestamp};
 use alloc::collections::BTreeMap;
@@ -906,6 +905,7 @@ impl IbcQuerier {
             }
             #[cfg(feature = "cosmwasm_2_2")]
             IbcQuery::FeeEnabledChannel { .. } => {
+                use crate::query::FeeEnabledChannelResponse;
                 // for now, we always return true
                 to_json_binary(&FeeEnabledChannelResponse::new(true)).into()
             }

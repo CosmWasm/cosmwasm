@@ -88,10 +88,8 @@ pub enum IbcMsg {
     /// # use cosmwasm_std::{IbcMsg, IbcEndpoint, IbcFee, IbcTimeout, Coin, CosmosMsg, Response, Timestamp};
     ///
     /// let incentivize = IbcMsg::PayPacketFee {
-    ///     src: IbcEndpoint {
-    ///         port_id: "transfer".to_string(),
-    ///         channel_id: "source-channel".to_string(),
-    ///     },
+    ///     port_id: "transfer".to_string(),
+    ///     channel_id: "source-channel".to_string(),
     ///     fee: IbcFee {
     ///         recv_fee: vec![Coin::new(100u32, "token")],
     ///         ..IbcFee::default()
