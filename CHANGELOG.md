@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-004
+
 ## [2.1.1] - 2024-07-30
 
 ### Fixed
