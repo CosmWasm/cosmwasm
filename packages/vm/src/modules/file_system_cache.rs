@@ -58,7 +58,9 @@ use super::CachedModule;
 /// - **v8**:<br>
 ///   New version because of Wasmer 4.1.2 -> 4.2.2 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed.
-const MODULE_SERIALIZATION_VERSION: &str = "v8";
+/// - **v9**:<br>
+///   New version because of Metering middleware change.
+const MODULE_SERIALIZATION_VERSION: &str = "v9";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
