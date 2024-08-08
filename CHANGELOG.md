@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Problem with caching related to CWA-2024-004. Please upgrade
+  directly to this version instead of the previous one.
+
 ## [2.0.5] - 2024-08-08
 
 ### Fixed
