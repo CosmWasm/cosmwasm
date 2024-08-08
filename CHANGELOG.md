@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-004
+
 ### Changed
 
 - cosmwasm-std: Backport PR that changed the version pinned dependency
