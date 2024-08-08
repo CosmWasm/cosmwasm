@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.6] - 2024-08-08
+
 ### Fixed
 
 - cosmwasm-vm: Problem with caching related to CWA-2024-004. Please upgrade
@@ -829,7 +831,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.5...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.6...HEAD
+[2.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.2...v2.0.3
