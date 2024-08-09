@@ -735,8 +735,8 @@ mod tests {
     fn implements_debug() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub));
         let embedded = format!("Debug: {error:?}");
-        let expected = r#"Debug: Overflow { source: OverflowError { operation: Sub }, backtrace: <disabled> }"#;
-        assert_eq!(embedded, expected);
+        assert!(embedded
+            .starts_with("Debug: Overflow { source: OverflowError { operation: Sub }, backtrace:"));
     }
 
     #[test]

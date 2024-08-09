@@ -16,8 +16,36 @@ use crate::{to_json_binary, Binary};
 
 use super::Empty;
 
-/// Like CustomQuery for better type clarity.
-/// Also makes it shorter to use as a trait bound.
+/// A trait for custom message types which are embedded in `CosmosMsg::Custom(..)`.
+/// Those are messages that the contract and the chain need
+/// to agree on in advance as the chain must be able to deserialize and execute them.
+///
+/// Custom messages are always JSON-encoded when sent from the contract to the environment.
+///
+/// This trait is similar to [`CustomQuery`](crate::CustomQuery) for better type clarity and
+/// makes it shorter to use as a trait bound. It does not require fields or functions to be implemented.
+///
+/// An alternative approach is using [`CosmosMsg::Any`][crate::CosmosMsg#variant.Any]
+/// which provides more flexibility but offers less type-safety.
+///
+/// ## Examples
+///
+/// Some real-world examples of such custom message types are
+/// [TgradeMsg](https://github.com/confio/poe-contracts/blob/v0.17.1/packages/bindings/src/msg.rs#L13),
+/// [ArchwayMsg](https://github.com/archway-network/arch3.rs/blob/bindings/v0.2.1/packages/bindings/src/msg.rs#L22) or
+/// [NeutronMsg](https://github.com/neutron-org/neutron-sdk/blob/v0.11.0/packages/neutron-sdk/src/bindings/msg.rs#L33).
+///
+/// ```
+/// use cosmwasm_schema::cw_serde;
+/// use cosmwasm_std::CustomQuery;
+///
+/// #[cw_serde]
+/// pub enum MyMsg {
+///    // ...
+/// }
+///
+/// impl CustomQuery for MyMsg {}
+/// ```
 pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema {}
 
 impl CustomMsg for Empty {}
