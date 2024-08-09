@@ -14,8 +14,12 @@ and this project adheres to
   These functions are meant to be used similarly to their JSON counterparts.
   [MessagePack](https://msgpack.org) is a more compact, binary encoding.
   ([#2118])
+- cosmwasm-std: Add `IbcMsg::{PayPacketFee, PayPacketFeeAsync}` and
+  `IbcQuery::FeeEnabledChannel` to allow contracts to incentivize IBC packets
+  using IBC Fees. ([#2196])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
+[#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
 
 ### Changed
 

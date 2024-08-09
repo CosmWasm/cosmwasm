@@ -75,6 +75,83 @@ pub enum IbcMsg {
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
+    /// Incentivizes the next IBC packet sent after this message with a fee.
+    /// Note that this does not necessarily have to be a packet sent by this contract.
+    /// The fees are taken from the contract's balance immediately and locked until the packet is handled.
+    ///
+    /// # Example
+    ///
+    /// Most commonly, you will attach this message to a response right before sending a packet using
+    /// [`IbcMsg::SendPacket`] or [`IbcMsg::Transfer`].
+    ///
+    /// ```rust
+    /// # use cosmwasm_std::{IbcMsg, IbcEndpoint, IbcFee, IbcTimeout, Coin, coins, CosmosMsg, Response, Timestamp};
+    ///
+    /// let incentivize = IbcMsg::PayPacketFee {
+    ///     port_id: "transfer".to_string(),
+    ///     channel_id: "source-channel".to_string(),
+    ///     fee: IbcFee {
+    ///         receive_fee: coins(100, "token"),
+    ///         ack_fee: coins(201, "token"),
+    ///         timeout_fee: coins(200, "token"),
+    ///     },
+    ///     relayers: vec![],
+    /// };
+    /// let transfer = IbcMsg::Transfer {
+    ///     channel_id: "source-channel".to_string(),
+    ///     to_address: "receiver".to_string(),
+    ///     amount: Coin::new(100u32, "token"),
+    ///     timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(0)),
+    ///     memo: None,
+    /// };
+    ///
+    /// # #[cfg(feature = "stargate")]
+    /// let _: Response = Response::new()
+    ///     .add_message(CosmosMsg::Ibc(incentivize))
+    ///     .add_message(CosmosMsg::Ibc(transfer));
+    /// ```
+    #[cfg(feature = "cosmwasm_2_2")]
+    PayPacketFee {
+        /// The port id on the chain where the packet is sent from (this chain).
+        port_id: String,
+        /// The channel id on the chain where the packet is sent from (this chain).
+        channel_id: String,
+        fee: IbcFee,
+        /// Allowlist of relayer addresses that can receive the fee.
+        /// An empty list means that any relayer can receive the fee.
+        ///
+        /// This is currently not implemented and *must* be empty.
+        relayers: Vec<String>,
+    },
+    /// Incentivizes the existing IBC packet with the given port, channel and sequence with a fee.
+    /// Note that this does not necessarily have to be a packet sent by this contract.
+    /// The fees are taken from the contract's balance immediately and locked until the packet is handled.
+    /// They are added to the existing fees on the packet.
+    #[cfg(feature = "cosmwasm_2_2")]
+    PayPacketFeeAsync {
+        /// The port id on the chain where the packet is sent from (this chain).
+        port_id: String,
+        /// The channel id on the chain where the packet is sent from (this chain).
+        channel_id: String,
+        /// The sequence number of the packet that should be incentivized.
+        sequence: u64,
+        fee: IbcFee,
+        /// Allowlist of relayer addresses that can receive the fee.
+        /// An empty list means that any relayer can receive the fee.
+        ///
+        /// This is currently not implemented and *must* be empty.
+        relayers: Vec<String>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct IbcFee {
+    // the packet receive fee
+    pub receive_fee: Vec<Coin>,
+    // the packet acknowledgement fee
+    pub ack_fee: Vec<Coin>,
+    // the packet timeout fee
+    pub timeout_fee: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

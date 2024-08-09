@@ -35,45 +35,49 @@ use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
 // See `docs/CAPABILITIES.md` for more details.
 #[cfg(feature = "iterator")]
 #[no_mangle]
-extern "C" fn requires_iterator() -> () {}
+extern "C" fn requires_iterator() {}
 
 #[cfg(feature = "staking")]
 #[no_mangle]
-extern "C" fn requires_staking() -> () {}
+extern "C" fn requires_staking() {}
 
 #[cfg(feature = "stargate")]
 #[no_mangle]
-extern "C" fn requires_stargate() -> () {}
+extern "C" fn requires_stargate() {}
 
 #[cfg(feature = "cosmwasm_1_1")]
 #[no_mangle]
-extern "C" fn requires_cosmwasm_1_1() -> () {}
+extern "C" fn requires_cosmwasm_1_1() {}
 
 #[cfg(feature = "cosmwasm_1_2")]
 #[no_mangle]
-extern "C" fn requires_cosmwasm_1_2() -> () {}
+extern "C" fn requires_cosmwasm_1_2() {}
 
 #[cfg(feature = "cosmwasm_1_3")]
 #[no_mangle]
-extern "C" fn requires_cosmwasm_1_3() -> () {}
+extern "C" fn requires_cosmwasm_1_3() {}
 
 #[cfg(feature = "cosmwasm_1_4")]
 #[no_mangle]
-extern "C" fn requires_cosmwasm_1_4() -> () {}
+extern "C" fn requires_cosmwasm_1_4() {}
 
 #[cfg(feature = "cosmwasm_2_0")]
 #[no_mangle]
-extern "C" fn requires_cosmwasm_2_0() -> () {}
+extern "C" fn requires_cosmwasm_2_0() {}
 
 #[cfg(feature = "cosmwasm_2_1")]
 #[no_mangle]
-extern "C" fn requires_cosmwasm_2_1() -> () {}
+extern "C" fn requires_cosmwasm_2_1() {}
+
+#[cfg(feature = "cosmwasm_2_2")]
+#[no_mangle]
+extern "C" fn requires_cosmwasm_2_2() {}
 
 /// interface_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-extern "C" fn interface_version_8() -> () {}
+extern "C" fn interface_version_8() {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
