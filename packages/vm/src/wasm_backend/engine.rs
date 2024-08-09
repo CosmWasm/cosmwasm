@@ -23,6 +23,10 @@ fn cost(operator: &Operator) -> u64 {
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet
     // precise enough to derive insights from it.
+    //
+    // Please note that any changes to this function need to be accompanied by a bump of
+    // `MODULE_SERIALIZATION_VERSION` to avoid cached modules from using different amounts of gas
+    // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
 
     match operator {
