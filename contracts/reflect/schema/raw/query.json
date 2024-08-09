@@ -357,7 +357,7 @@
       "additionalProperties": false
     },
     "IbcQuery": {
-      "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
+      "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. Most of these will return errors if the contract is not \"ibc enabled\".",
       "oneOf": [
         {
           "description": "Gets the Port ID the current contract is bound to.\n\nReturns a `PortIdResponse`.",
