@@ -11,5 +11,5 @@ for contract_dir in contracts/*/; do
   (
     cd "$contract_dir"
     cargo update -p "$CRATE_NAME"
-  )
+  ) || continue
 done
