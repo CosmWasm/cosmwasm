@@ -422,6 +422,34 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "description": "Queries whether the given channel supports IBC fees. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call)\n\nReturns a `FeeEnabledChannelResponse`.",
+          "type": "object",
+          "required": [
+            "fee_enabled_channel"
+          ],
+          "properties": {
+            "fee_enabled_channel": {
+              "type": "object",
+              "required": [
+                "channel_id"
+              ],
+              "properties": {
+                "channel_id": {
+                  "type": "string"
+                },
+                "port_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
