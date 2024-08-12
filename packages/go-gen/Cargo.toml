@@ -9,12 +9,12 @@ publish = false
 release = false
 
 [dependencies]
-cosmwasm-std = { version = "2.1.1", path = "../std", features = [
+cosmwasm-std = { version = "2.1.3", path = "../std", features = [
   "cosmwasm_2_2",
   "staking",
   "stargate",
 ] }
-cosmwasm-schema = { version = "2.1.1", path = "../schema" }
+cosmwasm-schema = { version = "2.1.3", path = "../schema" }
 anyhow = "1"
 Inflector = "0.11.4"
 indenter = "0.3.3"

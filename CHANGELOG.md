@@ -32,6 +32,19 @@ and this project adheres to
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 
+## [2.1.3] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Problem with caching related to CWA-2024-004. Please upgrade
+  directly to this version instead of the previous one.
+
+## [2.1.2] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-004
+
 ## [2.1.1] - 2024-07-30
 
 ### Fixed
@@ -908,7 +921,9 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1
