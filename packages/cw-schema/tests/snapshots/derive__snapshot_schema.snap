@@ -1,0 +1,96 @@
+---
+source: packages/cw-schema/tests/derive.rs
+expression: schema
+---
+{
+  "type": "v1",
+  "root": 6,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "derive::Bar",
+      "description": "Bar struct!",
+      "type": "struct",
+      "properties": {
+        "baz": {
+          "description": "Bar field!",
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "core::option::Option<derive::Bar>",
+      "type": "optional",
+      "inner": 2
+    },
+    {
+      "name": "derive::Baz",
+      "description": "Baz enum!",
+      "type": "enum",
+      "cases": {
+        "A": {
+          "description": "A variant!",
+          "type": "unit"
+        },
+        "B": {
+          "description": "B variant!",
+          "type": "named",
+          "properties": {
+            "c": {
+              "description": "C field!",
+              "value": 1
+            }
+          }
+        },
+        "D": {
+          "description": "D variant!",
+          "type": "tuple",
+          "items": [
+            1,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "(u32, u32)",
+      "type": "tuple",
+      "items": [
+        1,
+        1
+      ]
+    },
+    {
+      "name": "derive::HelloWorld",
+      "description": "Hello world struct!",
+      "type": "struct",
+      "properties": {
+        "baz": {
+          "description": "Baz field!",
+          "value": 4
+        },
+        "foo": {
+          "description": "Foo field!",
+          "value": 3
+        },
+        "name": {
+          "description": "Name field!",
+          "value": 0
+        },
+        "tuple": {
+          "description": "Tuple field!",
+          "value": 5
+        }
+      }
+    }
+  ]
+}
