@@ -14,6 +14,7 @@ use crate::{StdError, StdResult};
 /// This is often referred to as "code ID" in go-cosmwasm, even if code ID
 /// usually refers to an auto-incrementing number.
 #[derive(JsonSchema, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct Checksum(#[schemars(with = "String")] [u8; 32]);
 
 impl Checksum {

@@ -36,6 +36,7 @@ use super::num_consts::NumConsts;
 /// assert_eq!(b.u64(), 70);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);

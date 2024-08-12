@@ -31,6 +31,7 @@ use super::num_consts::NumConsts;
 /// assert_eq!(a.i128(), 258);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct Int128(#[schemars(with = "String")] pub(crate) i128);
 
 forward_ref_partial_eq!(Int128, Int128);

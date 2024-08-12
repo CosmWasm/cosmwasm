@@ -7,6 +7,7 @@ use crate::CoinFromStrError;
 use crate::Uint128;
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Coin {
     pub denom: String,
     pub amount: Uint128,

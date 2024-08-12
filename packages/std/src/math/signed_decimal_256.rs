@@ -27,6 +27,7 @@ use super::Int256;
 /// -57896044618658097711785492504343953926634992332820282019728.792003956564819968
 /// (which is -2^255 / 10^18).
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct SignedDecimal256(#[schemars(with = "String")] Int256);
 
 forward_ref_partial_eq!(SignedDecimal256, SignedDecimal256);

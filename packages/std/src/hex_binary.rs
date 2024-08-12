@@ -15,6 +15,7 @@ use crate::{
 /// This is similar to `cosmwasm_std::Binary` but uses hex.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct HexBinary(#[schemars(with = "String")] Vec<u8>);
 
 impl HexBinary {

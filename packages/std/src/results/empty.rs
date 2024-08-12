@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Empty {}
 
 #[cfg(test)]

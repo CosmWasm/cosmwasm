@@ -32,6 +32,7 @@ use crate::prelude::*;
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {
     Ok(S),

@@ -35,6 +35,7 @@ use crate::Binary;
 /// assert!(ack2.is_error());
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum StdAck {
     #[serde(rename = "result")]

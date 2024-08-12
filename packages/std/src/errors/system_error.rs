@@ -15,6 +15,7 @@ use crate::Binary;
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, schemars::JsonSchema, thiserror::Error,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {

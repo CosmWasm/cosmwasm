@@ -15,6 +15,7 @@ use crate::{
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.
 /// See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct Binary(#[schemars(with = "String")] Vec<u8>);
 
 impl Binary {

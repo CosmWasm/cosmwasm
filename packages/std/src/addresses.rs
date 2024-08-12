@@ -29,6 +29,7 @@ use crate::{HexBinary, __internal::forward_ref_partial_eq};
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, schemars::JsonSchema,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Addr(String);
 
 forward_ref_partial_eq!(Addr, Addr);
@@ -129,6 +130,7 @@ impl<'a> From<&'a Addr> for Cow<'a, Addr> {
 /// So the type should be treated as a marker to express the intended data type, not as
 /// a validity guarantee of any sort.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CanonicalAddr(Binary);
 
 /// Implement `CanonicalAddr == Binary`

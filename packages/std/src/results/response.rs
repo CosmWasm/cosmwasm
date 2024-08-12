@@ -61,6 +61,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// }
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct Response<T = Empty> {
     /// Optional list of messages to pass. These will be executed in order.

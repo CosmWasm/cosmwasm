@@ -42,6 +42,7 @@ pub use wasm::*;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest<C = Empty> {
     Bank(BankQuery),
@@ -85,6 +86,7 @@ pub enum QueryRequest<C = Empty> {
 /// you can query the chain's gRPC endpoint using a tool like
 /// [grpcurl](https://github.com/fullstorydev/grpcurl).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GrpcQuery {
     /// The fully qualified endpoint path used for routing.
     /// It follows the format `/service_path/method_name`,

@@ -5,6 +5,7 @@ use crate::prelude::*;
 
 /// Replicates the cosmos-sdk bank module Metadata type
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DenomMetadata {
     pub description: String,
     pub denom_units: Vec<DenomUnit>,
@@ -18,6 +19,7 @@ pub struct DenomMetadata {
 
 /// Replicates the cosmos-sdk bank module DenomUnit type
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DenomUnit {
     pub denom: String,
     pub exponent: u32,

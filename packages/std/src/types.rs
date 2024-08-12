@@ -6,6 +6,7 @@ use crate::prelude::*;
 use crate::{Addr, Timestamp};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
@@ -16,6 +17,7 @@ pub struct Env {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
@@ -27,6 +29,7 @@ pub struct TransactionInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
     pub height: u64,
@@ -106,6 +109,7 @@ pub struct MessageInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContractInfo {
     pub address: Addr,
 }

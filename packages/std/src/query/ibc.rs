@@ -9,6 +9,7 @@ use crate::prelude::*;
 /// Most of these will return errors if the contract is not "ibc enabled".
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum IbcQuery {
     /// Gets the Port ID the current contract is bound to.
@@ -42,6 +43,7 @@ pub enum IbcQuery {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct PortIdResponse {
     pub port_id: String,
@@ -50,6 +52,7 @@ pub struct PortIdResponse {
 impl_response_constructor!(PortIdResponse, port_id: String);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct ListChannelsResponse {
     pub channels: Vec<IbcChannel>,
@@ -58,6 +61,7 @@ pub struct ListChannelsResponse {
 impl_response_constructor!(ListChannelsResponse, channels: Vec<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,
@@ -66,6 +70,7 @@ pub struct ChannelResponse {
 impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct FeeEnabledChannelResponse {
     pub fee_enabled: bool,

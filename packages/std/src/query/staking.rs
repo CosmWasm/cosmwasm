@@ -8,6 +8,7 @@ use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum StakingQuery {
     /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
@@ -36,6 +37,7 @@ pub enum StakingQuery {
 
 /// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct BondedDenomResponse {
@@ -48,6 +50,7 @@ impl_response_constructor!(BondedDenomResponse, denom: String);
 
 /// DelegationsResponse is data format returned from StakingRequest::AllDelegations query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct AllDelegationsResponse {
@@ -62,6 +65,7 @@ impl_response_constructor!(AllDelegationsResponse, delegations: Vec<Delegation>)
 ///
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct Delegation {
     pub delegator: Addr,
@@ -85,6 +89,7 @@ impl From<FullDelegation> for Delegation {
 
 /// DelegationResponse is data format returned from StakingRequest::Delegation query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct DelegationResponse {
@@ -100,6 +105,7 @@ impl_response_constructor!(DelegationResponse, delegation: Option<FullDelegation
 ///
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct FullDelegation {
     pub delegator: Addr,
@@ -148,6 +154,7 @@ impl FullDelegation {
 
 /// The data format returned from StakingRequest::AllValidators query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct AllValidatorsResponse {
     pub validators: Vec<Validator>,
@@ -159,6 +166,7 @@ impl_response_constructor!(AllValidatorsResponse, validators: Vec<Validator>);
 
 /// The data format returned from StakingRequest::Validator query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct ValidatorResponse {
     pub validator: Option<Validator>,
@@ -170,6 +178,7 @@ impl_response_constructor!(ValidatorResponse, validator: Option<Validator>);
 
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[non_exhaustive]
 pub struct Validator {
     /// The operator address of the validator (e.g. cosmosvaloper1...).

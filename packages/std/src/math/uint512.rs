@@ -47,6 +47,7 @@ use super::num_consts::NumConsts;
 /// assert_eq!(a, b);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema), schema(value_type = String))]
 pub struct Uint512(#[schemars(with = "String")] pub(crate) U512);
 
 forward_ref_partial_eq!(Uint512, Uint512);

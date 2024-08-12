@@ -34,6 +34,7 @@ use crate::Uint64;
     Ord,
     schemars::JsonSchema,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {

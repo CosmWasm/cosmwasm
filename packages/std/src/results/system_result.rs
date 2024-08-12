@@ -31,6 +31,7 @@ use crate::SystemError;
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum SystemResult<S> {
     Ok(S),
