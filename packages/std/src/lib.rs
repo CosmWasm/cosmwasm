@@ -116,7 +116,7 @@ pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
-pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
+pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
 // Exposed in wasm build only
 
@@ -127,6 +127,8 @@ mod imports;
 #[cfg(target_arch = "wasm32")]
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
+#[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
+pub use crate::exports::do_migrate_with_info;
 #[cfg(target_arch = "wasm32")]
 pub use crate::exports::{
     do_execute, do_ibc_destination_callback, do_ibc_source_callback, do_instantiate, do_migrate,

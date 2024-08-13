@@ -86,6 +86,8 @@ pub enum VmError {
     WriteAccessDenied { backtrace: BT },
     #[error("Maximum call depth exceeded.")]
     MaxCallDepthExceeded { backtrace: BT },
+    #[error("The called function args arity does not match.")]
+    FunctionArityMismatch { backtrace: BT },
 }
 
 impl VmError {
@@ -242,6 +244,12 @@ impl VmError {
             backtrace: BT::capture(),
         }
     }
+
+    pub(crate) fn function_arity_mismatch() -> Self {
+        VmError::FunctionArityMismatch {
+            backtrace: BT::capture(),
+        }
+    }
 }
 
 impl_from_err!(CommunicationError, VmError, VmError::CommunicationErr);
@@ -297,7 +305,7 @@ impl From<wasmer::RuntimeError> for VmError {
         let message = format!("RuntimeError: {}", original.message());
         debug_assert!(
             original.to_string().starts_with(&message),
-            "The error message we created is not a prefix of the error message from Wasmer. Our message: '{}'. Wasmer messsage: '{}'",
+            "The error message we created is not a prefix of the error message from Wasmer. Our message: '{}'. Wasmer message: '{}'",
             &message,
             original
         );
@@ -379,7 +387,7 @@ mod tests {
     }
 
     #[test]
-    fn cyrpto_err_works() {
+    fn crypto_err_works() {
         let error = VmError::crypto_err(CryptoError::generic_err("something went wrong"));
         match error {
             VmError::CryptoErr {

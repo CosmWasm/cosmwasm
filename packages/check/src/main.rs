@@ -13,7 +13,7 @@ use cosmwasm_vm::internals::{check_wasm, compile, make_compiling_engine, LogOutp
 use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
-    "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
+    "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2";
 
 pub fn main() {
     let matches = Command::new("Contract checking")

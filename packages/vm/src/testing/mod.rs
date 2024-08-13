@@ -6,7 +6,7 @@ mod mock;
 mod querier;
 mod storage;
 
-pub use calls::{execute, instantiate, migrate, query, reply, sudo};
+pub use calls::{execute, instantiate, migrate, migrate_with_info, query, reply, sudo};
 #[cfg(feature = "stargate")]
 pub use calls::{
     ibc_channel_close, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, ibc_packet_receive,

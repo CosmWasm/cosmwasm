@@ -28,7 +28,7 @@ use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_json, to_json_vec};
 use crate::types::Env;
-use crate::{CustomMsg, Deps, DepsMut, MessageInfo};
+use crate::{CustomMsg, Deps, DepsMut, MessageInfo, MigrateInfo};
 
 // These functions are used as markers for the chain to know which features this contract requires.
 // If the chain does not support all the required features, it will reject storing the contract.
@@ -193,6 +193,38 @@ where
         migrate_fn,
         env_ptr as *mut Region<Owned>,
         msg_ptr as *mut Region<Owned>,
+    );
+    let v = to_json_vec(&res).unwrap();
+    Region::from_vec(v).to_heap_ptr() as u32
+}
+
+/// do_migrate_with_info should be wrapped in an external "C" export,
+/// containing a contract-specific function as arg
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+#[cfg(feature = "cosmwasm_2_2")]
+pub fn do_migrate_with_info<Q, M, C, E>(
+    migrate_with_info_fn: &dyn Fn(DepsMut<Q>, Env, M, MigrateInfo) -> Result<Response<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+    migrate_info_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    M: DeserializeOwned,
+    C: CustomMsg,
+    E: ToString,
+{
+    #[cfg(feature = "abort")]
+    install_panic_handler();
+    let res = _do_migrate_with_info(
+        migrate_with_info_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+        migrate_info_ptr as *mut Region<Owned>,
     );
     let v = to_json_vec(&res).unwrap();
     Region::from_vec(v).to_heap_ptr() as u32
@@ -568,6 +600,30 @@ where
 
     let mut deps = make_dependencies();
     migrate_fn(deps.as_mut(), env, msg).into()
+}
+
+fn _do_migrate_with_info<Q, M, C, E>(
+    migrate_with_info_fn: &dyn Fn(DepsMut<Q>, Env, M, MigrateInfo) -> Result<Response<C>, E>,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
+    migrate_info_ptr: *mut Region<Owned>,
+) -> ContractResult<Response<C>>
+where
+    Q: CustomQuery,
+    M: DeserializeOwned,
+    C: CustomMsg,
+    E: ToString,
+{
+    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
+    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let migrate_info = unsafe { Region::from_heap_ptr(migrate_info_ptr).into_vec() };
+
+    let env: Env = try_into_contract_result!(from_json(env));
+    let msg: M = try_into_contract_result!(from_json(msg));
+    let migrate_info: MigrateInfo = try_into_contract_result!(from_json(migrate_info));
+
+    let mut deps = make_dependencies();
+    migrate_with_info_fn(deps.as_mut(), env, msg, migrate_info).into()
 }
 
 fn _do_sudo<Q, M, C, E>(
