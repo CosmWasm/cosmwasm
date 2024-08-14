@@ -17,8 +17,10 @@ pub use instance::{
     mock_instance_with_failing_api, mock_instance_with_gas_limit, mock_instance_with_options,
     test_io, MockInstanceOptions,
 };
+#[allow(deprecated)]
 pub use mock::{
-    mock_backend, mock_backend_with_balances, mock_env, mock_info, MockApi, MOCK_CONTRACT_ADDR,
+    mock_backend, mock_backend_with_balances, mock_env, mock_environment, mock_info, MockApi,
+    MOCK_CONTRACT_ADDR,
 };
 pub use querier::MockQuerier;
 pub use storage::MockStorage;

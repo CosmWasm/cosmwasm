@@ -18,10 +18,11 @@ pub use mock::mock_info;
 pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
 pub use mock::StakingQuerier;
+#[allow(deprecated)]
 pub use mock::{
     mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances, mock_env,
-    mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
-    MockStorage, MOCK_CONTRACT_ADDR,
+    mock_environment, mock_wasmd_attr, BankQuerier, MockApi, MockQuerier,
+    MockQuerierCustomHandlerResult, MockStorage, MOCK_CONTRACT_ADDR,
 };
 #[cfg(feature = "stargate")]
 pub use mock::{

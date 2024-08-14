@@ -342,6 +342,7 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 /// test for expiration.
 ///
 /// This is intended for use in test code only.
+#[deprecated = "This produces an invalid contract address. Use mock_environment instead."]
 pub fn mock_env() -> Env {
     Env {
         block: BlockInfo {
@@ -352,6 +353,25 @@ pub fn mock_env() -> Env {
         transaction: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {
             address: Addr::unchecked(MOCK_CONTRACT_ADDR),
+        },
+    }
+}
+
+/// Returns a default environment with height, time, chain_id, and contract address
+/// You can submit as is to most contracts, or modify height/time if you want to
+/// test for expiration.
+///
+/// This is intended for use in test code only.
+pub fn mock_environment(api: &MockApi) -> Env {
+    Env {
+        block: BlockInfo {
+            height: 12_345,
+            time: Timestamp::from_nanos(1_571_797_419_879_305_533),
+            chain_id: "cosmos-testnet-14002".to_string(),
+        },
+        transaction: Some(TransactionInfo { index: 3 }),
+        contract: ContractInfo {
+            address: api.addr_make(MOCK_CONTRACT_ADDR),
         },
     }
 }
