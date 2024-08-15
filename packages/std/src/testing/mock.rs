@@ -73,7 +73,13 @@ pub fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty
 pub fn mock_dependencies_with_balance(
     contract_balance: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
-    mock_dependencies_with_balances(&[(MOCK_CONTRACT_ADDR, contract_balance)])
+    let mut deps = mock_dependencies();
+    deps.querier.bank.update_balance(
+        deps.api.addr_make(MOCK_CONTRACT_ADDR),
+        contract_balance.to_vec(),
+    );
+
+    deps
 }
 
 /// Initializes the querier along with the mock_dependencies.
