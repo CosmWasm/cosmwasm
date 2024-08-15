@@ -101,6 +101,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn cost_works() {
+        // accounting operator
+        assert_eq!(cost(&Operator::Br { relative_depth: 3 }), 1610);
+        assert_eq!(cost(&Operator::Return {}), 1610);
+
+        // anything else
+        assert_eq!(cost(&Operator::I64Const { value: 7 }), 115);
+        assert_eq!(cost(&Operator::I64Extend8S {}), 115);
+    }
+
+    #[test]
     fn limit_to_pages_works() {
         // rounds down
         assert_eq!(limit_to_pages(Size::new(0)), Pages(0));
