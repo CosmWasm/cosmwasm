@@ -29,6 +29,13 @@ pub fn main() {
                 .action(ArgAction::Set),
         )
         .arg(
+            Arg::new("VERBOSE")
+                .long("verbose")
+                .num_args(0)
+                .help("Prints additional information on stderr")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
             Arg::new("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
@@ -54,7 +61,7 @@ pub fn main() {
 
     let (passes, failures): (Vec<_>, _) = paths
         .map(|p| {
-            let result = check_contract(p, &available_capabilities);
+            let result = check_contract(p, &available_capabilities, matches.get_flag("VERBOSE"));
             match &result {
                 Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
@@ -88,6 +95,7 @@ pub fn main() {
 fn check_contract(
     path: impl AsRef<Path>,
     available_capabilities: &HashSet<String>,
+    verbose: bool,
 ) -> anyhow::Result<()> {
     let mut file = File::open(path)?;
 
@@ -95,7 +103,7 @@ fn check_contract(
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)?;
 
-    let mut logs = Logs::new();
+    let mut logs = if verbose { Logs::new() } else { Logs::Off };
     // Check wasm
     let res = check_wasm_with_logs(&wasm, available_capabilities, &mut logs);
     for line in logs {
