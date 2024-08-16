@@ -295,7 +295,7 @@ fn query_int() -> IntResponse {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_dependencies_with_balances, mock_environment,
+        message_info, mock_dependencies, mock_dependencies_with_balances_valid, mock_environment,
         MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
@@ -428,16 +428,21 @@ mod tests {
 
     #[test]
     fn querier_callbacks_work() {
-        let rich_addr = String::from("foobar");
+        let rich_addr = "foobar";
         let rich_balance = coins(10000, "gold");
-        let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
+        let deps = mock_dependencies_with_balances_valid(&[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
-        let bal = query_other_balance(deps.as_ref(), rich_addr).unwrap();
+        let bal =
+            query_other_balance(deps.as_ref(), deps.api.addr_make(rich_addr).to_string()).unwrap();
         assert_eq!(bal.amount, rich_balance);
 
         // querying other accounts gets none
-        let bal = query_other_balance(deps.as_ref(), String::from("someone else")).unwrap();
+        let bal = query_other_balance(
+            deps.as_ref(),
+            deps.api.addr_make("someone else").to_string(),
+        )
+        .unwrap();
         assert_eq!(bal.amount, vec![]);
     }
 

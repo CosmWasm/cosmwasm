@@ -70,20 +70,28 @@ pub fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty
 /// Creates all external requirements that can be injected for unit tests.
 ///
 /// It sets the given balance for the contract itself, nothing else.
+#[deprecated(
+    note = "This works only with mock_env, not mock_environment. Use mock_dependencies_with_contract_balance instead"
+)]
 pub fn mock_dependencies_with_balance(
     contract_balance: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
-    let mut deps = mock_dependencies();
-    deps.querier.bank.update_balance(
-        deps.api.addr_make(MOCK_CONTRACT_ADDR),
-        contract_balance.to_vec(),
-    );
+    #[allow(deprecated)]
+    mock_dependencies_with_balances(&[(MOCK_CONTRACT_ADDR, contract_balance)])
+}
 
-    deps
+/// Creates all external requirements that can be injected for unit tests.
+///
+/// It sets the given balance for the contract itself, nothing else.
+pub fn mock_dependencies_with_contract_balance(
+    contract_balance: &[Coin],
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+    mock_dependencies_with_balances_valid(&[(MOCK_CONTRACT_ADDR, contract_balance)])
 }
 
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (you must explicitly set contract balance if desired).
+#[deprecated = "This works only with mock_env, not mock_environment. Use mock_dependencies_with_balances_valid instead"]
 pub fn mock_dependencies_with_balances(
     balances: &[(&str, &[Coin])],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
@@ -93,6 +101,20 @@ pub fn mock_dependencies_with_balances(
         querier: MockQuerier::new(balances),
         custom_query_type: PhantomData,
     }
+}
+
+/// Initializes the querier along with the mock_dependencies.
+/// Sets all balances provided (you must explicitly set contract balance if desired).
+pub fn mock_dependencies_with_balances_valid(
+    balances: &[(&str, &[Coin])],
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty> {
+    let mut deps = mock_dependencies();
+    for (addr, coins) in balances {
+        deps.querier
+            .bank
+            .update_balance(deps.api.addr_make(addr), coins.to_vec());
+    }
+    deps
 }
 
 // Use MemoryStorage implementation (which is valid in non-testcode)

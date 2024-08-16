@@ -20,7 +20,8 @@ pub use mock::DistributionQuerier;
 pub use mock::StakingQuerier;
 #[allow(deprecated)]
 pub use mock::{
-    mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances, mock_env,
+    mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances,
+    mock_dependencies_with_balances_valid, mock_dependencies_with_contract_balance, mock_env,
     mock_environment, mock_wasmd_attr, BankQuerier, MockApi, MockQuerier,
     MockQuerierCustomHandlerResult, MockStorage, MOCK_CONTRACT_ADDR,
 };

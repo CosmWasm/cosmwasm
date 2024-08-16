@@ -83,7 +83,7 @@ fn cleanup(storage: &mut dyn Storage, mut limit: usize) -> usize {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_dependencies_with_balance, mock_environment,
+        message_info, mock_dependencies, mock_dependencies_with_contract_balance, mock_environment,
     };
     use cosmwasm_std::{coins, Attribute, StdError, Storage, SubMsg};
 
@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn migrate_sends_funds() {
-        let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+        let mut deps = mock_dependencies_with_contract_balance(&coins(123456, "gold"));
         let env = mock_environment(&deps.api);
 
         // change the verifier via migrate
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn migrate_with_delete() {
-        let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+        let mut deps = mock_dependencies_with_contract_balance(&coins(123456, "gold"));
         let env = mock_environment(&deps.api);
 
         // store some sample data
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn execute_cleans_up_data() {
-        let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+        let mut deps = mock_dependencies_with_contract_balance(&coins(123456, "gold"));
         let env = mock_environment(&deps.api);
 
         let anon = deps.api.addr_make("anon");
