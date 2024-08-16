@@ -62,9 +62,7 @@ impl fmt::Display for Coin {
 /// # Examples
 ///
 /// ```
-/// # use cosmwasm_std::{coins, BankMsg, CosmosMsg, Response, SubMsg};
-/// # use cosmwasm_std::testing::mock_env;
-/// # let env = mock_env();
+/// # use cosmwasm_std::{coins, BankMsg, Response, SubMsg};
 /// # let recipient = "blub".to_string();
 /// let tip = coins(123, "ucosm");
 ///
@@ -83,9 +81,7 @@ pub fn coins(amount: u128, denom: impl Into<String>) -> Vec<Coin> {
 /// # Examples
 ///
 /// ```
-/// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, Response, SubMsg};
-/// # use cosmwasm_std::testing::{mock_env, mock_info};
-/// # let env = mock_env();
+/// # use cosmwasm_std::{coin, BankMsg, Response, SubMsg};
 /// # let recipient = "blub".to_string();
 /// let tip = vec![
 ///     coin(123, "ucosm"),
