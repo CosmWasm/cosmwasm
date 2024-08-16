@@ -110,8 +110,8 @@ pub struct LogAccess<'a>(RefMut<'a, Vec<String>>);
 
 impl<'a> LogAccess<'a> {
     /// Adds a message to the logs
-    pub fn add(&mut self, msg: String) {
-        self.0.push(msg);
+    pub fn add(&mut self, msg: impl Into<String>) {
+        self.0.push(msg.into());
     }
 }
 
@@ -409,18 +409,16 @@ mod tests {
     fn logs_works() {
         let mut logs = Logs::new();
 
-        if let Some(mut logs) = logs.open() {
-            logs.add(format!("a test"));
-        }
+        logs.add(|| "a test".to_string());
 
         if let Some(mut logs) = logs.open() {
-            logs.add(format!("second test"));
-            logs.add(format!("third test"));
+            logs.add("second test");
+            logs.add("third test");
         }
 
         let mut logs_b = logs.clone();
         if let Some(mut logs) = logs_b.open() {
-            logs.add(format!("added in b"));
+            logs.add("added in b");
         }
 
         let mut iter = logs.into_iter();
