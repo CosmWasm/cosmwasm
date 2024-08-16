@@ -127,13 +127,14 @@ pub fn mock_instance_with_options(
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     check_wasm(wasm, &options.available_capabilities).unwrap();
 
+    // we need to create the address up here because the failing api will panic
+    let contract_address = MockApi::default().addr_make(MOCK_CONTRACT_ADDR);
+
     let api = if let Some(backend_error) = options.backend_error {
         MockApi::new_failing(backend_error)
     } else {
         MockApi::default()
     };
-
-    let contract_address = api.addr_make(MOCK_CONTRACT_ADDR);
 
     // merge balances
     let mut balances = options.balances.to_vec();
