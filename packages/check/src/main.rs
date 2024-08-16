@@ -95,10 +95,10 @@ fn check_contract(
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)?;
 
-    let logs = Logs::new();
+    let mut logs = Logs::new();
     // Check wasm
-    let res = check_wasm_with_logs(&wasm, available_capabilities, logs.clone());
-    for line in logs.iter() {
+    let res = check_wasm_with_logs(&wasm, available_capabilities, &mut logs);
+    for line in logs {
         eprintln!("{}", line);
     }
     res?;
