@@ -24,7 +24,7 @@ use cosmwasm_std::{
 use cosmwasm_vm::{
     call_execute, from_slice,
     testing::{
-        execute, instantiate, migrate, mock_env, mock_info, mock_instance,
+        execute, instantiate, migrate, mock_environment, mock_info, mock_instance,
         mock_instance_with_balances, query, sudo, test_io, MockApi, MOCK_CONTRACT_ADDR,
     },
     Storage, VmError,
@@ -53,6 +53,7 @@ fn make_init_msg(api: &MockApi) -> (InstantiateMsg, String) {
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
     assert_eq!(deps.required_capabilities().len(), 0);
 
     let verifier = deps.api().addr_make("verifies");
@@ -69,7 +70,7 @@ fn proper_initialization() {
         beneficiary,
     };
     let info = mock_info(&creator, &coins(1000, "earth"));
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, env.clone(), info, msg).unwrap();
     assert_eq!(res.messages.len(), 0);
     assert_eq!(res.attributes, [("Let the", "hacking begin")]);
 
@@ -90,6 +91,7 @@ fn proper_initialization() {
 #[test]
 fn instantiate_and_query() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let verifier = deps.api().addr_make("verifies");
     let beneficiary = deps.api().addr_make("benefits");
@@ -99,18 +101,18 @@ fn instantiate_and_query() {
         beneficiary,
     };
     let info = mock_info(&creator, &coins(1000, "earth"));
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, env.clone(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
-    let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+    let query_response = query(&mut deps, env.clone(), QueryMsg::Verifier {}).unwrap();
     assert_eq!(
         query_response,
         format!("{{\"verifier\":\"{verifier}\"}}").as_bytes()
     );
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
-    let qres = query(&mut deps, mock_env(), ExecuteMsg::Release {});
+    let qres = query(&mut deps, env, ExecuteMsg::Release {});
     let msg = qres.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -118,6 +120,7 @@ fn instantiate_and_query() {
 #[test]
 fn migrate_verifier() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let verifier = deps.api().addr_make("verifies");
     let beneficiary = deps.api().addr_make("benefits");
@@ -127,11 +130,11 @@ fn migrate_verifier() {
         beneficiary,
     };
     let info = mock_info(&creator, &[]);
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, env.clone(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'verifies'
-    let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+    let query_response = query(&mut deps, env.clone(), QueryMsg::Verifier {}).unwrap();
     assert_eq!(
         query_response,
         format!("{{\"verifier\":\"{verifier}\"}}").as_bytes()
@@ -142,11 +145,11 @@ fn migrate_verifier() {
     let msg = MigrateMsg {
         verifier: someone_else.clone(),
     };
-    let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
+    let res: Response = migrate(&mut deps, env.clone(), msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'someone else'
-    let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+    let query_response = query(&mut deps, env, QueryMsg::Verifier {}).unwrap();
     assert_eq!(
         query_response,
         format!("{{\"verifier\":\"{someone_else}\"}}").as_bytes()
@@ -156,6 +159,7 @@ fn migrate_verifier() {
 #[test]
 fn sudo_can_steal_tokens() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let verifier = deps.api().addr_make("verifies");
     let beneficiary = deps.api().addr_make("benefits");
@@ -165,7 +169,7 @@ fn sudo_can_steal_tokens() {
         beneficiary,
     };
     let info = mock_info(&creator, &[]);
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, env.clone(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // sudo takes any tax it wants
@@ -175,7 +179,7 @@ fn sudo_can_steal_tokens() {
         recipient: to_address.clone(),
         amount: amount.clone(),
     };
-    let res: Response = sudo(&mut deps, mock_env(), sys_msg).unwrap();
+    let res: Response = sudo(&mut deps, env, sys_msg).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.first().expect("no message");
     assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
@@ -186,10 +190,11 @@ fn querier_callbacks_work() {
     let rich_addr = String::from("cosmwasm1qqvk2mde");
     let rich_balance = coins(10000, "gold");
     let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr, &rich_balance)]);
+    let env = mock_environment(deps.api());
 
     // querying with balance gets the balance
     let query_msg = QueryMsg::OtherBalance { address: rich_addr };
-    let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
+    let query_response = query(&mut deps, env.clone(), query_msg).unwrap();
     let bal: AllBalanceResponse = from_json(query_response).unwrap();
     assert_eq!(bal.amount, rich_balance);
 
@@ -197,7 +202,7 @@ fn querier_callbacks_work() {
     let query_msg = QueryMsg::OtherBalance {
         address: String::from("someone else"),
     };
-    let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
+    let query_response = query(&mut deps, env, query_msg).unwrap();
     let bal: AllBalanceResponse = from_json(query_response).unwrap();
     assert_eq!(bal.amount, vec![]);
 }
@@ -205,10 +210,10 @@ fn querier_callbacks_work() {
 #[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
     let info = mock_info("creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res: ContractResult<Response> =
-        instantiate(&mut deps, mock_env(), info, ExecuteMsg::Release {});
+    let res: ContractResult<Response> = instantiate(&mut deps, env, info, ExecuteMsg::Release {});
     let msg = res.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -216,6 +221,7 @@ fn fails_on_bad_init() {
 #[test]
 fn execute_release_works() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     // initialize the store
     let creator = deps.api().addr_make("creator");
@@ -229,12 +235,12 @@ fn execute_release_works() {
     let init_amount = coins(1000, "earth");
     let init_info = mock_info(&creator, &init_amount);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
     // balance changed in init
     deps.with_querier(|querier| {
-        querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
+        querier.update_balance(&env.contract.address, init_amount);
         Ok(())
     })
     .unwrap();
@@ -242,7 +248,7 @@ fn execute_release_works() {
     // beneficiary can release it
     let execute_info = mock_info(&verifier, &[]);
     let execute_res: Response =
-        execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {}).unwrap();
+        execute(&mut deps, env, execute_info, ExecuteMsg::Release {}).unwrap();
     assert_eq!(execute_res.messages.len(), 1);
     let msg = execute_res.messages.first().expect("no message");
     assert_eq!(
@@ -262,6 +268,7 @@ fn execute_release_works() {
 #[test]
 fn execute_release_fails_for_wrong_sender() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     // initialize the store
     let creator = deps.api().addr_make("creator");
@@ -275,7 +282,7 @@ fn execute_release_fails_for_wrong_sender() {
     let init_amount = coins(1000, "earth");
     let init_info = mock_info(&creator, &init_amount);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
     // balance changed in init
@@ -288,7 +295,7 @@ fn execute_release_fails_for_wrong_sender() {
     // beneficiary cannot release it
     let execute_info = mock_info(&beneficiary, &[]);
     let execute_res: ContractResult<Response> =
-        execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {});
+        execute(&mut deps, env, execute_info, ExecuteMsg::Release {});
     let msg = execute_res.unwrap_err();
     assert!(msg.contains("Unauthorized"));
 
@@ -316,18 +323,19 @@ fn execute_release_fails_for_wrong_sender() {
 #[test]
 fn execute_cpu_loop() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let (instantiate_msg, creator) = make_init_msg(deps.api());
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let execute_res = call_execute::<_, _, _, Empty>(
         &mut deps,
-        &mock_env(),
+        &env,
         &execute_info,
         &to_json_vec(&ExecuteMsg::CpuLoop {}).unwrap(),
     );
@@ -338,18 +346,19 @@ fn execute_cpu_loop() {
 #[test]
 fn execute_storage_loop() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let (instantiate_msg, creator) = make_init_msg(deps.api());
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let execute_res = call_execute::<_, _, _, Empty>(
         &mut deps,
-        &mock_env(),
+        &env,
         &execute_info,
         &to_json_vec(&ExecuteMsg::StorageLoop {}).unwrap(),
     );
@@ -360,18 +369,19 @@ fn execute_storage_loop() {
 #[test]
 fn execute_memory_loop() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let (instantiate_msg, creator) = make_init_msg(deps.api());
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let execute_res = call_execute::<_, _, _, Empty>(
         &mut deps,
-        &mock_env(),
+        &env,
         &execute_info,
         &to_json_vec(&ExecuteMsg::MemoryLoop {}).unwrap(),
     );
@@ -385,11 +395,12 @@ fn execute_memory_loop() {
 #[test]
 fn execute_allocate_large_memory() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let (instantiate_msg, creator) = make_init_msg(deps.api());
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
     let mut pages_before = deps.memory_pages();
     assert_eq!(pages_before, 18);
@@ -399,7 +410,7 @@ fn execute_allocate_large_memory() {
     let gas_before = deps.get_gas_left();
     let execute_res: Response = execute(
         &mut deps,
-        mock_env(),
+        env.clone(),
         execute_info,
         ExecuteMsg::AllocateLargeMemory { pages: 48 },
     )
@@ -422,7 +433,7 @@ fn execute_allocate_large_memory() {
     let gas_before = deps.get_gas_left();
     let result: ContractResult<Response> = execute(
         &mut deps,
-        mock_env(),
+        env,
         execute_info,
         ExecuteMsg::AllocateLargeMemory { pages: 1600 },
     );
@@ -441,11 +452,12 @@ fn execute_allocate_large_memory() {
 #[test]
 fn execute_panic() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let (instantiate_msg, creator) = make_init_msg(deps.api());
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let execute_info = mock_info(creator.as_str(), &[]);
@@ -453,7 +465,7 @@ fn execute_panic() {
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let execute_res = call_execute::<_, _, _, Empty>(
         &mut deps,
-        &mock_env(),
+        &env,
         &execute_info,
         &to_json_vec(&ExecuteMsg::Panic {}).unwrap(),
     );
@@ -473,16 +485,17 @@ fn execute_panic() {
 #[test]
 fn execute_user_errors_in_api_calls() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let (instantiate_msg, creator) = make_init_msg(deps.api());
     let init_info = mock_info(creator.as_str(), &[]);
     let _init_res: Response =
-        instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
+        instantiate(&mut deps, env.clone(), init_info, instantiate_msg).unwrap();
 
     let execute_info = mock_info(creator.as_str(), &[]);
     let _execute_res: Response = execute(
         &mut deps,
-        mock_env(),
+        env,
         execute_info,
         ExecuteMsg::UserErrorsInApiCalls {},
     )

@@ -96,17 +96,18 @@ pub fn execute_spread(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env};
+    use cosmwasm_std::testing::{message_info, mock_dependencies, mock_environment};
 
     const CREATOR: &str = "creator";
 
     #[test]
     fn instantiate_works() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make(CREATOR);
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
     }
 }

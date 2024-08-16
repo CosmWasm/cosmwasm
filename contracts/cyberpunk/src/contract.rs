@@ -227,16 +227,17 @@ fn query_denom(deps: Deps, denom: String) -> StdResult<DenomMetadata> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage,
+        message_info, mock_dependencies, mock_environment, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{from_json, DenomMetadata, DenomUnit, OwnedDeps};
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
         let msg = Empty {};
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
     }
@@ -249,15 +250,17 @@ mod tests {
     #[test]
     fn debug_works() {
         let mut deps = setup();
+        let env = mock_environment(&deps.api);
         let caller = deps.api.addr_make("caller");
 
         let msg = ExecuteMsg::Debug {};
-        execute(deps.as_mut(), mock_env(), message_info(&caller, &[]), msg).unwrap();
+        execute(deps.as_mut(), env.clone(), message_info(&caller, &[]), msg).unwrap();
     }
 
     #[test]
     fn query_denoms_works() {
         let mut deps = setup();
+        let env = mock_environment(&deps.api);
 
         deps.querier.bank.set_denom_metadata(
             &(0..98)
@@ -279,14 +282,14 @@ mod tests {
         );
 
         let symbols: Vec<DenomMetadata> =
-            from_json(query(deps.as_ref(), mock_env(), QueryMsg::Denoms {}).unwrap()).unwrap();
+            from_json(query(deps.as_ref(), env.clone(), QueryMsg::Denoms {}).unwrap()).unwrap();
 
         assert_eq!(symbols.len(), 98);
 
         let denom: DenomMetadata = from_json(
             query(
                 deps.as_ref(),
-                mock_env(),
+                env.clone(),
                 QueryMsg::Denom {
                     denom: "ufoo0".to_string(),
                 },

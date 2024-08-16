@@ -83,7 +83,7 @@ fn cleanup(storage: &mut dyn Storage, mut limit: usize) -> usize {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_dependencies_with_balance, mock_env,
+        message_info, mock_dependencies, mock_dependencies_with_balance, mock_environment,
     };
     use cosmwasm_std::{coins, Attribute, StdError, Storage, SubMsg};
 
@@ -101,13 +101,14 @@ mod tests {
     #[test]
     fn instantiate_fails() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+        let res = instantiate(deps.as_mut(), env, info, msg);
         match res.unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "You can only use this contract for migrations")
@@ -119,6 +120,7 @@ mod tests {
     #[test]
     fn migrate_sends_funds() {
         let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+        let env = mock_environment(&deps.api);
 
         // change the verifier via migrate
         let payout = String::from("someone else");
@@ -126,7 +128,7 @@ mod tests {
             payout: payout.clone(),
             delete: 0,
         };
-        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        let res = migrate(deps.as_mut(), env, msg).unwrap();
         // check payout
         assert_eq!(1, res.messages.len());
         let msg = res.messages.first().expect("no message");
@@ -142,6 +144,7 @@ mod tests {
     #[test]
     fn migrate_with_delete() {
         let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+        let env = mock_environment(&deps.api);
 
         // store some sample data
         deps.storage.set(b"foo", b"bar");
@@ -155,7 +158,7 @@ mod tests {
             payout: "user".to_string(),
             delete: 100,
         };
-        migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        migrate(deps.as_mut(), env, msg).unwrap();
 
         // no more data
         let cnt = deps.storage.range(None, None, Order::Ascending).count();
@@ -165,6 +168,7 @@ mod tests {
     #[test]
     fn execute_cleans_up_data() {
         let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
+        let env = mock_environment(&deps.api);
 
         let anon = deps.api.addr_make("anon");
 
@@ -178,11 +182,11 @@ mod tests {
         // change the verifier via migrate
         let payout = String::from("someone else");
         let msg = MigrateMsg { payout, delete: 0 };
-        let _res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        let _res = migrate(deps.as_mut(), env.clone(), msg).unwrap();
 
         let res = execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             message_info(&anon, &[]),
             ExecuteMsg::Cleanup { limit: Some(2) },
         )
@@ -193,9 +197,10 @@ mod tests {
         let cnt = deps.storage.range(None, None, Order::Ascending).count();
         assert_eq!(cnt, 1);
 
+        let env = mock_environment(&deps.api);
         let res = execute(
             deps.as_mut(),
-            mock_env(),
+            env,
             message_info(&anon, &[]),
             ExecuteMsg::Cleanup { limit: Some(2) },
         )

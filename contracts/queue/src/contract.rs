@@ -179,16 +179,18 @@ fn query_open_iterators(deps: Deps, count: u32) -> Empty {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies_with_balance, mock_env, MockApi, MockQuerier, MockStorage,
+        message_info, mock_dependencies_with_balance, mock_environment, MockApi, MockQuerier,
+        MockStorage,
     };
     use cosmwasm_std::{coins, from_json, OwnedDeps};
 
     /// Instantiates a contract with no elements
     fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies_with_balance(&coins(1000, "earth"));
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
         let info = message_info(&creator, &coins(1000, "earth"));
-        let res = instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg {}).unwrap();
+        let res = instantiate(deps.as_mut(), env, info.clone(), InstantiateMsg {}).unwrap();
         assert_eq!(0, res.messages.len());
         (deps, info)
     }
@@ -211,9 +213,10 @@ mod tests {
     #[test]
     fn push_and_query() {
         let (mut deps, info) = create_contract();
+        let env = mock_environment(&deps.api);
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info,
             ExecuteMsg::Enqueue { value: 25 },
         )
@@ -225,23 +228,24 @@ mod tests {
     #[test]
     fn multiple_push() {
         let (mut deps, info) = create_contract();
+        let env = mock_environment(&deps.api);
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 25 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 35 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info,
             ExecuteMsg::Enqueue { value: 45 },
         )
@@ -253,21 +257,22 @@ mod tests {
     #[test]
     fn push_and_pop() {
         let (mut deps, info) = create_contract();
+        let env = mock_environment(&deps.api);
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 25 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 17 },
         )
         .unwrap();
-        let res = execute(deps.as_mut(), mock_env(), info, ExecuteMsg::Dequeue {}).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, ExecuteMsg::Dequeue {}).unwrap();
         // ensure we popped properly
         assert!(res.data.is_some());
         let data = res.data.unwrap();
@@ -281,30 +286,31 @@ mod tests {
     #[test]
     fn push_and_reduce() {
         let (mut deps, info) = create_contract();
+        let env = mock_environment(&deps.api);
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 40 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 15 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info.clone(),
             ExecuteMsg::Enqueue { value: 85 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             info,
             ExecuteMsg::Enqueue { value: -10 },
         )
@@ -318,10 +324,11 @@ mod tests {
     #[test]
     fn query_list() {
         let (mut deps, info) = create_contract();
+        let env = mock_environment(&deps.api);
         for _ in 0..0x25 {
             execute(
                 deps.as_mut(),
-                mock_env(),
+                env.clone(),
                 info.clone(),
                 ExecuteMsg::Enqueue { value: 40 },
             )
@@ -330,7 +337,7 @@ mod tests {
         for _ in 0..0x19 {
             execute(
                 deps.as_mut(),
-                mock_env(),
+                env.clone(),
                 info.clone(),
                 ExecuteMsg::Dequeue {},
             )
@@ -341,7 +348,7 @@ mod tests {
 
         let query_msg = QueryMsg::List {};
         let ids: ListResponse =
-            from_json(query(deps.as_ref(), mock_env(), query_msg).unwrap()).unwrap();
+            from_json(query(deps.as_ref(), env.clone(), query_msg).unwrap()).unwrap();
         assert_eq!(ids.empty, Vec::<u32>::new());
         assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
         assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
@@ -350,14 +357,15 @@ mod tests {
     #[test]
     fn query_open_iterators() {
         let (deps, _info) = create_contract();
+        let env = mock_environment(&deps.api);
 
         let query_msg = QueryMsg::OpenIterators { count: 0 };
-        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+        let _ = query(deps.as_ref(), env.clone(), query_msg).unwrap();
 
         let query_msg = QueryMsg::OpenIterators { count: 1 };
-        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+        let _ = query(deps.as_ref(), env.clone(), query_msg).unwrap();
 
         let query_msg = QueryMsg::OpenIterators { count: 321 };
-        let _ = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+        let _ = query(deps.as_ref(), env.clone(), query_msg).unwrap();
     }
 }

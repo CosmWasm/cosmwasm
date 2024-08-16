@@ -26,8 +26,8 @@ use cosmwasm_std::{
     IbcReceiveResponse, Reply, Response, SubMsgResponse, SubMsgResult, WasmMsg,
 };
 use cosmwasm_vm::testing::{
-    ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env, mock_info,
-    mock_instance, query, reply, MockApi, MockQuerier, MockStorage,
+    ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_environment,
+    mock_info, mock_instance, query, reply, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 
@@ -50,11 +50,12 @@ const DESERIALIZATION_LIMIT: usize = 20_000;
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
     let msg = InstantiateMsg {
         reflect_code_id: REFLECT_ID,
     };
     let info = mock_info(CREATOR, &[]);
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, env, info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
@@ -75,15 +76,16 @@ fn connect(
     channel_id: &str,
     account: impl Into<String>,
 ) {
+    let env = mock_environment(deps.api());
     let account: String = account.into();
     // first we try to open with a valid handshake
     let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_APP_VERSION);
-    ibc_channel_open(deps, mock_env(), handshake_open).unwrap();
+    ibc_channel_open(deps, env.clone(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)
     let handshake_connect =
         mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_APP_VERSION);
-    let res: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
+    let res: IbcBasicResponse = ibc_channel_connect(deps, env.clone(), handshake_connect).unwrap();
     assert_eq!(1, res.messages.len());
     assert_eq!(1, res.events.len());
     assert_eq!(
@@ -105,18 +107,19 @@ fn connect(
             data: None,
         }),
     };
-    let _: Response = reply(deps, mock_env(), response).unwrap();
+    let _: Response = reply(deps, env, response).unwrap();
 }
 
 #[test]
 fn instantiate_works() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {
         reflect_code_id: 17,
     };
     let info = mock_info("creator", &[]);
-    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = instantiate(&mut deps, env.clone(), info, msg);
     let msgs = res.unwrap().messages;
     assert_eq!(0, msgs.len());
 }
@@ -124,34 +127,36 @@ fn instantiate_works() {
 #[test]
 fn enforce_version_in_handshake() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let wrong_order =
         mock_ibc_channel_open_try("channel-1234", IbcOrder::Unordered, IBC_APP_VERSION);
-    ibc_channel_open(&mut deps, mock_env(), wrong_order).unwrap_err();
+    ibc_channel_open(&mut deps, env.clone(), wrong_order).unwrap_err();
 
     let wrong_version = mock_ibc_channel_open_try("channel-1234", IbcOrder::Ordered, "reflect");
-    ibc_channel_open(&mut deps, mock_env(), wrong_version).unwrap_err();
+    ibc_channel_open(&mut deps, env.clone(), wrong_version).unwrap_err();
 
     let valid_handshake =
         mock_ibc_channel_open_try("channel-1234", IbcOrder::Ordered, IBC_APP_VERSION);
-    ibc_channel_open(&mut deps, mock_env(), valid_handshake).unwrap();
+    ibc_channel_open(&mut deps, env.clone(), valid_handshake).unwrap();
 }
 
 #[test]
 fn proper_handshake_flow() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
     let channel_id = "channel-432";
     let reflect_addr = deps.api().addr_make(REFLECT_ADDR);
 
     // first we try to open with a valid handshake
     let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_APP_VERSION);
-    ibc_channel_open(&mut deps, mock_env(), handshake_open).unwrap();
+    ibc_channel_open(&mut deps, env.clone(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)
     let handshake_connect =
         mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_APP_VERSION);
     let res: IbcBasicResponse =
-        ibc_channel_connect(&mut deps, mock_env(), handshake_connect).unwrap();
+        ibc_channel_connect(&mut deps, env.clone(), handshake_connect).unwrap();
     // and set up a reflect account
     assert_eq!(1, res.messages.len());
     let id = res.messages[0].id;
@@ -173,7 +178,7 @@ fn proper_handshake_flow() {
     }
 
     // no accounts set yet
-    let raw = query(&mut deps, mock_env(), QueryMsg::ListAccounts {}).unwrap();
+    let raw = query(&mut deps, env.clone(), QueryMsg::ListAccounts {}).unwrap();
     let res: ListAccountsResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(0, res.accounts.len());
 
@@ -189,11 +194,11 @@ fn proper_handshake_flow() {
             data: None,
         }),
     };
-    let res: Response = reply(&mut deps, mock_env(), response).unwrap();
+    let res: Response = reply(&mut deps, env.clone(), response).unwrap();
     assert_eq!(0, res.messages.len());
 
     // ensure this is now registered
-    let raw = query(&mut deps, mock_env(), QueryMsg::ListAccounts {}).unwrap();
+    let raw = query(&mut deps, env.clone(), QueryMsg::ListAccounts {}).unwrap();
     let res: ListAccountsResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(1, res.accounts.len());
     assert_eq!(
@@ -207,7 +212,7 @@ fn proper_handshake_flow() {
     // and the account query also works
     let raw = query(
         &mut deps,
-        mock_env(),
+        env.clone(),
         QueryMsg::Account {
             channel_id: channel_id.to_string(),
         },
@@ -220,6 +225,7 @@ fn proper_handshake_flow() {
 #[test]
 fn handle_dispatch_packet() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let channel_id = "channel-123";
     let account = deps.api().addr_make("acct-123");
@@ -234,7 +240,7 @@ fn handle_dispatch_packet() {
         msgs: msgs_to_dispatch.clone(),
     };
     let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, env.clone(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     assert_eq!(1, res.events.len());
@@ -255,7 +261,7 @@ fn handle_dispatch_packet() {
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
     let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, env.clone(), msg).unwrap();
 
     // assert app-level success
     let ack: AcknowledgementMsg<DispatchResponse> =
@@ -292,7 +298,7 @@ fn handle_dispatch_packet() {
         reflect_code_id: 12345,
     };
     let msg = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, env.clone(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error

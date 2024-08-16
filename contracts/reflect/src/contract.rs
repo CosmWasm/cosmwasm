@@ -174,7 +174,7 @@ fn query_raw(deps: Deps<SpecialQuery>, contract: String, key: Binary) -> StdResu
 mod tests {
     use super::*;
     use crate::testing::mock_dependencies_with_custom_querier;
-    use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::testing::{message_info, mock_environment, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_json, AllBalanceResponse, BankMsg, BankQuery, Binary, Event, StakingMsg,
         StdError, SubMsgResponse, SubMsgResult,
@@ -183,13 +183,14 @@ mod tests {
     #[test]
     fn proper_instantialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
@@ -200,11 +201,12 @@ mod tests {
     #[test]
     fn reflect() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
             to_address: String::from("friend"),
@@ -216,7 +218,7 @@ mod tests {
             msgs: payload.clone(),
         };
         let info = message_info(&creator, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
         let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
     }
@@ -224,12 +226,13 @@ mod tests {
     #[test]
     fn reflect_requires_owner() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
         let random = deps.api.addr_make("random");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         // signer is not owner
         let payload = vec![BankMsg::Send {
@@ -240,7 +243,7 @@ mod tests {
         let msg = ExecuteMsg::ReflectMsg { msgs: payload };
 
         let info = message_info(&random, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        let res = execute(deps.as_mut(), env.clone(), info, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { .. } => {}
             err => panic!("Unexpected error: {err:?}"),
@@ -250,28 +253,30 @@ mod tests {
     #[test]
     fn reflect_reject_empty_msgs() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let info = message_info(&creator, &[]);
         let payload = vec![];
 
         let msg = ExecuteMsg::ReflectMsg { msgs: payload };
-        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(err, ReflectError::MessagesEmpty);
     }
 
     #[test]
     fn reflect_multiple_messages() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let payload = vec![
             BankMsg::Send {
@@ -293,7 +298,7 @@ mod tests {
             msgs: payload.clone(),
         };
         let info = message_info(&creator, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
         let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
     }
@@ -301,18 +306,19 @@ mod tests {
     #[test]
     fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let info = message_info(&creator, &[]);
         let new_owner = deps.api.addr_make("friend");
         let msg = ExecuteMsg::ChangeOwner {
             owner: new_owner.to_string(),
         };
-        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         // should change state
         assert_eq!(0, res.messages.len());
@@ -323,20 +329,21 @@ mod tests {
     #[test]
     fn change_owner_requires_current_owner_as_sender() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
         let random = deps.api.addr_make("random");
         let friend = deps.api.addr_make("friend");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let info = message_info(&random, &[]);
         let msg = ExecuteMsg::ChangeOwner {
             owner: friend.to_string(),
         };
 
-        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         assert_eq!(
             err,
             ReflectError::NotCurrentOwner {
@@ -349,17 +356,18 @@ mod tests {
     #[test]
     fn change_owner_errors_for_invalid_new_address() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let info = message_info(&creator, &[]);
         let msg = ExecuteMsg::ChangeOwner {
             owner: String::from("x"),
         };
-        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = execute(deps.as_mut(), env.clone(), info, msg).unwrap_err();
         match err {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
                 assert!(msg.contains("Error decoding bech32"))
@@ -371,11 +379,12 @@ mod tests {
     #[test]
     fn capitalized_query_works() {
         let deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
 
         let msg = QueryMsg::Capitalized {
             text: "demo one".to_string(),
         };
-        let response = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let response = query(deps.as_ref(), env.clone(), msg).unwrap();
         let value: CapitalizedResponse = from_json(response).unwrap();
         assert_eq!(value.text, "DEMO ONE");
     }
@@ -383,6 +392,7 @@ mod tests {
     #[test]
     fn chain_query_works() {
         let deps = mock_dependencies_with_custom_querier(&coins(123, "ucosm"));
+        let env = mock_environment(&deps.api);
 
         // with bank query
         let msg = QueryMsg::Chain {
@@ -391,7 +401,7 @@ mod tests {
             }
             .into(),
         };
-        let response = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let response = query(deps.as_ref(), env.clone(), msg).unwrap();
         let outer: ChainResponse = from_json(response).unwrap();
         let inner: AllBalanceResponse = from_json(outer.data).unwrap();
         assert_eq!(inner.amount, coins(123, "ucosm"));
@@ -400,7 +410,7 @@ mod tests {
         let msg = QueryMsg::Chain {
             request: SpecialQuery::Ping {}.into(),
         };
-        let response = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let response = query(deps.as_ref(), env.clone(), msg).unwrap();
         let outer: ChainResponse = from_json(response).unwrap();
         let inner: SpecialResponse = from_json(outer.data).unwrap();
         assert_eq!(inner.msg, "pong");
@@ -409,11 +419,12 @@ mod tests {
     #[test]
     fn reflect_subcall() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let id = 123u64;
         let payload = SubMsg::reply_always(
@@ -428,7 +439,7 @@ mod tests {
             msgs: vec![payload.clone()],
         };
         let info = message_info(&creator, &[]);
-        let mut res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let mut res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.pop().expect("must have a message");
         assert_eq!(payload, msg);
@@ -438,11 +449,12 @@ mod tests {
     #[test]
     fn reply_and_query() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let id = 123u64;
         let payload = Binary::from(b"my dear");
@@ -461,19 +473,19 @@ mod tests {
             gas_used,
             result,
         };
-        let res = reply(deps.as_mut(), mock_env(), the_reply).unwrap();
+        let res = reply(deps.as_mut(), env.clone(), the_reply).unwrap();
         assert_eq!(0, res.messages.len());
 
         // query for a non-existant id
         let qres = query(
             deps.as_ref(),
-            mock_env(),
+            env.clone(),
             QueryMsg::SubMsgResult { id: 65432 },
         );
         assert!(qres.is_err());
 
         // query for the real id
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubMsgResult { id }).unwrap();
+        let raw = query(deps.as_ref(), env.clone(), QueryMsg::SubMsgResult { id }).unwrap();
         let qres: Reply = from_json(raw).unwrap();
         assert_eq!(qres.id, id);
         let result = qres.result.unwrap();

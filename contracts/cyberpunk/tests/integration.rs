@@ -19,7 +19,8 @@
 
 use cosmwasm_std::{from_json, Empty, Env, Response};
 use cosmwasm_vm::testing::{
-    execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_with_gas_limit, query,
+    execute, instantiate, mock_environment, mock_info, mock_instance, mock_instance_with_gas_limit,
+    query,
 };
 use std::io::Write;
 use std::time::SystemTime;
@@ -32,15 +33,16 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/cy
 #[test]
 fn execute_argon2() {
     let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
+    let env = mock_environment(deps.api());
 
     let init_info = mock_info("admin", &[]);
-    let init_res: Response = instantiate(&mut deps, mock_env(), init_info, Empty {}).unwrap();
+    let init_res: Response = instantiate(&mut deps, env.clone(), init_info, Empty {}).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let gas_before = deps.get_gas_left();
     let _execute_res: Response = execute(
         &mut deps,
-        mock_env(),
+        env,
         mock_info("admin", &[]),
         ExecuteMsg::Argon2 {
             mem_cost: 256,
@@ -61,12 +63,13 @@ fn execute_argon2() {
 #[test]
 fn debug_works() {
     let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
+    let env = mock_environment(deps.api());
 
     let _res: Response =
-        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+        instantiate(&mut deps, env.clone(), mock_info("admin", &[]), Empty {}).unwrap();
 
     let msg = ExecuteMsg::Debug {};
-    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+    let _res: Response = execute(&mut deps, env.clone(), mock_info("caller", &[]), msg).unwrap();
 
     let start = SystemTime::now();
     deps.set_debug_handler(move |msg, info| {
@@ -76,13 +79,13 @@ fn debug_works() {
     });
 
     let msg = ExecuteMsg::Debug {};
-    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+    let _res: Response = execute(&mut deps, env.clone(), mock_info("caller", &[]), msg).unwrap();
 
     eprintln!("Unsetting debug handler. From here nothing is printed anymore.");
     deps.unset_debug_handler();
 
     let msg = ExecuteMsg::Debug {};
-    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+    let _res: Response = execute(&mut deps, env.clone(), mock_info("caller", &[]), msg).unwrap();
 }
 
 // Test with
@@ -90,9 +93,10 @@ fn debug_works() {
 #[test]
 fn debug_timing() {
     let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
+    let env = mock_environment(deps.api());
 
     let _res: Response =
-        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+        instantiate(&mut deps, env.clone(), mock_info("admin", &[]), Empty {}).unwrap();
 
     let mut last_time = None;
     deps.set_debug_handler(move |msg, _info| {
@@ -110,15 +114,16 @@ fn debug_timing() {
     });
 
     let msg = ExecuteMsg::Debug {};
-    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+    let _res: Response = execute(&mut deps, env.clone(), mock_info("caller", &[]), msg).unwrap();
 }
 
 #[test]
 fn debug_file() {
     let mut deps = mock_instance_with_gas_limit(WASM, 100_000_000_000);
+    let env = mock_environment(deps.api());
 
     let _res: Response =
-        instantiate(&mut deps, mock_env(), mock_info("admin", &[]), Empty {}).unwrap();
+        instantiate(&mut deps, env.clone(), mock_info("admin", &[]), Empty {}).unwrap();
 
     let temp_file = NamedTempFile::new().unwrap();
     let (mut temp_file, temp_path) = temp_file.into_parts();
@@ -128,7 +133,7 @@ fn debug_file() {
     });
 
     let msg = ExecuteMsg::Debug {};
-    let _res: Response = execute(&mut deps, mock_env(), mock_info("caller", &[]), msg).unwrap();
+    let _res: Response = execute(&mut deps, env, mock_info("caller", &[]), msg).unwrap();
 
     // check if file contains the expected output
     let file_content = std::fs::read_to_string(temp_path).unwrap();
@@ -138,12 +143,13 @@ fn debug_file() {
 #[test]
 fn test_env() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let init_info = mock_info("admin", &[]);
-    let init_res: Response = instantiate(&mut deps, mock_env(), init_info, Empty {}).unwrap();
+    let init_res: Response = instantiate(&mut deps, env.clone(), init_info, Empty {}).unwrap();
     assert_eq!(0, init_res.messages.len());
 
-    let env = mock_env();
+    let env = mock_environment(deps.api());
     let res: Response = execute(
         &mut deps,
         env.clone(),
@@ -156,7 +162,7 @@ fn test_env() {
 
     assert_eq!(received_env, env);
 
-    let env = mock_env();
+    let env = mock_environment(deps.api());
     let received_env: Env =
         from_json(query(&mut deps, env.clone(), QueryMsg::MirrorEnv {}).unwrap()).unwrap();
 

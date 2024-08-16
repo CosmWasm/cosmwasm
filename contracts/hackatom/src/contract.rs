@@ -295,7 +295,7 @@ fn query_int() -> IntResponse {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_dependencies_with_balances, mock_env,
+        message_info, mock_dependencies, mock_dependencies_with_balances, mock_environment,
         MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
@@ -304,6 +304,7 @@ mod tests {
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         let verifier = deps.api.addr_make("verifies");
         let beneficiary = deps.api.addr_make("benefits");
@@ -320,7 +321,7 @@ mod tests {
             beneficiary: beneficiary.to_string(),
         };
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes, [("Let the", "hacking begin")]);
 
@@ -333,6 +334,7 @@ mod tests {
     #[test]
     fn instantiate_and_query() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         let verifier = deps.api.addr_make("verifies");
         let beneficiary = deps.api.addr_make("benefits");
@@ -343,7 +345,7 @@ mod tests {
             beneficiary: beneficiary.to_string(),
         };
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
@@ -354,6 +356,7 @@ mod tests {
     #[test]
     fn migrate_verifier() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         let verifier = deps.api.addr_make("verifies");
         let beneficiary = deps.api.addr_make("benefits");
@@ -364,11 +367,11 @@ mod tests {
             beneficiary: beneficiary.to_string(),
         };
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'verifies'
-        let query_response = query(deps.as_ref(), mock_env(), QueryMsg::Verifier {}).unwrap();
+        let query_response = query(deps.as_ref(), env.clone(), QueryMsg::Verifier {}).unwrap();
         assert_eq!(
             query_response.as_slice(),
             format!(r#"{{"verifier":"{verifier}"}}"#).as_bytes()
@@ -379,7 +382,7 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        let res = migrate(deps.as_mut(), env.clone(), msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
@@ -390,6 +393,7 @@ mod tests {
     #[test]
     fn sudo_can_steal_tokens() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         let verifier = deps.api.addr_make("verifies");
         let beneficiary = deps.api.addr_make("benefits");
@@ -400,7 +404,7 @@ mod tests {
             beneficiary: beneficiary.to_string(),
         };
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // sudo takes any tax it wants
@@ -410,7 +414,7 @@ mod tests {
             recipient: to_address.to_string(),
             amount: amount.clone(),
         };
-        let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
+        let res = sudo(deps.as_mut(), env.clone(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.first().expect("no message");
         assert_eq!(
@@ -440,6 +444,7 @@ mod tests {
     #[test]
     fn execute_release_works() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         // initialize the store
         let creator = deps.api.addr_make("creator");
@@ -452,19 +457,19 @@ mod tests {
         };
         let init_amount = coins(1000, "earth");
         let info = message_info(&creator, &init_amount);
-        let init_res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
         deps.querier
             .bank
-            .update_balance(MOCK_CONTRACT_ADDR, init_amount);
+            .update_balance(&env.contract.address, init_amount);
 
         // beneficiary can release it
         let execute_info = message_info(&verifier, &[]);
         let execute_res = execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             execute_info,
             ExecuteMsg::Release {},
         )
@@ -488,6 +493,7 @@ mod tests {
     #[test]
     fn execute_release_fails_for_wrong_sender() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         // initialize the store
         let creator = deps.api.addr_make("creator");
@@ -500,7 +506,7 @@ mod tests {
         };
         let init_amount = coins(1000, "earth");
         let info = message_info(&creator, &init_amount);
-        let init_res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -512,7 +518,7 @@ mod tests {
         let execute_info = message_info(&beneficiary, &[]);
         let execute_res = execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             execute_info,
             ExecuteMsg::Release {},
         );
@@ -535,6 +541,7 @@ mod tests {
     #[should_panic(expected = "This page intentionally faulted")]
     fn execute_panic() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         // initialize the store
         let verifier = deps.api.addr_make("verifies");
@@ -546,14 +553,14 @@ mod tests {
             beneficiary: beneficiary.to_string(),
         };
         let info = message_info(&creator, &coins(1000, "earth"));
-        let init_res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let execute_info = message_info(&beneficiary, &[]);
         // this should panic
         let _ = execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             execute_info,
             ExecuteMsg::Panic {},
         );
@@ -562,6 +569,7 @@ mod tests {
     #[test]
     fn execute_user_errors_in_api_calls() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
 
         let creator = deps.api.addr_make("creator");
         let anyone = deps.api.addr_make("anyone");
@@ -573,13 +581,13 @@ mod tests {
             beneficiary: beneficiary.to_string(),
         };
         let info = message_info(&creator, &coins(1000, "earth"));
-        let response = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let response = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(0, response.messages.len());
 
         let execute_info = message_info(&anyone, &[]);
         execute(
             deps.as_mut(),
-            mock_env(),
+            env.clone(),
             execute_info,
             ExecuteMsg::UserErrorsInApiCalls {},
         )
@@ -592,6 +600,7 @@ mod tests {
         // let's just make sure the last step looks right
 
         let deps = mock_dependencies();
+
         let contract = Addr::unchecked("my-contract");
         let bin_contract: &[u8] = b"my-contract";
 

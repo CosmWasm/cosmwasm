@@ -678,7 +678,7 @@ where
 mod tests {
     use super::*;
     use crate::testing::{
-        mock_env, mock_info, mock_instance, mock_instance_with_options, MockInstanceOptions,
+        mock_environment, mock_info, mock_instance, mock_instance_with_options, MockInstanceOptions,
     };
     use cosmwasm_std::{coins, from_json, to_json_string, Empty};
     use sha2::{Digest, Sha256};
@@ -691,13 +691,14 @@ mod tests {
     #[test]
     fn call_instantiate_works() {
         let mut instance = mock_instance(CONTRACT, &[]);
+        let env = mock_environment(instance.api());
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, msg.as_bytes())
             .unwrap()
             .unwrap();
     }
@@ -705,14 +706,14 @@ mod tests {
     #[test]
     fn call_instantiate_handles_missing_export() {
         let mut deps = mock_instance(EMPTY, &[]);
+        let env = mock_environment(deps.api());
 
         let msg = Empty {};
         let info = mock_info("creator", &coins(1000, "earth"));
 
         let serialized_msg = to_vec(&msg).unwrap();
-        let err =
-            call_instantiate::<_, _, _, Empty>(&mut deps, &mock_env(), &info, &serialized_msg)
-                .unwrap_err();
+        let err = call_instantiate::<_, _, _, Empty>(&mut deps, &env, &info, &serialized_msg)
+            .unwrap_err();
 
         assert!(matches!(
             err,
@@ -727,20 +728,21 @@ mod tests {
     #[test]
     fn call_execute_works() {
         let mut instance = mock_instance(CONTRACT, &[]);
+        let env = mock_environment(instance.api());
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info(&verifier, &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_execute::<_, _, _, Empty>(&mut instance, &env, &info, msg)
             .unwrap()
             .unwrap();
     }
@@ -748,35 +750,35 @@ mod tests {
     #[test]
     fn call_execute_runs_out_of_gas() {
         let mut instance = mock_instance(CYBERPUNK, &[]);
+        let env = mock_environment(instance.api());
 
         // init
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("looper", &[]);
         let msg = br#"{"cpu_loop":{}}"#;
-        let err =
-            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        let err = call_execute::<_, _, _, Empty>(&mut instance, &env, &info, msg).unwrap_err();
         assert!(matches!(err, VmError::GasDepletion { .. }));
     }
 
     #[test]
     fn call_execute_handles_panic() {
         let mut instance = mock_instance(CYBERPUNK, &[]);
+        let env = mock_environment(instance.api());
 
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("troll", &[]);
         let msg = br#"{"panic":{}}"#;
-        let err =
-            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        let err = call_execute::<_, _, _, Empty>(&mut instance, &env, &info, msg).unwrap_err();
         match err {
             VmError::RuntimeErr { msg, .. } => {
                 assert!(
@@ -791,17 +793,17 @@ mod tests {
     #[test]
     fn call_execute_handles_unreachable() {
         let mut instance = mock_instance(CYBERPUNK, &[]);
+        let env = mock_environment(instance.api());
 
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // execute
         let info = mock_info("troll", &[]);
         let msg = br#"{"unreachable":{}}"#;
-        let err =
-            call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap_err();
+        let err = call_execute::<_, _, _, Empty>(&mut instance, &env, &info, msg).unwrap_err();
         match err {
             VmError::RuntimeErr { msg, .. } => {
                 assert!(msg.contains("RuntimeError: unreachable"))
@@ -813,26 +815,27 @@ mod tests {
     #[test]
     fn call_migrate_works() {
         let mut instance = mock_instance(CONTRACT, &[]);
+        let env = mock_environment(instance.api());
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // change the verifier via migrate
         let someone_else = instance.api().addr_make("someone else");
         let msg = format!(r#"{{"verifier": "{someone_else}"}}"#);
-        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg.as_bytes())
+        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &env, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // query the new_verifier with verifier
         let msg = br#"{"verifier":{}}"#;
-        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let contract_result = call_query(&mut instance, &env, msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(
             query_response,
@@ -843,19 +846,20 @@ mod tests {
     #[test]
     fn call_query_works() {
         let mut instance = mock_instance(CONTRACT, &[]);
+        let env = mock_environment(instance.api());
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, msg.as_bytes())
             .unwrap()
             .unwrap();
 
         // query
         let msg = br#"{"verifier":{}}"#;
-        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let contract_result = call_query(&mut instance, &env, msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(
             query_response,
@@ -885,15 +889,14 @@ mod tests {
 
         // init
         let info = mock_info("creator", &[]);
-        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+        let env = mock_environment(instance.api());
+        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, br#"{}"#)
             .unwrap()
             .unwrap();
 
         // query instructions
         let msg = br#"{"instructions":{}}"#;
-        let contract_result = call_query(&mut instance, &mock_env(), msg)
-            .unwrap()
-            .unwrap();
+        let contract_result = call_query(&mut instance, &env, msg).unwrap().unwrap();
         let instructions: Vec<String> = from_json(contract_result).unwrap();
         // little sanity check
         assert_eq!(instructions.len(), 70);
@@ -906,7 +909,7 @@ mod tests {
                 let args: Vec<Value> = from_json(
                     call_query(
                         &mut instance,
-                        &mock_env(),
+                        &env,
                         format!(
                             r#"{{"random_args_for":{{ "instruction": "{instr}", "seed": {seed}}}}}"#
                         )
@@ -927,7 +930,7 @@ mod tests {
                 );
                 // run the instruction
                 // this might throw a runtime error (e.g. if the instruction traps)
-                let result = match call_query(&mut instance, &mock_env(), msg.as_bytes()) {
+                let result = match call_query(&mut instance, &env, msg.as_bytes()) {
                     Ok(ContractResult::Ok(r)) => format!("{:?}", from_json::<Value>(&r).unwrap()),
                     Err(VmError::RuntimeErr { msg, .. }) => msg,
                     e => panic!("unexpected error: {e:?}"),
@@ -966,27 +969,25 @@ mod tests {
             account: &str,
         ) {
             // init
+            let env = mock_environment(instance.api());
             let info = mock_info("creator", &[]);
             let msg = br#"{"reflect_code_id":77}"#;
-            call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            call_instantiate::<_, _, _, Empty>(instance, &env, &info, msg)
                 .unwrap()
                 .unwrap();
             // first we try to open with a valid handshake
             let handshake_open =
                 mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
-            call_ibc_channel_open(instance, &mock_env(), &handshake_open)
+            call_ibc_channel_open(instance, &env, &handshake_open)
                 .unwrap()
                 .unwrap();
             // then we connect (with counter-party version set)
             let handshake_connect =
                 mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
-            let res: IbcBasicResponse = call_ibc_channel_connect::<_, _, _, Empty>(
-                instance,
-                &mock_env(),
-                &handshake_connect,
-            )
-            .unwrap()
-            .unwrap();
+            let res: IbcBasicResponse =
+                call_ibc_channel_connect::<_, _, _, Empty>(instance, &env, &handshake_connect)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(1, res.messages.len());
             assert_eq!(
                 res.events,
@@ -1011,7 +1012,7 @@ mod tests {
                     data: None,
                 }),
             };
-            call_reply::<_, _, _, Empty>(instance, &mock_env(), &response).unwrap();
+            call_reply::<_, _, _, Empty>(instance, &env, &response).unwrap();
         }
 
         const CHANNEL_ID: &str = "channel-123";
@@ -1026,11 +1027,12 @@ mod tests {
         #[test]
         fn call_ibc_channel_close_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
+            let env = mock_environment(instance.api());
             let account = instance.api().addr_make(ACCOUNT);
             setup(&mut instance, CHANNEL_ID, &account);
             let handshake_close =
                 mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
-            call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
+            call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &env, &handshake_close)
                 .unwrap()
                 .unwrap();
         }
@@ -1038,10 +1040,11 @@ mod tests {
         #[test]
         fn call_ibc_packet_ack_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
+            let env = mock_environment(instance.api());
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let ack = IbcAcknowledgement::new(br#"{}"#);
             let msg = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap();
-            call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &env, &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1049,9 +1052,10 @@ mod tests {
         #[test]
         fn call_ibc_packet_timeout_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
+            let env = mock_environment(instance.api());
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
-            call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &env, &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1059,10 +1063,11 @@ mod tests {
         #[test]
         fn call_ibc_packet_receive_works() {
             let mut instance = mock_instance(CONTRACT, &[]);
+            let env = mock_environment(instance.api());
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
             let msg = mock_ibc_packet_recv(CHANNEL_ID, who_am_i).unwrap();
-            call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &env, &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -1070,11 +1075,12 @@ mod tests {
         #[test]
         fn call_ibc_source_callback_works() {
             let mut instance = mock_instance(IBC_CALLBACKS, &[]);
+            let env = mock_environment(instance.api());
 
             // init
             let creator = instance.api().addr_make("creator");
             let info = mock_info(&creator, &[]);
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, br#"{}"#)
+            call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, br#"{}"#)
                 .unwrap()
                 .unwrap();
 
@@ -1093,12 +1099,12 @@ mod tests {
                 ack.original_packet,
                 ack.relayer,
             ));
-            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &env, &msg)
                 .unwrap()
                 .unwrap();
             // query the CallbackStats
             let stats: CallbackStats = serde_json::from_slice(
-                &call_query::<_, _, _>(&mut instance, &mock_env(), br#"{"callback_stats":{}}"#)
+                &call_query::<_, _, _>(&mut instance, &env, br#"{"callback_stats":{}}"#)
                     .unwrap()
                     .unwrap(),
             )
@@ -1112,12 +1118,12 @@ mod tests {
                 timeout.packet,
                 timeout.relayer,
             ));
-            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
+            call_ibc_source_callback::<_, _, _, Empty>(&mut instance, &env, &msg)
                 .unwrap()
                 .unwrap();
             // query the CallbackStats
             let stats: CallbackStats = serde_json::from_slice(
-                &call_query::<_, _, _>(&mut instance, &mock_env(), br#"{"callback_stats":{}}"#)
+                &call_query::<_, _, _>(&mut instance, &env, br#"{"callback_stats":{}}"#)
                     .unwrap()
                     .unwrap(),
             )

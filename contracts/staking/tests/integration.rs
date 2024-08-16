@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{coin, from_json, ContractResult, Decimal, Response, Uint128, Validator};
 use cosmwasm_vm::testing::{
-    instantiate, mock_backend, mock_env, mock_info, mock_instance_options, query,
+    instantiate, mock_backend, mock_environment, mock_info, mock_instance_options, query,
 };
 use cosmwasm_vm::Instance;
 
@@ -50,6 +50,7 @@ fn initialization_with_missing_validator() {
         .update_staking("ustake", &[sample_validator("john")], &[]);
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
+    let env = mock_environment(deps.api());
 
     let creator = deps.api().addr_make("creator");
     let msg = InstantiateMsg {
@@ -63,7 +64,7 @@ fn initialization_with_missing_validator() {
     let info = mock_info(&creator, &[]);
 
     // make sure we can instantiate with this
-    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = instantiate(&mut deps, env.clone(), info, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -86,6 +87,7 @@ fn proper_initialization() {
     );
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
+    let env = mock_environment(deps.api());
     assert_eq!(deps.required_capabilities().len(), 1);
     assert!(deps.required_capabilities().contains("staking"));
 
@@ -101,11 +103,11 @@ fn proper_initialization() {
     let info = mock_info(&creator, &[]);
 
     // make sure we can init with this
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg.clone()).unwrap();
+    let res: Response = instantiate(&mut deps, env.clone(), info, msg.clone()).unwrap();
     assert_eq!(0, res.messages.len());
 
     // token info is proper
-    let res = query(&mut deps, mock_env(), QueryMsg::TokenInfo {}).unwrap();
+    let res = query(&mut deps, env.clone(), QueryMsg::TokenInfo {}).unwrap();
     let token: TokenInfoResponse = from_json(res).unwrap();
     assert_eq!(&token.name, &msg.name);
     assert_eq!(&token.symbol, &msg.symbol);
@@ -114,7 +116,7 @@ fn proper_initialization() {
     // no balance
     let res = query(
         &mut deps,
-        mock_env(),
+        env.clone(),
         QueryMsg::Balance {
             address: creator.clone(),
         },
@@ -126,7 +128,7 @@ fn proper_initialization() {
     // no claims
     let res = query(
         &mut deps,
-        mock_env(),
+        env.clone(),
         QueryMsg::Claims {
             address: creator.clone(),
         },
@@ -136,7 +138,7 @@ fn proper_initialization() {
     assert_eq!(claim.claims, Uint128::new(0));
 
     // investment info correct
-    let res = query(&mut deps, mock_env(), QueryMsg::Investment {}).unwrap();
+    let res = query(&mut deps, env.clone(), QueryMsg::Investment {}).unwrap();
     let invest: InvestmentResponse = from_json(res).unwrap();
     assert_eq!(&invest.owner, &creator);
     assert_eq!(&invest.validator, &msg.validator);

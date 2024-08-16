@@ -407,7 +407,8 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_env, MockQuerier, StakingQuerier, MOCK_CONTRACT_ADDR,
+        message_info, mock_dependencies, mock_environment, MockApi, MockQuerier, StakingQuerier,
+        MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coins, Addr, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
@@ -421,9 +422,13 @@ mod tests {
         )
     }
 
-    fn sample_delegation(validator_addr: &str, amount: Coin) -> FullDelegation {
+    fn sample_delegation(
+        delegator_addr: Addr,
+        validator_addr: &str,
+        amount: Coin,
+    ) -> FullDelegation {
         FullDelegation::create(
-            Addr::unchecked(MOCK_CONTRACT_ADDR),
+            delegator_addr,
             validator_addr.to_owned(),
             amount.clone(),
             amount,
@@ -436,11 +441,15 @@ mod tests {
             StakingQuerier::new("ustake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
     }
 
-    fn set_delegation(querier: &mut MockQuerier, amount: u128, denom: &str) {
+    fn set_delegation(querier: &mut MockQuerier, api: &MockApi, amount: u128, denom: &str) {
         querier.staking.update(
             "ustake",
             &[sample_validator(DEFAULT_VALIDATOR)],
-            &[sample_delegation(DEFAULT_VALIDATOR, coin(amount, denom))],
+            &[sample_delegation(
+                api.addr_make(MOCK_CONTRACT_ADDR),
+                DEFAULT_VALIDATOR,
+                coin(amount, denom),
+            )],
         );
     }
 
@@ -468,6 +477,7 @@ mod tests {
     #[test]
     fn initialization_with_missing_validator() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         deps.querier
@@ -485,7 +495,7 @@ mod tests {
         let info = message_info(&creator, &[]);
 
         // make sure we can instantiate with this
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg);
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg);
         match res.unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "my-validator is not in the current validator set")
@@ -497,6 +507,7 @@ mod tests {
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         let creator = deps.api.addr_make("creator");
 
         deps.querier.staking.update(
@@ -520,7 +531,7 @@ mod tests {
         let info = message_info(&creator, &[]);
 
         // make sure we can instantiate with this
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg.clone()).unwrap();
         assert_eq!(0, res.messages.len());
 
         // token info is proper
@@ -549,6 +560,7 @@ mod tests {
     #[test]
     fn bonding_issues_tokens() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         set_validator(&mut deps.querier);
 
         let creator = deps.api.addr_make("creator");
@@ -558,7 +570,7 @@ mod tests {
         let info = message_info(&creator, &[]);
 
         // make sure we can instantiate with this
-        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
@@ -566,7 +578,7 @@ mod tests {
         let info = message_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
 
         // try to bond and make sure we trigger delegation
-        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let delegate = &res.messages[0].msg;
         match delegate {
@@ -590,6 +602,7 @@ mod tests {
     #[test]
     fn rebonding_changes_pricing() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         set_validator(&mut deps.querier);
 
         let creator = deps.api.addr_make("creator");
@@ -601,17 +614,17 @@ mod tests {
         let info = message_info(&creator, &[]);
 
         // make sure we can instantiate with this
-        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
         let bond_msg = ExecuteMsg::Bond {};
         let info = message_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
-        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
-        set_delegation(&mut deps.querier, 1000, "ustake");
+        set_delegation(&mut deps.querier, &deps.api, 1000, "ustake");
 
         // fake a reinvestment (this must be sent by the contract itself)
         let rebond_msg = ExecuteMsg::_BondAllTokens {};
@@ -619,12 +632,11 @@ mod tests {
         deps.querier
             .bank
             .update_balance(&contract, coins(500, "ustake"));
-        let mut env = mock_env();
-        env.contract.address = contract.clone();
-        let _ = execute(deps.as_mut(), env, info, rebond_msg).unwrap();
+        let env = mock_environment(&deps.api);
+        let _ = execute(deps.as_mut(), env.clone(), info, rebond_msg).unwrap();
 
         // update the querier with new bond
-        set_delegation(&mut deps.querier, 1500, "ustake");
+        set_delegation(&mut deps.querier, &deps.api, 1500, "ustake");
 
         // we should now see 1000 issues and 1500 bonded (and a price of 1.5)
         let invest = query_investment(deps.as_ref()).unwrap();
@@ -635,12 +647,12 @@ mod tests {
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
         let bond_msg = ExecuteMsg::Bond {};
-        let info = message_info(&alice, &[coin(3000, "ustake")]);
-        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let info: MessageInfo = message_info(&alice, &[coin(3000, "ustake")]);
+        let res = execute(deps.as_mut(), env.clone(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
-        set_delegation(&mut deps.querier, 3000, "ustake");
+        set_delegation(&mut deps.querier, &deps.api, 3000, "ustake");
 
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
         assert_eq!(get_balance(deps.as_ref(), &alice), Uint128::new(2000));
@@ -654,6 +666,7 @@ mod tests {
     #[test]
     fn bonding_fails_with_wrong_denom() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         set_validator(&mut deps.querier);
 
         let creator = deps.api.addr_make("creator");
@@ -663,7 +676,7 @@ mod tests {
         let info = message_info(&creator, &[]);
 
         // make sure we can instantiate with this
-        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
@@ -671,7 +684,7 @@ mod tests {
         let info = message_info(&bob, &[coin(500, "photon")]);
 
         // try to bond and make sure we trigger delegation
-        let res = execute(deps.as_mut(), mock_env(), info, bond_msg);
+        let res = execute(deps.as_mut(), env.clone(), info, bond_msg);
         match res.unwrap_err() {
             StakingError::Std {
                 original: StdError::GenericErr { msg, .. },
@@ -683,6 +696,7 @@ mod tests {
     #[test]
     fn unbonding_maintains_price_ratio() {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
         set_validator(&mut deps.querier);
 
         let creator = deps.api.addr_make("creator");
@@ -693,17 +707,17 @@ mod tests {
         let info = message_info(&creator, &[]);
 
         // make sure we can instantiate with this
-        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
         let bond_msg = ExecuteMsg::Bond {};
         let info = message_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
-        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), env.clone(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
-        set_delegation(&mut deps.querier, 1000, "ustake");
+        set_delegation(&mut deps.querier, &deps.api, 1000, "ustake");
 
         // fake a reinvestment (this must be sent by the contract itself)
         // after this, we see 1000 issues and 1500 bonded (and a price of 1.5)
@@ -712,12 +726,11 @@ mod tests {
         deps.querier
             .bank
             .update_balance(&contract, coins(500, "ustake"));
-        let mut env = mock_env();
-        env.contract.address = contract.clone();
-        let _ = execute(deps.as_mut(), env, info, rebond_msg).unwrap();
+        let env = mock_environment(&deps.api);
+        let _ = execute(deps.as_mut(), env.clone(), info, rebond_msg).unwrap();
 
         // update the querier with new bond, lower balance
-        set_delegation(&mut deps.querier, 1500, "ustake");
+        set_delegation(&mut deps.querier, &deps.api, 1500, "ustake");
         deps.querier.bank.update_balance(&contract, vec![]);
 
         // creator now tries to unbond these tokens - this must fail
@@ -725,7 +738,7 @@ mod tests {
             amount: Uint128::new(600),
         };
         let info = message_info(&creator, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, unbond_msg);
+        let res = execute(deps.as_mut(), env.clone(), info, unbond_msg);
         match res.unwrap_err() {
             StakingError::Std {
                 original: StdError::Overflow { .. },
@@ -743,7 +756,7 @@ mod tests {
         let bobs_claim = Uint128::new(810);
         let bobs_balance = Uint128::new(400);
         let info = message_info(&bob, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, unbond_msg).unwrap();
+        let res = execute(deps.as_mut(), env, info, unbond_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let delegate = &res.messages[0].msg;
         match delegate {
@@ -755,7 +768,7 @@ mod tests {
         }
 
         // update the querier with new bond, lower balance
-        set_delegation(&mut deps.querier, 690, "ustake");
+        set_delegation(&mut deps.querier, &deps.api, 690, "ustake");
 
         // check balances
         assert_eq!(get_balance(deps.as_ref(), &bob), bobs_balance);

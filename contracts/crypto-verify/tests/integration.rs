@@ -17,12 +17,12 @@
 //!      });
 //! 4. Anywhere you see init/execute(deps.as_mut(), ...) you must replace it with init/execute(&mut deps, ...)
 //! 5. Anywhere you see query(deps.as_ref(), ...) you must replace it with query(&mut deps, ...)
-//! (Use cosmwasm_vm::testing::{init, execute, query}, instead of the contract variants).
+//!    (Use cosmwasm_vm::testing::{init, execute, query}, instead of the contract variants).
 
 use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{
-    instantiate, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi, MockQuerier,
-    MockStorage,
+    instantiate, mock_environment, mock_info, mock_instance_with_gas_limit, query, MockApi,
+    MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 use hex_literal::hex;
@@ -98,9 +98,11 @@ const DESERIALIZATION_LIMIT: usize = 20_000;
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance_with_gas_limit(WASM, 10_000_000_000);
+    let env = mock_environment(deps.api());
+
     let msg = InstantiateMsg {};
     let info = mock_info(CREATOR, &[]);
-    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, env, info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
@@ -113,6 +115,7 @@ fn instantiate_works() {
 #[test]
 fn bls12_381_verifies_g1() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
     let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
@@ -127,7 +130,7 @@ fn bls12_381_verifies_g1() {
         dst: DOMAIN_HASH_TO_G2.into(),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -136,6 +139,7 @@ fn bls12_381_verifies_g1() {
 #[test]
 fn bls12_381_verifies_g2() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let signature = hex::decode("b75c69d0b72a5d906e854e808ba7e2accb1542ac355ae486d591aa9d43765482e26cd02df835d3546d23c4b13e0dfc92").unwrap();
     let round: u64 = 123;
@@ -149,7 +153,7 @@ fn bls12_381_verifies_g2() {
         dst: DOMAIN_HASH_TO_G1.into(),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -158,6 +162,7 @@ fn bls12_381_verifies_g2() {
 #[test]
 fn bls12_381_errors() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
     let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
@@ -174,7 +179,7 @@ fn bls12_381_errors() {
         dst: DOMAIN_HASH_TO_G2.into(),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
@@ -183,6 +188,7 @@ fn bls12_381_errors() {
 #[test]
 fn cosmos_signature_verify_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
     let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
@@ -194,7 +200,7 @@ fn cosmos_signature_verify_works() {
         public_key: Binary::new(public_key),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -203,6 +209,7 @@ fn cosmos_signature_verify_works() {
 #[test]
 fn cosmos_signature_verify_fails() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
     // alter hash
@@ -216,7 +223,7 @@ fn cosmos_signature_verify_fails() {
         public_key: Binary::new(public_key),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
@@ -225,6 +232,7 @@ fn cosmos_signature_verify_fails() {
 #[test]
 fn cosmos_signature_verify_errors() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
     let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
@@ -235,7 +243,7 @@ fn cosmos_signature_verify_errors() {
         signature: Binary::new(signature),
         public_key: Binary::new(public_key),
     };
-    let res = query(&mut deps, mock_env(), verify_msg);
+    let res = query(&mut deps, env.clone(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
         "Verification error: Invalid public key format"
@@ -245,6 +253,7 @@ fn cosmos_signature_verify_errors() {
 #[test]
 fn secp256r1_signature_verify_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = hex::decode(SECP256R1_MESSAGE_HEX).unwrap();
     let signature = hex::decode(SECP256R1_SIGNATURE_HEX).unwrap();
@@ -256,7 +265,7 @@ fn secp256r1_signature_verify_works() {
         public_key: Binary::new(public_key),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -265,6 +274,7 @@ fn secp256r1_signature_verify_works() {
 #[test]
 fn secp256r1_signature_verify_fails() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut message = hex::decode(SECP256R1_MESSAGE_HEX).unwrap();
     // alter hash
@@ -278,7 +288,7 @@ fn secp256r1_signature_verify_fails() {
         public_key: Binary::new(public_key),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
@@ -287,6 +297,7 @@ fn secp256r1_signature_verify_fails() {
 #[test]
 fn secp256r1_signature_verify_errors() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = hex::decode(SECP256R1_MESSAGE_HEX).unwrap();
     let signature = hex::decode(SECP256R1_SIGNATURE_HEX).unwrap();
@@ -297,7 +308,7 @@ fn secp256r1_signature_verify_errors() {
         signature: Binary::new(signature),
         public_key: Binary::new(public_key),
     };
-    let res = query(&mut deps, mock_env(), verify_msg);
+    let res = query(&mut deps, env.clone(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
         "Verification error: Invalid public key format"
@@ -307,6 +318,7 @@ fn secp256r1_signature_verify_errors() {
 #[test]
 fn ethereum_signature_verify_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = ETHEREUM_MESSAGE;
     let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
@@ -317,7 +329,7 @@ fn ethereum_signature_verify_works() {
         signature: signature.into(),
         signer_address: signer_address.into(),
     };
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -326,6 +338,7 @@ fn ethereum_signature_verify_works() {
 #[test]
 fn ethereum_signature_verify_fails_for_corrupted_message() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut message = String::from(ETHEREUM_MESSAGE);
     message.push('!');
@@ -337,7 +350,7 @@ fn ethereum_signature_verify_fails_for_corrupted_message() {
         signature: signature.into(),
         signer_address: signer_address.into(),
     };
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
@@ -346,6 +359,7 @@ fn ethereum_signature_verify_fails_for_corrupted_message() {
 #[test]
 fn ethereum_signature_verify_fails_for_corrupted_signature() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = ETHEREUM_MESSAGE;
     let signer_address = ETHEREUM_SIGNER_ADDRESS;
@@ -358,7 +372,7 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
         signature: signature.into(),
         signer_address: signer_address.into(),
     };
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(res, VerifyResponse { verifies: false });
 
@@ -369,7 +383,7 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
         signature: signature.into(),
         signer_address: signer_address.into(),
     };
-    let result = query(&mut deps, mock_env(), verify_msg);
+    let result = query(&mut deps, env.clone(), verify_msg);
     let msg = result.unwrap_err();
     assert_eq!(msg, "Recover pubkey error: Unknown error: 10");
 }
@@ -377,6 +391,7 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
 #[test]
 fn verify_ethereum_transaction_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     // curl -sS -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce"],"id":1}' -H "Content-type: application/json" https://rinkeby-light.eth.linkpool.io | jq .result
     // {
@@ -420,7 +435,7 @@ fn verify_ethereum_transaction_works() {
         s: s.into(),
         v,
     };
-    let raw = query(&mut deps, mock_env(), msg).unwrap();
+    let raw = query(&mut deps, env.clone(), msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -428,6 +443,7 @@ fn verify_ethereum_transaction_works() {
 #[test]
 fn tendermint_signature_verify_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
     let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
@@ -439,7 +455,7 @@ fn tendermint_signature_verify_works() {
         public_key: Binary::new(public_key),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -448,6 +464,7 @@ fn tendermint_signature_verify_works() {
 #[test]
 fn tendermint_signature_verify_fails() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
     // alter hash
@@ -461,7 +478,7 @@ fn tendermint_signature_verify_fails() {
         public_key: Binary::new(public_key),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
@@ -470,6 +487,7 @@ fn tendermint_signature_verify_fails() {
 #[test]
 fn tendermint_signature_verify_errors() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
     let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
@@ -480,7 +498,7 @@ fn tendermint_signature_verify_errors() {
         signature: Binary::new(signature),
         public_key: Binary::new(public_key),
     };
-    let res = query(&mut deps, mock_env(), verify_msg);
+    let res = query(&mut deps, env.clone(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
         "Verification error: Invalid public key format"
@@ -490,6 +508,7 @@ fn tendermint_signature_verify_errors() {
 #[test]
 fn tendermint_signatures_batch_verify_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
         .iter()
@@ -510,7 +529,7 @@ fn tendermint_signatures_batch_verify_works() {
         public_keys,
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -519,6 +538,7 @@ fn tendermint_signatures_batch_verify_works() {
 #[test]
 fn tendermint_signatures_batch_verify_message_multisig_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     // One message
     let messages = [ED25519_MESSAGE_HEX]
@@ -543,7 +563,7 @@ fn tendermint_signatures_batch_verify_message_multisig_works() {
         public_keys,
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -552,6 +572,7 @@ fn tendermint_signatures_batch_verify_message_multisig_works() {
 #[test]
 fn tendermint_signatures_batch_verify_single_public_key_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     // Multiple messages
     //FIXME: Use different messages / signatures
@@ -576,7 +597,7 @@ fn tendermint_signatures_batch_verify_single_public_key_works() {
         public_keys,
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
@@ -585,6 +606,7 @@ fn tendermint_signatures_batch_verify_single_public_key_works() {
 #[test]
 fn tendermint_signatures_batch_verify_fails() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut messages: Vec<Binary> = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
         .iter()
@@ -610,7 +632,7 @@ fn tendermint_signatures_batch_verify_fails() {
         public_keys: (public_keys),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
@@ -619,6 +641,7 @@ fn tendermint_signatures_batch_verify_fails() {
 #[test]
 fn tendermint_signatures_batch_verify_errors() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
         .iter()
@@ -639,7 +662,7 @@ fn tendermint_signatures_batch_verify_errors() {
         signatures,
         public_keys,
     };
-    let res = query(&mut deps, mock_env(), verify_msg);
+    let res = query(&mut deps, env.clone(), verify_msg);
     assert_eq!(
         res.unwrap_err(),
         "Verification error: Invalid public key format"
@@ -649,6 +672,8 @@ fn tendermint_signatures_batch_verify_errors() {
 #[test]
 fn webauthn_verify_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
+
     let verify_msg = QueryMsg::VerifyWebauthn {
         authenticator_data: WEBAUTHN_AUTHENTICATOR_DATA.into(),
         client_data_json: WEBAUTHN_CLIENT_DATA_JSON.into(),
@@ -659,7 +684,7 @@ fn webauthn_verify_works() {
         s: WEBAUTHN_SIGNATURE_S.into(),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert!(res.verifies);
 }
@@ -667,6 +692,7 @@ fn webauthn_verify_works() {
 #[test]
 fn webauthn_verify_errors() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let mut r = WEBAUTHN_SIGNATURE_R.to_vec();
     r[0] ^= 3;
@@ -681,7 +707,7 @@ fn webauthn_verify_errors() {
         s: WEBAUTHN_SIGNATURE_S.into(),
     };
 
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert!(!res.verifies);
 
@@ -698,7 +724,7 @@ fn webauthn_verify_errors() {
     };
 
     let mut deps = setup();
-    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert!(!res.verifies);
 }
@@ -706,10 +732,11 @@ fn webauthn_verify_errors() {
 #[test]
 fn query_works() {
     let mut deps = setup();
+    let env = mock_environment(deps.api());
 
     let query_msg = QueryMsg::ListVerificationSchemes {};
 
-    let raw = query(&mut deps, mock_env(), query_msg).unwrap();
+    let raw = query(&mut deps, env.clone(), query_msg).unwrap();
     let res: ListVerificationsResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(

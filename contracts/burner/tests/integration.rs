@@ -18,7 +18,9 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{coins, Attribute, BankMsg, ContractResult, Order, Response, SubMsg};
-use cosmwasm_vm::testing::{execute, instantiate, migrate, mock_env, mock_info, mock_instance};
+use cosmwasm_vm::testing::{
+    execute, instantiate, migrate, mock_environment, mock_info, mock_instance,
+};
 
 use burner::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
 use cosmwasm_vm::Storage;
@@ -42,11 +44,12 @@ fn first_attr(data: impl AsRef<[Attribute]>, search_key: &str) -> Option<String>
 #[test]
 fn instantiate_fails() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
-    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = instantiate(&mut deps, env, info, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -57,6 +60,7 @@ fn instantiate_fails() {
 #[test]
 fn migrate_sends_funds() {
     let mut deps = mock_instance(WASM, &coins(123456, "gold"));
+    let env = mock_environment(deps.api());
 
     // change the verifier via migrate
     let payout = String::from("someone else");
@@ -64,7 +68,7 @@ fn migrate_sends_funds() {
         payout: payout.clone(),
         delete: 0,
     };
-    let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
+    let res: Response = migrate(&mut deps, env, msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
     let msg = res.messages.first().expect("no message");
@@ -93,14 +97,15 @@ fn execute_cleans_up_data() {
     })
     .unwrap();
 
+    let env = mock_environment(deps.api());
     // change the verifier via migrate
     let payout = String::from("someone else");
     let msg = MigrateMsg { payout, delete: 0 };
-    let _res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
+    let _res: Response = migrate(&mut deps, env.clone(), msg).unwrap();
 
     let res: Response = execute(
         &mut deps,
-        mock_env(),
+        env.clone(),
         mock_info("anon", &[]),
         ExecuteMsg::Cleanup { limit: Some(2) },
     )
@@ -118,7 +123,7 @@ fn execute_cleans_up_data() {
 
     let res: Response = execute(
         &mut deps,
-        mock_env(),
+        env,
         mock_info("anon", &[]),
         ExecuteMsg::Cleanup { limit: Some(2) },
     )

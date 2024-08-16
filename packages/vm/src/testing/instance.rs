@@ -126,7 +126,14 @@ pub fn mock_instance_with_options(
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     check_wasm(wasm, &options.available_capabilities).unwrap();
-    let contract_address = MOCK_CONTRACT_ADDR;
+
+    let api = if let Some(backend_error) = options.backend_error {
+        MockApi::new_failing(backend_error)
+    } else {
+        MockApi::default()
+    };
+
+    let contract_address = api.addr_make(MOCK_CONTRACT_ADDR);
 
     // merge balances
     let mut balances = options.balances.to_vec();
@@ -135,14 +142,8 @@ pub fn mock_instance_with_options(
         if let Some(pos) = balances.iter().position(|item| item.0 == contract_address) {
             balances.remove(pos);
         }
-        balances.push((contract_address, contract_balance));
+        balances.push((&contract_address, contract_balance));
     }
-
-    let api = if let Some(backend_error) = options.backend_error {
-        MockApi::new_failing(backend_error)
-    } else {
-        MockApi::default()
-    };
 
     let backend = Backend {
         api,

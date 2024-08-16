@@ -24,8 +24,8 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     testing::{
-        execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_options, query,
-        reply, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        execute, instantiate, mock_environment, mock_info, mock_instance, mock_instance_options,
+        query, reply, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Backend, Instance,
 };
@@ -73,16 +73,17 @@ pub fn mock_dependencies_with_custom_querier_and_balances(
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
-    let res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = instantiate(&mut deps, env.clone(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
-    let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
+    let res = query(&mut deps, env.clone(), QueryMsg::Owner {}).unwrap();
     let value: OwnerResponse = from_json(res).unwrap();
     assert_eq!("creator", value.owner.as_str());
 }
@@ -90,10 +91,11 @@ fn proper_initialization() {
 #[test]
 fn reflect() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, env.clone(), info, msg).unwrap();
 
     let payload = vec![
         BankMsg::Send {
@@ -114,7 +116,7 @@ fn reflect() {
         msgs: payload.clone(),
     };
     let info = mock_info("creator", &[]);
-    let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = execute(&mut deps, env.clone(), info, msg).unwrap();
 
     // should return payload
     let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
@@ -124,10 +126,11 @@ fn reflect() {
 #[test]
 fn reflect_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, env.clone(), info, msg).unwrap();
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
@@ -138,7 +141,7 @@ fn reflect_requires_owner() {
     let msg = ExecuteMsg::ReflectMsg { msgs: payload };
 
     let info = mock_info("someone", &[]);
-    let res: ContractResult<Response<CustomMsg>> = execute(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response<CustomMsg>> = execute(&mut deps, env.clone(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -146,21 +149,22 @@ fn reflect_requires_owner() {
 #[test]
 fn transfer() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, env.clone(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
     let new_owner = deps.api().addr_make("friend");
     let msg = ExecuteMsg::ChangeOwner {
         owner: new_owner.to_string(),
     };
-    let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = execute(&mut deps, env.clone(), info, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
-    let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
+    let res = query(&mut deps, env.clone(), QueryMsg::Owner {}).unwrap();
     let value: OwnerResponse = from_json(res).unwrap();
     assert_eq!(value.owner, new_owner.as_str());
 }
@@ -168,16 +172,17 @@ fn transfer() {
 #[test]
 fn transfer_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, env.clone(), info, msg).unwrap();
 
     let info = mock_info("random", &[]);
     let new_owner = String::from("friend");
     let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
 
-    let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = execute(&mut deps, env.clone(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -192,11 +197,12 @@ fn supply_query() {
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, custom, instance_options, memory_limit).unwrap();
+    let env = mock_environment(deps.api());
 
     // we don't even initialize, just trigger a query
     let res = query(
         &mut deps,
-        mock_env(),
+        env,
         QueryMsg::Chain {
             request: QueryRequest::Bank(BankQuery::Supply {
                 denom: "OSMO".to_string(),
@@ -217,11 +223,12 @@ fn dispatch_custom_query() {
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, custom, instance_options, memory_limit).unwrap();
+    let env = mock_environment(deps.api());
 
     // we don't even initialize, just trigger a query
     let res = query(
         &mut deps,
-        mock_env(),
+        env,
         QueryMsg::Capitalized {
             text: "demo one".to_string(),
         },
@@ -234,10 +241,11 @@ fn dispatch_custom_query() {
 #[test]
 fn reflect_subcall() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, env.clone(), info, msg).unwrap();
 
     let id = 123u64;
     let payload = SubMsg::reply_always(
@@ -252,7 +260,7 @@ fn reflect_subcall() {
         msgs: vec![payload.clone()],
     };
     let info = mock_info("creator", &[]);
-    let mut res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
+    let mut res: Response<CustomMsg> = execute(&mut deps, env.clone(), info, msg).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.pop().expect("must have a message");
     assert_eq!(payload, msg);
@@ -262,10 +270,11 @@ fn reflect_subcall() {
 #[test]
 fn reply_and_query() {
     let mut deps = mock_instance(WASM, &[]);
+    let env = mock_environment(deps.api());
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, env.clone(), info, msg).unwrap();
 
     let id = 123u64;
     let payload = Binary::from(b"my dear");
@@ -284,15 +293,15 @@ fn reply_and_query() {
         gas_used,
         result,
     };
-    let res: Response = reply(&mut deps, mock_env(), the_reply).unwrap();
+    let res: Response = reply(&mut deps, env.clone(), the_reply).unwrap();
     assert_eq!(0, res.messages.len());
 
-    // query for a non-existant id
-    let qres = query(&mut deps, mock_env(), QueryMsg::SubMsgResult { id: 65432 });
+    // query for a non-existent id
+    let qres = query(&mut deps, env.clone(), QueryMsg::SubMsgResult { id: 65432 });
     assert!(qres.is_err());
 
     // query for the real id
-    let raw = query(&mut deps, mock_env(), QueryMsg::SubMsgResult { id }).unwrap();
+    let raw = query(&mut deps, env.clone(), QueryMsg::SubMsgResult { id }).unwrap();
     let qres: Reply = from_json(raw).unwrap();
     assert_eq!(qres.id, id);
     let result = qres.result.unwrap();

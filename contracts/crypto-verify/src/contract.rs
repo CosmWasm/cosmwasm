@@ -324,7 +324,7 @@ pub fn query_verify_bls12_pairing_g2(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage,
+        message_info, mock_dependencies, mock_environment, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{from_json, OwnedDeps, RecoverPubkeyError, VerificationError};
     use hex_literal::hex;
@@ -354,10 +354,12 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies();
+        let env = mock_environment(&deps.api);
+
         let creator = deps.api.addr_make(CREATOR);
         let msg = InstantiateMsg {};
         let info = message_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
     }
@@ -370,6 +372,7 @@ mod tests {
     #[test]
     fn cosmos_signature_verify_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
         let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
@@ -381,7 +384,7 @@ mod tests {
             public_key: Binary::new(public_key),
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env.clone(), verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
@@ -390,6 +393,7 @@ mod tests {
     #[test]
     fn cosmos_signature_verify_fails() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let mut message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
         // alter message
@@ -403,7 +407,7 @@ mod tests {
             public_key: Binary::new(public_key),
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env.clone(), verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
@@ -412,6 +416,7 @@ mod tests {
     #[test]
     fn cosmos_signature_verify_errors() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
         let signature = hex::decode(SECP256K1_SIGNATURE_HEX).unwrap();
@@ -423,7 +428,7 @@ mod tests {
             public_key: Binary::new(public_key),
         };
 
-        let res = query(deps.as_ref(), mock_env(), verify_msg);
+        let res = query(deps.as_ref(), env.clone(), verify_msg);
         assert!(res.is_err());
         assert!(matches!(
             res.unwrap_err(),
@@ -437,6 +442,7 @@ mod tests {
     #[test]
     fn ethereum_signature_verify_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let message = ETHEREUM_MESSAGE;
         let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
@@ -447,7 +453,7 @@ mod tests {
             signature: signature.into(),
             signer_address: signer_address.into(),
         };
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
@@ -456,6 +462,7 @@ mod tests {
     #[test]
     fn ethereum_signature_verify_fails_for_corrupted_message() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let mut message = String::from(ETHEREUM_MESSAGE);
         message.push('!');
@@ -468,7 +475,7 @@ mod tests {
             signer_address: signer_address.into(),
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: false });
     }
@@ -476,6 +483,7 @@ mod tests {
     #[test]
     fn ethereum_signature_verify_fails_for_corrupted_signature() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let message = ETHEREUM_MESSAGE;
         let signer_address = ETHEREUM_SIGNER_ADDRESS;
@@ -488,7 +496,7 @@ mod tests {
             signature: signature.into(),
             signer_address: signer_address.into(),
         };
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env.clone(), verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: false });
 
@@ -499,7 +507,7 @@ mod tests {
             signature: signature.into(),
             signer_address: signer_address.into(),
         };
-        let result = query(deps.as_ref(), mock_env(), verify_msg);
+        let result = query(deps.as_ref(), env, verify_msg);
         match result.unwrap_err() {
             StdError::RecoverPubkeyErr {
                 source: RecoverPubkeyError::UnknownErr { .. },
@@ -512,6 +520,7 @@ mod tests {
     #[test]
     fn verify_ethereum_transaction_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         // curl -sS -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce"],"id":1}' -H "Content-type: application/json" https://rinkeby-light.eth.linkpool.io | jq .result
         // {
@@ -555,7 +564,7 @@ mod tests {
             s: s.into(),
             v,
         };
-        let raw = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let raw = query(deps.as_ref(), env, msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: true });
     }
@@ -563,6 +572,7 @@ mod tests {
     #[test]
     fn tendermint_signatures_batch_verify_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
             .iter()
@@ -583,7 +593,7 @@ mod tests {
             public_keys,
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
@@ -592,6 +602,7 @@ mod tests {
     #[test]
     fn tendermint_signatures_batch_verify_message_multisig_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         // One message
         let messages = [ED25519_MESSAGE_HEX]
@@ -616,7 +627,7 @@ mod tests {
             public_keys,
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
@@ -625,6 +636,7 @@ mod tests {
     #[test]
     fn tendermint_signatures_batch_verify_single_public_key_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         // Multiple messages
         //FIXME: Use different messages
@@ -650,7 +662,7 @@ mod tests {
             public_keys,
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
@@ -659,6 +671,7 @@ mod tests {
     #[test]
     fn tendermint_signatures_batch_verify_fails() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let mut messages: Vec<Binary> = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
             .iter()
@@ -683,7 +696,7 @@ mod tests {
             public_keys: (public_keys),
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
@@ -692,6 +705,7 @@ mod tests {
     #[test]
     fn tendermint_signatures_batch_verify_errors() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
             .iter()
@@ -712,7 +726,7 @@ mod tests {
             signatures,
             public_keys,
         };
-        let res = query(deps.as_ref(), mock_env(), verify_msg);
+        let res = query(deps.as_ref(), env, verify_msg);
         assert!(res.is_err());
         assert!(matches!(
             res.unwrap_err(),
@@ -726,6 +740,7 @@ mod tests {
     #[test]
     fn tendermint_signature_verify_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
         let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
@@ -737,7 +752,7 @@ mod tests {
             public_key: Binary::new(public_key),
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: true });
@@ -746,6 +761,7 @@ mod tests {
     #[test]
     fn tendermint_signature_verify_fails() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let mut message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
         // alter message
@@ -759,7 +775,7 @@ mod tests {
             public_key: Binary::new(public_key),
         };
 
-        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let raw = query(deps.as_ref(), env, verify_msg).unwrap();
         let res: VerifyResponse = from_json(raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
@@ -768,6 +784,7 @@ mod tests {
     #[test]
     fn tendermint_signature_verify_errors() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();
         let signature = hex::decode(ED25519_SIGNATURE_HEX).unwrap();
@@ -778,7 +795,7 @@ mod tests {
             signature: Binary::new(signature),
             public_key: Binary::new(public_key),
         };
-        let res = query(deps.as_ref(), mock_env(), verify_msg);
+        let res = query(deps.as_ref(), env, verify_msg);
         assert!(res.is_err());
         assert!(matches!(
             res.unwrap_err(),
@@ -792,10 +809,11 @@ mod tests {
     #[test]
     fn list_signatures_works() {
         let deps = setup();
+        let env = mock_environment(&deps.api);
 
         let query_msg = QueryMsg::ListVerificationSchemes {};
 
-        let raw = query(deps.as_ref(), mock_env(), query_msg).unwrap();
+        let raw = query(deps.as_ref(), env, query_msg).unwrap();
         let res: ListVerificationsResponse = from_json(raw).unwrap();
 
         assert_eq!(

@@ -6,7 +6,9 @@ use tempfile::TempDir;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 use cosmwasm_std::{coins, Checksum, Empty};
-use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
+use cosmwasm_vm::testing::{
+    mock_backend, mock_environment, mock_info, MockApi, MockQuerier, MockStorage,
+};
 use cosmwasm_vm::{
     call_execute, call_instantiate, capabilities_from_csv, Cache, CacheOptions, InstanceOptions,
     Size,
@@ -153,17 +155,18 @@ fn app(runtime: u64) {
 
                 if let Some(msg) = &contracts[idx].instantiate_msg {
                     let info = mock_info("creator", &coins(1000, "earth"));
+                    let env = mock_environment(instance.api());
                     let contract_result =
-                        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                        call_instantiate::<_, _, _, Empty>(&mut instance, &env, &info, msg)
                             .unwrap();
                     assert!(contract_result.into_result().is_ok());
                 }
 
                 for (execution_idx, execute) in contracts[idx].execute_msgs.iter().enumerate() {
                     let info = mock_info("verifies", &coins(15, "earth"));
+                    let env = mock_environment(instance.api());
                     let msg = execute.msg;
-                    let res =
-                        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+                    let res = call_execute::<_, _, _, Empty>(&mut instance, &env, &info, msg);
 
                     if execute.expect_error {
                         if res.is_ok() {
