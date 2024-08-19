@@ -5,11 +5,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-use alloc::{
-    borrow::{Cow, ToOwned},
-    collections::BTreeMap,
-    vec::Vec,
-};
+use alloc::{borrow::Cow, collections::BTreeMap, vec::Vec};
 use core::hash::BuildHasherDefault;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -23,7 +19,7 @@ pub type DefinitionReference = usize;
 mod default_impls;
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct StructProperty {
@@ -32,7 +28,7 @@ pub struct StructProperty {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", untagged)]
 #[non_exhaustive]
@@ -47,7 +43,7 @@ pub enum StructType {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct EnumCase {
@@ -57,7 +53,7 @@ pub struct EnumCase {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
 #[non_exhaustive]
@@ -72,7 +68,7 @@ pub enum EnumValue {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
 #[non_exhaustive]
@@ -119,7 +115,7 @@ pub enum NodeType {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Node {
@@ -130,7 +126,7 @@ pub struct Node {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SchemaV1 {
@@ -139,7 +135,7 @@ pub struct SchemaV1 {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
 #[non_exhaustive]
@@ -176,6 +172,10 @@ pub struct SchemaVisitor {
 impl SchemaVisitor {
     pub fn get_reference<T: Schemaifier>(&self) -> Option<DefinitionReference> {
         self.schemas.get_index_of(&T::id())
+    }
+
+    pub fn get_schema<T: Schemaifier>(&self) -> Option<&Node> {
+        self.schemas.get(&T::id())
     }
 
     pub fn insert(&mut self, id: Identifier, node: Node) -> DefinitionReference {

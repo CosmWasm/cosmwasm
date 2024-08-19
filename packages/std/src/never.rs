@@ -25,6 +25,7 @@
 /// let res: Result<i32, Never> = Ok(5);
 /// assert_eq!(safe_unwrap(res), 5);
 /// ```
+#[derive(cw_schema::Schemaifier)]
 pub enum Never {}
 
 // The Debug implementation is needed to allow the use of `Result::unwrap`.

@@ -30,7 +30,19 @@ use super::num_consts::NumConsts;
 /// let a = Int64::from(258i64);
 /// assert_eq!(a.i64(), 258);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    schemars::JsonSchema,
+    cw_schema::Schemaifier,
+)]
+#[schemaifier(type = cw_schema::NodeType::Integer { precision: 64, signed: true })]
 pub struct Int64(#[schemars(with = "String")] pub(crate) i64);
 
 forward_ref_partial_eq!(Int64, Int64);

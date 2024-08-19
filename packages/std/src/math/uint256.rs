@@ -44,7 +44,19 @@ use super::num_consts::NumConsts;
 /// ]);
 /// assert_eq!(a, b);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    schemars::JsonSchema,
+    cw_schema::Schemaifier,
+)]
+#[schemaifier(type = cw_schema::NodeType::Integer { precision: 256, signed: false })]
 pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
 
 forward_ref_partial_eq!(Uint256, Uint256);

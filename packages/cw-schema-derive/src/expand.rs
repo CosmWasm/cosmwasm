@@ -1,9 +1,8 @@
-use std::borrow::Cow;
-
 use crate::bail;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{punctuated::Punctuated, DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
+use std::borrow::Cow;
+use syn::{DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
 
 struct SerdeContainerOptions {
     rename_all: Option<syn::LitStr>,
@@ -45,12 +44,16 @@ impl SerdeContainerOptions {
 }
 
 struct ContainerOptions {
+    r#as: Option<syn::Ident>,
+    r#type: Option<syn::Expr>,
     crate_path: syn::Path,
 }
 
 impl ContainerOptions {
     fn parse(attributes: &[syn::Attribute]) -> syn::Result<Self> {
         let mut options = ContainerOptions {
+            r#as: None,
+            r#type: None,
             crate_path: syn::parse_str("::cw_schema")?,
         };
 
@@ -62,6 +65,10 @@ impl ContainerOptions {
                 if meta.path.is_ident("crate") {
                     let stringified: syn::LitStr = meta.value()?.parse()?;
                     options.crate_path = stringified.parse()?;
+                } else if meta.path.is_ident("as") {
+                    options.r#as = Some(meta.value()?.parse()?);
+                } else if meta.path.is_ident("type") {
+                    options.r#type = Some(meta.value()?.parse()?);
                 } else {
                     bail!(meta.path, "unknown attribute");
                 }
@@ -228,55 +235,72 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
     let description = normalize_option(meta.description.as_ref());
     let crate_path = &meta.options.crate_path;
 
-    let node_ty = match input.fields {
-        syn::Fields::Named(named) => {
-            let items = named.named.iter().map(|field| {
-                let name = field.ident.as_ref().unwrap();
-                let description = normalize_option(extract_documentation(&field.attrs)?);
-                let field_ty = &field.ty;
+    let node = if let Some(ref r#as) = meta.options.r#as {
+        quote! {
+            let definition_resource = #crate_path::Schemaifier::visit_schema(visitor);
+            visitor.get_schema::<#r#as>().unwrap().clone()
+        }
+    } else {
+        let node_ty = if let Some(ref r#type) = meta.options.r#type {
+            quote! {
+                #r#type
+            }
+        } else {
+            let node_ty = match input.fields {
+                syn::Fields::Named(named) => {
+                    let items = named.named.iter().map(|field| {
+                        let name = field.ident.as_ref().unwrap();
+                        let description = normalize_option(extract_documentation(&field.attrs)?);
+                        let field_ty = &field.ty;
 
-                let expanded = quote! {
-                    (
-                        stringify!(#name).into(),
-                        #crate_path::StructProperty {
-                            description: #description,
-                            value: <#field_ty as #crate_path::Schemaifier>::visit_schema(visitor),
+                        let expanded = quote! {
+                            (
+                                stringify!(#name).into(),
+                                #crate_path::StructProperty {
+                                    description: #description,
+                                    value: <#field_ty as #crate_path::Schemaifier>::visit_schema(visitor),
+                                }
+                            )
+                        };
+
+                        Ok(expanded)
+                    }).collect::<syn::Result<Vec<_>>>()?;
+
+                    quote! {
+                        #crate_path::StructType::Named {
+                            properties: #crate_path::reexport::BTreeMap::from([
+                                #( #items, )*
+                            ])
                         }
-                    )
-                };
+                    }
+                }
+                syn::Fields::Unnamed(fields) => {
+                    let type_names = fields.unnamed.iter().map(|field| &field.ty);
 
-                Ok(expanded)
-            }).collect::<syn::Result<Vec<_>>>()?;
+                    quote! {
+                        #crate_path::StructType::Tuple {
+                            items: vec![
+                                #(
+                                    <#type_names as #crate_path::Schemaifier>::visit_schema(visitor),
+                                )*
+                            ],
+                        }
+                    }
+                }
+                syn::Fields::Unit => quote! { #crate_path::StructType::Unit },
+            };
 
             quote! {
-                #crate_path::StructType::Named {
-                    properties: #crate_path::reexport::BTreeMap::from([
-                        #( #items, )*
-                    ])
-                }
+                #crate_path::NodeType::Struct(#node_ty)
             }
-        }
-        syn::Fields::Unnamed(fields) => {
-            let type_names = fields.unnamed.iter().map(|field| &field.ty);
+        };
 
-            quote! {
-                #crate_path::StructType::Tuple {
-                    items: vec![
-                        #(
-                            <#type_names as #crate_path::Schemaifier>::visit_schema(visitor),
-                        )*
-                    ],
-                }
+        quote! {
+            #crate_path::Node {
+                name: std::any::type_name::<Self>().into(),
+                description: #description,
+                value: #node_ty,
             }
-        }
-        syn::Fields::Unit => quote! { #crate_path::StructType::Unit },
-    };
-
-    let node = quote! {
-        #crate_path::Node {
-            name: std::any::type_name::<Self>().into(),
-            description: #description,
-            value: #crate_path::NodeType::Struct(#node_ty),
         }
     };
 

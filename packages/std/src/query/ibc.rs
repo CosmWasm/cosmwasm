@@ -7,7 +7,9 @@ use crate::prelude::*;
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection. These will return errors if the contract is not "ibc enabled"
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcQuery {
     /// Gets the Port ID the current contract is bound to.
@@ -31,7 +33,9 @@ pub enum IbcQuery {
     // TODO: Add more
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct PortIdResponse {
     pub port_id: String,
@@ -39,7 +43,9 @@ pub struct PortIdResponse {
 
 impl_response_constructor!(PortIdResponse, port_id: String);
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct ListChannelsResponse {
     pub channels: Vec<IbcChannel>,
@@ -47,7 +53,9 @@ pub struct ListChannelsResponse {
 
 impl_response_constructor!(ListChannelsResponse, channels: Vec<IbcChannel>);
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,

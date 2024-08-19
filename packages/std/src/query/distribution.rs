@@ -7,7 +7,9 @@ use crate::{Addr, Decimal256};
 use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum DistributionQuery {
     /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L222-L230>
@@ -27,7 +29,9 @@ pub enum DistributionQuery {
 }
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L232-L240>
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct DelegatorWithdrawAddressResponse {
@@ -38,7 +42,9 @@ impl_response_constructor!(DelegatorWithdrawAddressResponse, withdraw_address: A
 impl QueryResponseType for DelegatorWithdrawAddressResponse {}
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L169-L178>
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct DelegationRewardsResponse {
@@ -57,7 +63,9 @@ impl QueryResponseType for DelegationRewardsResponse {}
 /// wasmd needs to truncate the decimal places to 18.
 ///
 /// [DecCoin]: (https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/proto/cosmos/base/v1beta1/coin.proto#L28-L38)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub struct DecCoin {
     pub denom: String,
@@ -78,7 +86,9 @@ impl DecCoin {
 }
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L189-L200>
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct DelegationTotalRewardsResponse {
     pub rewards: Vec<DelegatorReward>,
@@ -92,7 +102,9 @@ impl_response_constructor!(
 );
 impl QueryResponseType for DelegationTotalRewardsResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct DelegatorReward {
     pub validator_address: String,
@@ -105,7 +117,9 @@ impl_response_constructor!(
 );
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/b0acf60e6c39f7ab023841841fc0b751a12c13ff/proto/cosmos/distribution/v1beta1/query.proto#L212-L220>
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct DelegatorValidatorsResponse {
     pub validators: Vec<String>,

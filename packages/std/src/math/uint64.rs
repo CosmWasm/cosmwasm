@@ -35,7 +35,19 @@ use super::num_consts::NumConsts;
 /// let b = Uint64::from(70u32);
 /// assert_eq!(b.u64(), 70);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    schemars::JsonSchema,
+    cw_schema::Schemaifier,
+)]
+#[schemaifier(type = cw_schema::NodeType::Integer { precision: 64, signed: false })]
 pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
 
 forward_ref_partial_eq!(Uint64, Uint64);

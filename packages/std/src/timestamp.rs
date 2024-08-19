@@ -33,7 +33,9 @@ use crate::Uint64;
     PartialOrd,
     Ord,
     schemars::JsonSchema,
+    cw_schema::Schemaifier,
 )]
+#[schemaifier(type = cw_schema::NodeType::Timestamp)]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {
