@@ -4,7 +4,7 @@ expression: schema
 ---
 {
   "type": "v1",
-  "root": 6,
+  "root": 7,
   "definitions": [
     {
       "name": "String",
@@ -17,7 +17,7 @@ expression: schema
       "signed": false
     },
     {
-      "name": "derive::Bar",
+      "name": "Bar",
       "description": "Bar struct!",
       "type": "struct",
       "properties": {
@@ -33,7 +33,7 @@ expression: schema
       "inner": 2
     },
     {
-      "name": "derive::Baz",
+      "name": "Baz",
       "description": "Baz enum!",
       "type": "enum",
       "cases": {
@@ -62,6 +62,17 @@ expression: schema
       }
     },
     {
+      "name": "Quux",
+      "description": "Quux struct!",
+      "type": "struct",
+      "properties": {
+        "quuxField": {
+          "description": "Quux field!",
+          "value": 1
+        }
+      }
+    },
+    {
       "name": "(u32, u32)",
       "type": "tuple",
       "items": [
@@ -70,7 +81,7 @@ expression: schema
       ]
     },
     {
-      "name": "derive::HelloWorld",
+      "name": "HelloWorld",
       "description": "Hello world struct!",
       "type": "struct",
       "properties": {
@@ -86,9 +97,13 @@ expression: schema
           "description": "Name field!",
           "value": 0
         },
+        "quux": {
+          "description": "Quux field!",
+          "value": 5
+        },
         "tuple": {
           "description": "Tuple field!",
-          "value": 5
+          "value": 6
         }
       }
     }

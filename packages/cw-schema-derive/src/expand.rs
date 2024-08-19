@@ -1,8 +1,39 @@
 use crate::bail;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use std::borrow::Cow;
 use syn::{DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
+
+type Converter = fn(&str) -> String;
+
+fn case_converter(case: &syn::LitStr) -> syn::Result<Converter> {
+    macro_rules! define_converter {
+        (match $value:expr => {
+            $( $case:pat => $converter:expr, )*
+        }) => {
+            match $value {
+                $( $case => |txt: &str| $converter(txt).to_string(), )*
+                _ => return Err(syn::Error::new_spanned(case, "unsupported case style")),
+            }
+        };
+    }
+
+    let case = case.value();
+    let converter = define_converter!(match case.as_str() => {
+        "camelCase" => heck::AsLowerCamelCase,
+        "snake_case" => heck::AsSnakeCase,
+        "kebab-case" => heck::AsKebabCase,
+        "SCREAMING_SNAKE_CASE" => heck::AsShoutySnakeCase,
+        "SCREAMING-KEBAB-CASE" => heck::AsShoutyKebabCase,
+    });
+
+    Ok(converter)
+}
+
+fn ident_adapter(converter: Converter) -> impl Fn(&syn::Ident) -> syn::Ident {
+    let adapter = move |ident: &syn::Ident| format_ident!("{}", converter(&ident.to_string()));
+    Box::new(adapter)
+}
 
 struct SerdeContainerOptions {
     rename_all: Option<syn::LitStr>,
@@ -140,13 +171,20 @@ pub struct ContainerMeta {
 
 fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStream> {
     let crate_path = &meta.options.crate_path;
+    let converter = ident_adapter(
+        meta.serde_options
+            .rename_all
+            .as_ref()
+            .map(case_converter)
+            .unwrap_or_else(|| Ok(|txt: &str| txt.to_string()))?,
+    );
 
     let mut cases = Vec::new();
     for variant in input.variants.iter() {
         let value = match variant.fields {
             syn::Fields::Named(ref fields) => {
                 let items = fields.named.iter().map(|field| {
-                    let name = field.ident.as_ref().unwrap();
+                    let name = converter(field.ident.as_ref().unwrap());
                     let description = normalize_option(extract_documentation(&field.attrs)?);
                     let field_ty = &field.ty;
 
@@ -185,7 +223,7 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
             syn::Fields::Unit => quote! { #crate_path::EnumValue::Unit },
         };
 
-        let variant_name = &variant.ident;
+        let variant_name = converter(&variant.ident);
         let description = normalize_option(extract_documentation(&variant.attrs)?);
 
         let expanded = quote! {
@@ -214,7 +252,7 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
         impl #impl_generics #crate_path::Schemaifier for #name #ty_generics #where_clause {
             fn visit_schema(visitor: &mut #crate_path::SchemaVisitor) -> #crate_path::DefinitionReference {
                 let node = #crate_path::Node {
-                    name: std::any::type_name::<Self>().into(),
+                    name: stringify!(#name).into(),
                     description: #description,
                     value: #crate_path::NodeType::Enum {
                         discriminator: None,
@@ -231,6 +269,14 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
 }
 
 fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<TokenStream> {
+    let converter = ident_adapter(
+        meta.serde_options
+            .rename_all
+            .as_ref()
+            .map(case_converter)
+            .unwrap_or_else(|| Ok(|txt: &str| txt.to_string()))?,
+    );
+
     let name = &meta.name;
     let description = normalize_option(meta.description.as_ref());
     let crate_path = &meta.options.crate_path;
@@ -249,7 +295,7 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
             let node_ty = match input.fields {
                 syn::Fields::Named(named) => {
                     let items = named.named.iter().map(|field| {
-                        let name = field.ident.as_ref().unwrap();
+                        let name = converter(field.ident.as_ref().unwrap());
                         let description = normalize_option(extract_documentation(&field.attrs)?);
                         let field_ty = &field.ty;
 
@@ -297,7 +343,7 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
 
         quote! {
             #crate_path::Node {
-                name: std::any::type_name::<Self>().into(),
+                name: stringify!(#name).into(),
                 description: #description,
                 value: #node_ty,
             }

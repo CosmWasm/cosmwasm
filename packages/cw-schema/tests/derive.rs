@@ -12,6 +12,9 @@ struct HelloWorld {
     /// Baz field!
     baz: Baz,
 
+    /// Quux field!
+    quux: Quux,
+
     /// Tuple field!
     tuple: (u32, u32),
 }
@@ -35,6 +38,14 @@ enum Baz {
     },
     /// D variant!
     D(u32, u32),
+}
+
+#[derive(Schemaifier)]
+#[serde(rename_all = "camelCase")]
+/// Quux struct!
+pub struct Quux {
+    /// Quux field!
+    quux_field: u32,
 }
 
 #[test]
