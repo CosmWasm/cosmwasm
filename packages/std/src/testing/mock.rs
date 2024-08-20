@@ -739,7 +739,8 @@ pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
     supplies: BTreeMap<String, Uint128>,
-    /// BTreeMap<address, coins>
+    /// A map from address to balance. The address ist the String conversion of `Addr`,
+    /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
     /// Vec<Metadata>
     denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
@@ -749,7 +750,7 @@ impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         let balances: BTreeMap<_, _> = balances
             .iter()
-            .map(|(s, c)| (s.to_string(), c.to_vec()))
+            .map(|(address, balance)| (address.to_string(), balance.to_vec()))
             .collect();
 
         BankQuerier {
