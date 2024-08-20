@@ -32,6 +32,9 @@ and this project adheres to
 - cosmwasm-std: Let `mock_env` return a contract address that is valid bech32
   and uses the same bech32 prefix as `MockApi`; Change `MOCK_CONTRACT_ADDR`
   value to match the contract address from `mock_env`. ([#2211])
+- cosmwasm-vm: Let `mock_env` return a contract address that is valid bech32 and
+  uses the same bech32 prefix as `MockApi`; Change `MOCK_CONTRACT_ADDR` value to
+  match the contract address from `mock_env`. ([#2211])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
