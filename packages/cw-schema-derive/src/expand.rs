@@ -1,3 +1,5 @@
+// TODO: CLEAN ALL THIS SHIT UP WHAT THE FUCK IS THIS
+
 use crate::bail;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -30,9 +32,13 @@ fn case_converter(case: &syn::LitStr) -> syn::Result<Converter> {
     Ok(converter)
 }
 
+fn maybe_case_converter(case: Option<&syn::LitStr>) -> syn::Result<Converter> {
+    case.map(case_converter)
+        .unwrap_or_else(|| Ok(|txt: &str| txt.to_string()))
+}
+
 fn ident_adapter(converter: Converter) -> impl Fn(&syn::Ident) -> syn::Ident {
-    let adapter = move |ident: &syn::Ident| format_ident!("{}", converter(&ident.to_string()));
-    Box::new(adapter)
+    move |ident: &syn::Ident| format_ident!("{}", converter(&ident.to_string()))
 }
 
 struct SerdeContainerOptions {
@@ -169,37 +175,45 @@ pub struct ContainerMeta {
     serde_options: SerdeContainerOptions,
 }
 
+fn collect_struct_fields<'a, C>(
+    converter: &'a C,
+    crate_path: &'a syn::Path,
+    fields: &'a syn::FieldsNamed,
+) -> impl Iterator<Item = syn::Result<TokenStream>> + 'a
+where
+    C: Fn(&syn::Ident) -> syn::Ident,
+{
+    fields.named.iter().map(move |field| {
+        let name = converter(field.ident.as_ref().unwrap());
+        let description = normalize_option(extract_documentation(&field.attrs)?);
+        let field_ty = &field.ty;
+
+        let expanded = quote! {
+            (
+                stringify!(#name).into(),
+                #crate_path::StructProperty {
+                    description: #description,
+                    value: <#field_ty as #crate_path::Schemaifier>::visit_schema(visitor),
+                }
+            )
+        };
+
+        Ok(expanded)
+    })
+}
+
 fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStream> {
     let crate_path = &meta.options.crate_path;
-    let converter = ident_adapter(
-        meta.serde_options
-            .rename_all
-            .as_ref()
-            .map(case_converter)
-            .unwrap_or_else(|| Ok(|txt: &str| txt.to_string()))?,
-    );
+    let converter = ident_adapter(maybe_case_converter(
+        meta.serde_options.rename_all.as_ref(),
+    )?);
 
     let mut cases = Vec::new();
     for variant in input.variants.iter() {
         let value = match variant.fields {
             syn::Fields::Named(ref fields) => {
-                let items = fields.named.iter().map(|field| {
-                    let name = converter(field.ident.as_ref().unwrap());
-                    let description = normalize_option(extract_documentation(&field.attrs)?);
-                    let field_ty = &field.ty;
-
-                    let expanded = quote! {
-                        (
-                            stringify!(#name).into(),
-                            #crate_path::StructProperty {
-                                description: #description,
-                                value: <#field_ty as #crate_path::Schemaifier>::visit_schema(visitor),
-                            }
-                        )
-                    };
-
-                    Ok(expanded)
-                }).collect::<syn::Result<Vec<_>>>()?;
+                let items = collect_struct_fields(&converter, crate_path, fields)
+                    .collect::<syn::Result<Vec<_>>>()?;
 
                 quote! {
                     #crate_path::EnumValue::Named {
@@ -269,13 +283,9 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
 }
 
 fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<TokenStream> {
-    let converter = ident_adapter(
-        meta.serde_options
-            .rename_all
-            .as_ref()
-            .map(case_converter)
-            .unwrap_or_else(|| Ok(|txt: &str| txt.to_string()))?,
-    );
+    let converter = ident_adapter(maybe_case_converter(
+        meta.serde_options.rename_all.as_ref(),
+    )?);
 
     let name = &meta.name;
     let description = normalize_option(meta.description.as_ref());
@@ -293,24 +303,9 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
             }
         } else {
             let node_ty = match input.fields {
-                syn::Fields::Named(named) => {
-                    let items = named.named.iter().map(|field| {
-                        let name = converter(field.ident.as_ref().unwrap());
-                        let description = normalize_option(extract_documentation(&field.attrs)?);
-                        let field_ty = &field.ty;
-
-                        let expanded = quote! {
-                            (
-                                stringify!(#name).into(),
-                                #crate_path::StructProperty {
-                                    description: #description,
-                                    value: <#field_ty as #crate_path::Schemaifier>::visit_schema(visitor),
-                                }
-                            )
-                        };
-
-                        Ok(expanded)
-                    }).collect::<syn::Result<Vec<_>>>()?;
+                syn::Fields::Named(ref named) => {
+                    let items = collect_struct_fields(&converter, crate_path, named)
+                        .collect::<syn::Result<Vec<_>>>()?;
 
                     quote! {
                         #crate_path::StructType::Named {

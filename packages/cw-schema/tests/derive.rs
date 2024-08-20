@@ -1,3 +1,5 @@
+#![allow(dead_code)] // We never construct these types. Introspection is done at compile time.
+
 use cw_schema::Schemaifier;
 
 #[derive(Schemaifier)]

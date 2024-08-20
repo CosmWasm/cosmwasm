@@ -116,10 +116,8 @@ fn roundtrip() {
 
 #[test]
 fn can_decode_example() {
-    /*
     let example = include_str!("example.json");
     let _: Schema = serde_json::from_str(example).unwrap();
-    */
 }
 
 #[test]
