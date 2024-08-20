@@ -52,7 +52,8 @@ use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 
-pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
+pub const MOCK_CONTRACT_ADDR: &str =
+    "cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs";
 
 /// Creates all external requirements that can be injected for unit tests.
 ///
@@ -337,12 +338,62 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
     }
 }
 
-/// Returns a default environment with height, time, chain_id, and contract address
+/// Returns a default environment with height, time, chain_id, and contract address.
 /// You can submit as is to most contracts, or modify height/time if you want to
 /// test for expiration.
 ///
 /// This is intended for use in test code only.
+///
+/// The contract address uses the same bech32 prefix as [`MockApi`](crate::testing::MockApi). While
+/// this is good for the majority of users, you might need to create your `Env`s
+/// differently if you need a valid address using a different prefix.
+///
+/// ## Examples
+///
+/// Create an env:
+///
+/// ```
+/// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, Timestamp, TransactionInfo};
+/// use cosmwasm_std::testing::mock_env;
+///
+/// let env = mock_env();
+/// assert_eq!(env, Env {
+///     block: BlockInfo {
+///         height: 12_345,
+///         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
+///         chain_id: "cosmos-testnet-14002".to_string(),
+///     },
+///     transaction: Some(TransactionInfo { index: 3 }),
+///     contract: ContractInfo {
+///         address: Addr::unchecked("cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs"),
+///     },
+/// });
+/// ```
+///
+/// Mutate and reuse environment:
+///
+/// ```
+/// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, Timestamp, TransactionInfo};
+/// use cosmwasm_std::testing::mock_env;
+///
+/// let env1 = mock_env();
+///
+/// // First test with `env1`
+///
+/// let mut env2 = env1.clone();
+/// env2.block.height += 1;
+/// env2.block.time = env1.block.time.plus_seconds(6);
+///
+/// // `env2` is one block and 6 seconds later
+///
+/// let mut env3 = env2.clone();
+/// env3.block.height += 1;
+/// env3.block.time = env2.block.time.plus_nanos(5_500_000_000);
+///
+/// // `env3` is one block and 5.5 seconds later
+/// ```
 pub fn mock_env() -> Env {
+    let contract_addr = MockApi::default().addr_make("cosmos2contract");
     Env {
         block: BlockInfo {
             height: 12_345,
@@ -351,7 +402,7 @@ pub fn mock_env() -> Env {
         },
         transaction: Some(TransactionInfo { index: 3 }),
         contract: ContractInfo {
-            address: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            address: contract_addr,
         },
     }
 }
@@ -688,7 +739,8 @@ pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
     supplies: BTreeMap<String, Uint128>,
-    /// BTreeMap<address, coins>
+    /// A map from address to balance. The address is the String conversion of `Addr`,
+    /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
     /// Vec<Metadata>
     denom_metadata: BTreeMap<Vec<u8>, DenomMetadata>,
@@ -698,7 +750,7 @@ impl BankQuerier {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         let balances: BTreeMap<_, _> = balances
             .iter()
-            .map(|(s, c)| (s.to_string(), c.to_vec()))
+            .map(|(address, balance)| (address.to_string(), balance.to_vec()))
             .collect();
 
         BankQuerier {
@@ -1203,6 +1255,12 @@ mod tests {
 
     const ETH_BLOCK_HEADER: &[u8] =
         include_bytes!("../../../crypto/testdata/eth-headers/1699693797.394876721s.json");
+
+    #[test]
+    fn mock_env_matches_mock_contract_addr() {
+        let contract_address = mock_env().contract.address;
+        assert_eq!(contract_address, Addr::unchecked(MOCK_CONTRACT_ADDR));
+    }
 
     #[test]
     fn mock_info_works() {
