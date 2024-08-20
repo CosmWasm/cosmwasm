@@ -739,7 +739,7 @@ pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
     supplies: BTreeMap<String, Uint128>,
-    /// A map from address to balance. The address ist the String conversion of `Addr`,
+    /// A map from address to balance. The address is the String conversion of `Addr`,
     /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
     /// Vec<Metadata>
