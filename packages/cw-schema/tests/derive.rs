@@ -43,7 +43,7 @@ enum Baz {
 }
 
 #[derive(Schemaifier)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", thingy = "lmao")]
 /// Quux struct!
 pub struct Quux {
     /// Quux field!

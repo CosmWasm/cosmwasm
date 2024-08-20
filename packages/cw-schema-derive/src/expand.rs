@@ -1,10 +1,39 @@
 // TODO: CLEAN ALL THIS SHIT UP WHAT THE FUCK IS THIS
 
 use crate::bail;
+use owo_colors::{OwoColorize, Stream, Style};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    fmt::Display,
+    io::{self, Write as _},
+};
 use syn::{DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
+
+fn print_warning(title: impl Display, content: impl Display) -> io::Result<()> {
+    let mut sink = io::stderr();
+
+    macro_rules! apply_style {
+        ($style:ident => $content:expr) => {{
+            //$content.if_supports_color(Stream::Stderr, |txt| txt.style($style))
+            $content.style($style)
+        }};
+    }
+
+    let bold_yellow = Style::new().bold().yellow();
+    let bold = Style::new().bold();
+    let blue = Style::new().blue();
+
+    write!(sink, "{}", apply_style!(bold_yellow => "warning"))?;
+    writeln!(sink, "{}", apply_style!(bold => format_args!(": {title}")))?;
+
+    writeln!(sink, "{}", apply_style!(blue => "  | "))?;
+    write!(sink, "{}", apply_style!(blue => "  | "))?;
+    writeln!(sink, "{content}")?;
+
+    Ok(())
+}
 
 type Converter = fn(&str) -> String;
 
@@ -32,11 +61,13 @@ fn case_converter(case: &syn::LitStr) -> syn::Result<Converter> {
     Ok(converter)
 }
 
+#[inline]
 fn maybe_case_converter(case: Option<&syn::LitStr>) -> syn::Result<Converter> {
     case.map(case_converter)
         .unwrap_or_else(|| Ok(|txt: &str| txt.to_string()))
 }
 
+#[inline]
 fn ident_adapter(converter: Converter) -> impl Fn(&syn::Ident) -> syn::Ident {
     move |ident: &syn::Ident| format_ident!("{}", converter(&ident.to_string()))
 }
@@ -63,6 +94,18 @@ impl SerdeContainerOptions {
                 } else if meta.path.is_ident("untagged") {
                     options.untagged = true;
                 } else {
+                    print_warning(
+                        "unknown serde attribute",
+                        format!(
+                            "unknown attribute \"{}\"",
+                            meta.path
+                                .get_ident()
+                                .map(|ident| ident.to_string())
+                                .unwrap_or_else(|| "[error]".into())
+                        ),
+                    )
+                    .unwrap();
+
                     // TODO: support other serde attributes
                     //
                     // For now we simply clear the buffer to avoid errors
@@ -118,6 +161,51 @@ impl ContainerOptions {
     }
 }
 
+struct SerdeFieldOptions {
+    rename: Option<syn::LitStr>,
+}
+
+impl SerdeFieldOptions {
+    fn parse(attributes: &[syn::Attribute]) -> syn::Result<Self> {
+        let mut options = SerdeFieldOptions { rename: None };
+
+        for attribute in attributes
+            .iter()
+            .filter(|attr| attr.path().is_ident("serde"))
+        {
+            attribute.parse_nested_meta(|meta| {
+                if meta.path.is_ident("rename") {
+                    options.rename = Some(meta.value()?.parse()?);
+                } else {
+                    print_warning(
+                        "unknown serde attribute",
+                        format!(
+                            "unknown attribute \"{}\"",
+                            meta.path
+                                .get_ident()
+                                .map(|ident| ident.to_string())
+                                .unwrap_or_else(|| "[error]".into())
+                        ),
+                    )
+                    .unwrap();
+
+                    // TODO: support other serde attributes
+                    //
+                    // For now we simply clear the buffer to avoid errors
+                    let _ = meta
+                        .value()
+                        .map(|val| val.parse::<TokenStream>().unwrap())
+                        .unwrap_or_else(|_| meta.input.cursor().token_stream());
+                }
+
+                Ok(())
+            })?;
+        }
+
+        Ok(options)
+    }
+}
+
 #[inline]
 fn normalize_option<T: quote::ToTokens>(value: Option<T>) -> TokenStream {
     match value {
@@ -154,10 +242,10 @@ fn extract_documentation(attributes: &[syn::Attribute]) -> syn::Result<Option<St
     Ok(Some(docs))
 }
 
-fn patch_type_params<'a>(
-    options: &ContainerOptions,
-    type_params: impl Iterator<Item = &'a mut syn::TypeParam>,
-) {
+fn patch_type_params<'a, I>(options: &ContainerOptions, type_params: I)
+where
+    I: Iterator<Item = &'a mut syn::TypeParam>,
+{
     let crate_path = &options.crate_path;
 
     for param in type_params {
@@ -371,7 +459,6 @@ fn expand_union(_meta: ContainerMeta, input: DataUnion) -> syn::Result<TokenStre
 pub fn expand(input: DeriveInput) -> syn::Result<TokenStream> {
     let options = ContainerOptions::parse(&input.attrs)?;
     let serde_options = SerdeContainerOptions::parse(&input.attrs)?;
-
     let description = extract_documentation(&input.attrs)?;
 
     let meta = ContainerMeta {
