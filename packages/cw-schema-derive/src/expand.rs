@@ -1,36 +1,44 @@
 // TODO: CLEAN ALL THIS SHIT UP WHAT THE FUCK IS THIS
 
 use crate::bail;
-use owo_colors::{OwoColorize, Stream, Style};
+use owo_colors::{OwoColorize, Style};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::{
-    borrow::Cow,
-    fmt::Display,
-    io::{self, Write as _},
+    borrow::Cow, env, fmt::Display, io::{self, Write as _}
 };
 use syn::{DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
 
-fn print_warning(title: impl Display, content: impl Display) -> io::Result<()> {
-    let mut sink = io::stderr();
+const DISABLE_WARNINGS_VAR: &str = "SHUT_UP_CW_SCHEMA_DERIVE";
 
-    macro_rules! apply_style {
-        ($style:ident => $content:expr) => {{
-            //$content.if_supports_color(Stream::Stderr, |txt| txt.style($style))
-            $content.style($style)
-        }};
+fn print_warning(title: impl Display, content: impl Display) -> io::Result<()> {
+    if let Ok("1") = env::var(DISABLE_WARNINGS_VAR).as_deref() {
+        return Ok(());
     }
+
+    let mut sink = io::stderr();
 
     let bold_yellow = Style::new().bold().yellow();
     let bold = Style::new().bold();
     let blue = Style::new().blue();
 
-    write!(sink, "{}", apply_style!(bold_yellow => "warning"))?;
-    writeln!(sink, "{}", apply_style!(bold => format_args!(": {title}")))?;
+    write!(sink, "{}", "warning".style(bold_yellow))?;
+    writeln!(
+        sink,
+        "{}",
+        format_args!("({}): {title}", env!("CARGO_PKG_NAME")).style(bold)
+    )?;
 
-    writeln!(sink, "{}", apply_style!(blue => "  | "))?;
-    write!(sink, "{}", apply_style!(blue => "  | "))?;
+    writeln!(sink, "{}", "  | ".style(blue))?;
+    write!(sink, "{}", "  | ".style(blue))?;
     writeln!(sink, "{content}")?;
+
+    writeln!(sink, "{}", "  | ".style(blue))?;
+    writeln!(sink, "{}", "  | ".style(blue))?;
+
+    write!(sink, "{}", "  = ".style(blue))?;
+    write!(sink, "{}", "note: ".style(bold))?;
+    writeln!(sink, "set `{DISABLE_WARNINGS_VAR}=1` to silence this warning")?;
 
     Ok(())
 }
@@ -272,7 +280,12 @@ where
     C: Fn(&syn::Ident) -> syn::Ident,
 {
     fields.named.iter().map(move |field| {
-        let name = converter(field.ident.as_ref().unwrap());
+        let field_options = SerdeFieldOptions::parse(&field.attrs)?;
+
+        let name = field_options
+            .rename
+            .map(|lit_str| format_ident!("{}", lit_str.value()))
+            .unwrap_or_else(|| converter(field.ident.as_ref().unwrap()));
         let description = normalize_option(extract_documentation(&field.attrs)?);
         let field_ty = &field.ty;
 
@@ -325,7 +338,12 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
             syn::Fields::Unit => quote! { #crate_path::EnumValue::Unit },
         };
 
-        let variant_name = converter(&variant.ident);
+        let field_options = SerdeFieldOptions::parse(&variant.attrs)?;
+
+        let variant_name = field_options
+            .rename
+            .map(|lit_str| format_ident!("{}", lit_str.value()))
+            .unwrap_or_else(|| converter(&variant.ident));
         let description = normalize_option(extract_documentation(&variant.attrs)?);
 
         let expanded = quote! {
