@@ -623,6 +623,7 @@ version = "2.1.1"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
+ "cw-schema",
  "schemars 0.8.20",
  "semver",
  "serde",
