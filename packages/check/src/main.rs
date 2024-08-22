@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 use std::process::exit;
 
 use clap::{Arg, ArgAction, Command};
@@ -104,7 +105,12 @@ fn check_contract(
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)?;
 
-    let prefix = format!("{}: ", path);
+    // Potentially lossy filename or path as used as a short prefix for the output
+    let filename_identifier: String = Path::new(path)
+        .file_name()
+        .map(|f| String::from_utf8_lossy(f.as_encoded_bytes()).to_string())
+        .unwrap_or(path.to_string());
+    let prefix = format!("    {}: ", filename_identifier);
     let logs = if verbose {
         Logger::On {
             prefix: &prefix,
