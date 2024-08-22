@@ -108,7 +108,7 @@ fn check_contract(
     // Potentially lossy filename or path as used as a short prefix for the output
     let filename_identifier: String = Path::new(path)
         .file_name()
-        .map(|f| String::from_utf8_lossy(f.as_encoded_bytes()).to_string())
+        .map(|f| f.to_string_lossy().into_owned())
         .unwrap_or(path.to_string());
     let prefix = format!("    {}: ", filename_identifier);
     let logs = if verbose {
