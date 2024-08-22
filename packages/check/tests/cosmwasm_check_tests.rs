@@ -15,6 +15,19 @@ fn valid_contract_check() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
+fn contract_check_verbose() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin("cosmwasm-check")?;
+
+    cmd.arg("../vm/testdata/empty.wasm").arg("--verbose");
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("pass"))
+        .stderr(predicate::str::contains("Max function parameters"));
+
+    Ok(())
+}
+
+#[test]
 fn empty_contract_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 

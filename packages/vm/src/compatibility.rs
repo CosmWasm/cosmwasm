@@ -97,17 +97,64 @@ const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 /// during static validation.
 const MAX_FUNCTION_RESULTS: usize = 1;
 
+#[derive(Clone, Copy)]
+pub enum LogOutput {
+    StdOut,
+    StdErr,
+}
+#[derive(Clone, Copy, Default)]
+pub enum Logger<'a> {
+    On {
+        prefix: &'a str,
+        output: LogOutput,
+    },
+    #[default]
+    Off,
+}
+
+impl<'a> Logger<'a> {
+    pub fn with_config(output: LogOutput, prefix: &'a str) -> Self {
+        On { output, prefix }
+    }
+
+    /// Adds a message to the logs, if they are enabled.
+    /// This is a convenience method for adding a single message.
+    ///
+    /// Takes a closure that returns the message to add to avoid unnecessary allocations.
+    pub fn add(&self, msg_fn: impl FnOnce() -> String) {
+        if let On { prefix, output } = &self {
+            let msg = msg_fn();
+            match output {
+                LogOutput::StdOut => println!("{prefix}{msg}"),
+                LogOutput::StdErr => eprintln!("{prefix}{msg}"),
+            }
+        }
+    }
+}
+
+use Logger::*;
+
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
+    check_wasm_with_logs(wasm_code, available_capabilities, Off)
+}
+
+pub fn check_wasm_with_logs(
+    wasm_code: &[u8],
+    available_capabilities: &HashSet<String>,
+    logs: Logger<'_>,
+) -> VmResult<()> {
+    logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
+
     let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module)?;
     check_wasm_memories(&module)?;
     check_interface_version(&module)?;
-    check_wasm_exports(&module)?;
-    check_wasm_imports(&module, SUPPORTED_IMPORTS)?;
-    check_wasm_capabilities(&module, available_capabilities)?;
-    check_wasm_functions(&module)?;
+    check_wasm_exports(&module, logs)?;
+    check_wasm_imports(&module, SUPPORTED_IMPORTS, logs)?;
+    check_wasm_capabilities(&module, available_capabilities, logs)?;
+    check_wasm_functions(&module, logs)?;
 
     module.validate_funcs()
 }
@@ -188,8 +235,11 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
     }
 }
 
-fn check_wasm_exports(module: &ParsedWasm) -> VmResult<()> {
+fn check_wasm_exports(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
     let available_exports: HashSet<String> = module.exported_function_names(None);
+
+    logs.add(|| format!("Exports: {}", available_exports.to_string_limited(20_000)));
+
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.contains(*required_export) {
             return Err(VmError::static_validation_err(format!(
@@ -203,7 +253,24 @@ fn check_wasm_exports(module: &ParsedWasm) -> VmResult<()> {
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
-fn check_wasm_imports(module: &ParsedWasm, supported_imports: &[&str]) -> VmResult<()> {
+fn check_wasm_imports(
+    module: &ParsedWasm,
+    supported_imports: &[&str],
+    logs: Logger,
+) -> VmResult<()> {
+    logs.add(|| {
+        format!(
+            "Imports ({}): {}",
+            module.imports.len(),
+            module
+                .imports
+                .iter()
+                .map(|import| full_import_name(import))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    });
+
     if module.imports.len() > MAX_IMPORTS {
         return Err(VmError::static_validation_err(format!(
             "Import count exceeds limit. Imports: {}. Limit: {}.",
@@ -240,8 +307,15 @@ fn full_import_name(ie: &Import) -> String {
 fn check_wasm_capabilities(
     module: &ParsedWasm,
     available_capabilities: &HashSet<String>,
+    logs: Logger,
 ) -> VmResult<()> {
     let required_capabilities = required_capabilities_from_module(module);
+    logs.add(|| {
+        format!(
+            "Required capabilities: {}",
+            required_capabilities.to_string_limited(20_000)
+        )
+    });
     if !required_capabilities.is_subset(available_capabilities) {
         // We switch to BTreeSet to get a sorted error message
         let unavailable: BTreeSet<_> = required_capabilities
@@ -255,7 +329,17 @@ fn check_wasm_capabilities(
     Ok(())
 }
 
-fn check_wasm_functions(module: &ParsedWasm) -> VmResult<()> {
+fn check_wasm_functions(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
+    logs.add(|| format!("Function count: {}", module.function_count));
+    logs.add(|| format!("Max function parameters: {}", module.max_func_params));
+    logs.add(|| format!("Max function results: {}", module.max_func_results));
+    logs.add(|| {
+        format!(
+            "Total function parameter count: {}",
+            module.total_func_params
+        )
+    });
+
     if module.function_count > MAX_FUNCTIONS {
         return Err(VmError::static_validation_err(format!(
             "Wasm contract contains more than {MAX_FUNCTIONS} functions"
@@ -599,7 +683,7 @@ mod tests {
         )
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        check_wasm_exports(&module).unwrap();
+        check_wasm_exports(&module, Off).unwrap();
 
         // this is invalid, as it doesn't any required export
         let wasm = wat::parse_str(
@@ -611,7 +695,7 @@ mod tests {
         )
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_exports(&module) {
+        match check_wasm_exports(&module, Off) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have required export: \"allocate\""));
             }
@@ -630,7 +714,7 @@ mod tests {
         )
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_exports(&module) {
+        match check_wasm_exports(&module, Off) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(
                     msg.starts_with("Wasm contract doesn't have required export: \"deallocate\"")
@@ -660,7 +744,7 @@ mod tests {
         )"#,
         )
         .unwrap();
-        check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS).unwrap();
+        check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off).unwrap();
     }
 
     #[test]
@@ -771,8 +855,8 @@ mod tests {
         )"#,
         )
         .unwrap();
-        let err =
-            check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS).unwrap_err();
+        let err = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off)
+            .unwrap_err();
         match err {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Import count exceeds limit. Imports: 101. Limit: 100.");
@@ -809,7 +893,7 @@ mod tests {
             "env.debug",
             "env.query_chain",
         ];
-        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), supported_imports);
+        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), supported_imports, Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 println!("{msg}");
@@ -825,7 +909,7 @@ mod tests {
     #[test]
     fn check_wasm_imports_of_old_contract() {
         let module = &ParsedWasm::parse(CONTRACT_0_7).unwrap();
-        let result = check_wasm_imports(module, SUPPORTED_IMPORTS);
+        let result = check_wasm_imports(module, SUPPORTED_IMPORTS, Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -839,7 +923,7 @@ mod tests {
     #[test]
     fn check_wasm_imports_wrong_type() {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
-        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS);
+        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -874,7 +958,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        check_wasm_capabilities(&module, &available).unwrap();
+        check_wasm_capabilities(&module, &available, Off).unwrap();
     }
 
     #[test]
@@ -902,7 +986,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        match check_wasm_capabilities(&module, &available).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"sun\"}"
@@ -918,7 +1002,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        match check_wasm_capabilities(&module, &available).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"sun\", \"water\"}"
@@ -928,7 +1012,7 @@ mod tests {
 
         // Available set 3
         let available = ["freedom".to_string()].into_iter().collect();
-        match check_wasm_capabilities(&module, &available).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
@@ -938,7 +1022,7 @@ mod tests {
 
         // Available set 4
         let available = [].into_iter().collect();
-        match check_wasm_capabilities(&module, &available).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
@@ -960,7 +1044,7 @@ mod tests {
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
 
-        match check_wasm_functions(&module).unwrap_err() {
+        match check_wasm_functions(&module, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract contains function with more than 100 parameters"
@@ -979,7 +1063,7 @@ mod tests {
         ))
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_functions(&module).unwrap_err() {
+        match check_wasm_functions(&module, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract contains function with more than 1 results"
@@ -998,7 +1082,7 @@ mod tests {
         ))
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_functions(&module).unwrap_err() {
+        match check_wasm_functions(&module, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract contains more than 20000 functions")
             }
