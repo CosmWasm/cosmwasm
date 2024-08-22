@@ -1,14 +1,15 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
 use std::process::exit;
 
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
 use cosmwasm_vm::capabilities_from_csv;
-use cosmwasm_vm::internals::{check_wasm_with_logs, compile, make_compiling_engine, Logs};
+use cosmwasm_vm::internals::{
+    check_wasm_with_logs, compile, make_compiling_engine, LogOutput, Logger,
+};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -27,6 +28,13 @@ pub fn main() {
                 .help("Sets the available capabilities that the desired target chain has")
                 .num_args(1)
                 .action(ArgAction::Set),
+        )
+        .arg(
+            Arg::new("VERBOSE")
+                .long("verbose")
+                .num_args(0)
+                .help("Prints additional information on stderr")
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("WASM")
@@ -54,7 +62,7 @@ pub fn main() {
 
     let (passes, failures): (Vec<_>, _) = paths
         .map(|p| {
-            let result = check_contract(p, &available_capabilities);
+            let result = check_contract(p, &available_capabilities, matches.get_flag("VERBOSE"));
             match &result {
                 Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
@@ -86,8 +94,9 @@ pub fn main() {
 }
 
 fn check_contract(
-    path: impl AsRef<Path>,
+    path: &str,
     available_capabilities: &HashSet<String>,
+    verbose: bool,
 ) -> anyhow::Result<()> {
     let mut file = File::open(path)?;
 
@@ -95,13 +104,17 @@ fn check_contract(
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)?;
 
-    let logs = Logs::new();
+    let prefix = format!("{}: ", path);
+    let logs = if verbose {
+        Logger::On {
+            prefix: &prefix,
+            output: LogOutput::StdErr,
+        }
+    } else {
+        Logger::Off
+    };
     // Check wasm
-    let res = check_wasm_with_logs(&wasm, available_capabilities, logs.clone());
-    for line in logs.iter() {
-        eprintln!("{}", line);
-    }
-    res?;
+    check_wasm_with_logs(&wasm, available_capabilities, logs)?;
 
     // Compile module
     let engine = make_compiling_engine(None);

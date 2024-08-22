@@ -1,9 +1,5 @@
-use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::collections::HashSet;
-use std::iter::empty;
-use std::rc::Rc;
-use std::sync::Mutex;
 
 use wasmer::wasmparser::Import;
 use wasmer::wasmparser::TypeRef;
@@ -101,38 +97,42 @@ const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 /// during static validation.
 const MAX_FUNCTION_RESULTS: usize = 1;
 
-#[derive(Clone)]
-pub enum Logs {
-    On(RefCell<Vec<String>>),
+#[derive(Clone, Copy)]
+pub enum LogOutput {
+    StdOut,
+    StdErr,
+}
+#[derive(Clone, Copy, Default)]
+pub enum Logger<'a> {
+    On {
+        prefix: &'a str,
+        output: LogOutput,
+    },
+    #[default]
     Off,
 }
 
-impl Logs {
-    pub fn new() -> Self {
-        On(RefCell::new(Vec::new()))
+impl<'a> Logger<'a> {
+    pub fn with_config(output: LogOutput, prefix: &'a str) -> Self {
+        On { output, prefix }
     }
 
-    // Gets access to logs for writing
-    pub fn open(&mut self) -> Option<&mut Vec<String>> {
-        match self {
-            On(data) => {
-                let mut data = data.borrow_mut();
-                Some(data.as_mut())
+    /// Adds a message to the logs, if they are enabled.
+    /// This is a convenience method for adding a single message.
+    ///
+    /// Takes a closure that returns the message to add to avoid unnecessary allocations.
+    pub fn add(&self, msg_fn: impl FnOnce() -> String) {
+        if let On { prefix, output } = &self {
+            let msg = msg_fn();
+            match output {
+                LogOutput::StdOut => println!("{prefix}{msg}"),
+                LogOutput::StdErr => eprintln!("{prefix}{msg}"),
             }
-            Off => None,
         }
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = String> {
-        let iter = match self {
-            On(data) => data.borrow().iter(),
-            Off => Vec::new().into_iter().into(), // How to create am empty Iter<String> ?!?!?!?
-        };
-        iter
     }
 }
 
-use Logs::*;
+use Logger::*;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
@@ -142,21 +142,19 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
 pub fn check_wasm_with_logs(
     wasm_code: &[u8],
     available_capabilities: &HashSet<String>,
-    logs: Logs,
+    logs: Logger<'_>,
 ) -> VmResult<()> {
-    if let Some(logs) = logs.clone().open() {
-        logs.push(format!("Size of Wasm blob: {}", wasm_code.len()));
-    }
+    logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
 
     let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module)?;
     check_wasm_memories(&module)?;
     check_interface_version(&module)?;
-    check_wasm_exports(&module, logs.clone())?;
-    check_wasm_imports(&module, SUPPORTED_IMPORTS, logs.clone())?;
-    check_wasm_capabilities(&module, available_capabilities, logs.clone())?;
-    check_wasm_functions(&module, logs.clone())?;
+    check_wasm_exports(&module, logs)?;
+    check_wasm_imports(&module, SUPPORTED_IMPORTS, logs)?;
+    check_wasm_capabilities(&module, available_capabilities, logs)?;
+    check_wasm_functions(&module, logs)?;
 
     module.validate_funcs()
 }
@@ -237,15 +235,10 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
     }
 }
 
-fn check_wasm_exports(module: &ParsedWasm, mut logs: Logs) -> VmResult<()> {
+fn check_wasm_exports(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
     let available_exports: HashSet<String> = module.exported_function_names(None);
 
-    if let Some(logs) = logs.open() {
-        logs.push(format!(
-            "Exports: {}",
-            available_exports.to_string_limited(20_000)
-        ));
-    }
+    logs.add(|| format!("Exports: {}", available_exports.to_string_limited(20_000)));
 
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.contains(*required_export) {
@@ -263,10 +256,10 @@ fn check_wasm_exports(module: &ParsedWasm, mut logs: Logs) -> VmResult<()> {
 fn check_wasm_imports(
     module: &ParsedWasm,
     supported_imports: &[&str],
-    mut logs: Logs,
+    logs: Logger,
 ) -> VmResult<()> {
-    if let Some(logs) = logs.open() {
-        logs.push(format!(
+    logs.add(|| {
+        format!(
             "Imports ({}): {}",
             module.imports.len(),
             module
@@ -275,8 +268,8 @@ fn check_wasm_imports(
                 .map(|import| full_import_name(import))
                 .collect::<Vec<_>>()
                 .join(", ")
-        ));
-    }
+        )
+    });
 
     if module.imports.len() > MAX_IMPORTS {
         return Err(VmError::static_validation_err(format!(
@@ -314,15 +307,15 @@ fn full_import_name(ie: &Import) -> String {
 fn check_wasm_capabilities(
     module: &ParsedWasm,
     available_capabilities: &HashSet<String>,
-    mut logs: Logs,
+    logs: Logger,
 ) -> VmResult<()> {
     let required_capabilities = required_capabilities_from_module(module);
-    if let Some(logs) = logs.open() {
-        logs.push(format!(
+    logs.add(|| {
+        format!(
             "Required capabilities: {}",
             required_capabilities.to_string_limited(20_000)
-        ));
-    }
+        )
+    });
     if !required_capabilities.is_subset(available_capabilities) {
         // We switch to BTreeSet to get a sorted error message
         let unavailable: BTreeSet<_> = required_capabilities
@@ -336,19 +329,16 @@ fn check_wasm_capabilities(
     Ok(())
 }
 
-fn check_wasm_functions(module: &ParsedWasm, mut logs: Logs) -> VmResult<()> {
-    if let Some(logs) = logs.open() {
-        logs.push(format!("Function count: {}", module.function_count));
-        logs.push(format!(
-            "Max function parameters: {}",
-            module.max_func_params
-        ));
-        logs.push(format!("Max function results: {}", module.max_func_results));
-        logs.push(format!(
+fn check_wasm_functions(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
+    logs.add(|| format!("Function count: {}", module.function_count));
+    logs.add(|| format!("Max function parameters: {}", module.max_func_params));
+    logs.add(|| format!("Max function results: {}", module.max_func_results));
+    logs.add(|| {
+        format!(
             "Total function parameter count: {}",
             module.total_func_params
-        ));
-    }
+        )
+    });
 
     if module.function_count > MAX_FUNCTIONS {
         return Err(VmError::static_validation_err(format!(
@@ -390,31 +380,6 @@ mod tests {
 
     fn default_capabilities() -> HashSet<String> {
         capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking,stargate")
-    }
-
-    #[test]
-    fn logs_works() {
-        let mut logs = Logs::new();
-
-        if let Some(logs) = logs.open() {
-            logs.push(format!("a test"));
-        }
-
-        if let Some(logs) = logs.open() {
-            logs.push(format!("second test"));
-            logs.push(format!("third test"));
-        }
-
-        let mut logs_b = logs.clone();
-        if let Some(logs) = logs_b.open() {
-            logs.push(format!("added in b"));
-        }
-
-        let mut iter = logs.iter();
-        assert_eq!(iter.next(), Some(String::from("a test")));
-        assert_eq!(iter.next(), Some(String::from("second test")));
-        assert_eq!(iter.next(), Some(String::from("third test")));
-        assert_eq!(iter.next(), None);
     }
 
     #[test]
