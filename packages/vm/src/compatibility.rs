@@ -139,10 +139,10 @@ pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) ->
     check_wasm_with_logs(wasm_code, available_capabilities, Off)
 }
 
-pub fn check_wasm_with_logs<'a>(
+pub fn check_wasm_with_logs(
     wasm_code: &[u8],
     available_capabilities: &HashSet<String>,
-    logs: Logger<'a>,
+    logs: Logger<'_>,
 ) -> VmResult<()> {
     logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
 
