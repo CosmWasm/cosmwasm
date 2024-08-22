@@ -1,14 +1,15 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
 use std::process::exit;
 
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
 use cosmwasm_vm::capabilities_from_csv;
-use cosmwasm_vm::internals::{check_wasm_with_logs, compile, make_compiling_engine, Logger};
+use cosmwasm_vm::internals::{
+    check_wasm_with_logs, compile, make_compiling_engine, LogOutput, Logger,
+};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -93,7 +94,7 @@ pub fn main() {
 }
 
 fn check_contract(
-    path: impl AsRef<Path>,
+    path: &str,
     available_capabilities: &HashSet<String>,
     verbose: bool,
 ) -> anyhow::Result<()> {
@@ -103,7 +104,15 @@ fn check_contract(
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)?;
 
-    let logs = if verbose { Logger::new() } else { Logger::Off };
+    let prefix = format!("{}: ", path);
+    let logs = if verbose {
+        Logger::On {
+            prefix: &prefix,
+            output: LogOutput::StdErr,
+        }
+    } else {
+        Logger::Off
+    };
     // Check wasm
     check_wasm_with_logs(&wasm, available_capabilities, logs)?;
 

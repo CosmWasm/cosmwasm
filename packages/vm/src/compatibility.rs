@@ -113,13 +113,6 @@ pub enum Logger<'a> {
 }
 
 impl<'a> Logger<'a> {
-    pub fn new() -> Self {
-        On {
-            output: LogOutput::StdOut,
-            prefix: "",
-        }
-    }
-
     pub fn with_config(output: LogOutput, prefix: &'a str) -> Self {
         On { output, prefix }
     }
