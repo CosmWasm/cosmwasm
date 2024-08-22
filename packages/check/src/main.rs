@@ -8,7 +8,7 @@ use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
 use cosmwasm_vm::capabilities_from_csv;
-use cosmwasm_vm::internals::{check_wasm_with_logs, compile, make_compiling_engine, Logs};
+use cosmwasm_vm::internals::{check_wasm_with_logs, compile, make_compiling_engine, Logger};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -103,13 +103,9 @@ fn check_contract(
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)?;
 
-    let mut logs = if verbose { Logs::new() } else { Logs::Off };
+    let logs = if verbose { Logger::new() } else { Logger::Off };
     // Check wasm
-    let res = check_wasm_with_logs(&wasm, available_capabilities, &mut logs);
-    for line in logs {
-        eprintln!("{}", line);
-    }
-    res?;
+    check_wasm_with_logs(&wasm, available_capabilities, logs)?;
 
     // Compile module
     let engine = make_compiling_engine(None);

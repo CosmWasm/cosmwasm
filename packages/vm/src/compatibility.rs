@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::cell::RefMut;
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
@@ -99,70 +97,59 @@ const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 /// during static validation.
 const MAX_FUNCTION_RESULTS: usize = 1;
 
-#[derive(Clone, Default)]
-pub enum Logs {
-    On(RefCell<Vec<String>>),
+#[derive(Clone, Copy)]
+pub enum LogOutput {
+    StdOut,
+    StdErr,
+}
+#[derive(Clone, Copy, Default)]
+pub enum Logger<'a> {
+    On {
+        prefix: &'a str,
+        output: LogOutput,
+    },
     #[default]
     Off,
 }
 
-pub struct LogAccess<'a>(RefMut<'a, Vec<String>>);
-
-impl<'a> LogAccess<'a> {
-    /// Adds a message to the logs
-    pub fn add(&mut self, msg: impl Into<String>) {
-        self.0.push(msg.into());
-    }
-}
-
-impl Logs {
+impl<'a> Logger<'a> {
     pub fn new() -> Self {
-        On(RefCell::new(Vec::new()))
+        On {
+            output: LogOutput::StdOut,
+            prefix: "",
+        }
     }
 
-    // Gets access to logs for writing.
-    // Use this if you want to add multiple messages at once.
-    pub fn open(&mut self) -> Option<LogAccess> {
-        match self {
-            On(data) => Some(LogAccess(data.borrow_mut())),
-            Off => None,
-        }
+    pub fn with_config(output: LogOutput, prefix: &'a str) -> Self {
+        On { output, prefix }
     }
 
     /// Adds a message to the logs, if they are enabled.
     /// This is a convenience method for adding a single message.
     ///
     /// Takes a closure that returns the message to add to avoid unnecessary allocations.
-    pub fn add(&mut self, msg_fn: impl FnOnce() -> String) {
-        if let Some(mut logs) = self.open() {
-            logs.add(msg_fn());
+    pub fn add(&self, msg_fn: impl FnOnce() -> String) {
+        if let On { prefix, output } = &self {
+            let msg = msg_fn();
+            match output {
+                LogOutput::StdOut => println!("{prefix}{msg}"),
+                LogOutput::StdErr => eprintln!("{prefix}{msg}"),
+            }
         }
     }
 }
 
-impl IntoIterator for Logs {
-    type Item = String;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        match self {
-            Logs::On(data) => data.into_inner().into_iter(),
-            Logs::Off => vec![].into_iter(),
-        }
-    }
-}
-
-use Logs::*;
+use Logger::*;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
-    check_wasm_with_logs(wasm_code, available_capabilities, &mut Off)
+    check_wasm_with_logs(wasm_code, available_capabilities, Off)
 }
 
-pub fn check_wasm_with_logs(
+pub fn check_wasm_with_logs<'a>(
     wasm_code: &[u8],
     available_capabilities: &HashSet<String>,
-    logs: &mut Logs,
+    logs: Logger<'a>,
 ) -> VmResult<()> {
     logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
 
@@ -255,7 +242,7 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
     }
 }
 
-fn check_wasm_exports(module: &ParsedWasm, logs: &mut Logs) -> VmResult<()> {
+fn check_wasm_exports(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
     let available_exports: HashSet<String> = module.exported_function_names(None);
 
     logs.add(|| format!("Exports: {}", available_exports.to_string_limited(20_000)));
@@ -276,7 +263,7 @@ fn check_wasm_exports(module: &ParsedWasm, logs: &mut Logs) -> VmResult<()> {
 fn check_wasm_imports(
     module: &ParsedWasm,
     supported_imports: &[&str],
-    logs: &mut Logs,
+    logs: Logger,
 ) -> VmResult<()> {
     logs.add(|| {
         format!(
@@ -327,7 +314,7 @@ fn full_import_name(ie: &Import) -> String {
 fn check_wasm_capabilities(
     module: &ParsedWasm,
     available_capabilities: &HashSet<String>,
-    logs: &mut Logs,
+    logs: Logger,
 ) -> VmResult<()> {
     let required_capabilities = required_capabilities_from_module(module);
     logs.add(|| {
@@ -349,19 +336,16 @@ fn check_wasm_capabilities(
     Ok(())
 }
 
-fn check_wasm_functions(module: &ParsedWasm, logs: &mut Logs) -> VmResult<()> {
-    if let Some(mut logs) = logs.open() {
-        logs.add(format!("Function count: {}", module.function_count));
-        logs.add(format!(
-            "Max function parameters: {}",
-            module.max_func_params
-        ));
-        logs.add(format!("Max function results: {}", module.max_func_results));
-        logs.add(format!(
+fn check_wasm_functions(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
+    logs.add(|| format!("Function count: {}", module.function_count));
+    logs.add(|| format!("Max function parameters: {}", module.max_func_params));
+    logs.add(|| format!("Max function results: {}", module.max_func_results));
+    logs.add(|| {
+        format!(
             "Total function parameter count: {}",
             module.total_func_params
-        ));
-    }
+        )
+    });
 
     if module.function_count > MAX_FUNCTIONS {
         return Err(VmError::static_validation_err(format!(
@@ -403,29 +387,6 @@ mod tests {
 
     fn default_capabilities() -> HashSet<String> {
         capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking,stargate")
-    }
-
-    #[test]
-    fn logs_works() {
-        let mut logs = Logs::new();
-
-        logs.add(|| "a test".to_string());
-
-        if let Some(mut logs) = logs.open() {
-            logs.add("second test");
-            logs.add("third test");
-        }
-
-        let mut logs_b = logs.clone();
-        if let Some(mut logs) = logs_b.open() {
-            logs.add("added in b");
-        }
-
-        let mut iter = logs.into_iter();
-        assert_eq!(iter.next(), Some(String::from("a test")));
-        assert_eq!(iter.next(), Some(String::from("second test")));
-        assert_eq!(iter.next(), Some(String::from("third test")));
-        assert_eq!(iter.next(), None);
     }
 
     #[test]
@@ -729,7 +690,7 @@ mod tests {
         )
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        check_wasm_exports(&module, &mut Off).unwrap();
+        check_wasm_exports(&module, Off).unwrap();
 
         // this is invalid, as it doesn't any required export
         let wasm = wat::parse_str(
@@ -741,7 +702,7 @@ mod tests {
         )
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_exports(&module, &mut Off) {
+        match check_wasm_exports(&module, Off) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have required export: \"allocate\""));
             }
@@ -760,7 +721,7 @@ mod tests {
         )
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_exports(&module, &mut Off) {
+        match check_wasm_exports(&module, Off) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(
                     msg.starts_with("Wasm contract doesn't have required export: \"deallocate\"")
@@ -790,12 +751,7 @@ mod tests {
         )"#,
         )
         .unwrap();
-        check_wasm_imports(
-            &ParsedWasm::parse(&wasm).unwrap(),
-            SUPPORTED_IMPORTS,
-            &mut Off,
-        )
-        .unwrap();
+        check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off).unwrap();
     }
 
     #[test]
@@ -906,12 +862,8 @@ mod tests {
         )"#,
         )
         .unwrap();
-        let err = check_wasm_imports(
-            &ParsedWasm::parse(&wasm).unwrap(),
-            SUPPORTED_IMPORTS,
-            &mut Off,
-        )
-        .unwrap_err();
+        let err = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off)
+            .unwrap_err();
         match err {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Import count exceeds limit. Imports: 101. Limit: 100.");
@@ -948,11 +900,7 @@ mod tests {
             "env.debug",
             "env.query_chain",
         ];
-        let result = check_wasm_imports(
-            &ParsedWasm::parse(&wasm).unwrap(),
-            supported_imports,
-            &mut Off,
-        );
+        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), supported_imports, Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 println!("{msg}");
@@ -968,7 +916,7 @@ mod tests {
     #[test]
     fn check_wasm_imports_of_old_contract() {
         let module = &ParsedWasm::parse(CONTRACT_0_7).unwrap();
-        let result = check_wasm_imports(module, SUPPORTED_IMPORTS, &mut Off);
+        let result = check_wasm_imports(module, SUPPORTED_IMPORTS, Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -982,11 +930,7 @@ mod tests {
     #[test]
     fn check_wasm_imports_wrong_type() {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
-        let result = check_wasm_imports(
-            &ParsedWasm::parse(&wasm).unwrap(),
-            SUPPORTED_IMPORTS,
-            &mut Off,
-        );
+        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -1021,7 +965,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        check_wasm_capabilities(&module, &available, &mut Off).unwrap();
+        check_wasm_capabilities(&module, &available, Off).unwrap();
     }
 
     #[test]
@@ -1049,7 +993,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        match check_wasm_capabilities(&module, &available, &mut Off).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"sun\"}"
@@ -1065,7 +1009,7 @@ mod tests {
         ]
         .into_iter()
         .collect();
-        match check_wasm_capabilities(&module, &available, &mut Off).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"sun\", \"water\"}"
@@ -1075,7 +1019,7 @@ mod tests {
 
         // Available set 3
         let available = ["freedom".to_string()].into_iter().collect();
-        match check_wasm_capabilities(&module, &available, &mut Off).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
@@ -1085,7 +1029,7 @@ mod tests {
 
         // Available set 4
         let available = [].into_iter().collect();
-        match check_wasm_capabilities(&module, &available, &mut Off).unwrap_err() {
+        match check_wasm_capabilities(&module, &available, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract requires unavailable capabilities: {\"nutrients\", \"sun\", \"water\"}"
@@ -1107,7 +1051,7 @@ mod tests {
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
 
-        match check_wasm_functions(&module, &mut Off).unwrap_err() {
+        match check_wasm_functions(&module, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract contains function with more than 100 parameters"
@@ -1126,7 +1070,7 @@ mod tests {
         ))
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_functions(&module, &mut Off).unwrap_err() {
+        match check_wasm_functions(&module, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract contains function with more than 1 results"
@@ -1145,7 +1089,7 @@ mod tests {
         ))
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_functions(&module, &mut Off).unwrap_err() {
+        match check_wasm_functions(&module, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract contains more than 20000 functions")
             }
