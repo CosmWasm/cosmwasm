@@ -11,7 +11,7 @@ use cosmwasm_std::Checksum;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
-use crate::compatibility::check_wasm;
+use crate::compatibility::check_wasm_with_limits;
 use crate::config::{CacheOptions, Config, WasmLimits};
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
@@ -91,6 +91,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_querier: PhantomData<Q>,
     /// To prevent concurrent access to `WasmerInstance::new`
     instantiation_lock: Mutex<()>,
+    wasm_limits: WasmLimits,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -136,12 +137,16 @@ where
     /// assumes the disk contents are correct, and there's no way to ensure the artifacts
     /// stored in the cache haven't been corrupted or tampered with.
     pub unsafe fn new_with_config(config: Config) -> VmResult<Self> {
-        let CacheOptions {
-            base_dir,
-            available_capabilities,
-            memory_cache_size,
-            instance_memory_limit,
-        } = config.cache;
+        let Config {
+            cache:
+                CacheOptions {
+                    base_dir,
+                    available_capabilities,
+                    memory_cache_size,
+                    instance_memory_limit,
+                },
+            wasm_limits,
+        } = config;
 
         let state_path = base_dir.join(STATE_DIR);
         let cache_path = base_dir.join(CACHE_DIR);
@@ -169,6 +174,7 @@ where
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
             instantiation_lock: Mutex::new(()),
+            wasm_limits,
         })
     }
 
@@ -223,7 +229,12 @@ where
     /// This does the same as [`save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.available_capabilities)?;
+        check_wasm_with_limits(
+            wasm,
+            &self.available_capabilities,
+            &self.wasm_limits,
+            crate::internals::Logger::Off,
+        )?;
         self.save_wasm_unchecked(wasm)
     }
 
@@ -1614,5 +1625,28 @@ mod tests {
         // loading wasm from before the wasm extension was added should still work
         let restored = cache.load_wasm(&checksum).unwrap();
         assert_eq!(restored, CONTRACT);
+    }
+
+    #[test]
+    fn test_wasm_limits_checked() {
+        let tmp_dir = TempDir::new().unwrap();
+
+        let config = Config {
+            wasm_limits: WasmLimits {
+                max_function_params: Some(0),
+                ..Default::default()
+            },
+            cache: CacheOptions {
+                base_dir: tmp_dir.path().to_path_buf(),
+                available_capabilities: default_capabilities(),
+                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit: TESTING_MEMORY_LIMIT,
+            },
+        };
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new_with_config(config).unwrap() };
+        let err = cache.save_wasm(CONTRACT).unwrap_err();
+        assert!(matches!(err, VmError::StaticValidationErr { .. }));
     }
 }

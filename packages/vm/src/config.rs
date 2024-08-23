@@ -49,7 +49,7 @@ impl Config {
 #[non_exhaustive]
 pub struct WasmLimits {
     /// Maximum number of memory pages that a module can request.
-    memory_page_limit: Option<u32>,
+    pub memory_page_limit: Option<u32>,
     /// The upper limit for the `max` value of each table. CosmWasm contracts have
     /// initial=max for 1 table. See
     ///
@@ -61,27 +61,27 @@ pub struct WasmLimits {
     /// - table[0] type=funcref initial=161 max=161
     /// ```
     ///
-    table_size_limit: Option<u32>,
+    pub table_size_limit: Option<u32>,
     /// If the contract has more than this amount of imports, it will be rejected
     /// during static validation before even looking into the imports.
-    max_imports: Option<usize>,
+    pub max_imports: Option<usize>,
 
     /// The maximum number of functions a contract can have.
     /// Any contract with more functions than this will be rejected during static validation.
-    max_functions: Option<usize>,
+    pub max_functions: Option<usize>,
 
     /// The maximum number of parameters a Wasm function can have.
-    max_function_params: Option<usize>,
+    pub max_function_params: Option<usize>,
     /// The maximum total number of parameters of all functions in the Wasm.
     /// For each function in the Wasm, take the number of parameters and sum all of these up.
     /// If that sum exceeds this limit, the Wasm will be rejected during static validation.
     ///
     /// Be careful when adjusting this limit, as it prevents an attack where a small Wasm file
     /// explodes in size when compiled.
-    max_total_function_params: Option<usize>,
+    pub max_total_function_params: Option<usize>,
 
     /// The maximum number of results a Wasm function type can have.
-    max_function_results: Option<usize>,
+    pub max_function_results: Option<usize>,
 }
 
 impl WasmLimits {
