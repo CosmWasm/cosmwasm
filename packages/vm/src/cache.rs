@@ -12,6 +12,7 @@ use cosmwasm_std::Checksum;
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::compatibility::check_wasm;
+use crate::config::{CacheOptions, Config, WasmLimits};
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::instance::{Instance, InstanceOptions};
@@ -69,37 +70,6 @@ pub struct PinnedMetrics {
     pub per_module: Vec<(Checksum, PerModuleMetrics)>,
 }
 
-#[derive(Clone, Debug)]
-#[non_exhaustive]
-pub struct CacheOptions {
-    /// The base directory of this cache.
-    ///
-    /// If this does not exist, it will be created. Not sure if this behaviour
-    /// is desired but wasmd relies on it.
-    pub base_dir: PathBuf,
-    pub available_capabilities: HashSet<String>,
-    pub memory_cache_size: Size,
-    /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
-    /// e.g. full MiBs.
-    pub instance_memory_limit: Size,
-}
-
-impl CacheOptions {
-    pub fn new(
-        base_dir: impl Into<PathBuf>,
-        available_capabilities: impl Into<HashSet<String>>,
-        memory_cache_size: Size,
-        instance_memory_limit: Size,
-    ) -> Self {
-        Self {
-            base_dir: base_dir.into(),
-            available_capabilities: available_capabilities.into(),
-            memory_cache_size,
-            instance_memory_limit,
-        }
-    }
-}
-
 pub struct CacheInner {
     /// The directory in which the Wasm blobs are stored in the file system.
     wasm_path: PathBuf,
@@ -151,12 +121,27 @@ where
     /// assumes the disk contents are correct, and there's no way to ensure the artifacts
     /// stored in the cache haven't been corrupted or tampered with.
     pub unsafe fn new(options: CacheOptions) -> VmResult<Self> {
+        Self::new_with_config(Config {
+            wasm_limits: WasmLimits::default(),
+            cache: options,
+        })
+    }
+
+    /// Creates a new cache with the given configuration.
+    /// This allows configuring lots of limits and sizes.
+    ///
+    /// # Safety
+    ///
+    /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
+    /// assumes the disk contents are correct, and there's no way to ensure the artifacts
+    /// stored in the cache haven't been corrupted or tampered with.
+    pub unsafe fn new_with_config(config: Config) -> VmResult<Self> {
         let CacheOptions {
             base_dir,
             available_capabilities,
             memory_cache_size,
             instance_memory_limit,
-        } = options;
+        } = config.cache;
 
         let state_path = base_dir.join(STATE_DIR);
         let cache_path = base_dir.join(CACHE_DIR);

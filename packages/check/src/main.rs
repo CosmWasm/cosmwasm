@@ -7,10 +7,10 @@ use std::process::exit;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
-use cosmwasm_vm::capabilities_from_csv;
 use cosmwasm_vm::internals::{
-    check_wasm_with_logs, compile, make_compiling_engine, LogOutput, Logger,
+    check_wasm_with_limits, compile, make_compiling_engine, LogOutput, Logger,
 };
+use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -120,7 +120,7 @@ fn check_contract(
         Logger::Off
     };
     // Check wasm
-    check_wasm_with_logs(&wasm, available_capabilities, logs)?;
+    check_wasm_with_limits(&wasm, available_capabilities, &WasmLimits::default(), logs)?;
 
     // Compile module
     let engine = make_compiling_engine(None);
