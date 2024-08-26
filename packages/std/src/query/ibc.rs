@@ -73,7 +73,9 @@ pub struct ChannelResponse {
 
 impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct FeeEnabledChannelResponse {
     pub fee_enabled: bool,

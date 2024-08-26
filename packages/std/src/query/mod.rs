@@ -108,7 +108,7 @@ pub struct GrpcQuery {
 /// # use cosmwasm_std::CustomQuery;
 /// # use schemars::JsonSchema;
 /// # use serde::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, cw_schema::Schemaifier)]
 /// #[serde(rename_all = "snake_case")]
 /// pub enum MyCustomQuery {
 ///     Ping {},
