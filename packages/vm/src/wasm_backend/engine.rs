@@ -16,14 +16,31 @@ use super::limiting_tunables::LimitingTunables;
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
-fn cost(_operator: &Operator) -> u64 {
+fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
     //
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet
     // precise enough to derive insights from it.
-    170
+    //
+    // Please note that any changes to this function need to be accompanied by a bump of
+    // `MODULE_SERIALIZATION_VERSION` to avoid cached modules from using different amounts of gas
+    // compared to newly compiled ones.
+    const GAS_PER_OPERATION: u64 = 115;
+
+    match operator {
+        Operator::Loop { .. }
+        | Operator::End
+        | Operator::Else
+        | Operator::Br { .. }
+        | Operator::BrTable { .. }
+        | Operator::BrIf { .. }
+        | Operator::Call { .. }
+        | Operator::CallIndirect { .. }
+        | Operator::Return => GAS_PER_OPERATION * 14,
+        _ => GAS_PER_OPERATION,
+    }
 }
 
 /// Use Cranelift as the compiler backend if the feature is enabled
@@ -82,6 +99,17 @@ fn limit_to_pages(limit: Size) -> Pages {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cost_works() {
+        // accounting operator
+        assert_eq!(cost(&Operator::Br { relative_depth: 3 }), 1610);
+        assert_eq!(cost(&Operator::Return {}), 1610);
+
+        // anything else
+        assert_eq!(cost(&Operator::I64Const { value: 7 }), 115);
+        assert_eq!(cost(&Operator::I64Extend8S {}), 115);
+    }
 
     #[test]
     fn limit_to_pages_works() {

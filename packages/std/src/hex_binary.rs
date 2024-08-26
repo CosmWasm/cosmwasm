@@ -225,7 +225,7 @@ impl Serialize for HexBinary {
         if serializer.is_human_readable() {
             serializer.serialize_str(&self.to_hex())
         } else {
-            panic!("HexBinary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            serializer.serialize_bytes(&self.0)
         }
     }
 }
@@ -239,7 +239,7 @@ impl<'de> Deserialize<'de> for HexBinary {
         if deserializer.is_human_readable() {
             deserializer.deserialize_str(HexVisitor)
         } else {
-            panic!("HexBinary is only intended to be used with JSON serialization for now. If you are hitting this panic please open an issue at https://github.com/CosmWasm/cosmwasm describing your use case.")
+            deserializer.deserialize_bytes(BytesVisitor)
         }
     }
 }
@@ -261,6 +261,23 @@ impl<'de> de::Visitor<'de> for HexVisitor {
             Ok(data) => Ok(data),
             Err(_) => Err(E::custom(format!("invalid hex: {v}"))),
         }
+    }
+}
+
+struct BytesVisitor;
+
+impl<'de> de::Visitor<'de> for BytesVisitor {
+    type Value = HexBinary;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("byte array")
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(HexBinary(v.to_vec()))
     }
 }
 
@@ -558,6 +575,32 @@ mod tests {
         let invalid_str = "**BAD!**";
         let serialized = serde_json::to_vec(&invalid_str).unwrap();
         let res = serde_json::from_slice::<HexBinary>(&serialized);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn msgpack_serialization_works() {
+        let data = HexBinary(vec![0u8, 187, 61, 11, 250, 0]);
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let expected = [196, 6, 0, 187, 61, 11, 250, 0];
+
+        assert_eq!(rmp_serde::to_vec(&data).unwrap(), expected);
+    }
+
+    #[test]
+    fn msgpack_deserialize_from_valid_data() {
+        // see: https://github.com/msgpack/msgpack/blob/8aa09e2/spec.md#bin-format-family
+        let serialized = vec![196, 6, 0, 187, 61, 11, 250, 0];
+        let expected = vec![0u8, 187, 61, 11, 250, 0];
+
+        let deserialized: HexBinary = rmp_serde::from_slice(&serialized).unwrap();
+        assert_eq!(expected, deserialized.as_slice());
+    }
+
+    #[test]
+    fn msgpack_deserialize_from_invalid_data() {
+        let invalid_data = vec![0, 1, 2, 3, 4, 5];
+        let res = rmp_serde::from_slice::<HexBinary>(&invalid_data);
         assert!(res.is_err());
     }
 

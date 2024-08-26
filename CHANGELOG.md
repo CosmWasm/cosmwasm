@@ -8,6 +8,50 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `from_msgpack`, `to_msgpack_vec` and `to_msgpack_binary`.
+  These functions are meant to be used similarly to their JSON counterparts.
+  [MessagePack](https://msgpack.org) is a more compact, binary encoding.
+  ([#2118])
+- cosmwasm-std: Add `IbcMsg::{PayPacketFee, PayPacketFeeAsync}` and
+  `IbcQuery::FeeEnabledChannel` to allow contracts to incentivize IBC packets
+  using IBC Fees. ([#2196])
+
+[#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
+[#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
+
+### Changed
+
+- cosmwasm-std: `Binary`, `HexBinary` and `Checksum` are now encoded as binary
+  blobs when used together with a "compact" `serde` encoding. A compact encoding
+  is an encoding that returns `false` from
+  [`is_human_readable`](https://docs.rs/serde/latest/serde/trait.Serializer.html#method.is_human_readable).
+  This is to make these types more efficient when used together with the new
+  [MessagePack](https://msgpack.org) encoding. ([#2118])
+- cosmwasm-std: Let `mock_env` return a contract address that is valid bech32
+  and uses the same bech32 prefix as `MockApi`; Change `MOCK_CONTRACT_ADDR`
+  value to match the contract address from `mock_env`. ([#2211])
+- cosmwasm-vm: Let `mock_env` return a contract address that is valid bech32 and
+  uses the same bech32 prefix as `MockApi`; Change `MOCK_CONTRACT_ADDR` value to
+  match the contract address from `mock_env`. ([#2211])
+
+[#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
+[#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
+
+## [2.1.3] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Problem with caching related to CWA-2024-004. Please upgrade
+  directly to this version instead of the previous one.
+
+## [2.1.2] - 2024-08-08
+
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2024-004
+
 ## [2.1.1] - 2024-07-30
 
 ### Fixed
@@ -884,7 +928,9 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.0...v2.0.1

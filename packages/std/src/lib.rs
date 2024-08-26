@@ -29,6 +29,7 @@ mod import_helpers;
 mod iterator;
 mod math;
 mod metadata;
+mod msgpack;
 mod never;
 mod pagination;
 mod panic;
@@ -69,7 +70,7 @@ pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
     IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
+    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
     TransferMsgBuilder,
@@ -82,6 +83,7 @@ pub use crate::math::{
     SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
 };
 pub use crate::metadata::{DenomMetadata, DenomUnit};
+pub use crate::msgpack::{from_msgpack, to_msgpack_binary, to_msgpack_vec};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
 pub use crate::query::{
@@ -90,8 +92,9 @@ pub use crate::query::{
     ContractInfoResponse, CustomQuery, DecCoin, Delegation, DelegationResponse,
     DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
     DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
-    DistributionQuery, FullDelegation, GrpcQuery, IbcQuery, ListChannelsResponse, PortIdResponse,
-    QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
+    DistributionQuery, FeeEnabledChannelResponse, FullDelegation, GrpcQuery, IbcQuery,
+    ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator,
+    ValidatorResponse, WasmQuery,
 };
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;
