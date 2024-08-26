@@ -1,14 +1,12 @@
 mod context;
 
 use crate::error::{bail, error_message};
-use strum::EnumIter;
 use syn::{
     parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, TypeParamBound, Variant,
 };
 
 use self::context::Context;
 
-#[derive(EnumIter)]
 enum SchemaBackend {
     CwSchema,
     JsonSchema,

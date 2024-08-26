@@ -10,7 +10,6 @@ license = "Apache-2.0"
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-strum = { version = "0.26.3", features = ["derive"] }
 syn = { version = "2", features = ["extra-traits", "full", "printing"] }
 
 [lib]

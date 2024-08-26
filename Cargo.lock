@@ -638,7 +638,6 @@ version = "2.1.1"
 dependencies = [
  "proc-macro2",
  "quote",
- "strum",
  "syn 2.0.75",
 ]
 
