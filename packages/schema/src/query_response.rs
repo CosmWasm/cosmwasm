@@ -13,14 +13,15 @@ pub use cosmwasm_schema_derive::QueryResponses;
 /// # Examples
 /// ```
 /// use cosmwasm_schema::QueryResponses;
+/// use cw_schema::Schemaifier;
 /// use schemars::JsonSchema;
 ///
-/// #[derive(JsonSchema)]
+/// #[derive(JsonSchema, Schemaifier)]
 /// struct AccountInfo {
 ///     IcqHandle: String,
 /// }
 ///
-/// #[derive(JsonSchema, QueryResponses)]
+/// #[derive(JsonSchema, Schemaifier, QueryResponses)]
 /// enum QueryMsg {
 ///     #[returns(Vec<String>)]
 ///     Denoms {},
@@ -37,7 +38,8 @@ pub use cosmwasm_schema_derive::QueryResponses;
 /// ```
 /// # use cosmwasm_schema::QueryResponses;
 /// # use schemars::JsonSchema;
-/// #[derive(JsonSchema, QueryResponses)]
+/// # use cw_schema::Schemaifier;
+/// #[derive(JsonSchema, Schemaifier, QueryResponses)]
 /// #[query_responses(nested)]
 /// #[serde(untagged)]
 /// enum QueryMsg {
@@ -45,19 +47,19 @@ pub use cosmwasm_schema_derive::QueryResponses;
 ///     MsgB(QueryB),
 /// }
 ///
-/// #[derive(JsonSchema, QueryResponses)]
+/// #[derive(JsonSchema, Schemaifier, QueryResponses)]
 /// enum QueryA {
 ///     #[returns(Vec<String>)]
 ///     Denoms {},
 /// }
 ///
-/// #[derive(JsonSchema, QueryResponses)]
+/// #[derive(JsonSchema, Schemaifier, QueryResponses)]
 /// enum QueryB {
 ///     #[returns(AccountInfo)]
 ///     AccountInfo { account: String },
 /// }
 ///
-/// # #[derive(JsonSchema)]
+/// # #[derive(JsonSchema, Schemaifier)]
 /// # struct AccountInfo {
 /// #     IcqHandle: String,
 /// # }
