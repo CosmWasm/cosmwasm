@@ -112,6 +112,7 @@ pub enum NodeType {
     Optional {
         inner: DefinitionReference,
     },
+    Unit,
 }
 
 #[skip_serializing_none]

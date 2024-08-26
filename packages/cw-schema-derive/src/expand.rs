@@ -5,7 +5,10 @@ use owo_colors::{OwoColorize, Style};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::{
-    borrow::Cow, env, fmt::Display, io::{self, Write as _}
+    borrow::Cow,
+    env,
+    fmt::Display,
+    io::{self, Write as _},
 };
 use syn::{DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
 
@@ -38,7 +41,10 @@ fn print_warning(title: impl Display, content: impl Display) -> io::Result<()> {
 
     write!(sink, "{}", "  = ".style(blue))?;
     write!(sink, "{}", "note: ".style(bold))?;
-    writeln!(sink, "set `{DISABLE_WARNINGS_VAR}=1` to silence this warning")?;
+    writeln!(
+        sink,
+        "set `{DISABLE_WARNINGS_VAR}=1` to silence this warning"
+    )?;
 
     Ok(())
 }

@@ -70,13 +70,21 @@ pub trait QueryResponses: JsonSchema {
     }
 
     fn response_schemas_impl() -> BTreeMap<String, RootSchema>;
+
+    fn response_schemas_cw() -> Result<BTreeMap<String, cw_schema::Schema>, IntegrityError> {
+        let response_schemas = Self::response_schemas_cw_impl();
+
+        Ok(response_schemas)
+    }
+
+    fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema>;
 }
 
 /// Combines multiple response schemas into one. Panics if there are name collisions.
 /// Used internally in the implementation of [`QueryResponses`] when using `#[query_responses(nested)]`
-pub fn combine_subqueries<const N: usize, T>(
-    subqueries: [BTreeMap<String, RootSchema>; N],
-) -> BTreeMap<String, RootSchema> {
+pub fn combine_subqueries<const N: usize, T, S>(
+    subqueries: [BTreeMap<String, S>; N],
+) -> BTreeMap<String, S> {
     let sub_count = subqueries.iter().flatten().count();
     let map: BTreeMap<_, _> = subqueries.into_iter().flatten().collect();
     if map.len() != sub_count {
@@ -105,6 +113,7 @@ pub enum IntegrityError {
 
 #[cfg(test)]
 mod tests {
+    use cw_schema::schema_of;
     use schemars::schema_for;
 
     use super::*;
@@ -128,6 +137,16 @@ mod tests {
                 ("supply".to_string(), schema_for!(u128)),
                 ("liquidity".to_string(), schema_for!(u128)),
                 ("account_count".to_string(), schema_for!(u128)),
+            ])
+        }
+
+        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+            BTreeMap::from([
+                ("balance_for".to_string(), schema_of::<u128>()),
+                ("account_id_for".to_string(), schema_of::<u128>()),
+                ("supply".to_string(), schema_of::<u128>()),
+                ("liquidity".to_string(), schema_of::<u128>()),
+                ("account_count".to_string(), schema_of::<u128>()),
             ])
         }
     }
@@ -156,6 +175,10 @@ mod tests {
         fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([])
         }
+
+        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+            BTreeMap::from([])
+        }
     }
 
     #[test]
@@ -174,6 +197,10 @@ mod tests {
     impl QueryResponses for BadMsg {
         fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([("balance_for".to_string(), schema_for!(u128))])
+        }
+
+        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+            BTreeMap::from([("balance_for".to_string(), schema_of::<u128>())])
         }
     }
 
@@ -202,6 +229,17 @@ mod tests {
                 ("liquidity".to_string(), schema_for!(u128)),
                 ("account_count".to_string(), schema_for!(u128)),
                 ("extension".to_string(), schema_for!(())),
+            ])
+        }
+
+        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+            BTreeMap::from([
+                ("balance_for".to_string(), schema_of::<u128>()),
+                ("account_id_for".to_string(), schema_of::<u128>()),
+                ("supply".to_string(), schema_of::<u128>()),
+                ("liquidity".to_string(), schema_of::<u128>()),
+                ("account_count".to_string(), schema_of::<u128>()),
+                ("extension".to_string(), schema_of::<()>()),
             ])
         }
     }

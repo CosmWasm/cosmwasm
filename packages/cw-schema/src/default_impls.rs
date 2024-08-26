@@ -1,6 +1,19 @@
 use crate::{Node, NodeType, Schemaifier};
 use alloc::{borrow::Cow, string::String, vec, vec::Vec};
 
+impl Schemaifier for () {
+    fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
+        visitor.insert(
+            Self::id(),
+            Node {
+                name: Cow::Borrowed("Unit"),
+                description: None,
+                value: NodeType::Unit,
+            },
+        )
+    }
+}
+
 impl Schemaifier for String {
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         visitor.insert(
