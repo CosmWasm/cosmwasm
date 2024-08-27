@@ -153,13 +153,17 @@ impl Identifier {
         T: ?Sized,
     {
         // Don't do this at home. I'm a professional.
+        //
+        // This is a hack based on the assumption that each type has will produce a unique monomorphized function.
+        // Therefore each function has a distinct function pointer.
+        //
+        // The compiler _might_ break this assumption in the future.
         #[inline]
         fn type_id_of<T: ?Sized>() -> usize {
             type_id_of::<T> as usize
         }
 
         debug_assert_eq!(type_id_of::<T>(), type_id_of::<T>());
-        debug_assert_eq!(core::any::type_name::<T>(), core::any::type_name::<T>());
 
         Self(type_id_of::<T>())
     }
