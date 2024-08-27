@@ -392,6 +392,18 @@ expression: schema
             "type",
             "inner"
           ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "unit"
+            }
+          },
+          "required": [
+            "type"
+          ]
         }
       ],
       "required": [

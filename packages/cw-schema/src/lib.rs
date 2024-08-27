@@ -145,23 +145,14 @@ pub enum Schema {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct Identifier(&'static str);
+pub struct Identifier(core::any::TypeId);
 
 impl Identifier {
     pub fn of<T>() -> Self
     where
-        T: ?Sized,
+        T: ?Sized + 'static,
     {
-        Self(core::any::type_name::<T>())
-    }
-}
-
-impl Serialize for Identifier {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.0.serialize(serializer)
+        Self(core::any::TypeId::of::<T>())
     }
 }
 
@@ -191,7 +182,7 @@ impl SchemaVisitor {
     }
 }
 
-pub trait Schemaifier {
+pub trait Schemaifier: 'static {
     #[doc(hidden)]
     fn id() -> Identifier {
         Identifier::of::<Self>()
