@@ -1,5 +1,10 @@
 use crate::{Node, NodeType, Schemaifier};
-use alloc::{borrow::Cow, string::String, vec, vec::Vec};
+use alloc::{
+    borrow::{Cow, ToOwned},
+    string::String,
+    vec,
+    vec::Vec,
+};
 
 impl Schemaifier for () {
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
@@ -180,6 +185,15 @@ where
 impl<T> Schemaifier for &T
 where
     T: Schemaifier + ?Sized,
+{
+    fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
+        T::visit_schema(visitor)
+    }
+}
+
+impl<T> Schemaifier for Cow<'_, T>
+where
+    T: Schemaifier + ToOwned + ?Sized,
 {
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         T::visit_schema(visitor)

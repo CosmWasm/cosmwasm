@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod module1 {
     #[derive(cw_schema::Schemaifier)]
     pub struct Test {
