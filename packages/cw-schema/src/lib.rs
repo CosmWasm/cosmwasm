@@ -158,6 +158,9 @@ impl Identifier {
             type_id_of::<T> as usize
         }
 
+        debug_assert_eq!(type_id_of::<T>(), type_id_of::<T>());
+        debug_assert_eq!(core::any::type_name::<T>(), core::any::type_name::<T>());
+
         Self(type_id_of::<T>())
     }
 }
