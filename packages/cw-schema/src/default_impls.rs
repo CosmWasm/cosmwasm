@@ -14,6 +14,19 @@ impl Schemaifier for () {
     }
 }
 
+impl Schemaifier for str {
+    fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
+        visitor.insert(
+            Self::id(),
+            Node {
+                name: Cow::Borrowed("str"),
+                description: None,
+                value: NodeType::String,
+            },
+        )
+    }
+}
+
 impl Schemaifier for String {
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
         visitor.insert(
@@ -161,5 +174,14 @@ where
         };
 
         visitor.insert(Self::id(), node)
+    }
+}
+
+impl<T> Schemaifier for &T
+where
+    T: Schemaifier + ?Sized,
+{
+    fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
+        T::visit_schema(visitor)
     }
 }

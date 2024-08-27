@@ -21,12 +21,12 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
         let subquery_calls = input
             .variants
             .iter()
-            .map(|variant| parse_subquery(&ctx, variant.clone(), SchemaBackend::JsonSchema))
+            .map(|variant| parse_subquery(&ctx, variant, SchemaBackend::JsonSchema))
             .collect::<syn::Result<Vec<_>>>()?;
 
         let subquery_calls_cw = input
             .variants
-            .into_iter()
+            .iter()
             .map(|variant| parse_subquery(&ctx, variant, SchemaBackend::CwSchema))
             .collect::<syn::Result<Vec<_>>>()?;
 
@@ -67,8 +67,6 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
             .map(|variant| parse_query(&ctx, variant, SchemaBackend::JsonSchema))
             .collect::<syn::Result<Vec<_>>>()?;
 
-        let mut queries: Vec<_> = mappings.clone().into_iter().map(|(q, _)| q).collect();
-        queries.sort();
         let mappings = mappings.into_iter().map(parse_tuple);
 
         let cw_mappings = input
@@ -77,8 +75,6 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
             .map(|variant| parse_query(&ctx, variant, SchemaBackend::CwSchema))
             .collect::<syn::Result<Vec<_>>>()?;
 
-        let mut cw_queries: Vec<_> = cw_mappings.clone().into_iter().map(|(q, _)| q).collect();
-        cw_queries.sort();
         let cw_mappings = cw_mappings.into_iter().map(parse_tuple);
 
         // Handle generics if the type has any
@@ -159,16 +155,16 @@ fn parse_query(
 }
 
 /// Extract the nested query  -> response mapping out of an enum variant.
-fn parse_subquery(ctx: &Context, v: Variant, schema_backend: SchemaBackend) -> syn::Result<Expr> {
+fn parse_subquery(ctx: &Context, v: &Variant, schema_backend: SchemaBackend) -> syn::Result<Expr> {
     let crate_name = &ctx.crate_name;
     let submsg = match v.fields {
         syn::Fields::Named(_) => bail!(v, "a struct variant is not a valid subquery"),
-        syn::Fields::Unnamed(fields) => {
+        syn::Fields::Unnamed(ref fields) => {
             if fields.unnamed.len() != 1 {
                 bail!(fields, "invalid number of subquery parameters");
             }
 
-            fields.unnamed[0].ty.clone()
+            &fields.unnamed[0].ty
         }
         syn::Fields::Unit => bail!(v, "a unit variant is not a valid subquery"),
     };

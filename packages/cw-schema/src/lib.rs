@@ -145,14 +145,20 @@ pub enum Schema {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct Identifier(core::any::TypeId);
+pub struct Identifier(usize);
 
 impl Identifier {
     pub fn of<T>() -> Self
     where
-        T: ?Sized + 'static,
+        T: ?Sized,
     {
-        Self(core::any::TypeId::of::<T>())
+        // Don't do this at home. I'm a professional.
+        #[inline]
+        fn type_id_of<T: ?Sized>() -> usize {
+            type_id_of::<T> as usize
+        }
+
+        Self(type_id_of::<T>())
     }
 }
 
@@ -182,7 +188,7 @@ impl SchemaVisitor {
     }
 }
 
-pub trait Schemaifier: 'static {
+pub trait Schemaifier {
     #[doc(hidden)]
     fn id() -> Identifier {
         Identifier::of::<Self>()
