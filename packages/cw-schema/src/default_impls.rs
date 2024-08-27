@@ -59,7 +59,7 @@ macro_rules! impl_integer {
     };
 }
 
-impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
+impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128, usize, isize);
 
 impl Schemaifier for f32 {
     fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
