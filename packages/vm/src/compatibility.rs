@@ -110,6 +110,8 @@ pub fn check_wasm_with_limits(
     limits: &WasmLimits,
     logs: Logger<'_>,
 ) -> VmResult<()> {
+    logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
+
     let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module, limits)?;
