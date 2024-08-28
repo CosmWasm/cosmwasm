@@ -8,10 +8,11 @@ use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
+use cosmwasm_std::from_base64;
 use cosmwasm_vm::internals::{
     check_wasm_with_limits, compile, make_compiling_engine, LogOutput, Logger,
 };
-use cosmwasm_vm::{capabilities_from_csv, Config, WasmLimits};
+use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -39,14 +40,12 @@ pub fn main() {
                 .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::new("CONFIG")
-            .long("wasm-config")
-            .value_name("CONFIG_FILE")
-            .conflicts_with("CAPABILITIES")
-            .help("Provide a file with the chain's Wasmd configuration.")
-            .long_help("Provide a file with the chain's Wasmd configuration.
-You can query this configuration from the chain, using the WasmConfig query.
-If this is not provided, the default values are used. This conflicts with the --available-capabilities flag because the config also contains those.")
+            Arg::new("LIMITS")
+            .long("wasm-limits")
+            .help("Provide a file or base64 encoded value with the chain's wasm limits configuration.")
+            .long_help("Provide a file or base64 encoded value with the chain's wasm limits configuration.
+You can query this configuration from the chain, using the 'cosmwasm.wasm.v1.Query/WasmLimitsConfig' query.
+If this is not provided, the default values are used.")
             .num_args(1)
             .action(ArgAction::Set)
         )
@@ -60,26 +59,20 @@ If this is not provided, the default values are used. This conflicts with the --
         )
         .get_matches();
 
-    let config_file = matches.get_one::<String>("CONFIG");
+    // Available capabilities
     let available_capabilities_csv = matches
         .get_one::<String>("CAPABILITIES")
-        .map(|s| s.as_str());
-
-    // Available capabilities and Wasm limits
-    let (wasm_limits, available_capabilities) = match (config_file, available_capabilities_csv) {
-        (Some(config_file), _) => {
-            let config = read_config(config_file).unwrap();
-            (config.wasm_limits, config.cache.available_capabilities)
-        }
-        (_, available_capabilities_csv) => {
-            let available_capabilities = capabilities_from_csv(
-                available_capabilities_csv.unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES),
-            );
-            (WasmLimits::default(), available_capabilities)
-        }
-    };
+        .map(|s| s.as_str())
+        .unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES);
+    let available_capabilities = capabilities_from_csv(available_capabilities_csv);
     println!("Available capabilities: {available_capabilities:?}");
     println!();
+
+    // Wasm limits
+    let wasm_limits = matches
+        .get_one::<String>("LIMITS")
+        .map(|input| read_wasm_limits(input).unwrap())
+        .unwrap_or(WasmLimits::default());
 
     // File
     let paths = matches
@@ -124,9 +117,15 @@ If this is not provided, the default values are used. This conflicts with the --
     }
 }
 
-fn read_config(path: &str) -> anyhow::Result<Config> {
-    let file = File::open(path).context("error opening config file")?;
-    let config = rmp_serde::from_read(file).context("error parsing config file")?;
+fn read_wasm_limits(input: &str) -> anyhow::Result<WasmLimits> {
+    // we accept both base64 and file paths as input, try file path first
+    let config = File::open(input)
+        .map(|file| rmp_serde::from_read(file).context("error parsing wasm limits"))
+        .unwrap_or_else(|_| {
+            from_base64(input)
+                .context("error parsing base64")
+                .and_then(|data| rmp_serde::from_slice(&data).context("error parsing wasm limits"))
+        })?;
     Ok(config)
 }
 
