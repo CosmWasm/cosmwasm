@@ -52,7 +52,7 @@ pub struct WasmLimits {
     ///
     /// Every Wasm memory has an initial size and an optional maximum size,
     /// both measured in Wasm pages. This limit applies to the initial size.
-    pub initial_memory_limit_in_pages: Option<u32>,
+    pub initial_memory_limit: Option<u32>,
     /// The upper limit for the `max` value of each table. CosmWasm contracts have
     /// initial=max for 1 table. See
     ///
@@ -88,9 +88,8 @@ pub struct WasmLimits {
 }
 
 impl WasmLimits {
-    pub fn initial_memory_limit_in_pages(&self) -> u32 {
-        self.initial_memory_limit_in_pages
-            .unwrap_or(DEFAULT_MEMORY_LIMIT)
+    pub fn initial_memory_limit(&self) -> u32 {
+        self.initial_memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT)
     }
 
     pub fn table_size_limit(&self) -> u32 {
