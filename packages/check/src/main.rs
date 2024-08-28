@@ -4,13 +4,14 @@ use std::io::Read;
 use std::path::Path;
 use std::process::exit;
 
+use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
 use cosmwasm_vm::internals::{
     check_wasm_with_limits, compile, make_compiling_engine, LogOutput, Logger,
 };
-use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
+use cosmwasm_vm::{capabilities_from_csv, Config, WasmLimits};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -38,6 +39,18 @@ pub fn main() {
                 .action(ArgAction::SetTrue),
         )
         .arg(
+            Arg::new("CONFIG")
+            .long("wasm-config")
+            .value_name("CONFIG_FILE")
+            .conflicts_with("CAPABILITIES")
+            .help("Provide a file with the chain's Wasmd configuration.")
+            .long_help("Provide a file with the chain's Wasmd configuration.
+You can query this configuration from the chain, using the WasmConfig query.
+If this is not provided, the default values are used. This conflicts with the --available-capabilities flag because the config also contains those.")
+            .num_args(1)
+            .action(ArgAction::Set)
+        )
+        .arg(
             Arg::new("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
@@ -47,12 +60,24 @@ pub fn main() {
         )
         .get_matches();
 
-    // Available capabilities
+    let config_file = matches.get_one::<String>("CONFIG");
     let available_capabilities_csv = matches
         .get_one::<String>("CAPABILITIES")
-        .map(|s| s.as_str())
-        .unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES);
-    let available_capabilities = capabilities_from_csv(available_capabilities_csv);
+        .map(|s| s.as_str());
+
+    // Available capabilities and Wasm limits
+    let (wasm_limits, available_capabilities) = match (config_file, available_capabilities_csv) {
+        (Some(config_file), _) => {
+            let config = read_config(config_file).unwrap();
+            (config.wasm_limits, config.cache.available_capabilities)
+        }
+        (_, available_capabilities_csv) => {
+            let available_capabilities = capabilities_from_csv(
+                available_capabilities_csv.unwrap_or(DEFAULT_AVAILABLE_CAPABILITIES),
+            );
+            (WasmLimits::default(), available_capabilities)
+        }
+    };
     println!("Available capabilities: {available_capabilities:?}");
     println!();
 
@@ -63,7 +88,12 @@ pub fn main() {
 
     let (passes, failures): (Vec<_>, _) = paths
         .map(|p| {
-            let result = check_contract(p, &available_capabilities, matches.get_flag("VERBOSE"));
+            let result = check_contract(
+                p,
+                &available_capabilities,
+                matches.get_flag("VERBOSE"),
+                &wasm_limits,
+            );
             match &result {
                 Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
@@ -94,10 +124,17 @@ pub fn main() {
     }
 }
 
+fn read_config(path: &str) -> anyhow::Result<Config> {
+    let file = File::open(path).context("error opening config file")?;
+    let config = rmp_serde::from_read(file).context("error parsing config file")?;
+    Ok(config)
+}
+
 fn check_contract(
     path: &str,
     available_capabilities: &HashSet<String>,
     verbose: bool,
+    wasm_limits: &WasmLimits,
 ) -> anyhow::Result<()> {
     let mut file = File::open(path)?;
 
@@ -120,7 +157,7 @@ fn check_contract(
         Logger::Off
     };
     // Check wasm
-    check_wasm_with_limits(&wasm, available_capabilities, &WasmLimits::default(), logs)?;
+    check_wasm_with_limits(&wasm, available_capabilities, wasm_limits, logs)?;
 
     // Compile module
     let engine = make_compiling_engine(None);
