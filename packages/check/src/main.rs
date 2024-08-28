@@ -72,7 +72,7 @@ If this is not provided, the default values are used.")
     let wasm_limits = matches
         .get_one::<String>("LIMITS")
         .map(|input| read_wasm_limits(input).unwrap())
-        .unwrap_or(WasmLimits::default());
+        .unwrap_or_default();
 
     // File
     let paths = matches
