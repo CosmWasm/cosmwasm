@@ -157,10 +157,10 @@ fn check_wasm_memories(module: &ParsedWasm, limits: &WasmLimits) -> VmResult<()>
     }
     let memory = &module.memories[0];
 
-    if memory.initial > limits.memory_page_limit() as u64 {
+    if memory.initial > limits.initial_memory_limit_in_pages() as u64 {
         return Err(VmError::static_validation_err(format!(
             "Wasm contract memory's minimum must not exceed {} pages.",
-            limits.memory_page_limit()
+            limits.initial_memory_limit_in_pages()
         )));
     }
 
