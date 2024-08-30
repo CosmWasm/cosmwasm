@@ -8,7 +8,7 @@ use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
-use cosmwasm_std::from_base64;
+use cosmwasm_std::from_json;
 use cosmwasm_vm::internals::{
     check_wasm_with_limits, compile, make_compiling_engine, LogOutput, Logger,
 };
@@ -42,8 +42,8 @@ pub fn main() {
         .arg(
             Arg::new("LIMITS")
             .long("wasm-limits")
-            .help("Provide a file or base64 encoded value with the chain's wasm limits configuration.")
-            .long_help("Provide a file or base64 encoded value with the chain's wasm limits configuration.
+            .help("Provide either a file or string containing the chain's json-encoded wasm limits configuration.")
+            .long_help("Provide either a file or string containing the chain's json-encoded wasm limits configuration.
 You can query this configuration from the chain, using the 'cosmwasm.wasm.v1.Query/WasmLimitsConfig' query.
 If this is not provided, the default values are used.")
             .num_args(1)
@@ -118,15 +118,14 @@ If this is not provided, the default values are used.")
 }
 
 fn read_wasm_limits(input: &str) -> anyhow::Result<WasmLimits> {
-    // we accept both base64 and file paths as input, try file path first
-    let config = File::open(input)
-        .map(|file| rmp_serde::from_read(file).context("error parsing wasm limits"))
-        .unwrap_or_else(|_| {
-            from_base64(input)
-                .context("error parsing base64")
-                .and_then(|data| rmp_serde::from_slice(&data).context("error parsing wasm limits"))
-        })?;
-    Ok(config)
+    // try to parse JSON, if that fails, try to open as File and parse that
+    from_json::<WasmLimits>(input)
+        .context("error parsing wasm limits")
+        .or_else(|_| {
+            std::fs::read_to_string(input)
+                .context("error reading wasm limits file")
+                .and_then(|s| from_json(s).context("error parsing wasm limits file"))
+        })
 }
 
 fn check_contract(

@@ -558,7 +558,6 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
  "predicates",
- "rmp-serde",
  "tempfile",
 ]
 

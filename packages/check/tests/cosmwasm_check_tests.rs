@@ -1,5 +1,5 @@
 use assert_cmd::prelude::*;
-use cosmwasm_std::{to_base64, to_msgpack_vec};
+use cosmwasm_std::{to_json_string, to_json_vec};
 use cosmwasm_vm::WasmLimits;
 use predicates::prelude::*;
 use std::{io::Write, process::Command};
@@ -106,7 +106,7 @@ fn wasm_limits_base64_check() -> Result<(), Box<dyn std::error::Error>> {
     limits.initial_memory_limit = Some(10);
 
     cmd.arg("--wasm-limits")
-        .arg(to_base64(to_msgpack_vec(&limits).unwrap()))
+        .arg(to_json_string(&limits).unwrap())
         .arg("../vm/testdata/hackatom.wasm");
     cmd.assert()
         .failure()
@@ -121,7 +121,7 @@ fn wasm_limits_file_check() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut limits = WasmLimits::default();
     limits.max_functions = Some(15);
-    let limits = to_msgpack_vec(&limits)?;
+    let limits = to_json_vec(&limits)?;
 
     let mut tmp_file = NamedTempFile::new()?;
     tmp_file.write_all(&limits)?;
