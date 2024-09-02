@@ -95,16 +95,7 @@ impl<'a> Logger<'a> {
 use Logger::*;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
-pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
-    check_wasm_with_limits(
-        wasm_code,
-        available_capabilities,
-        &WasmLimits::default(),
-        Off,
-    )
-}
-
-pub fn check_wasm_with_limits(
+pub fn check_wasm(
     wasm_code: &[u8],
     available_capabilities: &HashSet<String>,
     limits: &WasmLimits,
@@ -118,7 +109,7 @@ pub fn check_wasm_with_limits(
     check_wasm_memories(&module, limits)?;
     check_interface_version(&module)?;
     check_wasm_exports(&module, logs)?;
-    check_wasm_imports(&module, limits, SUPPORTED_IMPORTS, logs)?;
+    check_wasm_imports(&module, SUPPORTED_IMPORTS, limits, logs)?;
     check_wasm_capabilities(&module, available_capabilities, logs)?;
     check_wasm_functions(&module, limits, logs)?;
 
@@ -222,8 +213,8 @@ fn check_wasm_exports(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
 /// or a error in the contract.
 fn check_wasm_imports(
     module: &ParsedWasm,
-    limits: &WasmLimits,
     supported_imports: &[&str],
+    limits: &WasmLimits,
     logs: Logger,
 ) -> VmResult<()> {
     logs.add(|| {
@@ -357,19 +348,38 @@ mod tests {
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
-        check_wasm(CONTRACT, &default_capabilities()).unwrap();
-        check_wasm(CYBERPUNK, &default_capabilities()).unwrap();
+        check_wasm(
+            CONTRACT,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
+        check_wasm(
+            CYBERPUNK,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
     }
 
     #[test]
     fn check_wasm_allows_sign_ext() {
         // See https://github.com/CosmWasm/cosmwasm/issues/1727
-        check_wasm(CONTRACT_RUST_170, &default_capabilities()).unwrap();
+        check_wasm(
+            CONTRACT_RUST_170,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
     }
 
     #[test]
     fn check_wasm_old_contract() {
-        match check_wasm(CONTRACT_0_15, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_15, &default_capabilities(),&WasmLimits::default(),
+        Off) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -378,7 +388,8 @@ mod tests {
             Ok(_) => panic!("This must not succeed"),
         };
 
-        match check_wasm(CONTRACT_0_14, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_14, &default_capabilities(),&WasmLimits::default(),
+        Off,) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -387,7 +398,12 @@ mod tests {
             Ok(_) => panic!("This must not succeed"),
         };
 
-        match check_wasm(CONTRACT_0_12, &default_capabilities()) {
+        match check_wasm(
+            CONTRACT_0_12,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        ) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.contains(
                     "Wasm contract missing a required marker export: interface_version_*"
@@ -397,7 +413,12 @@ mod tests {
             Ok(_) => panic!("This must not succeed"),
         };
 
-        match check_wasm(CONTRACT_0_7, &default_capabilities()) {
+        match check_wasm(
+            CONTRACT_0_7,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        ) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.contains(
                     "Wasm contract missing a required marker export: interface_version_*"

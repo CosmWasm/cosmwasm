@@ -9,9 +9,7 @@ use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
 use cosmwasm_std::from_json;
-use cosmwasm_vm::internals::{
-    check_wasm_with_limits, compile, make_compiling_engine, LogOutput, Logger,
-};
+use cosmwasm_vm::internals::{check_wasm, compile, make_compiling_engine, LogOutput, Logger};
 use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
@@ -155,7 +153,7 @@ fn check_contract(
         Logger::Off
     };
     // Check wasm
-    check_wasm_with_limits(&wasm, available_capabilities, wasm_limits, logs)?;
+    check_wasm(&wasm, available_capabilities, wasm_limits, logs)?;
 
     // Compile module
     let engine = make_compiling_engine(None);

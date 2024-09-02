@@ -11,7 +11,7 @@ use cosmwasm_std::Checksum;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
-use crate::compatibility::check_wasm_with_limits;
+use crate::compatibility::check_wasm;
 use crate::config::{CacheOptions, Config, WasmLimits};
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
@@ -229,7 +229,7 @@ where
     /// This does the same as [`save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm_with_limits(
+        check_wasm(
             wasm,
             &self.available_capabilities,
             &self.wasm_limits,
