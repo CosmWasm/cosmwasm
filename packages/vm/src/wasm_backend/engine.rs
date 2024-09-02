@@ -3,12 +3,12 @@ use wasmer::NativeEngineExt;
 use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
-use wasmer_middlewares::Metering;
 
 use crate::size::Size;
 
 use super::gatekeeper::Gatekeeper;
 use super::limiting_tunables::LimitingTunables;
+use super::metering::{is_accounting, Metering};
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
@@ -25,17 +25,10 @@ fn cost(operator: &Operator) -> u64 {
     // precise enough to derive insights from it.
     const GAS_PER_OPERATION: u64 = 115;
 
-    match operator {
-        Operator::Loop { .. }
-        | Operator::End
-        | Operator::Else
-        | Operator::Br { .. }
-        | Operator::BrTable { .. }
-        | Operator::BrIf { .. }
-        | Operator::Call { .. }
-        | Operator::CallIndirect { .. }
-        | Operator::Return => GAS_PER_OPERATION * 14,
-        _ => GAS_PER_OPERATION,
+    if is_accounting(operator) {
+        GAS_PER_OPERATION * 14
+    } else {
+        GAS_PER_OPERATION
     }
 }
 
