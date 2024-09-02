@@ -8,15 +8,13 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
 
 [package.metadata.release]
-pre-release-hook = [
-    "../../devtools/release_checks.sh"
-]
+pre-release-hook = ["../../devtools/release_checks.sh"]
 pre-release-replacements = [
-    { file="../../CHANGELOG.md", search="## \\[Unreleased\\]", replace="## [{{version}}] - {{date}}", exactly=1 },
-    { file="../../CHANGELOG.md", search="(U|u)nreleased", replace="{{version}}" },
-    { file="../../CHANGELOG.md", search="<!-- next-header -->", replace="<!-- next-header -->\n\n## [Unreleased]", exactly=1 },
-    { file="../../CHANGELOG.md", search="\\.\\.\\.HEAD", replace="...{{tag_name}}", exactly=1 },
-    { file="../../CHANGELOG.md", search="<!-- next-url -->\n", replace="<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly=1 },
+  { file = "../../CHANGELOG.md", search = "## \\[Unreleased\\]", replace = "## [{{version}}] - {{date}}", exactly = 1 },
+  { file = "../../CHANGELOG.md", search = "(U|u)nreleased", replace = "{{version}}" },
+  { file = "../../CHANGELOG.md", search = "<!-- next-header -->", replace = "<!-- next-header -->\n\n## [Unreleased]", exactly = 1 },
+  { file = "../../CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
+  { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
 ]
 
 [features]
@@ -47,7 +45,7 @@ allow_interface_version_7 = []
 bench = false
 
 [dependencies]
-bytes = "1.4.0" # need a higher version than the one required by Wasmer for the Bytes -> Vec<u8> implementation
+bytes = "1.4.0"     # need a higher version than the one required by Wasmer for the Bytes -> Vec<u8> implementation
 clru = "0.6.1"
 crc32fast = "1.3.2"
 # Uses the path when built locally; uses the given version from crates.io when published
@@ -61,13 +59,14 @@ serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
 wasmer = { version = "=4.2.2", default-features = false, features = ["cranelift", "singlepass"] }
+wasmer-types = "=4.2.2"
 wasmer-middlewares = "=4.2.2"
 
 # Dependencies that we do not use ourself. We add those entries
 # to bump the min version of them.
 bytecheck = "0.6.3" # With this version the simdutf8 dependency became optional
-enumset = "1.0.2" # Fixes https://github.com/Lymia/enumset/issues/17 (https://github.com/Lymia/enumset/commit/a430550cd6a3c9b1ef636d37f75dede7616f5b62)
-bitflags = "1.1.0" # https://github.com/CensoredUsername/dynasm-rs/pull/74
+enumset = "1.0.2"   # Fixes https://github.com/Lymia/enumset/issues/17 (https://github.com/Lymia/enumset/commit/a430550cd6a3c9b1ef636d37f75dede7616f5b62)
+bitflags = "1.1.0"  # https://github.com/CensoredUsername/dynasm-rs/pull/74
 
 # Wasmer git/local (used for quick local debugging or patching)
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["cranelift", "singlepass"] }
@@ -76,7 +75,7 @@ bitflags = "1.1.0" # https://github.com/CensoredUsername/dynasm-rs/pull/74
 # wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
 
 [dev-dependencies]
-criterion = { version = "0.4", features = [ "html_reports" ] }
+criterion = { version = "0.4", features = ["html_reports"] }
 glob = "0.3.1"
 hex-literal = "0.3.1"
 tempfile = "3.1.0"

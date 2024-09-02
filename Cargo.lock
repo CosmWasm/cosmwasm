@@ -550,6 +550,7 @@ dependencies = [
  "thiserror",
  "wasmer",
  "wasmer-middlewares",
+ "wasmer-types",
  "wat",
 ]
 
