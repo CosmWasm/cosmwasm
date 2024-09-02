@@ -1,0 +1,30 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "i32",
+      "type": "integer",
+      "precision": 32,
+      "signed": true
+    },
+    {
+      "name": "ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "dequeue": {
+          "type": "named",
+          "properties": {}
+        },
+        "enqueue": {
+          "type": "named",
+          "properties": {
+            "value": {
+              "value": 0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

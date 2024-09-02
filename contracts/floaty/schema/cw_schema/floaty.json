@@ -1,0 +1,230 @@
+{
+  "contract_name": "floaty",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "Empty",
+        "description": "An empty struct that serves as a placeholder in different places,\nsuch as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but\ncontains no meaningful data. Previously we used enums without cases,\nbut those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "struct",
+        "properties": {}
+      }
+    ]
+  },
+  "execute": null,
+  "query": {
+    "type": "v1",
+    "root": 5,
+    "definitions": [
+      {
+        "name": "String",
+        "type": "string"
+      },
+      {
+        "name": "u64",
+        "type": "integer",
+        "precision": 64,
+        "signed": false
+      },
+      {
+        "name": "u32",
+        "type": "integer",
+        "precision": 32,
+        "signed": false
+      },
+      {
+        "name": "Value",
+        "type": "enum",
+        "cases": {
+          "f32": {
+            "type": "tuple",
+            "items": [
+              2
+            ]
+          },
+          "f64": {
+            "type": "tuple",
+            "items": [
+              1
+            ]
+          },
+          "u32": {
+            "type": "tuple",
+            "items": [
+              2
+            ]
+          },
+          "u64": {
+            "type": "tuple",
+            "items": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "name": "alloc::vec::Vec<floaty::instructions::Value>",
+        "type": "array",
+        "items": 3
+      },
+      {
+        "name": "QueryMsg",
+        "type": "enum",
+        "cases": {
+          "instructions": {
+            "description": "Returns a list of all instructions",
+            "type": "named",
+            "properties": {}
+          },
+          "random_args_for": {
+            "description": "Returns valid random arguments for the given instruction",
+            "type": "named",
+            "properties": {
+              "instruction": {
+                "value": 0
+              },
+              "seed": {
+                "value": 1
+              }
+            }
+          },
+          "run": {
+            "description": "Runs the given instruction with the given arguments and returns the result",
+            "type": "named",
+            "properties": {
+              "args": {
+                "value": 4
+              },
+              "instruction": {
+                "value": 0
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "instructions": {
+      "type": "v1",
+      "root": 1,
+      "definitions": [
+        {
+          "name": "String",
+          "type": "string"
+        },
+        {
+          "name": "alloc::vec::Vec<alloc::string::String>",
+          "type": "array",
+          "items": 0
+        }
+      ]
+    },
+    "random_args_for": {
+      "type": "v1",
+      "root": 3,
+      "definitions": [
+        {
+          "name": "u32",
+          "type": "integer",
+          "precision": 32,
+          "signed": false
+        },
+        {
+          "name": "u64",
+          "type": "integer",
+          "precision": 64,
+          "signed": false
+        },
+        {
+          "name": "Value",
+          "type": "enum",
+          "cases": {
+            "f32": {
+              "type": "tuple",
+              "items": [
+                0
+              ]
+            },
+            "f64": {
+              "type": "tuple",
+              "items": [
+                1
+              ]
+            },
+            "u32": {
+              "type": "tuple",
+              "items": [
+                0
+              ]
+            },
+            "u64": {
+              "type": "tuple",
+              "items": [
+                1
+              ]
+            }
+          }
+        },
+        {
+          "name": "alloc::vec::Vec<floaty::instructions::Value>",
+          "type": "array",
+          "items": 2
+        }
+      ]
+    },
+    "run": {
+      "type": "v1",
+      "root": 2,
+      "definitions": [
+        {
+          "name": "u32",
+          "type": "integer",
+          "precision": 32,
+          "signed": false
+        },
+        {
+          "name": "u64",
+          "type": "integer",
+          "precision": 64,
+          "signed": false
+        },
+        {
+          "name": "Value",
+          "type": "enum",
+          "cases": {
+            "f32": {
+              "type": "tuple",
+              "items": [
+                0
+              ]
+            },
+            "f64": {
+              "type": "tuple",
+              "items": [
+                1
+              ]
+            },
+            "u32": {
+              "type": "tuple",
+              "items": [
+                0
+              ]
+            },
+            "u64": {
+              "type": "tuple",
+              "items": [
+                1
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

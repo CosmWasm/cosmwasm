@@ -1,0 +1,35 @@
+{
+  "type": "v1",
+  "root": 2,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u8",
+      "type": "integer",
+      "precision": 8,
+      "signed": false
+    },
+    {
+      "name": "TokenInfoResponse",
+      "description": "TokenInfoResponse is info to display the derivative token in a UI",
+      "type": "struct",
+      "properties": {
+        "decimals": {
+          "description": "decimal places of the derivative token (for UI)",
+          "value": 1
+        },
+        "name": {
+          "description": "name of the derivative token",
+          "value": 0
+        },
+        "symbol": {
+          "description": "symbol / ticker of the derivative token",
+          "value": 0
+        }
+      }
+    }
+  ]
+}

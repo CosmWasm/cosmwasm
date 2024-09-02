@@ -1,0 +1,43 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "QueryMsg",
+      "type": "enum",
+      "cases": {
+        "count": {
+          "type": "named",
+          "properties": {}
+        },
+        "list": {
+          "type": "named",
+          "properties": {}
+        },
+        "open_iterators": {
+          "description": "Opens the given number of iterators for no reason other than testing.\nReturns and `Empty` response.",
+          "type": "named",
+          "properties": {
+            "count": {
+              "value": 0
+            }
+          }
+        },
+        "reducer": {
+          "type": "named",
+          "properties": {}
+        },
+        "sum": {
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

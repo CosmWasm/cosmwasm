@@ -1,0 +1,61 @@
+{
+  "type": "v1",
+  "root": 3,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "CallbackType",
+      "type": "enum",
+      "cases": {
+        "both": {
+          "description": "Both the source contract and the destination address should receive callbacks",
+          "type": "unit"
+        },
+        "dst": {
+          "description": "Only the destination address should receive callbacks",
+          "type": "unit"
+        },
+        "src": {
+          "description": "Only this contract on the source chain should receive callbacks",
+          "type": "unit"
+        }
+      }
+    },
+    {
+      "name": "ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "transfer": {
+          "type": "named",
+          "properties": {
+            "callback_type": {
+              "description": "Who should receive callbacks for the message",
+              "value": 2
+            },
+            "channel_id": {
+              "description": "The channel to send the packet through",
+              "value": 0
+            },
+            "timeout_seconds": {
+              "description": "The amount of seconds from now the transfer should timeout at",
+              "value": 1
+            },
+            "to_address": {
+              "description": "Address on the destination chain",
+              "value": 0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

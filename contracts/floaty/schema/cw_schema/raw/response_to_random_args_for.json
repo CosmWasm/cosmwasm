@@ -1,0 +1,53 @@
+{
+  "type": "v1",
+  "root": 3,
+  "definitions": [
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "u64",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "Value",
+      "type": "enum",
+      "cases": {
+        "f32": {
+          "type": "tuple",
+          "items": [
+            0
+          ]
+        },
+        "f64": {
+          "type": "tuple",
+          "items": [
+            1
+          ]
+        },
+        "u32": {
+          "type": "tuple",
+          "items": [
+            0
+          ]
+        },
+        "u64": {
+          "type": "tuple",
+          "items": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<floaty::instructions::Value>",
+      "type": "array",
+      "items": 2
+    }
+  ]
+}

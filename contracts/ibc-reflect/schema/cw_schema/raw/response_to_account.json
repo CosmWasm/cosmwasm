@@ -1,0 +1,24 @@
+{
+  "type": "v1",
+  "root": 2,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "core::option::Option<alloc::string::String>",
+      "type": "optional",
+      "inner": 0
+    },
+    {
+      "name": "AccountResponse",
+      "type": "struct",
+      "properties": {
+        "account": {
+          "value": 1
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "type": "v1",
+  "root": 2,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "MigrateMsg",
+      "type": "struct",
+      "properties": {
+        "delete": {
+          "description": "Optional amount of items to delete in this call.\nIf it is not provided, nothing will be deleted.\nYou can delete further items in a subsequent execute call.",
+          "value": 1
+        },
+        "payout": {
+          "description": "The address we send all remaining balance to",
+          "value": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "i32",
+      "type": "integer",
+      "precision": 32,
+      "signed": true
+    },
+    {
+      "name": "SumResponse",
+      "type": "struct",
+      "properties": {
+        "sum": {
+          "value": 0
+        }
+      }
+    }
+  ]
+}

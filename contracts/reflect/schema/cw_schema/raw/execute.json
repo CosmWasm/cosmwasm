@@ -1,0 +1,731 @@
+{
+  "type": "v1",
+  "root": 33,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "Uint128",
+      "description": "A thin wrapper around u128 that is using strings for JSON encoding/decoding,\nsuch that the full u128 range can be used for clients that convert JSON numbers to floats,\nlike JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u128` to get the value out:\n\n```\n# use cosmwasm_std::Uint128;\nlet a = Uint128::from(123u128);\nassert_eq!(a.u128(), 123);\n\nlet b = Uint128::from(42u64);\nassert_eq!(b.u128(), 42);\n\nlet c = Uint128::from(70u32);\nassert_eq!(c.u128(), 70);\n```",
+      "type": "integer",
+      "precision": 128,
+      "signed": false
+    },
+    {
+      "name": "Coin",
+      "type": "struct",
+      "properties": {
+        "amount": {
+          "value": 1
+        },
+        "denom": {
+          "value": 0
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<cosmwasm_std::coin::Coin>",
+      "type": "array",
+      "items": 2
+    },
+    {
+      "name": "BankMsg",
+      "description": "The message types of the bank module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto",
+      "type": "enum",
+      "cases": {
+        "burn": {
+          "description": "This will burn the given coins from the contract's account.\nThere is no Cosmos SDK message that performs this, but it can be done by calling the bank keeper.\nImportant if a contract controls significant token supply that must be retired.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "value": 3
+            }
+          }
+        },
+        "send": {
+          "description": "Sends native tokens from the contract to the given address.\n\nThis is translated to a [MsgSend](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto#L19-L28).\n`from_address` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "value": 3
+            },
+            "to_address": {
+              "value": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Binary",
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "binary"
+    },
+    {
+      "name": "CustomMsg",
+      "description": "CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract",
+      "type": "enum",
+      "cases": {
+        "debug": {
+          "type": "tuple",
+          "items": [
+            0
+          ]
+        },
+        "raw": {
+          "type": "tuple",
+          "items": [
+            5
+          ]
+        }
+      }
+    },
+    {
+      "name": "StakingMsg",
+      "description": "The message types of the staking module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto",
+      "type": "enum",
+      "cases": {
+        "delegate": {
+          "description": "This is translated to a [MsgDelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L81-L90).\n`delegator_address` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "value": 2
+            },
+            "validator": {
+              "value": 0
+            }
+          }
+        },
+        "redelegate": {
+          "description": "This is translated to a [MsgBeginRedelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L95-L105).\n`delegator_address` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "value": 2
+            },
+            "dst_validator": {
+              "value": 0
+            },
+            "src_validator": {
+              "value": 0
+            }
+          }
+        },
+        "undelegate": {
+          "description": "This is translated to a [MsgUndelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L112-L121).\n`delegator_address` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "value": 2
+            },
+            "validator": {
+              "value": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DistributionMsg",
+      "description": "The message types of the distribution module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto",
+      "type": "enum",
+      "cases": {
+        "fund_community_pool": {
+          "description": "This is translated to a [[MsgFundCommunityPool](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#LL69C1-L76C2).\n`depositor` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "description": "The amount to spend",
+              "value": 3
+            }
+          }
+        },
+        "set_withdraw_address": {
+          "description": "This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37).\n`delegator_address` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "address": {
+              "description": "The `withdraw_address`",
+              "value": 0
+            }
+          }
+        },
+        "withdraw_delegator_reward": {
+          "description": "This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).\n`delegator_address` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "validator": {
+              "description": "The `validator_address`",
+              "value": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "AnyMsg",
+      "description": "A message encoded the same way as a protobuf [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).\nThis is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)",
+      "type": "struct",
+      "properties": {
+        "type_url": {
+          "value": 0
+        },
+        "value": {
+          "value": 5
+        }
+      }
+    },
+    {
+      "name": "u64",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "IbcTimeoutBlock",
+      "description": "IBCTimeoutHeight Height is a monotonically increasing data type\nthat can be compared against another Height for the purposes of updating and\nfreezing clients.\nOrdering is (revision_number, timeout_height)",
+      "type": "struct",
+      "properties": {
+        "height": {
+          "description": "block height after which the packet times out.\nthe height within the given revision",
+          "value": 10
+        },
+        "revision": {
+          "description": "the version that the client is currently on\n(e.g. after resetting the chain this could increment 1 as height drops to 0)",
+          "value": 10
+        }
+      }
+    },
+    {
+      "name": "core::option::Option<cosmwasm_std::ibc::IbcTimeoutBlock>",
+      "type": "optional",
+      "inner": 11
+    },
+    {
+      "name": "Timestamp",
+      "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n```\n# use cosmwasm_std::Timestamp;\nlet ts = Timestamp::from_nanos(1_000_000_202);\nassert_eq!(ts.nanos(), 1_000_000_202);\nassert_eq!(ts.seconds(), 1);\nassert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2);\nassert_eq!(ts.nanos(), 3_000_000_202);\nassert_eq!(ts.seconds(), 3);\nassert_eq!(ts.subsec_nanos(), 202);\n```",
+      "type": "timestamp"
+    },
+    {
+      "name": "core::option::Option<cosmwasm_std::timestamp::Timestamp>",
+      "type": "optional",
+      "inner": 13
+    },
+    {
+      "name": "IbcTimeout",
+      "description": "In IBC each package must set at least one type of timeout:\nthe timestamp or the block height. Using this rather complex enum instead of\ntwo timeout fields we ensure that at least one timeout is set.",
+      "type": "struct",
+      "properties": {
+        "block": {
+          "value": 12
+        },
+        "timestamp": {
+          "value": 14
+        }
+      }
+    },
+    {
+      "name": "core::option::Option<alloc::string::String>",
+      "type": "optional",
+      "inner": 0
+    },
+    {
+      "name": "IbcAcknowledgement",
+      "type": "struct",
+      "properties": {
+        "data": {
+          "value": 5
+        }
+      }
+    },
+    {
+      "name": "IbcFee",
+      "type": "struct",
+      "properties": {
+        "ack_fee": {
+          "value": 3
+        },
+        "receive_fee": {
+          "value": 3
+        },
+        "timeout_fee": {
+          "value": 3
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<alloc::string::String>",
+      "type": "array",
+      "items": 0
+    },
+    {
+      "name": "IbcMsg",
+      "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts\n(contracts that directly speak the IBC protocol via 6 entry points)",
+      "type": "enum",
+      "cases": {
+        "close_channel": {
+          "description": "This will close an existing channel that is owned by this contract.\nPort is auto-assigned to the contract's IBC port",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 0
+            }
+          }
+        },
+        "pay_packet_fee": {
+          "description": "Incentivizes the next IBC packet sent after this message with a fee.\nNote that this does not necessarily have to be a packet sent by this contract.\nThe fees are taken from the contract's balance immediately and locked until the packet is handled.\n\n# Example\n\nMost commonly, you will attach this message to a response right before sending a packet using\n[`IbcMsg::SendPacket`] or [`IbcMsg::Transfer`].\n\n```rust\n# use cosmwasm_std::{IbcMsg, IbcEndpoint, IbcFee, IbcTimeout, Coin, coins, CosmosMsg, Response, Timestamp};\n\nlet incentivize = IbcMsg::PayPacketFee {\nport_id: \"transfer\".to_string(),\nchannel_id: \"source-channel\".to_string(),\nfee: IbcFee {\nreceive_fee: coins(100, \"token\"),\nack_fee: coins(201, \"token\"),\ntimeout_fee: coins(200, \"token\"),\n},\nrelayers: vec![],\n};\nlet transfer = IbcMsg::Transfer {\nchannel_id: \"source-channel\".to_string(),\nto_address: \"receiver\".to_string(),\namount: Coin::new(100u32, \"token\"),\ntimeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(0)),\nmemo: None,\n};\n\n# #[cfg(feature = \"stargate\")]\nlet _: Response = Response::new()\n.add_message(CosmosMsg::Ibc(incentivize))\n.add_message(CosmosMsg::Ibc(transfer));\n```",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "description": "The channel id on the chain where the packet is sent from (this chain).",
+              "value": 0
+            },
+            "fee": {
+              "value": 18
+            },
+            "port_id": {
+              "description": "The port id on the chain where the packet is sent from (this chain).",
+              "value": 0
+            },
+            "relayers": {
+              "description": "Allowlist of relayer addresses that can receive the fee.\nAn empty list means that any relayer can receive the fee.\n\nThis is currently not implemented and *must* be empty.",
+              "value": 19
+            }
+          }
+        },
+        "pay_packet_fee_async": {
+          "description": "Incentivizes the existing IBC packet with the given port, channel and sequence with a fee.\nNote that this does not necessarily have to be a packet sent by this contract.\nThe fees are taken from the contract's balance immediately and locked until the packet is handled.\nThey are added to the existing fees on the packet.",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "description": "The channel id on the chain where the packet is sent from (this chain).",
+              "value": 0
+            },
+            "fee": {
+              "value": 18
+            },
+            "port_id": {
+              "description": "The port id on the chain where the packet is sent from (this chain).",
+              "value": 0
+            },
+            "relayers": {
+              "description": "Allowlist of relayer addresses that can receive the fee.\nAn empty list means that any relayer can receive the fee.\n\nThis is currently not implemented and *must* be empty.",
+              "value": 19
+            },
+            "sequence": {
+              "description": "The sequence number of the packet that should be incentivized.",
+              "value": 10
+            }
+          }
+        },
+        "send_packet": {
+          "description": "Sends an IBC packet with given data over the existing channel.\nData should be encoded in a format defined by the channel version,\nand the module on the other side should know how to parse this.",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 0
+            },
+            "data": {
+              "value": 5
+            },
+            "timeout": {
+              "description": "when packet times out, measured on remote chain",
+              "value": 15
+            }
+          }
+        },
+        "transfer": {
+          "description": "Sends bank tokens owned by the contract to the given address on another chain.\nThe channel must already be established between the ibctransfer module on this chain\nand a matching module on the remote chain.\nWe cannot select the port_id, this is whatever the local chain has bound the ibctransfer\nmodule to.",
+          "type": "named",
+          "properties": {
+            "amount": {
+              "description": "packet data only supports one coin\nhttps://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20",
+              "value": 2
+            },
+            "channel_id": {
+              "description": "existing channel to send the tokens over",
+              "value": 0
+            },
+            "memo": {
+              "description": "An optional memo. See the blog post\n[\"Moving Beyond Simple Token Transfers\"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b)\nfor more information.\n\nThere is no difference between setting this to `None` or an empty string.\n\nThis field is only supported on chains with CosmWasm >= 2.0 and silently\nignored on older chains.\nIf you need support for both 1.x and 2.x chain with the same codebase,\nit is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer\nprotobuf encoder instead.",
+              "value": 16
+            },
+            "timeout": {
+              "description": "when packet times out, measured on remote chain",
+              "value": 15
+            },
+            "to_address": {
+              "description": "address on the remote chain to receive these tokens",
+              "value": 0
+            }
+          }
+        },
+        "write_acknowledgement": {
+          "description": "Acknowledges a packet that this contract received over IBC.\nThis allows acknowledging a packet that was not acknowledged yet in the `ibc_packet_receive` call.",
+          "type": "named",
+          "properties": {
+            "ack": {
+              "description": "The acknowledgement to send back",
+              "value": 17
+            },
+            "channel_id": {
+              "description": "Existing channel where the packet was received",
+              "value": 0
+            },
+            "packet_sequence": {
+              "description": "Sequence number of the packet that was received",
+              "value": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "WasmMsg",
+      "description": "The message types of the wasm module.\n\nSee https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto",
+      "type": "enum",
+      "cases": {
+        "clear_admin": {
+          "description": "Clears the admin on the given contract, so no more migration possible.\nFails if this contract is not currently admin of the target contract.",
+          "type": "named",
+          "properties": {
+            "contract_addr": {
+              "value": 0
+            }
+          }
+        },
+        "execute": {
+          "description": "Dispatches a call to another contract at a known address (with known ABI).\n\nThis is translated to a [MsgExecuteContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L68-L78).\n`sender` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "contract_addr": {
+              "value": 0
+            },
+            "funds": {
+              "value": 3
+            },
+            "msg": {
+              "description": "msg is the json-encoded ExecuteMsg struct (as raw Binary)",
+              "value": 5
+            }
+          }
+        },
+        "instantiate": {
+          "description": "Instantiates a new contracts from previously uploaded Wasm code.\n\nThe contract address is non-predictable. But it is guaranteed that\nwhen emitting the same Instantiate message multiple times,\nmultiple instances on different addresses will be generated. See also\nInstantiate2.\n\nThis is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L53-L71).\n`sender` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "admin": {
+              "value": 16
+            },
+            "code_id": {
+              "value": 10
+            },
+            "funds": {
+              "value": 3
+            },
+            "label": {
+              "description": "A human-readable label for the contract.\n\nValid values should:\n- not be empty\n- not be bigger than 128 bytes (or some chain-specific limit)\n- not start / end with whitespace",
+              "value": 0
+            },
+            "msg": {
+              "description": "msg is the JSON-encoded InstantiateMsg struct (as raw Binary)",
+              "value": 5
+            }
+          }
+        },
+        "instantiate2": {
+          "description": "Instantiates a new contracts from previously uploaded Wasm code\nusing a predictable address derivation algorithm implemented in\n[`cosmwasm_std::instantiate2_address`].\n\nThis is translated to a [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/blob/v0.29.2/proto/cosmwasm/wasm/v1/tx.proto#L73-L96).\n`sender` is automatically filled with the current contract's address.\n`fix_msg` is automatically set to false.",
+          "type": "named",
+          "properties": {
+            "admin": {
+              "value": 16
+            },
+            "code_id": {
+              "value": 10
+            },
+            "funds": {
+              "value": 3
+            },
+            "label": {
+              "description": "A human-readable label for the contract.\n\nValid values should:\n- not be empty\n- not be bigger than 128 bytes (or some chain-specific limit)\n- not start / end with whitespace",
+              "value": 0
+            },
+            "msg": {
+              "description": "msg is the JSON-encoded InstantiateMsg struct (as raw Binary)",
+              "value": 5
+            },
+            "salt": {
+              "value": 5
+            }
+          }
+        },
+        "migrate": {
+          "description": "Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to\ncustomize behavior.\n\nOnly the contract admin (as defined in wasmd), if any, is able to make this call.\n\nThis is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96).\n`sender` is automatically filled with the current contract's address.",
+          "type": "named",
+          "properties": {
+            "contract_addr": {
+              "value": 0
+            },
+            "msg": {
+              "description": "msg is the json-encoded MigrateMsg struct that will be passed to the new code",
+              "value": 5
+            },
+            "new_code_id": {
+              "description": "the code_id of the new logic to place in the given contract",
+              "value": 10
+            }
+          }
+        },
+        "update_admin": {
+          "description": "Sets a new admin (for migrate) on the given contract.\nFails if this contract is not currently admin of the target contract.",
+          "type": "named",
+          "properties": {
+            "admin": {
+              "value": 0
+            },
+            "contract_addr": {
+              "value": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "VoteOption",
+      "type": "enum",
+      "cases": {
+        "abstain": {
+          "type": "unit"
+        },
+        "no": {
+          "type": "unit"
+        },
+        "no_with_veto": {
+          "type": "unit"
+        },
+        "yes": {
+          "type": "unit"
+        }
+      }
+    },
+    {
+      "name": "Decimal",
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "decimal",
+      "precision": 128,
+      "signed": false
+    },
+    {
+      "name": "WeightedVoteOption",
+      "type": "struct",
+      "properties": {
+        "option": {
+          "value": 22
+        },
+        "weight": {
+          "value": 23
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<cosmwasm_std::results::cosmos_msg::WeightedVoteOption>",
+      "type": "array",
+      "items": 24
+    },
+    {
+      "name": "GovMsg",
+      "description": "This message type allows the contract interact with the [x/gov] module in order\nto cast votes.\n\n[x/gov]: https://github.com/cosmos/cosmos-sdk/tree/v0.45.12/x/gov\n\n## Examples\n\nCast a simple vote:\n\n```\n# use cosmwasm_std::{\n#     HexBinary,\n#     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,\n#     Response, QueryResponse,\n# };\n# type ExecuteMsg = ();\nuse cosmwasm_std::{GovMsg, VoteOption};\n\n#[entry_point]\npub fn execute(\ndeps: DepsMut,\nenv: Env,\ninfo: MessageInfo,\nmsg: ExecuteMsg,\n) -> Result<Response, StdError> {\n// ...\nOk(Response::new().add_message(GovMsg::Vote {\nproposal_id: 4,\noption: VoteOption::Yes,\n}))\n}\n```\n\nCast a weighted vote:\n\n```\n# use cosmwasm_std::{\n#     HexBinary,\n#     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,\n#     Response, QueryResponse,\n# };\n# type ExecuteMsg = ();\n# #[cfg(feature = \"cosmwasm_1_2\")]\nuse cosmwasm_std::{Decimal, GovMsg, VoteOption, WeightedVoteOption};\n\n# #[cfg(feature = \"cosmwasm_1_2\")]\n#[entry_point]\npub fn execute(\ndeps: DepsMut,\nenv: Env,\ninfo: MessageInfo,\nmsg: ExecuteMsg,\n) -> Result<Response, StdError> {\n// ...\nOk(Response::new().add_message(GovMsg::VoteWeighted {\nproposal_id: 4,\noptions: vec![\nWeightedVoteOption {\noption: VoteOption::Yes,\nweight: Decimal::percent(65),\n},\nWeightedVoteOption {\noption: VoteOption::Abstain,\nweight: Decimal::percent(35),\n},\n],\n}))\n}\n```",
+      "type": "enum",
+      "cases": {
+        "vote": {
+          "description": "This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.",
+          "type": "named",
+          "properties": {
+            "option": {
+              "description": "The vote option.\n\nThis used to be called \"vote\", but was changed for consistency with Cosmos SDK.",
+              "value": 22
+            },
+            "proposal_id": {
+              "value": 10
+            }
+          }
+        },
+        "vote_weighted": {
+          "description": "This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.",
+          "type": "named",
+          "properties": {
+            "options": {
+              "value": 25
+            },
+            "proposal_id": {
+              "value": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "CosmosMsg",
+      "type": "enum",
+      "cases": {
+        "any": {
+          "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped\nin a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)\nthat is suppored by the chain. It behaves the same as\n`CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because\na chain running CosmWasm < 2.0 cannot process this.",
+          "type": "tuple",
+          "items": [
+            9
+          ]
+        },
+        "bank": {
+          "type": "tuple",
+          "items": [
+            4
+          ]
+        },
+        "custom": {
+          "type": "tuple",
+          "items": [
+            6
+          ]
+        },
+        "distribution": {
+          "type": "tuple",
+          "items": [
+            8
+          ]
+        },
+        "gov": {
+          "type": "tuple",
+          "items": [
+            26
+          ]
+        },
+        "ibc": {
+          "type": "tuple",
+          "items": [
+            20
+          ]
+        },
+        "staking": {
+          "type": "tuple",
+          "items": [
+            7
+          ]
+        },
+        "stargate": {
+          "description": "This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)",
+          "type": "named",
+          "properties": {
+            "type_url": {
+              "value": 0
+            },
+            "value": {
+              "value": 5
+            }
+          }
+        },
+        "wasm": {
+          "type": "tuple",
+          "items": [
+            21
+          ]
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<cosmwasm_std::results::cosmos_msg::CosmosMsg<reflect::msg::CustomMsg>>",
+      "type": "array",
+      "items": 27
+    },
+    {
+      "name": "core::option::Option<u64>",
+      "type": "optional",
+      "inner": 10
+    },
+    {
+      "name": "ReplyOn",
+      "description": "Use this to define when the contract gets a response callback.\nIf you only need it for errors or success you can select just those in order\nto save gas.",
+      "type": "enum",
+      "cases": {
+        "always": {
+          "description": "Always perform a callback after SubMsg is processed",
+          "type": "unit"
+        },
+        "error": {
+          "description": "Only callback if SubMsg returned an error, no callback on success case",
+          "type": "unit"
+        },
+        "never": {
+          "description": "Never make a callback - this is like the original CosmosMsg semantics",
+          "type": "unit"
+        },
+        "success": {
+          "description": "Only callback if SubMsg was successful, no callback on error case",
+          "type": "unit"
+        }
+      }
+    },
+    {
+      "name": "SubMsg",
+      "description": "A submessage that will guarantee a `reply` call on success or error, depending on\nthe `reply_on` setting. If you do not need to process the result, use regular messages instead.\n\nNote: On error the submessage execution will revert any partial state changes due to this message,\nbut not revert any state changes in the calling contract. If this is required, it must be done\nmanually in the `reply` entry point.",
+      "type": "struct",
+      "properties": {
+        "gas_limit": {
+          "description": "Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).\n\nSetting this to `None` means unlimited. Then the submessage execution can consume all gas of the\ncurrent execution context.",
+          "value": 29
+        },
+        "id": {
+          "description": "An arbitrary ID chosen by the contract.\nThis is typically used to match `Reply`s in the `reply` entry point to the submessage.",
+          "value": 10
+        },
+        "msg": {
+          "value": 27
+        },
+        "payload": {
+          "description": "Some arbirary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
+          "value": 5
+        },
+        "reply_on": {
+          "value": 30
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<cosmwasm_std::results::submessages::SubMsg<reflect::msg::CustomMsg>>",
+      "type": "array",
+      "items": 31
+    },
+    {
+      "name": "ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "change_owner": {
+          "type": "named",
+          "properties": {
+            "owner": {
+              "value": 0
+            }
+          }
+        },
+        "reflect_msg": {
+          "type": "named",
+          "properties": {
+            "msgs": {
+              "value": 28
+            }
+          }
+        },
+        "reflect_sub_msg": {
+          "type": "named",
+          "properties": {
+            "msgs": {
+              "value": 32
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "QueryMsg",
+      "type": "enum",
+      "cases": {
+        "account": {
+          "description": "Returns (reflect) account that is attached to this channel,\nor none.",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 0
+            }
+          }
+        },
+        "list_accounts": {
+          "description": "Returns all (channel, reflect_account) pairs.\nNo pagination - this is a test contract",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

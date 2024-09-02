@@ -1,0 +1,62 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "allocate_large_memory": {
+          "description": "Allocate large amounts of memory without consuming much gas",
+          "type": "named",
+          "properties": {
+            "pages": {
+              "value": 0
+            }
+          }
+        },
+        "cpu_loop": {
+          "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
+          "type": "named",
+          "properties": {}
+        },
+        "memory_loop": {
+          "description": "Infinite loop reading and writing memory",
+          "type": "named",
+          "properties": {}
+        },
+        "message_loop": {
+          "description": "Infinite loop sending message to itself",
+          "type": "named",
+          "properties": {}
+        },
+        "panic": {
+          "description": "Trigger a panic to ensure framework handles gracefully",
+          "type": "named",
+          "properties": {}
+        },
+        "release": {
+          "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
+          "type": "named",
+          "properties": {}
+        },
+        "storage_loop": {
+          "description": "Infinite loop making storage calls (to test when their limit hits)",
+          "type": "named",
+          "properties": {}
+        },
+        "user_errors_in_api_calls": {
+          "description": "Starting with CosmWasm 0.10, some API calls return user errors back to the contract.\nThis triggers such user errors, ensuring the transaction does not fail in the backend.",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

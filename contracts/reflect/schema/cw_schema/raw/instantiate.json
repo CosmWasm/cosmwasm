@@ -1,0 +1,11 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "InstantiateMsg",
+      "type": "struct",
+      "properties": {}
+    }
+  ]
+}

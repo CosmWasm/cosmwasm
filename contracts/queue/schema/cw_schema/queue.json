@@ -1,0 +1,226 @@
+{
+  "contract_name": "queue",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "InstantiateMsg",
+        "type": "struct",
+        "properties": {}
+      }
+    ]
+  },
+  "execute": {
+    "type": "v1",
+    "root": 1,
+    "definitions": [
+      {
+        "name": "i32",
+        "type": "integer",
+        "precision": 32,
+        "signed": true
+      },
+      {
+        "name": "ExecuteMsg",
+        "type": "enum",
+        "cases": {
+          "dequeue": {
+            "type": "named",
+            "properties": {}
+          },
+          "enqueue": {
+            "type": "named",
+            "properties": {
+              "value": {
+                "value": 0
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "query": {
+    "type": "v1",
+    "root": 1,
+    "definitions": [
+      {
+        "name": "u32",
+        "type": "integer",
+        "precision": 32,
+        "signed": false
+      },
+      {
+        "name": "QueryMsg",
+        "type": "enum",
+        "cases": {
+          "count": {
+            "type": "named",
+            "properties": {}
+          },
+          "list": {
+            "type": "named",
+            "properties": {}
+          },
+          "open_iterators": {
+            "description": "Opens the given number of iterators for no reason other than testing.\nReturns and `Empty` response.",
+            "type": "named",
+            "properties": {
+              "count": {
+                "value": 0
+              }
+            }
+          },
+          "reducer": {
+            "type": "named",
+            "properties": {}
+          },
+          "sum": {
+            "type": "named",
+            "properties": {}
+          }
+        }
+      }
+    ]
+  },
+  "migrate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "MigrateMsg",
+        "type": "struct",
+        "properties": {}
+      }
+    ]
+  },
+  "sudo": null,
+  "responses": {
+    "count": {
+      "type": "v1",
+      "root": 1,
+      "definitions": [
+        {
+          "name": "u32",
+          "type": "integer",
+          "precision": 32,
+          "signed": false
+        },
+        {
+          "name": "CountResponse",
+          "type": "struct",
+          "properties": {
+            "count": {
+              "value": 0
+            }
+          }
+        }
+      ]
+    },
+    "list": {
+      "type": "v1",
+      "root": 2,
+      "definitions": [
+        {
+          "name": "u32",
+          "type": "integer",
+          "precision": 32,
+          "signed": false
+        },
+        {
+          "name": "alloc::vec::Vec<u32>",
+          "type": "array",
+          "items": 0
+        },
+        {
+          "name": "ListResponse",
+          "type": "struct",
+          "properties": {
+            "early": {
+              "description": "List all IDs lower than 0x20",
+              "value": 1
+            },
+            "empty": {
+              "description": "List an empty range, both bounded",
+              "value": 1
+            },
+            "late": {
+              "description": "List all IDs starting from 0x20",
+              "value": 1
+            }
+          }
+        }
+      ]
+    },
+    "open_iterators": {
+      "type": "v1",
+      "root": 0,
+      "definitions": [
+        {
+          "name": "Empty",
+          "description": "An empty struct that serves as a placeholder in different places,\nsuch as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but\ncontains no meaningful data. Previously we used enums without cases,\nbut those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+          "type": "struct",
+          "properties": {}
+        }
+      ]
+    },
+    "reducer": {
+      "type": "v1",
+      "root": 3,
+      "definitions": [
+        {
+          "name": "i32",
+          "type": "integer",
+          "precision": 32,
+          "signed": true
+        },
+        {
+          "name": "(i32, i32)",
+          "type": "tuple",
+          "items": [
+            0,
+            0
+          ]
+        },
+        {
+          "name": "alloc::vec::Vec<(i32, i32)>",
+          "type": "array",
+          "items": 1
+        },
+        {
+          "name": "ReducerResponse",
+          "type": "struct",
+          "properties": {
+            "counters": {
+              "value": 2
+            }
+          }
+        }
+      ]
+    },
+    "sum": {
+      "type": "v1",
+      "root": 1,
+      "definitions": [
+        {
+          "name": "i32",
+          "type": "integer",
+          "precision": 32,
+          "signed": true
+        },
+        {
+          "name": "SumResponse",
+          "type": "struct",
+          "properties": {
+            "sum": {
+              "value": 0
+            }
+          }
+        }
+      ]
+    }
+  }
+}

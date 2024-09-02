@@ -1,0 +1,89 @@
+{
+  "type": "v1",
+  "root": 9,
+  "definitions": [
+    {
+      "name": "u64",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "Timestamp",
+      "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n```\n# use cosmwasm_std::Timestamp;\nlet ts = Timestamp::from_nanos(1_000_000_202);\nassert_eq!(ts.nanos(), 1_000_000_202);\nassert_eq!(ts.seconds(), 1);\nassert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2);\nassert_eq!(ts.nanos(), 3_000_000_202);\nassert_eq!(ts.seconds(), 3);\nassert_eq!(ts.subsec_nanos(), 202);\n```",
+      "type": "timestamp"
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "BlockInfo",
+      "type": "struct",
+      "properties": {
+        "chain_id": {
+          "value": 2
+        },
+        "height": {
+          "description": "The height of a block is the number of blocks preceding it in the blockchain.",
+          "value": 0
+        },
+        "time": {
+          "description": "Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).\n\nThe source of this is the [BFT Time in Tendermint](https://github.com/tendermint/tendermint/blob/58dc1726/spec/consensus/bft-time.md),\nwhich has the same nanosecond precision as the `Timestamp` type.\n\n# Examples\n\nUsing chrono:\n\n```\n# use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};\n# let env = Env {\n#     block: BlockInfo {\n#         height: 12_345,\n#         time: Timestamp::from_nanos(1_571_797_419_879_305_533),\n#         chain_id: \"cosmos-testnet-14002\".to_string(),\n#     },\n#     transaction: Some(TransactionInfo { index: 3 }),\n#     contract: ContractInfo {\n#         address: Addr::unchecked(\"contract\"),\n#     },\n# };\n# extern crate chrono;\nuse chrono::NaiveDateTime;\nlet seconds = env.block.time.seconds();\nlet nsecs = env.block.time.subsec_nanos();\nlet dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32);\n```\n\nCreating a simple millisecond-precision timestamp (as used in JavaScript):\n\n```\n# use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};\n# let env = Env {\n#     block: BlockInfo {\n#         height: 12_345,\n#         time: Timestamp::from_nanos(1_571_797_419_879_305_533),\n#         chain_id: \"cosmos-testnet-14002\".to_string(),\n#     },\n#     transaction: Some(TransactionInfo { index: 3 }),\n#     contract: ContractInfo {\n#         address: Addr::unchecked(\"contract\"),\n#     },\n# };\nlet millis = env.block.time.nanos() / 1_000_000;\n```",
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "TransactionInfo",
+      "type": "struct",
+      "properties": {
+        "index": {
+          "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction indentifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
+          "value": 4
+        }
+      }
+    },
+    {
+      "name": "core::option::Option<cosmwasm_std::types::TransactionInfo>",
+      "type": "optional",
+      "inner": 5
+    },
+    {
+      "name": "Addr",
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no\nassumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways\n1. Use `Addr::unchecked(input)`\n2. Use `let checked: Addr = deps.api.addr_validate(input)?`\n3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`\n4. Deserialize from JSON. This must only be done from JSON that was validated before\nsuch as a contract's state. `Addr` must not be used in messages sent by the user\nbecause this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create\na mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`\ninstance.",
+      "type": "address"
+    },
+    {
+      "name": "ContractInfo",
+      "type": "struct",
+      "properties": {
+        "address": {
+          "value": 7
+        }
+      }
+    },
+    {
+      "name": "Env",
+      "type": "struct",
+      "properties": {
+        "block": {
+          "value": 3
+        },
+        "contract": {
+          "value": 8
+        },
+        "transaction": {
+          "description": "Information on the transaction this message was executed in.\nThe field is unset when the `MsgExecuteContract`/`MsgInstantiateContract`/`MsgMigrateContract`\nis not executed as part of a transaction.",
+          "value": 6
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "type": "v1",
+  "root": 3,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "AccountInfo",
+      "type": "struct",
+      "properties": {
+        "account": {
+          "value": 0
+        },
+        "channel_id": {
+          "value": 0
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<ibc_reflect::msg::AccountInfo>",
+      "type": "array",
+      "items": 1
+    },
+    {
+      "name": "ListAccountsResponse",
+      "type": "struct",
+      "properties": {
+        "accounts": {
+          "value": 2
+        }
+      }
+    }
+  ]
+}

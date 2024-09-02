@@ -1,0 +1,22 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "InstantiateMsg",
+      "type": "struct",
+      "properties": {
+        "beneficiary": {
+          "value": 0
+        },
+        "verifier": {
+          "value": 0
+        }
+      }
+    }
+  ]
+}
