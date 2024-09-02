@@ -17,9 +17,14 @@ and this project adheres to
 - cosmwasm-std: Add `IbcMsg::{PayPacketFee, PayPacketFeeAsync}` and
   `IbcQuery::FeeEnabledChannel` to allow contracts to incentivize IBC packets
   using IBC Fees. ([#2196])
+- cosmwasm-vm: Add `Config` that allows to configure the limits for static Wasm
+  validation. ([#2220])
+- cosmwasm-check: Add `--wasm-limits` flag to supply configured limits for
+  static validation. ([#2220])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
+[#2220]: https://github.com/CosmWasm/cosmwasm/pull/2220
 
 ### Changed
 
