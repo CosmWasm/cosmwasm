@@ -54,6 +54,7 @@ sha2 = "0.10.3"
 thiserror = "1.0.26"
 wasmer = { version = "=4.2.6", default-features = false, features = ["cranelift", "singlepass"] }
 wasmer-middlewares = "=4.2.6"
+wasmer-types = "=4.2.6"
 strum = { version = "0.25.0", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in "memory" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.

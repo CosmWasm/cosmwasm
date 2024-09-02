@@ -531,6 +531,7 @@ dependencies = [
  "time",
  "wasmer",
  "wasmer-middlewares",
+ "wasmer-types",
  "wat",
 ]
 

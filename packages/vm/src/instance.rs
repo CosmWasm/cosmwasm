@@ -858,7 +858,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 15479658);
+        assert_eq!(report2.used_internally, 19235903);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1049,7 +1049,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 15479909);
+        assert_eq!(init_used, 19236154);
     }
 
     #[test]
@@ -1074,7 +1074,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 20477581);
+        assert_eq!(execute_used, 25417751);
     }
 
     #[test]
@@ -1117,6 +1117,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 12737176);
+        assert_eq!(query_used, 15594121);
     }
 }
