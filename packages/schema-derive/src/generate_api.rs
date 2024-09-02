@@ -148,6 +148,7 @@ macro_rules! option_dispatch {
     ($opt:expr, $closure:expr) => {{
         match $opt {
             Some(ref ty) => {
+                #[allow(clippy::redundant_closure_call)]
                 let tokens = $closure(ty);
                 quote! { Some(#tokens) }
             }
