@@ -422,6 +422,7 @@ dependencies = [
  "tracing",
  "wasmer",
  "wasmer-middlewares",
+ "wasmer-types",
 ]
 
 [[package]]
