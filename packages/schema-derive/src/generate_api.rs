@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use super::SchemaBackend;
 use crate::error::bail;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -8,10 +9,36 @@ use syn::{
     parse_quote, Block, ExprStruct, Ident, Token,
 };
 
+fn generate_api_write(api_object: syn::ExprStruct, name: &TokenStream) -> TokenStream {
+    quote! {{
+        let api = #api_object.render();
+        let path = out_dir.join(concat!(#name, ".json"));
+
+        let json = api.to_string().unwrap();
+        write(&path, json + "\n").unwrap();
+        println!("Exported the full API as {}", path.to_str().unwrap());
+
+        let raw_dir = out_dir.join("raw");
+        create_dir_all(&raw_dir).unwrap();
+
+        for (filename, json) in api.to_schema_files().unwrap() {
+            let path = raw_dir.join(filename);
+
+            write(&path, json + "\n").unwrap();
+            println!("Exported {}", path.to_str().unwrap());
+        }
+    }}
+}
+
 pub fn write_api_impl(input: Options) -> Block {
-    let api_object = generate_api_impl(&input);
+    let cw_api_object = generate_api_impl(SchemaBackend::CwSchema, &input);
+    let json_schema_api_object = generate_api_impl(SchemaBackend::JsonSchema, &input);
+
     let crate_name = input.crate_name;
     let name = input.name;
+
+    let cw_api_write = generate_api_write(cw_api_object, &name);
+    let json_schema_api_write = generate_api_write(json_schema_api_object, &name);
 
     parse_quote! {
         {
@@ -20,50 +47,46 @@ pub fn write_api_impl(input: Options) -> Block {
             use ::std::env;
             use ::std::fs::{create_dir_all, write};
 
-            use #crate_name::{remove_schemas, Api, QueryResponses};
+            use #crate_name::{remove_schemas, CwApi, Api, QueryResponses};
 
             let mut out_dir = env::current_dir().unwrap();
             out_dir.push("schema");
             create_dir_all(&out_dir).unwrap();
             remove_schemas(&out_dir).unwrap();
 
-            let api = #api_object.render();
+            #json_schema_api_write
 
+            out_dir.push("cw_schema");
+            create_dir_all(&out_dir).unwrap();
+            remove_schemas(&out_dir).unwrap();
 
-            let path = out_dir.join(concat!(#name, ".json"));
-
-            let json = api.to_string().unwrap();
-            write(&path, json + "\n").unwrap();
-            println!("Exported the full API as {}", path.to_str().unwrap());
-
-            let raw_dir = out_dir.join("raw");
-            create_dir_all(&raw_dir).unwrap();
-
-            for (filename, json) in api.to_schema_files().unwrap() {
-                let path = raw_dir.join(filename);
-
-                write(&path, json + "\n").unwrap();
-                println!("Exported {}", path.to_str().unwrap());
-            }
+            #cw_api_write
         }
     }
 }
 
-pub fn generate_api_impl(input: &Options) -> ExprStruct {
+pub fn generate_api_impl(backend: SchemaBackend, input: &Options) -> ExprStruct {
     let Options {
         crate_name,
         name,
         version,
-        instantiate,
-        execute,
-        query,
-        migrate,
-        sudo,
-        responses,
+        ..
     } = input;
 
+    let instantiate = input.instantiate(backend);
+    let execute = input.execute(backend);
+    let query = input.query(backend);
+    let migrate = input.migrate(backend);
+    let sudo = input.sudo(backend);
+    let responses = input.responses(backend);
+
+    let api_path = match backend {
+        SchemaBackend::CwSchema => quote! { #crate_name::CwApi },
+        SchemaBackend::JsonSchema => quote! { #crate_name::Api },
+    };
+
     parse_quote! {
-        #crate_name::Api {
+        #api_path {
             contract_name: #name.to_string(),
             contract_version: #version.to_string(),
             instantiate: #instantiate,
@@ -121,17 +144,74 @@ impl Parse for Pair {
     }
 }
 
+macro_rules! option_dispatch {
+    ($opt:expr, $closure:expr) => {{
+        match $opt {
+            Some(ref ty) => {
+                let tokens = $closure(ty);
+                quote! { Some(#tokens) }
+            }
+            None => quote! { None },
+        }
+    }};
+}
+
+macro_rules! backend_dispatch {
+    ($fn_name:ident, $ty_field:ident) => {
+        pub fn $fn_name(&self, backend: SchemaBackend) -> TokenStream {
+            let crate_name = &self.crate_name;
+
+            option_dispatch!(self.$ty_field, |ty| {
+                match backend {
+                    SchemaBackend::CwSchema => {
+                        quote! { #crate_name::cw_schema::schema_of::<#ty>() }
+                    }
+                    SchemaBackend::JsonSchema => quote! { #crate_name::schema_for!(#ty) },
+                }
+            })
+        }
+    };
+}
+
 #[derive(Debug)]
 pub struct Options {
-    crate_name: TokenStream,
+    crate_name: syn::Path,
     name: TokenStream,
     version: TokenStream,
-    instantiate: TokenStream,
-    execute: TokenStream,
-    query: TokenStream,
-    migrate: TokenStream,
-    sudo: TokenStream,
-    responses: TokenStream,
+    instantiate_ty: Option<syn::Path>,
+    execute_ty: Option<syn::Path>,
+    query_ty: Option<syn::Path>,
+    migrate_ty: Option<syn::Path>,
+    sudo_ty: Option<syn::Path>,
+
+    schema_backend: SchemaBackend,
+}
+
+impl Options {
+    backend_dispatch!(instantiate, instantiate_ty);
+    backend_dispatch!(execute, execute_ty);
+    backend_dispatch!(query, query_ty);
+    backend_dispatch!(migrate, migrate_ty);
+    backend_dispatch!(sudo, sudo_ty);
+
+    pub fn responses(&self, backend: SchemaBackend) -> TokenStream {
+        let crate_name = &self.crate_name;
+
+        option_dispatch!(self.query_ty, |ty| {
+            match backend {
+                SchemaBackend::CwSchema => {
+                    quote! { <#ty as #crate_name::QueryResponses>::response_schemas_cw().unwrap() }
+                }
+                SchemaBackend::JsonSchema => {
+                    quote! { <#ty as #crate_name::QueryResponses>::response_schemas().unwrap() }
+                }
+            }
+        })
+    }
+
+    pub fn schema_backend(&self) -> SchemaBackend {
+        self.schema_backend
+    }
 }
 
 impl Parse for Options {
@@ -140,10 +220,9 @@ impl Parse for Options {
         let mut map: BTreeMap<_, _> = pairs.into_iter().map(|p| p.0).collect();
 
         let crate_name = if let Some(crate_name_override) = map.remove(&parse_quote!(crate_name)) {
-            let crate_name_override = crate_name_override.get_type()?;
-            quote! { #crate_name_override }
+            crate_name_override.get_type()?
         } else {
-            quote! { ::cosmwasm_schema }
+            parse_quote! { ::cosmwasm_schema }
         };
 
         let name = if let Some(name_override) = map.remove(&parse_quote!(name)) {
@@ -168,47 +247,36 @@ impl Parse for Options {
             }
         };
 
-        let instantiate = match map.remove(&parse_quote!(instantiate)) {
-            Some(ty) => {
-                let ty = ty.get_type()?;
-                quote! {Some(#crate_name::schema_for!(#ty))}
-            }
-            None => quote! { None },
-        };
+        let instantiate_ty = map
+            .remove(&parse_quote!(instantiate))
+            .map(|ty| ty.get_type())
+            .transpose()?;
 
-        let execute = match map.remove(&parse_quote!(execute)) {
-            Some(ty) => {
-                let ty = ty.get_type()?;
-                quote! {Some(#crate_name::schema_for!(#ty))}
-            }
-            None => quote! { None },
-        };
+        let execute_ty = map
+            .remove(&parse_quote!(execute))
+            .map(|ty| ty.get_type())
+            .transpose()?;
 
-        let (query, responses) = match map.remove(&parse_quote!(query)) {
-            Some(ty) => {
-                let ty = ty.get_type()?;
-                (
-                    quote! {Some(#crate_name::schema_for!(#ty))},
-                    quote! { Some(<#ty as #crate_name::QueryResponses>::response_schemas().unwrap()) },
-                )
-            }
-            None => (quote! { None }, quote! { None }),
-        };
+        let query_ty = map
+            .remove(&parse_quote!(query))
+            .map(|ty| ty.get_type())
+            .transpose()?;
 
-        let migrate = match map.remove(&parse_quote!(migrate)) {
-            Some(ty) => {
-                let ty = ty.get_type()?;
-                quote! {Some(#crate_name::schema_for!(#ty))}
-            }
-            None => quote! { None },
-        };
+        let migrate_ty = map
+            .remove(&parse_quote!(migrate))
+            .map(|ty| ty.get_type())
+            .transpose()?;
 
-        let sudo = match map.remove(&parse_quote!(sudo)) {
-            Some(ty) => {
-                let ty = ty.get_type()?;
-                quote! {Some(#crate_name::schema_for!(#ty))}
-            }
-            None => quote! { None },
+        let sudo_ty = map
+            .remove(&parse_quote!(sudo))
+            .map(|ty| ty.get_type())
+            .transpose()?;
+
+        let schema_backend = if let Some(backend) = map.remove(&parse_quote!(schema_backend)) {
+            let backend = backend.get_str()?;
+            parse_quote! { #backend }
+        } else {
+            SchemaBackend::JsonSchema
         };
 
         if let Some((invalid_option, _)) = map.into_iter().next() {
@@ -216,15 +284,15 @@ impl Parse for Options {
         }
 
         Ok(Self {
+            schema_backend,
             crate_name,
             name,
             version,
-            instantiate,
-            execute,
-            query,
-            migrate,
-            sudo,
-            responses,
+            instantiate_ty,
+            execute_ty,
+            query_ty,
+            migrate_ty,
+            sudo_ty,
         })
     }
 }
@@ -236,14 +304,17 @@ mod tests {
     #[test]
     fn crate_rename() {
         assert_eq!(
-            generate_api_impl(&parse_quote! {
-                crate_name: ::my_crate::cw_schema,
-                instantiate: InstantiateMsg,
-                execute: ExecuteMsg,
-                query: QueryMsg,
-                migrate: MigrateMsg,
-                sudo: SudoMsg,
-            }),
+            generate_api_impl(
+                SchemaBackend::JsonSchema,
+                &parse_quote! {
+                    crate_name: ::my_crate::cw_schema,
+                    instantiate: InstantiateMsg,
+                    execute: ExecuteMsg,
+                    query: QueryMsg,
+                    migrate: MigrateMsg,
+                    sudo: SudoMsg,
+                }
+            ),
             parse_quote! {
                 ::my_crate::cw_schema::Api {
                     contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
@@ -262,7 +333,7 @@ mod tests {
     #[test]
     fn api_object_minimal() {
         assert_eq!(
-            generate_api_impl(&parse_quote! {}),
+            generate_api_impl(SchemaBackend::JsonSchema, &parse_quote! {}),
             parse_quote! {
                 ::cosmwasm_schema::Api {
                     contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
@@ -281,9 +352,12 @@ mod tests {
     #[test]
     fn api_object_instantiate_only() {
         assert_eq!(
-            generate_api_impl(&parse_quote! {
-                instantiate: InstantiateMsg,
-            }),
+            generate_api_impl(
+                SchemaBackend::JsonSchema,
+                &parse_quote! {
+                    instantiate: InstantiateMsg,
+                }
+            ),
             parse_quote! {
                 ::cosmwasm_schema::Api {
                     contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),
@@ -302,11 +376,14 @@ mod tests {
     #[test]
     fn api_object_name_version_override() {
         assert_eq!(
-            generate_api_impl(&parse_quote! {
-                name: "foo",
-                version: "bar",
-                instantiate: InstantiateMsg,
-            }),
+            generate_api_impl(
+                SchemaBackend::JsonSchema,
+                &parse_quote! {
+                    name: "foo",
+                    version: "bar",
+                    instantiate: InstantiateMsg,
+                }
+            ),
             parse_quote! {
                 ::cosmwasm_schema::Api {
                     contract_name: "foo".to_string(),
@@ -325,13 +402,16 @@ mod tests {
     #[test]
     fn api_object_all_msgs() {
         assert_eq!(
-            generate_api_impl(&parse_quote! {
-                instantiate: InstantiateMsg,
-                execute: ExecuteMsg,
-                query: QueryMsg,
-                migrate: MigrateMsg,
-                sudo: SudoMsg,
-            }),
+            generate_api_impl(
+                SchemaBackend::JsonSchema,
+                &parse_quote! {
+                    instantiate: InstantiateMsg,
+                    execute: ExecuteMsg,
+                    query: QueryMsg,
+                    migrate: MigrateMsg,
+                    sudo: SudoMsg,
+                }
+            ),
             parse_quote! {
                 ::cosmwasm_schema::Api {
                     contract_name: ::std::env!("CARGO_PKG_NAME").to_string(),

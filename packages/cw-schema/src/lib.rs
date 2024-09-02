@@ -204,7 +204,7 @@ pub trait Schemaifier {
     fn visit_schema(visitor: &mut SchemaVisitor) -> DefinitionReference;
 }
 
-pub fn schema_of<T: Schemaifier>() -> Schema {
+pub fn schema_of<T: Schemaifier + ?Sized>() -> Schema {
     let mut visitor = SchemaVisitor::default();
     Schema::V1(SchemaV1 {
         root: T::visit_schema(&mut visitor),

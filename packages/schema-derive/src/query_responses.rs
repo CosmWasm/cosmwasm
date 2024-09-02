@@ -1,16 +1,12 @@
 mod context;
 
+use super::SchemaBackend;
 use crate::error::{bail, error_message};
 use syn::{
     parse_quote, Expr, ExprTuple, Generics, ItemEnum, ItemImpl, Type, TypeParamBound, Variant,
 };
 
 use self::context::Context;
-
-enum SchemaBackend {
-    CwSchema,
-    JsonSchema,
-}
 
 pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
     let ctx = context::get_context(&input)?;
