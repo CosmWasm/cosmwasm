@@ -5,6 +5,7 @@ use wasmer::wasmparser::Import;
 use wasmer::wasmparser::TypeRef;
 
 use crate::capabilities::required_capabilities_from_module;
+use crate::config::WasmLimits;
 use crate::errors::{VmError, VmResult};
 use crate::limited::LimitedDisplay;
 use crate::parsed_wasm::ParsedWasm;
@@ -56,47 +57,6 @@ const REQUIRED_EXPORTS: &[&str] = &[
 const INTERFACE_VERSION_PREFIX: &str = "interface_version_";
 const SUPPORTED_INTERFACE_VERSIONS: &[&str] = &["interface_version_8"];
 
-const MEMORY_LIMIT: u32 = 512; // in pages
-/// The upper limit for the `max` value of each table. CosmWasm contracts have
-/// initial=max for 1 table. See
-///
-/// ```plain
-/// $ wasm-objdump --section=table -x packages/vm/testdata/hackatom.wasm
-/// Section Details:
-///
-/// Table[1]:
-/// - table[0] type=funcref initial=161 max=161
-/// ```
-///
-/// As of March 2023, on Juno mainnet the largest value for production contracts
-/// is 485. Most are between 100 and 300.
-const TABLE_SIZE_LIMIT: u32 = 2500; // entries
-
-/// If the contract has more than this amount of imports, it will be rejected
-/// during static validation before even looking into the imports. We keep this
-/// number high since failing early gives less detailed error messages. Especially
-/// when a user accidentally includes wasm-bindgen, they get a bunch of unsupported imports.
-const MAX_IMPORTS: usize = 100;
-
-/// The maximum number of functions a contract can have.
-/// Any contract with more functions than this will be rejected during static validation.
-const MAX_FUNCTIONS: usize = 20_000;
-
-/// The maximum number of parameters a wasm function can have.
-/// Any contract with a function type with more parameters than this will be rejected
-/// during static validation.
-const MAX_FUNCTION_PARAMS: usize = 100;
-
-/// The maximum total number of parameters of all functions in the wasm.
-/// For each function in the wasm, take the number of parameters and sum all of these up.
-/// If that sum exceeds this limit, the wasm will be rejected during static validation.
-const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
-
-/// The maximum number of results a wasm function can have.
-/// Any contract with a function type with more results than this will be rejected
-/// during static validation.
-const MAX_FUNCTION_RESULTS: usize = 1;
-
 #[derive(Clone, Copy)]
 pub enum LogOutput {
     StdOut,
@@ -135,37 +95,34 @@ impl<'a> Logger<'a> {
 use Logger::*;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
-pub fn check_wasm(wasm_code: &[u8], available_capabilities: &HashSet<String>) -> VmResult<()> {
-    check_wasm_with_logs(wasm_code, available_capabilities, Off)
-}
-
-pub fn check_wasm_with_logs(
+pub fn check_wasm(
     wasm_code: &[u8],
     available_capabilities: &HashSet<String>,
+    limits: &WasmLimits,
     logs: Logger<'_>,
 ) -> VmResult<()> {
     logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
 
     let mut module = ParsedWasm::parse(wasm_code)?;
 
-    check_wasm_tables(&module)?;
-    check_wasm_memories(&module)?;
+    check_wasm_tables(&module, limits)?;
+    check_wasm_memories(&module, limits)?;
     check_interface_version(&module)?;
     check_wasm_exports(&module, logs)?;
-    check_wasm_imports(&module, SUPPORTED_IMPORTS, logs)?;
+    check_wasm_imports(&module, SUPPORTED_IMPORTS, limits, logs)?;
     check_wasm_capabilities(&module, available_capabilities, logs)?;
-    check_wasm_functions(&module, logs)?;
+    check_wasm_functions(&module, limits, logs)?;
 
     module.validate_funcs()
 }
 
-fn check_wasm_tables(module: &ParsedWasm) -> VmResult<()> {
+fn check_wasm_tables(module: &ParsedWasm, wasm_limits: &WasmLimits) -> VmResult<()> {
     match module.tables.len() {
         0 => Ok(()),
         1 => {
             let limits = &module.tables[0];
             if let Some(maximum) = limits.maximum {
-                if maximum > TABLE_SIZE_LIMIT {
+                if maximum > wasm_limits.table_size_limit() {
                     return Err(VmError::static_validation_err(
                         "Wasm contract's first table section has a too large max limit",
                     ));
@@ -183,7 +140,7 @@ fn check_wasm_tables(module: &ParsedWasm) -> VmResult<()> {
     }
 }
 
-fn check_wasm_memories(module: &ParsedWasm) -> VmResult<()> {
+fn check_wasm_memories(module: &ParsedWasm, limits: &WasmLimits) -> VmResult<()> {
     if module.memories.len() != 1 {
         return Err(VmError::static_validation_err(
             "Wasm contract must contain exactly one memory",
@@ -191,9 +148,10 @@ fn check_wasm_memories(module: &ParsedWasm) -> VmResult<()> {
     }
     let memory = &module.memories[0];
 
-    if memory.initial > MEMORY_LIMIT as u64 {
+    if memory.initial > limits.initial_memory_limit() as u64 {
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract memory's minimum must not exceed {MEMORY_LIMIT} pages."
+            "Wasm contract memory's minimum must not exceed {} pages.",
+            limits.initial_memory_limit()
         )));
     }
 
@@ -256,6 +214,7 @@ fn check_wasm_exports(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
 fn check_wasm_imports(
     module: &ParsedWasm,
     supported_imports: &[&str],
+    limits: &WasmLimits,
     logs: Logger,
 ) -> VmResult<()> {
     logs.add(|| {
@@ -271,11 +230,11 @@ fn check_wasm_imports(
         )
     });
 
-    if module.imports.len() > MAX_IMPORTS {
+    if module.imports.len() > limits.max_imports() {
         return Err(VmError::static_validation_err(format!(
             "Import count exceeds limit. Imports: {}. Limit: {}.",
             module.imports.len(),
-            MAX_IMPORTS
+            limits.max_imports()
         )));
     }
 
@@ -329,7 +288,7 @@ fn check_wasm_capabilities(
     Ok(())
 }
 
-fn check_wasm_functions(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
+fn check_wasm_functions(module: &ParsedWasm, limits: &WasmLimits, logs: Logger) -> VmResult<()> {
     logs.add(|| format!("Function count: {}", module.function_count));
     logs.add(|| format!("Max function parameters: {}", module.max_func_params));
     logs.add(|| format!("Max function results: {}", module.max_func_results));
@@ -340,25 +299,29 @@ fn check_wasm_functions(module: &ParsedWasm, logs: Logger) -> VmResult<()> {
         )
     });
 
-    if module.function_count > MAX_FUNCTIONS {
+    if module.function_count > limits.max_functions() {
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract contains more than {MAX_FUNCTIONS} functions"
+            "Wasm contract contains more than {} functions",
+            limits.max_functions()
         )));
     }
-    if module.max_func_params > MAX_FUNCTION_PARAMS {
+    if module.max_func_params > limits.max_function_params() {
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract contains function with more than {MAX_FUNCTION_PARAMS} parameters"
+            "Wasm contract contains function with more than {} parameters",
+            limits.max_function_params()
         )));
     }
-    if module.max_func_results > MAX_FUNCTION_RESULTS {
+    if module.max_func_results > limits.max_function_results() {
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract contains function with more than {MAX_FUNCTION_RESULTS} results"
+            "Wasm contract contains function with more than {} results",
+            limits.max_function_results()
         )));
     }
 
-    if module.total_func_params > MAX_TOTAL_FUNCTION_PARAMS {
+    if module.total_func_params > limits.max_total_function_params() {
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract contains more than {MAX_TOTAL_FUNCTION_PARAMS} function parameters in total"
+            "Wasm contract contains more than {} function parameters in total",
+            limits.max_total_function_params()
         )));
     }
 
@@ -385,19 +348,38 @@ mod tests {
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
-        check_wasm(CONTRACT, &default_capabilities()).unwrap();
-        check_wasm(CYBERPUNK, &default_capabilities()).unwrap();
+        check_wasm(
+            CONTRACT,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
+        check_wasm(
+            CYBERPUNK,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
     }
 
     #[test]
     fn check_wasm_allows_sign_ext() {
         // See https://github.com/CosmWasm/cosmwasm/issues/1727
-        check_wasm(CONTRACT_RUST_170, &default_capabilities()).unwrap();
+        check_wasm(
+            CONTRACT_RUST_170,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
     }
 
     #[test]
     fn check_wasm_old_contract() {
-        match check_wasm(CONTRACT_0_15, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_15, &default_capabilities(),&WasmLimits::default(),
+        Off) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -406,7 +388,8 @@ mod tests {
             Ok(_) => panic!("This must not succeed"),
         };
 
-        match check_wasm(CONTRACT_0_14, &default_capabilities()) {
+        match check_wasm(CONTRACT_0_14, &default_capabilities(),&WasmLimits::default(),
+        Off,) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert_eq!(
                 msg,
                 "Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)"
@@ -415,7 +398,12 @@ mod tests {
             Ok(_) => panic!("This must not succeed"),
         };
 
-        match check_wasm(CONTRACT_0_12, &default_capabilities()) {
+        match check_wasm(
+            CONTRACT_0_12,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        ) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.contains(
                     "Wasm contract missing a required marker export: interface_version_*"
@@ -425,7 +413,12 @@ mod tests {
             Ok(_) => panic!("This must not succeed"),
         };
 
-        match check_wasm(CONTRACT_0_7, &default_capabilities()) {
+        match check_wasm(
+            CONTRACT_0_7,
+            &default_capabilities(),
+            &WasmLimits::default(),
+            Off,
+        ) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.contains(
                     "Wasm contract missing a required marker export: interface_version_*"
@@ -438,13 +431,14 @@ mod tests {
 
     #[test]
     fn check_wasm_tables_works() {
+        let limits = WasmLimits::default();
         // No tables is fine
         let wasm = wat::parse_str("(module)").unwrap();
         assert!(ParsedWasm::parse(&wasm).unwrap().tables.is_empty());
 
         // One table (bound)
         let wasm = wat::parse_str("(module (table $name 123 123 funcref))").unwrap();
-        check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap()).unwrap();
+        check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap(), &limits).unwrap();
 
         // One table (bound, initial > max)
         let wasm = wat::parse_str("(module (table $name 124 123 funcref))").unwrap();
@@ -456,14 +450,14 @@ mod tests {
 
         // One table (bound, max too large)
         let wasm = wat::parse_str("(module (table $name 100 9999 funcref))").unwrap();
-        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap()).unwrap_err();
+        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap(), &limits).unwrap_err();
         assert!(err
             .to_string()
             .contains("Wasm contract's first table section has a too large max limit"));
 
         // One table (unbound)
         let wasm = wat::parse_str("(module (table $name 100 funcref))").unwrap();
-        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap()).unwrap_err();
+        let err = check_wasm_tables(&ParsedWasm::parse(&wasm).unwrap(), &limits).unwrap_err();
         assert!(err
             .to_string()
             .contains("Wasm contract must not have unbound table section"));
@@ -472,13 +466,14 @@ mod tests {
     #[test]
     fn check_wasm_memories_ok() {
         let wasm = wat::parse_str("(module (memory 1))").unwrap();
-        check_wasm_memories(&ParsedWasm::parse(&wasm).unwrap()).unwrap()
+        check_wasm_memories(&ParsedWasm::parse(&wasm).unwrap(), &WasmLimits::default()).unwrap()
     }
 
     #[test]
     fn check_wasm_memories_no_memory() {
+        let limits = WasmLimits::default();
         let wasm = wat::parse_str("(module)").unwrap();
-        match check_wasm_memories(&ParsedWasm::parse(&wasm).unwrap()) {
+        match check_wasm_memories(&ParsedWasm::parse(&wasm).unwrap(), &limits) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
@@ -524,7 +519,7 @@ mod tests {
         ))
         .unwrap();
 
-        match check_wasm_memories(&ParsedWasm::parse(&wasm).unwrap()) {
+        match check_wasm_memories(&ParsedWasm::parse(&wasm).unwrap(), &WasmLimits::default()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
@@ -535,11 +530,12 @@ mod tests {
 
     #[test]
     fn check_wasm_memories_initial_size() {
+        let limits = WasmLimits::default();
         let wasm_ok = wat::parse_str("(module (memory 512))").unwrap();
-        check_wasm_memories(&ParsedWasm::parse(&wasm_ok).unwrap()).unwrap();
+        check_wasm_memories(&ParsedWasm::parse(&wasm_ok).unwrap(), &limits).unwrap();
 
         let wasm_too_big = wat::parse_str("(module (memory 513))").unwrap();
-        match check_wasm_memories(&ParsedWasm::parse(&wasm_too_big).unwrap()) {
+        match check_wasm_memories(&ParsedWasm::parse(&wasm_too_big).unwrap(), &limits) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's minimum must not exceed 512 pages"));
             }
@@ -551,7 +547,10 @@ mod tests {
     #[test]
     fn check_wasm_memories_maximum_size() {
         let wasm_max = wat::parse_str("(module (memory 1 5))").unwrap();
-        match check_wasm_memories(&ParsedWasm::parse(&wasm_max).unwrap()) {
+        match check_wasm_memories(
+            &ParsedWasm::parse(&wasm_max).unwrap(),
+            &WasmLimits::default(),
+        ) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's maximum must be unset"));
             }
@@ -744,7 +743,13 @@ mod tests {
         )"#,
         )
         .unwrap();
-        check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off).unwrap();
+        check_wasm_imports(
+            &ParsedWasm::parse(&wasm).unwrap(),
+            SUPPORTED_IMPORTS,
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap();
     }
 
     #[test]
@@ -855,8 +860,13 @@ mod tests {
         )"#,
         )
         .unwrap();
-        let err = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off)
-            .unwrap_err();
+        let err = check_wasm_imports(
+            &ParsedWasm::parse(&wasm).unwrap(),
+            SUPPORTED_IMPORTS,
+            &WasmLimits::default(),
+            Off,
+        )
+        .unwrap_err();
         match err {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Import count exceeds limit. Imports: 101. Limit: 100.");
@@ -893,7 +903,12 @@ mod tests {
             "env.debug",
             "env.query_chain",
         ];
-        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), supported_imports, Off);
+        let result = check_wasm_imports(
+            &ParsedWasm::parse(&wasm).unwrap(),
+            supported_imports,
+            &WasmLimits::default(),
+            Off,
+        );
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 println!("{msg}");
@@ -909,7 +924,7 @@ mod tests {
     #[test]
     fn check_wasm_imports_of_old_contract() {
         let module = &ParsedWasm::parse(CONTRACT_0_7).unwrap();
-        let result = check_wasm_imports(module, SUPPORTED_IMPORTS, Off);
+        let result = check_wasm_imports(module, SUPPORTED_IMPORTS, &WasmLimits::default(), Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -923,7 +938,12 @@ mod tests {
     #[test]
     fn check_wasm_imports_wrong_type() {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
-        let result = check_wasm_imports(&ParsedWasm::parse(&wasm).unwrap(), SUPPORTED_IMPORTS, Off);
+        let result = check_wasm_imports(
+            &ParsedWasm::parse(&wasm).unwrap(),
+            SUPPORTED_IMPORTS,
+            &WasmLimits::default(),
+            Off,
+        );
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -1033,8 +1053,9 @@ mod tests {
 
     #[test]
     fn check_wasm_fails_for_big_functions() {
+        let limits = WasmLimits::default();
         // too many arguments
-        let args = " i32".repeat(MAX_FUNCTION_PARAMS + 1);
+        let args = " i32".repeat(limits.max_function_params() + 1);
         let wasm = wat::parse_str(format!(
             r#"(module
             (type (func (param {args})))
@@ -1044,7 +1065,7 @@ mod tests {
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
 
-        match check_wasm_functions(&module, Off).unwrap_err() {
+        match check_wasm_functions(&module, &limits, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract contains function with more than 100 parameters"
@@ -1053,8 +1074,8 @@ mod tests {
         }
 
         // too many returns
-        let return_types = " i32".repeat(MAX_FUNCTION_RESULTS + 1);
-        let returns = " i32.const 42".repeat(MAX_FUNCTION_RESULTS + 1);
+        let return_types = " i32".repeat(limits.max_function_results() + 1);
+        let returns = " i32.const 42".repeat(limits.max_function_results() + 1);
         let wasm = wat::parse_str(format!(
             r#"(module
             (type (func (result {return_types})))
@@ -1063,7 +1084,7 @@ mod tests {
         ))
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_functions(&module, Off).unwrap_err() {
+        match check_wasm_functions(&module, &limits, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
                 "Wasm contract contains function with more than 1 results"
@@ -1072,8 +1093,7 @@ mod tests {
         }
 
         // too many functions
-        let functions = ["(func (type 0) nop)"; MAX_FUNCTIONS + 1];
-        let functions = functions.join("\n");
+        let functions = "(func (type 0) nop)".repeat(limits.max_functions() + 1);
         let wasm = wat::parse_str(format!(
             r#"(module
             (type (func))
@@ -1082,7 +1102,7 @@ mod tests {
         ))
         .unwrap();
         let module = ParsedWasm::parse(&wasm).unwrap();
-        match check_wasm_functions(&module, Off).unwrap_err() {
+        match check_wasm_functions(&module, &limits, Off).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract contains more than 20000 functions")
             }

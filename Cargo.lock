@@ -558,6 +558,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
  "predicates",
+ "tempfile",
 ]
 
 [[package]]

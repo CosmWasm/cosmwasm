@@ -4,13 +4,13 @@ use std::io::Read;
 use std::path::Path;
 use std::process::exit;
 
+use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
 use colored::Colorize;
 
-use cosmwasm_vm::capabilities_from_csv;
-use cosmwasm_vm::internals::{
-    check_wasm_with_logs, compile, make_compiling_engine, LogOutput, Logger,
-};
+use cosmwasm_std::from_json;
+use cosmwasm_vm::internals::{check_wasm, compile, make_compiling_engine, LogOutput, Logger};
+use cosmwasm_vm::{capabilities_from_csv, WasmLimits};
 
 const DEFAULT_AVAILABLE_CAPABILITIES: &str =
     "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1";
@@ -38,6 +38,16 @@ pub fn main() {
                 .action(ArgAction::SetTrue),
         )
         .arg(
+            Arg::new("LIMITS")
+            .long("wasm-limits")
+            .help("Provide either a file or string containing the chain's json-encoded wasm limits configuration.")
+            .long_help("Provide either a file or string containing the chain's json-encoded wasm limits configuration.
+You can query this configuration from the chain, using the 'cosmwasm.wasm.v1.Query/WasmLimitsConfig' query.
+If this is not provided, the default values are used.")
+            .num_args(1)
+            .action(ArgAction::Set)
+        )
+        .arg(
             Arg::new("WASM")
                 .help("Wasm file to read and compile")
                 .required(true)
@@ -56,6 +66,12 @@ pub fn main() {
     println!("Available capabilities: {available_capabilities:?}");
     println!();
 
+    // Wasm limits
+    let wasm_limits = matches
+        .get_one::<String>("LIMITS")
+        .map(|input| read_wasm_limits(input).unwrap())
+        .unwrap_or_default();
+
     // File
     let paths = matches
         .get_many::<String>("WASM")
@@ -63,7 +79,12 @@ pub fn main() {
 
     let (passes, failures): (Vec<_>, _) = paths
         .map(|p| {
-            let result = check_contract(p, &available_capabilities, matches.get_flag("VERBOSE"));
+            let result = check_contract(
+                p,
+                &available_capabilities,
+                matches.get_flag("VERBOSE"),
+                &wasm_limits,
+            );
             match &result {
                 Ok(_) => println!("{}: {}", p, "pass".green()),
                 Err(e) => {
@@ -94,10 +115,22 @@ pub fn main() {
     }
 }
 
+fn read_wasm_limits(input: &str) -> anyhow::Result<WasmLimits> {
+    // try to parse JSON, if that fails, try to open as File and parse that
+    from_json::<WasmLimits>(input)
+        .context("error parsing wasm limits")
+        .or_else(|_| {
+            std::fs::read_to_string(input)
+                .context("error reading wasm limits file")
+                .and_then(|s| from_json(s).context("error parsing wasm limits file"))
+        })
+}
+
 fn check_contract(
     path: &str,
     available_capabilities: &HashSet<String>,
     verbose: bool,
+    wasm_limits: &WasmLimits,
 ) -> anyhow::Result<()> {
     let mut file = File::open(path)?;
 
@@ -120,7 +153,7 @@ fn check_contract(
         Logger::Off
     };
     // Check wasm
-    check_wasm_with_logs(&wasm, available_capabilities, logs)?;
+    check_wasm(&wasm, available_capabilities, wasm_limits, logs)?;
 
     // Compile module
     let engine = make_compiling_engine(None);
