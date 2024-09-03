@@ -745,8 +745,8 @@ mod tests {
         .unwrap();
         check_wasm_imports(
             &ParsedWasm::parse(&wasm).unwrap(),
-            &WasmLimits::default(),
             SUPPORTED_IMPORTS,
+            &WasmLimits::default(),
             Off,
         )
         .unwrap();
@@ -862,8 +862,8 @@ mod tests {
         .unwrap();
         let err = check_wasm_imports(
             &ParsedWasm::parse(&wasm).unwrap(),
-            &WasmLimits::default(),
             SUPPORTED_IMPORTS,
+            &WasmLimits::default(),
             Off,
         )
         .unwrap_err();
@@ -905,8 +905,8 @@ mod tests {
         ];
         let result = check_wasm_imports(
             &ParsedWasm::parse(&wasm).unwrap(),
-            &WasmLimits::default(),
             supported_imports,
+            &WasmLimits::default(),
             Off,
         );
         match result.unwrap_err() {
@@ -924,7 +924,7 @@ mod tests {
     #[test]
     fn check_wasm_imports_of_old_contract() {
         let module = &ParsedWasm::parse(CONTRACT_0_7).unwrap();
-        let result = check_wasm_imports(module, &WasmLimits::default(), SUPPORTED_IMPORTS, Off);
+        let result = check_wasm_imports(module, SUPPORTED_IMPORTS, &WasmLimits::default(), Off);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -940,8 +940,8 @@ mod tests {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
         let result = check_wasm_imports(
             &ParsedWasm::parse(&wasm).unwrap(),
-            &WasmLimits::default(),
             SUPPORTED_IMPORTS,
+            &WasmLimits::default(),
             Off,
         );
         match result.unwrap_err() {
