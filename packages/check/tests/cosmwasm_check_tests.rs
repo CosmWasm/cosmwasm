@@ -99,7 +99,7 @@ fn custom_capabilities_check() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn wasm_limits_base64_check() -> Result<(), Box<dyn std::error::Error>> {
+fn wasm_limits_string_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 
     let mut limits = WasmLimits::default();
