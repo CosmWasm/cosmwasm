@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::process::exit;
+use std::time::Instant;
 
 use anyhow::Context;
 use clap::{Arg, ArgAction, Command};
@@ -156,8 +157,15 @@ fn check_contract(
     check_wasm(&wasm, available_capabilities, wasm_limits, logs)?;
 
     // Compile module
-    let engine = make_compiling_engine(None);
-    let _module = compile(&engine, &wasm)?;
+    let start = Instant::now();
+    {
+        let engine = make_compiling_engine(None);
+        let _module = compile(&engine, &wasm)?;
+    }
+    if verbose {
+        let duration = start.elapsed();
+        eprintln!("Compile time: {:?}", duration);
+    }
 
     Ok(())
 }
