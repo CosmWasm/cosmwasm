@@ -72,7 +72,7 @@ pub enum CosmosMsg<T = Empty> {
     },
     /// `CosmosMsg::Any` is the replaces the "stargate message" – a message wrapped
     /// in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)
-    /// that is suppored by the chain. It behaves the same as
+    /// that is supported by the chain. It behaves the same as
     /// `CosmosMsg::Stargate` but has a better name and slightly improved syntax.
     ///
     /// This is feature-gated at compile time with `cosmwasm_2_0` because
