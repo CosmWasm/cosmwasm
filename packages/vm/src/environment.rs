@@ -274,7 +274,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         })?;
         let function_arity = func.param_arity(store);
         if args.len() != function_arity {
-            return Err(VmError::function_arity_mismatch());
+            return Err(VmError::function_arity_mismatch(function_arity));
         };
         self.increment_call_depth()?;
         let res = func.call(store, args).map_err(|runtime_err| -> VmError {

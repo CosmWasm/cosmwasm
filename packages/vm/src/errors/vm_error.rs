@@ -86,8 +86,14 @@ pub enum VmError {
     WriteAccessDenied { backtrace: BT },
     #[error("Maximum call depth exceeded.")]
     MaxCallDepthExceeded { backtrace: BT },
-    #[error("The called function args arity does not match.")]
-    FunctionArityMismatch { backtrace: BT },
+    #[error(
+        "The called function args arity does not match. The contract's method arity: {}",
+        contract_method_arity
+    )]
+    FunctionArityMismatch {
+        contract_method_arity: usize,
+        backtrace: BT,
+    },
 }
 
 impl VmError {
@@ -245,8 +251,9 @@ impl VmError {
         }
     }
 
-    pub(crate) fn function_arity_mismatch() -> Self {
+    pub(crate) fn function_arity_mismatch(contract_method_arity: usize) -> Self {
         VmError::FunctionArityMismatch {
+            contract_method_arity,
             backtrace: BT::capture(),
         }
     }
