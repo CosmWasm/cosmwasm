@@ -100,14 +100,33 @@ impl Parse for Options {
 ///
 /// ```
 /// # use cosmwasm_std::{
-/// #     DepsMut, entry_point, Env,
+/// #     DepsMut, entry_point, Env, MigrateInfo,
 /// #     Response, StdResult,
 /// # };
 /// #
 /// # type MigrateMsg = ();
 /// #[entry_point]
 /// #[migrate_version(2)]
-/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
+/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg, migrate_info: MigrateInfo) -> StdResult<Response> {
+///     todo!();
+/// }
+/// ```
+///
+/// It is also possible to assign the migrate version number to
+/// a given constant name:
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     DepsMut, entry_point, Env, MigrateInfo,
+/// #     Response, StdResult,
+/// # };
+/// #
+/// # type MigrateMsg = ();
+/// const CONTRACT_VERSION: u64 = 66;
+///
+/// #[entry_point]
+/// #[migrate_version(CONTRACT_VERSION)]
+/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg, migrate_info: MigrateInfo) -> StdResult<Response> {
 ///     todo!();
 /// }
 /// ```
@@ -135,29 +154,50 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
             ));
         }
 
-        let version: syn::LitInt = attribute.parse_args()?;
-        // Enforce that the version is a valid u64 and non-zero
-        if version.base10_parse::<u64>()? == 0 {
+        let version: syn::Expr = attribute.parse_args()?;
+        if !(matches!(version, syn::Expr::Lit(_)) || matches!(version, syn::Expr::Path(_))) {
             return Err(syn::Error::new_spanned(
-                version,
-                "please start versioning with 1",
+                &attribute,
+                "Expected `u64` or `path::to::constant` in the migrate_version attribute",
             ));
         }
-
-        let version = version.base10_digits();
-        let n = version.len();
-        let version = proc_macro2::Literal::byte_string(version.as_bytes());
 
         stream = quote! {
             #stream
 
-            #[allow(unused)]
-            #[doc(hidden)]
-            #[cfg(target_arch = "wasm32")]
-            #[link_section = "cw_migrate_version"]
-            /// This is an internal constant exported as a custom section denoting the contract migrate version.
-            /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_MIGRATE_VERSION: [u8; #n] = *#version;
+            const _: () = {
+                #[allow(unused)]
+                #[doc(hidden)]
+                #[cfg(target_arch = "wasm32")]
+                #[link_section = "cw_migrate_version"]
+                /// This is an internal constant exported as a custom section denoting the contract migrate version.
+                /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+                static __CW_MIGRATE_VERSION: [u8; version_size(#version)] = stringify_version(#version);
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                const fn stringify_version<const N: usize>(mut version: u64) -> [u8; N] {
+                    let mut result: [u8; N] = [0; N];
+                    let mut index = N;
+                    while index > 0 {
+                        let digit: u8 = (version%10) as u8;
+                        result[index-1] = digit + b'0';
+                        version /= 10;
+                        index -= 1;
+                    }
+                    result
+                }
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                const fn version_size(version: u64) -> usize {
+                    if version > 0 {
+                        (version.ilog10()+1) as usize
+                    } else {
+                        panic!("Contract migrate version should be greater than 0.")
+                    }
+                }
+            };
         };
     }
 
@@ -174,7 +214,13 @@ fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
     let args = function.sig.inputs.len().saturating_sub(1);
     let fn_name = &function.sig.ident;
     let wasm_export = format_ident!("__wasm_export_{fn_name}");
-    let do_call = format_ident!("do_{fn_name}");
+
+    // Migrate entry point can take 2 or 3 arguments
+    let do_call = if fn_name == "migrate" && args == 3 {
+        format_ident!("do_migrate_with_info")
+    } else {
+        format_ident!("do_{fn_name}")
+    };
 
     let decl_args = (0..args).map(|item| format_ident!("ptr_{item}"));
     let call_args = decl_args.clone();
@@ -202,23 +248,6 @@ mod test {
     use crate::entry_point_impl;
 
     #[test]
-    fn contract_state_zero_not_allowed() {
-        let code = quote! {
-            #[migrate_version(0)]
-            fn migrate() -> Response {
-                // Logic here
-            }
-        };
-
-        let actual = entry_point_impl(TokenStream::new(), code);
-        let expected = quote! {
-            ::core::compile_error! { "please start versioning with 1" }
-        };
-
-        assert_eq!(actual.to_string(), expected.to_string());
-    }
-
-    #[test]
     fn contract_migrate_version_on_non_migrate() {
         let code = quote! {
             #[migrate_version(42)]
@@ -236,23 +265,6 @@ mod test {
     }
 
     #[test]
-    fn contract_migrate_version_in_u64() {
-        let code = quote! {
-            #[migrate_version(0xDEAD_BEEF_FFFF_DEAD_2BAD)]
-            fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
-                // Logic here
-            }
-        };
-
-        let actual = entry_point_impl(TokenStream::new(), code);
-        let expected = quote! {
-            ::core::compile_error! { "number too large to fit in target type" }
-        };
-
-        assert_eq!(actual.to_string(), expected.to_string());
-    }
-
-    #[test]
     fn contract_migrate_version_expansion() {
         let code = quote! {
             #[migrate_version(2)]
@@ -263,13 +275,100 @@ mod test {
 
         let actual = entry_point_impl(TokenStream::new(), code);
         let expected = quote! {
-            #[allow(unused)]
-            #[doc(hidden)]
+            const _: () = {
+                #[allow(unused)]
+                #[doc(hidden)]
+                #[cfg(target_arch = "wasm32")]
+                #[link_section = "cw_migrate_version"]
+                /// This is an internal constant exported as a custom section denoting the contract migrate version.
+                /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+                static __CW_MIGRATE_VERSION: [u8; version_size(2)] = stringify_version(2);
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                const fn stringify_version<const N: usize>(mut version: u64) -> [u8; N] {
+                    let mut result: [u8; N] = [0; N];
+                    let mut index = N;
+                    while index > 0 {
+                        let digit: u8 = (version%10) as u8;
+                        result[index-1] = digit + b'0';
+                        version /= 10;
+                        index -= 1;
+                    }
+                    result
+                }
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                const fn version_size(version: u64) -> usize {
+                    if version > 0 {
+                        (version.ilog10()+1) as usize
+                    } else {
+                        panic!("Contract migrate version should be greater than 0.")
+                    }
+                }
+            };
+
+            fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
+                // Logic here
+            }
+
             #[cfg(target_arch = "wasm32")]
-            #[link_section = "cw_migrate_version"]
-            /// This is an internal constant exported as a custom section denoting the contract migrate version.
-            /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
-            static __CW_MIGRATE_VERSION: [u8; 1usize] = *b"2";
+            mod __wasm_export_migrate {
+                #[no_mangle]
+                extern "C" fn migrate(ptr_0: u32, ptr_1: u32) -> u32 {
+                    ::cosmwasm_std::do_migrate(&super::migrate, ptr_0, ptr_1)
+                }
+            }
+        };
+
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn contract_migrate_version_with_const_expansion() {
+        let code = quote! {
+            #[migrate_version(CONTRACT_VERSION)]
+            fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
+                // Logic here
+            }
+        };
+
+        let actual = entry_point_impl(TokenStream::new(), code);
+        let expected = quote! {
+            const _: () = {
+                #[allow(unused)]
+                #[doc(hidden)]
+                #[cfg(target_arch = "wasm32")]
+                #[link_section = "cw_migrate_version"]
+                /// This is an internal constant exported as a custom section denoting the contract migrate version.
+                /// The format and even the existence of this value is an implementation detail, DO NOT RELY ON THIS!
+                static __CW_MIGRATE_VERSION: [u8; version_size(CONTRACT_VERSION)] = stringify_version(CONTRACT_VERSION);
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                const fn stringify_version<const N: usize>(mut version: u64) -> [u8; N] {
+                    let mut result: [u8; N] = [0; N];
+                    let mut index = N;
+                    while index > 0 {
+                        let digit: u8 = (version%10) as u8;
+                        result[index-1] = digit + b'0';
+                        version /= 10;
+                        index -= 1;
+                    }
+                    result
+                }
+
+                #[allow(unused)]
+                #[doc(hidden)]
+                const fn version_size(version: u64) -> usize {
+                    if version > 0 {
+                        (version.ilog10()+1) as usize
+                    } else {
+                        panic!("Contract migrate version should be greater than 0.")
+                    }
+                }
+            };
 
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
                 // Logic here

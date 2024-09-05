@@ -21,10 +21,16 @@ and this project adheres to
   validation. ([#2220])
 - cosmwasm-check: Add `--wasm-limits` flag to supply configured limits for
   static validation. ([#2220])
+- cosmwasm-std: Add `migrate_with_info` call implementation for the extended
+  `migrate` entrypoint function ([#2212])
+- cosmwasm-vm: Export a new `migrate_with_info` function ([#2212])
+- cosmwasm-derive: Add support for migrate method with
+  `migrate_info: MigrateInfo` argument. ([#2212])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
 [#2220]: https://github.com/CosmWasm/cosmwasm/pull/2220
+[#2212]: https://github.com/CosmWasm/cosmwasm/pull/2212
 
 ### Changed
 

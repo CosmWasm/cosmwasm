@@ -19,12 +19,12 @@
 
 use cosmwasm_std::{
     assert_approx_eq, coins, from_json, to_json_vec, Addr, AllBalanceResponse, BankMsg, Binary,
-    ContractResult, Empty, Response, SubMsg,
+    ContractResult, Empty, MigrateInfo, Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
     testing::{
-        execute, instantiate, migrate, mock_env, mock_info, mock_instance,
+        execute, instantiate, migrate_with_info, mock_env, mock_info, mock_instance,
         mock_instance_with_balances, query, sudo, test_io, MockApi, MOCK_CONTRACT_ADDR,
     },
     Storage, VmError,
@@ -53,7 +53,7 @@ fn make_init_msg(api: &MockApi) -> (InstantiateMsg, String) {
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
-    assert_eq!(deps.required_capabilities().len(), 0);
+    assert_eq!(deps.required_capabilities().len(), 7);
 
     let verifier = deps.api().addr_make("verifies");
     let beneficiary = deps.api().addr_make("benefits");
@@ -142,7 +142,11 @@ fn migrate_verifier() {
     let msg = MigrateMsg {
         verifier: someone_else.clone(),
     };
-    let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
+    let migrate_info = MigrateInfo {
+        sender: Addr::unchecked(creator),
+        old_migrate_version: None,
+    };
+    let res: Response = migrate_with_info(&mut deps, mock_env(), msg, migrate_info).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'someone else'

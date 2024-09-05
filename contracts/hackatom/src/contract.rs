@@ -2,8 +2,8 @@ use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
     entry_point, from_json, to_json_binary, to_json_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    BankQuery, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse,
-    Response, StdError, StdResult, WasmMsg, WasmQuery,
+    BankQuery, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, MigrateInfo, QueryRequest,
+    QueryResponse, Response, StdError, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -35,9 +35,21 @@ pub fn instantiate(
     Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
+const CONTRACT_MIGRATE_VERSION: u64 = 420;
+
 #[entry_point]
-#[migrate_version(42)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
+#[migrate_version(CONTRACT_MIGRATE_VERSION)]
+pub fn migrate(
+    deps: DepsMut,
+    _env: Env,
+    msg: MigrateMsg,
+    migrate_info: MigrateInfo,
+) -> Result<Response, HackError> {
+    if let Some(old_version) = migrate_info.old_migrate_version {
+        if CONTRACT_MIGRATE_VERSION <= old_version {
+            return Err(HackError::Downgrade);
+        }
+    }
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -379,7 +391,11 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        let migrate_info = MigrateInfo {
+            sender: creator,
+            old_migrate_version: None,
+        };
+        let res = migrate(deps.as_mut(), mock_env(), msg, migrate_info).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'

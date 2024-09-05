@@ -9,4 +9,7 @@ pub enum HackError {
     // this is whatever we want
     #[error("Unauthorized")]
     Unauthorized {},
+    // this is whatever we want
+    #[error("Downgrade is not supported")]
+    Downgrade,
 }

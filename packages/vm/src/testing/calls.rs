@@ -4,7 +4,9 @@
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use cosmwasm_std::{ContractResult, CustomMsg, Env, MessageInfo, QueryResponse, Reply, Response};
+use cosmwasm_std::{
+    ContractResult, CustomMsg, Env, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
+};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
@@ -13,7 +15,8 @@ use cosmwasm_std::{
 };
 
 use crate::calls::{
-    call_execute, call_instantiate, call_migrate, call_query, call_reply, call_sudo,
+    call_execute, call_instantiate, call_migrate, call_migrate_with_info, call_query, call_reply,
+    call_sudo,
 };
 #[cfg(feature = "stargate")]
 use crate::calls::{
@@ -24,7 +27,7 @@ use crate::instance::Instance;
 use crate::serde::to_vec;
 use crate::{BackendApi, Querier, Storage};
 
-/// Mimicks the call signature of the smart contracts.
+/// Mimics the call signature of the smart contracts.
 /// Thus it moves env and msg rather than take them as reference.
 /// This is inefficient here, but only used in test code.
 pub fn instantiate<A, S, Q, M, U>(
@@ -40,11 +43,11 @@ where
     M: Serialize + JsonSchema,
     U: DeserializeOwned + CustomMsg,
 {
-    let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
+    let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_instantiate(instance, &env, &info, &serialized_msg).expect("VM error")
 }
 
-// execute mimicks the call signature of the smart contracts.
+// execute mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn execute<A, S, Q, M, U>(
@@ -60,11 +63,11 @@ where
     M: Serialize + JsonSchema,
     U: DeserializeOwned + CustomMsg,
 {
-    let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
+    let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_execute(instance, &env, &info, &serialized_msg).expect("VM error")
 }
 
-// migrate mimicks the call signature of the smart contracts.
+// migrate mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn migrate<A, S, Q, M, U>(
@@ -79,11 +82,31 @@ where
     M: Serialize + JsonSchema,
     U: DeserializeOwned + CustomMsg,
 {
-    let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
+    let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_migrate(instance, &env, &serialized_msg).expect("VM error")
 }
 
-// sudo mimicks the call signature of the smart contracts.
+// migrate mimics the call signature of the smart contracts.
+// thus it moves env and msg rather than take them as reference.
+// this is inefficient here, but only used in test code
+pub fn migrate_with_info<A, S, Q, M, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: Env,
+    msg: M,
+    migrate_info: MigrateInfo,
+) -> ContractResult<Response<U>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    M: Serialize + JsonSchema,
+    U: DeserializeOwned + CustomMsg,
+{
+    let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
+    call_migrate_with_info(instance, &env, &serialized_msg, &migrate_info).expect("VM error")
+}
+
+// sudo mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn sudo<A, S, Q, M, U>(
@@ -98,11 +121,11 @@ where
     M: Serialize + JsonSchema,
     U: DeserializeOwned + CustomMsg,
 {
-    let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
+    let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_sudo(instance, &env, &serialized_msg).expect("VM error")
 }
 
-// reply mimicks the call signature of the smart contracts.
+// reply mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn reply<A, S, Q, U>(
@@ -119,7 +142,7 @@ where
     call_reply(instance, &env, &msg).expect("VM error")
 }
 
-// query mimicks the call signature of the smart contracts.
+// query mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn query<A, S, Q, M>(
@@ -133,11 +156,11 @@ where
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
 {
-    let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
+    let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_query(instance, &env, &serialized_msg).expect("VM error")
 }
 
-// ibc_channel_open mimicks the call signature of the smart contracts.
+// ibc_channel_open mimics the call signature of the smart contracts.
 // thus it moves env and channel rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
@@ -154,7 +177,7 @@ where
     call_ibc_channel_open(instance, &env, &msg).expect("VM error")
 }
 
-// ibc_channel_connect mimicks the call signature of the smart contracts.
+// ibc_channel_connect mimics the call signature of the smart contracts.
 // thus it moves env and channel rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
@@ -172,7 +195,7 @@ where
     call_ibc_channel_connect(instance, &env, &msg).expect("VM error")
 }
 
-// ibc_channel_close mimicks the call signature of the smart contracts.
+// ibc_channel_close mimics the call signature of the smart contracts.
 // thus it moves env and channel rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
@@ -190,7 +213,7 @@ where
     call_ibc_channel_close(instance, &env, &msg).expect("VM error")
 }
 
-// ibc_packet_receive mimicks the call signature of the smart contracts.
+// ibc_packet_receive mimics the call signature of the smart contracts.
 // thus it moves env and packet rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
@@ -208,7 +231,7 @@ where
     call_ibc_packet_receive(instance, &env, &msg).expect("VM error")
 }
 
-// ibc_packet_ack mimicks the call signature of the smart contracts.
+// ibc_packet_ack mimics the call signature of the smart contracts.
 // thus it moves env and acknowledgement rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
@@ -226,7 +249,7 @@ where
     call_ibc_packet_ack(instance, &env, &msg).expect("VM error")
 }
 
-// ibc_packet_timeout mimicks the call signature of the smart contracts.
+// ibc_packet_timeout mimics the call signature of the smart contracts.
 // thus it moves env and packet rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
