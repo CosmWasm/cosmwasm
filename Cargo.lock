@@ -460,8 +460,14 @@ dependencies = [
 name = "cosmwasm-derive"
 version = "1.5.8"
 dependencies = [
+<<<<<<< HEAD
  "cosmwasm-std",
  "syn 1.0.109",
+=======
+ "proc-macro2",
+ "quote",
+ "syn 2.0.66",
+>>>>>>> e230048f1 (Document entry_point in cosmwasm-std instead of derive)
 ]
 
 [[package]]
