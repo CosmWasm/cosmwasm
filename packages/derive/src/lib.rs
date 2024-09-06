@@ -4,6 +4,7 @@ extern crate syn;
 use proc_macro::TokenStream;
 use std::str::FromStr;
 
+<<<<<<< HEAD
 /// This attribute macro generates the boilerplate required to call into the
 /// contract-specific logic from the entry-points to the Wasm module.
 ///
@@ -51,6 +52,9 @@ use std::str::FromStr;
 ///
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
+=======
+// function documented in cosmwasm-std
+>>>>>>> e230048f1 (Document entry_point in cosmwasm-std instead of derive)
 #[proc_macro_attribute]
 pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
     let cloned = item.clone();
