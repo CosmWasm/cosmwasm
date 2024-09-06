@@ -18,6 +18,7 @@ default = []
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 syn = { version = "2", features = ["full"] }
+<<<<<<< HEAD
 
 [dev-dependencies]
 # Needed for testing docs
@@ -25,3 +26,5 @@ syn = { version = "2", features = ["full"] }
 # "(a package can have an indirect dev-dependency on itself)"
 # https://users.rust-lang.org/t/does-cargo-support-cyclic-dependencies/35666/3
 cosmwasm-std = { version = "2.1.4", path = "../std" }
+=======
+>>>>>>> e230048f1 (Document entry_point in cosmwasm-std instead of derive)

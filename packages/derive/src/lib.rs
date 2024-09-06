@@ -46,6 +46,7 @@ impl Parse for Options {
     }
 }
 
+<<<<<<< HEAD
 /// This attribute macro generates the boilerplate required to call into the
 /// contract-specific logic from the entry-points to the Wasm module.
 ///
@@ -111,6 +112,9 @@ impl Parse for Options {
 ///     todo!();
 /// }
 /// ```
+=======
+// function documented in cosmwasm-std
+>>>>>>> e230048f1 (Document entry_point in cosmwasm-std instead of derive)
 #[proc_macro_attribute]
 pub fn entry_point(
     attr: proc_macro::TokenStream,
