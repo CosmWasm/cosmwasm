@@ -172,13 +172,21 @@ fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[cfg(test)]
 mod test {
+    use std::env;
+
     use proc_macro2::TokenStream;
     use quote::quote;
 
     use crate::entry_point_impl;
 
+    fn setup_environment() {
+        env::set_var("CARGO_PRIMARY_PACKAGE", "1");
+    }
+
     #[test]
     fn contract_migrate_version_on_non_migrate() {
+        setup_environment();
+
         let code = quote! {
             #[migrate_version(42)]
             fn anything_else() -> Response {
@@ -196,6 +204,8 @@ mod test {
 
     #[test]
     fn contract_migrate_version_expansion() {
+        setup_environment();
+
         let code = quote! {
             #[migrate_version(2)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
@@ -257,6 +267,8 @@ mod test {
 
     #[test]
     fn contract_migrate_version_with_const_expansion() {
+        setup_environment();
+
         let code = quote! {
             #[migrate_version(CONTRACT_VERSION)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
@@ -318,6 +330,8 @@ mod test {
 
     #[test]
     fn default_expansion() {
+        setup_environment();
+
         let code = quote! {
             fn instantiate(deps: DepsMut, env: Env) -> Response {
                 // Logic here
@@ -342,6 +356,8 @@ mod test {
 
     #[test]
     fn renamed_expansion() {
+        setup_environment();
+
         let attribute = quote!(crate = "::my_crate::cw_std");
         let code = quote! {
             fn instantiate(deps: DepsMut, env: Env) -> Response {
