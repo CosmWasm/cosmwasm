@@ -18,12 +18,14 @@ macro_rules! maybe {
 
 struct Options {
     crate_path: syn::Path,
+    primary_package: Option<syn::Expr>,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
             crate_path: parse_quote!(::cosmwasm_std),
+            primary_package: None,
         }
     }
 }
@@ -36,7 +38,9 @@ impl Parse for Options {
         for kv in attrs {
             if kv.path.is_ident("crate") {
                 let path_as_string: syn::LitStr = syn::parse2(kv.value.to_token_stream())?;
-                ret.crate_path = path_as_string.parse()?
+                ret.crate_path = path_as_string.parse()?;
+            } else if kv.path.is_ident("primary_package") {
+                ret.primary_package = Some(syn::parse2(kv.value.into_token_stream())?);
             } else {
                 return Err(syn::Error::new_spanned(kv, "Unknown attribute"));
             }
@@ -121,10 +125,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
     Ok(stream)
 }
 
-fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let mut function: syn::ItemFn = maybe!(syn::parse2(item));
-    let Options { crate_path } = maybe!(syn::parse2(attr));
-
+fn expand_bindings(crate_path: &syn::Path, mut function: syn::ItemFn) -> TokenStream {
     let attribute_code = maybe!(expand_attributes(&mut function));
 
     // The first argument is `deps`, the rest is region pointers
@@ -154,6 +155,31 @@ fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
                 #crate_path::#do_call(&super::#fn_name, #( #call_args ),*)
             }
         }
+    }
+}
+
+fn expand_reexpand(crate_path: &syn::Path, function: syn::ItemFn) -> TokenStream {
+    quote! {
+        #crate_path::with_builtin!(let $primary_package = option_env!("CARGO_PRIMARY_PACKAGE") in {
+            #[#crate_path::entry_point(primary_package = ($primary_package))]
+            #function
+        });
+    }
+}
+
+fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut function: syn::ItemFn = maybe!(syn::parse2(item));
+    let Options { crate_path, primary_package } = maybe!(syn::parse2(attr));
+
+    if let Some(primary_package) = primary_package {
+        if matches!(primary_package, syn::Expr::Paren(..)) {
+            expand_bindings(&crate_path, function)
+        } else {
+            function.attrs.retain(|attr| !attr.path().is_ident("migrate_version"));
+            quote! { #function }
+        }
+    } else {
+        expand_reexpand(&crate_path, function)
     }
 }
 
