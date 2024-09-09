@@ -4,7 +4,7 @@ use thiserror::Error;
 use super::region_validation_error::RegionValidationError;
 use crate::memory::Region;
 
-/// An error in the communcation between contract and host. Those happen around imports and exports.
+/// An error in the communication between contract and host. Those happen around imports and exports.
 #[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum CommunicationError {
@@ -25,6 +25,9 @@ pub enum CommunicationError {
         #[from]
         source: RegionValidationError,
     },
+    /// When the contract supplies invalid section data to the host. See also `decode_sections` [crate::sections::decode_sections].
+    #[error("Got an invalid section: {}", msg)]
+    InvalidSection { msg: String },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[error("Cannot decode UTF8 bytes into string: {}", msg)]
     InvalidUtf8 { msg: String },
@@ -54,6 +57,10 @@ impl CommunicationError {
     #[allow(dead_code)]
     pub(crate) fn invalid_order(value: i32) -> Self {
         CommunicationError::InvalidOrder { value }
+    }
+
+    pub(crate) fn invalid_section(msg: impl Into<String>) -> Self {
+        CommunicationError::InvalidSection { msg: msg.into() }
     }
 
     #[allow(dead_code)]
