@@ -67,8 +67,6 @@ static_assertions = "1.1.0"
 thiserror = "1.0.26"
 rmp-serde = "1.3.0"
 
-with_builtin_macros = "0.1.0"
-
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.11.0"
 cosmwasm-crypto = { version = "2.1.3", path = "../crypto" }

@@ -234,5 +234,3 @@ pub use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 /// }
 /// ```
 pub use cosmwasm_derive::entry_point;
-#[doc(hidden)]
-pub use ::with_builtin_macros::with_builtin;
