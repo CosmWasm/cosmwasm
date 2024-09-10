@@ -825,6 +825,7 @@ impl BankQuerier {
                 };
                 to_json_binary(&bank_res).into()
             }
+            #[allow(deprecated)]
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
@@ -936,6 +937,7 @@ impl IbcQuerier {
                 let res = ChannelResponse { channel };
                 to_json_binary(&res).into()
             }
+            #[allow(deprecated)]
             IbcQuery::ListChannels { port_id } => {
                 let channels = self
                     .channels
@@ -1868,6 +1870,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn bank_querier_all_balances() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -1911,6 +1914,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn bank_querier_missing_account() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -2217,6 +2221,7 @@ mod tests {
 
     #[cfg(feature = "stargate")]
     #[test]
+    #[allow(deprecated)]
     fn ibc_querier_channels_matching() {
         let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
         let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
@@ -2234,6 +2239,7 @@ mod tests {
 
     #[cfg(feature = "stargate")]
     #[test]
+    #[allow(deprecated)]
     fn ibc_querier_channels_no_matching() {
         let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
         let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");

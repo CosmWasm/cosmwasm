@@ -102,6 +102,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
 
     if info.sender == state.verifier {
         let to_addr = state.beneficiary;
+        #[allow(deprecated)]
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
         let resp = Response::new()
@@ -268,6 +269,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     })
 }
 
+#[allow(deprecated)]
 fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
     deps.querier
         .query(&BankQuery::AllBalances { address }.into())

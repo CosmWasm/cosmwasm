@@ -945,6 +945,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn with_querier_from_context_works() {
         let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);

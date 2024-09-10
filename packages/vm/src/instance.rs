@@ -978,6 +978,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn with_querier_works_readonly() {
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];

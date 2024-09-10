@@ -385,6 +385,7 @@ mod tests {
         let deps = mock_dependencies_with_custom_querier(&coins(123, "ucosm"));
 
         // with bank query
+        #[allow(deprecated)]
         let msg = QueryMsg::Chain {
             request: BankQuery::AllBalances {
                 address: MOCK_CONTRACT_ADDR.to_string(),

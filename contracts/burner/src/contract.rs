@@ -19,6 +19,7 @@ pub fn instantiate(
 #[entry_point]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
     // get balance and send all to recipient
+    #[allow(deprecated)]
     let balance = deps.querier.query_all_balances(env.contract.address)?;
     let send = BankMsg::Send {
         to_address: msg.payout.clone(),

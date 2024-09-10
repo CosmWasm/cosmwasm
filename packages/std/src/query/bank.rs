@@ -25,6 +25,7 @@ pub enum BankQuery {
     /// This calls into the native bank module for all denominations.
     /// Note that this may be much more expensive than Balance and should be avoided if possible.
     /// Return value is AllBalanceResponse.
+    #[deprecated = "Returns a potentially unbound number of results. If you think you have a valid usecase, please open an issue."]
     AllBalances { address: String },
     /// This calls into the native bank module for querying metadata for a specific bank token.
     /// Return value is DenomMetadataResponse

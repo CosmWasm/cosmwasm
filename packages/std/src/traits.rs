@@ -420,7 +420,9 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         Ok(res.amount)
     }
 
+    #[deprecated]
     pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
+        #[allow(deprecated)]
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -706,6 +708,7 @@ mod tests {
         let balance = wrapper.query_balance("foo", "ELF").unwrap();
         assert_eq!(balance, coin(123, "ELF"));
 
+        #[allow(deprecated)]
         let all_balances = wrapper.query_all_balances("foo").unwrap();
         assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
