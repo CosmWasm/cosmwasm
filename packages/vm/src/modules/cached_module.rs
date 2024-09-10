@@ -3,7 +3,7 @@ use wasmer::{Engine, Module};
 /// Some manual tests on Simon's machine showed that Engine is roughly 3-5 KB big,
 /// so give it a constant 10 KiB estimate.
 #[inline]
-pub const fn engine_size_estimate() -> usize {
+pub fn engine_size_estimate() -> usize {
     10 * 1024
 }
 

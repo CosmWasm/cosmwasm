@@ -1,4 +1,4 @@
-#![allow(unreachable_code)]
+#![allow(unreachable_code, clippy::diverging_sub_expression)]
 
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
