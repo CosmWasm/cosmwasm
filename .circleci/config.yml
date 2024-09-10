@@ -763,7 +763,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_floaty-rust:1.74-{{ checksum "Cargo.lock" }}
-  
+
   contract_nested_contracts:
     docker:
       - image: rust:1.74
