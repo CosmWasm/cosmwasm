@@ -640,7 +640,6 @@ dependencies = [
 name = "cosmwasm-derive"
 version = "2.1.3"
 dependencies = [
- "blake3",
  "proc-macro2",
  "quote",
  "syn 2.0.77",
