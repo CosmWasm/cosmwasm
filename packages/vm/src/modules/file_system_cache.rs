@@ -1,10 +1,10 @@
+use cosmwasm_vm_derive::read_wasmer_version;
 use std::fs;
 use std::hash::Hash;
 use std::io;
 use std::panic::catch_unwind;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
-use cosmwasm_vm_derive::read_wasmer_version;
 use thiserror::Error;
 
 use wasmer::{DeserializeError, Module, Target};
@@ -21,20 +21,20 @@ use super::cached_module::engine_size_estimate;
 use super::CachedModule;
 
 /// Function that actually does the heavy lifting of creating the module version discriminator.
-/// 
+///
 /// Separated for sanity tests because otherwise the `OnceLock` would cache the result.
 #[inline]
 fn raw_module_version_discriminator() -> String {
     let wasmer_version = read_wasmer_version!();
-        let hashes = cosmwasm_vm_derive::collect_hashes();
+    let hashes = cosmwasm_vm_derive::collect_hashes();
 
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(wasmer_version.as_bytes());
-        for hash in hashes {
-            hasher.update(hash.as_bytes());
-        }
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(wasmer_version.as_bytes());
+    for hash in hashes {
+        hasher.update(hash.as_bytes());
+    }
 
-        hasher.finalize().to_hex().to_string()
+    hasher.finalize().to_hex().to_string()
 }
 
 /// Bump this version whenever the module system changes in a way
@@ -221,7 +221,10 @@ fn target_id(target: &Target) -> String {
 
 /// The path to the latest version of the modules.
 fn modules_path(base_path: &Path, wasmer_module_version: u32, target: &Target) -> PathBuf {
-    let version_dir = format!("{}-wasmer{wasmer_module_version}", module_version_discriminator());
+    let version_dir = format!(
+        "{}-wasmer{wasmer_module_version}",
+        module_version_discriminator()
+    );
     let target_dir = target_id(target);
     base_path.join(version_dir).join(target_dir)
 }
