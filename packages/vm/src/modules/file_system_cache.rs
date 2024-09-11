@@ -306,9 +306,11 @@ mod tests {
         let module = compile(&engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
+        let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/v10-wasmer7/**/{}.module",
+            "{}/{}-wasmer7/**/{}.module",
             tmp_dir.path().to_string_lossy(),
+            discriminator,
             checksum
         ))
         .expect("Failed to read glob pattern");
@@ -387,13 +389,20 @@ mod tests {
         };
         let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
+        let descriminator = raw_module_version_discriminator();
+
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v10-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                format!(
+                    "modules\\{descriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                )
             } else {
-                "modules/v10-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                format!(
+                    "modules/{descriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                )
             }
+            .as_str()
         );
     }
 
