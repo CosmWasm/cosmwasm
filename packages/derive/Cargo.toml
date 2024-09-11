@@ -15,6 +15,7 @@ proc-macro = true
 default = []
 
 [dependencies]
+blake3 = "1.5.4"
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 syn = { version = "2", features = ["full"] }

@@ -70,6 +70,7 @@ workflows:
       - package_schema_derive
       - package_std
       - package_vm
+      - package_vm_derive
       - package_vm_windows
       - contract_burner
       - contract_crypto_verify
@@ -491,6 +492,43 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_vm-rust:1.74-{{ checksum "Cargo.lock" }}
+
+  package_vm_derive:
+    docker:
+      - image: rust:1.74
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_vm_derive-rust:1.74-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/vm-derive
+          command: cargo build --locked
+      - run:
+          name: Test
+          working_directory: ~/project/packages/vm-derive
+          command: cargo test --locked
+
+      - run:
+          name: Build impl
+          working_directory: ~/project/packages/vm-derive-impl
+          command: cargo build --locked
+      - run:
+          name: Test impl
+          working_directory: ~/project/packages/vm-derive-impl
+          command: cargo test --locked
+
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_vm_derive-rust:1.74-{{ checksum "Cargo.lock" }}
 
   package_vm_windows:
     executor:

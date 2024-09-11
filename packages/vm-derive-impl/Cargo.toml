@@ -1,0 +1,6 @@
+[package]
+name = "cosmwasm-vm-derive-impl"
+edition = "2021"
+version.workspace = true
+
+[dependencies]
