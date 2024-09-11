@@ -399,8 +399,17 @@ mod tests {
 
     #[test]
     fn module_version_discriminator_stays_the_same() {
-        let v1 = module_version_discriminator();
-        let v2 = module_version_discriminator();
+        let v1 = raw_module_version_discriminator();
+        let v2 = raw_module_version_discriminator();
         assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn module_version_discriminator_is_fixed() {
+        let discriminator = raw_module_version_discriminator();
+        assert_eq!(
+            discriminator,
+            "bc465b26592e04a988baf4eb5358065904ecfff3f8f3fa9d417d137dacb4a20d"
+        );
     }
 }
