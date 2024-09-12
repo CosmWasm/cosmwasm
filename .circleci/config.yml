@@ -455,6 +455,8 @@ jobs:
   package_vm:
     docker:
       - image: rust:1.74
+    environment:
+      CARGO_INCREMENTAL: "0"
     steps:
       - checkout
       - run:
