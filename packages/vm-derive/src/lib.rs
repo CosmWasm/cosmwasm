@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 pub struct Hash(pub &'static str);
 
 inventory::collect!(Hash);
 
 #[inline]
-pub fn collect_hashes() -> impl Iterator<Item = &'static str> {
+pub fn collect_hashes() -> impl Iterator<Item = &'static str> + Debug {
     let mut hashes = inventory::iter::<Hash>
         .into_iter()
         .map(|hash| hash.0)

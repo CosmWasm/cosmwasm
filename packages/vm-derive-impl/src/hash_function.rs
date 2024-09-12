@@ -12,6 +12,7 @@ pub fn hash_function_impl(attr: TokenStream, input: TokenStream) -> TokenStream 
     let _: syn::ItemFn = maybe!(syn::parse2(input.clone()));
 
     let display = input.to_string();
+    panic!("display: {:?}", display);
     let hex_hash = blake3::hash(display.as_bytes()).to_hex();
     let hex_hash = hex_hash.as_str();
 
