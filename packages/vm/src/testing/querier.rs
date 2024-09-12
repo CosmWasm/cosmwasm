@@ -132,6 +132,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn bank_querier_all_balances() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -193,6 +194,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn bank_querier_missing_account() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
