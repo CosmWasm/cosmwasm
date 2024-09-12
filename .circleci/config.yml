@@ -460,9 +460,9 @@ jobs:
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_vm-rust:1.74-{{ checksum "Cargo.lock" }}
+      #- restore_cache:
+      #    keys:
+      #      - cargocache-v2-package_vm-rust:1.74-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -485,13 +485,13 @@ jobs:
           command: |
             cargo build --locked --example multi_threaded_cache
             time ../../target/debug/examples/multi_threaded_cache >/dev/null
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_vm-rust:1.74-{{ checksum "Cargo.lock" }}
+      #- save_cache:
+      #    paths:
+      #      - /usr/local/cargo/registry
+      #      - target/debug/.fingerprint
+      #      - target/debug/build
+      #      - target/debug/deps
+      #    key: cargocache-v2-package_vm-rust:1.74-{{ checksum "Cargo.lock" }}
 
   package_vm_derive:
     docker:
