@@ -63,7 +63,10 @@ use super::CachedModule;
 ///   Module compatibility between Wasmer versions is not guaranteed.
 /// - **v10**:<br>
 ///   New version because of Metering middleware change.
-const MODULE_SERIALIZATION_VERSION: &str = "v10";
+/// - **v20**:<br>
+///   New version because of Wasmer 4.3.3 -> 4.3.7 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed.
+const MODULE_SERIALIZATION_VERSION: &str = "v20";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -315,7 +318,7 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let mut globber = glob::glob(&format!(
-            "{}/v10-wasmer7/**/{}.module",
+            "{}/v20-wasmer7/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             checksum
         ))
@@ -398,9 +401,9 @@ mod tests {
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v10-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules\\v20-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
-                "modules/v10-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                "modules/v20-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             }
         );
     }
