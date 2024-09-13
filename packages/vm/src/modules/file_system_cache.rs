@@ -418,7 +418,7 @@ mod tests {
         let discriminator = raw_module_version_discriminator();
         assert_eq!(
             discriminator,
-            "bc465b26592e04a988baf4eb5358065904ecfff3f8f3fa9d417d137dacb4a20d"
+            "ddae2ae211962fc3481ff11cd46413750c692ddeb3d65f3e7a8a6d31ab1f8511"
         );
     }
 }
