@@ -465,4 +465,13 @@ mod tests {
         assert_eq!(v2, v3);
         assert_eq!(v3, v4);
     }
+
+    #[test]
+    fn module_version_static() {
+        let version = raw_module_version_discriminator();
+        assert_eq!(
+            version,
+            "9ef3de8cb5fb770171ae3ea14db67fe25d946fef383472a18ddd75ced7bfcd4b"
+        );
+    }
 }
