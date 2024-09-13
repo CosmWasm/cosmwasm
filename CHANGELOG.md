@@ -46,9 +46,13 @@ and this project adheres to
 - cosmwasm-vm: Let `mock_env` return a contract address that is valid bech32 and
   uses the same bech32 prefix as `MockApi`; Change `MOCK_CONTRACT_ADDR` value to
   match the contract address from `mock_env`. ([#2211])
+- cosmwasm-std: Deprecate `BankQuery::AllBalances` and `IbcQuery::ListChannels`.
+  Both are inherently problematic to use because the returned entries are
+  unbounded. ([#2247])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
+[#2247]: https://github.com/CosmWasm/cosmwasm/pull/2247
 
 ## [2.1.3] - 2024-08-08
 
