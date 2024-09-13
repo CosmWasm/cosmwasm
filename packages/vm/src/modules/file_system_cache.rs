@@ -20,6 +20,51 @@ use crate::Size;
 use super::cached_module::engine_size_estimate;
 use super::CachedModule;
 
+/// This is a value you can manually modify to the cache.
+/// You normally _do not_ need to change this value yourself.
+///
+/// Cases where you might need to update it yourself, is things like when the memory layout of some types in Rust [std] changes.
+///
+/// ---
+///
+/// Now follows the legacy documentation of this value:
+///
+/// ## Version history:
+/// - **v1**:<br>
+///   cosmwasm_vm < 1.0.0-beta5. This is working well up to Wasmer 2.0.0 as
+///   [in wasmvm 1.0.0-beta2](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-beta2/libwasmvm/Cargo.lock#L1412-L1413)
+///   and [wasmvm 0.16.3](https://github.com/CosmWasm/wasmvm/blob/v0.16.3/libwasmvm/Cargo.lock#L1408-L1409).
+///   Versions that ship with Wasmer 2.1.x such [as wasmvm 1.0.0-beta3](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-beta3/libwasmvm/Cargo.lock#L1534-L1535)
+///   to [wasmvm 1.0.0-beta5](https://github.com/CosmWasm/wasmvm/blob/v1.0.0-beta5/libwasmvm/Cargo.lock#L1530-L1531)
+///   are broken, i.e. they will crash when reading older v1 modules.
+/// - **v2**:<br>
+///   Version for cosmwasm_vm 1.0.0-beta5 / wasmvm 1.0.0-beta6 that ships with Wasmer 2.1.1.
+/// - **v3**:<br>
+///   Version for Wasmer 2.2.0 which contains a [module breaking change to 2.1.x](https://github.com/wasmerio/wasmer/pull/2747).
+/// - **v4**:<br>
+///   Version for Wasmer 2.3.0 which contains a module breaking change to 2.2.0 that was not reflected in
+///   the module header version (<https://github.com/wasmerio/wasmer/issues/3193>). In cosmwasm-vm 1.1.0-1.1.1
+///   the old value "v3" is still used along with Wasmer 2.3.0 (bug). From cosmwasm 1.1.2 onwards, this is
+///   fixed by bumping to "v4".
+/// - **v5**:<br>
+///   A change in memory layout of some types in Rust [std] caused
+///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
+///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
+/// - **v6**:<br>
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+/// - **v7**:<br>
+///   New version because of Wasmer 2.3.0 -> 4 upgrade.
+///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
+/// - **v8**:<br>
+///   New version because of Wasmer 4.1.2 -> 4.2.2 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed.
+/// - **v9**:<br>
+///   New version because of Wasmer 4.2.2 -> 4.2.6 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed.
+/// - **v10**:<br>
+///   New version because of Metering middleware change.
+const MODULE_SERIALIZATION_VERSION: &str = "v10";
+
 /// Function that actually does the heavy lifting of creating the module version discriminator.
 ///
 /// Separated for sanity tests because otherwise the `OnceLock` would cache the result.
@@ -29,7 +74,10 @@ fn raw_module_version_discriminator() -> String {
     let hashes = cosmwasm_vm_derive::collect_hashes();
 
     let mut hasher = blake3::Hasher::new();
+
+    hasher.update(MODULE_SERIALIZATION_VERSION.as_bytes());
     hasher.update(wasmer_version.as_bytes());
+
     for hash in hashes {
         hasher.update(hash.as_bytes());
     }
@@ -410,15 +458,11 @@ mod tests {
     fn module_version_discriminator_stays_the_same() {
         let v1 = raw_module_version_discriminator();
         let v2 = raw_module_version_discriminator();
-        assert_eq!(v1, v2);
-    }
+        let v3 = raw_module_version_discriminator();
+        let v4 = raw_module_version_discriminator();
 
-    #[test]
-    fn module_version_discriminator_is_fixed() {
-        let discriminator = raw_module_version_discriminator();
-        assert_eq!(
-            discriminator,
-            "ddae2ae211962fc3481ff11cd46413750c692ddeb3d65f3e7a8a6d31ab1f8511"
-        );
+        assert_eq!(v1, v2);
+        assert_eq!(v2, v3);
+        assert_eq!(v3, v4);
     }
 }
