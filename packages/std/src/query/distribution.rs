@@ -63,7 +63,7 @@ pub struct DecCoin {
     pub denom: String,
     /// An amount in the base denom of the distributed token.
     ///
-    /// Some chains have choosen atto (10^-18) for their token's base denomination. If we used `Decimal` here, we could only store
+    /// Some chains have chosen atto (10^-18) for their token's base denomination. If we used `Decimal` here, we could only store
     /// 340282366920938463463.374607431768211455atoken which is 340.28 TOKEN.
     pub amount: Decimal256,
 }

@@ -12,7 +12,7 @@ pub struct Context {
     /// setting this flag will derive the implementation appropriately, collecting all
     /// KV pairs from the nested enums rather than expecting `#[return]` annotations.
     pub is_nested: bool,
-    /// Disable infering the `JsonSchema` trait bound for chosen type parameters.
+    /// Disable inferring the `JsonSchema` trait bound for chosen type parameters.
     pub no_bounds_for: HashSet<Ident>,
 }
 

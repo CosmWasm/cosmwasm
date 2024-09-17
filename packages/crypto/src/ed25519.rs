@@ -45,7 +45,7 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 /// In the limiting case where all signatures in the batch are made with the same verification key,
 /// coalesced batch verification runs twice as fast as ordinary batch verification.
 ///
-/// Three Variants are suppported in the input for convenience:
+/// Three Variants are supported in the input for convenience:
 ///  - Equal number of messages, signatures, and public keys: Standard, generic functionality.
 ///  - One message, and an equal number of signatures and public keys: Multiple digital signature
 ///    (multisig) verification of a single message.
