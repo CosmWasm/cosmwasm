@@ -1,4 +1,5 @@
 [files]
 extend-exclude = [
     "contracts/**/schema/**",
+    "packages/crypto/**/*.json",
 ]
