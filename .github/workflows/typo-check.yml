@@ -1,0 +1,19 @@
+name: Check for typos
+
+on:
+  merge_group:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check-typos:
+    name: "Spell-check repository source"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run spell-check
+        uses: crate-ci/typos@master
