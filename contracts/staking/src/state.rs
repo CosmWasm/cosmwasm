@@ -54,7 +54,7 @@ pub struct InvestmentInfo {
     /// All tokens are bonded to this validator
     /// addr_humanize/addr_canonicalize doesn't work for validator addrresses (e.g. cosmosvaloper1...)
     pub validator: String,
-    /// This is the minimum amount we will pull out to reinvest, as well as a minumum
+    /// This is the minimum amount we will pull out to reinvest, as well as a minimum
     /// that can be unbonded (to avoid needless staking tx)
     pub min_withdrawal: Uint128,
 }

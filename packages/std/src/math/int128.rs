@@ -999,7 +999,7 @@ mod tests {
             Int128(750)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(2i128, 3i128).unwrap(),
             Int128(333)
@@ -1009,7 +1009,7 @@ mod tests {
             Int128(333)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(5i128, 6i128).unwrap(),
             Int128(416)

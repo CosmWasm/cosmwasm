@@ -47,7 +47,7 @@ pub struct Gatekeeper {
 impl Gatekeeper {
     /// Creates a new Gatekeeper with a custom config.
     ///
-    /// A costum configuration is potentially dangerous (non-final Wasm proposals, floats in SIMD operation).
+    /// A custom configuration is potentially dangerous (non-final Wasm proposals, floats in SIMD operation).
     /// For this reason, only [`Gatekeeper::default()`] is public.
     fn new(config: GatekeeperConfig) -> Self {
         Self { config }

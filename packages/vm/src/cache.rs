@@ -517,7 +517,7 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
     let filepath = dir.into().join(filename).with_extension("wasm");
 
     // write data to file
-    // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
+    // Since the same filename (a collision resistant hash) cannot be generated from two different byte codes
     // (even if a malicious actor tried), it is safe to override.
     let mut file = OpenOptions::new()
         .write(true)

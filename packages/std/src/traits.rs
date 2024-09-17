@@ -164,7 +164,7 @@ pub trait Api {
     /// But that might change. So your contract should not make assumptions on the size.
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
 
-    /// Takes a canonical address and returns a human readble address.
+    /// Takes a canonical address and returns a human readable address.
     /// This is the inverse of [`addr_canonicalize`].
     ///
     /// [`addr_canonicalize`]: Api::addr_canonicalize

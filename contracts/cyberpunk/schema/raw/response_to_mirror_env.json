@@ -86,7 +86,7 @@
       ],
       "properties": {
         "index": {
-          "description": "The position of this transaction in the block. The first transaction has index 0.\n\nThis allows you to get a unique transaction indentifier in this chain using the pair (`env.block.height`, `env.transaction.index`).",
+          "description": "The position of this transaction in the block. The first transaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain using the pair (`env.block.height`, `env.transaction.index`).",
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0

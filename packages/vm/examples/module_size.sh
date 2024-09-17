@@ -1,7 +1,7 @@
 #!/bin/bash
 # Uses valgrind's massif tool to compute heap memory consumption of compiled modules.
 # For a wasmer `Module`, it has been determined that this method underestimates the size
-# of the module significanty.
+# of the module significantly.
 set -e
 
 MAX_SNAPSHOTS=1000

@@ -1,4 +1,4 @@
-//! This module is an implemention of a namespacing scheme described
+//! This module is an implementation of a namespacing scheme described
 //! in https://github.com/webmaster128/key-namespacing#length-prefixed-keys
 //!
 //! Everything in this file is only responsible for building such keys
@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn to_length_prefixed_calculates_capacity_correctly() {
         // Those tests cannot guarantee the required capacity was calculated correctly before
-        // the vector allocation but increase the likelyhood of a proper implementation.
+        // the vector allocation but increase the likelihood of a proper implementation.
 
         let key = to_length_prefixed(b"");
         assert_eq!(key.capacity(), key.len());
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn to_length_prefixed_nested_calculates_capacity_correctly() {
         // Those tests cannot guarantee the required capacity was calculated correctly before
-        // the vector allocation but increase the likelyhood of a proper implementation.
+        // the vector allocation but increase the likelihood of a proper implementation.
 
         let key = to_length_prefixed_nested(&[]);
         assert_eq!(key.capacity(), key.len());

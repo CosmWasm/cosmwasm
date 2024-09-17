@@ -968,14 +968,14 @@ mod tests {
             Int64(750)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.checked_multiply_ratio(2i64, 3i64).unwrap(), Int64(333));
         assert_eq!(
             base.checked_multiply_ratio(222222i64, 333333i64).unwrap(),
             Int64(333)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.checked_multiply_ratio(5i64, 6i64).unwrap(), Int64(416));
         assert_eq!(
             base.checked_multiply_ratio(100i64, 120i64).unwrap(),
