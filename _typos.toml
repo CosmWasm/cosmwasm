@@ -1,3 +1,8 @@
+[default]
+extend-ignore-re = [
+    "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$",
+]
+
 [files]
 extend-exclude = [
     "contracts/**/schema/**",

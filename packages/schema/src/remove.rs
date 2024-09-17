@@ -61,9 +61,9 @@ mod tests {
         #[cfg(any(unix, target_os = "redox"))]
         {
             use std::os::unix::ffi::OsStrExt;
-            let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o
+            let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o // spellchecker:disable-line
             assert!(!is_hidden(Path::new(non_hidden)));
-            let hidden = OsStr::from_bytes(&[0x2e, 0x66, 0x6f, 0x80, 0x6f]); // .fo�o
+            let hidden = OsStr::from_bytes(&[0x2e, 0x66, 0x6f, 0x80, 0x6f]); // .fo�o // spellchecker:disable-line
             assert!(is_hidden(Path::new(hidden)));
         }
     }
@@ -90,9 +90,9 @@ mod tests {
         #[cfg(any(unix, target_os = "redox"))]
         {
             use std::os::unix::ffi::OsStrExt;
-            let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o
+            let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o // spellchecker:disable-line
             assert!(!is_json(Path::new(non_hidden)));
-            let hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f, 0x2e, 0x6a, 0x73, 0x6f, 0x6e]); // fo�o.json
+            let hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f, 0x2e, 0x6a, 0x73, 0x6f, 0x6e]); // fo�o.json // spellchecker:disable-line
             assert!(is_json(Path::new(hidden)));
         }
     }
