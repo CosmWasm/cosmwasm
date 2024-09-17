@@ -1505,14 +1505,14 @@ mod tests {
             Uint256::from(750u32)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(2u128, 3u128), Uint256::from(333u32));
         assert_eq!(
             base.multiply_ratio(222222u128, 333333u128),
             Uint256::from(333u32)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(5u128, 6u128), Uint256::from(416u32));
         assert_eq!(base.multiply_ratio(100u128, 120u128), Uint256::from(416u32));
     }

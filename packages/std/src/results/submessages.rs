@@ -33,7 +33,7 @@ pub struct SubMsg<T = Empty> {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
     pub id: u64,
-    /// Some arbirary data that the contract can set in an application specific way.
+    /// Some arbitrary data that the contract can set in an application specific way.
     /// This is just passed into the `reply` entry point and is not stored to state.
     /// Any encoding can be used. If `id` is used to identify a particular action,
     /// the encoding can also be different for each of those actions since you can match `id`
@@ -171,7 +171,7 @@ pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
     pub id: u64,
-    /// Some arbirary data that the contract set when emitting the `SubMsg`.
+    /// Some arbitrary data that the contract set when emitting the `SubMsg`.
     /// This is just passed into the `reply` entry point and is not stored to state.
     ///
     /// Unset/nil/null cannot be differentiated from empty data.
@@ -197,7 +197,7 @@ pub struct Reply {
 ///
 /// Until version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead
 /// of this type. Once serialized, the two types are the same. However, in the Rust type
-/// system we want different types for clarity and documenation reasons.
+/// system we want different types for clarity and documentation reasons.
 ///
 /// # Examples
 ///
@@ -231,7 +231,7 @@ pub struct Reply {
 pub enum SubMsgResult {
     Ok(SubMsgResponse),
     /// An error type that every custom error created by contract developers can be converted to.
-    /// This could potientially have more structure, but String is the easiest.
+    /// This could potentially have more structure, but String is the easiest.
     #[serde(rename = "error")]
     Err(String),
 }

@@ -898,11 +898,11 @@ mod tests {
         assert_eq!(base.multiply_ratio(3u64, 2u64), Uint64(750));
         assert_eq!(base.multiply_ratio(333333u64, 222222u64), Uint64(750));
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(2u64, 3u64), Uint64(333));
         assert_eq!(base.multiply_ratio(222222u64, 333333u64), Uint64(333));
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(5u64, 6u64), Uint64(416));
         assert_eq!(base.multiply_ratio(100u64, 120u64), Uint64(416));
     }

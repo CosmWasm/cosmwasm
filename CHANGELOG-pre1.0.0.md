@@ -1259,7 +1259,7 @@ https://github.com/CosmWasm/cosmwasm/issues/451).
   for mock storage and copying a stateless bridge for the external storage,
   which are different semantics.
 - Remove public `cosmwasm::imports::dependencies`. A user of this library does
-  not need to call this explicitely. Dependencies are created internally and
+  not need to call this explicitly. Dependencies are created internally and
   passed as an argument in `exports::do_init`, `exports::do_handle` and
   `exports::do_query`.
 - Make `ExternalStorage` not `Clone`able anymore. This does not copy any data,

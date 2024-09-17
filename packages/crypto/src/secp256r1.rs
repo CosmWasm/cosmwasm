@@ -193,7 +193,7 @@ mod tests {
         // Signing
         let secret_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
 
-        // Note: the signature type must be annotated or otherwise inferrable as
+        // Note: the signature type must be annotated or otherwise inferable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
         let (signature, _recovery_id): (Signature, RecoveryId) =

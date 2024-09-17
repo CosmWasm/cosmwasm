@@ -191,7 +191,7 @@ pub trait Querier {
 }
 
 /// A result type for calling into the backend. Such a call can cause
-/// non-negligible computational cost in both success and faiure case and
+/// non-negligible computational cost in both success and failure case and
 /// must always have gas information attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 

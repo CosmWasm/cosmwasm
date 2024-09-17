@@ -100,7 +100,7 @@ where
         let signature = read_signature(signature)?;
         let pubkey = read_pubkey(public_key)?;
 
-        // Enqueing
+        // Enqueuing
         batch.queue((pubkey.into(), signature.into(), message));
     }
 
