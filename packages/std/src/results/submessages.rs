@@ -208,13 +208,13 @@ pub struct Reply {
 /// #[allow(deprecated)]
 /// let response = SubMsgResponse {
 ///     data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-///     events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+///     events: vec![Event::new("wasm").add_attribute("foo", "bar")],
 ///     msg_responses: vec![],
 /// };
 /// let result: SubMsgResult = SubMsgResult::Ok(response);
 /// assert_eq!(
 ///     to_json_string(&result).unwrap(),
-///     r#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg==","msg_responses":[]}}"#,
+///     r#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"foo","value":"bar"}]}],"data":"MTIzCg==","msg_responses":[]}}"#,
 /// );
 /// ```
 ///
@@ -392,12 +392,12 @@ mod tests {
                 type_url: "URL".to_string(),
                 value: Binary::from_base64("MTIzCg==").unwrap(),
             }],
-            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+            events: vec![Event::new("wasm").add_attribute("foo", "bar")],
         });
         println!("{}", &crate::to_json_string(&result).unwrap());
         assert_eq!(
             &to_json_vec(&result).unwrap(),
-            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg==","msg_responses":[{"type_url":"URL","value":"MTIzCg=="}]}}"#
+            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"foo","value":"bar"}]}],"data":"MTIzCg==","msg_responses":[{"type_url":"URL","value":"MTIzCg=="}]}}"#
         );
 
         let result: SubMsgResult = SubMsgResult::Err("broken".to_string());
@@ -430,7 +430,7 @@ mod tests {
         );
 
         let result: SubMsgResult = from_json(
-            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"fo","value":"ba"}]}],"data":"MTIzCg==",
+            br#"{"ok":{"events":[{"type":"wasm","attributes":[{"key":"foo","value":"bar"}]}],"data":"MTIzCg==",
             "msg_responses":[{"type_url":"URL","value":"MTIzCg=="}]}}"#).unwrap();
         assert_eq!(
             result,
@@ -440,7 +440,7 @@ mod tests {
                     type_url: "URL".to_string(),
                     value: Binary::from_base64("MTIzCg==").unwrap(),
                 }],
-                events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+                events: vec![Event::new("wasm").add_attribute("foo", "bar")],
             })
         );
 
@@ -468,7 +468,7 @@ mod tests {
                 type_url: "URL".to_string(),
                 value: Binary::from_base64("MTIzCg==").unwrap(),
             }],
-            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+            events: vec![Event::new("wasm").add_attribute("foo", "bar")],
         };
         let success = SubMsgResult::Ok(response.clone());
         assert_eq!(success.unwrap(), response);
@@ -492,7 +492,7 @@ mod tests {
     fn sub_msg_result_unwrap_err_panics_for_ok() {
         let response = SubMsgResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+            events: vec![Event::new("wasm").add_attribute("foo", "bar")],
             msg_responses: vec![],
         };
         let success = SubMsgResult::Ok(response);
@@ -503,7 +503,7 @@ mod tests {
     fn sub_msg_result_is_ok_works() {
         let success = SubMsgResult::Ok(SubMsgResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+            events: vec![Event::new("wasm").add_attribute("foo", "bar")],
             msg_responses: vec![],
         });
         let failure = SubMsgResult::Err("broken".to_string());
@@ -515,7 +515,7 @@ mod tests {
     fn sub_msg_result_is_err_works() {
         let success = SubMsgResult::Ok(SubMsgResponse {
             data: Some(Binary::from_base64("MTIzCg==").unwrap()),
-            events: vec![Event::new("wasm").add_attribute("fo", "ba")],
+            events: vec![Event::new("wasm").add_attribute("foo", "bar")],
             msg_responses: vec![],
         });
         let failure = SubMsgResult::Err("broken".to_string());
