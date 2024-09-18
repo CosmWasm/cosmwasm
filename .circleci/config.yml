@@ -1107,7 +1107,7 @@ jobs:
       - run:
           name: Install cargo-nextest
           command: |
-            curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-/usr/local/cargo}/bin
+            cargo install cargo-nextest --locked
       - run:
           name: Run tests with coverage
           command: |
