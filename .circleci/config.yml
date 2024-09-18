@@ -1086,7 +1086,7 @@ jobs:
 
   coverage:
     docker:
-      - image: rust:1.78.0-slim
+      - image: rust:1.78.0-alpine
     environment:
       CARGO_TERM_COLOR: "always"
     resource_class: medium+
@@ -1095,11 +1095,11 @@ jobs:
       - run:
           name: Install necessary packages
           command: |
-            apt update
-            apt install -y curl gnupg
-      - restore_cache:
-          keys:
-            - cargocache-v2-coverage-rust:1.78-{{ checksum "Cargo.lock" }}
+            apk update
+            apk add mold clang curl coreutils gnupg
+      #- restore_cache:
+      #    keys:
+      #      - cargocache-v2-coverage-rust:1.78-{{ checksum "Cargo.lock" }}
       - run:
           name: Install cargo-llvm-cov
           command: |
@@ -1107,11 +1107,13 @@ jobs:
       - run:
           name: Install cargo-nextest
           command: |
-            curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+            curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-/usr/local/cargo}/bin
       - run:
           name: Run tests with coverage
           command: |
             cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
+          environment:
+            RUSTFLAGS: "-Clinker=clang -Clink-arg=-fuse-ld=/usr/bin/mold"
       - run:
           name: Quick fix for GPG error in Codecov
           command: mkdir -p ~/.gnupg
