@@ -372,48 +372,48 @@ mod tests {
         // Uint64/Uint128/Uint256/Uint512
         {
             let s = to_msgpack_vec(&Uint64::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
             let s = to_msgpack_vec(&Uint128::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
             let s = to_msgpack_vec(&Uint256::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
             let s = to_msgpack_vec(&Uint512::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
 
             let s = to_msgpack_vec(&Uint64::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
             let s = to_msgpack_vec(&Uint128::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
             let s = to_msgpack_vec(&Uint256::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
             let s = to_msgpack_vec(&Uint512::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
 
             let s = to_msgpack_vec(&Uint64::MAX).unwrap();
             assert_eq!(
                 s,
                 [
                     0b10100000 ^ 20,
-                    '1' as u8,
-                    '8' as u8,
-                    '4' as u8,
-                    '4' as u8,
-                    '6' as u8,
-                    '7' as u8,
-                    '4' as u8,
-                    '4' as u8,
-                    '0' as u8,
-                    '7' as u8,
-                    '3' as u8,
-                    '7' as u8,
-                    '0' as u8,
-                    '9' as u8,
-                    '5' as u8,
-                    '5' as u8,
-                    '1' as u8,
-                    '6' as u8,
-                    '1' as u8,
-                    '5' as u8
+                    b'1',
+                    b'8',
+                    b'4',
+                    b'4',
+                    b'6',
+                    b'7',
+                    b'4',
+                    b'4',
+                    b'0',
+                    b'7',
+                    b'3',
+                    b'7',
+                    b'0',
+                    b'9',
+                    b'5',
+                    b'5',
+                    b'1',
+                    b'6',
+                    b'1',
+                    b'5'
                 ]
             ); // string of lengths 1 with value "1"
         }
@@ -421,40 +421,40 @@ mod tests {
         // Int64/Int128/Int256/Int512
         {
             let s = to_msgpack_vec(&Int64::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
             let s = to_msgpack_vec(&Int128::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
             let s = to_msgpack_vec(&Int256::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
             let s = to_msgpack_vec(&Int512::zero()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '0' as u8]); // string of lengths 1 with value "0"
+            assert_eq!(s, [0b10100000 ^ 1, b'0']); // string of lengths 1 with value "0"
 
             let s = to_msgpack_vec(&Int64::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
             let s = to_msgpack_vec(&Int128::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
             let s = to_msgpack_vec(&Int256::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
             let s = to_msgpack_vec(&Int512::one()).unwrap();
-            assert_eq!(s, [0b10100000 ^ 1, '1' as u8]); // string of lengths 1 with value "1"
+            assert_eq!(s, [0b10100000 ^ 1, b'1']); // string of lengths 1 with value "1"
 
             let s = to_msgpack_vec(&Int64::from(15i32)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '1' as u8, '5' as u8]); // string of lengths 2 with value "15"
+            assert_eq!(s, [0b10100000 ^ 2, b'1', b'5']); // string of lengths 2 with value "15"
             let s = to_msgpack_vec(&Int128::from(15i32)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '1' as u8, '5' as u8]); // string of lengths 2 with value "15"
+            assert_eq!(s, [0b10100000 ^ 2, b'1', b'5']); // string of lengths 2 with value "15"
             let s = to_msgpack_vec(&Int256::from(15i32)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '1' as u8, '5' as u8]); // string of lengths 2 with value "15"
+            assert_eq!(s, [0b10100000 ^ 2, b'1', b'5']); // string of lengths 2 with value "15"
             let s = to_msgpack_vec(&Int512::from(15i32)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '1' as u8, '5' as u8]); // string of lengths 2 with value "15"
+            assert_eq!(s, [0b10100000 ^ 2, b'1', b'5']); // string of lengths 2 with value "15"
 
             let s = to_msgpack_vec(&Int64::from(-1i64)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '-' as u8, '1' as u8]); // string of lengths 2 with value "-1"
+            assert_eq!(s, [0b10100000 ^ 2, b'-', b'1']); // string of lengths 2 with value "-1"
             let s = to_msgpack_vec(&Int128::from(-1i64)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '-' as u8, '1' as u8]); // string of lengths 2 with value "-1"
+            assert_eq!(s, [0b10100000 ^ 2, b'-', b'1']); // string of lengths 2 with value "-1"
             let s = to_msgpack_vec(&Int256::from(-1i64)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '-' as u8, '1' as u8]); // string of lengths 2 with value "-1"
+            assert_eq!(s, [0b10100000 ^ 2, b'-', b'1']); // string of lengths 2 with value "-1"
             let s = to_msgpack_vec(&Int512::from(-1i64)).unwrap();
-            assert_eq!(s, [0b10100000 ^ 2, '-' as u8, '1' as u8]); // string of lengths 2 with value "-1"
+            assert_eq!(s, [0b10100000 ^ 2, b'-', b'1']); // string of lengths 2 with value "-1"
         }
     }
 }
