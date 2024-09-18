@@ -1114,6 +1114,7 @@ jobs:
           command: mkdir -p ~/.gnupg
       - codecov/upload:
           file: codecov.json
+          flags: "cosmwasm-core,cosmwasm-crypto,cosmwasm-derive,cosmwasm-schema,cosmwasm-std,cosmwasm-vm"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
