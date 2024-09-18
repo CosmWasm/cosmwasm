@@ -1108,13 +1108,12 @@ jobs:
       - run:
           name: Run tests with coverage
           command: |
-            cargo llvm-cov --all-features --workspace --codecov --output-path codecov.json
+            cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
       - run:
           name: Quick fix for GPG error in Codecov
           command: mkdir -p ~/.gnupg
       - codecov/upload:
-          file: codecov.json
-          flags: "cosmwasm-core,cosmwasm-crypto,cosmwasm-derive,cosmwasm-schema,cosmwasm-std,cosmwasm-vm"
+          file: lcov.info
       - save_cache:
           paths:
             - /usr/local/cargo/registry
