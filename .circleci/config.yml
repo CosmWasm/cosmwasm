@@ -1087,9 +1087,6 @@ jobs:
   coverage:
     docker:
       - image: rust:1.78.0-slim
-    environment:
-      # Limit the number of parallel jobs to avoid OOM crashes during doc testing
-      RUST_TEST_THREADS: 8
     resource_class: medium+
     steps:
       - checkout
@@ -1109,6 +1106,8 @@ jobs:
           name: Run tests with coverage
           command: |
             cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+          environment:
+            RUSTFLAGS: "-C opt-level=2"
       - run:
           name: Quick fix for GPG error in Codecov
           command: mkdir -p ~/.gnupg
