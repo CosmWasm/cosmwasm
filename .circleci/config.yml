@@ -1087,6 +1087,8 @@ jobs:
   coverage:
     docker:
       - image: rust:1.78.0-slim
+    environment:
+      CARGO_TERM_COLOR: "always"
     resource_class: medium+
     steps:
       - checkout
@@ -1103,9 +1105,13 @@ jobs:
           command: |
             cargo install cargo-llvm-cov --locked
       - run:
+          name: Install cargo-nextest
+          command: |
+            curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+      - run:
           name: Run tests with coverage
           command: |
-            cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+            cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
       - run:
           name: Quick fix for GPG error in Codecov
           command: mkdir -p ~/.gnupg
