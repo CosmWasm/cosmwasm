@@ -1086,7 +1086,7 @@ jobs:
 
   coverage:
     docker:
-      - image: rust:1.78.0-alpine3.19
+      - image: rust:1.78.0-slim
     environment:
       # Limit the number of parallel jobs to avoid OOM crashes during doc testing
       RUST_TEST_THREADS: 8
@@ -1096,8 +1096,8 @@ jobs:
       - run:
           name: Install necessary packages
           command: |
-            apk update
-            apk add mold clang curl coreutils gnupg
+            apt update
+            apt install -y curl gnupg
       - restore_cache:
           keys:
             - cargocache-v2-coverage-rust:1.74-{{ checksum "Cargo.lock" }}
