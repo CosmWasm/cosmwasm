@@ -1097,7 +1097,7 @@ jobs:
             apt install -y curl gnupg
       - restore_cache:
           keys:
-            - cargocache-v2-coverage-rust:1.74-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-coverage-rust:1.78-{{ checksum "Cargo.lock" }}
       - run:
           name: Install cargo-llvm-cov
           command: |
@@ -1106,8 +1106,6 @@ jobs:
           name: Run tests with coverage
           command: |
             cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
-          environment:
-            RUSTFLAGS: "-C opt-level=2"
       - run:
           name: Quick fix for GPG error in Codecov
           command: mkdir -p ~/.gnupg
