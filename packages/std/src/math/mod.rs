@@ -30,6 +30,53 @@ pub use uint256::Uint256;
 pub use uint512::Uint512;
 pub use uint64::Uint64;
 
+macro_rules! impl_int_serde {
+    ($ty:ty) => {
+        impl ::serde::Serialize for $ty {
+            /// Serializes as an integer string using base 10
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: ::serde::ser::Serializer,
+            {
+                serializer.serialize_str(&self.to_string())
+            }
+        }
+
+        impl<'de> ::serde::Deserialize<'de> for $ty {
+            /// Deserialized from an integer string using base 10
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: ::serde::de::Deserializer<'de>,
+            {
+                struct IntVisitor;
+
+                impl<'de> ::serde::de::Visitor<'de> for IntVisitor {
+                    type Value = $ty;
+
+                    fn expecting(
+                        &self,
+                        formatter: &mut ::core::fmt::Formatter,
+                    ) -> ::core::fmt::Result {
+                        formatter.write_str("string-encoded integer")
+                    }
+
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: ::serde::de::Error,
+                    {
+                        <_>::try_from(v).map_err(|e| {
+                            E::custom(format_args!("invalid {} '{v}' - {e}", stringify!($t)))
+                        })
+                    }
+                }
+
+                deserializer.deserialize_str(IntVisitor)
+            }
+        }
+    };
+}
+use impl_int_serde;
+
 #[cfg(test)]
 mod tests {
     use super::*;
