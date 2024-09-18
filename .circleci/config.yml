@@ -1111,7 +1111,7 @@ jobs:
       - run:
           name: Run tests with coverage
           command: |
-            cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
+            cargo llvm-cov nextest --features staking,iterator,stargate,dhat-heap,cosmwasm_2_2 --workspace --lcov --output-path lcov.info
           environment:
             RUSTFLAGS: "-Clinker=clang -Clink-arg=-fuse-ld=/usr/bin/mold"
       - run:
