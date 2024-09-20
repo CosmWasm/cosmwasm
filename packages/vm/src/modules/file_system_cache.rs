@@ -14,6 +14,7 @@ use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::modules::current_wasmer_module_version;
 use crate::wasm_backend::make_runtime_engine;
+use crate::wasm_backend::COST_FUNCTION_HASH;
 use crate::Size;
 
 use super::cached_module::engine_size_estimate;
@@ -69,7 +70,7 @@ const MODULE_SERIALIZATION_VERSION: &str = "v10";
 /// Separated for sanity tests because otherwise the `OnceLock` would cache the result.
 #[inline]
 fn raw_module_version_discriminator() -> String {
-    let hashes = cosmwasm_vm_derive::collect_hashes();
+    let hashes = [COST_FUNCTION_HASH];
 
     let mut hasher = blake3::Hasher::new();
 
@@ -77,7 +78,7 @@ fn raw_module_version_discriminator() -> String {
     hasher.update(wasmer::VERSION.as_bytes());
 
     for hash in hashes {
-        hasher.update(hash.as_bytes());
+        hasher.update(hash);
     }
 
     hasher.finalize().to_hex().to_string()

@@ -1,21 +1,22 @@
-use std::fmt::Debug;
+mod hash_function;
 
-pub struct Hash(pub &'static str);
-
-inventory::collect!(Hash);
-
-#[inline]
-pub fn collect_hashes() -> impl Iterator<Item = &'static str> + Debug {
-    let mut hashes = inventory::iter::<Hash>
-        .into_iter()
-        .map(|hash| hash.0)
-        .collect::<Vec<_>>();
-
-    hashes.sort();
-    hashes.into_iter()
+macro_rules! maybe {
+    ($result:expr) => {{
+        match { $result } {
+            Ok(val) => val,
+            Err(err) => return err.into_compile_error(),
+        }
+    }};
 }
+use maybe;
 
-#[doc(hidden)]
-pub use ::inventory;
-
-pub use ::cosmwasm_vm_derive_impl::*;
+/// Submit the hash of the function to a global inventory
+///
+/// These hashes affect whether the Wasm cache is regenerated or not
+#[proc_macro_attribute]
+pub fn hash_function(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    hash_function::hash_function_impl(attr.into(), item.into()).into()
+}

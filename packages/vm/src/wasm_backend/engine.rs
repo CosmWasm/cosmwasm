@@ -17,7 +17,7 @@ use super::limiting_tunables::LimitingTunables;
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
-#[hash_function]
+#[hash_function(const_name = "COST_FUNCTION_HASH")]
 fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
