@@ -513,15 +513,6 @@ jobs:
           working_directory: ~/project/packages/vm-derive
           command: cargo test --locked
 
-      - run:
-          name: Build impl
-          working_directory: ~/project/packages/vm-derive-impl
-          command: cargo build --locked
-      - run:
-          name: Test impl
-          working_directory: ~/project/packages/vm-derive-impl
-          command: cargo test --locked
-
       - save_cache:
           paths:
             - /usr/local/cargo/registry
