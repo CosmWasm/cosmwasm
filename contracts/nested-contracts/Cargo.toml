@@ -20,10 +20,6 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-[features]
-# use library feature to disable all instantiate/execute/query exports
-library = []
-
 [package.metadata.scripts]
 optimize = """docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
