@@ -31,10 +31,17 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["std", "staking", "stargate", "cosmwasm_2_2"] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
+    "cosmwasm_2_2",
+    "staking",
+    "stargate",
+    "std",
+] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["stargate"] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
+    "stargate",
+] }
