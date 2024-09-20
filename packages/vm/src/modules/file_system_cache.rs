@@ -1,4 +1,3 @@
-use cosmwasm_vm_derive::read_wasmer_version;
 use std::fs;
 use std::hash::Hash;
 use std::io;
@@ -70,13 +69,12 @@ const MODULE_SERIALIZATION_VERSION: &str = "v10";
 /// Separated for sanity tests because otherwise the `OnceLock` would cache the result.
 #[inline]
 fn raw_module_version_discriminator() -> String {
-    let wasmer_version = read_wasmer_version!();
     let hashes = cosmwasm_vm_derive::collect_hashes();
 
     let mut hasher = blake3::Hasher::new();
 
     hasher.update(MODULE_SERIALIZATION_VERSION.as_bytes());
-    hasher.update(wasmer_version.as_bytes());
+    hasher.update(wasmer::VERSION.as_bytes());
 
     for hash in hashes {
         hasher.update(hash.as_bytes());

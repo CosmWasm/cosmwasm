@@ -1,5 +1,4 @@
 mod hash_function;
-mod read_wasmer_version;
 
 macro_rules! bail {
     ($span:ident, $message:literal) => {{
@@ -23,11 +22,6 @@ macro_rules! maybe {
     }};
 }
 use {bail, maybe};
-
-#[proc_macro]
-pub fn read_wasmer_version(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    read_wasmer_version::read_wasmer_version_impl(input.into()).into()
-}
 
 /// Submit the hash of the function to a global inventory
 ///
