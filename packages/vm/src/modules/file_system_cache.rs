@@ -470,7 +470,7 @@ mod tests {
         let version = raw_module_version_discriminator();
         assert_eq!(
             version,
-            "9ef3de8cb5fb770171ae3ea14db67fe25d946fef383472a18ddd75ced7bfcd4b"
+            "2cc4970565c9d957af65f1ea3511d7426e38aca57181167cc4af5daf2b68a763"
         );
     }
 }
