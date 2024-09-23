@@ -30,9 +30,9 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 cosmwasm-schema = "2.1.0"
 cosmwasm-std = { version = "2.1.0", features = [
-  "cosmwasm_1_4",
-  # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
-  # "cosmwasm_2_0",
+    "cosmwasm_1_4",
+    # Enable this if you only deploy to chains that have CosmWasm 2.0 or higher
+    # "cosmwasm_2_0",
 ] }
 cw-storage-plus = "2.0.0"
 cw2 = "2.0.0"
