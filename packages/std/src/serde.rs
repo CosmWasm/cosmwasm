@@ -70,7 +70,13 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::num::{
+        NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroU16, NonZeroU32, NonZeroU64,
+        NonZeroU8,
+    };
     use serde::Deserialize;
+
+    use crate::msgpack::{from_msgpack, to_msgpack_vec};
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
     #[serde(rename_all = "snake_case")]
@@ -181,5 +187,84 @@ mod tests {
             serialized,
             r#"{"release_all":{"image":"foo","amount":42,"time":9007199254740999,"karma":-17}}"#
         );
+    }
+
+    const MINUS_ONE_MSGPACK: &[u8] = &[0xFF];
+    const ONE_MSGPACK: &[u8] = &[0x01];
+
+    macro_rules! test_integer {
+        (signed $ty:ty) => {
+            ::paste::paste! {
+                #[test]
+                fn [<test_ $ty:snake:lower _encoding>]() {
+                    let minus_one = $ty::new(-1).unwrap();
+                    let one = $ty::new(1).unwrap();
+
+                    let serialized = to_json_string(&minus_one).unwrap();
+                    assert_eq!(serialized, "-1");
+
+                    let serialized = to_json_string(&one).unwrap();
+                    assert_eq!(serialized, "1");
+
+                    let deserialized: $ty = from_json("-1").unwrap();
+                    assert_eq!(deserialized, minus_one);
+
+                    let deserialized: $ty = from_json("1").unwrap();
+                    assert_eq!(deserialized, one);
+
+                    assert!(from_json::<$ty>("0").is_err());
+
+                    let serialized = to_msgpack_vec(&one).unwrap();
+                    assert_eq!(serialized, ONE_MSGPACK);
+
+                    let serialized = to_msgpack_vec(&minus_one).unwrap();
+                    assert_eq!(serialized, MINUS_ONE_MSGPACK);
+
+                    let deserialized: $ty = from_msgpack(ONE_MSGPACK).unwrap();
+                    assert_eq!(deserialized, one);
+                }
+            }
+        };
+
+        (unsigned $ty:ty) => {
+            ::paste::paste! {
+                #[test]
+                fn [<test_ $ty:snake:lower _encoding>]() {
+                    let one = $ty::new(1).unwrap();
+
+                    let serialized = to_json_string(&one).unwrap();
+                    assert_eq!(serialized, "1");
+
+                    let deserialized: $ty = from_json("1").unwrap();
+                    assert_eq!(deserialized, one);
+
+                    assert!(from_json::<$ty>("0").is_err());
+
+                    let serialized = to_msgpack_vec(&one).unwrap();
+                    assert_eq!(serialized, ONE_MSGPACK);
+
+                    let deserialized: $ty = from_msgpack(ONE_MSGPACK).unwrap();
+                    assert_eq!(deserialized, one);
+                }
+            }
+        };
+
+        ($($disc:ident $ty:ty),+$(,)?) => {
+            $(
+                test_integer!($disc $ty);
+            )+
+        };
+    }
+
+    test_integer! {
+        unsigned NonZeroU8,
+        unsigned NonZeroU16,
+        unsigned NonZeroU32,
+        unsigned NonZeroU64,
+
+        signed NonZeroI8,
+        signed NonZeroI16,
+        signed NonZeroI32,
+        signed NonZeroI64,
     }
 }

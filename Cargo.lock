@@ -645,6 +645,7 @@ dependencies = [
  "derive_more",
  "hex",
  "hex-literal",
+ "paste",
  "rand_core",
  "rmp-serde",
  "schemars",
