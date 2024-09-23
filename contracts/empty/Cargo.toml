@@ -34,4 +34,6 @@ cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
 schemars = "0.8.12"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
+    "iterator",
+] }

@@ -30,10 +30,15 @@ cranelift = ["cosmwasm-vm/cranelift"]
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["std", "staking"] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
+    "staking",
+    "std",
+] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = "0.8.2"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["staking"] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
+    "staking",
+] }

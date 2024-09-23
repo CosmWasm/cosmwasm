@@ -31,9 +31,15 @@ cranelift = ["cosmwasm-vm/cranelift"]
 [dependencies]
 base64 = "0.22.0"
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["cosmwasm_2_1", "iterator"] }
+cosmwasm-std = { path = "../../packages/std", features = [
+    "cosmwasm_2_1",
+    "iterator",
+] }
 hex = "0.4"
-p256 = { version = "0.13.2", default-features = false, features = ["alloc", "ecdsa"] }
+p256 = { version = "0.13.2", default-features = false, features = [
+    "alloc",
+    "ecdsa",
+] }
 rlp = "0.5"
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
@@ -41,5 +47,7 @@ sha2 = "0.10"
 sha3 = "0.10"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
+    "iterator",
+] }
 hex-literal = "0.4.1"
