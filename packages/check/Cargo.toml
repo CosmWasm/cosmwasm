@@ -11,8 +11,8 @@ license = "Apache-2.0"
 anyhow = "1.0.57"
 clap = "4"
 colored = "2"
-cosmwasm-vm = { path = "../vm", version = "=1.5.7" }
-cosmwasm-std = { path = "../std", version = "=1.5.7" }
+cosmwasm-vm = { path = "../vm", version = "=1.5.8" }
+cosmwasm-std = { path = "../std", version = "=1.5.8" }
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
