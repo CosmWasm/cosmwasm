@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
+use std::env;
 use syn::{
     parse::{Parse, ParseStream},
     parse_quote,
@@ -36,7 +37,7 @@ impl Parse for Options {
         for kv in attrs {
             if kv.path.is_ident("crate") {
                 let path_as_string: syn::LitStr = syn::parse2(kv.value.to_token_stream())?;
-                ret.crate_path = path_as_string.parse()?
+                ret.crate_path = path_as_string.parse()?;
             } else {
                 return Err(syn::Error::new_spanned(kv, "Unknown attribute"));
             }
@@ -121,10 +122,7 @@ fn expand_attributes(func: &mut ItemFn) -> syn::Result<TokenStream> {
     Ok(stream)
 }
 
-fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let mut function: syn::ItemFn = maybe!(syn::parse2(item));
-    let Options { crate_path } = maybe!(syn::parse2(attr));
-
+fn expand_bindings(crate_path: &syn::Path, mut function: syn::ItemFn) -> TokenStream {
     let attribute_code = maybe!(expand_attributes(&mut function));
 
     // The first argument is `deps`, the rest is region pointers
@@ -157,15 +155,38 @@ fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 }
 
+fn entry_point_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut function: syn::ItemFn = maybe!(syn::parse2(item));
+    let Options { crate_path } = maybe!(syn::parse2(attr));
+
+    if env::var("CARGO_PRIMARY_PACKAGE").is_ok() {
+        expand_bindings(&crate_path, function)
+    } else {
+        function
+            .attrs
+            .retain(|attr| !attr.path().is_ident("migrate_version"));
+
+        quote! { #function }
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use std::env;
+
     use proc_macro2::TokenStream;
     use quote::quote;
 
     use crate::entry_point_impl;
 
+    fn setup_environment() {
+        env::set_var("CARGO_PRIMARY_PACKAGE", "1");
+    }
+
     #[test]
     fn contract_migrate_version_on_non_migrate() {
+        setup_environment();
+
         let code = quote! {
             #[migrate_version(42)]
             fn anything_else() -> Response {
@@ -183,6 +204,8 @@ mod test {
 
     #[test]
     fn contract_migrate_version_expansion() {
+        setup_environment();
+
         let code = quote! {
             #[migrate_version(2)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
@@ -244,6 +267,8 @@ mod test {
 
     #[test]
     fn contract_migrate_version_with_const_expansion() {
+        setup_environment();
+
         let code = quote! {
             #[migrate_version(CONTRACT_VERSION)]
             fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Response {
@@ -305,6 +330,8 @@ mod test {
 
     #[test]
     fn default_expansion() {
+        setup_environment();
+
         let code = quote! {
             fn instantiate(deps: DepsMut, env: Env) -> Response {
                 // Logic here
@@ -329,6 +356,8 @@ mod test {
 
     #[test]
     fn renamed_expansion() {
+        setup_environment();
+
         let attribute = quote!(crate = "::my_crate::cw_std");
         let code = quote! {
             fn instantiate(deps: DepsMut, env: Env) -> Response {
