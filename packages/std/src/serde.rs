@@ -71,9 +71,10 @@ where
 mod tests {
     use super::*;
     use core::num::{
-        NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroU16, NonZeroU32, NonZeroU64,
-        NonZeroU8,
+        NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroU128, NonZeroU16,
+        NonZeroU32, NonZeroU64, NonZeroU8,
     };
+    use proptest::{prop_assert_eq, property_test};
     use serde::Deserialize;
 
     use crate::msgpack::{from_msgpack, to_msgpack_vec};
@@ -228,23 +229,30 @@ mod tests {
 
         (unsigned $ty:ty) => {
             ::paste::paste! {
-                #[test]
-                fn [<test_ $ty:snake:lower _encoding>]() {
-                    let one = $ty::new(1).unwrap();
+                #[property_test]
+                fn [<test_ $ty:snake:lower _encoding>](input: $ty) {
+                    let primitive = input.get();
 
-                    let serialized = to_json_string(&one).unwrap();
-                    assert_eq!(serialized, "1");
+                    // Verify that the serialization is the same as the primitive
+                    let serialized = to_json_string(&input).unwrap();
+                    let serialized_primitive = to_json_string(&primitive).unwrap();
+                    prop_assert_eq!(serialized.as_str(), serialized_primitive.as_str());
 
-                    let deserialized: $ty = from_json("1").unwrap();
-                    assert_eq!(deserialized, one);
+                    // Verify that the serialized primitive can be deserialized
+                    let deserialized: $ty = from_json(serialized_primitive).unwrap();
+                    assert_eq!(deserialized, input);
 
+                    // Verify that zero is not allowed
                     assert!(from_json::<$ty>("0").is_err());
 
-                    let serialized = to_msgpack_vec(&one).unwrap();
-                    assert_eq!(serialized, ONE_MSGPACK);
+                    // Verify that the msgpack encoding is the same as the primitive
+                    let serialized = to_msgpack_vec(&input).unwrap();
+                    let serialized_primitive = to_msgpack_vec(&primitive).unwrap();
+                    prop_assert_eq!(serialized.as_slice(), serialized_primitive.as_slice());
 
-                    let deserialized: $ty = from_msgpack(ONE_MSGPACK).unwrap();
-                    assert_eq!(deserialized, one);
+                    // Verify that the serialized primitive can be deserialized
+                    let deserialized: $ty = from_msgpack(&serialized_primitive).unwrap();
+                    prop_assert_eq!(deserialized, input);
                 }
             }
         };
@@ -261,10 +269,12 @@ mod tests {
         unsigned NonZeroU16,
         unsigned NonZeroU32,
         unsigned NonZeroU64,
+        unsigned NonZeroU128,
 
         signed NonZeroI8,
         signed NonZeroI16,
         signed NonZeroI32,
         signed NonZeroI64,
+        signed NonZeroI128,
     }
 }
