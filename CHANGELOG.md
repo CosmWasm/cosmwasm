@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.7] - 2024-09-23
+
 ### Fixed
 
 - cosmwasm-vm: Fix CWA-2024-007 and CWA-2024-008.
@@ -835,7 +837,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.6...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.7...HEAD
+[2.0.7]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.6...v2.0.7
 [2.0.6]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/CosmWasm/cosmwasm/compare/v2.0.3...v2.0.4
