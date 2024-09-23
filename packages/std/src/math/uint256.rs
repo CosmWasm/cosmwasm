@@ -5,7 +5,6 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, ConversionOverflowError,
@@ -22,6 +21,7 @@ use crate::{
 use bnum::types::U256;
 
 use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// An implementation of u256 that is using strings for JSON encoding/decoding,
@@ -47,6 +47,7 @@ use super::num_consts::NumConsts;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
 
+impl_int_serde!(Uint256);
 forward_ref_partial_eq!(Uint256, Uint256);
 
 impl Uint256 {
@@ -645,43 +646,6 @@ impl ShlAssign<u32> for Uint256 {
 impl<'a> ShlAssign<&'a u32> for Uint256 {
     fn shl_assign(&mut self, rhs: &'a u32) {
         *self = self.shl(*rhs);
-    }
-}
-
-impl Serialize for Uint256 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Uint256 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Uint256, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Uint256Visitor)
-    }
-}
-
-struct Uint256Visitor;
-
-impl<'de> de::Visitor<'de> for Uint256Visitor {
-    type Value = Uint256;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Uint256::try_from(v).map_err(|e| E::custom(format_args!("invalid Uint256 '{v}' - {e}")))
     }
 }
 
@@ -1505,14 +1469,14 @@ mod tests {
             Uint256::from(750u32)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(2u128, 3u128), Uint256::from(333u32));
         assert_eq!(
             base.multiply_ratio(222222u128, 333333u128),
             Uint256::from(333u32)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(5u128, 6u128), Uint256::from(416u32));
         assert_eq!(base.multiply_ratio(100u128, 120u128), Uint256::from(416u32));
     }

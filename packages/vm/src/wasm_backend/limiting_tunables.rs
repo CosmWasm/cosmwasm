@@ -13,7 +13,7 @@ use wasmer::{
 /// After adjusting the memory limits, it delegates all other logic
 /// to the base tunables.
 pub struct LimitingTunables<T: Tunables> {
-    /// The maxium a linear memory is allowed to be (in Wasm pages, 65 KiB each).
+    /// The maximum a linear memory is allowed to be (in Wasm pages, 65 KiB each).
     /// Since Wasmer ensures there is only none or one memory, this is practically
     /// an upper limit for the guest memory.
     limit: Pages,

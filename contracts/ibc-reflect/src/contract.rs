@@ -147,7 +147,7 @@ pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 }
 
 #[entry_point]
-/// enforces ordering and versioing constraints
+/// enforces ordering and versioning constraints
 pub fn ibc_channel_open(
     _deps: DepsMut,
     _env: Env,
@@ -250,7 +250,7 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
     Ok(Response::default())
 }
 
-// this encode an error or error message into a proper acknowledgement to the recevier
+// this encode an error or error message into a proper acknowledgement to the receiver
 fn encode_ibc_error(msg: impl Into<String>) -> Binary {
     // this cannot error, unwrap to keep the interface simple
     to_json_binary(&AcknowledgementMsg::<()>::Error(msg.into())).unwrap()

@@ -95,7 +95,7 @@ pub trait Storage {
     fn get(&self, key: &[u8]) -> BackendResult<Option<Vec<u8>>>;
 
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
-    /// Returns an interator ID that is unique within the Storage instance.
+    /// Returns an iterator ID that is unique within the Storage instance.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
@@ -178,7 +178,7 @@ pub trait Querier {
     /// types.
     ///
     /// The gas limit describes how much [CosmWasm gas] this particular query is allowed
-    /// to comsume when measured separately from the rest of the contract.
+    /// to consume when measured separately from the rest of the contract.
     /// The returned gas info (in BackendResult) can exceed the gas limit in cases
     /// where the query could not be aborted exactly at the limit.
     ///
@@ -191,7 +191,7 @@ pub trait Querier {
 }
 
 /// A result type for calling into the backend. Such a call can cause
-/// non-negligible computational cost in both success and faiure case and
+/// non-negligible computational cost in both success and failure case and
 /// must always have gas information attached.
 pub type BackendResult<T> = (core::result::Result<T, BackendError>, GasInfo);
 

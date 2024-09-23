@@ -1342,7 +1342,7 @@ arbitrary ones.
 
 - The block time in `env.block.time` is now a `Timestamp` which stores
   nanosecond precision. `env.block.time_nanos` was removed. If you need the
-  compnents as before, use
+  components as before, use
   ```rust
   let seconds = env.block.time.nanos() / 1_000_000_000;
   let nsecs = env.block.time.nanos() % 1_000_000_000;
@@ -1456,7 +1456,7 @@ arbitrary ones.
 - Contracts now support any custom error type `E: ToString + From<StdError>`.
   Previously this has been `StdError`, which you can still use. However, you can
   now create a much more structured error experience for your unit tests that
-  handels exactly the error cases of your contract. In order to get a convenient
+  handles exactly the error cases of your contract. In order to get a convenient
   implementation for `ToString` and `From<StdError>`, we use the crate
   [thiserror](https://crates.io/crates/thiserror), which needs to be added to
   the contracts dependencies in `Cargo.toml`. To create the custom error, create
@@ -1492,8 +1492,8 @@ arbitrary ones.
   - `fn handle`: `Result<HandleResponse, MyCustomError>`,
   - `fn query`: `Result<Binary, MyCustomError>`.
 
-  If one of your funtions does not use the custom error, you can continue to use
-  `StdError` as before. I.e. you can have `handle` returning
+  If one of your functions does not use the custom error, you can continue to
+  use `StdError` as before. I.e. you can have `handle` returning
   `Result<HandleResponse, MyCustomError>` and `query` returning
   `StdResult<Binary>`.
 

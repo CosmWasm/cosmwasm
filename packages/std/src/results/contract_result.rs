@@ -36,7 +36,7 @@ use crate::prelude::*;
 pub enum ContractResult<S> {
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.
-    /// This could potientially have more structure, but String is the easiest.
+    /// This could potentially have more structure, but String is the easiest.
     #[serde(rename = "error")]
     Err(String),
 }

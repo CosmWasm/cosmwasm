@@ -20,7 +20,7 @@ pub fn verify(
     //
     // - the length of the encoded bytes being correct
     // - the point being an element of the curve
-    // - the conversion from the encoded coorinate to an affine point succeeding
+    // - the conversion from the encoded coordinate to an affine point succeeding
     // - the affine point actually being a valid public key
     // - the signature could actually exist like this for a secp256r1 ECDSA key
     //

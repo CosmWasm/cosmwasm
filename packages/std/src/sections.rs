@@ -38,7 +38,7 @@ pub fn encode_sections(sections: &[&[u8]]) -> Vec<u8> {
 
 /// Splits data into the last section ("tail") and the rest.
 /// The tail's length information is cut off, such that it is ready to use.
-/// The rest is basically unparsed and contails the lengths of the remaining sections.
+/// The rest is basically unparsed and contains the lengths of the remaining sections.
 ///
 /// While the tail is copied into a new vector, the rest is only truncated such that
 /// no re-allocation is necessary.

@@ -5,7 +5,6 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
@@ -19,6 +18,7 @@ use crate::{
 use bnum::types::{I256, U256};
 
 use super::conversion::{grow_be_int, try_from_int_to_int, try_from_uint_to_int};
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// An implementation of i256 that is using strings for JSON encoding/decoding,
@@ -44,6 +44,7 @@ use super::num_consts::NumConsts;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Int256(#[schemars(with = "String")] pub(crate) I256);
 
+impl_int_serde!(Int256);
 forward_ref_partial_eq!(Int256, Int256);
 
 impl Int256 {
@@ -612,43 +613,6 @@ impl ShlAssign<u32> for Int256 {
 }
 forward_ref_op_assign!(impl ShlAssign, shl_assign for Int256, u32);
 
-impl Serialize for Int256 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Int256 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Int256, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Int256Visitor)
-    }
-}
-
-struct Int256Visitor;
-
-impl<'de> de::Visitor<'de> for Int256Visitor {
-    type Value = Int256;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Int256::try_from(v).map_err(|e| E::custom(format_args!("invalid Int256 '{v}' - {e}")))
-    }
-}
-
 impl<A> core::iter::Sum<A> for Int256
 where
     Self: Add<A, Output = Self>,
@@ -1106,7 +1070,7 @@ mod tests {
             Int256::from_i128(750)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(2i128, 3i128).unwrap(),
             Int256::from_i128(333)
@@ -1116,7 +1080,7 @@ mod tests {
             Int256::from_i128(333)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(5i128, 6i128).unwrap(),
             Int256::from_i128(416)

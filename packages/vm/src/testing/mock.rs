@@ -35,7 +35,7 @@ pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockApi, MockStorage, 
 }
 
 /// Initializes the querier along with the mock_dependencies.
-/// Sets all balances provided (yoy must explicitly set contract balance if desired)
+/// Sets all balances provided (you must explicitly set contract balance if desired)
 pub fn mock_backend_with_balances(
     balances: &[(&str, &[Coin])],
 ) -> Backend<MockApi, MockStorage, MockQuerier> {
@@ -48,7 +48,7 @@ pub fn mock_backend_with_balances(
 
 /// Zero-pads all human addresses to make them fit the canonical_length and
 /// trims off zeros for the reverse operation.
-/// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
+/// This is not really smart, but allows us to see a difference (and consistent length for canonical addresses).
 #[derive(Copy, Clone)]
 pub struct MockApi(MockApiImpl);
 

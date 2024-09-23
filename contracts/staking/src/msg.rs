@@ -19,7 +19,7 @@ pub struct InstantiateMsg {
     /// this is how much the owner takes as a cut when someone unbonds
     /// TODO
     pub exit_tax: Decimal,
-    /// This is the minimum amount we will pull out to reinvest, as well as a minumum
+    /// This is the minimum amount we will pull out to reinvest, as well as a minimum
     /// that can be unbonded (to avoid needless staking tx)
     pub min_withdrawal: Uint128,
 }
@@ -99,7 +99,7 @@ pub struct InvestmentResponse {
     pub exit_tax: Decimal,
     /// All tokens are bonded to this validator
     pub validator: String,
-    /// This is the minimum amount we will pull out to reinvest, as well as a minumum
+    /// This is the minimum amount we will pull out to reinvest, as well as a minimum
     /// that can be unbonded (to avoid needless staking tx)
     pub min_withdrawal: Uint128,
 }

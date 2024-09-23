@@ -20,7 +20,7 @@ pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
     ///
-    /// This allows you to get a unique transaction indentifier in this chain
+    /// This allows you to get a unique transaction identifier in this chain
     /// using the pair (`env.block.height`, `env.transaction.index`).
     ///
     pub index: u32,

@@ -465,7 +465,7 @@ mod tests {
         let res = reply(deps.as_mut(), mock_env(), the_reply).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // query for a non-existant id
+        // query for a non-existent id
         let qres = query(
             deps.as_ref(),
             mock_env(),

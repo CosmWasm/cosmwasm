@@ -46,6 +46,9 @@ and this project adheres to
 - cosmwasm-vm: Let `mock_env` return a contract address that is valid bech32 and
   uses the same bech32 prefix as `MockApi`; Change `MOCK_CONTRACT_ADDR` value to
   match the contract address from `mock_env`. ([#2211])
+- cosmwasm-derive: Automatically detect whether the package is a dependency or
+  the primary package, only expanding entrypoints for the primary package. This
+  effectively deprecates the usage of the `library` feature pattern. ([#2246])
 - cosmwasm-std: Deprecate `BankQuery::AllBalances` and `IbcQuery::ListChannels`.
   Both are inherently problematic to use because the returned entries are
   unbounded. ([#2247])
@@ -54,6 +57,7 @@ and this project adheres to
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
+[#2246]: https://github.com/CosmWasm/cosmwasm/pull/2246
 [#2247]: https://github.com/CosmWasm/cosmwasm/pull/2247
 [#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
 
@@ -771,7 +775,7 @@ and this project adheres to
 - all: Bump a few dependency versions to make the codebase compile with
   `-Zminimal-versions` ([#1465]).
 - cosmwasm-profiler: Package was removed 🪦. It served its job showing us that
-  we cannot properly measure different runtimes for differet Wasm opcodes.
+  we cannot properly measure different runtimes for different Wasm opcodes.
 - cosmwasm-schema: schema generation is now locked to produce strictly
   `draft-07` schemas
 - cosmwasm-schema: `QueryResponses` derive now sets the `JsonSchema` trait bound

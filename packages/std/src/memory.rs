@@ -142,7 +142,7 @@ where
         if TypeId::of::<O>() == TypeId::of::<Owned>() {
             let region_start = self.offset as *mut u8;
 
-            // This case is explicitely disallowed by Vec
+            // This case is explicitly disallowed by Vec
             // "The pointer will never be null, so this type is null-pointer-optimized."
             assert!(!region_start.is_null(), "Region starts at null pointer");
 

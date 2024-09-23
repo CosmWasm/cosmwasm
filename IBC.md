@@ -25,7 +25,7 @@ pub enum IbcMsg {
     /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
     /// module to.
     Transfer {
-        /// exisiting channel to send the tokens over
+        /// existing channel to send the tokens over
         channel_id: String,
         /// address on the remote chain to receive these tokens
         to_address: String,
@@ -385,7 +385,7 @@ produced 3 suggestions on how to handle errors and rollbacks _inside
    `submessage` and capture the error. This approach requires we use _exactly
    one_ submessage. If we have multiple, we may commit #1 and rollback #2 (see
    example 3 for that case). The main point is moving `messages` to
-   `submessages` and reformating the error in `reply`. Note that if you set the
+   `submessages` and reformatting the error in `reply`. Note that if you set the
    `Response.data` field in `reply` it will override the acknowledgement
    returned from the parent call. (See
    [bottom of reply section](./SEMANTICS.md#handling-the-reply)). You can see a

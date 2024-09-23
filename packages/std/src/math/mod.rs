@@ -30,6 +30,88 @@ pub use uint256::Uint256;
 pub use uint512::Uint512;
 pub use uint64::Uint64;
 
+macro_rules! impl_int_serde {
+    ($ty:ty) => {
+        impl ::serde::Serialize for $ty {
+            /// Serializes as an integer string using base 10.
+            ///
+            /// We consistently serialize all `UintXXX` and `IntYYY` types as strings in JSON
+            /// to ensure the best possible compatibility with clients. E.g. JavaScript and jq
+            /// only support up to ~53bit numbers without losing precision, making it hard to use
+            /// serialized `u64`s on other systems than Rust or Go. `Uint64`/`Int64` ensure the full
+            /// 64 bit range is supported. For larger integers, the use of strings is pretty much the
+            /// only reasonable way to store them in JSON.
+            ///
+            /// For binary encodings (notably MessagePack) strings are used too. The reason is that
+            /// in MessagePack integers are limited to 64 bit and we strive for consistent encoding
+            /// within the `UintXXX`/`IntYYY` family. Also for small to mid sized values, decimal strings
+            /// are often more compact than a fixed-length binary encoding.
+            ///
+            /// ## Examples
+            ///
+            /// Serialize to JSON:
+            ///
+            /// ```
+            /// # use cosmwasm_std::{to_json_vec, Uint64};
+            /// let value = Uint64::new(17);
+            /// let serialized = to_json_vec(&value).unwrap();
+            /// assert_eq!(serialized, b"\"17\"");
+            /// ```
+            ///
+            /// Serialize to MessagePack:
+            ///
+            /// ```
+            /// # use cosmwasm_std::{to_msgpack_vec, Uint64};
+            /// let value = Uint64::new(17);
+            /// let serialized = to_msgpack_vec(&value).unwrap();
+            /// assert_eq!(serialized, [0b10100000 ^ 2, b'1', b'7']); // string of lengths 2 with value "17"
+            /// ```
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: ::serde::ser::Serializer,
+            {
+                serializer.serialize_str(&self.to_string())
+            }
+        }
+
+        impl<'de> ::serde::Deserialize<'de> for $ty {
+            /// Deserializes from an integer string using base 10.
+            ///
+            /// See the [`Serialize` documentation](#method.serialize) for a few more words
+            /// on the encoding of the `UintXXX`/`IntYYY` family.
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: ::serde::de::Deserializer<'de>,
+            {
+                struct IntVisitor;
+
+                impl<'de> ::serde::de::Visitor<'de> for IntVisitor {
+                    type Value = $ty;
+
+                    fn expecting(
+                        &self,
+                        formatter: &mut ::core::fmt::Formatter,
+                    ) -> ::core::fmt::Result {
+                        formatter.write_str("string-encoded integer")
+                    }
+
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: ::serde::de::Error,
+                    {
+                        <_>::try_from(v).map_err(|e| {
+                            E::custom(format_args!("invalid {} '{v}' - {e}", stringify!($t)))
+                        })
+                    }
+                }
+
+                deserializer.deserialize_str(IntVisitor)
+            }
+        }
+    };
+}
+use impl_int_serde;
+
 #[cfg(test)]
 mod tests {
     use super::*;
