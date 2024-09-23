@@ -52,11 +52,14 @@ and this project adheres to
 - cosmwasm-std: Deprecate `BankQuery::AllBalances` and `IbcQuery::ListChannels`.
   Both are inherently problematic to use because the returned entries are
   unbounded. ([#2247])
+- cosmwasm-vm: Upgrade Wasmer to 4.3.7; Bump `MODULE_SERIALIZATION_VERSION` to
+  "v20". ([#2255])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
 [#2246]: https://github.com/CosmWasm/cosmwasm/pull/2246
 [#2247]: https://github.com/CosmWasm/cosmwasm/pull/2247
+[#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
 
 ## [2.1.3] - 2024-08-08
 
