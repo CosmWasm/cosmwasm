@@ -25,12 +25,6 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-[features]
-# Add feature "cranelift" to default if you need 32 bit or ARM support
-default = []
-# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
-cranelift = ["cosmwasm-vm/cranelift"]
-
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 # cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`

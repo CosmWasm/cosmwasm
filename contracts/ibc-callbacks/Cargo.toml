@@ -22,11 +22,6 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-[features]
-default = []
-# Use cranelift backend instead of singlepass.
-cranelift = ["cosmwasm-vm/cranelift"]
-
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = [

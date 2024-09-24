@@ -28,10 +28,12 @@ iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
 # this enables all stargate-related functionality, including the ibc entry points
 stargate = ["cosmwasm-std/stargate"]
-# Use cranelift backend instead of singlepass
-cranelift = ["wasmer/cranelift"]
 # For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
+
+# Legacy no-op feature. This is kept for compatibility with older contracts.
+# Delete this with the next major release.
+cranelift = []
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options

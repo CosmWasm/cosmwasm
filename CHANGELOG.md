@@ -54,12 +54,16 @@ and this project adheres to
   unbounded. ([#2247])
 - cosmwasm-vm: Upgrade Wasmer to 4.3.7; Bump `MODULE_SERIALIZATION_VERSION` to
   "v20". ([#2255])
+- cosmwasm-vm: Effectively remove the `cranelift` feature. It still exists but
+  is only a no-op for semver compatibility. It will now unconditionally use the
+  singlepass compiler. ([#2260])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
 [#2246]: https://github.com/CosmWasm/cosmwasm/pull/2246
 [#2247]: https://github.com/CosmWasm/cosmwasm/pull/2247
 [#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
+[#2260]: https://github.com/CosmWasm/cosmwasm/pull/2260
 
 ## [2.1.3] - 2024-08-08
 
