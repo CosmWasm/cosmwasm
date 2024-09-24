@@ -460,7 +460,6 @@ dependencies = [
 name = "cosmwasm-derive"
 version = "1.5.8"
 dependencies = [
- "cosmwasm-std",
  "syn 1.0.109",
 ]
 
