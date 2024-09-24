@@ -15,7 +15,7 @@ use maybe;
 /// # Example
 ///
 /// ```rust
-/// # use vm_derive::hash_function;
+/// # use cosmwasm_vm_derive::hash_function;
 /// #[hash_function(const_name = "HASH")]
 /// fn foo() {
 ///    println!("Hello, world!");
