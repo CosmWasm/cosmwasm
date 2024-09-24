@@ -491,7 +491,7 @@ mod tests {
     }
 
     #[test]
-    fn accronym_replacement_works() {
+    fn acronym_replacement_works() {
         #[cw_serde]
         struct IbcStruct {
             a: IbcSubStruct,

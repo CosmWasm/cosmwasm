@@ -147,7 +147,7 @@ pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 }
 
 #[entry_point]
-/// enforces ordering and versioing constraints
+/// enforces ordering and versioning constraints
 pub fn ibc_channel_open(
     _deps: DepsMut,
     _env: Env,
@@ -220,6 +220,7 @@ pub fn ibc_channel_close(
     remove_account(deps.storage, channel_id);
 
     // transfer current balance if any (steal the money)
+    #[allow(deprecated)]
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
     let messages: Vec<SubMsg<Empty>> = if !amount.is_empty() {
         let bank_msg = BankMsg::Send {
@@ -249,7 +250,7 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
     Ok(Response::default())
 }
 
-// this encode an error or error message into a proper acknowledgement to the recevier
+// this encode an error or error message into a proper acknowledgement to the receiver
 fn encode_ibc_error(msg: impl Into<String>) -> Binary {
     // this cannot error, unwrap to keep the interface simple
     to_json_binary(&AcknowledgementMsg::<()>::Error(msg.into())).unwrap()
@@ -303,6 +304,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
 // processes PacketMsg::Balances variant
 fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
     let account = load_account(deps.storage, &caller)?;
+    #[allow(deprecated)]
     let balances = deps.querier.query_all_balances(&account)?;
     let response = BalancesResponse {
         account: account.into(),
@@ -656,6 +658,7 @@ mod tests {
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
         let res: ListAccountsResponse = from_json(raw).unwrap();
         assert_eq!(1, res.accounts.len());
+        #[allow(deprecated)]
         let balance = deps.as_ref().querier.query_all_balances(&account).unwrap();
         assert_eq!(funds, balance);
 

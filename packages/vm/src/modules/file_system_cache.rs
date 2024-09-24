@@ -63,7 +63,10 @@ use super::CachedModule;
 ///   Module compatibility between Wasmer versions is not guaranteed.
 /// - **v10**:<br>
 ///   New version because of Metering middleware change.
-const MODULE_SERIALIZATION_VERSION: &str = "v10";
+/// - **v20**:<br>
+///   New version because of Wasmer 4.3.3 -> 4.3.7 upgrade.
+///   Module compatibility between Wasmer versions is not guaranteed.
+const MODULE_SERIALIZATION_VERSION: &str = "v20";
 
 /// Function that actually does the heavy lifting of creating the module version discriminator.
 ///

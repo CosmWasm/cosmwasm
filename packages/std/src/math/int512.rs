@@ -5,7 +5,6 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
@@ -18,6 +17,7 @@ use crate::{
 use bnum::types::{I512, U512};
 
 use super::conversion::{grow_be_int, try_from_uint_to_int};
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// An implementation of i512 that is using strings for JSON encoding/decoding,
@@ -47,6 +47,7 @@ use super::num_consts::NumConsts;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Int512(#[schemars(with = "String")] pub(crate) I512);
 
+impl_int_serde!(Int512);
 forward_ref_partial_eq!(Int512, Int512);
 
 impl Int512 {
@@ -610,43 +611,6 @@ impl ShlAssign<u32> for Int512 {
     }
 }
 forward_ref_op_assign!(impl ShlAssign, shl_assign for Int512, u32);
-
-impl Serialize for Int512 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Int512 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Int512, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Int512Visitor)
-    }
-}
-
-struct Int512Visitor;
-
-impl<'de> de::Visitor<'de> for Int512Visitor {
-    type Value = Int512;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Int512::try_from(v).map_err(|e| E::custom(format!("invalid Int512 '{v}' - {e}")))
-    }
-}
 
 impl<A> core::iter::Sum<A> for Int512
 where

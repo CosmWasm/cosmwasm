@@ -82,6 +82,6 @@ type IBCTimeoutBlock struct {
 	// the height within the given revision
 	Height uint64 `json:"height"`
 	// the version that the client is currently on
-	// (eg. after reseting the chain this could increment 1 as height drops to 0)
+	// (eg. after resetting the chain this could increment 1 as height drops to 0)
 	Revision uint64 `json:"revision"`
 }

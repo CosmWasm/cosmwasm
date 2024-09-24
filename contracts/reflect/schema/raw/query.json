@@ -163,6 +163,7 @@
         },
         {
           "description": "This calls into the native bank module for all denominations. Note that this may be much more expensive than Balance and should be avoided if possible. Return value is AllBalanceResponse.",
+          "deprecated": true,
           "type": "object",
           "required": [
             "all_balances"
@@ -375,6 +376,7 @@
         },
         {
           "description": "Lists all channels that are bound to a given port. If `port_id` is omitted, this list all channels bound to the contract's port.\n\nReturns a `ListChannelsResponse`.",
+          "deprecated": true,
           "type": "object",
           "required": [
             "list_channels"

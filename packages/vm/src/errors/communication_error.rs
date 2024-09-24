@@ -4,7 +4,7 @@ use thiserror::Error;
 use super::region_validation_error::RegionValidationError;
 use crate::memory::Region;
 
-/// An error in the communcation between contract and host. Those happen around imports and exports.
+/// An error in the communication between contract and host. Those happen around imports and exports.
 #[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum CommunicationError {

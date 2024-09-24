@@ -52,7 +52,7 @@ impl fmt::Display for Coin {
         // We use the formatting without a space between amount and denom,
         // which is common in the Cosmos SDK ecosystem:
         // https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/types/coin.go#L643-L645
-        // For communication to end users, Coin needs to transformed anways (e.g. convert integer uatom to decimal ATOM).
+        // For communication to end users, Coin needs to transformed anyway (e.g. convert integer uatom to decimal ATOM).
         write!(f, "{}{}", self.amount, self.denom)
     }
 }

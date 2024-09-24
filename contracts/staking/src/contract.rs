@@ -192,7 +192,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
     let owner_raw = deps.api.addr_canonicalize(invest.owner.as_str())?;
 
-    // calculate tax and remainer to unbond
+    // calculate tax and remainder to unbond
     let tax = amount.mul_floor(invest.exit_tax);
 
     // deduct all from the account

@@ -164,7 +164,7 @@ pub trait Api {
     /// But that might change. So your contract should not make assumptions on the size.
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
 
-    /// Takes a canonical address and returns a human readble address.
+    /// Takes a canonical address and returns a human readable address.
     /// This is the inverse of [`addr_canonicalize`].
     ///
     /// [`addr_canonicalize`]: Api::addr_canonicalize
@@ -420,7 +420,9 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         Ok(res.amount)
     }
 
+    #[deprecated]
     pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
+        #[allow(deprecated)]
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -706,6 +708,7 @@ mod tests {
         let balance = wrapper.query_balance("foo", "ELF").unwrap();
         assert_eq!(balance, coin(123, "ELF"));
 
+        #[allow(deprecated)]
         let all_balances = wrapper.query_all_balances("foo").unwrap();
         assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }

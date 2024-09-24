@@ -287,7 +287,7 @@ fn reply_and_query() {
     let res: Response = reply(&mut deps, mock_env(), the_reply).unwrap();
     assert_eq!(0, res.messages.len());
 
-    // query for a non-existant id
+    // query for a non-existent id
     let qres = query(&mut deps, mock_env(), QueryMsg::SubMsgResult { id: 65432 });
     assert!(qres.is_err());
 

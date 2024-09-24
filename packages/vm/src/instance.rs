@@ -160,7 +160,7 @@ where
         );
 
         // Four parameters, "ps", "qs", "r", "s", which all represent elements on the BLS12-381 curve (where "ps" and "r" are elements of the G1 subgroup, and "qs" and "s" elements of G2).
-        // The "ps" and "qs" are interpreted as a continous list of points in the subgroups G1 and G2 respectively.
+        // The "ps" and "qs" are interpreted as a continuous list of points in the subgroups G1 and G2 respectively.
         // Returns a single u32 which signifies the validity of the pairing equality.
         // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
         env_imports.insert(
@@ -978,6 +978,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn with_querier_works_readonly() {
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];

@@ -11,7 +11,7 @@ use crate::{BackendError, BackendResult, GasInfo, Querier};
 const GAS_COST_QUERY_FLAT: u64 = 100_000;
 /// Gas per request byte
 const GAS_COST_QUERY_REQUEST_MULTIPLIER: u64 = 0;
-/// Gas per reponse byte
+/// Gas per response byte
 const GAS_COST_QUERY_RESPONSE_MULTIPLIER: u64 = 100;
 
 /// MockQuerier holds an immutable table of bank balances
@@ -132,6 +132,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn bank_querier_all_balances() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -193,6 +194,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn bank_querier_missing_account() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];

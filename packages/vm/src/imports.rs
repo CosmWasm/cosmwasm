@@ -2533,6 +2533,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn do_query_chain_works() {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);

@@ -5,7 +5,6 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     ConversionOverflowError, DivideByZeroError, OverflowError, OverflowOperation, StdError,
@@ -20,6 +19,7 @@ use crate::{
 use bnum::types::U512;
 
 use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// An implementation of u512 that is using strings for JSON encoding/decoding,
@@ -49,6 +49,7 @@ use super::num_consts::NumConsts;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Uint512(#[schemars(with = "String")] pub(crate) U512);
 
+impl_int_serde!(Uint512);
 forward_ref_partial_eq!(Uint512, Uint512);
 
 impl Uint512 {
@@ -620,43 +621,6 @@ impl ShlAssign<u32> for Uint512 {
 impl<'a> ShlAssign<&'a u32> for Uint512 {
     fn shl_assign(&mut self, rhs: &'a u32) {
         *self = self.shl(*rhs);
-    }
-}
-
-impl Serialize for Uint512 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Uint512 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Uint512, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Uint512Visitor)
-    }
-}
-
-struct Uint512Visitor;
-
-impl<'de> de::Visitor<'de> for Uint512Visitor {
-    type Value = Uint512;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Uint512::try_from(v).map_err(|e| E::custom(format_args!("invalid Uint512 '{v}' - {e}")))
     }
 }
 

@@ -102,7 +102,7 @@ fn execute_message_loop(env: Env) -> Result<Response, ContractError> {
 
 #[allow(unused_variables)]
 fn execute_allocate_large_memory(pages: u32) -> Result<Response, ContractError> {
-    // We create memory pages explicitely since Rust's default allocator seems to be clever enough
+    // We create memory pages explicitly since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
 

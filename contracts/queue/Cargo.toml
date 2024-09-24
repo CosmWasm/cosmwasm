@@ -1,7 +1,10 @@
 [package]
 name = "queue"
 version = "0.0.0"
-authors = ["Simon Warta <webmaster128@users.noreply.github.com>", "Ethan Frey <ethanfrey@users.noreply.github.com>"]
+authors = [
+    "Ethan Frey <ethanfrey@users.noreply.github.com>",
+    "Simon Warta <webmaster128@users.noreply.github.com>",
+]
 edition = "2021"
 publish = false
 license = "Apache-2.0"
@@ -22,20 +25,17 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-[features]
-# Add feature "cranelift" to default if you need 32 bit or ARM support
-default = []
-# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
-cranelift = ["cosmwasm-vm/cranelift"]
-# this is to demonstrate conditional entry-points for cosmwasm-plus style
-library = []
-
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 # cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`
-cosmwasm-std = { path = "../../packages/std", features = ["iterator", "cosmwasm_1_4"] }
+cosmwasm-std = { path = "../../packages/std", features = [
+    "cosmwasm_1_4",
+    "iterator",
+] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = [
+    "iterator",
+] }

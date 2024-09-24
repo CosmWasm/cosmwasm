@@ -47,9 +47,6 @@ fn cost(operator: &Operator) -> u64 {
 
 /// Use Cranelift as the compiler backend if the feature is enabled
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
-    #[cfg(feature = "cranelift")]
-    return wasmer::Cranelift::new();
-    #[cfg(not(feature = "cranelift"))]
     wasmer::Singlepass::new()
 }
 

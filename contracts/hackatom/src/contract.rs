@@ -102,6 +102,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
 
     if info.sender == state.verifier {
         let to_addr = state.beneficiary;
+        #[allow(deprecated)]
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
         let resp = Response::new()
@@ -157,7 +158,7 @@ fn do_message_loop(env: Env) -> Result<Response, HackError> {
 
 #[allow(unused_variables)]
 fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
-    // We create memory pages explicitely since Rust's default allocator seems to be clever enough
+    // We create memory pages explicitly since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
 
@@ -268,6 +269,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     })
 }
 
+#[allow(deprecated)]
 fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
     deps.querier
         .query(&BankQuery::AllBalances { address }.into())
