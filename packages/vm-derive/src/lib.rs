@@ -10,9 +10,17 @@ macro_rules! maybe {
 }
 use maybe;
 
-/// Submit the hash of the function to a global inventory
-///
-/// These hashes affect whether the Wasm cache is regenerated or not
+/// Hash the function
+/// 
+/// # Example
+/// 
+/// ```rust
+/// # use vm_derive::hash_function;
+/// #[hash_function(const_name = "HASH")]
+/// fn foo() {
+///    println!("Hello, world!");
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn hash_function(
     attr: proc_macro::TokenStream,
