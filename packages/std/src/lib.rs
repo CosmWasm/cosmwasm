@@ -132,12 +132,6 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing;
 
-<<<<<<< HEAD
-// Re-exports
-
-=======
-pub use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
-
 /// This attribute macro generates the boilerplate required to call into the
 /// contract-specific logic from the entry-points to the Wasm module.
 ///
@@ -185,42 +179,4 @@ pub use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 ///
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
-///
-/// ## Set the version of the state of your contract
-///
-/// The VM will use this as a hint whether it needs to run the migrate function of your contract or not.
-///
-/// ```
-/// # use cosmwasm_std::{
-/// #     DepsMut, entry_point, Env, MigrateInfo,
-/// #     Response, StdResult,
-/// # };
-/// #
-/// # type MigrateMsg = ();
-/// #[entry_point]
-/// #[migrate_version(2)]
-/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg, migrate_info: MigrateInfo) -> StdResult<Response> {
-///     todo!();
-/// }
-/// ```
-///
-/// It is also possible to assign the migrate version number to
-/// a given constant name:
-///
-/// ```
-/// # use cosmwasm_std::{
-/// #     DepsMut, entry_point, Env, MigrateInfo,
-/// #     Response, StdResult,
-/// # };
-/// #
-/// # type MigrateMsg = ();
-/// const CONTRACT_VERSION: u64 = 66;
-///
-/// #[entry_point]
-/// #[migrate_version(CONTRACT_VERSION)]
-/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg, migrate_info: MigrateInfo) -> StdResult<Response> {
-///     todo!();
-/// }
-/// ```
->>>>>>> e230048f1 (Document entry_point in cosmwasm-std instead of derive)
 pub use cosmwasm_derive::entry_point;
