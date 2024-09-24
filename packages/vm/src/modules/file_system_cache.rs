@@ -87,9 +87,21 @@ fn raw_module_version_discriminator() -> String {
     hasher.finalize().to_hex().to_string()
 }
 
-/// Bump this version whenever the module system changes in a way
+/// This version __MUST__ change whenever the module system changes in a way
 /// that old stored modules would be corrupt when loaded in the new system.
 /// This needs to be done e.g. when switching between the jit/native engine.
+///
+/// By default, this derived by performing the following operation:
+///
+/// ```ignore
+/// BLAKE3(
+///   manual module version,
+///   wasmer version requirement,
+///   BLAKE3(cost_fn)
+/// )
+/// ```
+///
+/// If anything else changes, you must change the manual module version.
 ///
 /// The string is used as a folder and should be named in a way that is
 /// easy to interpret for system admins. It should allow easy clearing

@@ -11,9 +11,9 @@ macro_rules! maybe {
 use maybe;
 
 /// Hash the function
-/// 
+///
 /// # Example
-/// 
+///
 /// ```rust
 /// # use vm_derive::hash_function;
 /// #[hash_function(const_name = "HASH")]
