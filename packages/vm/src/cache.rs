@@ -178,6 +178,11 @@ where
         })
     }
 
+    /// Update the limits for Wasm module validation
+    pub fn set_wasm_limits(&mut self, limits: WasmLimits) {
+        self.wasm_limits = limits;
+    }
+
     /// If `unchecked` is true, the filesystem cache will use the `*_unchecked` wasmer functions for
     /// loading modules from disk.
     pub fn set_module_unchecked(&mut self, unchecked: bool) {
