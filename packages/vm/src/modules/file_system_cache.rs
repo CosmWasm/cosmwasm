@@ -103,10 +103,6 @@ fn raw_module_version_discriminator() -> String {
 ///
 /// If anything else changes, you must change the manual module version.
 ///
-/// The string is used as a folder and should be named in a way that is
-/// easy to interpret for system admins. It should allow easy clearing
-/// of old versions.
-///
 /// See https://github.com/wasmerio/wasmer/issues/2781 for more information
 /// on Wasmer's module stability concept.
 #[inline]
