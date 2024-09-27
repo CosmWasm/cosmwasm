@@ -481,7 +481,7 @@ mod tests {
         let version = raw_module_version_discriminator();
         assert_eq!(
             version,
-            "ccb684857ad601a472678fe20c863ee289157dc01b6f3c67c50886beae630ae8"
+            "b2a230627e6fd9c14c45aabcf781b58d873dd251fcb004d30e081c8407cad5af"
         );
     }
 }
