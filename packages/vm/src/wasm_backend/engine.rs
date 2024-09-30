@@ -1,3 +1,4 @@
+use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
 use wasmer::NativeEngineExt;
 use wasmer::{
@@ -16,6 +17,7 @@ use super::metering::{is_accounting, Metering};
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
+#[hash_function(const_name = "COST_FUNCTION_HASH")]
 fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).

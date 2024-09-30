@@ -57,6 +57,8 @@ and this project adheres to
 - cosmwasm-vm: Effectively remove the `cranelift` feature. It still exists but
   is only a no-op for semver compatibility. It will now unconditionally use the
   singlepass compiler. ([#2260])
+- cosmwasm-vm: Automatically derive cache version from function hashes and the
+  Wasmer version ([#2250])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
@@ -64,6 +66,7 @@ and this project adheres to
 [#2247]: https://github.com/CosmWasm/cosmwasm/pull/2247
 [#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
 [#2260]: https://github.com/CosmWasm/cosmwasm/pull/2260
+[#2250]: https://github.com/CosmWasm/cosmwasm/pull/2250
 
 ## [2.1.3] - 2024-08-08
 

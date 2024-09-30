@@ -3,6 +3,7 @@ use std::hash::Hash;
 use std::io;
 use std::panic::catch_unwind;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 use thiserror::Error;
 
 use wasmer::{DeserializeError, Module, Target};
@@ -13,21 +14,20 @@ use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::modules::current_wasmer_module_version;
 use crate::wasm_backend::make_runtime_engine;
+use crate::wasm_backend::COST_FUNCTION_HASH;
 use crate::Size;
 
 use super::cached_module::engine_size_estimate;
 use super::CachedModule;
 
-/// Bump this version whenever the module system changes in a way
-/// that old stored modules would be corrupt when loaded in the new system.
-/// This needs to be done e.g. when switching between the jit/native engine.
+/// This is a value you can manually modify to the cache.
+/// You normally _do not_ need to change this value yourself.
 ///
-/// The string is used as a folder and should be named in a way that is
-/// easy to interpret for system admins. It should allow easy clearing
-/// of old versions.
+/// Cases where you might need to update it yourself, is things like when the memory layout of some types in Rust [std] changes.
 ///
-/// See https://github.com/wasmerio/wasmer/issues/2781 for more information
-/// on Wasmer's module stability concept.
+/// ---
+///
+/// Now follows the legacy documentation of this value:
 ///
 /// ## Version history:
 /// - **v1**:<br>
@@ -67,6 +67,50 @@ use super::CachedModule;
 ///   New version because of Wasmer 4.3.3 -> 4.3.7 upgrade.
 ///   Module compatibility between Wasmer versions is not guaranteed.
 const MODULE_SERIALIZATION_VERSION: &str = "v20";
+
+/// Function that actually does the heavy lifting of creating the module version discriminator.
+///
+/// Separated for sanity tests because otherwise the `OnceLock` would cache the result.
+#[inline]
+fn raw_module_version_discriminator() -> String {
+    let hashes = [COST_FUNCTION_HASH];
+
+    let mut hasher = blake3::Hasher::new();
+
+    hasher.update(MODULE_SERIALIZATION_VERSION.as_bytes());
+    hasher.update(wasmer::VERSION.as_bytes());
+
+    for hash in hashes {
+        hasher.update(hash);
+    }
+
+    hasher.finalize().to_hex().to_string()
+}
+
+/// This version __MUST__ change whenever the module system changes in a way
+/// that old stored modules would be corrupt when loaded in the new system.
+/// This needs to be done e.g. when switching between the jit/native engine.
+///
+/// By default, this derived by performing the following operation:
+///
+/// ```ignore
+/// BLAKE3(
+///   manual module version,
+///   wasmer version requirement,
+///   BLAKE3(cost_fn)
+/// )
+/// ```
+///
+/// If anything else changes, you must change the manual module version.
+///
+/// See https://github.com/wasmerio/wasmer/issues/2781 for more information
+/// on Wasmer's module stability concept.
+#[inline]
+fn module_version_discriminator() -> &'static str {
+    static DISCRIMINATOR: OnceLock<String> = OnceLock::new();
+
+    DISCRIMINATOR.get_or_init(raw_module_version_discriminator)
+}
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -235,7 +279,10 @@ fn target_id(target: &Target) -> String {
 
 /// The path to the latest version of the modules.
 fn modules_path(base_path: &Path, wasmer_module_version: u32, target: &Target) -> PathBuf {
-    let version_dir = format!("{MODULE_SERIALIZATION_VERSION}-wasmer{wasmer_module_version}");
+    let version_dir = format!(
+        "{}-wasmer{wasmer_module_version}",
+        module_version_discriminator()
+    );
     let target_dir = target_id(target);
     base_path.join(version_dir).join(target_dir)
 }
@@ -317,9 +364,11 @@ mod tests {
         let module = compile(&engine, &wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
+        let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/v20-wasmer7/**/{}.module",
+            "{}/{}-wasmer7/**/{}.module",
             tmp_dir.path().to_string_lossy(),
+            discriminator,
             checksum
         ))
         .expect("Failed to read glob pattern");
@@ -398,13 +447,41 @@ mod tests {
         };
         let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
+        let descriminator = raw_module_version_discriminator();
+
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
-                "modules\\v20-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                format!(
+                    "modules\\{descriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                )
             } else {
-                "modules/v20-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                format!(
+                    "modules/{descriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                )
             }
+            .as_str()
+        );
+    }
+
+    #[test]
+    fn module_version_discriminator_stays_the_same() {
+        let v1 = raw_module_version_discriminator();
+        let v2 = raw_module_version_discriminator();
+        let v3 = raw_module_version_discriminator();
+        let v4 = raw_module_version_discriminator();
+
+        assert_eq!(v1, v2);
+        assert_eq!(v2, v3);
+        assert_eq!(v3, v4);
+    }
+
+    #[test]
+    fn module_version_static() {
+        let version = raw_module_version_discriminator();
+        assert_eq!(
+            version,
+            "b2a230627e6fd9c14c45aabcf781b58d873dd251fcb004d30e081c8407cad5af"
         );
     }
 }
