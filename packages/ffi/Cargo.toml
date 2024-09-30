@@ -1,0 +1,13 @@
+[package]
+name = "cosmwasm-ffi"
+edition = "2021"
+version.workspace = true
+publish = false
+
+[lib]
+name = "cwffi"
+crate-type = ["cdylib"]
+
+[dependencies]
+cosmwasm-vm = { version = "=2.1.3", path = "../vm" }
+uniffi = "0.28.1"
