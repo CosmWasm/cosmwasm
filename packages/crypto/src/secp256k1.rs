@@ -11,7 +11,7 @@ use crate::identity_digest::Identity256;
 
 /// ECDSA secp256k1 implementation.
 ///
-/// This function verifies message hashes (typically, hashed unsing SHA-256) against a signature,
+/// This function verifies message hashes (typically, hashed using SHA-256) against a signature,
 /// with the public key of the signer, using the secp256k1 elliptic curve digital signature
 /// parametrization / algorithm.
 ///
@@ -217,7 +217,7 @@ mod tests {
         // Signing
         let secret_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
 
-        // Note: the signature type must be annotated or otherwise inferrable as
+        // Note: the signature type must be annotated or otherwise inferable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
         let signature: Signature = secret_key.sign_digest(message_digest);

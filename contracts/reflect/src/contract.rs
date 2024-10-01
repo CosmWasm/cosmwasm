@@ -385,6 +385,7 @@ mod tests {
         let deps = mock_dependencies_with_custom_querier(&coins(123, "ucosm"));
 
         // with bank query
+        #[allow(deprecated)]
         let msg = QueryMsg::Chain {
             request: BankQuery::AllBalances {
                 address: MOCK_CONTRACT_ADDR.to_string(),
@@ -464,7 +465,7 @@ mod tests {
         let res = reply(deps.as_mut(), mock_env(), the_reply).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // query for a non-existant id
+        // query for a non-existent id
         let qres = query(
             deps.as_ref(),
             mock_env(),

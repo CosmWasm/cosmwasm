@@ -150,7 +150,7 @@ mod tests {
         // is_success
         assert!(success.is_success());
         assert!(!err.is_success());
-        // is_eror
+        // is_error
         assert!(!success.is_error());
         assert!(err.is_error());
     }

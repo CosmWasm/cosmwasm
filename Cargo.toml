@@ -2,7 +2,7 @@
 members = ["packages/*"]
 exclude = ["contracts"]
 
-# Resolver has to be set explicitely in workspaces
+# Resolver has to be set explicitly in workspaces
 # due to https://github.com/rust-lang/cargo/issues/9956
 resolver = "2"
 
@@ -11,7 +11,10 @@ version = "2.1.3"
 
 [workspace.dependencies]
 schemars = "0.8.4"
-serde = { version = "1.0.192", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1.0.192", default-features = false, features = [
+    "alloc",
+    "derive",
+] }
 
 [workspace.metadata.release]
 shared-version = true

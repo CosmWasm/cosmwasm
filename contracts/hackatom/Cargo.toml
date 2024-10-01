@@ -22,15 +22,13 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-[features]
-# Add feature "cranelift" to default if you need 32 bit or ARM support
-default = []
-# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
-cranelift = ["cosmwasm-vm/cranelift"]
-
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["std", "abort"] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
+    "abort",
+    "cosmwasm_2_2",
+    "std",
+] }
 schemars = "0.8.12"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.10"

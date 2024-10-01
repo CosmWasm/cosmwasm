@@ -2,8 +2,8 @@ use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
     entry_point, from_json, to_json_binary, to_json_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    BankQuery, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse,
-    Response, StdError, StdResult, WasmMsg, WasmQuery,
+    BankQuery, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, MigrateInfo, QueryRequest,
+    QueryResponse, Response, StdError, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -35,9 +35,21 @@ pub fn instantiate(
     Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
+const CONTRACT_MIGRATE_VERSION: u64 = 420;
+
 #[entry_point]
-#[migrate_version(42)]
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
+#[migrate_version(CONTRACT_MIGRATE_VERSION)]
+pub fn migrate(
+    deps: DepsMut,
+    _env: Env,
+    msg: MigrateMsg,
+    migrate_info: MigrateInfo,
+) -> Result<Response, HackError> {
+    if let Some(old_version) = migrate_info.old_migrate_version {
+        if CONTRACT_MIGRATE_VERSION <= old_version {
+            return Err(HackError::Downgrade);
+        }
+    }
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -90,6 +102,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
 
     if info.sender == state.verifier {
         let to_addr = state.beneficiary;
+        #[allow(deprecated)]
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
         let resp = Response::new()
@@ -145,7 +158,7 @@ fn do_message_loop(env: Env) -> Result<Response, HackError> {
 
 #[allow(unused_variables)]
 fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
-    // We create memory pages explicitely since Rust's default allocator seems to be clever enough
+    // We create memory pages explicitly since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
 
@@ -256,6 +269,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     })
 }
 
+#[allow(deprecated)]
 fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
     deps.querier
         .query(&BankQuery::AllBalances { address }.into())
@@ -379,7 +393,11 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        let migrate_info = MigrateInfo {
+            sender: creator,
+            old_migrate_version: None,
+        };
+        let res = migrate(deps.as_mut(), mock_env(), msg, migrate_info).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'

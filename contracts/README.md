@@ -18,7 +18,7 @@ Introducing the development contracts in the order they were created.
    [mask contract](https://medium.com/cosmwasm/introducing-the-mask-41d11e51bccf),
    which allows the user to send messages to the contract which are then emitted
    with the contract as the sender. It later got support to handle sub messages
-   and replys ([#796](https://github.com/CosmWasm/cosmwasm/pull/796)).
+   and replies ([#796](https://github.com/CosmWasm/cosmwasm/pull/796)).
 4. **staking** is a staking derivatives example showing how the contract itself
    can be a delegator.
 5. **burner** shows how contract migrations work, which were added in CosmWasm

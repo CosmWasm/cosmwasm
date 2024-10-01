@@ -24,7 +24,7 @@ pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
     ///
-    /// This allows you to get a unique transaction indentifier in this chain
+    /// This allows you to get a unique transaction identifier in this chain
     /// using the pair (`env.block.height`, `env.transaction.index`).
     ///
     pub index: u32,
@@ -116,4 +116,20 @@ pub struct MessageInfo {
 )]
 pub struct ContractInfo {
     pub address: Addr,
+}
+
+/// The structure contains additional information related to the
+/// contract's migration procedure - the sender address and
+/// the contract's migrate version currently stored on the blockchain.
+/// The `old_migrate_version` is optional, since there is no guarantee
+/// that the currently stored contract's binary contains that information.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct MigrateInfo {
+    /// Address of the sender.
+    ///
+    /// This is the `sender` field from [`MsgMigrateContract`](https://github.com/CosmWasm/wasmd/blob/v0.53.0/proto/cosmwasm/wasm/v1/tx.proto#L217-L233).
+    pub sender: Addr,
+    /// Migrate version of the previous contract. It's optional, since
+    /// adding the version number to the binary is not a mandatory feature.
+    pub old_migrate_version: Option<u64>,
 }

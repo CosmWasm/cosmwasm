@@ -33,7 +33,7 @@ pub struct MigrateMsg {
 }
 
 #[test]
-fn unknown_fields_explicity_allowed() {
+fn unknown_fields_explicitly_allowed() {
     let json = serde_json::json!({
         "admin": "someone",
         "cap": 512,

@@ -21,6 +21,7 @@ pub enum IbcQuery {
     /// If `port_id` is omitted, this list all channels bound to the contract's port.
     ///
     /// Returns a `ListChannelsResponse`.
+    #[deprecated = "Returns a potentially unbound number of results. If you think you have a valid usecase, please open an issue."]
     ListChannels { port_id: Option<String> },
     /// Lists all information for a (portID, channelID) pair.
     /// If port_id is omitted, it will default to the contract's own channel.

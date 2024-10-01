@@ -70,6 +70,7 @@ workflows:
       - package_schema_derive
       - package_std
       - package_vm
+      - package_vm_derive
       - package_vm_windows
       - contract_burner
       - contract_crypto_verify
@@ -80,6 +81,7 @@ workflows:
       - contract_ibc_callbacks
       - contract_ibc_reflect
       - contract_ibc_reflect_send
+      - contract_nested_contracts
       - contract_queue
       - contract_reflect
       - contract_staking
@@ -492,6 +494,34 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_vm-rust:1.74-{{ checksum "Cargo.lock" }}
 
+  package_vm_derive:
+    docker:
+      - image: rust:1.74
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_vm_derive-rust:1.74-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/vm-derive
+          command: cargo build --locked
+      - run:
+          name: Test
+          working_directory: ~/project/packages/vm-derive
+          command: cargo test --locked
+
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_vm_derive-rust:1.74-{{ checksum "Cargo.lock" }}
+
   package_vm_windows:
     executor:
       name: win/default
@@ -637,6 +667,7 @@ jobs:
             - cargocache-v2-contract_hackatom-rust:1.74-{{ checksum "Cargo.lock" }}
       - check_contract:
           min_version: "1.4"
+          skip_cosmwasm_check: true
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -761,6 +792,34 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_floaty-rust:1.74-{{ checksum "Cargo.lock" }}
+
+  contract_nested_contracts:
+    docker:
+      - image: rust:1.75
+    environment:
+      RUST_BACKTRACE: 1
+    working_directory: ~/cosmwasm/contracts/nested-contracts
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_nested_contracts-rust:1.75-{{ checksum "Cargo.lock" }}
+      - check_contract:
+          min_version: "1.4"
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_nested_contracts-rust:1.75-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:

@@ -3,7 +3,7 @@ use wasmer::Value;
 
 use cosmwasm_std::{
     ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationCallbackMsg,
-    IbcSourceCallbackMsg, MessageInfo, QueryResponse, Reply, Response,
+    IbcSourceCallbackMsg, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
 };
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
@@ -158,6 +158,26 @@ where
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
+    let result: ContractResult<Response<U>> =
+        from_slice(&data, deserialization_limits::RESULT_MIGRATE)?;
+    Ok(result)
+}
+
+pub fn call_migrate_with_info<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &[u8],
+    migrate_info: &MigrateInfo,
+) -> VmResult<ContractResult<Response<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
+{
+    let env = to_vec(env)?;
+    let migrate_info = to_vec(migrate_info)?;
+    let data = call_migrate_with_info_raw(instance, &env, msg, &migrate_info)?;
     let result: ContractResult<Response<U>> =
         from_slice(&data, deserialization_limits::RESULT_MIGRATE)?;
     Ok(result)
@@ -441,6 +461,47 @@ where
     )
 }
 
+/// Calls Wasm export "migrate" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+/// The difference between this function and [call_migrate_raw] is the
+/// additional argument - `migrate_info`. It contains additional data
+/// related to the contract's migration procedure.
+///
+/// It is safe to call this method instead of [call_migrate_raw] even
+/// if a contract contains the migrate entrypoint without `migrate_info`.
+/// In such case this structure is omitted.
+pub fn call_migrate_with_info_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+    migrate_info: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "migrate",
+        &[env, msg, migrate_info],
+        read_limits::RESULT_MIGRATE,
+    )
+    .or_else(|err| {
+        if matches!(err, VmError::FunctionArityMismatch { .. }) {
+            call_raw(
+                instance,
+                "migrate",
+                &[env, msg],
+                read_limits::RESULT_MIGRATE,
+            )
+        } else {
+            Err(err)
+        }
+    })
+}
+
 /// Calls Wasm export "sudo" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_sudo_raw<A, S, Q>(
@@ -680,7 +741,7 @@ mod tests {
     use crate::testing::{
         mock_env, mock_info, mock_instance, mock_instance_with_options, MockInstanceOptions,
     };
-    use cosmwasm_std::{coins, from_json, to_json_string, Empty};
+    use cosmwasm_std::{coins, from_json, to_json_string, Addr, Empty};
     use sha2::{Digest, Sha256};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
@@ -829,6 +890,45 @@ mod tests {
         let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg.as_bytes())
             .unwrap()
             .unwrap();
+
+        // query the new_verifier with verifier
+        let msg = br#"{"verifier":{}}"#;
+        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let query_response = contract_result.unwrap();
+        assert_eq!(
+            query_response,
+            format!(r#"{{"verifier":"{}"}}"#, someone_else).as_bytes(),
+        );
+    }
+
+    #[test]
+    fn call_migrate_with_info_works() {
+        let mut instance = mock_instance(CONTRACT, &[]);
+
+        // init
+        let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
+        let verifier = instance.api().addr_make("verifies");
+        let beneficiary = instance.api().addr_make("benefits");
+        let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+            .unwrap()
+            .unwrap();
+
+        // change the verifier via migrate
+        let someone_else = instance.api().addr_make("someone else");
+        let msg = format!(r#"{{"verifier": "{someone_else}"}}"#);
+        let migrate_info = MigrateInfo {
+            sender: Addr::unchecked(someone_else.clone()),
+            old_migrate_version: Some(33),
+        };
+        let _res = call_migrate_with_info::<_, _, _, Empty>(
+            &mut instance,
+            &mock_env(),
+            msg.as_bytes(),
+            &migrate_info,
+        )
+        .unwrap()
+        .unwrap();
 
         // query the new_verifier with verifier
         let msg = br#"{"verifier":{}}"#;

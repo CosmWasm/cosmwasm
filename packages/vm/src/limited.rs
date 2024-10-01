@@ -1,5 +1,5 @@
 //! A set of tools designed for processing user defined contract data,
-//! which can potientially have abusive size.
+//! which can potentially have abusive size.
 
 use std::collections::{BTreeSet, HashSet};
 

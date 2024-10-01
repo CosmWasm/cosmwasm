@@ -6,8 +6,6 @@ use core::ops::{
 };
 use core::str::FromStr;
 
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
-
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
     OverflowOperation, StdError,
@@ -19,6 +17,7 @@ use crate::{
 };
 
 use super::conversion::forward_try_from;
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
@@ -55,6 +54,7 @@ use super::num_consts::NumConsts;
 #[schemaifier(type = cw_schema::NodeType::Integer { precision: 128, signed: false })]
 pub struct Uint128(#[schemars(with = "String")] pub(crate) u128);
 
+impl_int_serde!(Uint128);
 forward_ref_partial_eq!(Uint128, Uint128);
 
 impl Uint128 {
@@ -595,46 +595,6 @@ impl<'a> ShlAssign<&'a u32> for Uint128 {
     }
 }
 
-impl Serialize for Uint128 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Uint128 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Uint128, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Uint128Visitor)
-    }
-}
-
-struct Uint128Visitor;
-
-impl<'de> de::Visitor<'de> for Uint128Visitor {
-    type Value = Uint128;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        match v.parse::<u128>() {
-            Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(E::custom(format_args!("invalid Uint128 '{v}' - {e}"))),
-        }
-    }
-}
-
 impl<A> core::iter::Sum<A> for Uint128
 where
     Self: Add<A, Output = Self>,
@@ -992,11 +952,11 @@ mod tests {
         assert_eq!(base.multiply_ratio(3u128, 2u128), Uint128(750));
         assert_eq!(base.multiply_ratio(333333u128, 222222u128), Uint128(750));
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(2u128, 3u128), Uint128(333));
         assert_eq!(base.multiply_ratio(222222u128, 333333u128), Uint128(333));
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(5u128, 6u128), Uint128(416));
         assert_eq!(base.multiply_ratio(100u128, 120u128), Uint128(416));
     }

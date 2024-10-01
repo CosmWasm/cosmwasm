@@ -160,7 +160,7 @@ where
         );
 
         // Four parameters, "ps", "qs", "r", "s", which all represent elements on the BLS12-381 curve (where "ps" and "r" are elements of the G1 subgroup, and "qs" and "s" elements of G2).
-        // The "ps" and "qs" are interpreted as a continous list of points in the subgroups G1 and G2 respectively.
+        // The "ps" and "qs" are interpreted as a continuous list of points in the subgroups G1 and G2 respectively.
         // Returns a single u32 which signifies the validity of the pairing equality.
         // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
         env_imports.insert(
@@ -914,7 +914,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 17457465);
+        assert_eq!(report2.used_internally, 21589990);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -978,6 +978,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn with_querier_works_readonly() {
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
@@ -1105,7 +1106,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 17457716);
+        assert_eq!(init_used, 21590241);
     }
 
     #[test]
@@ -1130,7 +1131,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 21041196);
+        assert_eq!(execute_used, 26961511);
     }
 
     #[test]
@@ -1173,6 +1174,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 12631261);
+        assert_eq!(query_used, 15938086);
     }
 }

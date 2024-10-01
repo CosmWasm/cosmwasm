@@ -5,7 +5,6 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
@@ -15,6 +14,7 @@ use crate::{
 };
 
 use super::conversion::{forward_try_from, try_from_int_to_int};
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// An implementation of i128 that is using strings for JSON encoding/decoding,
@@ -45,6 +45,7 @@ use super::num_consts::NumConsts;
 #[schemaifier(type = cw_schema::NodeType::Integer { precision: 128, signed: true })]
 pub struct Int128(#[schemars(with = "String")] pub(crate) i128);
 
+impl_int_serde!(Int128);
 forward_ref_partial_eq!(Int128, Int128);
 
 impl Int128 {
@@ -549,43 +550,6 @@ impl ShlAssign<u32> for Int128 {
 }
 forward_ref_op_assign!(impl ShlAssign, shl_assign for Int128, u32);
 
-impl Serialize for Int128 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Int128 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Int128, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Int128Visitor)
-    }
-}
-
-struct Int128Visitor;
-
-impl<'de> de::Visitor<'de> for Int128Visitor {
-    type Value = Int128;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Int128::try_from(v).map_err(|e| E::custom(format_args!("invalid Int128 '{v}' - {e}")))
-    }
-}
-
 impl<A> core::iter::Sum<A> for Int128
 where
     Self: Add<A, Output = Self>,
@@ -1011,7 +975,7 @@ mod tests {
             Int128(750)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(2i128, 3i128).unwrap(),
             Int128(333)
@@ -1021,7 +985,7 @@ mod tests {
             Int128(333)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(5i128, 6i128).unwrap(),
             Int128(416)

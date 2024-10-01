@@ -20,15 +20,13 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-[features]
-# Add feature "cranelift" to default if you need 32 bit or ARM support
-default = []
-# Use cranelift backend instead of singlepass. This is required for development on 32 bit or ARM machines.
-cranelift = ["cosmwasm-vm/cranelift"]
-
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", default-features = false, features = ["std", "abort", "cosmwasm_1_3"] }
+cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
+    "abort",
+    "cosmwasm_1_3",
+    "std",
+] }
 rust-argon2 = "2.1"
 thiserror = "1.0.26"
 

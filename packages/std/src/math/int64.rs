@@ -5,7 +5,6 @@ use core::ops::{
     ShrAssign, Sub, SubAssign,
 };
 use core::str::FromStr;
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{DivideByZeroError, DivisionError, OverflowError, OverflowOperation, StdError};
 use crate::forward_ref::{forward_ref_binop, forward_ref_op_assign};
@@ -15,6 +14,7 @@ use crate::{
 };
 
 use super::conversion::{forward_try_from, try_from_int_to_int};
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// An implementation of i64 that is using strings for JSON encoding/decoding,
@@ -45,6 +45,7 @@ use super::num_consts::NumConsts;
 #[schemaifier(type = cw_schema::NodeType::Integer { precision: 64, signed: true })]
 pub struct Int64(#[schemars(with = "String")] pub(crate) i64);
 
+impl_int_serde!(Int64);
 forward_ref_partial_eq!(Int64, Int64);
 
 impl Int64 {
@@ -528,43 +529,6 @@ impl ShlAssign<u32> for Int64 {
 }
 forward_ref_op_assign!(impl ShlAssign, shl_assign for Int64, u32);
 
-impl Serialize for Int64 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Int64 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Int64, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Int64Visitor)
-    }
-}
-
-struct Int64Visitor;
-
-impl<'de> de::Visitor<'de> for Int64Visitor {
-    type Value = Int64;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Int64::try_from(v).map_err(|e| E::custom(format_args!("invalid Int64 '{v}' - {e}")))
-    }
-}
-
 impl<A> core::iter::Sum<A> for Int64
 where
     Self: Add<A, Output = Self>,
@@ -980,14 +944,14 @@ mod tests {
             Int64(750)
         );
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.checked_multiply_ratio(2i64, 3i64).unwrap(), Int64(333));
         assert_eq!(
             base.checked_multiply_ratio(222222i64, 333333i64).unwrap(),
             Int64(333)
         );
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.checked_multiply_ratio(5i64, 6i64).unwrap(), Int64(416));
         assert_eq!(
             base.checked_multiply_ratio(100i64, 120i64).unwrap(),

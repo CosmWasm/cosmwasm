@@ -1,14 +1,15 @@
+use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
 use wasmer::NativeEngineExt;
 use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
-use wasmer_middlewares::Metering;
 
 use crate::size::Size;
 
 use super::gatekeeper::Gatekeeper;
 use super::limiting_tunables::LimitingTunables;
+use super::metering::{is_accounting, Metering};
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at
@@ -16,6 +17,7 @@ use super::limiting_tunables::LimitingTunables;
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
+#[hash_function(const_name = "COST_FUNCTION_HASH")]
 fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
     // The target is 1 Teragas per second (see GAS.md).
@@ -29,25 +31,15 @@ fn cost(operator: &Operator) -> u64 {
     // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
 
-    match operator {
-        Operator::Loop { .. }
-        | Operator::End
-        | Operator::Else
-        | Operator::Br { .. }
-        | Operator::BrTable { .. }
-        | Operator::BrIf { .. }
-        | Operator::Call { .. }
-        | Operator::CallIndirect { .. }
-        | Operator::Return => GAS_PER_OPERATION * 14,
-        _ => GAS_PER_OPERATION,
+    if is_accounting(operator) {
+        GAS_PER_OPERATION * 14
+    } else {
+        GAS_PER_OPERATION
     }
 }
 
 /// Use Cranelift as the compiler backend if the feature is enabled
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
-    #[cfg(feature = "cranelift")]
-    return wasmer::Cranelift::new();
-    #[cfg(not(feature = "cranelift"))]
     wasmer::Singlepass::new()
 }
 

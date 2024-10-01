@@ -12,6 +12,7 @@ use cosmwasm_std::Checksum;
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::capabilities::required_capabilities_from_module;
 use crate::compatibility::check_wasm;
+use crate::config::{CacheOptions, Config, WasmLimits};
 use crate::errors::{VmError, VmResult};
 use crate::filesystem::mkdir_p;
 use crate::instance::{Instance, InstanceOptions};
@@ -69,37 +70,6 @@ pub struct PinnedMetrics {
     pub per_module: Vec<(Checksum, PerModuleMetrics)>,
 }
 
-#[derive(Clone, Debug)]
-#[non_exhaustive]
-pub struct CacheOptions {
-    /// The base directory of this cache.
-    ///
-    /// If this does not exist, it will be created. Not sure if this behaviour
-    /// is desired but wasmd relies on it.
-    pub base_dir: PathBuf,
-    pub available_capabilities: HashSet<String>,
-    pub memory_cache_size: Size,
-    /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
-    /// e.g. full MiBs.
-    pub instance_memory_limit: Size,
-}
-
-impl CacheOptions {
-    pub fn new(
-        base_dir: impl Into<PathBuf>,
-        available_capabilities: impl Into<HashSet<String>>,
-        memory_cache_size: Size,
-        instance_memory_limit: Size,
-    ) -> Self {
-        Self {
-            base_dir: base_dir.into(),
-            available_capabilities: available_capabilities.into(),
-            memory_cache_size,
-            instance_memory_limit,
-        }
-    }
-}
-
 pub struct CacheInner {
     /// The directory in which the Wasm blobs are stored in the file system.
     wasm_path: PathBuf,
@@ -121,6 +91,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_querier: PhantomData<Q>,
     /// To prevent concurrent access to `WasmerInstance::new`
     instantiation_lock: Mutex<()>,
+    wasm_limits: WasmLimits,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -151,12 +122,31 @@ where
     /// assumes the disk contents are correct, and there's no way to ensure the artifacts
     /// stored in the cache haven't been corrupted or tampered with.
     pub unsafe fn new(options: CacheOptions) -> VmResult<Self> {
-        let CacheOptions {
-            base_dir,
-            available_capabilities,
-            memory_cache_size,
-            instance_memory_limit,
-        } = options;
+        Self::new_with_config(Config {
+            wasm_limits: WasmLimits::default(),
+            cache: options,
+        })
+    }
+
+    /// Creates a new cache with the given configuration.
+    /// This allows configuring lots of limits and sizes.
+    ///
+    /// # Safety
+    ///
+    /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
+    /// assumes the disk contents are correct, and there's no way to ensure the artifacts
+    /// stored in the cache haven't been corrupted or tampered with.
+    pub unsafe fn new_with_config(config: Config) -> VmResult<Self> {
+        let Config {
+            cache:
+                CacheOptions {
+                    base_dir,
+                    available_capabilities,
+                    memory_cache_size,
+                    instance_memory_limit,
+                },
+            wasm_limits,
+        } = config;
 
         let state_path = base_dir.join(STATE_DIR);
         let cache_path = base_dir.join(CACHE_DIR);
@@ -184,6 +174,7 @@ where
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
             instantiation_lock: Mutex::new(()),
+            wasm_limits,
         })
     }
 
@@ -238,7 +229,12 @@ where
     /// This does the same as [`save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.available_capabilities)?;
+        check_wasm(
+            wasm,
+            &self.available_capabilities,
+            &self.wasm_limits,
+            crate::internals::Logger::Off,
+        )?;
         self.save_wasm_unchecked(wasm)
     }
 
@@ -521,7 +517,7 @@ fn save_wasm_to_disk(dir: impl Into<PathBuf>, wasm: &[u8]) -> VmResult<Checksum>
     let filepath = dir.into().join(filename).with_extension("wasm");
 
     // write data to file
-    // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
+    // Since the same filename (a collision resistant hash) cannot be generated from two different byte codes
     // (even if a malicious actor tried), it is safe to override.
     let mut file = OpenOptions::new()
         .write(true)
@@ -1629,5 +1625,28 @@ mod tests {
         // loading wasm from before the wasm extension was added should still work
         let restored = cache.load_wasm(&checksum).unwrap();
         assert_eq!(restored, CONTRACT);
+    }
+
+    #[test]
+    fn test_wasm_limits_checked() {
+        let tmp_dir = TempDir::new().unwrap();
+
+        let config = Config {
+            wasm_limits: WasmLimits {
+                max_function_params: Some(0),
+                ..Default::default()
+            },
+            cache: CacheOptions {
+                base_dir: tmp_dir.path().to_path_buf(),
+                available_capabilities: default_capabilities(),
+                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit: TESTING_MEMORY_LIMIT,
+            },
+        };
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new_with_config(config).unwrap() };
+        let err = cache.save_wasm(CONTRACT).unwrap_err();
+        assert!(matches!(err, VmError::StaticValidationErr { .. }));
     }
 }

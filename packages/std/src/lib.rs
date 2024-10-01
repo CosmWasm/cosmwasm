@@ -116,7 +116,7 @@ pub use crate::stdack::StdAck;
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
-pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
+pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
 // Exposed in wasm build only
 
@@ -127,6 +127,8 @@ mod imports;
 #[cfg(target_arch = "wasm32")]
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
+#[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
+pub use crate::exports::do_migrate_with_info;
 #[cfg(target_arch = "wasm32")]
 pub use crate::exports::{
     do_execute, do_ibc_destination_callback, do_ibc_source_callback, do_instantiate, do_migrate,
@@ -146,4 +148,89 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 pub mod testing;
 
 pub use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
+
+/// This attribute macro generates the boilerplate required to call into the
+/// contract-specific logic from the entry-points to the Wasm module.
+///
+/// It should be added to the contract's init, handle, migrate and query implementations
+/// like this:
+/// ```
+/// # use cosmwasm_std::{
+/// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+/// #     Response, QueryResponse,
+/// # };
+/// #
+/// # type InstantiateMsg = ();
+/// # type ExecuteMsg = ();
+/// # type QueryMsg = ();
+///
+/// #[entry_point]
+/// pub fn instantiate(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: InstantiateMsg,
+/// ) -> Result<Response, StdError> {
+/// #   Ok(Default::default())
+/// }
+///
+/// #[entry_point]
+/// pub fn execute(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: ExecuteMsg,
+/// ) -> Result<Response, StdError> {
+/// #   Ok(Default::default())
+/// }
+///
+/// #[entry_point]
+/// pub fn query(
+///     deps: Deps,
+///     env: Env,
+///     msg: QueryMsg,
+/// ) -> Result<QueryResponse, StdError> {
+/// #   Ok(Default::default())
+/// }
+/// ```
+///
+/// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
+/// types that implement `DeserializeOwned + JsonSchema`.
+///
+/// ## Set the version of the state of your contract
+///
+/// The VM will use this as a hint whether it needs to run the migrate function of your contract or not.
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     DepsMut, entry_point, Env, MigrateInfo,
+/// #     Response, StdResult,
+/// # };
+/// #
+/// # type MigrateMsg = ();
+/// #[entry_point]
+/// #[migrate_version(2)]
+/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg, migrate_info: MigrateInfo) -> StdResult<Response> {
+///     todo!();
+/// }
+/// ```
+///
+/// It is also possible to assign the migrate version number to
+/// a given constant name:
+///
+/// ```
+/// # use cosmwasm_std::{
+/// #     DepsMut, entry_point, Env, MigrateInfo,
+/// #     Response, StdResult,
+/// # };
+/// #
+/// # type MigrateMsg = ();
+/// const CONTRACT_VERSION: u64 = 66;
+///
+/// #[entry_point]
+/// #[migrate_version(CONTRACT_VERSION)]
+/// pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg, migrate_info: MigrateInfo) -> StdResult<Response> {
+///     todo!();
+/// }
+/// ```
 pub use cosmwasm_derive::entry_point;

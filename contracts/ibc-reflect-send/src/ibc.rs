@@ -17,7 +17,7 @@ pub const IBC_APP_VERSION: &str = "ibc-reflect-v1";
 pub const PACKET_LIFETIME: u64 = 60 * 60;
 
 #[entry_point]
-/// enforces ordering and versioing constraints
+/// enforces ordering and versioning constraints
 pub fn ibc_channel_open(
     _deps: DepsMut,
     _env: Env,

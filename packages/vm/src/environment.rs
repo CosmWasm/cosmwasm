@@ -272,6 +272,10 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
         })?;
+        let function_arity = func.param_arity(store);
+        if args.len() != function_arity {
+            return Err(VmError::function_arity_mismatch(function_arity));
+        };
         self.increment_call_depth()?;
         let res = func.call(store, args).map_err(|runtime_err| -> VmError {
             self.with_wasmer_instance::<_, Never>(|instance| {
@@ -941,6 +945,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn with_querier_from_context_works() {
         let (env, _store, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);

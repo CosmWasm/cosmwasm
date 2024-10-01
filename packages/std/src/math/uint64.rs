@@ -4,7 +4,6 @@ use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, RemAssign, Shl, ShlAssign, Shr,
     ShrAssign, Sub, SubAssign,
 };
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{
     CheckedMultiplyFractionError, CheckedMultiplyRatioError, DivideByZeroError, OverflowError,
@@ -17,6 +16,7 @@ use crate::{
 };
 
 use super::conversion::forward_try_from;
+use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
@@ -50,6 +50,7 @@ use super::num_consts::NumConsts;
 #[schemaifier(type = cw_schema::NodeType::Integer { precision: 64, signed: false })]
 pub struct Uint64(#[schemars(with = "String")] pub(crate) u64);
 
+impl_int_serde!(Uint64);
 forward_ref_partial_eq!(Uint64, Uint64);
 
 impl Uint64 {
@@ -561,46 +562,6 @@ impl<'a> ShlAssign<&'a u32> for Uint64 {
     }
 }
 
-impl Serialize for Uint64 {
-    /// Serializes as an integer string using base 10
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> Deserialize<'de> for Uint64 {
-    /// Deserialized from an integer string using base 10
-    fn deserialize<D>(deserializer: D) -> Result<Uint64, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(Uint64Visitor)
-    }
-}
-
-struct Uint64Visitor;
-
-impl<'de> de::Visitor<'de> for Uint64Visitor {
-    type Value = Uint64;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string-encoded integer")
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        match v.parse::<u64>() {
-            Ok(u) => Ok(Uint64(u)),
-            Err(e) => Err(E::custom(format_args!("invalid Uint64 '{v}' - {e}"))),
-        }
-    }
-}
-
 impl<A> core::iter::Sum<A> for Uint64
 where
     Self: Add<A, Output = Self>,
@@ -910,11 +871,11 @@ mod tests {
         assert_eq!(base.multiply_ratio(3u64, 2u64), Uint64(750));
         assert_eq!(base.multiply_ratio(333333u64, 222222u64), Uint64(750));
 
-        // factor 2/3 (integer devision always floors the result)
+        // factor 2/3 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(2u64, 3u64), Uint64(333));
         assert_eq!(base.multiply_ratio(222222u64, 333333u64), Uint64(333));
 
-        // factor 5/6 (integer devision always floors the result)
+        // factor 5/6 (integer division always floors the result)
         assert_eq!(base.multiply_ratio(5u64, 6u64), Uint64(416));
         assert_eq!(base.multiply_ratio(100u64, 120u64), Uint64(416));
     }

@@ -730,9 +730,9 @@ pub fn do_ed25519_batch_verify<
         (EDDSA_PUBKEY_LEN + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
 
-    let messages = decode_sections(&messages);
-    let signatures = decode_sections(&signatures);
-    let public_keys = decode_sections(&public_keys);
+    let messages = decode_sections(&messages)?;
+    let signatures = decode_sections(&signatures)?;
+    let public_keys = decode_sections(&public_keys)?;
 
     let gas_cost = if public_keys.len() == 1 {
         &data.gas_config.ed25519_batch_verify_one_pubkey_cost
@@ -2533,6 +2533,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn do_query_chain_works() {
         let api = MockApi::default();
         let (fe, mut store, _instance) = make_instance(api);

@@ -7,15 +7,16 @@ use std::collections::HashSet;
 use crate::capabilities::capabilities_from_csv;
 use crate::compatibility::check_wasm;
 use crate::instance::{Instance, InstanceOptions};
+use crate::internals::Logger;
 use crate::size::Size;
-use crate::{Backend, BackendApi, Querier, Storage};
+use crate::{Backend, BackendApi, Querier, Storage, WasmLimits};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
 /// This gas limit is used in integration tests and should be high enough to allow a reasonable
-/// number of contract executions and queries on one instance. For this reason it is significatly
+/// number of contract executions and queries on one instance. For this reason it is significantly
 /// higher than the limit for a single execution that we have in the production setup.
 const DEFAULT_GAS_LIMIT: u64 = 2_000_000_000; // ~2.0ms
 const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
@@ -125,7 +126,13 @@ pub fn mock_instance_with_options(
     wasm: &[u8],
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
-    check_wasm(wasm, &options.available_capabilities).unwrap();
+    check_wasm(
+        wasm,
+        &options.available_capabilities,
+        &WasmLimits::default(),
+        Logger::Off,
+    )
+    .unwrap();
     let contract_address = MOCK_CONTRACT_ADDR;
 
     // merge balances
