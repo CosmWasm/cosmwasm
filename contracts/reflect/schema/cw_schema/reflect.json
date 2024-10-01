@@ -587,7 +587,7 @@
         "type": "enum",
         "cases": {
           "any": {
-            "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped\nin a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)\nthat is suppored by the chain. It behaves the same as\n`CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because\na chain running CosmWasm < 2.0 cannot process this.",
+            "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped\nin a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)\nthat is supported by the chain. It behaves the same as\n`CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because\na chain running CosmWasm < 2.0 cannot process this.",
             "type": "tuple",
             "items": [
               9
@@ -699,7 +699,7 @@
             "value": 27
           },
           "payload": {
-            "description": "Some arbirary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
+            "description": "Some arbitrary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
             "value": 5
           },
           "reply_on": {
@@ -1372,11 +1372,11 @@
         },
         {
           "name": "SubMsgResult",
-          "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to\ndefine the serialization, which is a public interface. Every language that compiles\nto Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead\nof this type. Once serialized, the two types are the same. However, in the Rust type\nsystem we want different types for clarity and documenation reasons.\n\n# Examples\n\nSuccess:\n\n```\n# use cosmwasm_std::{to_json_string, Binary, Event, SubMsgResponse, SubMsgResult};\n#[allow(deprecated)]\nlet response = SubMsgResponse {\ndata: Some(Binary::from_base64(\"MTIzCg==\").unwrap()),\nevents: vec![Event::new(\"wasm\").add_attribute(\"fo\", \"ba\")],\nmsg_responses: vec![],\n};\nlet result: SubMsgResult = SubMsgResult::Ok(response);\nassert_eq!(\nto_json_string(&result).unwrap(),\nr#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"fo\",\"value\":\"ba\"}]}],\"data\":\"MTIzCg==\",\"msg_responses\":[]}}\"#,\n);\n```\n\nFailure:\n\n```\n# use cosmwasm_std::{to_json_string, SubMsgResult, Response};\nlet error_msg = String::from(\"Something went wrong\");\nlet result = SubMsgResult::Err(error_msg);\nassert_eq!(to_json_string(&result).unwrap(), r#\"{\"error\":\"Something went wrong\"}\"#);\n```",
+          "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to\ndefine the serialization, which is a public interface. Every language that compiles\nto Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead\nof this type. Once serialized, the two types are the same. However, in the Rust type\nsystem we want different types for clarity and documentation reasons.\n\n# Examples\n\nSuccess:\n\n```\n# use cosmwasm_std::{to_json_string, Binary, Event, SubMsgResponse, SubMsgResult};\n#[allow(deprecated)]\nlet response = SubMsgResponse {\ndata: Some(Binary::from_base64(\"MTIzCg==\").unwrap()),\nevents: vec![Event::new(\"wasm\").add_attribute(\"foo\", \"bar\")],\nmsg_responses: vec![],\n};\nlet result: SubMsgResult = SubMsgResult::Ok(response);\nassert_eq!(\nto_json_string(&result).unwrap(),\nr#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"foo\",\"value\":\"bar\"}]}],\"data\":\"MTIzCg==\",\"msg_responses\":[]}}\"#,\n);\n```\n\nFailure:\n\n```\n# use cosmwasm_std::{to_json_string, SubMsgResult, Response};\nlet error_msg = String::from(\"Something went wrong\");\nlet result = SubMsgResult::Err(error_msg);\nassert_eq!(to_json_string(&result).unwrap(), r#\"{\"error\":\"Something went wrong\"}\"#);\n```",
           "type": "enum",
           "cases": {
             "error": {
-              "description": "An error type that every custom error created by contract developers can be converted to.\nThis could potientially have more structure, but String is the easiest.",
+              "description": "An error type that every custom error created by contract developers can be converted to.\nThis could potentially have more structure, but String is the easiest.",
               "type": "tuple",
               "items": [
                 2
@@ -1404,7 +1404,7 @@
               "value": 0
             },
             "payload": {
-              "description": "Some arbirary data that the contract set when emitting the `SubMsg`.\nThis is just passed into the `reply` entry point and is not stored to state.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field is never filled.",
+              "description": "Some arbitrary data that the contract set when emitting the `SubMsg`.\nThis is just passed into the `reply` entry point and is not stored to state.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field is never filled.",
               "value": 1
             },
             "result": {

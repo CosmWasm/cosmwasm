@@ -45,7 +45,7 @@
       "type": "struct",
       "properties": {
         "index": {
-          "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction indentifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
+          "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
           "value": 4
         }
       }

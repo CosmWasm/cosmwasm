@@ -8,7 +8,7 @@
     "definitions": [
       {
         "name": "Empty",
-        "description": "An empty struct that serves as a placeholder in different places,\nsuch as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but\ncontains no meaningful data. Previously we used enums without cases,\nbut those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "description": "An empty struct that serves as a placeholder in different places,\nsuch as contracts that don't set a custom message.\n\nIt is designed to be expressible in correct JSON and JSON Schema but\ncontains no meaningful data. Previously we used enums without cases,\nbut those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
         "type": "struct",
         "properties": {}
       }
@@ -336,7 +336,7 @@
           "type": "struct",
           "properties": {
             "index": {
-              "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction indentifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
+              "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
               "value": 4
             }
           }

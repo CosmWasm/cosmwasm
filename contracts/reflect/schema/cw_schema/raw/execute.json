@@ -572,7 +572,7 @@
       "type": "enum",
       "cases": {
         "any": {
-          "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped\nin a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)\nthat is suppored by the chain. It behaves the same as\n`CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because\na chain running CosmWasm < 2.0 cannot process this.",
+          "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped\nin a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)\nthat is supported by the chain. It behaves the same as\n`CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because\na chain running CosmWasm < 2.0 cannot process this.",
           "type": "tuple",
           "items": [
             9
@@ -684,7 +684,7 @@
           "value": 27
         },
         "payload": {
-          "description": "Some arbirary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
+          "description": "Some arbitrary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
           "value": 5
         },
         "reply_on": {

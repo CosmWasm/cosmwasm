@@ -43,7 +43,7 @@
             "value": 2
           },
           "min_withdrawal": {
-            "description": "This is the minimum amount we will pull out to reinvest, as well as a minumum\nthat can be unbonded (to avoid needless staking tx)",
+            "description": "This is the minimum amount we will pull out to reinvest, as well as a minimum\nthat can be unbonded (to avoid needless staking tx)",
             "value": 3
           },
           "name": {
@@ -260,7 +260,7 @@
               "value": 3
             },
             "min_withdrawal": {
-              "description": "This is the minimum amount we will pull out to reinvest, as well as a minumum\nthat can be unbonded (to avoid needless staking tx)",
+              "description": "This is the minimum amount we will pull out to reinvest, as well as a minimum\nthat can be unbonded (to avoid needless staking tx)",
               "value": 0
             },
             "nominal_value": {
