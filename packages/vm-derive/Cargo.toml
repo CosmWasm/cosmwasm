@@ -2,6 +2,7 @@
 name = "cosmwasm-vm-derive"
 edition = "2021"
 version.workspace = true
+description = "Derive macros for cosmwasm-vm. For internal use only. No stability guarantees."
 
 [lib]
 proc-macro = true
