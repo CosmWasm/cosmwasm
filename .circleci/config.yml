@@ -1228,7 +1228,7 @@ jobs:
             for contract_dir in contracts/*; do
               if [ -d "$contract_dir" ]; then
                 echo "Building '$contract_dir' ..."
-                docker run --volumes-from with_code cosmwasm/optimizer:0.15.0 "$contract_dir"
+                docker run --volumes-from with_code cosmwasm/optimizer:0.16.0 "$contract_dir"
               fi
             done
       - run:
