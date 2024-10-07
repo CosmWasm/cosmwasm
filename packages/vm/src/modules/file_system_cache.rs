@@ -95,10 +95,10 @@ fn raw_module_version_discriminator() -> String {
 /// By default, this derived by performing the following operation:
 ///
 /// ```ignore
-/// BLAKE3(
+/// BLAKE2(
 ///   manual module version,
 ///   wasmer version requirement,
-///   BLAKE3(cost_fn)
+///   BLAKE2(cost_fn)
 /// )
 /// ```
 ///
