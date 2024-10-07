@@ -1,5 +1,6 @@
 use std::hash::{Hash, Hasher};
 
+use blake2::{Blake2b512, Digest};
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{punctuated::Punctuated, Token};
@@ -35,23 +36,23 @@ impl syn::parse::Parse for Options {
     }
 }
 
-struct Blake3Hasher {
-    hasher: blake3::Hasher,
+struct Blake2Hasher {
+    hasher: Blake2b512,
 }
 
-impl Blake3Hasher {
+impl Blake2Hasher {
     fn new() -> Self {
         Self {
-            hasher: blake3::Hasher::new(),
+            hasher: Blake2b512::new(),
         }
     }
 
-    fn consume(self) -> blake3::Hash {
-        self.hasher.finalize()
+    fn consume(self) -> [u8; 64] {
+        self.hasher.finalize().into()
     }
 }
 
-impl Hasher for Blake3Hasher {
+impl Hasher for Blake2Hasher {
     fn write(&mut self, bytes: &[u8]) {
         self.hasher.update(bytes);
     }
@@ -67,12 +68,12 @@ pub fn hash_function_impl(attr: TokenStream, input: TokenStream) -> TokenStream 
     // Just verify that this is actually a function
     let function: syn::ItemFn = maybe!(syn::parse2(input.clone()));
 
-    let mut hasher = Blake3Hasher::new();
+    let mut hasher = Blake2Hasher::new();
     function.hash(&mut hasher);
     let hash = hasher.consume();
 
     let hash_variable_name = &options.const_name;
-    let hash_bytes = hash.as_bytes();
+    let hash_bytes = hash.as_slice();
 
     quote! {
         pub const #hash_variable_name: &[u8] = &[#(#hash_bytes),*];
