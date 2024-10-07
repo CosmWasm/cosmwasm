@@ -1,3 +1,4 @@
+use blake2::{digest::consts::U5, Blake2b, Digest};
 use std::fs;
 use std::hash::Hash;
 use std::io;
@@ -75,7 +76,7 @@ const MODULE_SERIALIZATION_VERSION: &str = "v20";
 fn raw_module_version_discriminator() -> String {
     let hashes = [COST_FUNCTION_HASH];
 
-    let mut hasher = blake3::Hasher::new();
+    let mut hasher = Blake2b::<U5>::new();
 
     hasher.update(MODULE_SERIALIZATION_VERSION.as_bytes());
     hasher.update(wasmer::VERSION.as_bytes());
@@ -84,7 +85,7 @@ fn raw_module_version_discriminator() -> String {
         hasher.update(hash);
     }
 
-    hasher.finalize().to_hex().to_string()
+    hex::encode(hasher.finalize())
 }
 
 /// This version __MUST__ change whenever the module system changes in a way
@@ -94,10 +95,10 @@ fn raw_module_version_discriminator() -> String {
 /// By default, this derived by performing the following operation:
 ///
 /// ```ignore
-/// BLAKE3(
+/// BLAKE2(
 ///   manual module version,
 ///   wasmer version requirement,
-///   BLAKE3(cost_fn)
+///   BLAKE2_512(cost_fn)
 /// )
 /// ```
 ///
@@ -479,9 +480,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(
-            version,
-            "b2a230627e6fd9c14c45aabcf781b58d873dd251fcb004d30e081c8407cad5af"
-        );
+        assert_eq!(version, "5b35f8ce52");
     }
 }

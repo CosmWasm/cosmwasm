@@ -44,7 +44,7 @@ bytes = "1.4.0"     # need a higher version than the one required by Wasmer for 
 clru = "0.6.1"
 crc32fast = "1.3.2"
 bech32 = "0.11.0"
-blake3 = "1.5"
+blake2 = "0.10.6"
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-core = { version = "2.2.0-rc.1", path = "../core" }
 cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", default-features = false, features = [
