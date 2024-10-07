@@ -98,7 +98,7 @@ fn raw_module_version_discriminator() -> String {
 /// BLAKE2(
 ///   manual module version,
 ///   wasmer version requirement,
-///   BLAKE2(cost_fn)
+///   BLAKE2_512(cost_fn)
 /// )
 /// ```
 ///
