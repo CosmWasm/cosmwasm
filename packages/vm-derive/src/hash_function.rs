@@ -36,11 +36,11 @@ impl syn::parse::Parse for Options {
     }
 }
 
-struct Blake3Hasher {
+struct Blake2Hasher {
     hasher: Blake2b512,
 }
 
-impl Blake3Hasher {
+impl Blake2Hasher {
     fn new() -> Self {
         Self {
             hasher: Blake2b512::new(),
@@ -52,7 +52,7 @@ impl Blake3Hasher {
     }
 }
 
-impl Hasher for Blake3Hasher {
+impl Hasher for Blake2Hasher {
     fn write(&mut self, bytes: &[u8]) {
         self.hasher.update(bytes);
     }
@@ -68,7 +68,7 @@ pub fn hash_function_impl(attr: TokenStream, input: TokenStream) -> TokenStream 
     // Just verify that this is actually a function
     let function: syn::ItemFn = maybe!(syn::parse2(input.clone()));
 
-    let mut hasher = Blake3Hasher::new();
+    let mut hasher = Blake2Hasher::new();
     function.hash(&mut hasher);
     let hash = hasher.consume();
 
