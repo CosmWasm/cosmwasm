@@ -7,6 +7,23 @@ use self::error::fallible_macro;
 use quote::ToTokens;
 use syn::parse_macro_input;
 
+#[derive(Clone, Copy, Debug)]
+enum SchemaBackend {
+    CwSchema,
+    JsonSchema,
+}
+
+impl syn::parse::Parse for SchemaBackend {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let ident: syn::LitStr = input.parse()?;
+        match ident.value().as_str() {
+            "cw_schema" => Ok(SchemaBackend::CwSchema),
+            "json_schema" => Ok(SchemaBackend::JsonSchema),
+            _ => Err(syn::Error::new(ident.span(), "Unknown schema backend")),
+        }
+    }
+}
+
 fallible_macro! {
     #[proc_macro_derive(QueryResponses, attributes(returns, query_responses))]
     pub fn query_responses_derive(
@@ -30,7 +47,8 @@ pub fn write_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 #[proc_macro]
 pub fn generate_api(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as generate_api::Options);
-    let expanded = generate_api::generate_api_impl(&input).into_token_stream();
+    let expanded =
+        generate_api::generate_api_impl(input.schema_backend(), &input).into_token_stream();
 
     proc_macro::TokenStream::from(expanded)
 }

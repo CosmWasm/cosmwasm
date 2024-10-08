@@ -1,0 +1,11 @@
+---
+source: packages/cw-schema-codegen/tests/rust_tpl.rs
+expression: rendered
+---
+pub enum Simple {
+    
+        One ,
+    
+        Two ,
+    
+}

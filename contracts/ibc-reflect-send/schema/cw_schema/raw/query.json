@@ -1,0 +1,32 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "QueryMsg",
+      "type": "enum",
+      "cases": {
+        "account": {
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 0
+            }
+          }
+        },
+        "admin": {
+          "type": "named",
+          "properties": {}
+        },
+        "list_accounts": {
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}
