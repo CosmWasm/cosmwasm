@@ -4,7 +4,7 @@ version.workspace = true
 edition = "2021"
 
 [dependencies]
-cw-schema-derive = { version = "=2.1.3", path = "../cw-schema-derive" }
+cw-schema-derive = { version = "=2.2.0-rc.1", path = "../cw-schema-derive" }
 indexmap = { version = "2.3.0", default-features = false }
 schemars = { version = "1.0.0-alpha.2", optional = true }
 serde = { version = "1.0.204", features = ["derive"] }

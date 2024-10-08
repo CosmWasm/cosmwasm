@@ -2,12 +2,15 @@
 name = "cosmwasm-vm-derive"
 edition = "2021"
 version.workspace = true
+description = "Derive macros for cosmwasm-vm. For internal use only. No stability guarantees."
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
+license = "Apache-2.0"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-blake3 = "1.5"
+blake2 = "0.10.6"
 proc-macro2 = "1.0.86"
 quote = "1.0.37"
 syn = { version = "2.0.77", features = ["extra-traits", "full"] }
