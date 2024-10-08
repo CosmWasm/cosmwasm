@@ -551,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "cw-schema"
-version = "2.1.3"
+version = "2.2.0-rc.1"
 dependencies = [
  "cw-schema-derive",
  "indexmap 2.4.0",
@@ -563,7 +563,7 @@ dependencies = [
 
 [[package]]
 name = "cw-schema-derive"
-version = "2.1.3"
+version = "2.2.0-rc.1"
 dependencies = [
  "heck",
  "itertools 0.13.0",
