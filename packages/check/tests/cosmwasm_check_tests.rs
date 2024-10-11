@@ -103,7 +103,7 @@ fn wasm_limits_string_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 
     let mut limits = WasmLimits::default();
-    limits.initial_memory_limit = Some(10);
+    limits.initial_memory_limit_pages = Some(10);
 
     cmd.arg("--wasm-limits")
         .arg(to_json_string(&limits).unwrap())

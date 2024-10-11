@@ -142,8 +142,8 @@ where
                 CacheOptions {
                     base_dir,
                     available_capabilities,
-                    memory_cache_size,
-                    instance_memory_limit,
+                    memory_cache_size_bytes,
+                    instance_memory_limit_bytes,
                 },
             wasm_limits,
         } = config;
@@ -165,11 +165,11 @@ where
             inner: Mutex::new(CacheInner {
                 wasm_path,
                 pinned_memory_cache: PinnedMemoryCache::new(),
-                memory_cache: InMemoryCache::new(memory_cache_size),
+                memory_cache: InMemoryCache::new(memory_cache_size_bytes),
                 fs_cache,
                 stats: Stats::default(),
             }),
-            instance_memory_limit,
+            instance_memory_limit: instance_memory_limit_bytes,
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
@@ -614,8 +614,8 @@ mod tests {
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
             available_capabilities: default_capabilities(),
-            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit: TESTING_MEMORY_LIMIT,
+            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
         }
     }
 
@@ -625,8 +625,8 @@ mod tests {
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
             available_capabilities: capabilities,
-            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit: TESTING_MEMORY_LIMIT,
+            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
         }
     }
 
@@ -755,8 +755,8 @@ mod tests {
             let options1 = CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
                 available_capabilities: default_capabilities(),
-                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-                instance_memory_limit: TESTING_MEMORY_LIMIT,
+                memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
             };
             let cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
@@ -767,8 +767,8 @@ mod tests {
             let options2 = CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
                 available_capabilities: default_capabilities(),
-                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-                instance_memory_limit: TESTING_MEMORY_LIMIT,
+                memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
             };
             let cache2: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options2).unwrap() };
@@ -800,8 +800,8 @@ mod tests {
         let options = CacheOptions {
             base_dir: tmp_dir.path().to_path_buf(),
             available_capabilities: default_capabilities(),
-            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit: TESTING_MEMORY_LIMIT,
+            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
@@ -1606,8 +1606,8 @@ mod tests {
         let options = CacheOptions {
             base_dir: tmp_dir.path().to_path_buf(),
             available_capabilities: default_capabilities(),
-            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-            instance_memory_limit: TESTING_MEMORY_LIMIT,
+            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
@@ -1639,8 +1639,8 @@ mod tests {
             cache: CacheOptions {
                 base_dir: tmp_dir.path().to_path_buf(),
                 available_capabilities: default_capabilities(),
-                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-                instance_memory_limit: TESTING_MEMORY_LIMIT,
+                memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
             },
         };
 
