@@ -122,7 +122,7 @@ fn check_wasm_tables(module: &ParsedWasm, wasm_limits: &WasmLimits) -> VmResult<
         1 => {
             let limits = &module.tables[0];
             if let Some(maximum) = limits.maximum {
-                if maximum > wasm_limits.table_size_limit() {
+                if maximum > wasm_limits.table_size_limit_elements() {
                     return Err(VmError::static_validation_err(
                         "Wasm contract's first table section has a too large max limit",
                     ));
@@ -148,10 +148,10 @@ fn check_wasm_memories(module: &ParsedWasm, limits: &WasmLimits) -> VmResult<()>
     }
     let memory = &module.memories[0];
 
-    if memory.initial > limits.initial_memory_limit() as u64 {
+    if memory.initial > limits.initial_memory_limit_pages() as u64 {
         return Err(VmError::static_validation_err(format!(
             "Wasm contract memory's minimum must not exceed {} pages.",
-            limits.initial_memory_limit()
+            limits.initial_memory_limit_pages()
         )));
     }
 
