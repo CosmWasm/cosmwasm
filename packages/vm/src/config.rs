@@ -52,7 +52,7 @@ pub struct WasmLimits {
     ///
     /// Every Wasm memory has an initial size and an optional maximum size,
     /// both measured in Wasm pages. This limit applies to the initial size.
-    pub initial_memory_limit: Option<u32>,
+    pub initial_memory_limit_pages: Option<u32>,
     /// The upper limit for the `max` value of each table. CosmWasm contracts have
     /// initial=max for 1 table. See
     ///
@@ -64,7 +64,7 @@ pub struct WasmLimits {
     /// - table[0] type=funcref initial=161 max=161
     /// ```
     ///
-    pub table_size_limit: Option<u32>,
+    pub table_size_limit_elements: Option<u32>,
     /// If the contract has more than this amount of imports, it will be rejected
     /// during static validation before even looking into the imports.
     pub max_imports: Option<usize>,
@@ -88,12 +88,14 @@ pub struct WasmLimits {
 }
 
 impl WasmLimits {
-    pub fn initial_memory_limit(&self) -> u32 {
-        self.initial_memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT)
+    pub fn initial_memory_limit_pages(&self) -> u32 {
+        self.initial_memory_limit_pages
+            .unwrap_or(DEFAULT_MEMORY_LIMIT)
     }
 
-    pub fn table_size_limit(&self) -> u32 {
-        self.table_size_limit.unwrap_or(DEFAULT_TABLE_SIZE_LIMIT)
+    pub fn table_size_limit_elements(&self) -> u32 {
+        self.table_size_limit_elements
+            .unwrap_or(DEFAULT_TABLE_SIZE_LIMIT)
     }
 
     pub fn max_imports(&self) -> usize {
@@ -130,24 +132,24 @@ pub struct CacheOptions {
     pub base_dir: PathBuf,
     pub available_capabilities: HashSet<String>,
     /// Memory limit for the cache, in bytes.
-    pub memory_cache_size: Size,
+    pub memory_cache_size_bytes: Size,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
-    pub instance_memory_limit: Size,
+    pub instance_memory_limit_bytes: Size,
 }
 
 impl CacheOptions {
     pub fn new(
         base_dir: impl Into<PathBuf>,
         available_capabilities: impl Into<HashSet<String>>,
-        memory_cache_size: Size,
-        instance_memory_limit: Size,
+        memory_cache_size_bytes: Size,
+        instance_memory_limit_bytes: Size,
     ) -> Self {
         Self {
             base_dir: base_dir.into(),
             available_capabilities: available_capabilities.into(),
-            memory_cache_size,
-            instance_memory_limit,
+            memory_cache_size_bytes,
+            instance_memory_limit_bytes,
         }
     }
 }
