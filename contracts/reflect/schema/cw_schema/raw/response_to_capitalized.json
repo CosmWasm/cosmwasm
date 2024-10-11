@@ -1,0 +1,19 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "CapitalizedResponse",
+      "type": "struct",
+      "properties": {
+        "text": {
+          "value": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "type": "v1",
+  "root": 4,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "Uint64",
+      "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding,\nsuch that the full u64 range can be used for clients that convert JSON numbers to floats,\nlike JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n```\n# use cosmwasm_std::Uint64;\nlet a = Uint64::from(42u64);\nassert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32);\nassert_eq!(b.u64(), 70);\n```",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "Binary",
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "binary"
+    },
+    {
+      "name": "IbcAcknowledgement",
+      "type": "struct",
+      "properties": {
+        "data": {
+          "value": 2
+        }
+      }
+    },
+    {
+      "name": "ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "async_ack": {
+          "type": "named",
+          "properties": {
+            "ack": {
+              "description": "The acknowledgement to send back",
+              "value": 3
+            },
+            "channel_id": {
+              "description": "Existing channel where the packet was received",
+              "value": 0
+            },
+            "packet_sequence": {
+              "description": "Sequence number of the packet that was received",
+              "value": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -12,6 +12,35 @@ use thiserror::Error;
 pub const IDL_VERSION: &str = "1.0.0";
 
 /// Rust representation of a contract's API.
+pub struct CwApi {
+    pub contract_name: String,
+    pub contract_version: String,
+    pub instantiate: Option<cw_schema::Schema>,
+    pub execute: Option<cw_schema::Schema>,
+    pub query: Option<cw_schema::Schema>,
+    pub migrate: Option<cw_schema::Schema>,
+    pub sudo: Option<cw_schema::Schema>,
+    /// A mapping of query variants to response types
+    pub responses: Option<BTreeMap<String, cw_schema::Schema>>,
+}
+
+impl CwApi {
+    pub fn render(self) -> JsonCwApi {
+        JsonCwApi {
+            contract_name: self.contract_name,
+            contract_version: self.contract_version,
+            idl_version: IDL_VERSION.to_string(),
+            instantiate: self.instantiate,
+            execute: self.execute,
+            query: self.query,
+            migrate: self.migrate,
+            sudo: self.sudo,
+            responses: self.responses,
+        }
+    }
+}
+
+/// Rust representation of a contract's API.
 pub struct Api {
     pub contract_name: String,
     pub contract_version: String,
@@ -65,6 +94,76 @@ impl Api {
         }
 
         json_api
+    }
+}
+
+/// A JSON representation of a contract's API.
+#[derive(serde::Serialize)]
+pub struct JsonCwApi {
+    contract_name: String,
+    contract_version: String,
+    idl_version: String,
+    instantiate: Option<cw_schema::Schema>,
+    execute: Option<cw_schema::Schema>,
+    query: Option<cw_schema::Schema>,
+    migrate: Option<cw_schema::Schema>,
+    sudo: Option<cw_schema::Schema>,
+    responses: Option<BTreeMap<String, cw_schema::Schema>>,
+}
+
+impl JsonCwApi {
+    pub fn to_string(&self) -> Result<String, EncodeError> {
+        serde_json::to_string_pretty(&self).map_err(Into::into)
+    }
+
+    pub fn to_schema_files(&self) -> Result<Vec<(String, String)>, EncodeError> {
+        let mut result = Vec::new();
+
+        if let Some(instantiate) = &self.instantiate {
+            result.push((
+                "instantiate.json".to_string(),
+                serde_json::to_string_pretty(&instantiate)?,
+            ));
+        }
+
+        if let Some(execute) = &self.execute {
+            result.push((
+                "execute.json".to_string(),
+                serde_json::to_string_pretty(&execute)?,
+            ));
+        }
+        if let Some(query) = &self.query {
+            result.push((
+                "query.json".to_string(),
+                serde_json::to_string_pretty(&query)?,
+            ));
+        }
+        if let Some(migrate) = &self.migrate {
+            result.push((
+                "migrate.json".to_string(),
+                serde_json::to_string_pretty(&migrate)?,
+            ));
+        }
+        if let Some(sudo) = &self.sudo {
+            result.push((
+                "sudo.json".to_string(),
+                serde_json::to_string_pretty(&sudo)?,
+            ));
+        }
+        if let Some(responses) = &self.responses {
+            for (name, response) in responses {
+                result.push((
+                    format!("response_to_{name}.json"),
+                    serde_json::to_string_pretty(&response)?,
+                ));
+            }
+        }
+
+        Ok(result)
+    }
+
+    pub fn to_writer(&self, writer: impl std::io::Write) -> Result<(), EncodeError> {
+        serde_json::to_writer_pretty(writer, self).map_err(Into::into)
     }
 }
 

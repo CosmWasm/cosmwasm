@@ -1,0 +1,19 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "AdminResponse",
+      "type": "struct",
+      "properties": {
+        "admin": {
+          "value": 0
+        }
+      }
+    }
+  ]
+}

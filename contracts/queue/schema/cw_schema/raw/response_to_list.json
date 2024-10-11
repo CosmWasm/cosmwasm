@@ -1,0 +1,35 @@
+{
+  "type": "v1",
+  "root": 2,
+  "definitions": [
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "alloc::vec::Vec<u32>",
+      "type": "array",
+      "items": 0
+    },
+    {
+      "name": "ListResponse",
+      "type": "struct",
+      "properties": {
+        "early": {
+          "description": "List all IDs lower than 0x20",
+          "value": 1
+        },
+        "empty": {
+          "description": "List an empty range, both bounded",
+          "value": 1
+        },
+        "late": {
+          "description": "List all IDs starting from 0x20",
+          "value": 1
+        }
+      }
+    }
+  ]
+}
