@@ -386,7 +386,7 @@ fn bench_combined(c: &mut Criterion) {
 
     group.bench_function("get instance from fs cache and execute", |b| {
         let mut non_memcache = options.clone();
-        non_memcache.memory_cache_size = Size::kibi(0);
+        non_memcache.memory_cache_size_bytes = Size::kibi(0);
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
