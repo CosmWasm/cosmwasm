@@ -10,10 +10,8 @@ use std::{
     io::{self, Write},
     path::PathBuf,
 };
-use strum::Display;
 
-#[derive(Clone, Copy, Default, Display, ValueEnum)]
-#[strum(serialize_all = "kebab-case")]
+#[derive(Clone, Copy, Default, ValueEnum)]
 pub enum Language {
     #[default]
     Rust,
@@ -25,7 +23,7 @@ pub enum Language {
 #[clap(about, author, version)]
 /// Official CosmWasm codegen tool
 struct Opts {
-    #[clap(default_value_t, long, short)]
+    #[clap(default_value_t, long, short, value_enum)]
     /// Programming language to generate code for
     language: Language,
 

@@ -949,7 +949,6 @@ dependencies = [
  "log",
  "serde_json",
  "simple_logger",
- "strum",
 ]
 
 [[package]]
