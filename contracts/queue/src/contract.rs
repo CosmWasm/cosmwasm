@@ -71,7 +71,7 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<Response> {
     Ok(res)
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     // clear all
     let keys: Vec<_> = deps

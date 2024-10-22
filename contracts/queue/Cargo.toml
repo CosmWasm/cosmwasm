@@ -25,6 +25,10 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
+[features]
+# this is to demonstrate conditional entry-points for cosmwasm-plus style
+library = []
+
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 # cosmwasm_1_4 is enabled here for more efficient `range_keys` and `range_values`

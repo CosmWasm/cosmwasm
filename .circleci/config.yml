@@ -81,7 +81,6 @@ workflows:
       - contract_ibc_callbacks
       - contract_ibc_reflect
       - contract_ibc_reflect_send
-      - contract_nested_contracts
       - contract_queue
       - contract_reflect
       - contract_staking
@@ -792,34 +791,6 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_floaty-rust:1.74-{{ checksum "Cargo.lock" }}
-
-  contract_nested_contracts:
-    docker:
-      - image: rust:1.75
-    environment:
-      RUST_BACKTRACE: 1
-    working_directory: ~/cosmwasm/contracts/nested-contracts
-    steps:
-      - checkout:
-          path: ~/cosmwasm
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - cargocache-v2-contract_nested_contracts-rust:1.75-{{ checksum "Cargo.lock" }}
-      - check_contract:
-          min_version: "1.4"
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-            - target/wasm32-unknown-unknown/release/.fingerprint
-            - target/wasm32-unknown-unknown/release/build
-            - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_nested_contracts-rust:1.75-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:
