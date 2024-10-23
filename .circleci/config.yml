@@ -92,7 +92,7 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
-              rust-version: ["1.74.0", "1.78.0"]
+              rust-version: ["1.74.0", "1.82.0"]
       - benchmarking:
           requires:
             - package_vm
@@ -1144,7 +1144,7 @@ jobs:
 
   coverage:
     docker:
-      - image: rust:1.78.0-alpine3.19
+      - image: rust:1.82.0-alpine3.19
     environment:
       # Limit the number of parallel jobs to avoid OOM crashes during doc testing
       RUST_TEST_THREADS: 8
