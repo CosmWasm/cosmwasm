@@ -652,7 +652,8 @@ jobs:
 
   contract_hackatom:
     docker:
-      - image: rust:1.74
+      # We compile this contract with the upper bound to detect issues with new Rust versions early
+      - image: rust:1.82
     environment:
       RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/hackatom
@@ -664,7 +665,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_hackatom-rust:1.74-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_hackatom-rust:1.82-{{ checksum "Cargo.lock" }}
+      # TODO: enable again once 2.2 is released
       - check_contract:
           min_version: "1.4"
           skip_cosmwasm_check: true
@@ -677,7 +679,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_hackatom-rust:1.74-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_hackatom-rust:1.82-{{ checksum "Cargo.lock" }}
 
   contract_ibc_callbacks:
     docker:
