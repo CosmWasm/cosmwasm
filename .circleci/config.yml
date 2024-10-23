@@ -35,7 +35,10 @@ commands:
             - run:
                 name: Run cosmwasm-check (<< parameters.min_version >>)
                 command: |
-                  cargo install cosmwasm-check@~<< parameters.min_version >> --locked --force
+                  # Try installing min_version, but fall back to latest main version.
+                  # This allows us to test contracts against the latest cosmwasm-check before releasing it.
+                  cargo install cosmwasm-check@~<< parameters.min_version >> --locked --force \
+                  || cargo install --path ../../packages/check --locked --force
                   cosmwasm-check --version
                   cosmwasm-check target/wasm32-unknown-unknown/release/*.wasm
       # Run clippy after wasm build to ensure target/wasm32-unknown-unknown/release/<contract>.wasm exists
@@ -666,10 +669,8 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_hackatom-rust:1.82-{{ checksum "Cargo.lock" }}
-      # TODO: enable again once 2.2 is released
       - check_contract:
-          min_version: "1.4"
-          skip_cosmwasm_check: true
+          min_version: "2.2"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -724,10 +725,8 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_ibc_reflect-rust:1.74-{{ checksum "Cargo.lock" }}
-      # TODO: enable again once 2.2 is released
       - check_contract:
           min_version: "2.2"
-          skip_cosmwasm_check: true
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -866,10 +865,8 @@ jobs:
       - restore_cache:
           keys:
             - cargocache-v2-contract_reflect-rust:1.74-{{ checksum "Cargo.lock" }}
-      # TODO: enable again once 2.2 is released
       - check_contract:
           min_version: "2.2"
-          skip_cosmwasm_check: true
       - save_cache:
           paths:
             - /usr/local/cargo/registry
