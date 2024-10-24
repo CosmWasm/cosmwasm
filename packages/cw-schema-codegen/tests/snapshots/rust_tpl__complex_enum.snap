@@ -4,8 +4,26 @@ expression: rendered
 ---
 pub enum Complex {
     
-        One ( u64, ) ,
+        One
+        
+                (
+                    
+                        u64,
+                    
+                )
+            
+        ,
     
-        Two ( String,  u64, ) ,
+        Two
+        
+                {
+                    
+                        a: u64,
+                    
+                        b: String,
+                    
+                }
+        
+        ,
     
 }

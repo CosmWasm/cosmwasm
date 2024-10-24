@@ -1,5 +1,5 @@
 use askama::Template;
-use cw_schema_codegen::rust::{EnumTemplate, EnumVariantTemplate};
+use cw_schema_codegen::rust::{EnumTemplate, EnumVariantTemplate, FieldTemplate, TypeTemplate};
 
 #[test]
 fn simple_enum() {
@@ -8,11 +8,11 @@ fn simple_enum() {
         variants: &[
             EnumVariantTemplate {
                 name: "One",
-                types: None,
+                ty: TypeTemplate::Unit,
             },
             EnumVariantTemplate {
                 name: "Two",
-                types: None,
+                ty: TypeTemplate::Unit,
             },
         ],
     };
@@ -28,11 +28,22 @@ fn complex_enum() {
         variants: &[
             EnumVariantTemplate {
                 name: "One",
-                types: Some(&["u64"]),
+                ty: TypeTemplate::Tuple(&["u64"]),
             },
             EnumVariantTemplate {
                 name: "Two",
-                types: Some(&["String", "u64"]),
+                ty: TypeTemplate::Named {
+                    fields: &[
+                        FieldTemplate {
+                            name: "a",
+                            ty: "u64",
+                        },
+                        FieldTemplate {
+                            name: "b",
+                            ty: "String",
+                        },
+                    ],
+                },
             },
         ],
     };

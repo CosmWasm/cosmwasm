@@ -4,8 +4,14 @@ expression: rendered
 ---
 pub enum Simple {
     
-        One ,
+        One
+        
+            
+        ,
     
-        Two ,
+        Two
+        
+            
+        ,
     
 }

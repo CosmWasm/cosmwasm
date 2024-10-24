@@ -11,7 +11,7 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Clone, Copy, Default, ValueEnum)]
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
 pub enum Language {
     #[default]
     Rust,
@@ -54,7 +54,7 @@ fn main() -> anyhow::Result<()> {
         .init()?;
 
     let opts: Opts = Opts::parse();
-    info!("Generating code for {} from {:?}", opts.language, opts.file);
+    info!("Generating code for {:?} from {:?}", opts.language, opts.file);
 
     let schema = std::fs::read_to_string(&opts.file)?;
     let schema: cw_schema::Schema = serde_json::from_str(&schema)?;
