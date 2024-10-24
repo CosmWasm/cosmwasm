@@ -1,0 +1,29 @@
+---
+source: packages/cw-schema-codegen/tests/rust_tpl.rs
+expression: rendered
+---
+pub enum Complex {
+    
+        One
+        
+                (
+                    
+                        u64,
+                    
+                )
+            
+        ,
+    
+        Two
+        
+                {
+                    
+                        a: u64,
+                    
+                        b: String,
+                    
+                }
+        
+        ,
+    
+}

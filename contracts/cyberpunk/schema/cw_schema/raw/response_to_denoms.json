@@ -1,0 +1,78 @@
+{
+  "type": "v1",
+  "root": 6,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "alloc::vec::Vec<alloc::string::String>",
+      "type": "array",
+      "items": 0
+    },
+    {
+      "name": "DenomUnit",
+      "description": "Replicates the cosmos-sdk bank module DenomUnit type",
+      "type": "struct",
+      "properties": {
+        "aliases": {
+          "value": 2
+        },
+        "denom": {
+          "value": 0
+        },
+        "exponent": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<cosmwasm_std::metadata::DenomUnit>",
+      "type": "array",
+      "items": 3
+    },
+    {
+      "name": "DenomMetadata",
+      "description": "Replicates the cosmos-sdk bank module Metadata type",
+      "type": "struct",
+      "properties": {
+        "base": {
+          "value": 0
+        },
+        "denom_units": {
+          "value": 4
+        },
+        "description": {
+          "value": 0
+        },
+        "display": {
+          "value": 0
+        },
+        "name": {
+          "value": 0
+        },
+        "symbol": {
+          "value": 0
+        },
+        "uri": {
+          "value": 0
+        },
+        "uri_hash": {
+          "value": 0
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<cosmwasm_std::metadata::DenomMetadata>",
+      "type": "array",
+      "items": 5
+    }
+  ]
+}
