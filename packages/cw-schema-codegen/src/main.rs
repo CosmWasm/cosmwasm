@@ -54,7 +54,10 @@ fn main() -> anyhow::Result<()> {
         .init()?;
 
     let opts: Opts = Opts::parse();
-    info!("Generating code for {:?} from {:?}", opts.language, opts.file);
+    info!(
+        "Generating code for {:?} from {:?}",
+        opts.language, opts.file
+    );
 
     let schema = std::fs::read_to_string(&opts.file)?;
     let schema: cw_schema::Schema = serde_json::from_str(&schema)?;

@@ -20,9 +20,7 @@ pub struct FieldTemplate<'a> {
 pub enum TypeTemplate<'a> {
     Unit,
     Tuple(&'a [&'a str]),
-    Named {
-        fields: &'a [FieldTemplate<'a>],
-    }
+    Named { fields: &'a [FieldTemplate<'a>] },
 }
 
 #[derive(Template)]

@@ -1,0 +1,14 @@
+---
+source: packages/cw-schema-codegen/tests/rust_tpl.rs
+expression: rendered
+---
+pub struct Named
+
+
+        {
+            
+                a: u64,
+            
+                b: String,
+            
+        }
