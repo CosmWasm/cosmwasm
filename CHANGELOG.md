@@ -26,11 +26,14 @@ and this project adheres to
 - cosmwasm-vm: Export a new `migrate_with_info` function ([#2212])
 - cosmwasm-derive: Add support for migrate method with
   `migrate_info: MigrateInfo` argument. ([#2212])
+- cosmwasm-vm: Enable support for reference-types proposal, required since Rust
+  1.82 ([#2288])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
 [#2220]: https://github.com/CosmWasm/cosmwasm/pull/2220
 [#2212]: https://github.com/CosmWasm/cosmwasm/pull/2212
+[#2288]: https://github.com/CosmWasm/cosmwasm/pull/2288
 
 ### Changed
 
@@ -48,7 +51,12 @@ and this project adheres to
   match the contract address from `mock_env`. ([#2211])
 - cosmwasm-derive: Automatically detect whether the package is a dependency or
   the primary package, only expanding entrypoints for the primary package. This
-  effectively deprecates the usage of the `library` feature pattern. ([#2246])
+  effectively deprecates the usage of the `library` feature pattern.
+
+  Note: This feature does **NOT** interact well with workspaces due to a cargo
+  bug. If you have multiple contracts in a workspace, you might still want to
+  use the library feature ([#2246])
+
 - cosmwasm-std: Deprecate `BankQuery::AllBalances` and `IbcQuery::ListChannels`.
   Both are inherently problematic to use because the returned entries are
   unbounded. ([#2247])
