@@ -229,13 +229,30 @@ where
     /// This does the same as [`save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
+        self.store_code(wasm, true)
+    }
+
+    /// Takes a Wasm bytecode and stores it to the cache.
+    ///
+    /// This performs static checks, compiles the bytescode to a module and
+    /// stores the Wasm file on disk if `persist` is `true`.
+    ///
+    /// This does the same as [`save_wasm`] if `persist` is `true`.
+    pub fn store_code(&self, wasm: &[u8], persist: bool) -> VmResult<Checksum> {
         check_wasm(
             wasm,
             &self.available_capabilities,
             &self.wasm_limits,
             crate::internals::Logger::Off,
         )?;
-        self.save_wasm_unchecked(wasm)
+
+        let module = compile_module(wasm)?;
+
+        if persist {
+            self.save_to_disk(wasm, &module)
+        } else {
+            Ok(Checksum::generate(wasm))
+        }
     }
 
     /// Takes a Wasm bytecode and stores it to the cache.
@@ -247,14 +264,14 @@ where
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        // We need a new engine for each Wasm -> module compilation due to the metering middleware.
-        let compiling_engine = make_compiling_engine(None);
-        // This module cannot be executed directly as it was not created with the runtime engine
-        let module = compile(&compiling_engine, wasm)?;
+        let module = compile_module(wasm)?;
+        self.save_to_disk(wasm, &module)
+    }
 
+    fn save_to_disk(&self, wasm: &[u8], module: &Module) -> VmResult<Checksum> {
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
-        cache.fs_cache.store(&checksum, &module)?;
+        cache.fs_cache.store(&checksum, module)?;
         Ok(checksum)
     }
 
@@ -489,6 +506,12 @@ where
         let store = Store::new(engine);
         Ok((module, store))
     }
+}
+
+fn compile_module(wasm: &[u8]) -> Result<Module, VmError> {
+    let compiling_engine = make_compiling_engine(None);
+    let module = compile(&compiling_engine, wasm)?;
+    Ok(module)
 }
 
 unsafe impl<A, S, Q> Sync for Cache<A, S, Q>
