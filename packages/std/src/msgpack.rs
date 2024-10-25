@@ -12,11 +12,51 @@ use crate::{StdError, StdResult};
 /// Deserializes the given MessagePack bytes to a data structure.
 ///
 /// Errors if the input is not valid MessagePack or cannot be deserialized to the given type.
+///
+/// ## Examples
+///
+/// Encoding and decoding an enum using MessagePack.
+///
+/// ```
+/// use cosmwasm_schema::cw_serde;
+/// use cosmwasm_std::{to_msgpack_binary, from_msgpack};
+///
+/// #[cw_serde]
+/// enum MyPacket {
+///     Cowsay {
+///         text: String,
+///     },
+/// }
+///
+/// let packet = MyPacket::Cowsay { text: "hi".to_string() };
+/// let encoded = to_msgpack_binary(&packet).unwrap();
+/// let decoded: MyPacket  = from_msgpack(&encoded).unwrap();
+/// assert_eq!(decoded, packet);
 pub fn from_msgpack<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> StdResult<T> {
     rmp_serde::from_read(value.as_ref()).map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as a MessagePack byte vector.
+///
+/// ## Examples
+///
+/// Encoding and decoding an enum using MessagePack.
+///
+/// ```
+/// use cosmwasm_schema::cw_serde;
+/// use cosmwasm_std::{to_msgpack_vec, from_msgpack};
+///
+/// #[cw_serde]
+/// enum MyPacket {
+///     Cowsay {
+///         text: String,
+///     },
+/// }
+///
+/// let packet = MyPacket::Cowsay { text: "hi".to_string() };
+/// let encoded = to_msgpack_vec(&packet).unwrap();
+/// let decoded: MyPacket  = from_msgpack(&encoded).unwrap();
+/// assert_eq!(decoded, packet);
 pub fn to_msgpack_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
@@ -25,6 +65,27 @@ where
 }
 
 /// Serializes the given data structure as MessagePack bytes.
+///
+/// ## Examples
+///
+/// Encoding and decoding an enum using MessagePack.
+///
+/// ```
+/// use cosmwasm_schema::cw_serde;
+/// use cosmwasm_std::{to_msgpack_binary, from_msgpack};
+///
+/// #[cw_serde]
+/// enum MyPacket {
+///     Cowsay {
+///         text: String,
+///     },
+/// }
+///
+/// let packet = MyPacket::Cowsay { text: "hi".to_string() };
+/// let encoded = to_msgpack_binary(&packet).unwrap();
+/// let decoded: MyPacket  = from_msgpack(&encoded).unwrap();
+/// assert_eq!(decoded, packet);
+/// ```
 pub fn to_msgpack_binary<T>(data: &T) -> StdResult<Binary>
 where
     T: Serialize + ?Sized,
