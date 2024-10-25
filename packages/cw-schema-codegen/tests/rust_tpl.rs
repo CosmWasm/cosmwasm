@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use askama::Template;
 use cw_schema_codegen::rust::{
     EnumTemplate, EnumVariantTemplate, FieldTemplate, StructTemplate, TypeTemplate,
@@ -7,16 +9,19 @@ use cw_schema_codegen::rust::{
 fn simple_enum() {
     let tpl = EnumTemplate {
         name: "Simple",
-        variants: &[
+        docs: Cow::Borrowed(&[Cow::Borrowed("Simple enum")]),
+        variants: Cow::Borrowed(&[
             EnumVariantTemplate {
                 name: "One",
+                docs: Cow::Borrowed(&[Cow::Borrowed("One variant")]),
                 ty: TypeTemplate::Unit,
             },
             EnumVariantTemplate {
                 name: "Two",
+                docs: Cow::Borrowed(&[Cow::Borrowed("Two variant")]),
                 ty: TypeTemplate::Unit,
             },
-        ],
+        ]),
     };
 
     let rendered = tpl.render().unwrap();
@@ -27,27 +32,32 @@ fn simple_enum() {
 fn complex_enum() {
     let tpl = EnumTemplate {
         name: "Complex",
-        variants: &[
+        docs: Cow::Borrowed(&[Cow::Borrowed("Complex enum")]),
+        variants: Cow::Borrowed(&[
             EnumVariantTemplate {
                 name: "One",
-                ty: TypeTemplate::Tuple(&["u64"]),
+                docs: Cow::Borrowed(&[Cow::Borrowed("One variant")]),
+                ty: TypeTemplate::Tuple(Cow::Borrowed(&[Cow::Borrowed("u64")])),
             },
             EnumVariantTemplate {
                 name: "Two",
+                docs: Cow::Borrowed(&[Cow::Borrowed("Two variant")]),
                 ty: TypeTemplate::Named {
-                    fields: &[
+                    fields: Cow::Borrowed(&[
                         FieldTemplate {
-                            name: "a",
-                            ty: "u64",
+                            name: Cow::Borrowed("a"),
+                            docs: Cow::Borrowed(&[Cow::Borrowed("Field a")]),
+                            ty: Cow::Borrowed("u64"),
                         },
                         FieldTemplate {
-                            name: "b",
-                            ty: "String",
+                            name: Cow::Borrowed("b"),
+                            docs: Cow::Borrowed(&[Cow::Borrowed("Field b")]),
+                            ty: Cow::Borrowed("String"),
                         },
-                    ],
+                    ]),
                 },
             },
-        ],
+        ]),
     };
 
     let rendered = tpl.render().unwrap();
@@ -58,7 +68,8 @@ fn complex_enum() {
 fn empty_enum() {
     let tpl = EnumTemplate {
         name: "Empty",
-        variants: &[],
+        docs: Cow::Borrowed(&[Cow::Borrowed("Empty enum")]),
+        variants: Cow::Borrowed(&[]),
     };
 
     let rendered = tpl.render().unwrap();
@@ -69,6 +80,7 @@ fn empty_enum() {
 fn empty_struct() {
     let tpl = StructTemplate {
         name: "Empty",
+        docs: Cow::Borrowed(&[Cow::Borrowed("Empty struct")]),
         ty: TypeTemplate::Unit,
     };
 
@@ -80,7 +92,11 @@ fn empty_struct() {
 fn tuple_struct() {
     let tpl = StructTemplate {
         name: "Tuple",
-        ty: TypeTemplate::Tuple(&["u64", "String"]),
+        docs: Cow::Borrowed(&[Cow::Borrowed("Tuple struct")]),
+        ty: TypeTemplate::Tuple(Cow::Borrowed(&[
+            Cow::Borrowed("u64"),
+            Cow::Borrowed("String"),
+        ])),
     };
 
     let rendered = tpl.render().unwrap();
@@ -91,17 +107,20 @@ fn tuple_struct() {
 fn named_struct() {
     let tpl = StructTemplate {
         name: "Named",
+        docs: Cow::Borrowed(&[Cow::Borrowed("Named struct")]),
         ty: TypeTemplate::Named {
-            fields: &[
+            fields: Cow::Borrowed(&[
                 FieldTemplate {
-                    name: "a",
-                    ty: "u64",
+                    name: Cow::Borrowed("a"),
+                    docs: Cow::Borrowed(&[Cow::Borrowed("Field a")]),
+                    ty: Cow::Borrowed("u64"),
                 },
                 FieldTemplate {
-                    name: "b",
-                    ty: "String",
+                    name: Cow::Borrowed("b"),
+                    docs: Cow::Borrowed(&[Cow::Borrowed("Field b")]),
+                    ty: Cow::Borrowed("String"),
                 },
-            ],
+            ]),
         },
     };
 
