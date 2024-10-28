@@ -1,6 +1,7 @@
 use self::template::{
     EnumTemplate, EnumVariantTemplate, FieldTemplate, StructTemplate, TypeTemplate,
 };
+use heck::ToPascalCase;
 use std::{borrow::Cow, io};
 
 pub mod template;
@@ -38,7 +39,13 @@ fn expand_node_name<'a>(
             format!("({})", items).into()
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
-        _ => todo!(),
+
+        cw_schema::NodeType::Decimal { precision, signed } => todo!(),
+        cw_schema::NodeType::Address => todo!(),
+        cw_schema::NodeType::Checksum => todo!(),
+        cw_schema::NodeType::HexBinary => todo!(),
+        cw_schema::NodeType::Timestamp => todo!(),
+        cw_schema::NodeType::Unit => Cow::Borrowed("()"),
     }
 }
 
@@ -62,24 +69,26 @@ where
     match node.value {
         cw_schema::NodeType::Struct(ref sty) => {
             let structt = StructTemplate {
-                name: &node.name,
+                name: node.name.clone(),
                 docs: prepare_docs(node.description.as_deref()),
                 ty: match sty {
                     cw_schema::StructType::Unit => TypeTemplate::Unit,
                     cw_schema::StructType::Named { ref properties } => TypeTemplate::Named {
                         fields: properties
                             .iter()
-                            .map(|(name, prop)| {
-                                let ty = expand_node_name(schema, &schema.definitions[prop.value]);
-                                FieldTemplate {
-                                    name: Cow::Borrowed(name),
-                                    docs: prepare_docs(prop.description.as_deref()),
-                                    ty,
-                                }
+                            .map(|(name, prop)| FieldTemplate {
+                                name: Cow::Borrowed(name),
+                                docs: prepare_docs(prop.description.as_deref()),
+                                ty: expand_node_name(schema, &schema.definitions[prop.value]),
                             })
                             .collect(),
                     },
-                    _ => unreachable!(),
+                    cw_schema::StructType::Tuple { ref items } => TypeTemplate::Tuple(
+                        items
+                            .iter()
+                            .map(|item| expand_node_name(schema, &schema.definitions[*item]))
+                            .collect(),
+                    ),
                 },
             };
 
@@ -87,21 +96,21 @@ where
         }
         cw_schema::NodeType::Enum { ref cases, .. } => {
             let enumm = EnumTemplate {
-                name: &node.name,
+                name: node.name.clone(),
                 docs: prepare_docs(node.description.as_deref()),
                 variants: cases
                     .iter()
                     .map(|(name, case)| EnumVariantTemplate {
-                        name,
+                        name: name.to_pascal_case().into(),
                         docs: prepare_docs(case.description.as_deref()),
+                        serde_rename: Some(name.clone()),
                         ty: match case.value {
                             cw_schema::EnumValue::Unit => TypeTemplate::Unit,
                             cw_schema::EnumValue::Tuple { ref items } => {
                                 let items = items
                                     .iter()
                                     .map(|item| {
-                                        let node = &schema.definitions[*item];
-                                        expand_node_name(schema, node)
+                                        expand_node_name(schema, &schema.definitions[*item])
                                     })
                                     .collect();
 
@@ -111,21 +120,17 @@ where
                                 TypeTemplate::Named {
                                     fields: properties
                                         .iter()
-                                        .map(|(name, prop)| {
-                                            let ty = expand_node_name(
+                                        .map(|(name, prop)| FieldTemplate {
+                                            name: Cow::Borrowed(name),
+                                            docs: prepare_docs(prop.description.as_deref()),
+                                            ty: expand_node_name(
                                                 schema,
                                                 &schema.definitions[prop.value],
-                                            );
-                                            FieldTemplate {
-                                                name: Cow::Borrowed(name),
-                                                docs: prepare_docs(prop.description.as_deref()),
-                                                ty,
-                                            }
+                                            ),
                                         })
                                         .collect(),
                                 }
                             }
-                            _ => unreachable!(),
                         },
                     })
                     .collect(),

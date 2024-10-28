@@ -2,11 +2,18 @@
     #[doc = "{{ doc }}"]
 {% endfor %}
 
+#[cosmwasm_schema::cw_serde]
 pub enum {{ name }} {
     {% for variant in variants %}
         {% for doc in variant.docs %}
             #[doc = "{{ doc }}"]
         {% endfor %}
+
+        {% match variant.serde_rename %}
+            {% when Some with (rename) %}
+                #[serde(rename = "{{ rename }}")]
+            {% when None %}
+        {% endmatch %}
 
         {{ variant.name }}
         {% match variant.ty %}

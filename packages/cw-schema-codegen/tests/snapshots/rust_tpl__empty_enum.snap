@@ -5,6 +5,7 @@ expression: rendered
     #[doc = "Empty enum"]
 
 
+#[cosmwasm_schema::cw_serde]
 pub enum Empty {
     
 }

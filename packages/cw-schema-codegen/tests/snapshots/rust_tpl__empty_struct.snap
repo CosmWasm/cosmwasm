@@ -5,6 +5,7 @@ expression: rendered
     #[doc = "Empty struct"]
 
 
+#[cosmwasm_schema::cw_serde]
 pub struct Empty
 
 

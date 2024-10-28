@@ -5,6 +5,7 @@ expression: rendered
     #[doc = "Named struct"]
 
 
+#[cosmwasm_schema::cw_serde]
 pub struct Named
 
 

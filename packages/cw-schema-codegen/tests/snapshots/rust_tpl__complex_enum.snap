@@ -5,10 +5,14 @@ expression: rendered
     #[doc = "Complex enum"]
 
 
+#[cosmwasm_schema::cw_serde]
 pub enum Complex {
     
         
             #[doc = "One variant"]
+        
+
+        
         
 
         One
@@ -23,6 +27,9 @@ pub enum Complex {
     
         
             #[doc = "Two variant"]
+        
+
+        
         
 
         Two

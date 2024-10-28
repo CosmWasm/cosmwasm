@@ -5,6 +5,7 @@ expression: rendered
     #[doc = "Tuple struct"]
 
 
+#[cosmwasm_schema::cw_serde]
 pub struct Tuple
 
 

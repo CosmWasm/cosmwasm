@@ -2,6 +2,7 @@
     #[doc = "{{ doc }}"]
 {% endfor %}
 
+#[cosmwasm_schema::cw_serde]
 pub struct {{ name }}
 
 {% match ty %}
