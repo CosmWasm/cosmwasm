@@ -140,7 +140,7 @@ fn bench_cache(c: &mut Criterion) {
             unsafe { Cache::new(options.clone()).unwrap() };
 
         b.iter(|| {
-            let result = cache.save_wasm(HACKATOM);
+            let result = cache.store_code(HACKATOM, true, true);
             assert!(result.is_ok());
         });
     });
@@ -148,7 +148,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("load wasm", |b| {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(HACKATOM).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         b.iter(|| {
             let result = cache.load_wasm(&checksum);
@@ -161,7 +161,7 @@ fn bench_cache(c: &mut Criterion) {
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
         cache.set_module_unchecked(true);
-        let checksum = cache.save_wasm(HACKATOM).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         b.iter(|| {
             let result = cache.load_wasm(&checksum);
@@ -172,7 +172,7 @@ fn bench_cache(c: &mut Criterion) {
     group.bench_function("analyze", |b| {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(HACKATOM).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         b.iter(|| {
             let result = cache.analyze(&checksum);
@@ -189,7 +189,7 @@ fn bench_cache(c: &mut Criterion) {
         );
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
-        let checksum = cache.save_wasm(HACKATOM).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         b.iter(|| {
             let _ = cache
@@ -212,7 +212,7 @@ fn bench_cache(c: &mut Criterion) {
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
         cache.set_module_unchecked(true);
-        let checksum = cache.save_wasm(HACKATOM).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         b.iter(|| {
             let _ = cache
@@ -307,8 +307,8 @@ fn bench_instance_threads(c: &mut Criterion) {
             // Splice data in contract
             contract.splice(offset..offset + leb128_buf.len(), leb128_buf);
 
-            cache.save_wasm(contract.as_slice()).unwrap()
-            // let checksum = cache.save_wasm(contract.as_slice()).unwrap();
+            cache.store_code(contract.as_slice(), true, true).unwrap()
+            // let checksum = cache.store_code(contract.as_slice(), true, true).unwrap();
             // Preload into memory
             // cache
             //     .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
@@ -367,7 +367,7 @@ fn bench_combined(c: &mut Criterion) {
     let checksum: Checksum = {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        cache.save_wasm(CYBERPUNK).unwrap()
+        cache.store_code(CYBERPUNK, true, true).unwrap()
     };
 
     group.bench_function("get instance from fs cache and execute", |b| {
