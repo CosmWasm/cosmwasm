@@ -237,18 +237,24 @@ where
     ///
     /// This does the same as [`save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
+    #[deprecated = "Use `store_code` instead"]
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        self.store_code(wasm, true)
+        self.store_code(wasm, true, true)
     }
 
     /// Takes a Wasm bytecode and stores it to the cache.
     ///
-    /// This performs static checks, compiles the bytescode to a module and
+    /// This performs static checks if `checked` is `true`,
+    /// compiles the bytescode to a module and
     /// stores the Wasm file on disk if `persist` is `true`.
     ///
     /// This does the same as [`save_wasm`] if `persist` is `true`.
-    pub fn store_code(&self, wasm: &[u8], persist: bool) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.available_capabilities)?;
+    /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
+    /// use this function.
+    pub fn store_code(&self, wasm: &[u8], checked: bool, persist: bool) -> VmResult<Checksum> {
+        if checked {
+            check_wasm(wasm, &self.available_capabilities)?;
+        }
 
         let module = compile_module(wasm)?;
 
@@ -267,9 +273,9 @@ where
     /// This does the same as [`save_wasm`] but without the static checks.
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
+    #[deprecated = "Use `store_code` instead"]
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let module = compile_module(wasm)?;
-        self.save_to_disk(wasm, &module)
+        self.store_code(wasm, false, true)
     }
 
     fn save_to_disk(&self, wasm: &[u8], module: &Module) -> VmResult<Checksum> {
