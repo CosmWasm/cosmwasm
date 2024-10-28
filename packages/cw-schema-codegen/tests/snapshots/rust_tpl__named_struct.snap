@@ -2,13 +2,24 @@
 source: packages/cw-schema-codegen/tests/rust_tpl.rs
 expression: rendered
 ---
+    #[doc = "Named struct"]
+
+
 pub struct Named
 
 
         {
             
+                
+                    #[doc = "Field a"]
+                
+
                 a: u64,
             
+                
+                    #[doc = "Field b"]
+                
+
                 b: String,
             
         }

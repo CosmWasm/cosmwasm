@@ -2,6 +2,9 @@
 source: packages/cw-schema-codegen/tests/rust_tpl.rs
 expression: rendered
 ---
+    #[doc = "Empty enum"]
+
+
 pub enum Empty {
     
 }

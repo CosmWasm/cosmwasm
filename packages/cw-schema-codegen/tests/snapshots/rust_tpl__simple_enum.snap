@@ -2,13 +2,24 @@
 source: packages/cw-schema-codegen/tests/rust_tpl.rs
 expression: rendered
 ---
+    #[doc = "Simple enum"]
+
+
 pub enum Simple {
     
+        
+            #[doc = "One variant"]
+        
+
         One
         
             
         ,
     
+        
+            #[doc = "Two variant"]
+        
+
         Two
         
             

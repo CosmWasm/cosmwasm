@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use askama::Template;
-use cw_schema_codegen::rust::{
+use cw_schema_codegen::rust::template::{
     EnumTemplate, EnumVariantTemplate, FieldTemplate, StructTemplate, TypeTemplate,
 };
 
