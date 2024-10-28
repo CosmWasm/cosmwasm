@@ -21,9 +21,9 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
-const SAVE_WASM_THREADS: usize = 32;
+const STORE_CODE_THREADS: usize = 32;
 const INSTANTIATION_THREADS: usize = 2048;
-const THREADS: usize = SAVE_WASM_THREADS + INSTANTIATION_THREADS;
+const THREADS: usize = STORE_CODE_THREADS + INSTANTIATION_THREADS;
 
 pub fn main() {
     let options = CacheOptions {
@@ -36,14 +36,14 @@ pub fn main() {
     let cache: Cache<MockApi, MockStorage, MockQuerier> = unsafe { Cache::new(options).unwrap() };
     let cache = Arc::new(cache);
 
-    let checksum = cache.save_wasm(CONTRACT).unwrap();
+    let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
     let mut threads = Vec::with_capacity(THREADS);
-    for _ in 0..SAVE_WASM_THREADS {
+    for _ in 0..STORE_CODE_THREADS {
         let cache = Arc::clone(&cache);
 
         threads.push(thread::spawn(move || {
-            let checksum = cache.save_wasm(CONTRACT).unwrap();
+            let checksum = cache.store_code(CONTRACT, true, true).unwrap();
             println!("Done saving Wasm {checksum}");
         }));
     }
