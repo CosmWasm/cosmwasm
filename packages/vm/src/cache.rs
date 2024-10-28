@@ -673,6 +673,18 @@ mod tests {
     }
 
     #[test]
+    fn store_code_without_persist_works() {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+        let checksum = cache.store_code(CONTRACT, true, false).unwrap();
+
+        assert!(
+            cache.load_wasm(&checksum).is_err(),
+            "wasm file should not be saved to disk"
+        );
+    }
+
+    #[test]
     // This property is required when the same bytecode is uploaded multiple times
     fn store_code_allows_saving_multiple_times() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
