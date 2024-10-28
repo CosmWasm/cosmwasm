@@ -119,7 +119,7 @@ fn app(runtime: u64) {
 
         let mut checksums = Vec::<Checksum>::new();
         for contract in &contracts {
-            checksums.push(cache.save_wasm(contract.wasm).unwrap());
+            checksums.push(cache.store_code(contract.wasm, true, true).unwrap());
         }
         checksums
     };
