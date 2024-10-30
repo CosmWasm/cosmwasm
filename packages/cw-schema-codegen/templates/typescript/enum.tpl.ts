@@ -36,3 +36,5 @@ type {{ name }} =
     {% endmatch %}
 {% endfor %}
 ;
+
+export { {{ name }} };
