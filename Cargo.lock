@@ -945,6 +945,7 @@ dependencies = [
  "cw-schema",
  "either",
  "frunk",
+ "heck",
  "insta",
  "log",
  "serde_json",

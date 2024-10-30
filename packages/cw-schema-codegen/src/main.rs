@@ -62,8 +62,11 @@ fn main() -> anyhow::Result<()> {
 
     ensure!(opts.file.exists(), "Schema file does not exist");
     ensure!(
-        opts.language == Language::Rust,
-        "Only Rust code generation is supported at the moment"
+        matches!(
+            opts.language,
+            Language::Rust | Language::Go | Language::Typescript
+        ),
+        "Only Rust, TypeScript, and Go code generation is supported at the moment"
     );
 
     let schema = fs::read_to_string(&opts.file)?;

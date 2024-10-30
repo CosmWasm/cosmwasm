@@ -31,7 +31,6 @@ pub struct StructProperty {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", untagged)]
-#[non_exhaustive]
 pub enum StructType {
     Unit,
     Named {
@@ -56,7 +55,6 @@ pub struct EnumCase {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
-#[non_exhaustive]
 pub enum EnumValue {
     Unit,
     Named {
@@ -71,7 +69,6 @@ pub enum EnumValue {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
-#[non_exhaustive]
 pub enum NodeType {
     // Floating point numbers
     Float,
