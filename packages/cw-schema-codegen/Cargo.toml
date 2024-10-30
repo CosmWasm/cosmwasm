@@ -12,6 +12,7 @@ clap = { version = "4.5.18", features = ["derive"] }
 cw-schema = { version = "=2.2.0-rc.1", path = "../cw-schema" }
 either = "1.13.0"
 frunk = "0.4.3"
+frunk_core = "0.4.3"
 heck = "0.5.0"
 log = "0.4.22"
 serde_json = "1.0.128"

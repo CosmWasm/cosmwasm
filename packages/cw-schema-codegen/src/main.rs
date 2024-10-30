@@ -79,7 +79,14 @@ fn main() -> anyhow::Result<()> {
 
     schema.definitions.iter().try_for_each(|node| {
         debug!("Processing node: {node:?}");
-        cw_schema_codegen::rust::process_node(&mut output, &schema, node)
+
+        match opts.language {
+            Language::Rust => cw_schema_codegen::rust::process_node(&mut output, &schema, node),
+            Language::Typescript => {
+                cw_schema_codegen::typescript::process_node(&mut output, &schema, node)
+            }
+            Language::Go | Language::Python => todo!(),
+        }
     })?;
 
     Ok(())
