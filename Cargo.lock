@@ -942,6 +942,7 @@ dependencies = [
  "anyhow",
  "askama",
  "clap",
+ "cosmwasm-schema",
  "cw-schema",
  "either",
  "frunk",

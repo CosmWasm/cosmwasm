@@ -19,11 +19,7 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::Double => "number".into(),
         cw_schema::NodeType::Boolean => "boolean".into(),
         cw_schema::NodeType::String => "string".into(),
-        cw_schema::NodeType::Integer { signed, precision } => {
-            "string".into()
-            /*let ty = if signed { "i" } else { "u" };
-            format!("{ty}{precision}").into()*/
-        }
+        cw_schema::NodeType::Integer { .. } => "string".into(),
         cw_schema::NodeType::Binary => "Uint8Array".into(),
         cw_schema::NodeType::Optional { inner } => {
             let inner = &schema.definitions[inner];
@@ -41,8 +37,8 @@ fn expand_node_name<'a>(
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 
-        cw_schema::NodeType::Decimal { precision, signed } => todo!(),
-        cw_schema::NodeType::Address => todo!(),
+        cw_schema::NodeType::Decimal { .. } => "string".into(),
+        cw_schema::NodeType::Address => "string".into(),
         cw_schema::NodeType::Checksum => todo!(),
         cw_schema::NodeType::HexBinary => todo!(),
         cw_schema::NodeType::Timestamp => todo!(),
@@ -51,12 +47,8 @@ fn expand_node_name<'a>(
 }
 
 fn prepare_docs(desc: Option<&str>) -> Cow<'_, [Cow<'_, str>]> {
-    desc.map(|desc| {
-        desc.lines()
-            .map(|line| line.replace('"', "\\\"").into())
-            .collect()
-    })
-    .unwrap_or(Cow::Borrowed(&[]))
+    desc.map(|desc| desc.lines().map(Into::into).collect())
+        .unwrap_or(Cow::Borrowed(&[]))
 }
 
 pub fn process_node<O>(

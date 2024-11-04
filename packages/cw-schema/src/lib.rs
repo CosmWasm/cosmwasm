@@ -19,7 +19,7 @@ pub type DefinitionReference = usize;
 mod default_impls;
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct StructProperty {
@@ -28,7 +28,7 @@ pub struct StructProperty {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum StructType {
@@ -42,7 +42,7 @@ pub enum StructType {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct EnumCase {
@@ -52,7 +52,7 @@ pub struct EnumCase {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum EnumValue {
@@ -66,7 +66,7 @@ pub enum EnumValue {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum NodeType {
@@ -113,7 +113,7 @@ pub enum NodeType {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct Node {
@@ -124,7 +124,7 @@ pub struct Node {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SchemaV1 {
@@ -133,7 +133,7 @@ pub struct SchemaV1 {
 }
 
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", tag = "type")]
 #[non_exhaustive]

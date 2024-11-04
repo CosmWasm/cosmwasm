@@ -41,10 +41,10 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 
         cw_schema::NodeType::Decimal { precision, signed } => todo!(),
-        cw_schema::NodeType::Address => todo!(),
-        cw_schema::NodeType::Checksum => todo!(),
+        cw_schema::NodeType::Address => "cosmrs::AccountId".into(),
+        cw_schema::NodeType::Checksum => "cosmrs::tendermint::Hash".into(),
         cw_schema::NodeType::HexBinary => todo!(),
-        cw_schema::NodeType::Timestamp => todo!(),
+        cw_schema::NodeType::Timestamp => "cosmrs::tendermint::Time".into(),
         cw_schema::NodeType::Unit => Cow::Borrowed("()"),
     }
 }

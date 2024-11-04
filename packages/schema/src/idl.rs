@@ -98,17 +98,17 @@ impl Api {
 }
 
 /// A JSON representation of a contract's API.
-#[derive(serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct JsonCwApi {
-    contract_name: String,
-    contract_version: String,
-    idl_version: String,
-    instantiate: Option<cw_schema::Schema>,
-    execute: Option<cw_schema::Schema>,
-    query: Option<cw_schema::Schema>,
-    migrate: Option<cw_schema::Schema>,
-    sudo: Option<cw_schema::Schema>,
-    responses: Option<BTreeMap<String, cw_schema::Schema>>,
+    pub contract_name: String,
+    pub contract_version: String,
+    pub idl_version: String,
+    pub instantiate: Option<cw_schema::Schema>,
+    pub execute: Option<cw_schema::Schema>,
+    pub query: Option<cw_schema::Schema>,
+    pub migrate: Option<cw_schema::Schema>,
+    pub sudo: Option<cw_schema::Schema>,
+    pub responses: Option<BTreeMap<String, cw_schema::Schema>>,
 }
 
 impl JsonCwApi {

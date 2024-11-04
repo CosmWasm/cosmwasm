@@ -9,6 +9,7 @@ publish = false
 anyhow = "1.0.89"
 askama = { version = "0.12.1", default-features = false }
 clap = { version = "4.5.18", features = ["derive"] }
+cosmwasm-schema = { version = "=2.2.0-rc.1", path = "../schema" }
 cw-schema = { version = "=2.2.0-rc.1", path = "../cw-schema" }
 either = "1.13.0"
 frunk = "0.4.3"

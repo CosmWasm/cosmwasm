@@ -6,6 +6,7 @@ extern crate log;
 
 use clap::{Parser, ValueEnum};
 use std::{
+    collections::HashSet,
     fs::{self, File},
     io::{self, Write},
     path::PathBuf,
@@ -49,9 +50,38 @@ impl Opts {
     }
 }
 
+fn generate_defs<W>(
+    output: &mut W,
+    language: Language,
+    schema: &cw_schema::Schema,
+) -> anyhow::Result<()>
+where
+    W: io::Write,
+{
+    let cw_schema::Schema::V1(schema) = schema else {
+        bail!("Only schema version 1 is supported")
+    };
+
+    schema.definitions.iter().try_for_each(|node| {
+        debug!("Processing node: {node:?}");
+
+        match language {
+            Language::Rust => cw_schema_codegen::rust::process_node(output, schema, node),
+            Language::Typescript => {
+                cw_schema_codegen::typescript::process_node(output, schema, node)
+            }
+            Language::Go | Language::Python => todo!(),
+        }
+    })?;
+
+    Ok(())
+}
+
 fn main() -> anyhow::Result<()> {
     simple_logger::SimpleLogger::new()
         .without_timestamps()
+        .with_level(log::LevelFilter::Info)
+        .env()
         .init()?;
 
     let opts: Opts = Opts::parse();
@@ -70,24 +100,40 @@ fn main() -> anyhow::Result<()> {
     );
 
     let schema = fs::read_to_string(&opts.file)?;
-    let schema: cw_schema::Schema = serde_json::from_str(&schema)?;
-    let cw_schema::Schema::V1(schema) = schema else {
-        bail!("Unsupported schema version");
-    };
+    let schema: cosmwasm_schema::JsonCwApi = serde_json::from_str(&schema)?;
 
     let mut output = opts.output()?;
 
-    schema.definitions.iter().try_for_each(|node| {
-        debug!("Processing node: {node:?}");
+    if let Some(ref instantiate) = schema.instantiate {
+        generate_defs(&mut output, opts.language, instantiate)?;
+    }
 
-        match opts.language {
-            Language::Rust => cw_schema_codegen::rust::process_node(&mut output, &schema, node),
-            Language::Typescript => {
-                cw_schema_codegen::typescript::process_node(&mut output, &schema, node)
-            }
-            Language::Go | Language::Python => todo!(),
+    if let Some(ref execute) = schema.execute {
+        generate_defs(&mut output, opts.language, execute)?;
+    }
+
+    if let Some(ref query) = schema.query {
+        generate_defs(&mut output, opts.language, query)?;
+    }
+
+    if let Some(ref migrate) = schema.migrate {
+        generate_defs(&mut output, opts.language, migrate)?;
+    }
+
+    if let Some(ref sudo) = schema.sudo {
+        generate_defs(&mut output, opts.language, sudo)?;
+    }
+
+    if let Some(ref responses) = schema.responses {
+        let responses = responses
+            .iter()
+            .map(|(_name, response)| response)
+            .collect::<HashSet<_>>();
+
+        for response in responses {
+            generate_defs(&mut output, opts.language, response)?;
         }
-    })?;
+    }
 
     Ok(())
 }
