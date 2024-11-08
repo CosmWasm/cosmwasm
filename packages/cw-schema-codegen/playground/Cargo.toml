@@ -1,0 +1,11 @@
+[package]
+name = "serialization"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+deserialize = []
+
+[dependencies]
+serde = { version = "1.0.215", features = ["derive", "serde_derive"] }
+serde_json = "1.0.133"

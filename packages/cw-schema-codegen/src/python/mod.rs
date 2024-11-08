@@ -43,6 +43,7 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::HexBinary => todo!(),
         cw_schema::NodeType::Timestamp => todo!(),
         cw_schema::NodeType::Unit => Cow::Borrowed("void"),
+        _ => todo!()
     }
 }
 
@@ -82,6 +83,7 @@ where
                             .map(|item| expand_node_name(schema, &schema.definitions[*item]))
                             .collect(),
                     ),
+                    _ => todo!()
                 },
             };
 
@@ -123,6 +125,7 @@ where
                                         .collect(),
                                 }
                             }
+                            _ => todo!()
                         },
                     })
                     .collect(),
