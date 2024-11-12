@@ -4,6 +4,7 @@ authors = ["Aumetra Weisman <aumetra@confio.gmbh>"]
 edition = "2021"
 version.workspace = true
 publish = false
+build = "build.rs"
 
 [dependencies]
 anyhow = "1.0.89"

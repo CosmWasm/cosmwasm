@@ -35,6 +35,10 @@ type {{ name }} =
             } }
     {% endmatch %}
 {% endfor %}
+
+{% if variants.len() == 0 %}
+    never;
+{% endif %}
 ;
 
 export { {{ name }} };
