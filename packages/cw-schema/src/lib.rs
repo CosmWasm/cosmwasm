@@ -153,11 +153,16 @@ impl Identifier {
         //
         // Seems more robust than the previous implementation.
         trait NonStaticAny {
-            fn get_type_id(&self) -> TypeId where Self: 'static;
+            fn get_type_id(&self) -> TypeId
+            where
+                Self: 'static;
         }
 
         impl<T: ?Sized> NonStaticAny for PhantomData<T> {
-            fn get_type_id(&self) -> TypeId where Self: 'static {
+            fn get_type_id(&self) -> TypeId
+            where
+                Self: 'static,
+            {
                 TypeId::of::<T>()
             }
         }
@@ -198,7 +203,6 @@ impl SchemaVisitor {
 }
 
 pub trait Schemaifier {
-    #[doc(hidden)]
     fn id() -> Identifier {
         Identifier::of::<Self>()
     }

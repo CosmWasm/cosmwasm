@@ -1,7 +1,6 @@
 use self::template::{
     EnumTemplate, EnumVariantTemplate, FieldTemplate, StructTemplate, TypeTemplate,
 };
-use heck::ToPascalCase;
 use std::{borrow::Cow, io};
 
 pub mod template;

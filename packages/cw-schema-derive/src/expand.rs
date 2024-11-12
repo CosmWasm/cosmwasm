@@ -375,6 +375,7 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
     let (impl_generics, ty_generics, where_clause) = meta.generics.split_for_impl();
 
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_generics #crate_path::Schemaifier for #name #ty_generics #where_clause {
             fn visit_schema(visitor: &mut #crate_path::SchemaVisitor) -> #crate_path::DefinitionReference {
                 let node = #crate_path::Node {
@@ -461,6 +462,7 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
     let (impl_generics, ty_generics, where_clause) = meta.generics.split_for_impl();
 
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_generics #crate_path::Schemaifier for #name #ty_generics #where_clause {
             fn visit_schema(visitor: &mut #crate_path::SchemaVisitor) -> #crate_path::DefinitionReference {
                 let node = {
