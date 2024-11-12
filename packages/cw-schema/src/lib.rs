@@ -6,7 +6,7 @@ extern crate alloc;
 extern crate std;
 
 use alloc::{borrow::Cow, collections::BTreeMap, vec::Vec};
-use core::hash::BuildHasherDefault;
+use core::{any::TypeId, hash::BuildHasherDefault, marker::PhantomData};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -142,27 +142,32 @@ pub enum Schema {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct Identifier(usize);
+pub struct Identifier(TypeId);
 
 impl Identifier {
     pub fn of<T>() -> Self
     where
         T: ?Sized,
     {
-        // Don't do this at home. I'm a professional.
+        // Taken from <sagebind/castaway>: https://github.com/sagebind/castaway/blob/a7baeab32d75d0f105d1415210a2867d213f8818/src/utils.rs#L36
         //
-        // This is a hack based on the assumption that each type has will produce a unique monomorphized function.
-        // Therefore each function has a distinct function pointer.
-        //
-        // The compiler _might_ break this assumption in the future.
-        #[inline]
-        fn type_id_of<T: ?Sized>() -> usize {
-            type_id_of::<T> as usize
+        // Seems more robust than the previous implementation.
+        trait NonStaticAny {
+            fn get_type_id(&self) -> TypeId where Self: 'static;
         }
 
-        debug_assert_eq!(type_id_of::<T>(), type_id_of::<T>());
+        impl<T: ?Sized> NonStaticAny for PhantomData<T> {
+            fn get_type_id(&self) -> TypeId where Self: 'static {
+                TypeId::of::<T>()
+            }
+        }
 
-        Self(type_id_of::<T>())
+        let phantom = PhantomData::<T>;
+        let ty_id = NonStaticAny::get_type_id(unsafe {
+            core::mem::transmute::<&dyn NonStaticAny, &(dyn NonStaticAny + 'static)>(&phantom)
+        });
+
+        Identifier(ty_id)
     }
 }
 
