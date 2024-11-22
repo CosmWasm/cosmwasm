@@ -1,84 +1,46 @@
-from dataclasses import dataclass, field
-from dataclasses_json import dataclass_json, config
-from typing import Optional, Iterable
 import sys
-import json
+from typing import Literal, Union, Tuple
+from pydantic import BaseModel, RootModel
 
 
-# TODO tkulik: try to get rid of the `dataclasses_json` dependency
-
-
-enum_field = lambda: field(default=None, metadata=config(exclude=lambda x: x is None))
-
-@dataclass_json
-@dataclass
-class SomeEnum:
-    class VariantIndicator:
+class SomeEnum(RootModel):
+    class Field1(RootModel[Literal['Field1']]):
         pass
 
-    class Field3Type:
-        a: str
-        b: int
+    class Field2(BaseModel):
+        Field2: Tuple[int, int]
 
-    class Field5Type:
-        a: Iterable['SomeEnum']
+    class Field3(BaseModel):
+        class __InnerStruct(BaseModel):
+            a: str
+            b: int
+        Field3: __InnerStruct
 
-    Field1: Optional[VariantIndicator] = enum_field()
-    Field2: Optional[tuple[int, int]] = enum_field()
-    Field3: Optional[Field3Type] = enum_field()
-    Field4: Optional[Iterable['SomeEnum']] = enum_field()
-    Field5: Optional[Field5Type] = enum_field()
-    
-    def deserialize(json):
-        if not ":" in json:
-            if json == '"Field1"':
-                return SomeEnum(Field1=SomeEnum.VariantIndicator())
-            else:
-                raise Exception(f"Deserialization error, undefined variant: {json}")
-        else:
-            return SomeEnum.from_json(json)
-        
-    def serialize(self):
-        if self.Field1 is not None:
-            return '"Field1"'
-        else:
-            return SomeEnum.to_json(self)
-        
-@dataclass_json
-@dataclass
-class UnitStructure:
-    def deserialize(json):
-        if json == "null":
-            return UnitStructure()
-        else:
-            Exception(f"Deserialization error, undefined value: {json}")
-        
-    def serialize(self):
-        return 'null'
+    class Field4(BaseModel):
+        Field4: 'SomeEnum'
 
-@dataclass_json
-@dataclass
-class TupleStructure:
-    Tuple: tuple[int, str, int]
+    class Field5(BaseModel):
+        class __InnerStruct(BaseModel):
+            a: 'SomeEnum'
+        Field5: __InnerStruct
 
-    def deserialize(json):
-        return TupleStructure.from_json(f'{{ "Tuple": {json} }}')
-        
-    def serialize(self):
-        return json.dumps(self.Tuple)
+    root: Union[Field1, Field2, Field3, Field4, Field5]
 
-@dataclass_json
-@dataclass
-class NamedStructure:
+
+class UnitStructure(RootModel):
+    root: None
+
+
+class TupleStructure(RootModel):
+    root: Tuple[int, str, int]
+
+
+class NamedStructure(BaseModel):
     a: str
     b: int
-    c: Iterable['SomeEnum']
+    c: SomeEnum
 
-    def deserialize(json):
-        return NamedStructure.from_json(json)
-        
-    def serialize(self):
-        return self.to_json()
+
 
 ###
 ### TESTS:
@@ -88,32 +50,36 @@ for (index, input) in enumerate(sys.stdin):
     input = input.rstrip()
     try:
         if index < 5:
-            deserialized = SomeEnum.deserialize(input)
+            deserialized = SomeEnum.model_validate_json(input)
         elif index == 5:
-            deserialized = UnitStructure.deserialize(input)
+            deserialized = UnitStructure.model_validate_json(input)
         elif index == 6:
-            deserialized = TupleStructure.deserialize(input)
+            deserialized = TupleStructure.model_validate_json(input)
         else:
-            deserialized = NamedStructure.deserialize(input)
+            deserialized = NamedStructure.model_validate_json(input)
     except:
         raise(Exception(f"This json can't be deserialized: {input}"))
-    serialized = deserialized.serialize()
+    serialized = deserialized.model_dump_json()
     print(serialized)
 
 
 # def handle_msg(json):
-#     a = SomeEnum.deserialize(json)
-#     if a.Field1 is not None:
+#     a = SomeEnum.model_validate_json(json)
+#     if isinstance(a.root, SomeEnum.Field1):
 #         print("SomeEnum::Field1")
-#     elif a.Field2 is not None:
-#         print(a.Field2[0])
-#         print(a.Field2[1])
-#     elif a.Field3 is not None:
-#         print(a.Field3)
-#     elif a.Field4 is not None:
-#         print(a.Field4)
-#     elif a.Field5 is not None:
-#         print(a.Field5)
+#     elif isinstance(a.root, SomeEnum.Field2):
+#         print(a.root.Field2[0])
+#         print(a.root.Field2[1])
+#     elif isinstance(a.root, SomeEnum.Field3):
+#         print(a.root.Field3)
+#     elif isinstance(a.root, SomeEnum.Field4):
+#         print(a.root.Field4)
+#     elif isinstance(a.root, SomeEnum.Field5):
+#         print(a.root.Field5)
 
 # handle_msg('"Field1"')
 # handle_msg('{"Field2": [10, 12]}')
+# handle_msg('{"Field3": { "a": "10", "b": 12 } }')
+# handle_msg('{"Field4": { "Field4": "Field1" } }')
+# handle_msg('{"Field5": { "a": "Field1" } }')
+# handle_msg('{"Field5": { "a": { "Field5": { "a": "Field1" } } } }')
