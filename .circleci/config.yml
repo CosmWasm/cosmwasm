@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3.2.5
+  codecov: codecov/codecov@4.1.0
   win: circleci/windows@5.0
 
 commands:
@@ -955,13 +955,26 @@ jobs:
   coverage:
     docker:
 <<<<<<< HEAD
+<<<<<<< HEAD
       - image: rust:1.73.0
     resource_class: medium+
 =======
       - image: rust:1.74.0
 >>>>>>> 2cc3923c3 (Update Rust version of coverage job)
+=======
+      - image: rust:1.82.0-alpine3.19
+    environment:
+      # Limit the number of parallel jobs to avoid OOM crashes during doc testing
+      RUST_TEST_THREADS: 8
+    resource_class: medium+
+>>>>>>> 9eef30903 (Fix codecov job)
     steps:
       - checkout
+      - run:
+          name: Install necessary packages
+          command: |
+            apk update
+            apk add mold clang curl coreutils gnupg
       - run:
           name: Install grcov
           command: |
@@ -981,6 +994,9 @@ jobs:
           environment:
             RUSTFLAGS: "-Cinstrument-coverage"
             LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
+      - run:
+          name: Quick fix for GPG error in Codecov
+          command: mkdir -p ~/.gnupg
       - codecov/upload:
           file: reports/crypto.info
           flags: cosmwasm-crypto
