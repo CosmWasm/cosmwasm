@@ -967,7 +967,7 @@ jobs:
 
   coverage:
     docker:
-      - image: rust:1.72.0
+      - image: rust:1.74.0
     steps:
       - checkout
       - run:
