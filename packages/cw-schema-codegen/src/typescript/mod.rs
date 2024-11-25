@@ -12,19 +12,20 @@ fn expand_node_name<'a>(
     match node.value {
         cw_schema::NodeType::Array { items } => {
             let items = &schema.definitions[items];
-            format!("{}[]", expand_node_name(schema, items)).into()
+            format!("z.array({})", expand_node_name(schema, items)).into()
         }
-        cw_schema::NodeType::Float => "number".into(),
-        cw_schema::NodeType::Double => "number".into(),
-        cw_schema::NodeType::Boolean => "boolean".into(),
-        cw_schema::NodeType::String => "string".into(),
-        cw_schema::NodeType::Integer { .. } => "string".into(),
-        cw_schema::NodeType::Binary => "Uint8Array".into(),
+        cw_schema::NodeType::Float => "z.number()".into(),
+        cw_schema::NodeType::Double => "z.number()".into(),
+        cw_schema::NodeType::Boolean => "z.boolean()".into(),
+        cw_schema::NodeType::String => "z.string()".into(),
+        cw_schema::NodeType::Integer { .. } => "z.string()".into(),
+        cw_schema::NodeType::Binary => "z.instanceof(Uint8Array)".into(),
         cw_schema::NodeType::Optional { inner } => {
             let inner = &schema.definitions[inner];
-            format!("{} | null", expand_node_name(schema, inner)).into()
+            format!("{}.optional()", expand_node_name(schema, inner)).into()
         }
-        cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
+
+        cw_schema::NodeType::Struct(..) => format!("{}Schema", node.name).into(),
         cw_schema::NodeType::Tuple { ref items } => {
             let items = items
                 .iter()
@@ -34,14 +35,17 @@ fn expand_node_name<'a>(
 
             format!("[{}]", items).into()
         }
-        cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
+        cw_schema::NodeType::Enum { .. } => format!("{}Schema", node.name).into(),
 
-        cw_schema::NodeType::Decimal { .. } => "string".into(),
-        cw_schema::NodeType::Address => "string".into(),
+        cw_schema::NodeType::Decimal { .. } => "z.string()".into(),
+        cw_schema::NodeType::Address => "z.string()".into(),
         cw_schema::NodeType::Checksum => todo!(),
         cw_schema::NodeType::HexBinary => todo!(),
-        cw_schema::NodeType::Timestamp => todo!(),
-        cw_schema::NodeType::Unit => Cow::Borrowed("void"),
+        cw_schema::NodeType::Timestamp => {
+            // ToDo: Replace with better type
+            "z.string()".into()
+        }
+        cw_schema::NodeType::Unit => "z.void()".into(),
     }
 }
 
@@ -54,6 +58,7 @@ pub fn process_node<O>(
     output: &mut O,
     schema: &cw_schema::SchemaV1,
     node: &cw_schema::Node,
+    add_imports: bool,
 ) -> io::Result<()>
 where
     O: io::Write,
@@ -82,6 +87,7 @@ where
                             .collect(),
                     ),
                 },
+                add_imports,
             };
 
             writeln!(output, "{structt}")?;
@@ -125,6 +131,7 @@ where
                         },
                     })
                     .collect(),
+                add_imports,
             };
 
             writeln!(output, "{enumm}")?;

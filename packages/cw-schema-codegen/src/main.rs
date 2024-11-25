@@ -12,6 +12,9 @@ use std::{
     path::PathBuf,
 };
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, ValueEnum)]
 pub enum Language {
     #[default]
@@ -54,6 +57,7 @@ fn generate_defs<W>(
     output: &mut W,
     language: Language,
     schema: &cw_schema::Schema,
+    add_imports: bool,
 ) -> anyhow::Result<()>
 where
     W: io::Write,
@@ -68,7 +72,7 @@ where
         match language {
             Language::Rust => cw_schema_codegen::rust::process_node(output, schema, node),
             Language::Typescript => {
-                cw_schema_codegen::typescript::process_node(output, schema, node)
+                cw_schema_codegen::typescript::process_node(output, schema, node, add_imports)
             }
             Language::Go | Language::Python => todo!(),
         }
@@ -105,23 +109,23 @@ fn main() -> anyhow::Result<()> {
     let mut output = opts.output()?;
 
     if let Some(ref instantiate) = schema.instantiate {
-        generate_defs(&mut output, opts.language, instantiate)?;
+        generate_defs(&mut output, opts.language, instantiate, true)?;
     }
 
     if let Some(ref execute) = schema.execute {
-        generate_defs(&mut output, opts.language, execute)?;
+        generate_defs(&mut output, opts.language, execute, false)?;
     }
 
     if let Some(ref query) = schema.query {
-        generate_defs(&mut output, opts.language, query)?;
+        generate_defs(&mut output, opts.language, query, false)?;
     }
 
     if let Some(ref migrate) = schema.migrate {
-        generate_defs(&mut output, opts.language, migrate)?;
+        generate_defs(&mut output, opts.language, migrate, false)?;
     }
 
     if let Some(ref sudo) = schema.sudo {
-        generate_defs(&mut output, opts.language, sudo)?;
+        generate_defs(&mut output, opts.language, sudo, false)?;
     }
 
     if let Some(ref responses) = schema.responses {
@@ -131,7 +135,7 @@ fn main() -> anyhow::Result<()> {
             .collect::<HashSet<_>>();
 
         for response in responses {
-            generate_defs(&mut output, opts.language, response)?;
+            generate_defs(&mut output, opts.language, response, false)?;
         }
     }
 

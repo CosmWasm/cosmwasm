@@ -14,6 +14,7 @@ pub struct EnumTemplate<'a> {
     pub name: Cow<'a, str>,
     pub docs: Cow<'a, [Cow<'a, str>]>,
     pub variants: Cow<'a, [EnumVariantTemplate<'a>]>,
+    pub add_imports: bool,
 }
 
 #[derive(Clone)]
@@ -38,4 +39,5 @@ pub struct StructTemplate<'a> {
     pub name: Cow<'a, str>,
     pub docs: Cow<'a, [Cow<'a, str>]>,
     pub ty: TypeTemplate<'a>,
+    pub add_imports: bool,
 }
