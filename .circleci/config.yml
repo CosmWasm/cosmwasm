@@ -954,8 +954,12 @@ jobs:
 
   coverage:
     docker:
+<<<<<<< HEAD
       - image: rust:1.73.0
     resource_class: medium+
+=======
+      - image: rust:1.74.0
+>>>>>>> 2cc3923c3 (Update Rust version of coverage job)
     steps:
       - checkout
       - run:
