@@ -24,7 +24,7 @@ class SomeEnum(RootModel):
             a: 'SomeEnum'
         Field5: __InnerStruct
 
-    root: Union[Field1, Field2, Field3, Field4, Field5]
+    root: Union[Field1, Field2, Field3, Field4, Field5,]
 
 
 class UnitStructure(RootModel):
@@ -46,21 +46,14 @@ class NamedStructure(BaseModel):
 ### TESTS:
 ###
 
-for (index, input) in enumerate(sys.stdin):
-    input = input.rstrip()
-    try:
-        if index < 5:
-            deserialized = SomeEnum.model_validate_json(input)
-        elif index == 5:
-            deserialized = UnitStructure.model_validate_json(input)
-        elif index == 6:
-            deserialized = TupleStructure.model_validate_json(input)
-        else:
-            deserialized = NamedStructure.model_validate_json(input)
-    except:
-        raise(Exception(f"This json can't be deserialized: {input}"))
-    serialized = deserialized.model_dump_json()
-    print(serialized)
+print(SomeEnum.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(SomeEnum.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(SomeEnum.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(SomeEnum.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(SomeEnum.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(UnitStructure.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(TupleStructure.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
+print(NamedStructure.model_validate_json(sys.stdin.readline().rstrip()).model_dump_json())
 
 
 # def handle_msg(json):

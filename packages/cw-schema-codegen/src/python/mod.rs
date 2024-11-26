@@ -1,7 +1,6 @@
 use self::template::{
     EnumTemplate, EnumVariantTemplate, FieldTemplate, StructTemplate, TypeTemplate,
 };
-use heck::ToPascalCase;
 use std::{borrow::Cow, io};
 
 pub mod template;
@@ -15,15 +14,15 @@ fn expand_node_name<'a>(
             let items = &schema.definitions[items];
             format!("{}[]", expand_node_name(schema, items)).into()
         }
-        cw_schema::NodeType::Float => "number".into(),
-        cw_schema::NodeType::Double => "number".into(),
-        cw_schema::NodeType::Boolean => "boolean".into(),
-        cw_schema::NodeType::String => "string".into(),
-        cw_schema::NodeType::Integer { .. } => "string".into(),
-        cw_schema::NodeType::Binary => "Uint8Array".into(),
+        cw_schema::NodeType::Float => "float".into(),
+        cw_schema::NodeType::Double => "float".into(),
+        cw_schema::NodeType::Boolean => "bool".into(),
+        cw_schema::NodeType::String => "str".into(),
+        cw_schema::NodeType::Integer { .. } => "int".into(),
+        cw_schema::NodeType::Binary => "bytes".into(),
         cw_schema::NodeType::Optional { inner } => {
             let inner = &schema.definitions[inner];
-            format!("{} | null", expand_node_name(schema, inner)).into()
+            format!("typing.Optional[{}]", expand_node_name(schema, inner)).into()
         }
         cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
         cw_schema::NodeType::Tuple { ref items } => {
@@ -37,13 +36,13 @@ fn expand_node_name<'a>(
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 
-        cw_schema::NodeType::Decimal { .. } => "string".into(),
-        cw_schema::NodeType::Address => "string".into(),
+        cw_schema::NodeType::Decimal { .. } => "decimal.Decimal".into(),
+        cw_schema::NodeType::Address => "str".into(),
         cw_schema::NodeType::Checksum => todo!(),
         cw_schema::NodeType::HexBinary => todo!(),
         cw_schema::NodeType::Timestamp => todo!(),
-        cw_schema::NodeType::Unit => Cow::Borrowed("void"),
-        _ => todo!()
+        cw_schema::NodeType::Unit => "None".into(),
+        _ => todo!(),
     }
 }
 
@@ -83,7 +82,7 @@ where
                             .map(|item| expand_node_name(schema, &schema.definitions[*item]))
                             .collect(),
                     ),
-                    _ => todo!()
+                    _ => todo!(),
                 },
             };
 
@@ -125,7 +124,7 @@ where
                                         .collect(),
                                 }
                             }
-                            _ => todo!()
+                            _ => todo!(),
                         },
                     })
                     .collect(),
