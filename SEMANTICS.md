@@ -344,8 +344,8 @@ It just ends up returning `Err` to contract-A's `reply` function.
 
 Note that errors are not handled with `ReplyOn::Success`, meaning, in such a
 case, an error will be treated just like a normal `message` returning an error.
-This diagram may help explain. Imagine a contract returned two submessages -
-(a) with `ReplyOn::Success` and (b) with `ReplyOn::Error`:
+This diagram may help explain. Imagine a contract returned two submessages - (a)
+with `ReplyOn::Success` and (b) with `ReplyOn::Error`:
 
 | processing a) | processing b) | reply called | may overwrite result from reply | note                                              |
 | ------------- | ------------- | ------------ | ------------------------------- | ------------------------------------------------- |
