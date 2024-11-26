@@ -96,7 +96,7 @@ contract checks the availability early on.
 
 When functionality is always present in the VM (such as a new import implemented
 directly in the VM, see [#1299]), we should not use capability. They just create
-fragmentation in the CosmWasm ecosystem and increase the barrier for adoption.
+fragmentation in the CosmWasm ecosystem and increase the barrier to adoption.
 Instead the `check_wasm_imports` check is used to validate this when the
 contract is stored.
 

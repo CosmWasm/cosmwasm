@@ -63,7 +63,7 @@ fn serialize_unsigned_transaction(
 
 /// Get the recovery param from the value `v` when no chain ID for replay protection is used.
 ///
-/// This is needed for chain-agnostig aignatures like signed text.
+/// This is needed for chain-agnostic signatures like signed text.
 ///
 /// See [EIP-155] for how `v` is composed.
 ///
@@ -78,7 +78,7 @@ pub fn get_recovery_param(v: u8) -> StdResult<u8> {
 
 /// Get the recovery param from the value `v` when a chain ID for replay protection is used.
 ///
-/// This is needed for chain-agnostig aignatures like signed text.
+/// This is needed for chain-agnostic signatures like signed text.
 ///
 /// See [EIP-155] for how `v` is composed.
 ///
