@@ -40,7 +40,10 @@ fn expand_node_name<'a>(
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 
-        cw_schema::NodeType::Decimal { precision: _, signed: _ } => {
+        cw_schema::NodeType::Decimal {
+            precision: _,
+            signed: _,
+        } => {
             // ToDo: Actually use a decimal type here
             "String".into()
         }
@@ -49,7 +52,7 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::HexBinary => {
             // ToDo: Actually use a hex-encoded binary type here
             "String".into()
-        },
+        }
         cw_schema::NodeType::Timestamp => "cosmrs::tendermint::Time".into(),
         cw_schema::NodeType::Unit => "()".into(),
     }

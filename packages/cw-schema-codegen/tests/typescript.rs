@@ -135,11 +135,11 @@ fn assert_validity() {
 
     // make sure the dependencies are installed
     let install_status = Command::new("npm")
-            .arg("i")
-            .current_dir(&e2e_dir)
-            .status()
-            .unwrap();
-        assert!(install_status.success());
+        .arg("i")
+        .current_dir(&e2e_dir)
+        .status()
+        .unwrap();
+    assert!(install_status.success());
 
     let random_data: [u8; 255] = rand::random();
     let mut unstructured = arbitrary::Unstructured::new(&random_data);

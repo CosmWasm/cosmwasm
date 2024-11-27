@@ -39,8 +39,14 @@ fn expand_node_name<'a>(
 
         cw_schema::NodeType::Decimal { .. } => "z.string()".into(),
         cw_schema::NodeType::Address => "z.string()".into(),
-        cw_schema::NodeType::Checksum => todo!(),
-        cw_schema::NodeType::HexBinary => todo!(),
+        cw_schema::NodeType::Checksum => {
+            // ToDo: Use actual checksum types
+            "z.string()".into()
+        }
+        cw_schema::NodeType::HexBinary => {
+            // ToDo: Actually use a binary decoding hex type
+            "z.string()".into()
+        }
         cw_schema::NodeType::Timestamp => {
             // ToDo: Replace with better type
             "z.string()".into()
