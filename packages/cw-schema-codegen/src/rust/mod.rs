@@ -40,12 +40,18 @@ fn expand_node_name<'a>(
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 
-        cw_schema::NodeType::Decimal { precision, signed } => todo!(),
+        cw_schema::NodeType::Decimal { precision: _, signed: _ } => {
+            // ToDo: Actually use a decimal type here
+            "String".into()
+        }
         cw_schema::NodeType::Address => "cosmrs::AccountId".into(),
         cw_schema::NodeType::Checksum => "cosmrs::tendermint::Hash".into(),
-        cw_schema::NodeType::HexBinary => todo!(),
+        cw_schema::NodeType::HexBinary => {
+            // ToDo: Actually use a hex-encoded binary type here
+            "String".into()
+        },
         cw_schema::NodeType::Timestamp => "cosmrs::tendermint::Time".into(),
-        cw_schema::NodeType::Unit => Cow::Borrowed("()"),
+        cw_schema::NodeType::Unit => "()".into(),
     }
 }
 
