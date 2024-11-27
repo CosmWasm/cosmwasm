@@ -1,4 +1,5 @@
 use arbitrary::Arbitrary;
+use core::str;
 use cw_schema::Schemaifier;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -19,15 +20,8 @@ struct Uwu(String, u32);
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
 struct Òwó;
 
-mod empty {
-    #![allow(unreachable_code)]
-    use super::*;
-    
-    #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
-    pub enum Empty {}
-}
-
-use self::empty::Empty;
+#[derive(Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
+pub enum Empty {}
 
 #[derive(Arbitrary, Schemaifier, Debug, Deserialize, PartialEq, Serialize)]
 enum Hehehe {
@@ -84,8 +78,7 @@ fn codegen_snap() {
             .iter()
             .map(|node| {
                 let mut buf = Vec::new();
-                cw_schema_codegen::typescript::process_node(&mut buf, &schema, node, true)
-                    .unwrap();
+                cw_schema_codegen::typescript::process_node(&mut buf, &schema, node, true).unwrap();
                 String::from_utf8(buf).unwrap()
             })
             .collect::<String>();
@@ -124,17 +117,29 @@ fn assert_validity() {
             wrap::<Òwó>,
             type_name::<Òwó>(),
         ),
-        (
+        // `Empty` is a non-constructable type
+        /*(
             cw_schema::schema_of::<Empty>(),
             wrap::<Empty>,
             type_name::<Empty>(),
-        ),
+        ),*/
         (
             cw_schema::schema_of::<Hehehe>(),
             wrap::<Hehehe>,
             type_name::<Hehehe>(),
         ),
     ];
+
+    let e2e_dir = format!("{}/tests/ts-e2e", env!("CARGO_MANIFEST_DIR"));
+    let gen_file_path = format!("{}/src/gen.ts", e2e_dir);
+
+    // make sure the dependencies are installed
+    let install_status = Command::new("npm")
+            .arg("i")
+            .current_dir(&e2e_dir)
+            .status()
+            .unwrap();
+        assert!(install_status.success());
 
     let random_data: [u8; 255] = rand::random();
     let mut unstructured = arbitrary::Unstructured::new(&random_data);
@@ -148,26 +153,20 @@ fn assert_validity() {
             .iter()
             .map(|node| {
                 let mut buf = Vec::new();
-                cw_schema_codegen::typescript::process_node(&mut buf, schema, node, true)
-                    .unwrap();
+                cw_schema_codegen::typescript::process_node(&mut buf, schema, node, true).unwrap();
                 String::from_utf8(buf).unwrap()
             })
             .collect::<String>();
 
-        let e2e_dir = format!("{}/tests/ts-e2e", env!("CARGO_MANIFEST_DIR"));
-        let gen_file_path = format!("{}/src/gen.ts", e2e_dir);
-        let mut gen_file = File::create(gen_file_path).unwrap();
+        let mut gen_file = File::create(&gen_file_path).unwrap();
         gen_file.write_all(output.as_bytes()).unwrap();
 
         let data = arbitrary_gen(&mut unstructured);
         let serialized = serde_json::to_string(&data).unwrap();
 
-        let install_status = Command::new("npm").arg("i").current_dir(&e2e_dir).status().unwrap();
-        assert!(install_status.success());
-
         let mut child = Command::new("npm")
             .args(["test", type_name])
-            .current_dir(e2e_dir)
+            .current_dir(&e2e_dir)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -178,8 +177,17 @@ fn assert_validity() {
             stdin.write_all(serialized.as_bytes()).unwrap();
         }
 
-        let output = child.wait_with_output().unwrap();
-        let deserialized: Combined = serde_json::from_slice(&output.stdout).unwrap();
+        let proc_output = child.wait_with_output().unwrap();
+        assert!(
+            proc_output.status.success(),
+            "failed with object: {data:#?}; json: {serialized}; schema: {output}"
+        );
+
+        let stdout = str::from_utf8(&proc_output.stdout).unwrap();
+        let stdout = stdout.lines().last().unwrap();
+        let deserialized: Combined = serde_json::from_str(stdout).unwrap_or_else(|err| {
+            panic!("{err:?}; input: {serialized}, output: {stdout}");
+        });
 
         assert_eq!(data, deserialized);
     }

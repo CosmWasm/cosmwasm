@@ -20,7 +20,7 @@ const {{ name }}Schema = z.union([
 
     {% match variant.ty %}
         {% when TypeTemplate::Unit %}
-            z.object({ "{{ variant.name }}": z.void() }),
+            z.object({ "{{ variant.name }}": z.null() }).or(z.literal("{{ variant.name }}")),
         {% when TypeTemplate::Tuple with (types) %}
             z.object({ "{{ variant.name }}": z.tuple([{{ types|join(", ") }}]) }),
         {% when TypeTemplate::Named with { fields } %}

@@ -13,7 +13,7 @@ import { z } from 'zod';
 const {{ name }}Schema = 
 {% match ty %}
     {% when TypeTemplate::Unit %}
-        z.void()
+        z.null()
     {% when TypeTemplate::Tuple with (types) %}
         z.tuple([{{ types|join(", ") }}])
     {% when TypeTemplate::Named with { fields } %}

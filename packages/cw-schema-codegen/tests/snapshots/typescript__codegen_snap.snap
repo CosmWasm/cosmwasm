@@ -20,7 +20,7 @@ const OwoSchema =
                 
                  */
 
-                field_1: z.string(),
+                field_1: z.string().or(z.number()),
             
                 /**
                 

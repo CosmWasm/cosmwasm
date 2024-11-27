@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 const UwuSchema = 
 
-        z.tuple([z.string(), z.string()])
+        z.tuple([z.string(), z.string().or(z.number())])
     
 ;
 

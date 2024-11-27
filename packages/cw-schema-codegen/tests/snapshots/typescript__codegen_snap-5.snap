@@ -19,7 +19,7 @@ const HeheheSchema = z.union([
      */
 
     
-            z.object({ "A": z.void() }),
+            z.object({ "A": z.null() }).or(z.literal("A")),
         
 
     /**
@@ -27,7 +27,7 @@ const HeheheSchema = z.union([
      */
 
     
-            z.object({ "B": z.tuple([z.string()]) }),
+            z.object({ "B": z.tuple([z.string().or(z.number())]) }),
         
 
     /**

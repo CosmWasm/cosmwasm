@@ -18,7 +18,7 @@ fn expand_node_name<'a>(
         cw_schema::NodeType::Double => "z.number()".into(),
         cw_schema::NodeType::Boolean => "z.boolean()".into(),
         cw_schema::NodeType::String => "z.string()".into(),
-        cw_schema::NodeType::Integer { .. } => "z.string()".into(),
+        cw_schema::NodeType::Integer { .. } => "z.string().or(z.number())".into(),
         cw_schema::NodeType::Binary => "z.instanceof(Uint8Array)".into(),
         cw_schema::NodeType::Optional { inner } => {
             let inner = &schema.definitions[inner];

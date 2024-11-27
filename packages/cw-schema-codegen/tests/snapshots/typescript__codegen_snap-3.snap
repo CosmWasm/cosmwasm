@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 const ÒwóSchema = 
 
-        z.void()
+        z.null()
     
 ;
 

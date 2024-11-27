@@ -14,6 +14,9 @@ const typeName = process.argv[2];
 const deserialized = JSON.parse(stdinString);
 
 let validated = gen[typeName].parse(deserialized);
+console.error(stdinString);
+console.error(deserialized);
+console.error(validated);
 
 const outputStream = process.stdout;
 outputStream.write(JSON.stringify(validated));
