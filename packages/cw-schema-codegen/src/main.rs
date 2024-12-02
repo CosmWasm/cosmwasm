@@ -74,7 +74,8 @@ where
             Language::Typescript => {
                 cw_schema_codegen::typescript::process_node(output, schema, node, add_imports)
             }
-            Language::Go | Language::Python => todo!(),
+            Language::Python => cw_schema_codegen::python::process_node(output, schema, node),
+            Language::Go => todo!(),
         }
     })?;
 
