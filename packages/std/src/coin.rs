@@ -6,7 +6,9 @@ use crate::prelude::*;
 use crate::CoinFromStrError;
 use crate::Uint128;
 
-#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct Coin {
     pub denom: String,
     pub amount: Uint128,
