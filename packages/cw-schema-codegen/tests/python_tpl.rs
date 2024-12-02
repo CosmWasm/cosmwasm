@@ -56,7 +56,7 @@ fn simple_enum() {
 
 macro_rules! validator {
     ($typ:ty) => {{
-        let a: Box<dyn FnOnce(&str) -> ()> = Box::new(|output| {
+        let a: Box<dyn FnOnce(&str)> = Box::new(|output| {
             serde_json::from_str::<$typ>(output).unwrap();
         });
         a
@@ -130,7 +130,7 @@ fn assert_validity() {
 
         let mut file = tempfile::NamedTempFile::with_suffix(".py").unwrap();
         file.write_all(schema_output.as_bytes()).unwrap();
-        file.write(
+        file.write_all(
             format!(
                 "import sys; print({type_name}.model_validate_json('{example}').model_dump_json())"
             )

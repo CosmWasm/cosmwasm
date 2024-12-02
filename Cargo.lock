@@ -966,6 +966,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_logger",
+ "tempfile",
 ]
 
 [[package]]
