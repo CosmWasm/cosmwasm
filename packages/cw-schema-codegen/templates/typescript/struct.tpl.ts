@@ -12,22 +12,22 @@ import { z } from 'zod';
 
 const {{ name }}Schema = 
 {% match ty %}
-    {% when TypeTemplate::Unit %}
-        z.null()
-    {% when TypeTemplate::Tuple with (types) %}
-        z.tuple([{{ types|join(", ") }}])
-    {% when TypeTemplate::Named with { fields } %}
-        z.object({
-            {% for field in fields %}
-                /**
-                {% for doc in field.docs %}
-                    * {{ doc }}
-                {% endfor %}
-                 */
+{% when TypeTemplate::Unit %}
+    z.null()
+{% when TypeTemplate::Tuple with (types) %}
+    z.tuple([{{ types|join(", ") }}])
+{% when TypeTemplate::Named with { fields } %}
+    z.object({
+{% for field in fields %}
+        /**
+        {% for doc in field.docs %}
+        * {{ doc }}
+        {% endfor %}
+         */
 
-                {{ field.name }}: {{ field.ty }},
-            {% endfor %}
-        })
+        {{ field.name }}: {{ field.ty }},
+{% endfor %}
+})
 {% endmatch %}
 ;
 

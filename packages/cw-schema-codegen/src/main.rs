@@ -57,7 +57,7 @@ fn generate_defs<W>(
     output: &mut W,
     language: Language,
     schema: &cw_schema::Schema,
-    add_imports: bool,
+    add_imports_or_package: bool,
 ) -> anyhow::Result<()>
 where
     W: io::Write,
@@ -72,10 +72,10 @@ where
         match language {
             Language::Rust => cw_schema_codegen::rust::process_node(output, schema, node),
             Language::Typescript => {
-                cw_schema_codegen::typescript::process_node(output, schema, node, add_imports)
+                cw_schema_codegen::typescript::process_node(output, schema, node, add_imports_or_package)
             }
             Language::Python => cw_schema_codegen::python::process_node(output, schema, node),
-            Language::Go => todo!(),
+            Language::Go => cw_schema_codegen::go::process_node(output, schema, node, add_imports_or_package),
         }
     })?;
 

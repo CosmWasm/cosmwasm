@@ -18,28 +18,28 @@ const {{ name }}Schema = z.union([
     {% endfor %}
      */
 
-    {% match variant.ty %}
-        {% when TypeTemplate::Unit %}
-            z.object({ "{{ variant.name }}": z.null() }).or(z.literal("{{ variant.name }}")),
-        {% when TypeTemplate::Tuple with (types) %}
-            z.object({ "{{ variant.name }}": z.tuple([{{ types|join(", ") }}]) }),
-        {% when TypeTemplate::Named with { fields } %}
-            z.object({ "{{ variant.name }}": z.object({
-                {% for field in fields %}
-                    /**
-                    {% for doc in field.docs %}
-                        * {{ doc }}
-                    {% endfor %}
-                     */
+{% match variant.ty %}
+{% when TypeTemplate::Unit %}
+    z.object({ "{{ variant.name }}": z.null() }).or(z.literal("{{ variant.name }}")),
+{% when TypeTemplate::Tuple with (types) %}
+    z.object({ "{{ variant.name }}": z.tuple([{{ types|join(", ") }}]) }),
+{% when TypeTemplate::Named with { fields } %}
+    z.object({ "{{ variant.name }}": z.object({
+{% for field in fields %}
+        /**
+        {% for doc in field.docs %}
+        * {{ doc }}
+        {% endfor %}
+         */
 
-                    {{ field.name }}: {{ field.ty }},
-                {% endfor %}
-            }) }),
-    {% endmatch %}
+        {{ field.name }}: {{ field.ty }},
+{% endfor %}
+}) }),
+{% endmatch %}
 {% endfor %}
 
 {% if variants.len() == 0 %}
-    never;
+never;
 {% endif %}
 ]);
 
