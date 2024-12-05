@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "description": "returns a human-readable representation of the verifier use to ensure query path works in integration tests",
+      "type": "object",
+      "required": [
+        "verifier"
+      ],
+      "properties": {
+        "verifier": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
+      "type": "object",
+      "required": [
+        "other_balance"
+      ],
+      "properties": {
+        "other_balance": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Recurse will execute a query into itself up to depth-times and return Each step of the recursion may perform some extra work to test gas metering (`work` rounds of sha256 on contract). Now that we have Env, we can auto-calculate the address to recurse into",
+      "type": "object",
+      "required": [
+        "recurse"
+      ],
+      "properties": {
+        "recurse": {
+          "type": "object",
+          "required": [
+            "depth",
+            "work"
+          ],
+          "properties": {
+            "depth": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "work": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "GetInt returns a hardcoded u32 value",
+      "type": "object",
+      "required": [
+        "get_int"
+      ],
+      "properties": {
+        "get_int": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

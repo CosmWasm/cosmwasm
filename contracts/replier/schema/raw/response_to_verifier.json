@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VerifierResponse",
+  "type": "object",
+  "required": [
+    "verifier"
+  ],
+  "properties": {
+    "verifier": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
