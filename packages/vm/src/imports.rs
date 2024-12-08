@@ -32,7 +32,7 @@ use crate::GasInfo;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
-/// A mibi (mega binary)
+/// A mebi (mega binary)
 const MI: usize = 1024 * 1024;
 /// Max key length for db_write/db_read/db_remove/db_scan (when VM reads the key argument from Wasm memory)
 const MAX_LENGTH_DB_KEY: usize = 64 * KI;
