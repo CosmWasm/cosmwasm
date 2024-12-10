@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-vm: Add `Cache::store_code`
+
 ## [1.5.8] - 2024-09-23
 
 ### Fixed
