@@ -953,6 +953,7 @@ dependencies = [
  "askama",
  "clap",
  "cosmwasm-schema",
+ "cosmwasm-std",
  "cw-schema",
  "derive_arbitrary",
  "either",
