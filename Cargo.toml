@@ -7,7 +7,7 @@ exclude = ["contracts"]
 resolver = "2"
 
 [workspace.package]
-version = "2.0.7"
+version = "2.0.8"
 
 [workspace.metadata.release]
 shared-version = true
