@@ -28,6 +28,7 @@ and this project adheres to
   `migrate_info: MigrateInfo` argument. ([#2212])
 - cosmwasm-vm: Enable support for reference-types proposal, required since Rust
   1.82 ([#2288])
+- cosmwasm-vm: Add `Cache::store_code`
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
