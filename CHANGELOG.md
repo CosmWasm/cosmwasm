@@ -10,6 +10,8 @@ and this project adheres to
 
 ## [2.1.5] - 2024-12-10
 
+- cosmwasm-vm: Add `Cache::store_code`
+
 ## [2.1.4] - 2024-09-23
 
 ### Fixed
