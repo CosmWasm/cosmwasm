@@ -448,17 +448,29 @@ mod tests {
         };
         let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
+<<<<<<< HEAD
         let discriminator = raw_module_version_discriminator();
+=======
+        let descriminator = raw_module_version_discriminator();
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
                 format!(
+<<<<<<< HEAD
                     "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
                 )
             } else {
                 format!(
                     "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+=======
+                    "modules\\{descriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                )
+            } else {
+                format!(
+                    "modules/{descriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
                 )
             }
             .as_str()

@@ -7,7 +7,11 @@ exclude = ["contracts"]
 resolver = "2"
 
 [workspace.package]
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 
 [workspace.dependencies]
 schemars = "0.8.4"

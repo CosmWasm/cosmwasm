@@ -95,7 +95,11 @@ workflows:
           matrix:
             parameters:
               # Run with MSRV and some modern stable Rust
+<<<<<<< HEAD
               rust-version: ["1.74.0", "1.82.0"]
+=======
+              rust-version: ["1.74.0", "1.78.0"]
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
       - benchmarking:
           requires:
             - package_vm
@@ -1142,7 +1146,11 @@ jobs:
 
   coverage:
     docker:
+<<<<<<< HEAD
       - image: rust:1.82.0-alpine3.19
+=======
+      - image: rust:1.78.0-alpine3.19
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
     environment:
       # Limit the number of parallel jobs to avoid OOM crashes during doc testing
       RUST_TEST_THREADS: 8

@@ -24,7 +24,11 @@ use crate::serde::{from_slice, to_vec};
 /// deserializing JSON is more expensive. As a consequence, any sane contract should hit
 /// the deserializer limit before the read limit.
 mod read_limits {
+<<<<<<< HEAD
     /// A mebi (mega binary)
+=======
+    /// A mibi (mega binary)
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
     const MI: usize = 1024 * 1024;
     /// Max length (in bytes) of the result data from an instantiate call.
     pub const RESULT_INSTANTIATE: usize = 64 * MI;

@@ -32,7 +32,11 @@ use crate::GasInfo;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
+<<<<<<< HEAD
 /// A mebi (mega binary)
+=======
+/// A mibi (mega binary)
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 const MI: usize = 1024 * 1024;
 /// Max key length for db_write/db_read/db_remove/db_scan (when VM reads the key argument from Wasm memory)
 const MAX_LENGTH_DB_KEY: usize = 64 * KI;

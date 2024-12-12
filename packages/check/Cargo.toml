@@ -11,8 +11,13 @@ license = "Apache-2.0"
 anyhow = "1.0.57"
 clap = "4"
 colored = "2.1.0"
+<<<<<<< HEAD
 cosmwasm-vm = { path = "../vm", version = "=2.2.0-rc.1" }
 cosmwasm-std = { path = "../std", version = "=2.2.0-rc.1" }
+=======
+cosmwasm-vm = { path = "../vm", version = "=2.2.0-rc.3" }
+cosmwasm-std = { path = "../std", version = "=2.2.0-rc.3" }
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 
 [dev-dependencies]
 assert_cmd = "2.0.12"

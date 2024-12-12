@@ -333,11 +333,19 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
 
 [[package]]
 name = "cosmwasm-crypto"
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+
+[[package]]
+name = "cosmwasm-crypto"
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -359,7 +367,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "proc-macro2",
  "quote",
@@ -368,7 +380,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -379,7 +395,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "proc-macro2",
  "quote",
@@ -388,7 +408,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "base64",
  "bech32",
@@ -410,7 +434,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "bech32",
  "blake2",
@@ -438,7 +466,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
+<<<<<<< HEAD
 version = "2.2.0-rc.1"
+=======
+version = "2.2.0-rc.3"
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 dependencies = [
  "blake2",
  "proc-macro2",

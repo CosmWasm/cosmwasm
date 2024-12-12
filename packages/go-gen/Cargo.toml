@@ -9,12 +9,20 @@ publish = false
 release = false
 
 [dependencies]
+<<<<<<< HEAD
 cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", features = [
+=======
+cosmwasm-std = { version = "2.2.0-rc.3", path = "../std", features = [
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
     "cosmwasm_2_2",
     "staking",
     "stargate",
 ] }
+<<<<<<< HEAD
 cosmwasm-schema = { version = "2.2.0-rc.1", path = "../schema" }
+=======
+cosmwasm-schema = { version = "2.2.0-rc.3", path = "../schema" }
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 anyhow = "1"
 Inflector = "0.11.4"
 indenter = "0.3.3"

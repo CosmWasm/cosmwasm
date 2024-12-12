@@ -49,12 +49,16 @@ and this project adheres to
   match the contract address from `mock_env`. ([#2211])
 - cosmwasm-derive: Automatically detect whether the package is a dependency or
   the primary package, only expanding entrypoints for the primary package. This
+<<<<<<< HEAD
   effectively deprecates the usage of the `library` feature pattern.
 
   Note: This feature does **NOT** interact well with workspaces due to a cargo
   bug. If you have multiple contracts in a workspace, you might still want to
   use the library feature ([#2246])
 
+=======
+  effectively deprecates the usage of the `library` feature pattern. ([#2246])
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
 - cosmwasm-std: Deprecate `BankQuery::AllBalances` and `IbcQuery::ListChannels`.
   Both are inherently problematic to use because the returned entries are
   unbounded. ([#2247])

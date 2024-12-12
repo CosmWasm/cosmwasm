@@ -106,7 +106,11 @@ impl SignedDecimal256 {
     /// Create a -1.0 SignedDecimal256
     #[inline]
     pub const fn negative_one() -> Self {
+<<<<<<< HEAD
         // -DECIMAL_FRACTIONAL
+=======
+        // -DECIMAL_FRATIONAL
+>>>>>>> f04587a1 (Revert "Update Rust CI version")
         Self(Int256::from_i128(-1_000_000_000_000_000_000))
     }
 
