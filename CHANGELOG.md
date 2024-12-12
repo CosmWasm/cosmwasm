@@ -26,15 +26,12 @@ and this project adheres to
 - cosmwasm-vm: Export a new `migrate_with_info` function ([#2212])
 - cosmwasm-derive: Add support for migrate method with
   `migrate_info: MigrateInfo` argument. ([#2212])
-- cosmwasm-vm: Enable support for reference-types proposal, required since Rust
-  1.82 ([#2288])
 - cosmwasm-vm: Add `Cache::store_code`
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
 [#2220]: https://github.com/CosmWasm/cosmwasm/pull/2220
 [#2212]: https://github.com/CosmWasm/cosmwasm/pull/2212
-[#2288]: https://github.com/CosmWasm/cosmwasm/pull/2288
 
 ### Changed
 
