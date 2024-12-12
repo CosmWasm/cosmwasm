@@ -1,0 +1,32 @@
+---
+source: packages/schema/tests/idl.rs
+expression: schema
+---
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MapMsg",
+  "type": "object",
+  "required": [
+    "btree",
+    "hash"
+  ],
+  "properties": {
+    "btree": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0.0
+      }
+    },
+    "hash": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "uint32",
+        "minimum": 0.0
+      }
+    }
+  },
+  "additionalProperties": false
+}
