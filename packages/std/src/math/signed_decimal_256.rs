@@ -107,7 +107,7 @@ impl SignedDecimal256 {
     /// Create a -1.0 SignedDecimal256
     #[inline]
     pub const fn negative_one() -> Self {
-        // -DECIMAL_FRATIONAL
+        // -DECIMAL_FRACTIONAL
         Self(Int256::from_i128(-1_000_000_000_000_000_000))
     }
 
