@@ -405,27 +405,12 @@ mod tests {
         };
         let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
-<<<<<<< HEAD
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
                 "modules\\v11-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
             } else {
                 "modules/v11-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
-=======
-        let discriminator = raw_module_version_discriminator();
-
-        assert_eq!(
-            p.as_os_str(),
-            if cfg!(windows) {
-                format!(
-                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
-                )
-            } else {
-                format!(
-                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
-                )
->>>>>>> af9d6cb29 (Fix typos)
             }
         );
     }
