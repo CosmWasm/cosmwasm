@@ -10,27 +10,11 @@ license = "Apache-2.0"
 [package.metadata.release]
 pre-release-hook = ["../../devtools/release_checks.sh"]
 pre-release-replacements = [
-<<<<<<< HEAD
-  { file = "../../CHANGELOG.md", search = "## \\[Unreleased\\]", replace = "## [{{version}}] - {{date}}", exactly = 1 },
-  { file = "../../CHANGELOG.md", search = "(U|u)nreleased", replace = "{{version}}" },
-  { file = "../../CHANGELOG.md", search = "<!-- next-header -->", replace = "<!-- next-header -->\n\n## [Unreleased]", exactly = 1 },
-  { file = "../../CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
-  { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
-=======
     { file = "../../CHANGELOG.md", search = "## \\[Unreleased\\]", replace = "## [{{version}}] - {{date}}", exactly = 1 },
     { file = "../../CHANGELOG.md", search = "(U|u)nreleased", replace = "{{version}}" },
     { file = "../../CHANGELOG.md", search = "<!-- next-header -->", replace = "<!-- next-header -->\n\n## [Unreleased]", exactly = 1 },
-<<<<<<< HEAD
-    { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
-<<<<<<< HEAD
->>>>>>> 55ee235b (Fix replacement order)
-=======
-    { file = "../../CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
->>>>>>> 38fea3a7 ([autofix.ci] apply automated fixes)
-=======
     { file = "../../CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
     { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
->>>>>>> 961abe68 (Fix replacement order (again))
 ]
 
 [features]
@@ -70,11 +54,17 @@ cosmwasm-crypto = { path = "../crypto", version = "1.5.9" }
 derivative = "2"
 hex = "0.4"
 schemars = "0.8.3"
-serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1.0.103", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
 serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
-wasmer = { version = "=4.2.2", default-features = false, features = ["cranelift", "singlepass"] }
+wasmer = { version = "=4.2.2", default-features = false, features = [
+    "cranelift",
+    "singlepass",
+] }
 wasmer-types = "=4.2.2"
 wasmer-middlewares = "=4.2.2"
 
