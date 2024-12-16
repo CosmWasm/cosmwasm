@@ -448,17 +448,17 @@ mod tests {
         };
         let target = Target::new(triple, wasmer::CpuFeature::POPCNT.into());
         let p = modules_path(&base, 17, &target);
-        let descriminator = raw_module_version_discriminator();
+        let discriminator = raw_module_version_discriminator();
 
         assert_eq!(
             p.as_os_str(),
             if cfg!(windows) {
                 format!(
-                    "modules\\{descriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
                 )
             } else {
                 format!(
-                    "modules/{descriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
                 )
             }
             .as_str()
