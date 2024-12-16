@@ -79,7 +79,7 @@ impl<'a> ParsedWasm<'a> {
             multi_value: true,
             floats: true,
 
-            reference_types: true,
+            reference_types: false,
             bulk_memory: false,
             simd: false,
             relaxed_simd: false,
