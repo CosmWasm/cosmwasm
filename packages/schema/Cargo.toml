@@ -19,5 +19,6 @@ thiserror = "1.0.26"
 
 [dev-dependencies]
 anyhow = "1.0.57"
+insta = { version = "1.41.1", features = ["json"] }
 semver = "1"
 tempfile = "3"
