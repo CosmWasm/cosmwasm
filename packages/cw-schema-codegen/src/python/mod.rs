@@ -12,7 +12,7 @@ fn expand_node_name<'a>(
     match node.value {
         cw_schema::NodeType::Array { items } => {
             let items = &schema.definitions[items];
-            format!("{}[]", expand_node_name(schema, items)).into()
+            format!("typing.List[{}]", expand_node_name(schema, items)).into()
         }
         cw_schema::NodeType::Float => "float".into(),
         cw_schema::NodeType::Double => "float".into(),
@@ -35,12 +35,11 @@ fn expand_node_name<'a>(
             format!("[{}]", items).into()
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
-
         cw_schema::NodeType::Decimal { .. } => "decimal.Decimal".into(),
         cw_schema::NodeType::Address => "str".into(),
-        cw_schema::NodeType::Checksum => todo!(),
-        cw_schema::NodeType::HexBinary => todo!(),
-        cw_schema::NodeType::Timestamp => todo!(),
+        cw_schema::NodeType::Checksum => "str".into(),
+        cw_schema::NodeType::HexBinary => "str".into(),
+        cw_schema::NodeType::Timestamp => "str".into(),
         cw_schema::NodeType::Unit => "None".into(),
     }
 }

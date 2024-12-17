@@ -29,3 +29,6 @@ rand = { version = "0.8.5", features = ["min_const_gen"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = "1.0.128"
 tempfile = "3.14.0"
+cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", default-features = false, features = [
+    "std",
+] }

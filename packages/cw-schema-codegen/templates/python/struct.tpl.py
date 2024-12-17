@@ -8,25 +8,25 @@ from pydantic import BaseModel, RootModel
 {% match ty %}
 {% when TypeTemplate::Unit %}
 class {{ name }}(RootModel):
-    '''{% for doc in docs %}
+    """{% for doc in docs %}
     {{ doc }}
-    {% endfor %}'''
+    {% endfor %}"""
     root: None
 {% when TypeTemplate::Tuple with (types) %}
 class {{ name }}(RootModel):
-    '''{% for doc in docs %}
+    """{% for doc in docs %}
     {{ doc }}
-    {% endfor %}'''
+    {% endfor %}"""
     root: typing.Tuple[{{ types|join(", ") }}]
 {% when TypeTemplate::Named with { fields } %}
 class {{ name }}(BaseModel):
-    '''{% for doc in docs %}
+    """{% for doc in docs %}
     {{ doc }}
-    {% endfor %}'''
+    {% endfor %}"""
     {% for field in fields %}
     {{ field.name }}: {{ field.ty }}
-    '''{% for doc in field.docs %}
+    """{% for doc in field.docs %}
     # {{ doc }}
-    {% endfor %}'''
+    {% endfor %}"""
     {% endfor %}
 {% endmatch %}
