@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.2.0] - 2024-12-17
+
 ### Added
 
 - cosmwasm-std: Add `from_msgpack`, `to_msgpack_vec` and `to_msgpack_binary`.
@@ -958,7 +960,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.2.0
 [2.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...v2.1.1

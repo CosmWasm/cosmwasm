@@ -7,7 +7,7 @@ exclude = ["contracts"]
 resolver = "2"
 
 [workspace.package]
-version = "2.2.0-rc.3"
+version = "2.2.0"
 
 [workspace.dependencies]
 schemars = "0.8.4"
