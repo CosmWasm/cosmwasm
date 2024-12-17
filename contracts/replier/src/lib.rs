@@ -6,6 +6,10 @@ use cosmwasm_std::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+const SET_DATA_IN_EXEC_AND_REPLY_FLAG: u64 = 0x100;
+const RETURN_OERDER_IN_REPLY_FLAG: u64 = 0x200;
+const REPLY_ERROR_FLAG: u64 = 0x400;
+
 #[cw_serde]
 pub struct InstantiateMsg {}
 
@@ -78,13 +82,13 @@ pub fn execute(
         };
         let mut msg_id: u64 = msg.msg_id.into();
         if msg.set_data_in_exec_and_reply {
-            msg_id = msg_id | 0x100;
+            msg_id |= SET_DATA_IN_EXEC_AND_REPLY_FLAG;
         }
         if msg.return_order_in_reply {
-            msg_id = msg_id | 0x200;
+            msg_id |= RETURN_OERDER_IN_REPLY_FLAG;
         }
         if msg.reply_error {
-            msg_id = msg_id | 0x400;
+            msg_id |= REPLY_ERROR_FLAG;
         }
 
         let submsg = SubMsg {
@@ -111,9 +115,9 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse>
 #[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
     let msg_id = msg.id & 0xFF;
-    let should_set_data = msg.id & 0x100 != 0;
-    let should_set_order = msg.id & 0x200 != 0;
-    let should_return_error = msg.id & 0x400 != 0;
+    let should_set_data = msg.id & SET_DATA_IN_EXEC_AND_REPLY_FLAG != 0;
+    let should_set_order = msg.id & RETURN_OERDER_IN_REPLY_FLAG != 0;
+    let should_return_error = msg.id & REPLY_ERROR_FLAG != 0;
 
     let data = deps.storage.get(CONFIG_KEY).unwrap();
     let mut config: State = from_json(data)?;
@@ -140,9 +144,8 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
             result
                 .msg_responses
                 .into_iter()
-                .map(|resp| resp.value.as_slice().to_vec())
-                .flatten()
-                .chain([0xBB, msg_id as u8].into_iter())
+                .flat_map(|resp| resp.value.as_slice().to_vec())
+                .chain([0xBB, msg_id as u8])
                 .collect(),
         )))
     } else {
