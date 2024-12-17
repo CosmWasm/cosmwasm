@@ -1,0 +1,32 @@
+---
+source: packages/cw-schema/tests/non_static.rs
+expression: schema
+---
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "str",
+      "type": "string"
+    },
+    {
+      "name": "NonStatic",
+      "type": "struct",
+      "properties": {
+        "test1": {
+          "value": 0
+        },
+        "test2": {
+          "value": 0
+        },
+        "test3": {
+          "value": 0
+        },
+        "test4": {
+          "value": 0
+        }
+      }
+    }
+  ]
+}
