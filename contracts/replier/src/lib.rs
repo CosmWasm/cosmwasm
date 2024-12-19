@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 const SET_DATA_IN_EXEC_AND_REPLY_FLAG: u64 = 0x100;
-const RETURN_OERDER_IN_REPLY_FLAG: u64 = 0x200;
+const RETURN_ORDER_IN_REPLY_FLAG: u64 = 0x200;
 const REPLY_ERROR_FLAG: u64 = 0x400;
 
 #[cw_serde]
@@ -85,7 +85,7 @@ pub fn execute(
             msg_id |= SET_DATA_IN_EXEC_AND_REPLY_FLAG;
         }
         if msg.return_order_in_reply {
-            msg_id |= RETURN_OERDER_IN_REPLY_FLAG;
+            msg_id |= RETURN_ORDER_IN_REPLY_FLAG;
         }
         if msg.reply_error {
             msg_id |= REPLY_ERROR_FLAG;
@@ -116,7 +116,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse>
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
     let msg_id = msg.id & 0xFF;
     let should_set_data = msg.id & SET_DATA_IN_EXEC_AND_REPLY_FLAG != 0;
-    let should_set_order = msg.id & RETURN_OERDER_IN_REPLY_FLAG != 0;
+    let should_set_order = msg.id & RETURN_ORDER_IN_REPLY_FLAG != 0;
     let should_return_error = msg.id & REPLY_ERROR_FLAG != 0;
 
     let data = deps.storage.get(CONFIG_KEY).unwrap();
