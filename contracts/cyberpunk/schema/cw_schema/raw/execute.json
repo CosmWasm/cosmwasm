@@ -1,0 +1,86 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "allocate_large_memory": {
+          "description": "Allocate large amounts of memory without consuming much gas",
+          "type": "named",
+          "properties": {
+            "pages": {
+              "value": 0
+            }
+          }
+        },
+        "argon2": {
+          "description": "Hashes some data. Uses CPU and memory, but no external calls.",
+          "type": "named",
+          "properties": {
+            "mem_cost": {
+              "description": "The amount of memory requested (KB).",
+              "value": 0
+            },
+            "time_cost": {
+              "description": "The number of passes.",
+              "value": 0
+            }
+          }
+        },
+        "cpu_loop": {
+          "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
+          "type": "named",
+          "properties": {}
+        },
+        "debug": {
+          "description": "Does a bit of work and calls debug",
+          "type": "named",
+          "properties": {}
+        },
+        "memory_loop": {
+          "description": "Infinite loop reading and writing memory",
+          "type": "named",
+          "properties": {}
+        },
+        "message_loop": {
+          "description": "Infinite loop sending message to itself",
+          "type": "named",
+          "properties": {}
+        },
+        "mirror_env": {
+          "description": "Returns the env for testing",
+          "type": "named",
+          "properties": {}
+        },
+        "noop": {
+          "description": "Does nothing. This can be used for baseline contract execution performance measurements.",
+          "type": "named",
+          "properties": {}
+        },
+        "panic": {
+          "description": "Trigger a panic to ensure framework handles gracefully",
+          "type": "named",
+          "properties": {}
+        },
+        "storage_loop": {
+          "description": "Infinite loop making storage calls (to test when their limit hits)",
+          "type": "named",
+          "properties": {}
+        },
+        "unreachable": {
+          "description": "In contrast to Panic, this does not use the panic handler.\n\nFrom <https://doc.rust-lang.org/beta/core/arch/wasm32/fn.unreachable.html>:\n\"Generates the unreachable instruction, which causes an unconditional trap.\"",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}
