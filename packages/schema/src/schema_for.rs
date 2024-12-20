@@ -30,6 +30,10 @@ macro_rules! schema_for {
                 $crate::schemars::visit::visit_schema_object(self, schema);
 
                 if let Some(ref mut validation) = schema.object {
+                    if validation.additional_properties.is_some() {
+                        return;
+                    }
+
                     validation.additional_properties = Some(Box::new(false.into()));
                 }
             }
