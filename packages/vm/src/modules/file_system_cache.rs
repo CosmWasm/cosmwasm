@@ -268,7 +268,7 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
 }
 
 /// Creates an identifier for the Wasmer `Target` that is used for
-/// cache invalidation. The output is reasonable human friendly to be useable
+/// cache invalidation. The output is reasonable human friendly to be usable
 /// in file path component.
 fn target_id(target: &Target) -> String {
     // Use a custom Hasher implementation to avoid randomization.
