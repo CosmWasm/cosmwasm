@@ -272,7 +272,7 @@ impl fmt::Display for Instantiate2AddressError {
 /// cannot be pre-computed as it contains inputs from the chain's state at the time of
 /// message execution.
 ///
-/// The predicable address format of instantiate2 is stable. But bear in mind this is
+/// The predictable address format of instantiate2 is stable. But bear in mind this is
 /// a powerful tool that requires multiple software components to work together smoothly.
 /// It should be used carefully and tested thoroughly to avoid the loss of funds.
 ///
