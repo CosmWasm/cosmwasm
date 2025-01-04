@@ -34,7 +34,7 @@ you can customize.
 
 ## Create a Repo
 
-After generating, you have a initialized local git repo, but no commits, and no
+After generating, you have an initialized local git repo, but no commits, and no
 remote. Go to a server (eg. github) and create a new upstream repo (called
 `YOUR-GIT-URL` below). Then run the following:
 
