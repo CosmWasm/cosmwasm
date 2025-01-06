@@ -71,7 +71,8 @@ and this project adheres to
 
 ## Fixed
 
-- cosmwasm-schema: The schema export now doesn't overwrite existing `additionalProperties` values anymore ([#2310])
+- cosmwasm-schema: The schema export now doesn't overwrite existing
+  `additionalProperties` values anymore ([#2310])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
