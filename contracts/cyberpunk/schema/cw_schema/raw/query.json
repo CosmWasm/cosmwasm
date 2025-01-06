@@ -1,0 +1,35 @@
+{
+  "type": "v1",
+  "root": 1,
+  "definitions": [
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "QueryMsg",
+      "type": "enum",
+      "cases": {
+        "denom": {
+          "description": "Queries `DenomMetadata` from the bank module and returns the result",
+          "type": "named",
+          "properties": {
+            "denom": {
+              "value": 0
+            }
+          }
+        },
+        "denoms": {
+          "description": "Queries `AllDenomMetadata` from the bank module repeatedly and returns all entries",
+          "type": "named",
+          "properties": {}
+        },
+        "mirror_env": {
+          "description": "Returns the env for testing",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "QueryMsg",
+      "type": "enum",
+      "cases": {
+        "callback_stats": {
+          "description": "Returns stats about what callbacks have been received",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

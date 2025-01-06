@@ -5,7 +5,9 @@ use crate::coin::Coin;
 use crate::prelude::*;
 use crate::{Addr, Timestamp};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
@@ -15,7 +17,9 @@ pub struct Env {
     pub contract: ContractInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
@@ -26,7 +30,9 @@ pub struct TransactionInfo {
     pub index: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct BlockInfo {
     /// The height of a block is the number of blocks preceding it in the blockchain.
     pub height: u64,
@@ -87,7 +93,7 @@ pub struct BlockInfo {
 ///
 /// [MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61
 /// [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier)]
 pub struct MessageInfo {
     /// The `sender` field from `MsgInstantiateContract` and `MsgExecuteContract`.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
@@ -105,7 +111,9 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct ContractInfo {
     pub address: Addr,
 }
