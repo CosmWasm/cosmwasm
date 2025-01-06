@@ -50,8 +50,8 @@ git push -u origin main
 ## CI Support
 
 We have templates for both github actions and Circle CI in the generated
-project, so you can get up a running with CI right away. One note is that the
-CI runs all `cargo` commands with `--locked` to ensure it uses the exact same
+project, so you can get up a running with CI right away. One note is that the CI
+runs all `cargo` commands with `--locked` to ensure it uses the exact same
 versions as you have locally. This also means you must have an up-to-date
 `Cargo.lock` file, which is not auto-generated.
 
