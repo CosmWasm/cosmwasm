@@ -32,6 +32,18 @@ pub struct MigrateMsg {
     pub cap: u128,
 }
 
+#[cw_serde]
+pub struct MapMsg {
+    btree: std::collections::BTreeMap<String, u32>,
+    hash: std::collections::HashMap<String, u32>,
+}
+
+#[test]
+fn assert_maps_generate_correctly() {
+    let schema = cosmwasm_schema::schema_for!(MapMsg);
+    insta::assert_json_snapshot!(schema);
+}
+
 #[test]
 fn unknown_fields_explicitly_allowed() {
     let json = serde_json::json!({
