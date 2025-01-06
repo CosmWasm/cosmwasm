@@ -104,7 +104,7 @@ macro_rules! try_from_int_to_int {
 }
 pub(crate) use try_from_int_to_int;
 
-/// Helper macro to implement `TryFrom` for a conversion from a unsigned int to a smaller or
+/// Helper macro to implement `TryFrom` for a conversion from an unsigned int to a smaller or
 /// equal sized signed int.
 /// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
 macro_rules! try_from_uint_to_int {

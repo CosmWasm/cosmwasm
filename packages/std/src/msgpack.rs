@@ -333,7 +333,7 @@ mod tests {
             let serialized = to_msgpack_vec(&-24i64).unwrap();
             assert_eq!(serialized, [232]);
 
-            // "uint 8 stores a 8-bit unsigned integer"
+            // "uint 8 stores an 8-bit unsigned integer"
             let serialized = to_msgpack_vec(&128u32).unwrap();
             assert_eq!(serialized, [0xcc, 128]);
             let serialized = to_msgpack_vec(&237u32).unwrap();
@@ -353,7 +353,7 @@ mod tests {
             let serialized = to_msgpack_vec(&u64::MAX).unwrap();
             assert_eq!(serialized, [0xcf, 255, 255, 255, 255, 255, 255, 255, 255]);
 
-            // "int 8 stores a 8-bit signed integer"
+            // "int 8 stores an 8-bit signed integer"
             let serialized = to_msgpack_vec(&i8::MIN).unwrap();
             assert_eq!(serialized, [0xd0, 128]);
             let serialized = to_msgpack_vec(&-111i8).unwrap();
