@@ -69,6 +69,10 @@ and this project adheres to
 - cosmwasm-vm: Automatically derive cache version from function hashes and the
   Wasmer version ([#2250])
 
+## Fixed
+
+- cosmwasm-schema: The schema export now doesn't overwrite existing `additionalProperties` values anymore ([#2310])
+
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
 [#2246]: https://github.com/CosmWasm/cosmwasm/pull/2246
@@ -76,6 +80,7 @@ and this project adheres to
 [#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
 [#2260]: https://github.com/CosmWasm/cosmwasm/pull/2260
 [#2250]: https://github.com/CosmWasm/cosmwasm/pull/2250
+[#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
 
 ## [2.1.3] - 2024-08-08
 
