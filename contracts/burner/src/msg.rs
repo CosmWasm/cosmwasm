@@ -18,7 +18,7 @@ pub struct InstantiateMsg {}
 #[cw_serde]
 pub enum ExecuteMsg {
     /// Cleans up the given number of state elements.
-    /// Call this multiple times to increamentally clean up state.
+    /// Call this multiple times to incrementally clean up state.
     Cleanup {
         /// The number of state elements to delete.
         ///
