@@ -8,6 +8,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- cosmwasm-schema: The schema export now doesn't overwrite existing
+  `additionalProperties` values anymore ([#2310])
+
+[#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
+
+## [2.2.0] - 2024-12-17
+
 ### Added
 
 - cosmwasm-std: Add `from_msgpack`, `to_msgpack_vec` and `to_msgpack_binary`.
@@ -66,11 +75,6 @@ and this project adheres to
 - cosmwasm-vm: Automatically derive cache version from function hashes and the
   Wasmer version ([#2250])
 
-## Fixed
-
-- cosmwasm-schema: The schema export now doesn't overwrite existing
-  `additionalProperties` values anymore ([#2310])
-
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2211]: https://github.com/CosmWasm/cosmwasm/issues/2211
 [#2246]: https://github.com/CosmWasm/cosmwasm/pull/2246
@@ -78,7 +82,6 @@ and this project adheres to
 [#2255]: https://github.com/CosmWasm/cosmwasm/pull/2255
 [#2260]: https://github.com/CosmWasm/cosmwasm/pull/2260
 [#2250]: https://github.com/CosmWasm/cosmwasm/pull/2250
-[#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
 
 ## [2.1.3] - 2024-08-08
 
@@ -969,7 +972,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.2.0
 [2.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.0...v2.1.1
