@@ -190,7 +190,7 @@ extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-`allocate`/`deallocate` allows the host to manage data within the Wasm VM. If
+`allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
 you're using Rust, you can implement them by simply
 [re-exporting them from cosmwasm::exports](https://github.com/CosmWasm/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
 `instantiate`, `execute` and `query` must be defined by your contract.
@@ -346,7 +346,7 @@ pub trait Storage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 
     #[cfg(feature = "iterator")]
-    /// Allows iteration over a set of key/value pairs, either forward or backward.
+    /// Allows iteration over a set of key/value pairs, either forwards or backwards.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
