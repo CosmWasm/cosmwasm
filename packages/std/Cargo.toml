@@ -20,7 +20,7 @@ std = []
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = []
-# staking exposes bindings to a required staking moudle in the runtime, via new
+# staking exposes bindings to a required staking module in the runtime, via new
 # CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
 # that require these types, so other contracts can be used on systems with eg. PoA consensus
 staking = []
