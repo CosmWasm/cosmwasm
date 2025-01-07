@@ -16,9 +16,9 @@ semantics apply to any other _mutating_ action - `instantiate`, `migrate`,
 
 Before looking at CosmWasm, we should look at the (somewhat under-documented)
 semantics enforced by the blockchain framework we integrate with - the
-[Cosmos SDK](https://v1.cosmos.network/sdk). It is based upon the
+[Cosmos SDK](https://v1.cosmos.network/sdk). It is based on the
 [Tendermint BFT](https://tendermint.com/core/) Consensus Engine. Let us first
-look how they process transactions before they arrive in CosmWasm (and after
+look at how they process transactions before they arrive in CosmWasm (and after
 they leave).
 
 First, the Tendermint engine will seek 2/3+ consensus on a list of transactions
@@ -38,7 +38,7 @@ The Cosmos SDK `BaseApp` handles each transaction in an isolated context. It
 first verifies all signatures and deducts the gas fees. It sets the "Gas Meter"
 to limit the execution to the amount of gas paid for by the fees. Then it makes
 an isolated context to run the transaction. This allows the code to read the
-current state of the chain (after the last transaction finished), but it only
+current state of the chain (after the last transaction is finished), but it only
 writes to a cache, which may be committed or rolled back on error.
 
 A transaction may consist of multiple messages and each one is executed in turn
@@ -116,7 +116,7 @@ to be provable and can return some essential state (although in general client
 apps rely on Events more). This result is more commonly used to pass results
 between contracts or modules in the sdk. Note that the `ResultHash` includes
 only the `Code` (non-zero meaning error) and `Result` (data) from the
-transaction. Events and log are available via queries, but there are no
+transaction. Events and logs are available via queries, but there are no
 light-client proofs possible.
 
 If the contract sets `data`, this will be returned in the `result` field.
@@ -137,7 +137,7 @@ The final result looks like this to the client:
 
 ### Dispatching Messages
 
-Now let's move onto the `messages` field. Some contracts are fine only talking
+Now let's move on to the `messages` field. Some contracts are fine only talking
 with themselves, such as a cw20 contract just adjusting its balances on
 transfers. But many want to move tokens (native or cw20) or call into other
 contracts for more complex actions. This is where messages come in. We return
@@ -169,7 +169,7 @@ executed in `x/wasm` _with the permissions of the contract_ (meaning
 `info.sender` will be the contract not the original caller). If they return
 success, they will emit a new event with the custom attributes, the `data` field
 will be ignored, and any messages they return will also be processed. If they
-return an error, the parent call will return an error, thus rolling back state
+return an error, the parent call will return an error, thus rolling back the state
 of the whole transaction.
 
 Note that the messages are executed
@@ -192,7 +192,7 @@ graph TD;
 ```
 
 This may be hard to understand at first. "Why can't I just call another
-contract?", you may ask. However, we do this to prevent one of most widespread
+contract?", you may ask. However, we do this to prevent one of the most widespread
 and hardest to detect security holes in Ethereum contracts - reentrancy. We do
 this by following the actor model, which doesn't nest function calls, but
 returns messages that will be executed later. This means all state that is
@@ -244,7 +244,7 @@ pub enum ReplyOn {
 }
 ```
 
-What are the semantics of a submessage execution. First, we create a
+What are the semantics of a submessage execution? First, we create a
 sub-transaction context around the state, allowing it to read the latest state
 written by the caller, but write to yet-another cache. If `gas_limit` is set, it
 is sandboxed to how much gas it can use until it aborts with `OutOfGasError`.
@@ -252,7 +252,7 @@ This error is caught and returned to the caller like any other error returned
 from contract execution (unless it burned the entire gas limit of the
 transaction). What is more interesting is what happens on completion.
 
-If it return success, the temporary state is committed (into the caller's
+If it returns success, the temporary state is committed (into the caller's
 cache), and the `Response` is processed as normal (an event is added to the
 current EventManager, messages and submessages are executed). Once the
 `Response` is fully processed, this may then be intercepted by the calling
@@ -264,10 +264,10 @@ intercepted by the calling contract (for `ReplyOn::Always` and
 transaction_
 
 Note, that error doesn't abort the whole transaction _if and only if_ the
-`reply` is called - so in case of `ReplyOn::Always` and `ReplyOn::Error`. If the
+`reply` is called - so in the case of `ReplyOn::Always` and `ReplyOn::Error`. If the
 submessage is called with `ReplyOn::Success` (or `ReplyOn::Never`, which makes
 it effectively a normal message), the error in subsequent call would result in
-failing whole transaction and not commit the changes for it. The rule here is as
+failing the whole transaction and not committing the changes for it. The rule here is as
 follows: if for any reason you want your message handling to succeed on
 submessage failure, you always have to reply on failure.
 
