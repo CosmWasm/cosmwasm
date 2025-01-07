@@ -148,7 +148,7 @@ major releases of `cosmwasm`. Note that you can also view the
   +CosmosMsg::Any(AnyMsg { type_url, value })
   ```
 
-- Replace all direct construction of `StdError` with use of the corresponding
+- Replace all direct construction of `StdError` with the use of the corresponding
   constructor:
 
   ```diff
@@ -259,7 +259,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
   The payload data will then be available in the new field `Reply.payload` in
   the `reply` entry point. This functionality is an optional addition introduced
-  in 2.0. To keep the CosmWasm 1.x behaviour, just set payload to
+  in 2.0. To keep the CosmWasm 1.x behavior, just set payload to
   `Binary::default()`.
 
 - In test code, replace calls to `mock_info` with `message_info`. This takes a
@@ -393,7 +393,7 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
-- There are changes to how we generate schemas, resulting in less boilerplace
+- There are changes to how we generate schemas, resulting in less boilerplate
   maintenance for smart contract devs. Old contracts will continue working for a
   while, but it's highly recommended to migrate now.
 
@@ -570,9 +570,9 @@ arbitrary ones.
   annotations. See the [0.13 -> 0.14 entry](#013---014) where `#[entry_point]`
   was introduced.
 
-- If your chain provides a custom queries, add the custom query type as a
+- If your chain provides a custom query, add the custom query type as a
   generic argument to `cosmwasm_std::Deps`, `DepsMut`, `OwnedDeps` and
-  `QuerierWrapper`. Otherwise it defaults to `Empty`. E.g.
+  `QuerierWrapper`. Otherwise, it defaults to `Empty`. E.g.
 
   ```diff
    #[entry_point]
@@ -1242,7 +1242,7 @@ arbitrary ones.
 - If necessary, add a wildcard arm to the `match` of now non-exhaustive message
   types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
 
-- `HumanAddr` has been deprecated in favour of simply `String`. It never added
+- `HumanAddr` has been deprecated in favor of simply `String`. It never added
   any significant safety bonus over `String` and was just a marker type. The new
   type `Addr` was created to hold validated addresses. Those can be created via
   `Addr::unchecked`, `Api::addr_validate`, `Api::addr_humanize` and JSON
@@ -1313,30 +1313,29 @@ arbitrary ones.
   which a compact binary representation is desired. For JSON state this does not
   save much data (e.g. the bech32 address
   cosmos1pfq05em6sfkls66ut4m2257p7qwlk448h8mysz takes 45 bytes as direct ASCII
-  and 28 bytes when its canonical representation is base64 encoded). For fixed
-  length database keys `CanonicalAddr` remains handy though.
+  and 28 bytes when its canonical representation is base64 encoded). For fixed-length database keys `CanonicalAddr` remains handy though.
 
 - Replace `StakingMsg::Withdraw` with `DistributionMsg::SetWithdrawAddress` and
   `DistributionMsg::WithdrawDelegatorReward`. `StakingMsg::Withdraw` was a
   shorthand for the two distribution messages. However, it was unintuitive
-  because it did not set the address for one withdraw only but for all following
-  withdrawls. Since withdrawls are [triggered by different
+  because it did not set the address for one withdrawal only but for all following
+  withdrawals. Since withdrawals are [triggered by different
   events][distribution docs] such as validators changing their commission rate,
   an address that was set for a one-time withdrawal would be used for future
-  withdrawls not considered by the contract author.
+  withdrawals not considered by the contract author.
 
-  If the contract never set a withdraw address other than the contract itself
+  If the contract never set a withdrawal address other than the contract itself
   (`env.contract.address`), you can simply replace `StakingMsg::Withdraw` with
   `DistributionMsg::WithdrawDelegatorReward`. It is then never changed from the
-  default. Otherwise you need to carefully track what the current withdraw
-  address is. A one-time change can be implemented by emitted 3 messages:
+  default. Otherwise, you need to carefully track what the current withdrawal
+  address is. A one-time change can be implemented by emitting 3 messages:
 
   1. `SetWithdrawAddress { address: recipient }` to temporarily change the
      recipient
   2. `WithdrawDelegatorReward { validator }` to do a manual withdrawal from the
      given validator
   3. `SetWithdrawAddress { address: env.contract.address.into() }` to change it
-     back for all future withdrawls
+     back for all future withdrawals
 
   [distribution docs]: https://docs.cosmos.network/v0.42/modules/distribution/
 
@@ -1534,7 +1533,7 @@ arbitrary ones.
   }
   ```
 
-  Once you got familiar with the concept, you can create different error types
+  Once you get familiar with the concept, you can create different error types
   for each of the contract's functions.
 
   You can also try a different error library than
@@ -1786,7 +1785,7 @@ Contract code and uni tests:
 - `cosmwasm_storage::get_with_prefix`, `cosmwasm_storage::set_with_prefix`,
   `cosmwasm_storage::RepLog::commit`, `cosmwasm_std::ReadonlyStorage::get`,
   `cosmwasm_std::ReadonlyStorage::range`, `cosmwasm_std::Storage::set` and
-  `cosmwasm_std::Storage::remove` now return the value directly that was wrapped
+  `cosmwasm_std::Storage::remove` now returns the value directly that was wrapped
   in a result before.
 - Error creator functions are now in type itself, e.g.
   `StdError::invalid_base64` instead of `invalid_base64`. The free functions are
@@ -1876,7 +1875,7 @@ Contract Code:
 
 - Complete overhaul of `cosmwasm::Error` into `cosmwasm_std::StdError`:
   - Auto generated snafu error constructor structs like `NotFound`/`ParseErr`/…
-    have been privatized in favour of error generation helpers like
+    have been privatized in favor of error generation helpers like
     `not_found`/`parse_err`/…
   - All error generator functions now return errors instead of results, such
     that e.g. `return unauthorized();` becomes `return Err(unauthorized());`
@@ -1911,7 +1910,7 @@ Both:
 - `dependencies` was renamed to `mock_dependencies`. `mock_dependencies` and
   `mock_instance` take a 2nd argument to set the contract balance (visible for
   the querier). If you need to set more balances, use `mock_XX_with_balances`.
-  The follow code block explains:
+  The following code block explains:
 
   ```rust
   // before: balance as last arg in mock_env
@@ -1933,7 +1932,7 @@ Integration Tests:
   - Before:
     `match err { ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"), ... }`
   - After: `match err { Err(StdError::Unauthorized{ .. }) => {}, ... }`
-- Remove all imports / use of `ContractResult`
+- Remove all imports/use of `ContractResult`
 - You must specify `CosmosMsg::Native` type when calling
   `cosmwasm_vm::testing::{handle, init}`. You will want to
   `use cosmwasm_std::{HandleResult, InitResult}` or
