@@ -1242,7 +1242,7 @@ arbitrary ones.
 - If necessary, add a wildcard arm to the `match` of now non-exhaustive message
   types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
 
-- `HumanAddr` has been deprecated in favor of simply `String`. It never added
+- `HumanAddr` has been deprecated in favour of simply `String`. It never added
   any significant safety bonus over `String` and was just a marker type. The new
   type `Addr` was created to hold validated addresses. Those can be created via
   `Addr::unchecked`, `Api::addr_validate`, `Api::addr_humanize` and JSON
