@@ -71,11 +71,16 @@ where
 
         match language {
             Language::Rust => cw_schema_codegen::rust::process_node(output, schema, node),
-            Language::Typescript => {
-                cw_schema_codegen::typescript::process_node(output, schema, node, add_imports_or_package)
-            }
+            Language::Typescript => cw_schema_codegen::typescript::process_node(
+                output,
+                schema,
+                node,
+                add_imports_or_package,
+            ),
             Language::Python => cw_schema_codegen::python::process_node(output, schema, node),
-            Language::Go => cw_schema_codegen::go::process_node(output, schema, node, add_imports_or_package),
+            Language::Go => {
+                cw_schema_codegen::go::process_node(output, schema, node, add_imports_or_package)
+            }
         }
     })?;
 
