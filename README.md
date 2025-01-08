@@ -129,8 +129,8 @@ repo.
 
 We also recommend you review our [documentation site](https://book.cosmwasm.com)
 which contains a few tutorials to guide you in building your first contracts.
-You can find past recordings of hackathon / conference workshops and
-presentations on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
+You can find past recordings of hackathon/conference workshops and presentations
+on our [YouTube channel](https://www.youtube.com/@CosmWasm), or
 [join our Discord server](https://chat.cosmwasm.com) to ask for help.
 
 ## Minimum Supported Rust Version (MSRV)
@@ -190,7 +190,7 @@ extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-`allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
+`allocate` and `deallocate` allow the host to manage data within the Wasm VM. If
 you're using Rust, you can implement them by simply
 [re-exporting them from cosmwasm::exports](https://github.com/CosmWasm/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
 `instantiate`, `execute` and `query` must be defined by your contract.
@@ -298,7 +298,7 @@ pub struct Region {
 ## Implementing the Smart Contract
 
 If you followed the [instructions above](#Creating-a-smart-contract), you should
-have a runable smart contract. You may notice that all of the Wasm exports are
+have a runnable smart contract. You may notice that all of the Wasm exports are
 taken care of by `lib.rs`, which you shouldn't need to modify. What you need to
 do is simply look in `contract.rs` and implement `instantiate` and `execute`
 functions, defining your custom `InstantiateMsg` and `ExecuteMsg` structs for
