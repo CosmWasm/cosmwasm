@@ -169,8 +169,8 @@ executed in `x/wasm` _with the permissions of the contract_ (meaning
 `info.sender` will be the contract not the original caller). If they return
 success, they will emit a new event with the custom attributes, the `data` field
 will be ignored, and any messages they return will also be processed. If they
-return an error, the parent call will return an error, thus rolling back the state
-of the whole transaction.
+return an error, the parent call will return an error, thus rolling back the
+state of the whole transaction.
 
 Note that the messages are executed
 [_depth-first_](https://en.wikipedia.org/wiki/Depth-first_search). This means if
@@ -192,12 +192,12 @@ graph TD;
 ```
 
 This may be hard to understand at first. "Why can't I just call another
-contract?", you may ask. However, we do this to prevent one of the most widespread
-and hardest to detect security holes in Ethereum contracts - reentrancy. We do
-this by following the actor model, which doesn't nest function calls, but
-returns messages that will be executed later. This means all state that is
-carried over between one call and the next happens in storage and not in memory.
-For more information on this design, I recommend you read
+contract?", you may ask. However, we do this to prevent one of the most
+widespread and hardest to detect security holes in Ethereum contracts -
+reentrancy. We do this by following the actor model, which doesn't nest function
+calls, but returns messages that will be executed later. This means all state
+that is carried over between one call and the next happens in storage and not in
+memory. For more information on this design, I recommend you read
 [our docs on the Actor Model](https://book.cosmwasm.com/actor-model.html).
 
 ### Submessages
@@ -264,12 +264,12 @@ intercepted by the calling contract (for `ReplyOn::Always` and
 transaction_
 
 Note, that error doesn't abort the whole transaction _if and only if_ the
-`reply` is called - so in the case of `ReplyOn::Always` and `ReplyOn::Error`. If the
-submessage is called with `ReplyOn::Success` (or `ReplyOn::Never`, which makes
-it effectively a normal message), the error in subsequent call would result in
-failing the whole transaction and not committing the changes for it. The rule here is as
-follows: if for any reason you want your message handling to succeed on
-submessage failure, you always have to reply on failure.
+`reply` is called - so in the case of `ReplyOn::Always` and `ReplyOn::Error`. If
+the submessage is called with `ReplyOn::Success` (or `ReplyOn::Never`, which
+makes it effectively a normal message), the error in subsequent call would
+result in failing the whole transaction and not committing the changes for it.
+The rule here is as follows: if for any reason you want your message handling to
+succeed on submessage failure, you always have to reply on failure.
 
 Obviously - on the successful processing of sub-message, if the reply is not
 called (in particular `ReplyOn::Error`), the whole transaction is assumed to

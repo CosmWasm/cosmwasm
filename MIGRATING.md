@@ -148,8 +148,8 @@ major releases of `cosmwasm`. Note that you can also view the
   +CosmosMsg::Any(AnyMsg { type_url, value })
   ```
 
-- Replace all direct construction of `StdError` with the use of the corresponding
-  constructor:
+- Replace all direct construction of `StdError` with the use of the
+  corresponding constructor:
 
   ```diff
   -StdError::GenericErr { msg }
@@ -570,9 +570,9 @@ arbitrary ones.
   annotations. See the [0.13 -> 0.14 entry](#013---014) where `#[entry_point]`
   was introduced.
 
-- If your chain provides a custom query, add the custom query type as a
-  generic argument to `cosmwasm_std::Deps`, `DepsMut`, `OwnedDeps` and
-  `QuerierWrapper`. Otherwise, it defaults to `Empty`. E.g.
+- If your chain provides a custom query, add the custom query type as a generic
+  argument to `cosmwasm_std::Deps`, `DepsMut`, `OwnedDeps` and `QuerierWrapper`.
+  Otherwise, it defaults to `Empty`. E.g.
 
   ```diff
    #[entry_point]
@@ -1313,13 +1313,14 @@ arbitrary ones.
   which a compact binary representation is desired. For JSON state this does not
   save much data (e.g. the bech32 address
   cosmos1pfq05em6sfkls66ut4m2257p7qwlk448h8mysz takes 45 bytes as direct ASCII
-  and 28 bytes when its canonical representation is base64 encoded). For fixed-length database keys `CanonicalAddr` remains handy though.
+  and 28 bytes when its canonical representation is base64 encoded). For
+  fixed-length database keys `CanonicalAddr` remains handy though.
 
 - Replace `StakingMsg::Withdraw` with `DistributionMsg::SetWithdrawAddress` and
   `DistributionMsg::WithdrawDelegatorReward`. `StakingMsg::Withdraw` was a
   shorthand for the two distribution messages. However, it was unintuitive
-  because it did not set the address for one withdrawal only but for all following
-  withdrawals. Since withdrawals are [triggered by different
+  because it did not set the address for one withdrawal only but for all
+  following withdrawals. Since withdrawals are [triggered by different
   events][distribution docs] such as validators changing their commission rate,
   an address that was set for a one-time withdrawal would be used for future
   withdrawals not considered by the contract author.
@@ -1785,8 +1786,8 @@ Contract code and uni tests:
 - `cosmwasm_storage::get_with_prefix`, `cosmwasm_storage::set_with_prefix`,
   `cosmwasm_storage::RepLog::commit`, `cosmwasm_std::ReadonlyStorage::get`,
   `cosmwasm_std::ReadonlyStorage::range`, `cosmwasm_std::Storage::set` and
-  `cosmwasm_std::Storage::remove` now returns the value directly that was wrapped
-  in a result before.
+  `cosmwasm_std::Storage::remove` now returns the value directly that was
+  wrapped in a result before.
 - Error creator functions are now in type itself, e.g.
   `StdError::invalid_base64` instead of `invalid_base64`. The free functions are
   deprecated and will be removed before 1.0.
