@@ -8,6 +8,12 @@ contract can be used. Doing this check when the contract is first stored ensures
 missing capabilities are detected early and not when a user tries to execute a
 certain code path.
 
+Note that capabilities are _not_ suitable to prevent contracts from accessing
+functionality. Their purpose is to signal to the contract that some
+functionality is available. Contracts are free to ignore this fact and attempt
+to use unavailable functionality anyway. Therefore, not enabling a capability on
+the host is _not_ a way of preventing a contract from using that functionality.
+
 ## Origin and Disambiguation
 
 Before August 2022, we had two types of "features": app level features in the
