@@ -297,13 +297,13 @@ impl<'a> Iterator for CoinsIter<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for CoinsIter<'a> {
+impl DoubleEndedIterator for CoinsIter<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|(_, coin)| coin)
     }
 }
 
-impl<'a> ExactSizeIterator for CoinsIter<'a> {
+impl ExactSizeIterator for CoinsIter<'_> {
     fn len(&self) -> usize {
         self.0.len()
     }

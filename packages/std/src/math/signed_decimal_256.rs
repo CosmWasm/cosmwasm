@@ -886,7 +886,7 @@ impl<'de> Deserialize<'de> for SignedDecimal256 {
 
 struct SignedDecimal256Visitor;
 
-impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
+impl de::Visitor<'_> for SignedDecimal256Visitor {
     type Value = SignedDecimal256;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
