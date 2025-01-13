@@ -11,22 +11,24 @@ coverage:
 
 ignore:
   - "contracts"
-  # Disabled due to "cargo_tarpaulin: Failed to get test coverage! Error: Failed to run tests: Error running test - SIGILL raised in 5835"
-  - "packages/vm"
+  - "packages/*/tests"
 
 flags:
   cosmwasm-crypto:
     paths:
-      - packages/crypto/
+      - packages/crypto/src
   cosmwasm-derive:
     paths:
-      - packages/derive/
+      - packages/derive/src
   cosmwasm-schema:
     paths:
-      - packages/schema/
+      - packages/schema/src
   cosmwasm-schema-derive:
     paths:
-      - packages/schema-derive/
+      - packages/schema-derive/src
   cosmwasm-std:
     paths:
-      - packages/std/
+      - packages/std/src
+  cosmwasm-vm:
+    paths:
+      - packages/vm/src
