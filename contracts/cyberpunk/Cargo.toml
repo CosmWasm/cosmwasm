@@ -23,7 +23,6 @@ overflow-checks = true
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
-    "abort",
     "cosmwasm_1_3",
     "std",
 ] }
