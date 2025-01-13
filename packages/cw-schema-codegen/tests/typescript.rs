@@ -94,7 +94,7 @@ fn wrap<T: for<'a> Arbitrary<'a> + Into<Combined>>(
 }
 
 fn type_name<T>() -> String {
-    let name = std::any::type_name::<T>().split(':').last().unwrap();
+    let name = std::any::type_name::<T>().split(':').next_back().unwrap();
     format!("{name}Schema")
 }
 

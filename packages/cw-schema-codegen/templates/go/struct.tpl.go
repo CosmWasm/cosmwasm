@@ -20,7 +20,7 @@ type {{ name }} struct {
 {% for doc in docs %}
 	// {{ doc }}
 {% endfor %}
-	{{ field.name }} *{{ field.ty }} `json:"{{ field.rename }},omitempty"`
+	{{ field.name }} *{{ field.ty }} `json:"{{ field.rename }}"`
 {% endfor %}
 }
 {% endmatch %}

@@ -29,15 +29,12 @@ fn expand_node_name<'a>(
             format!("{}", expand_node_name(schema, inner)).into()
         }
         cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
-        cw_schema::NodeType::Tuple { items: _ } => {
-            /*let items = items
-                .iter()
-                .map(|item| expand_node_name(schema, &schema.definitions[*item]))
-                .collect::<Vec<_>>()
-                .join(", ");
-
-            format!("({})", items).into()*/
-            "[]interface{}".into()
+        cw_schema::NodeType::Tuple { ref items } => {
+            if items.len() == 1 {
+                "interface{}"
+            } else {
+                "[]interface{}"
+            }.into()
         }
         cw_schema::NodeType::Enum { .. } => node.name.as_ref().into(),
 

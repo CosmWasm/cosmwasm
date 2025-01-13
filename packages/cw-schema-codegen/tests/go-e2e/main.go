@@ -18,7 +18,7 @@ func main() {
 
 	data := buffer.Bytes()
 
-	var out TestType
+	var out *TestType
 	if err := json.Unmarshal(data, &out); err != nil {
 		panic(err)
 	}

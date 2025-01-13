@@ -63,14 +63,14 @@ fn wrap<T: for<'a> Arbitrary<'a> + Into<Combined>>(
 }
 
 fn type_name<T>() -> &'static str {
-    let name = std::any::type_name::<T>().split(':').last().unwrap();
+    let name = std::any::type_name::<T>().split(':').next_back().unwrap();
     name
 }
 
 #[test]
 fn e2e() {
     #[allow(clippy::type_complexity)]
-    let schemas: &[(_, fn(&mut arbitrary::Unstructured) -> Combined, _)] = &[
+    let schemas: &[(_, fn(&mut arbitrary::Unstructured<'_>) -> Combined, _)] = &[
         (
             cw_schema::schema_of::<Owo>(),
             wrap::<Owo>,
@@ -81,11 +81,11 @@ fn e2e() {
             wrap::<Uwu>,
             type_name::<Uwu>(),
         ),
-        /*(
+        (
             cw_schema::schema_of::<Òwó>(),
             wrap::<Òwó>,
             type_name::<Òwó>(),
-        ),*/
+        ),
         // `Empty` is a non-constructable type
         /*(
             cw_schema::schema_of::<Empty>(),
@@ -100,7 +100,7 @@ fn e2e() {
     ];
 
     let e2e_dir = format!("{}/tests/go-e2e", env!("CARGO_MANIFEST_DIR"));
-    let gen_file_path = format!("{}/gen.go", e2e_dir);
+    let gen_file_path = format!("{e2e_dir}/gen.go");
 
     // make sure the dependencies are installed
     let install_status = Command::new("go")
