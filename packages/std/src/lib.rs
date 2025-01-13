@@ -120,7 +120,7 @@ pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, T
 
 #[cfg(feature = "abort")]
 mod _warning {
-    #[must_use = "cosmwasm-std feature `abort` is deprecated and will be removed in the next release. You can just remove the feature as this functionality is now the default"]
+    #[must_use = "cosmwasm-std feature `abort` is deprecated and will be removed in the next major release. You can just remove the feature as this functionality is now the default"]
     struct CompileWarning;
 
     #[allow(dead_code)]
