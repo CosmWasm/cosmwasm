@@ -1090,7 +1090,8 @@ jobs:
       - run:
           name: Clippy linting on std (all feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy --all-targets --tests --all-features -- -D warnings
+          # change to --all-features once `abort` is removed
+          command: cargo clippy --all-targets --tests --features staking,stargate,cosmwasm_2_2 -- -D warnings
       - run:
           name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
