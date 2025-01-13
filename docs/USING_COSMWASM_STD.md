@@ -16,7 +16,6 @@ extern "C" fn deallocate(pointer: u32) { /* ... */ }
 
 // Imports
 extern "C" {
-    #[cfg(feature = "abort")]
     fn abort(source_ptr: u32);
 
     fn db_read(key: u32) -> u32;
@@ -34,16 +33,16 @@ in the dependency tree. Otherwise conflicting C exports are created.
 
 The library comes with the following features:
 
-| Feature      | Enabled by default | Description                                                               |
-| ------------ | ------------------ | ------------------------------------------------------------------------- |
-| iterator     | x                  | Storage iterators                                                         |
-| abort        | x                  | A panic handler that aborts the contract execution with a helpful message |
-| stargate     |                    | Cosmos SDK 0.40+ features and IBC                                         |
-| staking      |                    | Access to the staking module                                              |
-| cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                          |
-| cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                          |
-| cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                          |
-| cosmwasm_1_4 |                    | Features that require CosmWasm 1.4+ on the chain                          |
+| Feature      | Enabled by default | Description                                                                          |
+| ------------ | ------------------ | ------------------------------------------------------------------------------------ |
+| iterator     | x                  | Storage iterators                                                                    |
+| abort        | x                  | DEPRECATED A panic handler that aborts the contract execution with a helpful message |
+| stargate     |                    | Cosmos SDK 0.40+ features and IBC                                                    |
+| staking      |                    | Access to the staking module                                                         |
+| cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                                     |
+| cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                                     |
+| cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                                     |
+| cosmwasm_1_4 |                    | Features that require CosmWasm 1.4+ on the chain                                     |
 
 ## The cosmwasm-std dependency for contract developers
 
@@ -71,9 +70,9 @@ cosmwasm-std = { version = "1.2.0", features = ["stargate", "cosmwasm_1_2"] }
 When you are creating a library that uses cosmwasm-std, you should be incredibly
 careful with which features you require. The moment you add e.g. `cosmwasm_1_2`
 there it becomes impossible to use the contract in chains with lower CosmWasm
-versions. If you add `abort`, it becomes impossible for the contract developer
-to opt out of the abort feature due to your library. Since this affects the
-default features `abort` and `iterator`, you should always disable default
+versions. If you add `iterator`, it becomes impossible for the contract
+developer to opt out of the iterator feature due to your library. Since this
+affects the default feature `iterator`, you should always disable default
 features. However, you should make sure to keep the `std` feature enabled, as we
 might move certain existing functionality to that feature in the future.
 

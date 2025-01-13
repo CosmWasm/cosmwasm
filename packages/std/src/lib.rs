@@ -118,8 +118,18 @@ pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
-// Exposed in wasm build only
+#[cfg(feature = "abort")]
+mod _warning {
+    #[must_use = "cosmwasm-std feature `abort` is deprecated and will be removed in the next major release. You can just remove the feature as this functionality is now the default"]
+    struct CompileWarning;
 
+    #[allow(dead_code)]
+    fn trigger_warning() {
+        CompileWarning;
+    }
+}
+
+// Exposed in wasm build only
 #[cfg(target_arch = "wasm32")]
 mod exports;
 #[cfg(target_arch = "wasm32")]
