@@ -12,7 +12,9 @@ readme = "README.md"
 features = ["abort", "cosmwasm_2_2", "staking", "stargate"]
 
 [features]
-default = ["abort", "iterator", "std"]
+default = ["iterator", "std"]
+# abort used to enable the panic handler that hands a nice error message back to the host.
+# The feature is now deprecated and the panic handler is always enabled.
 abort = []
 std = []
 # iterator allows us to iterate over all DB items in a given range

@@ -22,7 +22,6 @@ use crate::ibc::{
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{Owned, Region};
-#[cfg(feature = "abort")]
 use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
@@ -128,7 +127,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_instantiate(
         instantiate_fn,
@@ -158,7 +156,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_execute(
         execute_fn,
@@ -187,7 +184,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_migrate(
         migrate_fn,
@@ -218,7 +214,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_migrate_with_info(
         migrate_with_info_fn,
@@ -247,7 +242,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_sudo(
         sudo_fn,
@@ -274,7 +268,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_reply(
         reply_fn,
@@ -300,7 +293,6 @@ where
     M: DeserializeOwned,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_query(
         query_fn,
@@ -327,7 +319,6 @@ where
     Q: CustomQuery,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_channel_open(
         contract_fn,
@@ -356,7 +347,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_channel_connect(
         contract_fn,
@@ -385,7 +375,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_channel_close(
         contract_fn,
@@ -415,7 +404,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_packet_receive(
         contract_fn,
@@ -445,7 +433,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_packet_ack(
         contract_fn,
@@ -476,7 +463,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_packet_timeout(
         contract_fn,
@@ -497,7 +483,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_source_callback(
         contract_fn,
@@ -522,7 +507,6 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    #[cfg(feature = "abort")]
     install_panic_handler();
     let res = _do_ibc_destination_callback(
         contract_fn,

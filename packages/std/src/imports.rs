@@ -27,7 +27,7 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/packages/vm/src/instance.rs#L89-L206
 extern "C" {
-    #[cfg(feature = "abort")]
+
     fn abort(source_ptr: u32);
 
     fn db_read(key: u32) -> u32;
@@ -744,7 +744,6 @@ impl Querier for ExternalQuerier {
     }
 }
 
-#[cfg(feature = "abort")]
 pub fn handle_panic(message: &str) {
     let region = Region::from_slice(message.as_bytes());
     let region_ptr = region.as_ptr() as u32;
