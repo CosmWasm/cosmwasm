@@ -12,14 +12,14 @@ import { z } from 'zod';
 
  */
 
-const EmptySchema = z.union([
+const typescript_EmptySchema = z.union([
 
 
 
-    never;
+never;
 
 ]);
 
-type Empty = z.infer<typeof EmptySchema>;
+type typescript_Empty = z.infer<typeof typescript_EmptySchema>;
 
-export { Empty, EmptySchema };
+export { typescript_Empty, typescript_EmptySchema };

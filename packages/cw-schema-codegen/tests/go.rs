@@ -62,9 +62,10 @@ fn wrap<T: for<'a> Arbitrary<'a> + Into<Combined>>(
     T::arbitrary(stuff).unwrap().into()
 }
 
-fn type_name<T>() -> &'static str {
-    let name = std::any::type_name::<T>().split(':').next_back().unwrap();
-    name
+fn type_name<T>() -> String {
+    std::any::type_name::<T>()
+        .replace("::", "_")
+        .replace(['<', '>'], "_")
 }
 
 #[test]

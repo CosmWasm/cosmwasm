@@ -12,12 +12,12 @@ import { z } from 'zod';
 
  */
 
-const ÒwóSchema = 
+const typescript_ÒwóSchema = 
 
-        z.null()
-    
+    z.null()
+
 ;
 
-type Òwó = z.infer<typeof ÒwóSchema>;
+type typescript_Òwó = z.infer<typeof typescript_ÒwóSchema>;
 
-export { Òwó, ÒwóSchema };
+export { typescript_Òwó, typescript_ÒwóSchema };

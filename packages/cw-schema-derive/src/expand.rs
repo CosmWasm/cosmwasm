@@ -387,7 +387,10 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
         impl #impl_generics #crate_path::Schemaifier for #name #ty_generics #where_clause {
             fn visit_schema(visitor: &mut #crate_path::SchemaVisitor) -> #crate_path::DefinitionReference {
                 let node = #crate_path::Node {
-                    name: stringify!(#name).into(),
+                    name: std::any::type_name::<Self>()
+                        .replace("::", "_")
+                        .replace(['<', '>'], "_")
+                        .into(),
                     description: #description,
                     value: #crate_path::NodeType::Enum {
                         discriminator: None,
@@ -459,7 +462,10 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
 
         quote! {
             #crate_path::Node {
-                name: stringify!(#name).into(),
+                name: std::any::type_name::<Self>()
+                    .replace("::", "_")
+                    .replace(['<', '>'], "_")
+                    .into(),
                 description: #description,
                 value: #node_ty,
             }

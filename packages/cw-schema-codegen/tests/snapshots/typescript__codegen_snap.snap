@@ -12,26 +12,26 @@ import { z } from 'zod';
 
  */
 
-const OwoSchema = 
+const typescript_OwoSchema = 
 
-        z.object({
-            
-                /**
-                
-                 */
+    z.object({
 
-                field_1: z.string().or(z.number()),
-            
-                /**
-                
-                 */
+        /**
+        
+         */
 
-                field_2: z.string(),
-            
-        })
+        field_1: z.string().or(z.number()),
+
+        /**
+        
+         */
+
+        field_2: z.string(),
+
+})
 
 ;
 
-type Owo = z.infer<typeof OwoSchema>;
+type typescript_Owo = z.infer<typeof typescript_OwoSchema>;
 
-export { Owo, OwoSchema };
+export { typescript_Owo, typescript_OwoSchema };

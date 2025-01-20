@@ -12,12 +12,12 @@ import { z } from 'zod';
 
  */
 
-const UwuSchema = 
+const typescript_UwuSchema = 
 
-        z.tuple([z.string(), z.string().or(z.number())])
-    
+    z.tuple([z.string(), z.string().or(z.number())])
+
 ;
 
-type Uwu = z.infer<typeof UwuSchema>;
+type typescript_Uwu = z.infer<typeof typescript_UwuSchema>;
 
-export { Uwu, UwuSchema };
+export { typescript_Uwu, typescript_UwuSchema };

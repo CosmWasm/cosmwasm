@@ -12,44 +12,44 @@ import { z } from 'zod';
 
  */
 
-const HeheheSchema = z.union([
+const typescript_HeheheSchema = z.union([
 
     /**
     
      */
 
+
+    z.object({ "A": z.null() }).or(z.literal("A")),
+
+
+    /**
     
-            z.object({ "A": z.null() }).or(z.literal("A")),
+     */
+
+
+    z.object({ "B": z.tuple([z.string().or(z.number())]) }),
+
+
+    /**
+    
+     */
+
+
+    z.object({ "C": z.object({
+
+        /**
         
+         */
 
-    /**
-    
-     */
+        field: z.string(),
 
-    
-            z.object({ "B": z.tuple([z.string().or(z.number())]) }),
-        
+}) }),
 
-    /**
-    
-     */
-
-    
-            z.object({ "C": z.object({
-                
-                    /**
-                    
-                     */
-
-                    field: z.string(),
-                
-            }) }),
-    
 
 
 
 ]);
 
-type Hehehe = z.infer<typeof HeheheSchema>;
+type typescript_Hehehe = z.infer<typeof typescript_HeheheSchema>;
 
-export { Hehehe, HeheheSchema };
+export { typescript_Hehehe, typescript_HeheheSchema };
