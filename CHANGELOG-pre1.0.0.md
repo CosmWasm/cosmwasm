@@ -460,7 +460,7 @@ and this project adheres to
   secp256k1 signature verification scheme for Cosmos signature and public key
   formats. ([#780])
 - cosmwasm-vm: Add PinnedMemoryCache. ([#696])
-- cosmwasm-vm: The new `Cache::analyze` provides a static analyzis of the Wasm
+- cosmwasm-vm: The new `Cache::analyze` provides a static analysis of the Wasm
   bytecode. This is used to tell the caller if the contract exposes IBC entry
   points. ([#736])
 - cosmwasm-vm: Added new `stargate` feature flag to enable new stargate and ibc
