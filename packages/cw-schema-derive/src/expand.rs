@@ -108,7 +108,7 @@ impl SerdeContainerOptions {
                 } else if meta.path.is_ident("untagged") {
                     options.untagged = true;
                 } else {
-                    print_warning(
+                    /*print_warning(
                         "unknown serde attribute",
                         format!(
                             "unknown attribute \"{}\"",
@@ -118,7 +118,7 @@ impl SerdeContainerOptions {
                                 .unwrap_or_else(|| "[error]".into())
                         ),
                     )
-                    .unwrap();
+                    .unwrap();*/
 
                     // TODO: support other serde attributes
                     //
@@ -127,6 +127,14 @@ impl SerdeContainerOptions {
                         .value()
                         .map(|val| val.parse::<TokenStream>().unwrap())
                         .unwrap_or_else(|_| meta.input.cursor().token_stream());
+                }
+
+                if meta.path.is_ident("untagged") || meta.path.is_ident("tag") {
+                    print_warning(
+                        "unsupported tag type",
+                        meta.error("unsupported tag type").to_string(),
+                    )
+                    .unwrap();
                 }
 
                 Ok(())

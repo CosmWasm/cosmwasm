@@ -99,17 +99,8 @@ fn e2e() {
         ),
     ];
 
-    let e2e_dir = format!("{}/tests/go-e2e", env!("CARGO_MANIFEST_DIR"));
-    let gen_file_path = format!("{e2e_dir}/gen.go");
-
-    // make sure the dependencies are installed
-    let install_status = Command::new("go")
-        .args(["get"])
-        .current_dir(&e2e_dir)
-        .status()
-        .unwrap();
-
-    assert!(install_status.success());
+    let e2e_dir = format!("{}/tests/rust-e2e", env!("CARGO_MANIFEST_DIR"));
+    let gen_file_path = format!("{e2e_dir}/src/gen.rs");
 
     let random_data: [u8; 255] = rand::random();
     let mut unstructured = arbitrary::Unstructured::new(&random_data);
@@ -123,23 +114,22 @@ fn e2e() {
             .iter()
             .map(|node| {
                 let mut buf = Vec::new();
-                cw_schema_codegen::go::process_node(&mut buf, schema, node, true).unwrap();
+                cw_schema_codegen::rust::process_node(&mut buf, schema, node).unwrap();
                 String::from_utf8(buf).unwrap()
             })
             .collect::<String>();
 
         let mut gen_file = File::create(&gen_file_path).unwrap();
-        gen_file.write_all(b"package main\n").unwrap();
         gen_file.write_all(output.as_bytes()).unwrap();
         gen_file
-            .write_all(format!("type TestType {type_name}").as_bytes())
+            .write_all(format!("pub type TestType = {type_name};").as_bytes())
             .unwrap();
 
         let data = arbitrary_gen(&mut unstructured);
         let serialized = serde_json::to_string(&data).unwrap();
 
-        let mut child = Command::new("go")
-            .args(["run", "main.go", "gen.go"])
+        let mut child = Command::new("cargo")
+            .args(["run"])
             .current_dir(&e2e_dir)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
