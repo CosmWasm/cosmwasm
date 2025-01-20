@@ -21,6 +21,7 @@ mod conversion;
 mod deps;
 mod encoding;
 mod errors;
+mod eureka;
 mod forward_ref;
 mod hex_binary;
 mod ibc;
@@ -65,6 +66,7 @@ pub use crate::errors::{
     RecoverPubkeyError, RoundDownOverflowError, RoundUpOverflowError, StdError, StdResult,
     SystemError, VerificationError,
 };
+pub use crate::eureka::{EurekaMsg, EurekaPayload};
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
