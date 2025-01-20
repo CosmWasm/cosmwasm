@@ -15,6 +15,7 @@ and this project adheres to
 - cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
 
 [#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
+[#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 
 ## [2.2.0] - 2024-12-17
 
