@@ -29,6 +29,8 @@ staking = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
 stargate = []
+# eureka enables eureka-dependent messages and queries
+eureka = []
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []

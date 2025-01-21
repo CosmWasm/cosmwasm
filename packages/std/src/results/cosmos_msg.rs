@@ -6,6 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
+#[cfg(feature = "eureka")]
 use crate::eureka::EurekaMsg;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
@@ -85,6 +86,7 @@ pub enum CosmosMsg<T = Empty> {
     Wasm(WasmMsg),
     #[cfg(feature = "stargate")]
     Gov(GovMsg),
+    #[cfg(feature = "eureka")]
     Eureka(EurekaMsg),
 }
 
@@ -110,6 +112,7 @@ impl<T> CosmosMsg<T> {
             CosmosMsg::Wasm(msg) => CosmosMsg::Wasm(msg),
             #[cfg(feature = "stargate")]
             CosmosMsg::Gov(msg) => CosmosMsg::Gov(msg),
+            #[cfg(feature = "eureka")]
             CosmosMsg::Eureka(msg) => CosmosMsg::Eureka(msg),
         })
     }
@@ -488,6 +491,7 @@ impl<T> From<GovMsg> for CosmosMsg<T> {
     }
 }
 
+#[cfg(feature = "eureka")]
 impl<T> From<EurekaMsg> for CosmosMsg<T> {
     fn from(msg: EurekaMsg) -> Self {
         CosmosMsg::Eureka(msg)
