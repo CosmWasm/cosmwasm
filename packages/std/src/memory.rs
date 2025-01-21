@@ -95,7 +95,7 @@ where
     /// # Safety
     ///
     /// This function requires the following invariants to be upheld:
-    /// - `capacity` is smaller or equal to `length`
+    /// - `length` is smaller or equal to `capacity`
     /// - The number of bytes allocated by the pointer must be equal to `capacity`
     /// - The byte range covered by `length` must be initialized
     /// - `ptr` is a non-dangling and non-null pointer
