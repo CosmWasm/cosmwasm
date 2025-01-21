@@ -777,6 +777,24 @@ mod tests {
     }
 
     #[test]
+    fn func_ref_in_type_fails() {
+        let wasm = wat::parse_str(
+            r#"(module
+                (type $x1 (func (param funcref)))
+                (export "memory" (memory 0))
+                (import "env" "abort" (func $f (type $x1)))
+                (memory 3)
+            )"#,
+        )
+        .unwrap();
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+
+        cache.store_code(&wasm, true, true).unwrap_err();
+    }
+
+    #[test]
     fn load_wasm_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
