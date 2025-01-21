@@ -37,6 +37,7 @@ const _: () = {
 
 impl Region<Borrowed> {
     pub fn from_slice(slice: &[u8]) -> Self {
+        // SAFETY: A slice upholds all the safety variants we need to construct a borrowed Region
         unsafe { Self::from_parts(slice.as_ptr(), slice.len(), slice.len()) }
     }
 }
@@ -44,7 +45,9 @@ impl Region<Borrowed> {
 impl Region<Owned> {
     /// Construct a region from an existing vector
     pub fn from_vec(vec: Vec<u8>) -> Self {
+        // SAFETY: The `std::vec::Vec` type upholds all the safety invariants required to call `from_parts`
         let region = unsafe { Self::from_parts(vec.as_ptr(), vec.capacity(), vec.len()) };
+        // Important and load bearing: call `mem::forget` to prevent memory from being freed
         mem::forget(vec);
         region
     }
@@ -72,6 +75,7 @@ impl Region<Owned> {
 
     /// Transform the region into a vector
     pub fn into_vec(self) -> Vec<u8> {
+        // SAFETY: Invariants are covered by the safety contract of the constructor
         let vector = unsafe {
             Vec::from_raw_parts(
                 self.offset as *mut u8,
@@ -88,6 +92,14 @@ impl<O> Region<O>
 where
     O: Ownership,
 {
+    /// # Safety
+    ///
+    /// This function requires the following invariants to be upheld:
+    /// - `capacity` is smaller or equal to `length`
+    /// - The number of bytes allocated by the pointer must be equal to `capacity`
+    /// - The byte range covered by `length` must be initialized
+    /// - `ptr` is a non-dangling and non-null pointer
+    /// - If the generic `Ownership` parameter is set to `Owned`, the `ptr` must point to a memory region allocated by a `Vec`
     unsafe fn from_parts(ptr: *const u8, capacity: usize, length: usize) -> Self {
         // Well, this technically violates pointer provenance rules.
         // But there isn't a stable API for it, so that's the best we can do, I guess.
@@ -102,6 +114,7 @@ where
 
     /// Access the memory region this region points to in form of a byte slice
     pub fn as_bytes(&self) -> &[u8] {
+        // SAFETY: Safety contract of constructor requires `length` bytes to be initialized
         unsafe { slice::from_raw_parts(self.offset as *const u8, self.length as usize) }
     }
 
@@ -146,6 +159,8 @@ where
             // "The pointer will never be null, so this type is null-pointer-optimized."
             assert!(!region_start.is_null(), "Region starts at null pointer");
 
+            // SAFETY: Since `from_parts` was required to uphold the invariance that if the parameter is `Owned`
+            // the memory has been allocated through a `Vec`, we can safely reconstruct the `Vec` and deallocate it.
             unsafe {
                 let data =
                     Vec::from_raw_parts(region_start, self.length as usize, self.capacity as usize);
