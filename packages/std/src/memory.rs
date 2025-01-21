@@ -159,7 +159,7 @@ where
             // "The pointer will never be null, so this type is null-pointer-optimized."
             assert!(!region_start.is_null(), "Region starts at null pointer");
 
-            // SAFETY: Since `from_parts` was required to uphold the invariance that if the parameter is `Owned`
+            // SAFETY: Since `from_parts` was required to uphold the invariant that if the parameter is `Owned`
             // the memory has been allocated through a `Vec`, we can safely reconstruct the `Vec` and deallocate it.
             unsafe {
                 let data =
