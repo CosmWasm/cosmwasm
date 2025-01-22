@@ -96,6 +96,20 @@ macro_rules! wrapped_int_to_primitive {
 }
 pub(crate) use wrapped_int_to_primitive;
 
+/// Helper macro to implement `From` for a type that is just a wrapper around another type.
+/// This can be used for all our integer conversions where `bnum` implements `From`.
+macro_rules! primitive_to_wrapped_int {
+    ($input: ty, $output: ty) => {
+        impl From<$input> for $output {
+            fn from(value: $input) -> Self {
+                // By convention all our Uint*/Int* types store the value in .0
+                Self(value.into())
+            }
+        }
+    };
+}
+pub(crate) use primitive_to_wrapped_int;
+
 /// Helper macro to implement `TryFrom` for a conversion from a bigger signed int to a smaller one.
 /// This is needed because `bnum` does not implement `TryFrom` for those conversions
 /// because of limitations of const generics.

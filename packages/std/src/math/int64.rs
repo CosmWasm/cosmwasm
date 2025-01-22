@@ -13,7 +13,9 @@ use crate::{
     __internal::forward_ref_partial_eq,
 };
 
-use super::conversion::{forward_try_from, try_from_int_to_int, wrapped_int_to_primitive};
+use super::conversion::{
+    forward_try_from, primitive_to_wrapped_int, try_from_int_to_int, wrapped_int_to_primitive,
+};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -296,48 +298,15 @@ impl NumConsts for Int64 {
 }
 
 // uint to Int
-impl From<u32> for Int64 {
-    fn from(val: u32) -> Self {
-        Int64(val.into())
-    }
-}
-
-impl From<u16> for Int64 {
-    fn from(val: u16) -> Self {
-        Int64(val.into())
-    }
-}
-
-impl From<u8> for Int64 {
-    fn from(val: u8) -> Self {
-        Int64(val.into())
-    }
-}
+primitive_to_wrapped_int!(u8, Int64);
+primitive_to_wrapped_int!(u16, Int64);
+primitive_to_wrapped_int!(u32, Int64);
 
 // int to Int
-impl From<i64> for Int64 {
-    fn from(val: i64) -> Self {
-        Int64(val)
-    }
-}
-
-impl From<i32> for Int64 {
-    fn from(val: i32) -> Self {
-        Int64(val.into())
-    }
-}
-
-impl From<i16> for Int64 {
-    fn from(val: i16) -> Self {
-        Int64(val.into())
-    }
-}
-
-impl From<i8> for Int64 {
-    fn from(val: i8) -> Self {
-        Int64(val.into())
-    }
-}
+primitive_to_wrapped_int!(i8, Int64);
+primitive_to_wrapped_int!(i16, Int64);
+primitive_to_wrapped_int!(i32, Int64);
+primitive_to_wrapped_int!(i64, Int64);
 
 // Int to int
 wrapped_int_to_primitive!(Int64, i64);
