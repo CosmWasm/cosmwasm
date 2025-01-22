@@ -15,7 +15,7 @@ use crate::{
     Uint128,
 };
 
-use super::conversion::forward_try_from;
+use super::conversion::{forward_try_from, wrapped_int_to_primitive};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -342,6 +342,10 @@ impl From<u8> for Uint64 {
     }
 }
 
+// Uint to uint
+wrapped_int_to_primitive!(Uint64, u64);
+wrapped_int_to_primitive!(Uint64, u128);
+
 // Int to Uint
 forward_try_from!(Int64, Uint64);
 forward_try_from!(Int128, Uint64);
@@ -362,12 +366,6 @@ impl TryFrom<&str> for Uint64 {
 impl From<Uint64> for String {
     fn from(original: Uint64) -> Self {
         original.to_string()
-    }
-}
-
-impl From<Uint64> for u64 {
-    fn from(original: Uint64) -> Self {
-        original.0
     }
 }
 
@@ -597,6 +595,10 @@ mod tests {
     fn uint64_convert_into() {
         let original = Uint64(12345);
         let a = u64::from(original);
+        assert_eq!(a, 12345);
+
+        let original = Uint64(12345);
+        let a = u128::from(original);
         assert_eq!(a, 12345);
 
         let original = Uint64(12345);
