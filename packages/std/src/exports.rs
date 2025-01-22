@@ -44,6 +44,10 @@ extern "C" fn requires_staking() {}
 #[no_mangle]
 extern "C" fn requires_stargate() {}
 
+#[cfg(feature = "eureka")]
+#[no_mangle]
+extern "C" fn requires_eureka() {}
+
 #[cfg(feature = "cosmwasm_1_1")]
 #[no_mangle]
 extern "C" fn requires_cosmwasm_1_1() {}

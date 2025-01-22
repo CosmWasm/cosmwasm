@@ -294,18 +294,6 @@
             }
           },
           "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "eureka"
-          ],
-          "properties": {
-            "eureka": {
-              "$ref": "#/definitions/EurekaMsg"
-            }
-          },
-          "additionalProperties": false
         }
       ]
     },
@@ -363,78 +351,6 @@
     "Empty": {
       "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressible in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
       "type": "object",
-      "additionalProperties": false
-    },
-    "EurekaMsg": {
-      "description": "These are messages in the IBC lifecycle using the new Eureka approach. Only usable by IBC-enabled contracts",
-      "oneOf": [
-        {
-          "description": "Sends an IBC packet with given payloads over the existing channel.",
-          "type": "object",
-          "required": [
-            "send_packet"
-          ],
-          "properties": {
-            "send_packet": {
-              "type": "object",
-              "required": [
-                "channel_id",
-                "payloads",
-                "timeout"
-              ],
-              "properties": {
-                "channel_id": {
-                  "description": "existing channel to send the tokens over",
-                  "type": "string"
-                },
-                "payloads": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/EurekaPayload"
-                  }
-                },
-                "timeout": {
-                  "$ref": "#/definitions/Timestamp"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "EurekaPayload": {
-      "description": "Payload value should be encoded in a format defined by the channel version, and the module on the other side should know how to parse this.",
-      "type": "object",
-      "required": [
-        "destination_port",
-        "encoding",
-        "value",
-        "version"
-      ],
-      "properties": {
-        "destination_port": {
-          "description": "The port id on the chain where the packet is sent to (external chain).",
-          "type": "string"
-        },
-        "encoding": {
-          "description": "Encoding used to serialize the [EurekaPayload::value].",
-          "type": "string"
-        },
-        "value": {
-          "description": "Encoded payload data.",
-          "allOf": [
-            {
-              "$ref": "#/definitions/Binary"
-            }
-          ]
-        },
-        "version": {
-          "description": "Version of the receiving contract.",
-          "type": "string"
-        }
-      },
       "additionalProperties": false
     },
     "GovMsg": {
