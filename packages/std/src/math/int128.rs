@@ -13,7 +13,7 @@ use crate::{
     __internal::forward_ref_partial_eq,
 };
 
-use super::conversion::{forward_try_from, try_from_int_to_int};
+use super::conversion::{forward_try_from, try_from_int_to_int, wrapped_int_to_primitive};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -371,6 +371,9 @@ impl From<i8> for Int128 {
     }
 }
 
+// Int to int
+wrapped_int_to_primitive!(Int128, i128);
+
 impl TryFrom<&str> for Int128 {
     type Error = StdError;
 
@@ -624,6 +627,12 @@ mod tests {
         let num2 = Int128::from_le_bytes(le_bytes);
         assert_eq!(num1, Int128::from(65536u32 + 512 + 3));
         assert_eq!(num1, num2);
+    }
+
+    #[test]
+    fn int128_convert_to() {
+        let a = Int128::new(5);
+        assert_eq!(i128::from(a), 5);
     }
 
     #[test]
