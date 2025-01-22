@@ -20,7 +20,7 @@ use crate::{
 /// the implementation in the future.
 use bnum::types::U256;
 
-use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::conversion::{forward_try_from, primitive_to_wrapped_int, try_from_int_to_uint};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -385,6 +385,13 @@ impl NumConsts for Uint256 {
 
 impl_mul_fraction!(Uint256);
 
+// uint to Uint
+primitive_to_wrapped_int!(u8, Uint256);
+primitive_to_wrapped_int!(u16, Uint256);
+primitive_to_wrapped_int!(u32, Uint256);
+primitive_to_wrapped_int!(u64, Uint256);
+primitive_to_wrapped_int!(u128, Uint256);
+
 impl From<Uint128> for Uint256 {
     fn from(val: Uint128) -> Self {
         val.u128().into()
@@ -394,36 +401,6 @@ impl From<Uint128> for Uint256 {
 impl From<Uint64> for Uint256 {
     fn from(val: Uint64) -> Self {
         val.u64().into()
-    }
-}
-
-impl From<u128> for Uint256 {
-    fn from(val: u128) -> Self {
-        Uint256(val.into())
-    }
-}
-
-impl From<u64> for Uint256 {
-    fn from(val: u64) -> Self {
-        Uint256(val.into())
-    }
-}
-
-impl From<u32> for Uint256 {
-    fn from(val: u32) -> Self {
-        Uint256(val.into())
-    }
-}
-
-impl From<u16> for Uint256 {
-    fn from(val: u16) -> Self {
-        Uint256(val.into())
-    }
-}
-
-impl From<u8> for Uint256 {
-    fn from(val: u8) -> Self {
-        Uint256(val.into())
     }
 }
 

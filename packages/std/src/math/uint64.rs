@@ -15,7 +15,7 @@ use crate::{
     Uint128,
 };
 
-use super::conversion::{forward_try_from, wrapped_int_to_primitive};
+use super::conversion::{forward_try_from, primitive_to_wrapped_int, wrapped_int_to_primitive};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -318,29 +318,10 @@ impl_mul_fraction!(Uint64);
 // https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
 
 // uint to Uint
-impl From<u64> for Uint64 {
-    fn from(val: u64) -> Self {
-        Uint64(val)
-    }
-}
-
-impl From<u32> for Uint64 {
-    fn from(val: u32) -> Self {
-        Uint64(val.into())
-    }
-}
-
-impl From<u16> for Uint64 {
-    fn from(val: u16) -> Self {
-        Uint64(val.into())
-    }
-}
-
-impl From<u8> for Uint64 {
-    fn from(val: u8) -> Self {
-        Uint64(val.into())
-    }
-}
+primitive_to_wrapped_int!(u8, Uint64);
+primitive_to_wrapped_int!(u16, Uint64);
+primitive_to_wrapped_int!(u32, Uint64);
+primitive_to_wrapped_int!(u64, Uint64);
 
 // Uint to uint
 wrapped_int_to_primitive!(Uint64, u64);
