@@ -440,9 +440,9 @@ where
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&mut self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        read_region(&env.memory(&store), region_ptr, max_length)
+        read_region(env, &mut store, region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
@@ -886,7 +886,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 73);
-        assert_eq!(report2.used_internally, 13062390198);
+        assert_eq!(report2.used_internally, 13063765803);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1075,7 +1075,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 13062390271);
+        assert_eq!(init_used, 13063765876);
     }
 
     #[test]
@@ -1098,7 +1098,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 19772973606);
+        assert_eq!(execute_used, 19773652731);
     }
 
     #[test]
@@ -1132,6 +1132,6 @@ mod tests {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 9954975006);
+        assert_eq!(query_used, 9955398411);
     }
 }

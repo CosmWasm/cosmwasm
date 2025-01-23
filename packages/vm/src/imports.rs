@@ -59,10 +59,19 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 /// Max length for an abort message
 const MAX_LENGTH_ABORT: usize = 2 * MI;
 
+#[inline(always)]
+fn charge_host_call_gas<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    env: &Environment<A, S, Q>,
+    store: &mut impl AsStoreMut,
+) -> VmResult<()> {
+    let gas = GasInfo::with_cost(env.gas_config.host_call_cost);
+    process_gas_info(env, store, gas)
+}
+
 // Import implementations
 //
 // This block of do_* prefixed functions is tailored for Wasmer's
-// Function::new_native_with_env interface. Those require an env in the first
+// Function::new_typed_with_env interface. Those require an env in the first
 // argument and cannot capture other variables. Thus everything is accessed
 // through the env.
 
@@ -73,7 +82,9 @@ pub fn do_db_read<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let key = read_region(data, &mut store, key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) = data.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
     process_gas_info(data, &mut store, gas_info)?;
@@ -94,6 +105,8 @@ pub fn do_db_write<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + '
 ) -> VmResult<()> {
     let (data, mut store) = env.data_and_store_mut();
 
+    charge_host_call_gas(data, &mut store)?;
+
     if data.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
@@ -113,9 +126,9 @@ pub fn do_db_write<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + '
         }
     }
 
-    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)
+    let key = read_region(data, &mut store, key_ptr, MAX_LENGTH_DB_KEY)
         .map_err(|e| convert_error(e, "Key"))?;
-    let value = read_region(&data.memory(&store), value_ptr, MAX_LENGTH_DB_VALUE)
+    let value = read_region(data, &mut store, value_ptr, MAX_LENGTH_DB_VALUE)
         .map_err(|e| convert_error(e, "Value"))?;
 
     let (result, gas_info) =
@@ -132,11 +145,13 @@ pub fn do_db_remove<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 
 ) -> VmResult<()> {
     let (data, mut store) = env.data_and_store_mut();
 
+    charge_host_call_gas(data, &mut store)?;
+
     if data.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&data.memory(&store), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(data, &mut store, key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
@@ -152,11 +167,19 @@ pub fn do_addr_validate<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let source_data = read_region(&data.memory(&store), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let source_data = read_region(data, &mut store, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
         return write_to_contract(data, &mut store, b"Input is empty");
     }
 
+    let string_gas_cost = GasInfo::with_cost(
+        data.gas_config
+            .string_from_bytes_cost
+            .total_cost(source_data.len() as u64)?,
+    );
+    process_gas_info(data, &mut store, string_gas_cost)?;
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
         Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
@@ -196,11 +219,19 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let source_data = read_region(&data.memory(&store), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let source_data = read_region(data, &mut store, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
         return write_to_contract(data, &mut store, b"Input is empty");
     }
 
+    let string_gas_cost = GasInfo::with_cost(
+        data.gas_config
+            .string_from_bytes_cost
+            .total_cost(source_data.len() as u64)?,
+    );
+    process_gas_info(data, &mut store, string_gas_cost)?;
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
         Err(_) => return write_to_contract(data, &mut store, b"Input is not valid UTF-8"),
@@ -227,11 +258,9 @@ pub fn do_addr_humanize<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let canonical = read_region(
-        &data.memory(&store),
-        source_ptr,
-        MAX_LENGTH_CANONICAL_ADDRESS,
-    )?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let canonical = read_region(data, &mut store, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?;
 
     let (result, gas_info) = data.api.human_address(&canonical);
     process_gas_info(data, &mut store, gas_info)?;
@@ -261,12 +290,15 @@ pub fn do_secp256k1_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Que
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let hash = read_region(&data.memory(&store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&data.memory(&store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-    let pubkey = read_region(&data.memory(&store), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let hash = read_region(data, &mut store, hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(data, &mut store, signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let pubkey = read_region(data, &mut store, pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let gas_info = GasInfo::with_cost(data.gas_config.secp256k1_verify_cost);
     process_gas_info(data, &mut store, gas_info)?;
+
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let code = match result {
         Ok(valid) => {
@@ -301,8 +333,11 @@ pub fn do_secp256k1_recover_pubkey<
 ) -> VmResult<u64> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let hash = read_region(&data.memory(&store), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-    let signature = read_region(&data.memory(&store), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let hash = read_region(data, &mut store, hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(data, &mut store, signature_ptr, ECDSA_SIGNATURE_LEN)?;
+
     let recover_param: u8 = match recover_param.try_into() {
         Ok(rp) => rp,
         Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
@@ -310,6 +345,7 @@ pub fn do_secp256k1_recover_pubkey<
 
     let gas_info = GasInfo::with_cost(data.gas_config.secp256k1_recover_pubkey_cost);
     process_gas_info(data, &mut store, gas_info)?;
+
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
     match result {
         Ok(pubkey) => {
@@ -342,20 +378,20 @@ pub fn do_ed25519_verify<A: BackendApi + 'static, S: Storage + 'static, Q: Queri
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let message = read_region(
-        &data.memory(&store),
-        message_ptr,
-        MAX_LENGTH_ED25519_MESSAGE,
-    )?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let message = read_region(data, &mut store, message_ptr, MAX_LENGTH_ED25519_MESSAGE)?;
     let signature = read_region(
-        &data.memory(&store),
+        data,
+        &mut store,
         signature_ptr,
         MAX_LENGTH_ED25519_SIGNATURE,
     )?;
-    let pubkey = read_region(&data.memory(&store), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
+    let pubkey = read_region(data, &mut store, pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let gas_info = GasInfo::with_cost(data.gas_config.ed25519_verify_cost);
     process_gas_info(data, &mut store, gas_info)?;
+
     let result = ed25519_verify(&message, &signature, &pubkey);
     let code = match result {
         Ok(valid) => {
@@ -391,18 +427,23 @@ pub fn do_ed25519_batch_verify<
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
+    charge_host_call_gas(data, &mut store)?;
+
     let messages = read_region(
-        &data.memory(&store),
+        data,
+        &mut store,
         messages_ptr,
         (MAX_LENGTH_ED25519_MESSAGE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let signatures = read_region(
-        &data.memory(&store),
+        data,
+        &mut store,
         signatures_ptr,
         (MAX_LENGTH_ED25519_SIGNATURE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let public_keys = read_region(
-        &data.memory(&store),
+        data,
+        &mut store,
         public_keys_ptr,
         (EDDSA_PUBKEY_LEN + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
@@ -418,6 +459,7 @@ pub fn do_ed25519_batch_verify<
     } * signatures.len() as u64;
     let gas_info = GasInfo::with_cost(max(gas_cost, data.gas_config.ed25519_verify_cost));
     process_gas_info(data, &mut store, gas_info)?;
+
     let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
     let code = match result {
         Ok(valid) => {
@@ -441,15 +483,17 @@ pub fn do_ed25519_batch_verify<
 }
 
 /// Prints a debug message to console.
-/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
+/// Debug printing should be disabled when used in a blockchain module.
 pub fn do_debug<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
     let (data, mut store) = env.data_and_store_mut();
 
+    charge_host_call_gas(data, &mut store)?;
+
     if let Some(debug_handler) = data.debug_handler() {
-        let message_data = read_region(&data.memory(&store), message_ptr, MAX_LENGTH_DEBUG)?;
+        let message_data = read_region(data, &mut store, message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
         let gas_remaining = data.get_gas_left(&mut store);
         debug_handler.borrow_mut()(
@@ -468,9 +512,17 @@ pub fn do_abort<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'sta
     mut env: FunctionEnvMut<Environment<A, S, Q>>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    let (data, store) = env.data_and_store_mut();
+    let (data, mut store) = env.data_and_store_mut();
 
-    let message_data = read_region(&data.memory(&store), message_ptr, MAX_LENGTH_ABORT)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let message_data = read_region(data, &mut store, message_ptr, MAX_LENGTH_ABORT)?;
+    let string_gas_cost = GasInfo::with_cost(
+        data.gas_config
+            .string_from_bytes_cost
+            .total_cost(message_data.len() as u64)?,
+    );
+    process_gas_info(data, &mut store, string_gas_cost)?;
     let msg = String::from_utf8_lossy(&message_data);
     Err(VmError::aborted(msg))
 }
@@ -481,8 +533,11 @@ pub fn do_query_chain<A: BackendApi + 'static, S: Storage + 'static, Q: Querier 
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
+    charge_host_call_gas(data, &mut store)?;
+
     let request = read_region(
-        &data.memory(&store),
+        data,
+        &mut store,
         request_ptr,
         MAX_LENGTH_QUERY_CHAIN_REQUEST,
     )?;
@@ -505,8 +560,10 @@ pub fn do_db_scan<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
-    let start = maybe_read_region(&data.memory(&store), start_ptr, MAX_LENGTH_DB_KEY)?;
-    let end = maybe_read_region(&data.memory(&store), end_ptr, MAX_LENGTH_DB_KEY)?;
+    charge_host_call_gas(data, &mut store)?;
+
+    let start = maybe_read_region(data, &mut store, start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(data, &mut store, end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
@@ -525,6 +582,8 @@ pub fn do_db_next<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 's
     iterator_id: u32,
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
+
+    charge_host_call_gas(data, &mut store)?;
 
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
@@ -545,6 +604,8 @@ pub fn do_db_next_key<A: BackendApi + 'static, S: Storage + 'static, Q: Querier 
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
 
+    charge_host_call_gas(data, &mut store)?;
+
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.next_key(iterator_id)))?;
 
@@ -564,6 +625,8 @@ pub fn do_db_next_value<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
     iterator_id: u32,
 ) -> VmResult<u32> {
     let (data, mut store) = env.data_and_store_mut();
+
+    charge_host_call_gas(data, &mut store)?;
 
     let (result, gas_info) =
         data.with_storage_from_context::<_, _>(|store| Ok(store.next_value(iterator_id)))?;
@@ -766,9 +829,9 @@ mod tests {
         fe_mut: &mut FunctionEnvMut<Environment<MockApi, MockStorage, MockQuerier>>,
         region_ptr: u32,
     ) -> Vec<u8> {
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        read_region(&env.memory(&store), region_ptr, 5000).unwrap()
+        read_region(env, &mut store, region_ptr, 5000).unwrap()
     }
 
     #[test]
