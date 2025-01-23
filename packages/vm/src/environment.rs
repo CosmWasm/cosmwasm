@@ -55,6 +55,14 @@ pub struct GasConfig {
     pub bls12_381_hash_to_g2_cost: u64,
     /// bls12-381 pairing equality check cost
     pub bls12_381_pairing_equality_cost: LinearGasCost,
+    /// cost for reading memory regions <= 8MB
+    pub read_region_small_cost: LinearGasCost,
+    /// cost for reading memory regions > 8MB
+    pub read_region_large_cost: LinearGasCost,
+    /// cost for validating bytes into a String
+    pub string_from_bytes_cost: LinearGasCost,
+    /// cost for calling a host function
+    pub host_call_cost: u64,
 }
 
 impl Default for GasConfig {
@@ -97,6 +105,30 @@ impl Default for GasConfig {
                 base: 2112 * GAS_PER_US,
                 per_item: 163 * GAS_PER_US,
             },
+            read_region_small_cost: LinearGasCost {
+                base: 200000,
+                per_item: 115,
+            },
+            read_region_large_cost: LinearGasCost {
+                base: 0,
+                per_item: 520,
+            },
+            string_from_bytes_cost: LinearGasCost {
+                base: 28700,
+                per_item: 1400,
+            },
+            host_call_cost: 18000,
+        }
+    }
+}
+
+impl GasConfig {
+    pub fn read_region_cost(&self, bytes: usize) -> VmResult<u64> {
+        const THRESHOLD: usize = 8 * 1000 * 1000;
+        if bytes <= THRESHOLD {
+            self.read_region_small_cost.total_cost(bytes as u64)
+        } else {
+            self.read_region_large_cost.total_cost(bytes as u64)
         }
     }
 }
@@ -115,8 +147,13 @@ pub struct LinearGasCost {
 }
 
 impl LinearGasCost {
-    pub fn total_cost(&self, items: u64) -> u64 {
-        self.base + self.per_item * items
+    pub fn total_cost(&self, items: u64) -> VmResult<u64> {
+        self.total_cost_opt(items)
+            .ok_or_else(VmError::gas_depletion)
+    }
+
+    fn total_cost_opt(&self, items: u64) -> Option<u64> {
+        self.base.checked_add(self.per_item.checked_mul(items)?)
     }
 }
 
