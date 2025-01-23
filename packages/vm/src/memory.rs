@@ -3,10 +3,12 @@ use std::mem::{size_of, MaybeUninit};
 use wasmer::{ValueType, WasmPtr};
 
 use crate::conversion::to_u32;
+use crate::environment::{process_gas_info, Environment};
 use crate::errors::{
     CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
     VmResult,
 };
+use crate::{BackendApi, GasInfo, Querier, Storage};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -76,8 +78,16 @@ compile_error!("big endian systems are not supported");
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
-pub fn read_region(memory: &wasmer::MemoryView, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-    let region = get_region(memory, ptr)?;
+pub fn read_region<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    env: &Environment<A, S, Q>,
+    store: &mut wasmer::StoreMut<'_>,
+    ptr: u32,
+    max_length: usize,
+) -> VmResult<Vec<u8>> {
+    let region = get_region(&env.memory(store), ptr)?;
+
+    let gas_info = GasInfo::with_cost(env.gas_config.read_region_cost(region.length as usize)?);
+    process_gas_info(env, store, gas_info)?;
 
     if region.length > to_u32(max_length)? {
         return Err(
@@ -85,25 +95,28 @@ pub fn read_region(memory: &wasmer::MemoryView, ptr: u32, max_length: usize) -> 
         );
     }
 
+    let memory = env.memory(store);
     let mut result = vec![0u8; region.length as usize];
     memory
         .read(region.offset as u64, &mut result)
         .map_err(|_err| CommunicationError::region_access_err(region, memory.size().bytes().0))?;
+
     Ok(result)
 }
 
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]
-pub fn maybe_read_region(
-    memory: &wasmer::MemoryView,
+pub fn maybe_read_region<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    env: &Environment<A, S, Q>,
+    store: &mut wasmer::StoreMut<'_>,
     ptr: u32,
     max_length: usize,
 ) -> VmResult<Option<Vec<u8>>> {
     if ptr == 0 {
         Ok(None)
     } else {
-        read_region(memory, ptr, max_length).map(Some)
+        read_region(env, store, ptr, max_length).map(Some)
     }
 }
 
