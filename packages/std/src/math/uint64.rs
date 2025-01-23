@@ -15,7 +15,7 @@ use crate::{
     Uint128,
 };
 
-use super::conversion::forward_try_from;
+use super::conversion::{forward_try_from, primitive_to_wrapped_int, wrapped_int_to_primitive};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -318,29 +318,14 @@ impl_mul_fraction!(Uint64);
 // https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
 
 // uint to Uint
-impl From<u64> for Uint64 {
-    fn from(val: u64) -> Self {
-        Uint64(val)
-    }
-}
+primitive_to_wrapped_int!(u8, Uint64);
+primitive_to_wrapped_int!(u16, Uint64);
+primitive_to_wrapped_int!(u32, Uint64);
+primitive_to_wrapped_int!(u64, Uint64);
 
-impl From<u32> for Uint64 {
-    fn from(val: u32) -> Self {
-        Uint64(val.into())
-    }
-}
-
-impl From<u16> for Uint64 {
-    fn from(val: u16) -> Self {
-        Uint64(val.into())
-    }
-}
-
-impl From<u8> for Uint64 {
-    fn from(val: u8) -> Self {
-        Uint64(val.into())
-    }
-}
+// Uint to uint
+wrapped_int_to_primitive!(Uint64, u64);
+wrapped_int_to_primitive!(Uint64, u128);
 
 // Int to Uint
 forward_try_from!(Int64, Uint64);
@@ -362,12 +347,6 @@ impl TryFrom<&str> for Uint64 {
 impl From<Uint64> for String {
     fn from(original: Uint64) -> Self {
         original.to_string()
-    }
-}
-
-impl From<Uint64> for u64 {
-    fn from(original: Uint64) -> Self {
-        original.0
     }
 }
 
@@ -597,6 +576,10 @@ mod tests {
     fn uint64_convert_into() {
         let original = Uint64(12345);
         let a = u64::from(original);
+        assert_eq!(a, 12345);
+
+        let original = Uint64(12345);
+        let a = u128::from(original);
         assert_eq!(a, 12345);
 
         let original = Uint64(12345);
