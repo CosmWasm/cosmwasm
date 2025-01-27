@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, IbcBasicResponse,
     IbcDestinationCallbackMsg, IbcDstCallback, IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout,
-    MessageInfo, Response, StdError, StdResult, TransferMsgBuilder,
+    MessageInfo, Response, StdError, StdResult, TransferMsgBuilder, TransferMsgBuilderV2,
 };
 
 use crate::msg::{CallbackType, ExecuteMsg, QueryMsg};
@@ -35,6 +35,7 @@ pub fn execute(
             channel_id,
             timeout_seconds,
             callback_type,
+            channel_version,
         } => execute_transfer(
             env,
             info,
@@ -42,6 +43,7 @@ pub fn execute(
             channel_id,
             timeout_seconds,
             callback_type,
+            channel_version,
         ),
     }
 }
@@ -53,6 +55,7 @@ fn execute_transfer(
     channel_id: String,
     timeout_seconds: u32,
     callback_type: CallbackType,
+    channel_version: String,
 ) -> StdResult<Response> {
     let src_callback = IbcSrcCallback {
         address: env.contract.address,
@@ -62,28 +65,53 @@ fn execute_transfer(
         address: to_address.clone(),
         gas_limit: None,
     };
-    let coin = match &*info.funds {
-        [coin] if !coin.amount.is_zero() => coin,
+
+    let transfer_msg = match channel_version.as_str() {
+        "V1" => {
+            let coin = match &*info.funds {
+                [coin] if !coin.amount.is_zero() => coin,
+                _ => {
+                    return Err(StdError::generic_err(
+                        "Must send exactly one denom to trigger ics-20 transfer",
+                    ))
+                }
+            };
+            let builder = TransferMsgBuilder::new(
+                channel_id,
+                to_address.clone(),
+                coin.clone(),
+                IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
+            );
+            match callback_type {
+                CallbackType::Both => builder
+                    .with_src_callback(src_callback)
+                    .with_dst_callback(dst_callback)
+                    .build(),
+                CallbackType::Src => builder.with_src_callback(src_callback).build(),
+                CallbackType::Dst => builder.with_dst_callback(dst_callback).build(),
+            }
+        }
+        "V2" => {
+            let builder = TransferMsgBuilderV2::new(
+                channel_id,
+                to_address.clone(),
+                info.funds.into_iter().map(Into::into).collect(),
+                IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
+            );
+            match callback_type {
+                CallbackType::Both => builder
+                    .with_src_callback(src_callback)
+                    .with_dst_callback(dst_callback)
+                    .build(),
+                CallbackType::Src => builder.with_src_callback(src_callback).build(),
+                CallbackType::Dst => builder.with_dst_callback(dst_callback).build(),
+            }
+        }
         _ => {
             return Err(StdError::generic_err(
-                "Must send exactly one denom to trigger ics-20 transfer",
+                "Must specify \"V1\" or \"V2\" channel version",
             ))
         }
-    };
-
-    let builder = TransferMsgBuilder::new(
-        channel_id,
-        to_address.clone(),
-        coin.clone(),
-        IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
-    );
-    let transfer_msg = match callback_type {
-        CallbackType::Both => builder
-            .with_src_callback(src_callback)
-            .with_dst_callback(dst_callback)
-            .build(),
-        CallbackType::Src => builder.with_src_callback(src_callback).build(),
-        CallbackType::Dst => builder.with_dst_callback(dst_callback).build(),
     };
 
     Ok(Response::new()

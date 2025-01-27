@@ -23,6 +23,7 @@
             "type": "object",
             "required": [
               "channel_id",
+              "channel_version",
               "timeout_seconds",
               "to_address"
             ],
@@ -38,6 +39,10 @@
               },
               "channel_id": {
                 "description": "The channel to send the packet through",
+                "type": "string"
+              },
+              "channel_version": {
+                "description": "IBC channel version",
                 "type": "string"
               },
               "timeout_seconds": {

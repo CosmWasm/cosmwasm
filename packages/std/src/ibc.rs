@@ -4,19 +4,57 @@
 use core::cmp::{Ord, Ordering, PartialOrd};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::vec;
 
 use crate::coin::Coin;
-use crate::prelude::*;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::StdResult;
+use crate::{prelude::*, Uint256};
 use crate::{to_json_binary, Binary};
 use crate::{Addr, Timestamp};
 
 mod callbacks;
 mod transfer_msg_builder;
+mod transfer_msg_builder_v2;
 
 pub use callbacks::*;
 pub use transfer_msg_builder::*;
+pub use transfer_msg_builder_v2::*;
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct Token {
+    base: String,
+    trace: Vec<Hop>,
+    amount: Uint256,
+}
+
+impl From<Coin> for Token {
+    fn from(w: Coin) -> Token {
+        Token {
+            base: w.denom,
+            trace: vec![],
+            amount: w.amount.into(),
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
+#[serde(rename_all = "snake_case")]
+pub struct Forwarding {
+    hops: Vec<Hop>,
+    memo: String,
+}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct Hop {
+    port_id: String,
+    channel_id: String,
+}
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
@@ -51,6 +89,38 @@ pub enum IbcMsg {
         /// it is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer
         /// protobuf encoder instead.
         memo: Option<String>,
+    },
+    /// Sends bank tokens owned by the contract to the given address on another chain.
+    /// The channel must already be established between the ibctransfer module on this chain
+    /// and a matching module on the remote chain.
+    /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
+    /// module to.
+    TransferV2 {
+        /// existing channel to send the tokens over
+        channel_id: String,
+        /// address on the remote chain to receive these tokens
+        to_address: String,
+        /// packet data only supports one coin
+        /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
+        tokens: Vec<Token>,
+        /// when packet times out, measured on remote chain
+        timeout: IbcTimeout,
+        /// An optional memo. See the blog post
+        /// ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b)
+        /// for more information.
+        ///
+        /// There is no difference between setting this to `None` or an empty string.
+        ///
+        /// This field is only supported on chains with CosmWasm >= 2.0 and silently
+        /// ignored on older chains.
+        /// If you need support for both 1.x and 2.x chain with the same codebase,
+        /// it is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer
+        /// protobuf encoder instead.
+        memo: Option<String>,
+        // a struct containing the list of next hops,
+        // determining where the tokens must be forwarded next,
+        // and the memo for the final hop
+        forwarding: Forwarding,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,

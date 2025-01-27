@@ -20,6 +20,8 @@ pub enum ExecuteMsg {
         /// Who should receive callbacks for the message
         #[serde(default)]
         callback_type: CallbackType,
+        /// IBC channel version
+        channel_version: String,
     },
 }
 

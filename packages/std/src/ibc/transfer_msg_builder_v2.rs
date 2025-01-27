@@ -1,119 +1,60 @@
-use crate::{
-    to_json_string, Coin, IbcCallbackRequest, IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout,
+use crate::{IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout};
+
+use super::{
+    EmptyMemo, Forwarding, MemoSource, Token, WithCallbacks, WithDstCallback, WithMemo,
+    WithSrcCallback,
 };
 
-// these are the different memo types and at the same time the states
-// the TransferMsgBuilder can be in
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct EmptyMemo;
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct WithMemo {
-    pub memo: String,
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct WithSrcCallback {
-    pub src_callback: IbcSrcCallback,
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct WithDstCallback {
-    pub dst_callback: IbcDstCallback,
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct WithCallbacks {
-    pub src_callback: IbcSrcCallback,
-    pub dst_callback: IbcDstCallback,
-}
-
-pub trait MemoSource {
-    fn into_memo(self) -> Option<String>;
-}
-
-impl MemoSource for EmptyMemo {
-    fn into_memo(self) -> Option<String> {
-        None
-    }
-}
-
-impl MemoSource for WithMemo {
-    fn into_memo(self) -> Option<String> {
-        Some(self.memo)
-    }
-}
-
-impl MemoSource for WithSrcCallback {
-    fn into_memo(self) -> Option<String> {
-        Some(to_json_string(&IbcCallbackRequest::source(self.src_callback)).unwrap())
-    }
-}
-
-impl MemoSource for WithDstCallback {
-    fn into_memo(self) -> Option<String> {
-        Some(to_json_string(&IbcCallbackRequest::destination(self.dst_callback)).unwrap())
-    }
-}
-
-impl MemoSource for WithCallbacks {
-    fn into_memo(self) -> Option<String> {
-        Some(
-            to_json_string(&IbcCallbackRequest::both(
-                self.src_callback,
-                self.dst_callback,
-            ))
-            .unwrap(),
-        )
-    }
-}
-
-impl<M: MemoSource> TransferMsgBuilder<M> {
+impl<M: MemoSource> TransferMsgBuilderV2<M> {
     pub fn build(self) -> IbcMsg {
-        IbcMsg::Transfer {
+        IbcMsg::TransferV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
-            amount: self.amount,
+            tokens: self.tokens,
             timeout: self.timeout,
             memo: self.memo.into_memo(),
+            forwarding: self.forwarding,
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TransferMsgBuilder<MemoData> {
+pub struct TransferMsgBuilderV2<MemoData> {
     channel_id: String,
     to_address: String,
-    amount: Coin,
+    tokens: Vec<Token>,
     timeout: IbcTimeout,
     memo: MemoData,
+    forwarding: Forwarding,
 }
 
-impl TransferMsgBuilder<EmptyMemo> {
+impl TransferMsgBuilderV2<EmptyMemo> {
     /// Creates a new transfer message with the given parameters and no memo.
     pub fn new(
         channel_id: impl Into<String>,
         to_address: impl Into<String>,
-        amount: Coin,
+        tokens: Vec<Token>,
         timeout: impl Into<IbcTimeout>,
     ) -> Self {
         Self {
             channel_id: channel_id.into(),
             to_address: to_address.into(),
-            amount,
+            tokens,
             timeout: timeout.into(),
             memo: EmptyMemo,
+            forwarding: Forwarding::default(),
         }
     }
 
     /// Adds a memo text to the transfer message.
-    pub fn with_memo(self, memo: impl Into<String>) -> TransferMsgBuilder<WithMemo> {
-        TransferMsgBuilder {
+    pub fn with_memo(self, memo: impl Into<String>) -> TransferMsgBuilderV2<WithMemo> {
+        TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
-            amount: self.amount,
+            tokens: self.tokens,
             timeout: self.timeout,
             memo: WithMemo { memo: memo.into() },
+            forwarding: self.forwarding,
         }
     }
 
@@ -124,13 +65,14 @@ impl TransferMsgBuilder<EmptyMemo> {
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
-    ) -> TransferMsgBuilder<WithSrcCallback> {
-        TransferMsgBuilder {
+    ) -> TransferMsgBuilderV2<WithSrcCallback> {
+        TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
-            amount: self.amount,
+            tokens: self.tokens,
             timeout: self.timeout,
             memo: WithSrcCallback { src_callback },
+            forwarding: self.forwarding,
         }
     }
 
@@ -141,18 +83,19 @@ impl TransferMsgBuilder<EmptyMemo> {
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
-    ) -> TransferMsgBuilder<WithDstCallback> {
-        TransferMsgBuilder {
+    ) -> TransferMsgBuilderV2<WithDstCallback> {
+        TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
-            amount: self.amount,
+            tokens: self.tokens,
             timeout: self.timeout,
             memo: WithDstCallback { dst_callback },
+            forwarding: self.forwarding,
         }
     }
 }
 
-impl TransferMsgBuilder<WithSrcCallback> {
+impl TransferMsgBuilderV2<WithSrcCallback> {
     /// Adds an IBC destination callback entry to the memo field.
     /// Use this if you want to receive IBC callbacks on the destination chain.
     ///
@@ -160,21 +103,22 @@ impl TransferMsgBuilder<WithSrcCallback> {
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
-    ) -> TransferMsgBuilder<WithCallbacks> {
-        TransferMsgBuilder {
+    ) -> TransferMsgBuilderV2<WithCallbacks> {
+        TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
-            amount: self.amount,
+            tokens: self.tokens,
             timeout: self.timeout,
             memo: WithCallbacks {
                 src_callback: self.memo.src_callback,
                 dst_callback,
             },
+            forwarding: self.forwarding,
         }
     }
 }
 
-impl TransferMsgBuilder<WithDstCallback> {
+impl TransferMsgBuilderV2<WithDstCallback> {
     /// Adds an IBC source callback entry to the memo field.
     /// Use this if you want to receive IBC callbacks on the source chain.
     ///
@@ -182,23 +126,24 @@ impl TransferMsgBuilder<WithDstCallback> {
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
-    ) -> TransferMsgBuilder<WithCallbacks> {
-        TransferMsgBuilder {
+    ) -> TransferMsgBuilderV2<WithCallbacks> {
+        TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
-            amount: self.amount,
+            tokens: self.tokens,
             timeout: self.timeout,
             memo: WithCallbacks {
                 src_callback,
                 dst_callback: self.memo.dst_callback,
             },
+            forwarding: self.forwarding,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{coin, Addr, Timestamp, Uint64};
+    use crate::{coin, to_json_string, Addr, IbcCallbackRequest, Timestamp, Uint64};
 
     use super::*;
 
@@ -213,10 +158,10 @@ mod tests {
             gas_limit: None,
         };
 
-        let empty_memo_builder = TransferMsgBuilder::new(
+        let empty_memo_builder = TransferMsgBuilderV2::new(
             "channel-0",
             "cosmos1example",
-            coin(10, "ucoin"),
+            vec![coin(10, "ucoin").into()],
             Timestamp::from_seconds(12345),
         );
 
@@ -243,58 +188,63 @@ mod tests {
         // assert all the different messages
         assert_eq!(
             empty,
-            IbcMsg::Transfer {
+            IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                amount: coin(10, "ucoin"),
+                tokens: vec![coin(10, "ucoin").into()],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: None,
+                forwarding: Forwarding::default()
             }
         );
         assert_eq!(
             with_memo,
-            IbcMsg::Transfer {
+            IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                amount: coin(10, "ucoin"),
+                tokens: vec![coin(10, "ucoin").into()],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some("memo".to_string()),
+                forwarding: Forwarding::default()
             }
         );
         assert_eq!(
             with_src_callback,
-            IbcMsg::Transfer {
+            IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                amount: coin(10, "ucoin"),
+                tokens: vec![coin(10, "ucoin").into()],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::source(src_callback.clone())).unwrap()
                 ),
+                forwarding: Forwarding::default()
             }
         );
         assert_eq!(
             with_dst_callback,
-            IbcMsg::Transfer {
+            IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                amount: coin(10, "ucoin"),
+                tokens: vec![coin(10, "ucoin").into()],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::destination(dst_callback.clone())).unwrap()
                 ),
+                forwarding: Forwarding::default()
             }
         );
         assert_eq!(
             with_both_callbacks1,
-            IbcMsg::Transfer {
+            IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                amount: coin(10, "ucoin"),
+                tokens: vec![coin(10, "ucoin").into()],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::both(src_callback, dst_callback)).unwrap()
                 ),
+                forwarding: Forwarding::default(),
             }
         );
         assert_eq!(with_both_callbacks1, with_both_callbacks2);

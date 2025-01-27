@@ -286,6 +286,7 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
     match ty {
         "Uint64" => Some("Uint64"),
         "Uint128" => Some("string"),
+        "Uint256" => Some("string"),
         "Int64" => Some("Int64"),
         "Int128" => Some("string"),
         "Binary" => Some("[]byte"),
