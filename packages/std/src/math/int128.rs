@@ -521,16 +521,64 @@ mod tests {
 
     #[test]
     fn int128_from_be_bytes_works() {
-        let num = Int128::from_be_bytes([1; 16]);
-        let a: [u8; 16] = num.to_be_bytes();
-        assert_eq!(a, [1; 16]);
+        // zero
+        let original = [0; 16];
+        let num = Int128::from_be_bytes(original);
+        assert!(num.is_zero());
 
-        let be_bytes = [
+        // one
+        let original = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+        let num = Int128::from_be_bytes(original);
+        assert_eq!(num.i128(), 1);
+
+        // 258
+        let original = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2];
+        let num = Int128::from_be_bytes(original);
+        assert_eq!(num.i128(), 258);
+
+        // 2x roundtrip
+        let original = [1; 16];
+        let num = Int128::from_be_bytes(original);
+        let a: [u8; 16] = num.to_be_bytes();
+        assert_eq!(a, original);
+
+        let original = [
             0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Int128::from_be_bytes(be_bytes);
+        let num = Int128::from_be_bytes(original);
         let resulting_bytes: [u8; 16] = num.to_be_bytes();
-        assert_eq!(be_bytes, resulting_bytes);
+        assert_eq!(resulting_bytes, original);
+    }
+
+    #[test]
+    fn int128_from_le_bytes_works() {
+        // zero
+        let original = [0; 16];
+        let num = Int128::from_le_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let num = Int128::from_le_bytes(original);
+        assert_eq!(num.i128(), 1);
+
+        // 258
+        let original = [2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let num = Int128::from_le_bytes(original);
+        assert_eq!(num.i128(), 258);
+
+        // 2x roundtrip
+        let original = [1; 16];
+        let num = Int128::from_le_bytes(original);
+        let a: [u8; 16] = num.to_le_bytes();
+        assert_eq!(a, original);
+
+        let original = [
+            0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
+        ];
+        let num = Int128::from_le_bytes(original);
+        let resulting_bytes: [u8; 16] = num.to_le_bytes();
+        assert_eq!(resulting_bytes, original);
     }
 
     #[test]
