@@ -1,6 +1,7 @@
 # CosmWasm
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main)
+[![codecov](https://codecov.io/gh/CosmWasm/cosmwasm/graph/badge.svg?token=1VElQMQ2nZ)](https://codecov.io/gh/CosmWasm/cosmwasm)
 
 **WebAssembly Smart Contracts for the Cosmos SDK.**
 
@@ -22,6 +23,8 @@ The following packages are maintained here:
 maintained and has been dropped in favor of
 [cw-storage-plus](https://github.com/CosmWasm/cw-storage-plus).
 
+<!-- Codecov badges -->
+
 [cov-badge-crypto]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-crypto
 [cov-badge-derive]:
@@ -34,6 +37,9 @@ maintained and has been dropped in favor of
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-std
 [cov-badge-vm]:
   https://codecov.io/gh/CosmWasm/cosmwasm/branch/main/graph/badge.svg?flag=cosmwasm-vm
+
+<!-- Codecov links -->
+
 [cov-link-crypto]:
   https://codecov.io/gh/CosmWasm/cosmwasm/tree/main/packages/crypto
 [cov-link-derive]:
