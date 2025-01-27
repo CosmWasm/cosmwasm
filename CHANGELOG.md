@@ -8,6 +8,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-vm: Disable reference-types and bulk-memory proposals during
+  validation. ([#2349])
+
+[#2349]: https://github.com/CosmWasm/cosmwasm/pull/2349
+
 ## [1.5.9] - 2024-12-10
 
 ### Added
