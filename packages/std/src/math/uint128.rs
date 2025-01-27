@@ -16,7 +16,13 @@ use crate::{
     Uint256, Uint64,
 };
 
+<<<<<<< HEAD
 use super::conversion::forward_try_from;
+=======
+use super::conversion::{
+    forward_try_from, from_and_to_bytes, primitive_to_wrapped_int, wrapped_int_to_primitive,
+};
+>>>>>>> 23de2fcd (Implement from_be_bytes/from_le_bytes for Uint64 and Uint128)
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -73,17 +79,7 @@ impl Uint128 {
         self.0
     }
 
-    /// Returns a copy of the number as big endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_be_bytes(self) -> [u8; 16] {
-        self.0.to_be_bytes()
-    }
-
-    /// Returns a copy of the number as little endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_le_bytes(self) -> [u8; 16] {
-        self.0.to_le_bytes()
-    }
+    from_and_to_bytes!(u128, 16);
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
@@ -629,6 +625,68 @@ mod tests {
             one.to_be_bytes(),
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
         );
+    }
+
+    #[test]
+    fn uint128_from_be_bytes_works() {
+        // zero
+        let original = [0; 16];
+        let num = Uint128::from_be_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+        let num = Uint128::from_be_bytes(original);
+        assert_eq!(num.u128(), 1);
+
+        // 258
+        let original = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2];
+        let num = Uint128::from_be_bytes(original);
+        assert_eq!(num.u128(), 258);
+
+        // 2x roundtrip
+        let original = [1; 16];
+        let num = Uint128::from_be_bytes(original);
+        let a: [u8; 16] = num.to_be_bytes();
+        assert_eq!(a, original);
+
+        let original = [
+            0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
+        ];
+        let num = Uint128::from_be_bytes(original);
+        let resulting_bytes: [u8; 16] = num.to_be_bytes();
+        assert_eq!(resulting_bytes, original);
+    }
+
+    #[test]
+    fn uint128_from_le_bytes_works() {
+        // zero
+        let original = [0; 16];
+        let num = Uint128::from_le_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let num = Uint128::from_le_bytes(original);
+        assert_eq!(num.u128(), 1);
+
+        // 258
+        let original = [2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let num = Uint128::from_le_bytes(original);
+        assert_eq!(num.u128(), 258);
+
+        // 2x roundtrip
+        let original = [1; 16];
+        let num = Uint128::from_le_bytes(original);
+        let a: [u8; 16] = num.to_le_bytes();
+        assert_eq!(a, original);
+
+        let original = [
+            0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
+        ];
+        let num = Uint128::from_le_bytes(original);
+        let resulting_bytes: [u8; 16] = num.to_le_bytes();
+        assert_eq!(resulting_bytes, original);
     }
 
     #[test]
