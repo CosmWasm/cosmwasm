@@ -13,7 +13,14 @@ use crate::{
     __internal::forward_ref_partial_eq,
 };
 
+<<<<<<< HEAD
 use super::conversion::{forward_try_from, try_from_int_to_int};
+=======
+use super::conversion::{
+    forward_try_from, from_and_to_bytes, primitive_to_wrapped_int, try_from_int_to_int,
+    wrapped_int_to_primitive,
+};
+>>>>>>> 73dd0892 (Create and use from_and_to_bytes)
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -65,27 +72,7 @@ impl Int128 {
         self.0
     }
 
-    #[must_use]
-    pub const fn from_be_bytes(data: [u8; 16]) -> Self {
-        Self(i128::from_be_bytes(data))
-    }
-
-    #[must_use]
-    pub const fn from_le_bytes(data: [u8; 16]) -> Self {
-        Self(i128::from_le_bytes(data))
-    }
-
-    /// Returns a copy of the number as big endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_be_bytes(self) -> [u8; 16] {
-        self.0.to_be_bytes()
-    }
-
-    /// Returns a copy of the number as little endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_le_bytes(self) -> [u8; 16] {
-        self.0.to_le_bytes()
-    }
+    from_and_to_bytes!(i128, 16);
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
