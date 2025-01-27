@@ -326,6 +326,35 @@ macro_rules! try_from_int_to_uint {
 }
 pub(crate) use try_from_int_to_uint;
 
+macro_rules! from_and_to_bytes {
+    ($inner: ty, $byte_size: literal) => {
+        /// Constructs new value from big endian bytes
+        #[must_use]
+        pub const fn from_be_bytes(data: [u8; $byte_size]) -> Self {
+            Self(<$inner>::from_be_bytes(data))
+        }
+
+        /// Constructs new value from little endian bytes
+        #[must_use]
+        pub const fn from_le_bytes(data: [u8; $byte_size]) -> Self {
+            Self(<$inner>::from_le_bytes(data))
+        }
+
+        /// Returns a copy of the number as big endian bytes.
+        #[must_use = "this returns the result of the operation, without modifying the original"]
+        pub const fn to_be_bytes(self) -> [u8; $byte_size] {
+            self.0.to_be_bytes()
+        }
+
+        /// Returns a copy of the number as little endian bytes.
+        #[must_use = "this returns the result of the operation, without modifying the original"]
+        pub const fn to_le_bytes(self) -> [u8; $byte_size] {
+            self.0.to_le_bytes()
+        }
+    };
+}
+pub(crate) use from_and_to_bytes;
+
 #[cfg(test)]
 mod tests {
     use super::*;
