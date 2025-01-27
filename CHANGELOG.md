@@ -13,8 +13,11 @@ and this project adheres to
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
   `From<Int128> for i128` ([#2268])
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
+  enabled. ([#2337])
 
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 
 ## Fixed
 
