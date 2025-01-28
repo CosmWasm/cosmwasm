@@ -689,7 +689,7 @@ dependencies = [
  "cosmwasm-vm-derive",
  "crc32fast",
  "criterion",
- "derivative",
+ "derive_more",
  "dhat",
  "glob",
  "hex",
