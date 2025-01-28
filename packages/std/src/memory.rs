@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use core::{any::TypeId, marker::PhantomData, mem, ops::Deref, slice};
+use core::{any::TypeId, marker::PhantomData, mem, ops::Deref, ptr, slice};
 
 /// This trait is used to indicate whether a region is borrowed or owned
 pub trait Ownership: 'static {}
@@ -38,15 +38,21 @@ const _: () = {
 impl Region<Borrowed> {
     pub fn from_slice(slice: &[u8]) -> Self {
         // SAFETY: A slice upholds all the safety variants we need to construct a borrowed Region
-        unsafe { Self::from_parts(slice.as_ptr(), slice.len(), slice.len()) }
+        unsafe {
+            let ptr: ptr::NonNull<u8> = ptr::NonNull::from(slice).cast();
+            Self::from_parts(ptr, slice.len(), slice.len())
+        }
     }
 }
 
 impl Region<Owned> {
     /// Construct a region from an existing vector
-    pub fn from_vec(vec: Vec<u8>) -> Self {
+    pub fn from_vec(mut vec: Vec<u8>) -> Self {
         // SAFETY: The `std::vec::Vec` type upholds all the safety invariants required to call `from_parts`
-        let region = unsafe { Self::from_parts(vec.as_ptr(), vec.capacity(), vec.len()) };
+        let region = unsafe {
+            let ptr = ptr::NonNull::new_unchecked(vec.as_mut_ptr());
+            Self::from_parts(ptr, vec.capacity(), vec.len())
+        };
         // Important and load bearing: call `mem::forget` to prevent memory from being freed
         mem::forget(vec);
         region
@@ -57,13 +63,11 @@ impl Region<Owned> {
     ///
     /// # Safety
     ///
-    /// - The pointer must not be null
     /// - The pointer must be heap allocated
     /// - This region must point to a valid memory region
     /// - The memory region this region points to must be heap allocated as well
-    pub unsafe fn from_heap_ptr(ptr: *mut Self) -> Box<Self> {
-        assert!(!ptr.is_null(), "Region pointer is null");
-        Box::from_raw(ptr)
+    pub unsafe fn from_heap_ptr(ptr: ptr::NonNull<Self>) -> Box<Self> {
+        Box::from_raw(ptr.as_ptr())
     }
 
     /// Construct a new empty region with *at least* a capacity of what you passed in and a length of 0
@@ -98,13 +102,12 @@ where
     /// - `length` is smaller or equal to `capacity`
     /// - The number of bytes allocated by the pointer must be equal to `capacity` (if the `Ownership` is `Owned`)
     /// - The byte range covered by `length` must be initialized
-    /// - `ptr` is a non-null pointer
     /// - If the generic `Ownership` parameter is set to `Owned`, the `ptr` must point to a memory region allocated by a `Vec`
-    unsafe fn from_parts(ptr: *const u8, capacity: usize, length: usize) -> Self {
+    unsafe fn from_parts(ptr: ptr::NonNull<u8>, capacity: usize, length: usize) -> Self {
         // Well, this technically violates pointer provenance rules.
         // But there isn't a stable API for it, so that's the best we can do, I guess.
         Region {
-            offset: u32::try_from(ptr as usize).expect("pointer doesn't fit in u32"),
+            offset: u32::try_from(ptr.as_ptr() as usize).expect("pointer doesn't fit in u32"),
             capacity: u32::try_from(capacity).expect("capacity doesn't fit in u32"),
             length: u32::try_from(length).expect("length doesn't fit in u32"),
 
@@ -153,17 +156,16 @@ where
     fn drop(&mut self) {
         // Since we can't specialize the drop impl we need to perform a runtime check
         if TypeId::of::<O>() == TypeId::of::<Owned>() {
-            let region_start = self.offset as *mut u8;
-
-            // This case is explicitly disallowed by Vec
-            // "The pointer will never be null, so this type is null-pointer-optimized."
-            assert!(!region_start.is_null(), "Region starts at null pointer");
+            let region_start = ptr::NonNull::new(self.offset as *mut u8).unwrap();
 
             // SAFETY: Since `from_parts` was required to uphold the invariant that if the parameter is `Owned`
             // the memory has been allocated through a `Vec`, we can safely reconstruct the `Vec` and deallocate it.
             unsafe {
-                let data =
-                    Vec::from_raw_parts(region_start, self.length as usize, self.capacity as usize);
+                let data = Vec::from_raw_parts(
+                    region_start.as_ptr(),
+                    self.length as usize,
+                    self.capacity as usize,
+                );
 
                 drop(data);
             }

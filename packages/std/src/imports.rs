@@ -1,4 +1,5 @@
 use alloc::vec::Vec;
+use core::ptr;
 
 use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{Owned, Region};
@@ -133,7 +134,7 @@ impl Storage for ExternalStorage {
         }
 
         let value_ptr = read as *mut Region<Owned>;
-        let data = unsafe { Region::from_heap_ptr(value_ptr) };
+        let data = unsafe { Region::from_heap_ptr(ptr::NonNull::new(value_ptr).unwrap()) };
 
         Some(data.into_vec())
     }
@@ -255,7 +256,7 @@ impl Iterator for ExternalPartialIterator {
         }
 
         let data_region = next_result as *mut Region<Owned>;
-        let data = unsafe { Region::from_heap_ptr(data_region) };
+        let data = unsafe { Region::from_heap_ptr(ptr::NonNull::new(data_region).unwrap()) };
 
         Some(data.into_vec())
     }
@@ -284,7 +285,7 @@ impl Iterator for ExternalIterator {
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
         let kv_region_ptr = next_result as *mut Region<Owned>;
-        let kv = unsafe { Region::from_heap_ptr(kv_region_ptr) };
+        let kv = unsafe { Region::from_heap_ptr(ptr::NonNull::new(kv_region_ptr).unwrap()) };
 
         let (key, value) = decode_sections2(kv.into_vec());
 
@@ -307,7 +308,7 @@ fn skip_iter(iter_id: u32, count: usize) {
         }
 
         // just deallocate the region
-        unsafe { Region::from_heap_ptr(region as *mut Region<Owned>) };
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(region as *mut Region<Owned>).unwrap()) };
     }
 }
 
@@ -574,8 +575,12 @@ impl Api for ExternalApi {
         let pubkey_ptr = from_low_half(result);
         match error_code {
             0 => {
-                let pubkey =
-                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_vec() };
+                let pubkey = unsafe {
+                    Region::from_heap_ptr(
+                        ptr::NonNull::new(pubkey_ptr as *mut Region<Owned>).unwrap(),
+                    )
+                    .into_vec()
+                };
                 Ok(pubkey)
             }
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
@@ -631,8 +636,12 @@ impl Api for ExternalApi {
         let pubkey_ptr = from_low_half(result);
         match error_code {
             0 => {
-                let pubkey =
-                    unsafe { Region::from_heap_ptr(pubkey_ptr as *mut Region<Owned>).into_vec() };
+                let pubkey = unsafe {
+                    Region::from_heap_ptr(
+                        ptr::NonNull::new(pubkey_ptr as *mut Region<Owned>).unwrap(),
+                    )
+                    .into_vec()
+                };
                 Ok(pubkey)
             }
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
@@ -712,7 +721,7 @@ impl Api for ExternalApi {
 /// Takes a pointer to a Region and reads the data into a String.
 /// This is for trusted string sources only.
 unsafe fn consume_string_region_written_by_vm(from: *mut Region<Owned>) -> String {
-    let data = Region::from_heap_ptr(from).into_vec();
+    let data = Region::from_heap_ptr(ptr::NonNull::new(from).unwrap()).into_vec();
     // We trust the VM/chain to return correct UTF-8, so let's save some gas
     String::from_utf8_unchecked(data)
 }
@@ -732,8 +741,10 @@ impl Querier for ExternalQuerier {
         let request_ptr = req.as_ptr() as u32;
 
         let response_ptr = unsafe { query_chain(request_ptr) };
-        let response =
-            unsafe { Region::from_heap_ptr(response_ptr as *mut Region<Owned>).into_vec() };
+        let response = unsafe {
+            Region::from_heap_ptr(ptr::NonNull::new(response_ptr as *mut Region<Owned>).unwrap())
+                .into_vec()
+        };
 
         from_json(&response).unwrap_or_else(|parsing_err| {
             SystemResult::Err(SystemError::InvalidResponse {
