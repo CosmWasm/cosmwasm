@@ -15,9 +15,12 @@ and this project adheres to
   `From<Int128> for i128` ([#2268])
 - cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
   enabled. ([#2337])
+- cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
+  `Uint64::from_{be,le}_bytes`. ([#2269])
 
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
+[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 
 ## Fixed
 

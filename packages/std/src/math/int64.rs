@@ -14,7 +14,8 @@ use crate::{
 };
 
 use super::conversion::{
-    forward_try_from, primitive_to_wrapped_int, try_from_int_to_int, wrapped_int_to_primitive,
+    forward_try_from, from_and_to_bytes, primitive_to_wrapped_int, try_from_int_to_int,
+    wrapped_int_to_primitive,
 };
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
@@ -67,27 +68,7 @@ impl Int64 {
         self.0
     }
 
-    #[must_use]
-    pub const fn from_be_bytes(data: [u8; 8]) -> Self {
-        Self(i64::from_be_bytes(data))
-    }
-
-    #[must_use]
-    pub const fn from_le_bytes(data: [u8; 8]) -> Self {
-        Self(i64::from_le_bytes(data))
-    }
-
-    /// Returns a copy of the number as big endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_be_bytes(self) -> [u8; 8] {
-        self.0.to_be_bytes()
-    }
-
-    /// Returns a copy of the number as little endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_le_bytes(self) -> [u8; 8] {
-        self.0.to_le_bytes()
-    }
+    from_and_to_bytes!(i64, 8);
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
@@ -511,14 +492,60 @@ mod tests {
 
     #[test]
     fn int64_from_be_bytes_works() {
-        let num = Int64::from_be_bytes([1; 8]);
-        let a: [u8; 8] = num.to_be_bytes();
-        assert_eq!(a, [1; 8]);
+        // zero
+        let original = [0; 8];
+        let num = Int64::from_be_bytes(original);
+        assert!(num.is_zero());
 
-        let be_bytes = [0u8, 222u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8];
-        let num = Int64::from_be_bytes(be_bytes);
-        let resulting_bytes: [u8; 8] = num.to_be_bytes();
-        assert_eq!(be_bytes, resulting_bytes);
+        // one
+        let original = [0, 0, 0, 0, 0, 0, 0, 1];
+        let num = Int64::from_be_bytes(original);
+        assert_eq!(num.i64(), 1);
+
+        // 258
+        let original = [0, 0, 0, 0, 0, 0, 1, 2];
+        let num = Int64::from_be_bytes(original);
+        assert_eq!(num.i64(), 258);
+
+        // 2x roundtrip
+        let original = [1; 8];
+        let num = Int64::from_be_bytes(original);
+        let a: [u8; 8] = num.to_be_bytes();
+        assert_eq!(a, original);
+
+        let original = [0u8, 222u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8];
+        let num = Int64::from_be_bytes(original);
+        let a: [u8; 8] = num.to_be_bytes();
+        assert_eq!(a, original);
+    }
+
+    #[test]
+    fn int64_from_le_bytes_works() {
+        // zero
+        let original = [0; 8];
+        let num = Int64::from_le_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [1, 0, 0, 0, 0, 0, 0, 0];
+        let num = Int64::from_le_bytes(original);
+        assert_eq!(num.i64(), 1);
+
+        // 258
+        let original = [2, 1, 0, 0, 0, 0, 0, 0];
+        let num = Int64::from_le_bytes(original);
+        assert_eq!(num.i64(), 258);
+
+        // 2x roundtrip
+        let original = [1; 8];
+        let num = Int64::from_le_bytes(original);
+        let a: [u8; 8] = num.to_le_bytes();
+        assert_eq!(a, original);
+
+        let original = [0u8, 222u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8];
+        let num = Int64::from_le_bytes(original);
+        let a: [u8; 8] = num.to_le_bytes();
+        assert_eq!(a, original);
     }
 
     #[test]
