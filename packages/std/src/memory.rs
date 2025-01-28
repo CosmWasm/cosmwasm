@@ -96,7 +96,7 @@ where
     ///
     /// This function requires the following invariants to be upheld:
     /// - `length` is smaller or equal to `capacity`
-    /// - The number of bytes allocated by the pointer must be equal to `capacity`
+    /// - The number of bytes allocated by the pointer must be equal to `capacity` (if the `Ownership` is `Owned`)
     /// - The byte range covered by `length` must be initialized
     /// - `ptr` is a non-null pointer
     /// - If the generic `Ownership` parameter is set to `Owned`, the `ptr` must point to a memory region allocated by a `Vec`
