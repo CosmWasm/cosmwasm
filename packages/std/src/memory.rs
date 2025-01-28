@@ -98,7 +98,7 @@ where
     /// - `length` is smaller or equal to `capacity`
     /// - The number of bytes allocated by the pointer must be equal to `capacity`
     /// - The byte range covered by `length` must be initialized
-    /// - `ptr` is a non-dangling and non-null pointer
+    /// - `ptr` is a non-null pointer
     /// - If the generic `Ownership` parameter is set to `Owned`, the `ptr` must point to a memory region allocated by a `Vec`
     unsafe fn from_parts(ptr: *const u8, capacity: usize, length: usize) -> Self {
         // Well, this technically violates pointer provenance rules.
