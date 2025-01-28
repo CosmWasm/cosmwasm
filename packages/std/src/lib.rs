@@ -125,7 +125,7 @@ mod _warning {
     #[must_use = "cosmwasm-std feature `abort` is deprecated and will be removed in the next major release. You can just remove the feature as this functionality is now the default"]
     struct CompileWarning;
 
-    #[allow(dead_code)]
+    #[allow(dead_code, path_statements)]
     fn trigger_warning() {
         CompileWarning;
     }

@@ -6,7 +6,7 @@ use std::ptr::NonNull;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
-use derivative::Derivative;
+use derive_more::Debug;
 use wasmer::{AsStoreMut, Instance as WasmerInstance, Memory, MemoryView, Value};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
@@ -146,15 +146,14 @@ impl GasState {
 ///
 /// The currently unused lifetime parameter 'a allows accessing referenced data in the debug implementation
 /// without cloning it.
-#[derive(Derivative)]
-#[derivative(Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub struct DebugInfo<'a> {
     pub gas_remaining: u64,
     // This field is just to allow us to add the unused lifetime parameter. It can be removed
     // at any time.
     #[doc(hidden)]
-    #[derivative(Debug = "ignore")]
+    #[debug(skip)]
     pub(crate) __lifetime: PhantomData<&'a ()>,
 }
 

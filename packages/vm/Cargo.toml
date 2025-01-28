@@ -52,7 +52,9 @@ cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", default-features = fal
 ] }
 cosmwasm-crypto = { version = "2.2.0-rc.1", path = "../crypto" }
 cosmwasm-vm-derive = { version = "2.2.0-rc.1", path = "../vm-derive" }
-derivative = "2"
+derive_more = { version = "1.0.0", default-features = false, features = [
+    "debug",
+] }
 hex = "0.4"
 rand_core = { version = "0.6", features = ["getrandom"] }
 schemars = { workspace = true }
