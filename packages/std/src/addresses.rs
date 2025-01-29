@@ -10,7 +10,7 @@ use sha2::{
 use crate::Binary;
 use crate::{HexBinary, __internal::forward_ref_partial_eq};
 
-/// A human redable address.
+/// A human readable address.
 ///
 /// In Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no
 /// assumptions should be made other than being UTF-8 encoded and of reasonable length.
