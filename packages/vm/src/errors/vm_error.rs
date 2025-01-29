@@ -284,6 +284,19 @@ impl From<wasmer::wasmparser::BinaryReaderError> for VmError {
     }
 }
 
+impl From<crate::parsed_wasm::ValidatorError> for VmError {
+    fn from(value: crate::parsed_wasm::ValidatorError) -> Self {
+        match value {
+            crate::parsed_wasm::ValidatorError::BinaryReaderError(e) => e.into(),
+            crate::parsed_wasm::ValidatorError::Custom(msg) => {
+                VmError::static_validation_err(format!(
+                    "Wasm bytecode could not be deserialized. Deserialization error: \"{msg}\""
+                ))
+            }
+        }
+    }
+}
+
 impl From<wasmer::ExportError> for VmError {
     fn from(original: wasmer::ExportError) -> Self {
         VmError::resolve_err(format!("Could not get export: {original}"))

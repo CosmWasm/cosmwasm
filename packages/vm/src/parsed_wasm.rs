@@ -1,8 +1,8 @@
 use std::{fmt, mem, str};
 
 use wasmer::wasmparser::{
-    BinaryReaderError, CompositeType, Export, FuncToValidate, FunctionBody, Import, MemoryType,
-    Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources, WasmFeatures,
+    CompositeType, Export, FuncToValidate, FuncValidator, FunctionBody, Import, MemoryType, Parser,
+    Payload, TableType, ValidPayload, Validator, ValidatorResources, VisitOperator, WasmFeatures,
 };
 
 use crate::{VmError, VmResult};
@@ -31,7 +31,7 @@ impl<T> fmt::Debug for OpaqueDebug<T> {
 pub enum FunctionValidator<'a> {
     Pending(OpaqueDebug<Vec<(FuncToValidate<ValidatorResources>, FunctionBody<'a>)>>),
     Success,
-    Error(BinaryReaderError),
+    Error(ValidatorError),
 }
 
 impl<'a> FunctionValidator<'a> {
@@ -210,7 +210,7 @@ impl<'a> ParsedWasm<'a> {
                     let mut allocations = <_>::default();
                     for (func, body) in mem::take(funcs) {
                         let mut validator = func.into_validator(allocations);
-                        validator.validate(&body)?;
+                        validate_function(&mut validator, &body)?;
                         allocations = validator.into_allocations();
                     }
                     Ok(())
@@ -226,6 +226,110 @@ impl<'a> ParsedWasm<'a> {
             FunctionValidator::Success => Ok(()),
             FunctionValidator::Error(ref err) => Err(err.clone().into()),
         }
+    }
+}
+
+/// Copy of [wasmer::wasmparser::FuncValidator::validate], but with partial support for reference-types.
+fn validate_function(
+    validator: &mut FuncValidator<ValidatorResources>,
+    body: &FunctionBody<'_>,
+) -> Result<(), ValidatorError> {
+    let mut reader = body.get_binary_reader();
+    reader.allow_memarg64(false);
+
+    validator.read_locals(&mut reader)?;
+    while !reader.eof() {
+        // We need to wrap the reader in a PartialRefTypeValidator to allow LEB-128 encoded table indices for call_indirect.
+        // That feature was introduced in the reference-types proposal.
+        reader.visit_operator(&mut PartialRefTypeValidator::new(
+            validator.visitor(reader.original_position()),
+            reader.original_position(),
+        ))??;
+    }
+    Ok(validator.finish(reader.original_position())?)
+}
+
+/// Internal macro to forward all visit operators to the inner validator, except for `call_indirect`.
+macro_rules! implement_visit_operator {
+    ($(@$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? => $visit:ident)*) => {
+        $(
+            // delegate to sub-invocation of this macro
+            implement_visit_operator!(visit_one @$proposal $op $({ $($arg: $argty),* })? => $visit);
+        )*
+    };
+    (visit_one @mvp CallIndirect $($rest:tt)*) => {
+        fn visit_call_indirect(
+            &mut self,
+            type_index: u32,
+            table_index: u32,
+            _table_byte: u8,
+        ) -> Self::Output {
+            if table_index != 0 {
+                return Err(ValidatorError::custom(format!(
+                    "reference-types not fully supported: table_index must be zero (at offset 0x{:x})",
+                    self.offset
+                )));
+            }
+            // ignore table_byte, since we know that table_index is 0. That's all we care about.
+            Ok(self.inner.visit_call_indirect(type_index, table_index, 0)?)
+        }
+    };
+    (visit_one @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? => $visit:ident) => {
+        fn $visit(&mut self $($(,$arg: $argty)*)?) -> Self::Output {
+            Ok(self.inner.$visit($($($arg),*)?)?)
+        }
+    };
+}
+
+/// This is a validator that forwards everything to its inner validator, except for `call_indirect` operations.
+/// For those, it will check if the table index is 0 and will ignore the table byte.
+/// This is in order to not reject contracts that use the new reference-types proposal layout for `call_indirect`.
+///
+/// Before that proposal, the table_byte was always 0 and defined the table index, but now the table index is LEB128 encoded.
+/// Note that in newer versions of wasmparser, this check was moved into the [`wasmer::wasmparser::BinaryReader`],
+/// so the reader needs to be wrapped instead of the validator.
+struct PartialRefTypeValidator<'a, V> {
+    inner: V,
+    offset: usize,
+    _phantom: std::marker::PhantomData<&'a ()>,
+}
+
+impl<V> PartialRefTypeValidator<'_, V> {
+    fn new(inner: V, offset: usize) -> Self {
+        Self {
+            inner,
+            offset,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<'a, V> VisitOperator<'a> for PartialRefTypeValidator<'a, V>
+where
+    V: VisitOperator<'a, Output = wasmer::wasmparser::Result<()>>,
+{
+    type Output = Result<(), ValidatorError>;
+
+    wasmer::wasmparser::for_each_operator!(implement_visit_operator);
+}
+
+/// Custom error type for [`PartialRefTypeValidator`].
+/// We need a custom type because we cannot construct a [`wasmer::wasmparser::BinaryReaderError`] directly.
+#[derive(Debug, Clone)]
+pub(crate) enum ValidatorError {
+    BinaryReaderError(wasmer::wasmparser::BinaryReaderError),
+    Custom(String),
+}
+
+impl From<wasmer::wasmparser::BinaryReaderError> for ValidatorError {
+    fn from(err: wasmer::wasmparser::BinaryReaderError) -> Self {
+        Self::BinaryReaderError(err)
+    }
+}
+
+impl ValidatorError {
+    pub fn custom(err: impl Into<String>) -> Self {
+        Self::Custom(err.into())
     }
 }
 
