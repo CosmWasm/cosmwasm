@@ -8,7 +8,7 @@
 //! the contract-specific function pointer. This is done via the `#[entry_point]`
 //! macro attribute from cosmwasm-derive.
 use alloc::vec::Vec;
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ptr};
 
 use serde::de::DeserializeOwned;
 
@@ -95,7 +95,8 @@ extern "C" fn allocate(size: usize) -> u32 {
 #[no_mangle]
 extern "C" fn deallocate(pointer: u32) {
     // auto-drop Region on function end
-    let _ = unsafe { Region::from_heap_ptr(pointer as *mut Region<Owned>) };
+    let _ =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(pointer as *mut Region<Owned>).unwrap()) };
 }
 
 // TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
@@ -533,9 +534,12 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let info: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(info_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let info: MessageInfo = try_into_contract_result!(from_json(info));
@@ -557,9 +561,12 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let info: Vec<u8> = unsafe { Region::from_heap_ptr(info_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let info: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(info_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let info: MessageInfo = try_into_contract_result!(from_json(info));
@@ -580,8 +587,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -602,9 +611,12 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
-    let migrate_info = unsafe { Region::from_heap_ptr(migrate_info_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
+    let migrate_info =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(migrate_info_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -625,8 +637,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -645,8 +659,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Reply = try_into_contract_result!(from_json(msg));
@@ -665,8 +681,10 @@ where
     M: DeserializeOwned,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
@@ -684,8 +702,10 @@ where
     Q: CustomQuery,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelOpenMsg = try_into_contract_result!(from_json(msg));
@@ -705,8 +725,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelConnectMsg = try_into_contract_result!(from_json(msg));
@@ -726,8 +748,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelCloseMsg = try_into_contract_result!(from_json(msg));
@@ -747,8 +771,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_json(msg));
@@ -768,8 +794,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketAckMsg = try_into_contract_result!(from_json(msg));
@@ -789,8 +817,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json(msg));
@@ -809,8 +839,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcSourceCallbackMsg = try_into_contract_result!(from_json(msg));
@@ -833,8 +865,10 @@ where
     C: CustomMsg,
     E: ToString,
 {
-    let env: Vec<u8> = unsafe { Region::from_heap_ptr(env_ptr).into_vec() };
-    let msg: Vec<u8> = unsafe { Region::from_heap_ptr(msg_ptr).into_vec() };
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
 
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcDestinationCallbackMsg = try_into_contract_result!(from_json(msg));

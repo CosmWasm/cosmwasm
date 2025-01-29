@@ -13,23 +13,29 @@ and this project adheres to
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
   `From<Int128> for i128` ([#2268])
-- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
-  enabled. ([#2337])
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
+- cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
 
-[#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
-[#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
-[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
+## Changed
+
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
+  enabled. ([#2337])
+- cosmwasm-std: Document safety invariants of the internal memory repr ([#2344])
+- cosmwasm-std: Enforce non-null pointers using `ptr::NonNull` in the internal
+  memory repr ([#2344])
 
 ## Fixed
 
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
-- cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
 
+[#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 [#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
+[#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
+[#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
 
 ## [2.2.0] - 2024-12-17
 
