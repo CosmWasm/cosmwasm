@@ -17,7 +17,7 @@ type TransferMsg struct {
 type TransferV2Msg struct {
 	// existing channel to send the tokens over
 	ChannelID  string     `json:"channel_id"`
-	Forwarding Forwarding `json:"forwarding"`
+	Forwarding Array[Hop] `json:"forwarding"`
 	// An optional memo. See the blog post ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b) for more information.
 	//
 	// There is no difference between setting this to `None` or an empty string.
@@ -29,7 +29,7 @@ type TransferV2Msg struct {
 	// address on the remote chain to receive these tokens
 	ToAddress string `json:"to_address"`
 	// packet data only supports one coin https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
-	Tokens Array[Token] `json:"tokens"`
+	Tokens Array[Coin] `json:"tokens"`
 }
 type SendPacketMsg struct {
 	ChannelID string `json:"channel_id"`
@@ -73,7 +73,7 @@ type PayPacketFeeAsyncMsg struct {
 	Sequence uint64 `json:"sequence"`
 }
 
-// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 7 entry points)
+// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)
 type IBCMsg struct {
 	// Sends bank tokens owned by the contract to the given address on another chain. The channel must already be established between the ibctransfer module on this chain and a matching module on the remote chain. We cannot select the port_id, this is whatever the local chain has bound the ibctransfer module to.
 	Transfer *TransferMsg `json:"transfer,omitempty"`
@@ -104,10 +104,6 @@ type Coin struct {
 	Amount string `json:"amount"`
 	Denom  string `json:"denom"`
 }
-type Forwarding struct {
-	Hops Array[Hop] `json:"hops"`
-	Memo string     `json:"memo"`
-}
 type Hop struct {
 	ChannelID string `json:"channel_id"`
 	PortID    string `json:"port_id"`
@@ -133,9 +129,4 @@ type IBCTimeoutBlock struct {
 	Height uint64 `json:"height"`
 	// the version that the client is currently on (e.g. after resetting the chain this could increment 1 as height drops to 0)
 	Revision uint64 `json:"revision"`
-}
-type Token struct {
-	Amount string     `json:"amount"`
-	Base   string     `json:"base"`
-	Trace  Array[Hop] `json:"trace"`
 }

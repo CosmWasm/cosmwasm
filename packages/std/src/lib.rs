@@ -70,12 +70,12 @@ pub use crate::eureka::{EurekaMsg, EurekaPayload};
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
-    Forwarding, Hop, Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement,
-    IbcBasicResponse, IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg,
-    IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock,
-    IbcTimeoutCallbackMsg, Token, TransferMsgBuilder, TransferMsgBuilderV2,
+    Hop, Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
+    IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg, IbcOrder, IbcPacket,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
+    TransferMsgBuilder, TransferMsgBuilderV2,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};

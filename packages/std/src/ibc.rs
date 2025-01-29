@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::vec;
 
 use crate::coin::Coin;
+use crate::prelude::*;
 use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::StdResult;
-use crate::{prelude::*, Uint256};
 use crate::{to_json_binary, Binary};
 use crate::{Addr, Timestamp};
 
@@ -24,36 +24,9 @@ pub use transfer_msg_builder_v2::*;
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct Token {
-    base: String,
-    trace: Vec<Hop>,
-    amount: Uint256,
-}
-
-impl From<Coin> for Token {
-    fn from(w: Coin) -> Token {
-        Token {
-            base: w.denom,
-            trace: vec![],
-            amount: w.amount.into(),
-        }
-    }
-}
-
-#[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
-#[serde(rename_all = "snake_case")]
-pub struct Forwarding {
-    hops: Vec<Hop>,
-    memo: String,
-}
-
-#[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub struct Hop {
-    port_id: String,
-    channel_id: String,
+    pub port_id: String,
+    pub channel_id: String,
 }
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
@@ -100,9 +73,8 @@ pub enum IbcMsg {
         channel_id: String,
         /// address on the remote chain to receive these tokens
         to_address: String,
-        /// packet data only supports one coin
-        /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
-        tokens: Vec<Token>,
+        /// MsgTransfer in v2 version supports multiple coins
+        tokens: Vec<Coin>,
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout,
         /// An optional memo. See the blog post
@@ -119,8 +91,7 @@ pub enum IbcMsg {
         memo: Option<String>,
         // a struct containing the list of next hops,
         // determining where the tokens must be forwarded next,
-        // and the memo for the final hop
-        forwarding: Forwarding,
+        forwarding: Vec<Hop>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,

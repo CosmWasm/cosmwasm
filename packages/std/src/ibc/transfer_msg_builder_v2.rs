@@ -1,8 +1,7 @@
-use crate::{IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout};
+use crate::{Coin, IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout};
 
 use super::{
-    EmptyMemo, Forwarding, MemoSource, Token, WithCallbacks, WithDstCallback, WithMemo,
-    WithSrcCallback,
+    EmptyMemo, Hop, MemoSource, WithCallbacks, WithDstCallback, WithMemo, WithSrcCallback,
 };
 
 impl<M: MemoSource> TransferMsgBuilderV2<M> {
@@ -22,10 +21,20 @@ impl<M: MemoSource> TransferMsgBuilderV2<M> {
 pub struct TransferMsgBuilderV2<MemoData> {
     channel_id: String,
     to_address: String,
-    tokens: Vec<Token>,
+    tokens: Vec<Coin>,
     timeout: IbcTimeout,
     memo: MemoData,
-    forwarding: Forwarding,
+    forwarding: Vec<Hop>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct WithForwarding;
+
+impl MemoSource for WithForwarding {
+    fn into_memo(self) -> Option<String> {
+        None
+    }
 }
 
 impl TransferMsgBuilderV2<EmptyMemo> {
@@ -33,7 +42,7 @@ impl TransferMsgBuilderV2<EmptyMemo> {
     pub fn new(
         channel_id: impl Into<String>,
         to_address: impl Into<String>,
-        tokens: Vec<Token>,
+        tokens: Vec<Coin>,
         timeout: impl Into<IbcTimeout>,
     ) -> Self {
         Self {
@@ -42,7 +51,7 @@ impl TransferMsgBuilderV2<EmptyMemo> {
             tokens,
             timeout: timeout.into(),
             memo: EmptyMemo,
-            forwarding: Forwarding::default(),
+            forwarding: vec![],
         }
     }
 
@@ -91,6 +100,21 @@ impl TransferMsgBuilderV2<EmptyMemo> {
             timeout: self.timeout,
             memo: WithDstCallback { dst_callback },
             forwarding: self.forwarding,
+        }
+    }
+
+    /// Adds forwarding data.
+    /// It is worth to notice that the builder does not allow to add forwarding data along with
+    /// callbacks. It is discouraged in the IBC docs:
+    /// https://github.com/cosmos/ibc-go/blob/main/docs/docs/04-middleware/02-callbacks/01-overview.md#known-limitations
+    pub fn with_forwarding(self, forwarding: Vec<Hop>) -> TransferMsgBuilderV2<WithForwarding> {
+        TransferMsgBuilderV2 {
+            channel_id: self.channel_id,
+            to_address: self.to_address,
+            tokens: self.tokens,
+            timeout: self.timeout,
+            memo: WithForwarding,
+            forwarding,
         }
     }
 }
@@ -161,9 +185,15 @@ mod tests {
         let empty_memo_builder = TransferMsgBuilderV2::new(
             "channel-0",
             "cosmos1example",
-            vec![coin(10, "ucoin").into()],
+            vec![coin(10, "ucoin")],
             Timestamp::from_seconds(12345),
         );
+
+        let forwarding = empty_memo_builder.clone().with_forwarding(vec![Hop {
+            port_id: "portid".to_owned(),
+            channel_id: "chnid".to_owned(),
+        }]);
+        let forwarding = forwarding.build();
 
         let empty = empty_memo_builder.clone().build();
         let with_memo = empty_memo_builder.clone().with_memo("memo").build();
@@ -191,10 +221,24 @@ mod tests {
             IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                tokens: vec![coin(10, "ucoin").into()],
+                tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: None,
-                forwarding: Forwarding::default()
+                forwarding: vec![]
+            }
+        );
+        assert_eq!(
+            forwarding,
+            IbcMsg::TransferV2 {
+                channel_id: "channel-0".to_string(),
+                to_address: "cosmos1example".to_string(),
+                tokens: vec![coin(10, "ucoin")],
+                timeout: Timestamp::from_seconds(12345).into(),
+                memo: None,
+                forwarding: vec![Hop {
+                    port_id: "portid".to_owned(),
+                    channel_id: "chnid".to_owned()
+                }]
             }
         );
         assert_eq!(
@@ -202,10 +246,10 @@ mod tests {
             IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                tokens: vec![coin(10, "ucoin").into()],
+                tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some("memo".to_string()),
-                forwarding: Forwarding::default()
+                forwarding: vec![]
             }
         );
         assert_eq!(
@@ -213,12 +257,12 @@ mod tests {
             IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                tokens: vec![coin(10, "ucoin").into()],
+                tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::source(src_callback.clone())).unwrap()
                 ),
-                forwarding: Forwarding::default()
+                forwarding: vec![]
             }
         );
         assert_eq!(
@@ -226,12 +270,12 @@ mod tests {
             IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                tokens: vec![coin(10, "ucoin").into()],
+                tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::destination(dst_callback.clone())).unwrap()
                 ),
-                forwarding: Forwarding::default()
+                forwarding: vec![]
             }
         );
         assert_eq!(
@@ -239,12 +283,12 @@ mod tests {
             IbcMsg::TransferV2 {
                 channel_id: "channel-0".to_string(),
                 to_address: "cosmos1example".to_string(),
-                tokens: vec![coin(10, "ucoin").into()],
+                tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::both(src_callback, dst_callback)).unwrap()
                 ),
-                forwarding: Forwarding::default(),
+                forwarding: vec![],
             }
         );
         assert_eq!(with_both_callbacks1, with_both_callbacks2);
