@@ -17,7 +17,7 @@ use crate::{errors::InvalidPoint, CryptoError};
 pub struct G1(pub(crate) G1Affine);
 
 impl G1 {
-    /// Creates the generaor in G1
+    /// Creates the generator in G1
     #[inline]
     pub fn generator() -> Self {
         Self(G1Affine::generator())
@@ -73,7 +73,7 @@ impl<'a> core::iter::Sum<&'a G1> for G1 {
 pub struct G2(pub(crate) G2Affine);
 
 impl G2 {
-    /// Creates the generaor in G2
+    /// Creates the generator in G2
     #[inline]
     pub fn generator() -> Self {
         Self(G2Affine::generator())
