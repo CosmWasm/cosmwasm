@@ -8,8 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
-<<<<<<< HEAD
-=======
+# <<<<<<< HEAD
+
 ## Added
 
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
@@ -33,7 +33,9 @@ and this project adheres to
 [#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 
->>>>>>> 23de2fcd (Implement from_be_bytes/from_le_bytes for Uint64 and Uint128)
+> > > > > > > 23de2fcd (Implement from_be_bytes/from_le_bytes for Uint64 and
+> > > > > > > Uint128)
+
 ## [2.2.0] - 2024-12-17
 
 ### Added
