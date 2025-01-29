@@ -15,5 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - id: files
+        uses: tj-actions/changed-files@v45
       - name: Run spell-check
         uses: crate-ci/typos@master
+        with:
+          files: ${{ steps.files.outputs.all_changed_files }}
