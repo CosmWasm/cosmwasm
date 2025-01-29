@@ -16,7 +16,7 @@ use crate::{
 /// the implementation in the future.
 use bnum::types::{I512, U512};
 
-use super::conversion::{grow_be_int, try_from_uint_to_int};
+use super::conversion::{grow_be_int, primitive_to_wrapped_int, try_from_uint_to_int};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -365,66 +365,18 @@ impl From<Uint64> for Int512 {
 }
 
 // uint to Int
-impl From<u128> for Int512 {
-    fn from(val: u128) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<u64> for Int512 {
-    fn from(val: u64) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<u32> for Int512 {
-    fn from(val: u32) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<u16> for Int512 {
-    fn from(val: u16) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<u8> for Int512 {
-    fn from(val: u8) -> Self {
-        Int512(val.into())
-    }
-}
+primitive_to_wrapped_int!(u8, Int512);
+primitive_to_wrapped_int!(u16, Int512);
+primitive_to_wrapped_int!(u32, Int512);
+primitive_to_wrapped_int!(u64, Int512);
+primitive_to_wrapped_int!(u128, Int512);
 
 // int to Int
-impl From<i128> for Int512 {
-    fn from(val: i128) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<i64> for Int512 {
-    fn from(val: i64) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<i32> for Int512 {
-    fn from(val: i32) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<i16> for Int512 {
-    fn from(val: i16) -> Self {
-        Int512(val.into())
-    }
-}
-
-impl From<i8> for Int512 {
-    fn from(val: i8) -> Self {
-        Int512(val.into())
-    }
-}
+primitive_to_wrapped_int!(i8, Int512);
+primitive_to_wrapped_int!(i16, Int512);
+primitive_to_wrapped_int!(i32, Int512);
+primitive_to_wrapped_int!(i64, Int512);
+primitive_to_wrapped_int!(i128, Int512);
 
 // Int to Int
 impl From<Int64> for Int512 {

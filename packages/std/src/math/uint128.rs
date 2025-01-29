@@ -16,7 +16,7 @@ use crate::{
     Uint256, Uint64,
 };
 
-use super::conversion::forward_try_from;
+use super::conversion::{forward_try_from, primitive_to_wrapped_int, wrapped_int_to_primitive};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -321,39 +321,19 @@ impl_mul_fraction!(Uint128);
 // of the conflict with `TryFrom<&str>` as described here
 // https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
 
+// uint to Uint
+primitive_to_wrapped_int!(u8, Uint128);
+primitive_to_wrapped_int!(u16, Uint128);
+primitive_to_wrapped_int!(u32, Uint128);
+primitive_to_wrapped_int!(u64, Uint128);
+primitive_to_wrapped_int!(u128, Uint128);
+
+// Uint to uint
+wrapped_int_to_primitive!(Uint128, u128);
+
 impl From<Uint64> for Uint128 {
     fn from(val: Uint64) -> Self {
         val.u64().into()
-    }
-}
-
-impl From<u128> for Uint128 {
-    fn from(val: u128) -> Self {
-        Uint128(val)
-    }
-}
-
-impl From<u64> for Uint128 {
-    fn from(val: u64) -> Self {
-        Uint128(val.into())
-    }
-}
-
-impl From<u32> for Uint128 {
-    fn from(val: u32) -> Self {
-        Uint128(val.into())
-    }
-}
-
-impl From<u16> for Uint128 {
-    fn from(val: u16) -> Self {
-        Uint128(val.into())
-    }
-}
-
-impl From<u8> for Uint128 {
-    fn from(val: u8) -> Self {
-        Uint128(val.into())
     }
 }
 
@@ -387,12 +367,6 @@ impl FromStr for Uint128 {
 impl From<Uint128> for String {
     fn from(original: Uint128) -> Self {
         original.to_string()
-    }
-}
-
-impl From<Uint128> for u128 {
-    fn from(original: Uint128) -> Self {
-        original.0
     }
 }
 
