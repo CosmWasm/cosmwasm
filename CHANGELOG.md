@@ -19,6 +19,10 @@ and this project adheres to
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-002.
+
 ## [2.2.0] - 2024-12-17
 
 ### Added
