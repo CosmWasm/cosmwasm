@@ -15,6 +15,10 @@ and this project adheres to
 
 [#2349]: https://github.com/CosmWasm/cosmwasm/pull/2349
 
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-002.
+
 ## [1.5.9] - 2024-12-10
 
 ### Added
