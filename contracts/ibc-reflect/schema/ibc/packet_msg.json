@@ -403,22 +403,6 @@
         }
       ]
     },
-    "Hop": {
-      "type": "object",
-      "required": [
-        "channel_id",
-        "port_id"
-      ],
-      "properties": {
-        "channel_id": {
-          "type": "string"
-        },
-        "port_id": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
     "IbcAcknowledgement": {
       "type": "object",
       "required": [
@@ -509,65 +493,6 @@
                 "to_address": {
                   "description": "address on the remote chain to receive these tokens",
                   "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Sends bank tokens owned by the contract to the given address on another chain. The channel must already be established between the ibctransfer module on this chain and a matching module on the remote chain. We cannot select the port_id, this is whatever the local chain has bound the ibctransfer module to.",
-          "type": "object",
-          "required": [
-            "transfer_v2"
-          ],
-          "properties": {
-            "transfer_v2": {
-              "type": "object",
-              "required": [
-                "channel_id",
-                "forwarding",
-                "timeout",
-                "to_address",
-                "tokens"
-              ],
-              "properties": {
-                "channel_id": {
-                  "description": "existing channel to send the tokens over",
-                  "type": "string"
-                },
-                "forwarding": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Hop"
-                  }
-                },
-                "memo": {
-                  "description": "An optional memo. See the blog post [\"Moving Beyond Simple Token Transfers\"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b) for more information.\n\nThere is no difference between setting this to `None` or an empty string.\n\nThis field is only supported on chains with CosmWasm >= 2.0 and silently ignored on older chains. If you need support for both 1.x and 2.x chain with the same codebase, it is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer protobuf encoder instead.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "timeout": {
-                  "description": "when packet times out, measured on remote chain",
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/IbcTimeout"
-                    }
-                  ]
-                },
-                "to_address": {
-                  "description": "address on the remote chain to receive these tokens",
-                  "type": "string"
-                },
-                "tokens": {
-                  "description": "MsgTransfer in v2 version supports multiple coins",
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Coin"
-                  }
                 }
               },
               "additionalProperties": false

@@ -15,13 +15,14 @@ use crate::{Addr, Timestamp};
 
 mod callbacks;
 mod transfer_msg_builder;
+#[cfg(feature = "cosmwasm_3_0")]
 mod transfer_msg_builder_v2;
 
 pub use callbacks::*;
 pub use transfer_msg_builder::*;
+#[cfg(feature = "cosmwasm_3_0")]
 pub use transfer_msg_builder_v2::*;
 
-#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct Hop {
@@ -68,14 +69,15 @@ pub enum IbcMsg {
     /// and a matching module on the remote chain.
     /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
     /// module to.
+    #[cfg(feature = "cosmwasm_3_0")]
     TransferV2 {
-        /// existing channel to send the tokens over
+        /// Existing channel to send the tokens over.
         channel_id: String,
-        /// address on the remote chain to receive these tokens
+        /// Address on the remote chain to receive these tokens.
         to_address: String,
-        /// MsgTransfer in v2 version supports multiple coins
+        /// MsgTransfer in v2 version supports multiple coins.
         tokens: Vec<Coin>,
-        /// when packet times out, measured on remote chain
+        /// when packet times out, measured on remote chain.
         timeout: IbcTimeout,
         /// An optional memo. See the blog post
         /// ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b)
@@ -89,8 +91,8 @@ pub enum IbcMsg {
         /// it is recommended to use `CosmosMsg::Stargate` with a custom MsgTransfer
         /// protobuf encoder instead.
         memo: Option<String>,
-        // a struct containing the list of next hops,
-        // determining where the tokens must be forwarded next,
+        // A struct containing the list of next hops,
+        // determining where the tokens must be forwarded next.
         forwarding: Vec<Hop>,
     },
     /// Sends an IBC packet with given data over the existing channel.
