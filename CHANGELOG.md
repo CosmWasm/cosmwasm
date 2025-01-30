@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- cosmwasm-vm: Fix CWA-2025-002.
+
 ## [2.0.8] - 2024-12-10
 
 - cosmwasm-vm: Add `Cache::store_code`
