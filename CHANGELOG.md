@@ -13,8 +13,11 @@ and this project adheres to
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
   `From<Int128> for i128` ([#2268])
+- cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
+  `Uint64::from_{be,le}_bytes`. ([#2269])
 
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 
 ## [2.2.0] - 2024-12-17
 
