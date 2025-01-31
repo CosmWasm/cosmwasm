@@ -11,8 +11,8 @@ might define others.
   "Stargate". It primarily includes protobuf messages and IBC support.
 - `staking` is for chains with the Cosmos SDK staking module. There are Cosmos
   chains that don't use this (e.g. Tgrade).
-- `eureka` is for messages and queries that came with the Cosmos SDK upgrade
-  "Eureka".
+- `ibcv2` is for messages and queries that came with the Cosmos SDK upgrade
+  "IBCv2".
 - `cosmwasm_1_1` enables the `BankQuery::Supply` query. Only chains running
   CosmWasm `1.1.0` or higher support this.
 - `cosmwasm_1_2` enables the `GovMsg::VoteWeighted` and `WasmMsg::Instantiate2`

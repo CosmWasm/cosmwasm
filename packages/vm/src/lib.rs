@@ -39,6 +39,8 @@ pub use crate::calls::{
     call_ibc_packet_ack, call_ibc_packet_ack_raw, call_ibc_packet_receive,
     call_ibc_packet_receive_raw, call_ibc_packet_timeout, call_ibc_packet_timeout_raw,
 };
+#[cfg(feature = "ibcv2")]
+pub use crate::calls::{call_ibcv2_packet_receive, call_ibcv2_packet_receive_raw};
 pub use crate::capabilities::capabilities_from_csv;
 pub use crate::config::{CacheOptions, Config, WasmLimits};
 pub use crate::errors::{

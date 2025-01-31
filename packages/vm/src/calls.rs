@@ -11,6 +11,9 @@ use cosmwasm_std::{
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
+#[cfg(feature = "ibcv2")]
+use cosmwasm_std::IBCv2Payload;
+
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
 use crate::errors::{VmError, VmResult};
@@ -670,6 +673,26 @@ where
     )
 }
 
+#[cfg(feature = "ibcv2")]
+pub fn call_ibcv2_packet_receive_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "ibcv2_packet_receive",
+        &[env, msg],
+        read_limits::RESULT_IBC_PACKET_RECEIVE,
+    )
+}
+
 pub fn call_ibc_source_callback_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
@@ -733,6 +756,25 @@ where
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
+}
+
+#[cfg(feature = "ibcv2")]
+pub fn call_ibcv2_packet_receive<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &IBCv2Payload,
+) -> VmResult<ContractResult<Option<IbcReceiveResponse>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibcv2_packet_receive_raw(instance, &env, &msg)?;
+    let result: ContractResult<Option<IbcReceiveResponse>> =
+        from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
+    Ok(result)
 }
 
 #[cfg(test)]
