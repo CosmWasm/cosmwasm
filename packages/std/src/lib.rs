@@ -52,7 +52,10 @@ pub(crate) mod prelude;
 /// contract devs to use it directly.
 pub mod storage_keys;
 
-pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
+pub use crate::addresses::{
+    instantiate2_address, instantiate2_custom_len_address, Addr, CanonicalAddr,
+    Instantiate2AddressError,
+};
 pub use crate::binary::Binary;
 pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
