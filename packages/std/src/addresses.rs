@@ -310,10 +310,29 @@ pub fn instantiate2_address(
     creator: &CanonicalAddr,
     salt: &[u8],
 ) -> Result<CanonicalAddr, Instantiate2AddressError> {
+    instantiate2_custom_len_address::<32>(checksum, creator, salt)
+}
+
+/// Like [`instantiate2_address`], but allows to specify the length of the address.
+/// Only use this if your chain uses a smaller address length than 32 bytes.
+pub fn instantiate2_custom_len_address<const ADDR_LEN: usize>(
+    checksum: &[u8],
+    creator: &CanonicalAddr,
+    salt: &[u8],
+) -> Result<CanonicalAddr, Instantiate2AddressError> {
+    // compile-time assertion that ADDR_LEN is at most 32
+    // this can be replaced with inline const when we upgrade to Rust 1.79
+    struct Assert<const N: usize>;
+    impl<const N: usize> Assert<N> {
+        const ASSERT: () = assert!(N <= 32, "invalid address length");
+    }
+    #[allow(path_statements)]
+    Assert::<ADDR_LEN>::ASSERT;
+
     // Non-empty msg values are discouraged.
     // See https://medium.com/cosmwasm/dev-note-3-limitations-of-instantiate2-and-how-to-deal-with-them-a3f946874230.
     let msg = b"";
-    instantiate2_address_impl(checksum, creator, salt, msg)
+    instantiate2_address_impl(checksum, creator, salt, msg, ADDR_LEN)
 }
 
 /// The instantiate2 address derivation implementation. This API is used for
@@ -325,6 +344,7 @@ fn instantiate2_address_impl(
     creator: &CanonicalAddr,
     salt: &[u8],
     msg: &[u8],
+    addr_len: usize,
 ) -> Result<CanonicalAddr, Instantiate2AddressError> {
     if checksum.len() != 32 {
         return Err(Instantiate2AddressError::InvalidChecksumLength);
@@ -332,7 +352,7 @@ fn instantiate2_address_impl(
 
     if salt.is_empty() || salt.len() > 64 {
         return Err(Instantiate2AddressError::InvalidSaltLength);
-    };
+    }
 
     let mut key = Vec::<u8>::new();
     key.extend_from_slice(b"wasm\0");
@@ -344,7 +364,8 @@ fn instantiate2_address_impl(
     key.extend_from_slice(salt);
     key.extend_from_slice(&(msg.len() as u64).to_be_bytes());
     key.extend_from_slice(msg);
-    let address_data = hash("module", &key);
+    let mut address_data = hash("module", &key);
+    address_data.truncate(addr_len);
     Ok(address_data.into())
 }
 
@@ -650,7 +671,7 @@ mod tests {
             "5e865d3e45ad3e961f77fd77d46543417ced44d924dc3e079b5415ff6775f847"
         ));
         assert_eq!(
-            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg1).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg1, 32).unwrap(),
             expected
         );
 
@@ -659,7 +680,7 @@ mod tests {
             "0995499608947a5281e2c7ebd71bdb26a1ad981946dad57f6c4d3ee35de77835"
         ));
         assert_eq!(
-            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg2).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg2, 32).unwrap(),
             expected
         );
 
@@ -668,7 +689,7 @@ mod tests {
             "83326e554723b15bac664ceabc8a5887e27003abe9fbd992af8c7bcea4745167"
         ));
         assert_eq!(
-            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg3).unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt1, msg3, 32).unwrap(),
             expected
         );
 
@@ -677,36 +698,36 @@ mod tests {
             "9384c6248c0bb171e306fd7da0993ec1e20eba006452a3a9e078883eb3594564"
         ));
         assert_eq!(
-            instantiate2_address_impl(&checksum1, &creator1, &salt2, b"").unwrap(),
+            instantiate2_address_impl(&checksum1, &creator1, &salt2, b"", 32).unwrap(),
             expected
         );
 
         // Salt too short or too long
         let empty = Vec::<u8>::new();
         assert!(matches!(
-            instantiate2_address_impl(&checksum1, &creator1, &empty, b"").unwrap_err(),
+            instantiate2_address_impl(&checksum1, &creator1, &empty, b"", 32).unwrap_err(),
             Instantiate2AddressError::InvalidSaltLength
         ));
         let too_long = vec![0x11; 65];
         assert!(matches!(
-            instantiate2_address_impl(&checksum1, &creator1, &too_long, b"").unwrap_err(),
+            instantiate2_address_impl(&checksum1, &creator1, &too_long, b"", 32).unwrap_err(),
             Instantiate2AddressError::InvalidSaltLength
         ));
 
         // invalid checksum length
         let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2");
         assert!(matches!(
-            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"").unwrap_err(),
+            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"", 32).unwrap_err(),
             Instantiate2AddressError::InvalidChecksumLength
         ));
         let broken_cs = hex!("");
         assert!(matches!(
-            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"").unwrap_err(),
+            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"", 32).unwrap_err(),
             Instantiate2AddressError::InvalidChecksumLength
         ));
         let broken_cs = hex!("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2aaaa");
         assert!(matches!(
-            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"").unwrap_err(),
+            instantiate2_address_impl(&broken_cs, &creator1, &salt1, b"", 32).unwrap_err(),
             Instantiate2AddressError::InvalidChecksumLength
         ));
     }
@@ -774,10 +795,26 @@ mod tests {
                 &input.creator_data.into(),
                 &input.salt,
                 &msg,
+                32,
             )
             .unwrap();
             assert_eq!(addr, intermediate.address_data);
         }
+    }
+
+    #[test]
+    fn instantiate2_custom_len_address_works() {
+        let checksum =
+            HexBinary::from_hex("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5")
+                .unwrap();
+        let creator = CanonicalAddr::from(hex!("9999999999aaaaaaaaaabbbbbbbbbbcccccccccc"));
+        let salt = hex!("61");
+        // No msg
+        let expected = CanonicalAddr::from(hex!("5e865d3e45ad3e961f77fd77d46543417ced44d9"));
+        assert_eq!(
+            instantiate2_custom_len_address::<20>(&checksum, &creator, &salt).unwrap(),
+            expected
+        );
     }
 
     #[test]
