@@ -39,6 +39,8 @@ pub use crate::calls::{
     call_ibc_packet_ack, call_ibc_packet_ack_raw, call_ibc_packet_receive,
     call_ibc_packet_receive_raw, call_ibc_packet_timeout, call_ibc_packet_timeout_raw,
 };
+#[cfg(feature = "eureka")]
+pub use crate::calls::call_eureka_packet_receive;
 pub use crate::capabilities::capabilities_from_csv;
 pub use crate::config::{CacheOptions, Config, WasmLimits};
 pub use crate::errors::{

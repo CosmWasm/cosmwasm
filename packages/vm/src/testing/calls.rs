@@ -23,6 +23,8 @@ use crate::calls::{
     call_ibc_channel_close, call_ibc_channel_connect, call_ibc_channel_open, call_ibc_packet_ack,
     call_ibc_packet_receive, call_ibc_packet_timeout,
 };
+#[cfg(feature = "eureka")]
+use crate::calls::call_eureka_packet_receive;
 use crate::instance::Instance;
 use crate::serde::to_vec;
 use crate::{BackendApi, Querier, Storage};
