@@ -735,6 +735,25 @@ where
     Ok(data)
 }
 
+#[cfg(feature = "eureka")]
+pub fn call_eureka_packet_receive<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &IbcChannelOpenMsg,
+) -> VmResult<ContractResult<Option<Ibc3ChannelOpenResponse>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_eureka_packet_receive_raw(instance, &env, &msg)?;
+    let result: ContractResult<Option<Ibc3ChannelOpenResponse>> =
+        from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_OPEN)?;
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

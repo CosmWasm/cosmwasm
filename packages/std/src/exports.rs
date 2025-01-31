@@ -522,6 +522,34 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
+/// do_ibc_channel_close is designed for use with #[entry_point] to make a "C" extern
+///
+/// contract_fn is a callback when a IBC channel belonging to this contract is closed
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+#[cfg(feature = "stargate")]
+pub fn do_eureka_packet_receive<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    install_panic_handler();
+    let res = _do_eureka_packet_receive(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
+    let v = to_json_vec(&res).unwrap();
+    Region::from_vec(v).to_heap_ptr() as u32
+}
+
 fn _do_instantiate<Q, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region<Owned>,

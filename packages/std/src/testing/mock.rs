@@ -23,6 +23,8 @@ use crate::ibc::{
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
+#[cfg(feature = "eureka")]
+use crate::eureka::EurekaPacketReceiveMsg;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -577,6 +579,16 @@ pub fn mock_ibc_packet_timeout(
 ) -> StdResult<IbcPacketTimeoutMsg> {
     let packet = mock_ibc_packet(my_channel_id, data)?;
     Ok(IbcPacketTimeoutMsg::new(packet, Addr::unchecked("relayer")))
+}
+
+/// Creates a IbcChannelOpenMsg::OpenInit for testing ibc_channel_open.
+#[cfg(feature = "eureka")]
+pub fn mock_eureka_packet_receive(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> EurekaPacketReceiveMsg {
+    EurekaPacketReceiveMsg::new()
 }
 
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
