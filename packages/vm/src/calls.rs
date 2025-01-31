@@ -670,6 +670,26 @@ where
     )
 }
 
+#[cfg(feature = "eureka")]
+pub fn call_eu_packet_receive_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "eu_packet_receive",
+        &[env, msg],
+        read_limits::RESULT_IBC_PACKET_RECEIVE,
+    )
+}
+
 pub fn call_ibc_source_callback_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
@@ -733,6 +753,27 @@ where
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
+}
+
+#[cfg(feature = "eureka")]
+pub fn call_eu_packet_receive<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &EurekaPayload,
+) -> VmResult<ContractResult<Option<IbcReceiveResponse>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    use cosmwasm_std::EurekaPayload;
+
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_eu_packet_receive_raw(instance, &env, &msg)?;
+    let result: ContractResult<Option<IbcReceiveResponse>> =
+        from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_OPEN)?;
+    Ok(result)
 }
 
 #[cfg(test)]

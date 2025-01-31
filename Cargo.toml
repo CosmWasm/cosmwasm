@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/*"]
+members = [ "contracts/eureka","packages/*"]
 exclude = ["contracts"]
 
 # Resolver has to be set explicitly in workspaces

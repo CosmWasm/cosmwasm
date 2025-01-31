@@ -66,7 +66,7 @@ pub use crate::errors::{
     RecoverPubkeyError, RoundDownOverflowError, RoundUpOverflowError, StdError, StdResult,
     SystemError, VerificationError,
 };
-pub use crate::eureka::{EurekaMsg, EurekaPayload};
+pub use crate::eureka::{EurekaMsg, EurekaPacketReceiveMsg, EurekaPayload};
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
@@ -139,6 +139,8 @@ mod imports;
 #[cfg(target_arch = "wasm32")]
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
+#[cfg(all(feature = "eureka", target_arch = "wasm32"))]
+pub use crate::exports::do_eu_packet_receive;
 #[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
 pub use crate::exports::do_migrate_with_info;
 #[cfg(target_arch = "wasm32")]

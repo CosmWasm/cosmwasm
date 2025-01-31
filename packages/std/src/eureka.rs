@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Binary, Timestamp};
+use crate::{Addr, Binary, Timestamp};
 
 /// Payload value should be encoded in a format defined by the channel version,
 /// and the module on the other side should know how to parse this.
@@ -31,6 +31,20 @@ pub enum EurekaMsg {
         timeout: Timestamp,
         payloads: Vec<EurekaPayload>,
     },
+}
+
+/// The message that is passed into `eu_packet_receive`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct EurekaPacketReceiveMsg {
+    pub packet: EurekaPayload,
+    pub relayer: Addr,
+}
+
+impl EurekaPacketReceiveMsg {
+    pub fn new(packet: EurekaPayload, relayer: Addr) -> Self {
+        Self { packet, relayer }
+    }
 }
 
 #[cfg(test)]
