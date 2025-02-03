@@ -1,10 +1,11 @@
 use crate::{Coin, IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout};
 
 use super::{
-    EmptyMemo, Hop, MemoSource, WithCallbacks, WithDstCallback, WithMemo, WithSrcCallback,
+    EmptyMemo, Forwarding, Hop, MemoSource, WithCallbacks, WithDstCallback, WithMemo,
+    WithSrcCallback,
 };
 
-impl<M: MemoSource, F: Into<Vec<Hop>>> TransferMsgBuilderV2<M, F> {
+impl<M: MemoSource, F: Into<Option<Forwarding>>> TransferMsgBuilderV2<M, F> {
     pub fn build(self) -> IbcMsg {
         IbcMsg::TransferV2 {
             channel_id: self.channel_id,
@@ -34,18 +35,22 @@ pub struct WithoutForwarding;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct WithForwarding {
-    pub(crate) forwarding: Vec<Hop>,
+    pub(crate) unwind: bool,
+    pub(crate) hops: Vec<Hop>,
 }
 
-impl From<WithoutForwarding> for Vec<Hop> {
+impl From<WithoutForwarding> for Option<Forwarding> {
     fn from(_val: WithoutForwarding) -> Self {
-        vec![]
+        None
     }
 }
 
-impl From<WithForwarding> for Vec<Hop> {
+impl From<WithForwarding> for Option<Forwarding> {
     fn from(val: WithForwarding) -> Self {
-        val.forwarding
+        Some(Forwarding {
+            unwind: val.unwind,
+            hops: val.hops,
+        })
     }
 }
 
@@ -124,7 +129,8 @@ impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
     /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
     pub fn with_forwarding(
         self,
-        forwarding: Vec<Hop>,
+        hops: Vec<Hop>,
+        unwind: bool,
     ) -> TransferMsgBuilderV2<EmptyMemo, WithForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
@@ -132,7 +138,7 @@ impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
             tokens: self.tokens,
             timeout: self.timeout,
             memo: self.memo,
-            forwarding: WithForwarding { forwarding },
+            forwarding: WithForwarding { unwind, hops },
         }
     }
 }
@@ -188,7 +194,8 @@ impl TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
     /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
     pub fn with_forwarding(
         self,
-        forwarding: Vec<Hop>,
+        hops: Vec<Hop>,
+        unwind: bool,
     ) -> TransferMsgBuilderV2<WithDstCallback, WithForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
@@ -196,7 +203,7 @@ impl TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
             tokens: self.tokens,
             timeout: self.timeout,
             memo: self.memo,
-            forwarding: WithForwarding { forwarding },
+            forwarding: WithForwarding { hops, unwind },
         }
     }
 }
@@ -225,10 +232,13 @@ mod tests {
             Timestamp::from_seconds(12345),
         );
 
-        let forwarding = empty_memo_builder.clone().with_forwarding(vec![Hop {
-            port_id: "portid".to_owned(),
-            channel_id: "chnid".to_owned(),
-        }]);
+        let forwarding = empty_memo_builder.clone().with_forwarding(
+            vec![Hop {
+                port_id: "portid".to_owned(),
+                channel_id: "chnid".to_owned(),
+            }],
+            false,
+        );
         let forwarding = forwarding.build();
 
         let empty = empty_memo_builder.clone().build();
@@ -260,7 +270,7 @@ mod tests {
                 tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: None,
-                forwarding: vec![]
+                forwarding: None,
             }
         );
         assert_eq!(
@@ -271,10 +281,13 @@ mod tests {
                 tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: None,
-                forwarding: vec![Hop {
-                    port_id: "portid".to_owned(),
-                    channel_id: "chnid".to_owned()
-                }]
+                forwarding: Some(Forwarding {
+                    hops: vec![Hop {
+                        port_id: "portid".to_owned(),
+                        channel_id: "chnid".to_owned()
+                    }],
+                    unwind: false
+                }),
             }
         );
         assert_eq!(
@@ -285,7 +298,7 @@ mod tests {
                 tokens: vec![coin(10, "ucoin")],
                 timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some("memo".to_string()),
-                forwarding: vec![]
+                forwarding: None
             }
         );
         assert_eq!(
@@ -298,7 +311,7 @@ mod tests {
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::source(src_callback.clone())).unwrap()
                 ),
-                forwarding: vec![]
+                forwarding: None
             }
         );
         assert_eq!(
@@ -311,7 +324,7 @@ mod tests {
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::destination(dst_callback.clone())).unwrap()
                 ),
-                forwarding: vec![]
+                forwarding: None
             }
         );
         assert_eq!(
@@ -324,7 +337,7 @@ mod tests {
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::both(src_callback, dst_callback)).unwrap()
                 ),
-                forwarding: vec![],
+                forwarding: None,
             }
         );
         assert_eq!(with_both_callbacks1, with_both_callbacks2);

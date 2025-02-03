@@ -29,6 +29,13 @@ pub struct Hop {
     pub channel_id: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct Forwarding {
+    pub unwind: bool,
+    pub hops: Vec<Hop>,
+}
+
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
 #[non_exhaustive]
@@ -86,7 +93,9 @@ pub enum IbcMsg {
         memo: Option<String>,
         // A struct containing the list of next hops,
         // determining where the tokens must be forwarded next.
-        forwarding: Vec<Hop>,
+        // More info can be found in the `MsgTransfer` IBC docs:
+        // https://ibc.cosmos.network/main/apps/transfer/messages/
+        forwarding: Option<Forwarding>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,

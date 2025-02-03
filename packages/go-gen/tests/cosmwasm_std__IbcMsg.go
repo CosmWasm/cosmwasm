@@ -15,18 +15,18 @@ type TransferMsg struct {
 	ToAddress string `json:"to_address"`
 }
 type TransferV2Msg struct {
-	// existing channel to send the tokens over
-	ChannelID  string     `json:"channel_id"`
-	Forwarding Array[Hop] `json:"forwarding"`
+	// Existing channel to send the tokens over.
+	ChannelID  string      `json:"channel_id"`
+	Forwarding *Forwarding `json:"forwarding,omitempty"`
 	// An optional memo. See the blog post ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b) for more information.
 	//
 	// There is no difference between setting this to `None` or an empty string.
 	Memo string `json:"memo,omitempty"`
-	// when packet times out, measured on remote chain
+	// when packet times out, measured on remote chain.
 	Timeout IBCTimeout `json:"timeout"`
-	// address on the remote chain to receive these tokens
+	// Address on the remote chain to receive these tokens.
 	ToAddress string `json:"to_address"`
-	// packet data only supports one coin https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
+	// MsgTransfer in v2 version supports multiple coins.
 	Tokens Array[Coin] `json:"tokens"`
 }
 type SendPacketMsg struct {
@@ -101,6 +101,10 @@ type IBCMsg struct {
 type Coin struct {
 	Amount string `json:"amount"`
 	Denom  string `json:"denom"`
+}
+type Forwarding struct {
+	Hops   Array[Hop] `json:"hops"`
+	Unwind bool       `json:"unwind"`
 }
 type Hop struct {
 	ChannelID string `json:"channel_id"`
