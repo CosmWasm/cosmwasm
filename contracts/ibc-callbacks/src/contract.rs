@@ -4,7 +4,7 @@ use cosmwasm_std::{
     MessageInfo, Response, StdError, StdResult, TransferMsgBuilder, TransferMsgBuilderV2,
 };
 
-use crate::msg::{CallbackType, ExecuteMsg, QueryMsg};
+use crate::msg::{CallbackType, ChannelVersion, ExecuteMsg, QueryMsg};
 use crate::state::{load_stats, save_stats, CallbackStats};
 
 #[entry_point]
@@ -55,7 +55,7 @@ fn execute_transfer(
     channel_id: String,
     timeout_seconds: u32,
     callback_type: CallbackType,
-    channel_version: String,
+    channel_version: ChannelVersion,
 ) -> StdResult<Response> {
     let src_callback = IbcSrcCallback {
         address: env.contract.address,
@@ -66,8 +66,8 @@ fn execute_transfer(
         gas_limit: None,
     };
 
-    let transfer_msg = match channel_version.as_str() {
-        "V1" => {
+    let transfer_msg = match channel_version {
+        ChannelVersion::V1 => {
             let coin = match &*info.funds {
                 [coin] if !coin.amount.is_zero() => coin,
                 _ => {
@@ -91,7 +91,7 @@ fn execute_transfer(
                 CallbackType::Dst => builder.with_dst_callback(dst_callback).build(),
             }
         }
-        "V2" => {
+        ChannelVersion::V2 => {
             let builder = TransferMsgBuilderV2::new(
                 channel_id,
                 to_address.clone(),
@@ -106,11 +106,6 @@ fn execute_transfer(
                 CallbackType::Src => builder.with_src_callback(src_callback).build(),
                 CallbackType::Dst => builder.with_dst_callback(dst_callback).build(),
             }
-        }
-        _ => {
-            return Err(StdError::generic_err(
-                "Must specify \"V1\" or \"V2\" channel version",
-            ))
         }
     };
 

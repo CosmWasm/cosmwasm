@@ -32,7 +32,11 @@
             },
             "channel_version": {
               "description": "IBC channel version",
-              "type": "string"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/ChannelVersion"
+                }
+              ]
             },
             "timeout_seconds": {
               "description": "The amount of seconds from now the transfer should timeout at",
@@ -75,6 +79,13 @@
             "both"
           ]
         }
+      ]
+    },
+    "ChannelVersion": {
+      "type": "string",
+      "enum": [
+        "v1",
+        "v2"
       ]
     }
   }

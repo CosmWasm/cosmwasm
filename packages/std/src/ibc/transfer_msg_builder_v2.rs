@@ -4,7 +4,7 @@ use super::{
     EmptyMemo, Hop, MemoSource, WithCallbacks, WithDstCallback, WithMemo, WithSrcCallback,
 };
 
-impl<M: MemoSource> TransferMsgBuilderV2<M> {
+impl<M: MemoSource, F: Into<Vec<Hop>>> TransferMsgBuilderV2<M, F> {
     pub fn build(self) -> IbcMsg {
         IbcMsg::TransferV2 {
             channel_id: self.channel_id,
@@ -12,32 +12,44 @@ impl<M: MemoSource> TransferMsgBuilderV2<M> {
             tokens: self.tokens,
             timeout: self.timeout,
             memo: self.memo.into_memo(),
-            forwarding: self.forwarding,
+            forwarding: self.forwarding.into(),
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TransferMsgBuilderV2<MemoData> {
+pub struct TransferMsgBuilderV2<MemoData, ForwardingData> {
     channel_id: String,
     to_address: String,
     tokens: Vec<Coin>,
     timeout: IbcTimeout,
     memo: MemoData,
-    forwarding: Vec<Hop>,
+    forwarding: ForwardingData,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct WithForwarding;
+pub struct WithoutForwarding;
 
-impl MemoSource for WithForwarding {
-    fn into_memo(self) -> Option<String> {
-        None
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct WithForwarding {
+    pub(crate) forwarding: Vec<Hop>,
+}
+
+impl From<WithoutForwarding> for Vec<Hop> {
+    fn from(_val: WithoutForwarding) -> Self {
+        vec![]
     }
 }
 
-impl TransferMsgBuilderV2<EmptyMemo> {
+impl From<WithForwarding> for Vec<Hop> {
+    fn from(val: WithForwarding) -> Self {
+        val.forwarding
+    }
+}
+
+impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
     /// Creates a new transfer message with the given parameters and no memo.
     pub fn new(
         channel_id: impl Into<String>,
@@ -51,12 +63,15 @@ impl TransferMsgBuilderV2<EmptyMemo> {
             tokens,
             timeout: timeout.into(),
             memo: EmptyMemo,
-            forwarding: vec![],
+            forwarding: WithoutForwarding,
         }
     }
 
     /// Adds a memo text to the transfer message.
-    pub fn with_memo(self, memo: impl Into<String>) -> TransferMsgBuilderV2<WithMemo> {
+    pub fn with_memo(
+        self,
+        memo: impl Into<String>,
+    ) -> TransferMsgBuilderV2<WithMemo, WithoutForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
@@ -74,7 +89,7 @@ impl TransferMsgBuilderV2<EmptyMemo> {
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
-    ) -> TransferMsgBuilderV2<WithSrcCallback> {
+    ) -> TransferMsgBuilderV2<WithSrcCallback, WithoutForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
@@ -92,7 +107,7 @@ impl TransferMsgBuilderV2<EmptyMemo> {
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
-    ) -> TransferMsgBuilderV2<WithDstCallback> {
+    ) -> TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
@@ -105,21 +120,24 @@ impl TransferMsgBuilderV2<EmptyMemo> {
 
     /// Adds forwarding data.
     /// It is worth to notice that the builder does not allow to add forwarding data along with
-    /// callbacks. It is discouraged in the IBC docs:
-    /// https://github.com/cosmos/ibc-go/blob/main/docs/docs/04-middleware/02-callbacks/01-overview.md#known-limitations
-    pub fn with_forwarding(self, forwarding: Vec<Hop>) -> TransferMsgBuilderV2<WithForwarding> {
+    /// source callback. It is discouraged in the IBC docs:
+    /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
+    pub fn with_forwarding(
+        self,
+        forwarding: Vec<Hop>,
+    ) -> TransferMsgBuilderV2<EmptyMemo, WithForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
             tokens: self.tokens,
             timeout: self.timeout,
-            memo: WithForwarding,
-            forwarding,
+            memo: self.memo,
+            forwarding: WithForwarding { forwarding },
         }
     }
 }
 
-impl TransferMsgBuilderV2<WithSrcCallback> {
+impl TransferMsgBuilderV2<WithSrcCallback, WithoutForwarding> {
     /// Adds an IBC destination callback entry to the memo field.
     /// Use this if you want to receive IBC callbacks on the destination chain.
     ///
@@ -127,7 +145,7 @@ impl TransferMsgBuilderV2<WithSrcCallback> {
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
-    ) -> TransferMsgBuilderV2<WithCallbacks> {
+    ) -> TransferMsgBuilderV2<WithCallbacks, WithoutForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
@@ -142,7 +160,7 @@ impl TransferMsgBuilderV2<WithSrcCallback> {
     }
 }
 
-impl TransferMsgBuilderV2<WithDstCallback> {
+impl TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
     /// Adds an IBC source callback entry to the memo field.
     /// Use this if you want to receive IBC callbacks on the source chain.
     ///
@@ -150,7 +168,7 @@ impl TransferMsgBuilderV2<WithDstCallback> {
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
-    ) -> TransferMsgBuilderV2<WithCallbacks> {
+    ) -> TransferMsgBuilderV2<WithCallbacks, WithoutForwarding> {
         TransferMsgBuilderV2 {
             channel_id: self.channel_id,
             to_address: self.to_address,
@@ -161,6 +179,24 @@ impl TransferMsgBuilderV2<WithDstCallback> {
                 dst_callback: self.memo.dst_callback,
             },
             forwarding: self.forwarding,
+        }
+    }
+
+    /// Adds forwarding data.
+    /// It is worth to notice that the builder does not allow to add forwarding data along with
+    /// source callback. It is discouraged in the IBC docs:
+    /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
+    pub fn with_forwarding(
+        self,
+        forwarding: Vec<Hop>,
+    ) -> TransferMsgBuilderV2<WithDstCallback, WithForwarding> {
+        TransferMsgBuilderV2 {
+            channel_id: self.channel_id,
+            to_address: self.to_address,
+            tokens: self.tokens,
+            timeout: self.timeout,
+            memo: self.memo,
+            forwarding: WithForwarding { forwarding },
         }
     }
 }
