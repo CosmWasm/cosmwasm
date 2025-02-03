@@ -27,6 +27,7 @@ cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", features = [
     "iterator",
     "stargate",
+    "cosmwasm_3_0",
 ] }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }

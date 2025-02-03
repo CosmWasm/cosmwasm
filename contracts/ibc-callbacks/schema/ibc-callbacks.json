@@ -23,6 +23,7 @@
             "type": "object",
             "required": [
               "channel_id",
+              "channel_version",
               "timeout_seconds",
               "to_address"
             ],
@@ -39,6 +40,14 @@
               "channel_id": {
                 "description": "The channel to send the packet through",
                 "type": "string"
+              },
+              "channel_version": {
+                "description": "IBC channel version",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/ChannelVersion"
+                  }
+                ]
               },
               "timeout_seconds": {
                 "description": "The amount of seconds from now the transfer should timeout at",
@@ -81,6 +90,13 @@
               "both"
             ]
           }
+        ]
+      },
+      "ChannelVersion": {
+        "type": "string",
+        "enum": [
+          "v1",
+          "v2"
         ]
       }
     }

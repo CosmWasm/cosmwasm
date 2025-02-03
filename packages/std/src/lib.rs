@@ -69,8 +69,10 @@ pub use crate::errors::{
 pub use crate::eureka::{EurekaMsg, EurekaPayload};
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
+#[cfg(feature = "cosmwasm_3_0")]
+pub use crate::ibc::TransferMsgBuilderV2;
 pub use crate::ibc::{
-    Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
+    Hop, Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
     IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
     IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,

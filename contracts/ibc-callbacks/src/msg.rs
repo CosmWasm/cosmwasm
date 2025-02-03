@@ -9,6 +9,12 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
+pub enum ChannelVersion {
+    V1,
+    V2,
+}
+
+#[cw_serde]
 pub enum ExecuteMsg {
     Transfer {
         /// Address on the destination chain
@@ -20,6 +26,8 @@ pub enum ExecuteMsg {
         /// Who should receive callbacks for the message
         #[serde(default)]
         callback_type: CallbackType,
+        /// IBC channel version
+        channel_version: ChannelVersion,
     },
 }
 
