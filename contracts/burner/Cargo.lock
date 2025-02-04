@@ -353,11 +353,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "2.1.5"
+version = "2.1.6"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -378,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -387,7 +387,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -398,7 +398,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -407,7 +407,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "base64 0.22.0",
  "bech32",
@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "2.1.5"
+version = "2.1.6"
 dependencies = [
  "bech32",
  "bytes",
