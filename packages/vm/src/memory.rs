@@ -123,13 +123,27 @@ pub fn maybe_read_region<A: BackendApi + 'static, S: Storage + 'static, Q: Queri
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.
-pub fn write_region(memory: &wasmer::MemoryView, ptr: u32, data: &[u8]) -> VmResult<()> {
-    let mut region = get_region(memory, ptr)?;
+pub fn write_region<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'static>(
+    env: &Environment<A, S, Q>,
+    store: &mut wasmer::StoreMut<'_>,
+    ptr: u32,
+    data: &[u8],
+) -> VmResult<()> {
+    let mut region = get_region(&env.memory(store), ptr)?;
+
+    let gas_info = GasInfo::with_cost(
+        env.gas_config
+            .write_region_cost
+            .total_cost(data.len() as u64)?,
+    );
+    process_gas_info(env, store, gas_info)?;
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
         return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
+
+    let memory = &env.memory(store);
 
     memory
         .write(region.offset as u64, data)

@@ -228,7 +228,7 @@ pub fn do_addr_canonicalize<A: BackendApi + 'static, S: Storage + 'static, Q: Qu
     process_gas_info(data, &mut store, gas_info)?;
     match result {
         Ok(canonical) => {
-            write_region(&data.memory(&store), destination_ptr, canonical.as_slice())?;
+            write_region(data, &mut store, destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {
@@ -253,7 +253,7 @@ pub fn do_addr_humanize<A: BackendApi + 'static, S: Storage + 'static, Q: Querie
     process_gas_info(data, &mut store, gas_info)?;
     match result {
         Ok(human) => {
-            write_region(&data.memory(&store), destination_ptr, human.as_bytes())?;
+            write_region(data, &mut store, destination_ptr, human.as_bytes())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {
@@ -314,8 +314,7 @@ pub fn do_bls12_381_aggregate_g1<
 
     let code = match bls12_381_aggregate_g1(&g1s) {
         Ok(point) => {
-            let memory = data.memory(&store);
-            write_region(&memory, out_ptr, &point)?;
+            write_region(data, &mut store, out_ptr, &point)?;
             BLS12_381_AGGREGATE_SUCCESS
         }
         Err(err) => match err {
@@ -361,8 +360,7 @@ pub fn do_bls12_381_aggregate_g2<
 
     let code = match bls12_381_aggregate_g2(&g2s) {
         Ok(point) => {
-            let memory = data.memory(&store);
-            write_region(&memory, out_ptr, &point)?;
+            write_region(data, &mut store, out_ptr, &point)?;
             BLS12_381_AGGREGATE_SUCCESS
         }
         Err(err) => match err {
@@ -465,8 +463,7 @@ pub fn do_bls12_381_hash_to_g1<
     };
     let point = bls12_381_hash_to_g1(hash_function, &msg, &dst);
 
-    let memory = data.memory(&store);
-    write_region(&memory, out_ptr, &point)?;
+    write_region(data, &mut store, out_ptr, &point)?;
 
     Ok(BLS12_381_HASH_TO_CURVE_SUCCESS)
 }
@@ -498,8 +495,7 @@ pub fn do_bls12_381_hash_to_g2<
     };
     let point = bls12_381_hash_to_g2(hash_function, &msg, &dst);
 
-    let memory = data.memory(&store);
-    write_region(&memory, out_ptr, &point)?;
+    write_region(data, &mut store, out_ptr, &point)?;
 
     Ok(BLS12_381_HASH_TO_CURVE_SUCCESS)
 }
@@ -991,7 +987,7 @@ fn write_to_contract<A: BackendApi + 'static, S: Storage + 'static, Q: Querier +
     if target_ptr == 0 {
         return Err(CommunicationError::zero_address().into());
     }
-    write_region(&data.memory(store), target_ptr, input)?;
+    write_region(data, &mut store.as_store_mut(), target_ptr, input)?;
     Ok(target_ptr)
 }
 
@@ -1148,7 +1144,7 @@ mod tests {
             .call_function1(&mut store, "allocate", &[(data.len() as u32).into()])
             .unwrap();
         let region_ptr = ref_to_u32(&result).unwrap();
-        write_region(&env.memory(&store), region_ptr, data).expect("error writing");
+        write_region(env, &mut store, region_ptr, data).expect("error writing");
         region_ptr
     }
 

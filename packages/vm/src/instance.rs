@@ -486,9 +486,9 @@ where
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        write_region(&env.memory(&store), region_ptr, data)?;
+        write_region(env, &mut store, region_ptr, data)?;
         Ok(())
     }
 

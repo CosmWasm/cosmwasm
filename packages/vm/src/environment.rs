@@ -55,6 +55,8 @@ pub struct GasConfig {
     pub bls12_381_hash_to_g2_cost: u64,
     /// bls12-381 pairing equality check cost
     pub bls12_381_pairing_equality_cost: LinearGasCost,
+    /// cost for writing memory regions
+    pub write_region_cost: LinearGasCost,
     /// cost for reading memory regions <= 8MB
     pub read_region_small_cost: LinearGasCost,
     /// cost for reading memory regions > 8MB
@@ -104,6 +106,10 @@ impl Default for GasConfig {
             bls12_381_pairing_equality_cost: LinearGasCost {
                 base: 2112 * GAS_PER_US,
                 per_item: 163 * GAS_PER_US,
+            },
+            write_region_cost: LinearGasCost {
+                base: 230000,
+                per_item: 570,
             },
             read_region_small_cost: LinearGasCost {
                 base: 200000,
