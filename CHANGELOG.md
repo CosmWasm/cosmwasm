@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.5.10] - 2025-02-04
+
 ### Changed
 
 - cosmwasm-vm: Disable reference-types and bulk-memory proposals during
@@ -713,7 +715,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.9...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.10...HEAD
+[1.5.10]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.9...v1.5.10
 [1.5.9]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.8...v1.5.9
 [1.5.8]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.7...v1.5.8
 [1.5.7]: https://github.com/CosmWasm/cosmwasm/compare/v1.5.6...v1.5.7
