@@ -24,14 +24,16 @@ and this project adheres to
 - cosmwasm-std: Document safety invariants of the internal memory repr ([#2344])
 - cosmwasm-std: Enforce non-null pointers using `ptr::NonNull` in the internal
   memory repr ([#2344])
-- cosmwasm-std: Let private `instantiate2_address_impl` take a new `len`
-  argument to allow truncating address data as part of the generation process.
+- cosmwasm-std: Make `instantiate2_address_impl` public and let it take a new
+  `len` argument to allow truncating address data as part of the generation
+  process. ([#2155])
 
 ## Fixed
 
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
 
+[#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 [#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310

@@ -330,7 +330,7 @@ pub fn instantiate2_address(
 /// See also <https://github.com/CosmWasm/cosmwasm/issues/2155>.
 #[doc(hidden)]
 #[inline] // Only call this through a wrapper like instantiate2_address or a custom instantiate2_address_evm_compatible
-fn instantiate2_address_impl(
+pub fn instantiate2_address_impl(
     checksum: &[u8],
     creator: &CanonicalAddr,
     salt: &[u8],
