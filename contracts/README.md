@@ -113,6 +113,11 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_empty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/empty
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_eureka",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer:0.15.0 ./contracts/eureka
 ```
 
 ## Entry points

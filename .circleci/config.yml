@@ -79,6 +79,7 @@ workflows:
       - contract_crypto_verify
       - contract_cyberpunk
       - contract_empty
+      - contract_eureka
       - contract_replier
       # - contract_floaty # This contract needs nightly Rust to compile
       - contract_hackatom
@@ -169,6 +170,10 @@ jobs:
           working_directory: ~/project/contracts/hackatom
           command: cargo wasm --locked && cargo integration-test --locked
       - run:
+          name: "contracts/eureka: integration-test"
+          working_directory: ~/project/contracts/eureka
+          command: cargo wasm --locked && cargo integration-test --locked
+      - run:
           name: "contracts/queue: integration-test"
           working_directory: ~/project/contracts/queue
           command: cargo wasm --locked && cargo integration-test --locked
@@ -222,6 +227,13 @@ jobs:
             - contracts/hackatom/target/wasm32-unknown-unknown/release/.fingerprint
             - contracts/hackatom/target/wasm32-unknown-unknown/release/build
             - contracts/hackatom/target/wasm32-unknown-unknown/release/deps
+            # eureka
+            - contracts/eureka/target/debug/.fingerprint
+            - contracts/eureka/target/debug/build
+            - contracts/eureka/target/debug/deps
+            - contracts/eureka/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/eureka/target/wasm32-unknown-unknown/release/build
+            - contracts/eureka/target/wasm32-unknown-unknown/release/deps
             # queue
             - contracts/queue/target/debug/.fingerprint
             - contracts/queue/target/debug/build
@@ -681,6 +693,34 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_cyberpunk-rust:1.74-{{ checksum "Cargo.lock" }}
+
+  contract_eureka:
+    docker:
+      - image: rust:1.74
+    environment:
+      RUST_BACKTRACE: 1
+    working_directory: ~/cosmwasm/contracts/eureka
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_eureka-rust:1.74-{{ checksum "Cargo.lock" }}
+      - check_contract:
+          min_version: "2.2"
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_eureka-rust:1.74-{{ checksum "Cargo.lock" }}
 
   contract_hackatom:
     docker:

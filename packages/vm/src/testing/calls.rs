@@ -14,8 +14,6 @@ use cosmwasm_std::{
     IbcReceiveResponse,
 };
 
-#[cfg(feature = "eureka")]
-use crate::calls::call_eu_packet_receive;
 use crate::calls::{
     call_execute, call_instantiate, call_migrate, call_migrate_with_info, call_query, call_reply,
     call_sudo,

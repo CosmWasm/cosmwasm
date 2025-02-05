@@ -34,7 +34,7 @@ pub enum Entrypoint {
     #[strum(serialize = "ibc_packet_timeout")]
     IbcPacketTimeout,
     #[strum(serialize = "eu_packet_receive")]
-    EurekaPacketReceive,
+    EuPacketReceive,
 }
 
 // sort entrypoints by their &str representation
