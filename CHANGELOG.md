@@ -24,6 +24,8 @@ and this project adheres to
 - cosmwasm-std: Document safety invariants of the internal memory repr ([#2344])
 - cosmwasm-std: Enforce non-null pointers using `ptr::NonNull` in the internal
   memory repr ([#2344])
+- cosmwasm-std: Let private `instantiate2_address_impl` take a new `len`
+  argument to allow truncating address data as part of the generation process.
 
 ## Fixed
 
