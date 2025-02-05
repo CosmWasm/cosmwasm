@@ -2,7 +2,7 @@
 
 Those contracts are made for development purpose only. For more realistic
 example contracts, see
-[cosmwasm-examples](https://github.com/CosmWasm/cosmwasm-examples).
+[cosmwasm-examples](https://github.com/CosmWasm/cw-plus/tree/main/contracts).
 
 ## The contracts
 
