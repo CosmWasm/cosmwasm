@@ -328,6 +328,27 @@ pub fn instantiate2_address(
 /// However, some chains use 20 for compatibility with the Ethereum ecosystem.
 /// Using any other value than 32 requires a coordination with the chain implementation.
 /// See also <https://github.com/CosmWasm/cosmwasm/issues/2155>.
+///
+/// ## Examples
+///
+/// ```
+/// use cosmwasm_std::{instantiate2_address_impl, CanonicalAddr, HexBinary, Instantiate2AddressError};
+///
+/// fn instantiate2_address_evm_compatible(
+///    checksum: &[u8],
+///    creator: &CanonicalAddr,
+///    salt: &[u8],
+/// ) -> Result<CanonicalAddr, Instantiate2AddressError> {
+///     instantiate2_address_impl(checksum, creator, salt, b"", 20)
+/// }
+///
+/// let checksum = HexBinary::from_hex("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5").unwrap();
+/// let creator = CanonicalAddr::from(HexBinary::from_hex("9999999999aaaaaaaaaabbbbbbbbbbcccccccccc").unwrap());
+/// let salt = b"\x61";
+///
+/// let address = instantiate2_address_evm_compatible(&checksum, &creator, salt).unwrap();
+/// assert_eq!(address, HexBinary::from_hex("5e865d3e45ad3e961f77fd77d46543417ced44d9").unwrap());
+/// ```
 #[doc(hidden)]
 #[inline] // Only call this through a wrapper like instantiate2_address or a custom instantiate2_address_evm_compatible
 pub fn instantiate2_address_impl(
