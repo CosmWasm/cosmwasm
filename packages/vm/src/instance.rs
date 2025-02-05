@@ -752,7 +752,7 @@ mod tests {
 
     #[test]
     fn write_and_read_memory_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance_with_gas_limit(CONTRACT, 6_000_000_000);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -763,7 +763,7 @@ mod tests {
             40 * KIB,
             400 * KIB,
             4 * MIB,
-            // disabled for performance reasons, but pass as well
+            // disabled for performance reasons, but pass as well (with much more gas)
             // 40 * MIB,
             // 400 * MIB,
         ];
@@ -914,7 +914,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 22963110);
+        assert_eq!(report2.used_internally, 23938680);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1106,7 +1106,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 22963361);
+        assert_eq!(init_used, 23938931);
     }
 
     #[test]
@@ -1131,7 +1131,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 27661681);
+        assert_eq!(execute_used, 29167931);
     }
 
     #[test]
@@ -1174,6 +1174,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 16370691);
+        assert_eq!(query_used, 17327451);
     }
 }
