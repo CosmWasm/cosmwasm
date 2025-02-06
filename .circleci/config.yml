@@ -1022,7 +1022,9 @@ jobs:
       - checkout
       - run:
           name: Install shfmt
-          command: curl -sS https://webinstall.dev/shfmt | bash
+          command: |
+            wget -O install_shfmt.sh https://webinstall.dev/shfmt
+            bash install_shfmt.sh
       - run:
           name: Validate Markdown files
           command: devtools/format_md.sh -c
