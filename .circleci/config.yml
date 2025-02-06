@@ -544,12 +544,19 @@ jobs:
             set -o errexit
             curl -sS --output rustup-init.exe https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe
             ./rustup-init.exe --default-toolchain 1.81 -y
-            echo 'export PATH="$PATH;$USERPROFILE/.cargo/bin"' >> "$BASH_ENV"
+            echo 'export PATH="$PATH:$USERPROFILE/.cargo/bin"' >> "$BASH_ENV"
+            ls $USERPROFILE/.cargo/bin
+      - run:
+          name: Install gcc
+          command: |
+            set -o errexit
+            choco install -y mingw
+            echo 'export PATH="$PATH:/c/ProgramData/mingw64/mingw64/bin"' >> "$BASH_ENV"
       - run:
           name: Version information
           command: |
             set -o errexit
-            rustc --version; cargo --version; rustup --version; rustup target list --installed
+            rustc --version; cargo --version; rustup --version; rustup target list --installed; gcc --version
       - restore_cache:
           keys:
             - cachev3-package_vm_windows-rust:1.81-{{ checksum "Cargo.lock" }}
@@ -1183,12 +1190,12 @@ jobs:
           name: Install necessary packages
           command: |
             apk update
-            apk add mold clang curl coreutils gnupg
+            apk add mold clang curl coreutils gnupg llvm19-dev zlib-static clang19-static
       - run:
           name: Install grcov
           command: |
             rustup component add llvm-tools-preview
-            cargo install grcov --locked
+            LD_DEBUG=all cargo install grcov --locked
       - run:
           name: Run tests with coverage
           command: |
