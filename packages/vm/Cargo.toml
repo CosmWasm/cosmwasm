@@ -62,11 +62,12 @@ serde = { workspace = true }
 serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
-wasmer = { version = "=4.3.7", default-features = false, features = [
+# We pin wasmer to a specific version because the layout of cached modules can change between patch versions.
+wasmer = { version = "=5.0.4", default-features = false, features = [
     "singlepass",
 ] }
-wasmer-middlewares = "=4.3.7"
-wasmer-types = "=4.3.7"
+wasmer-middlewares = "=5.0.4"
+wasmer-types = "=5.0.4"
 strum = { version = "0.26.2", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.

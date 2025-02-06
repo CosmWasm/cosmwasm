@@ -1,8 +1,9 @@
 use std::{fmt, mem, str};
 
 use wasmer::wasmparser::{
-    BinaryReaderError, CompositeType, Export, FuncToValidate, FunctionBody, Import, MemoryType,
-    Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources, WasmFeatures,
+    BinaryReaderError, CompositeInnerType, Export, FuncToValidate, FunctionBody, Import,
+    MemoryType, Parser, Payload, TableType, ValidPayload, Validator, ValidatorResources,
+    WasmFeatures,
 };
 
 use crate::{VmError, VmResult};
@@ -72,30 +73,13 @@ pub struct ParsedWasm<'a> {
 
 impl<'a> ParsedWasm<'a> {
     pub fn parse(wasm: &'a [u8]) -> VmResult<Self> {
-        let mut validator = Validator::new_with_features(WasmFeatures {
-            mutable_global: true,
-            saturating_float_to_int: true,
-            sign_extension: true,
-            multi_value: true,
-            floats: true,
+        let features = WasmFeatures::MUTABLE_GLOBAL
+            | WasmFeatures::SATURATING_FLOAT_TO_INT
+            | WasmFeatures::SIGN_EXTENSION
+            | WasmFeatures::MULTI_VALUE
+            | WasmFeatures::FLOATS;
 
-            reference_types: false,
-            bulk_memory: false,
-            simd: false,
-            relaxed_simd: false,
-            threads: false,
-            tail_call: false,
-            multi_memory: false,
-            exceptions: false,
-            memory64: false,
-            extended_const: false,
-            component_model: false,
-            function_references: false,
-            memory_control: false,
-            gc: false,
-            component_model_values: false,
-            component_model_nested_names: false,
-        });
+        let mut validator = Validator::new_with_features(features);
 
         let mut this = Self {
             version: 0,
@@ -133,8 +117,8 @@ impl<'a> ParsedWasm<'a> {
                         this.type_count += types.len() as u32;
 
                         for ty in types {
-                            match ty.composite_type {
-                                CompositeType::Func(ft) => {
+                            match ty.composite_type.inner {
+                                CompositeInnerType::Func(ft) => {
                                     this.type_params.push(ft.params().len());
 
                                     this.max_func_params =
@@ -142,7 +126,7 @@ impl<'a> ParsedWasm<'a> {
                                     this.max_func_results =
                                         core::cmp::max(ft.results().len(), this.max_func_results);
                                 }
-                                CompositeType::Array(_) | CompositeType::Struct(_) => {
+                                CompositeInnerType::Array(_) | CompositeInnerType::Struct(_) => {
                                     // ignoring these for now, as they are only available with the GC
                                     // proposal and we explicitly disabled that above
                                 }
