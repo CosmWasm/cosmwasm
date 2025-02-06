@@ -4,12 +4,12 @@ use wasmer::NativeEngineExt;
 use wasmer::{
     sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
 };
+use wasmer_middlewares::metering::{is_accounting, Metering};
 
 use crate::size::Size;
 
 use super::gatekeeper::Gatekeeper;
 use super::limiting_tunables::LimitingTunables;
-use super::metering::{is_accounting, Metering};
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
 /// is 65536 (2^16) bytes. In WebAssembly version 1, a linear memory can have at

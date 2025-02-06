@@ -2,7 +2,6 @@ mod compile;
 mod engine;
 mod gatekeeper;
 mod limiting_tunables;
-mod metering;
 
 #[cfg(test)]
 pub use engine::make_compiler_config;
