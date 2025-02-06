@@ -793,6 +793,28 @@ mod tests {
     }
 
     #[test]
+    fn instantiate2_address_impl_matches_wasmd_for_len_24() {
+        // Manual test data generated with wasmd and bech32 CLI as follows
+        // 1. Install https://github.com/cmoog/bech32
+        // 2. Check out wasmd main and change to `var ContractAddrLen = 24`
+        // 3. Run `make build`
+        // 4. Run `./build/wasmd q wasm build-address 1122112211221122112211221122112211221122112211221122112211221122 wasm1xvenxvenxvenxvenxvenxvenxvenxvenkz5vxp aabbaabb | bech32 -d | xxd -p`
+
+        let checksum =
+            HexBinary::from_hex("1122112211221122112211221122112211221122112211221122112211221122")
+                .unwrap();
+        let creator = CanonicalAddr::from(hex!("3333333333333333333333333333333333333333"));
+        let salt = hex!("aabbaabb");
+
+        let expected =
+            CanonicalAddr::from(hex!["da1aaec9d0ddc75b873079eb1b4f7ddd73a0e3170225fec4"]);
+        assert_eq!(
+            instantiate2_address_impl(&checksum, &creator, &salt, b"", 24).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
     fn instantiate2_address_impl_works_for_cosmjs_test_vectors() {
         // Test data from https://github.com/cosmos/cosmjs/pull/1253
         const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/instantiate2_addresses.json";
