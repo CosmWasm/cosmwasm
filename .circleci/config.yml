@@ -1195,7 +1195,7 @@ jobs:
           name: Install grcov
           command: |
             rustup component add llvm-tools-preview
-            LD_DEBUG=all cargo install grcov --locked
+            cargo install grcov --locked
       - run:
           name: Run tests with coverage
           command: |
