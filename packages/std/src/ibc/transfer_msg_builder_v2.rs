@@ -1,92 +1,136 @@
-use crate::{Coin, IbcDstCallback, IbcMsg, IbcSrcCallback, IbcTimeout};
+use crate::{Coin, IbcDstCallback, IbcMsg, IbcSrcCallback, Timestamp};
 
 use super::{
-    EmptyMemo, Forwarding, Hop, MemoSource, WithCallbacks, WithDstCallback, WithMemo,
-    WithSrcCallback,
+    EmptyMemo, Hop, IbcTimeout, MemoSource, TransferV2Type, WithCallbacks, WithDstCallback,
+    WithMemo, WithSrcCallback,
 };
 
-impl<M: MemoSource, F: Into<Option<Forwarding>>> TransferMsgBuilderV2<M, F> {
+impl<M: MemoSource, F: Into<TransferV2Type>> TransferMsgBuilderV2<M, F> {
     pub fn build(self) -> IbcMsg {
         IbcMsg::TransferV2 {
-            channel_id: self.channel_id,
+            transfer_type: self.transfer_type.into(),
             to_address: self.to_address,
             tokens: self.tokens,
-            timeout: self.timeout,
             memo: self.memo.into_memo(),
-            forwarding: self.forwarding.into(),
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TransferMsgBuilderV2<MemoData, ForwardingData> {
-    channel_id: String,
+pub struct TransferMsgBuilderV2<MemoData, TransferType> {
+    transfer_type: TransferType,
     to_address: String,
     tokens: Vec<Coin>,
-    timeout: IbcTimeout,
     memo: MemoData,
-    forwarding: ForwardingData,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct WithoutForwarding;
+pub struct EmptyTransferType;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct WithForwarding {
-    pub(crate) unwind: bool,
-    pub(crate) hops: Vec<Hop>,
+pub struct Direct {
+    transfer_type: TransferV2Type,
 }
 
-impl From<WithoutForwarding> for Option<Forwarding> {
-    fn from(_val: WithoutForwarding) -> Self {
-        None
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct Forwarding {
+    transfer_type: TransferV2Type,
+}
+
+impl From<Direct> for TransferV2Type {
+    fn from(val: Direct) -> Self {
+        val.transfer_type
     }
 }
 
-impl From<WithForwarding> for Option<Forwarding> {
-    fn from(val: WithForwarding) -> Self {
-        Some(Forwarding {
-            unwind: val.unwind,
-            hops: val.hops,
-        })
+impl From<Forwarding> for TransferV2Type {
+    fn from(val: Forwarding) -> Self {
+        val.transfer_type
     }
 }
 
-impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
-    /// Creates a new transfer message with the given parameters and no memo.
-    pub fn new(
-        channel_id: impl Into<String>,
-        to_address: impl Into<String>,
-        tokens: Vec<Coin>,
-        timeout: impl Into<IbcTimeout>,
-    ) -> Self {
-        Self {
-            channel_id: channel_id.into(),
-            to_address: to_address.into(),
-            tokens,
-            timeout: timeout.into(),
-            memo: EmptyMemo,
-            forwarding: WithoutForwarding,
+pub trait ForwardingPossible {}
+impl ForwardingPossible for WithMemo {}
+impl ForwardingPossible for EmptyMemo {}
+impl ForwardingPossible for WithDstCallback {}
+
+pub trait SrcCallbackPossible {}
+impl SrcCallbackPossible for Direct {}
+impl SrcCallbackPossible for EmptyTransferType {}
+
+pub trait AddDstCallbackPossible {
+    type CallbackType;
+    fn add_dst_callback(self, dst_callback: IbcDstCallback) -> Self::CallbackType;
+}
+impl AddDstCallbackPossible for WithSrcCallback {
+    type CallbackType = WithCallbacks;
+    fn add_dst_callback(self, dst_callback: IbcDstCallback) -> Self::CallbackType {
+        WithCallbacks {
+            src_callback: self.src_callback,
+            dst_callback,
         }
     }
+}
+impl AddDstCallbackPossible for EmptyMemo {
+    type CallbackType = WithDstCallback;
+    fn add_dst_callback(self, dst_callback: IbcDstCallback) -> Self::CallbackType {
+        WithDstCallback { dst_callback }
+    }
+}
 
+pub trait AddSrcCallbackPossible {
+    type CallbackType;
+    fn add_src_callback(self, dst_callback: IbcSrcCallback) -> Self::CallbackType;
+}
+impl AddSrcCallbackPossible for WithDstCallback {
+    type CallbackType = WithCallbacks;
+    fn add_src_callback(self, src_callback: IbcSrcCallback) -> Self::CallbackType {
+        WithCallbacks {
+            dst_callback: self.dst_callback,
+            src_callback,
+        }
+    }
+}
+impl AddSrcCallbackPossible for EmptyMemo {
+    type CallbackType = WithSrcCallback;
+    fn add_src_callback(self, src_callback: IbcSrcCallback) -> Self::CallbackType {
+        WithSrcCallback { src_callback }
+    }
+}
+
+impl TransferMsgBuilderV2<EmptyMemo, EmptyTransferType> {
+    /// Creates a new transfer message with the given parameters and no memo.
+    pub fn new(to_address: impl Into<String>, tokens: Vec<Coin>) -> Self {
+        Self {
+            transfer_type: EmptyTransferType {},
+            to_address: to_address.into(),
+            tokens,
+            memo: EmptyMemo,
+        }
+    }
+}
+
+impl<TransferType> TransferMsgBuilderV2<EmptyMemo, TransferType> {
     /// Adds a memo text to the transfer message.
     pub fn with_memo(
         self,
         memo: impl Into<String>,
-    ) -> TransferMsgBuilderV2<WithMemo, WithoutForwarding> {
+    ) -> TransferMsgBuilderV2<WithMemo, TransferType> {
         TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
+            transfer_type: self.transfer_type,
             to_address: self.to_address,
             tokens: self.tokens,
-            timeout: self.timeout,
             memo: WithMemo { memo: memo.into() },
-            forwarding: self.forwarding,
         }
     }
+}
 
+impl<Memo: AddSrcCallbackPossible, TransferType: SrcCallbackPossible>
+    TransferMsgBuilderV2<Memo, TransferType>
+{
     /// Adds an IBC source callback entry to the memo field.
     /// Use this if you want to receive IBC callbacks on the source chain.
     ///
@@ -94,17 +138,17 @@ impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
     pub fn with_src_callback(
         self,
         src_callback: IbcSrcCallback,
-    ) -> TransferMsgBuilderV2<WithSrcCallback, WithoutForwarding> {
+    ) -> TransferMsgBuilderV2<Memo::CallbackType, TransferType> {
         TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
+            transfer_type: self.transfer_type,
             to_address: self.to_address,
             tokens: self.tokens,
-            timeout: self.timeout,
-            memo: WithSrcCallback { src_callback },
-            forwarding: self.forwarding,
+            memo: self.memo.add_src_callback(src_callback),
         }
     }
+}
 
+impl<Memo: AddDstCallbackPossible, TransferType> TransferMsgBuilderV2<Memo, TransferType> {
     /// Adds an IBC destination callback entry to the memo field.
     /// Use this if you want to receive IBC callbacks on the destination chain.
     ///
@@ -112,14 +156,36 @@ impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
     pub fn with_dst_callback(
         self,
         dst_callback: IbcDstCallback,
-    ) -> TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
+    ) -> TransferMsgBuilderV2<Memo::CallbackType, TransferType> {
         TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
+            transfer_type: self.transfer_type,
             to_address: self.to_address,
             tokens: self.tokens,
-            timeout: self.timeout,
-            memo: WithDstCallback { dst_callback },
-            forwarding: self.forwarding,
+            memo: self.memo.add_dst_callback(dst_callback),
+        }
+    }
+}
+
+impl<Memo: ForwardingPossible> TransferMsgBuilderV2<Memo, EmptyTransferType> {
+    /// Adds forwarding data.
+    /// It is worth to notice that the builder does not allow to add forwarding data along with
+    /// source callback. It is discouraged in the IBC docs:
+    /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
+    pub fn with_direct_transfer(
+        self,
+        channel_id: String,
+        ibc_timeout: IbcTimeout,
+    ) -> TransferMsgBuilderV2<Memo, Direct> {
+        TransferMsgBuilderV2 {
+            transfer_type: Direct {
+                transfer_type: TransferV2Type::Direct {
+                    channel_id,
+                    ibc_timeout,
+                },
+            },
+            to_address: self.to_address,
+            tokens: self.tokens,
+            memo: self.memo,
         }
     }
 
@@ -129,62 +195,21 @@ impl TransferMsgBuilderV2<EmptyMemo, WithoutForwarding> {
     /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
     pub fn with_forwarding(
         self,
+        channel_id: String,
         hops: Vec<Hop>,
-        unwind: bool,
-    ) -> TransferMsgBuilderV2<EmptyMemo, WithForwarding> {
+        timeout: Timestamp,
+    ) -> TransferMsgBuilderV2<Memo, Forwarding> {
         TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
+            transfer_type: Forwarding {
+                transfer_type: TransferV2Type::MultiHop {
+                    channel_id,
+                    hops,
+                    timeout,
+                },
+            },
             to_address: self.to_address,
             tokens: self.tokens,
-            timeout: self.timeout,
             memo: self.memo,
-            forwarding: WithForwarding { unwind, hops },
-        }
-    }
-}
-
-impl TransferMsgBuilderV2<WithSrcCallback, WithoutForwarding> {
-    /// Adds an IBC destination callback entry to the memo field.
-    /// Use this if you want to receive IBC callbacks on the destination chain.
-    ///
-    /// For more info check out [`crate::IbcDestinationCallbackMsg`].
-    pub fn with_dst_callback(
-        self,
-        dst_callback: IbcDstCallback,
-    ) -> TransferMsgBuilderV2<WithCallbacks, WithoutForwarding> {
-        TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
-            to_address: self.to_address,
-            tokens: self.tokens,
-            timeout: self.timeout,
-            memo: WithCallbacks {
-                src_callback: self.memo.src_callback,
-                dst_callback,
-            },
-            forwarding: self.forwarding,
-        }
-    }
-}
-
-impl TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
-    /// Adds an IBC source callback entry to the memo field.
-    /// Use this if you want to receive IBC callbacks on the source chain.
-    ///
-    /// For more info check out [`crate::IbcSourceCallbackMsg`].
-    pub fn with_src_callback(
-        self,
-        src_callback: IbcSrcCallback,
-    ) -> TransferMsgBuilderV2<WithCallbacks, WithoutForwarding> {
-        TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
-            to_address: self.to_address,
-            tokens: self.tokens,
-            timeout: self.timeout,
-            memo: WithCallbacks {
-                src_callback,
-                dst_callback: self.memo.dst_callback,
-            },
-            forwarding: self.forwarding,
         }
     }
 
@@ -192,18 +217,18 @@ impl TransferMsgBuilderV2<WithDstCallback, WithoutForwarding> {
     /// It is worth to notice that the builder does not allow to add forwarding data along with
     /// source callback. It is discouraged in the IBC docs:
     /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
-    pub fn with_forwarding(
+    pub fn with_forwarding_unwinding(
         self,
         hops: Vec<Hop>,
-        unwind: bool,
-    ) -> TransferMsgBuilderV2<WithDstCallback, WithForwarding> {
+        timeout: Timestamp,
+    ) -> TransferMsgBuilderV2<Memo, Forwarding> {
         TransferMsgBuilderV2 {
-            channel_id: self.channel_id,
+            transfer_type: Forwarding {
+                transfer_type: TransferV2Type::Unwinding { hops, timeout },
+            },
             to_address: self.to_address,
             tokens: self.tokens,
-            timeout: self.timeout,
             memo: self.memo,
-            forwarding: WithForwarding { hops, unwind },
         }
     }
 }
@@ -225,30 +250,42 @@ mod tests {
             gas_limit: None,
         };
 
-        let empty_memo_builder = TransferMsgBuilderV2::new(
-            "channel-0",
-            "cosmos1example",
-            vec![coin(10, "ucoin")],
+        let empty_builder = TransferMsgBuilderV2::new("cosmos1example", vec![coin(10, "ucoin")]);
+
+        let direct_builder = empty_builder.clone().with_direct_transfer(
+            "channel-0".to_owned(),
+            IbcTimeout::with_timestamp(Timestamp::from_seconds(12345)),
+        );
+        let direct = direct_builder.clone().build();
+
+        let forwarding_builder = empty_builder.clone().with_forwarding(
+            "channel-0".to_owned(),
+            vec![Hop {
+                port_id: "port-id".to_owned(),
+                channel_id: "channel-id".to_owned(),
+            }],
             Timestamp::from_seconds(12345),
         );
+        let forwarding = forwarding_builder.clone().build();
 
-        let forwarding = empty_memo_builder.clone().with_forwarding(
+        let unwinding_builder = empty_builder.clone().with_forwarding_unwinding(
             vec![Hop {
-                port_id: "portid".to_owned(),
-                channel_id: "chnid".to_owned(),
+                port_id: "port-id".to_owned(),
+                channel_id: "channel-id".to_owned(),
             }],
-            false,
+            Timestamp::from_seconds(12345),
         );
-        let forwarding = forwarding.build();
+        let unwinding = unwinding_builder
+            .with_dst_callback(dst_callback.clone())
+            .build();
 
-        let empty = empty_memo_builder.clone().build();
-        let with_memo = empty_memo_builder.clone().with_memo("memo").build();
+        let with_memo = forwarding_builder.with_memo("memo").build();
 
-        let with_src_callback_builder = empty_memo_builder
+        let with_src_callback_builder = direct_builder
             .clone()
             .with_src_callback(src_callback.clone());
         let with_src_callback = with_src_callback_builder.clone().build();
-        let with_dst_callback_builder = empty_memo_builder
+        let with_dst_callback_builder = direct_builder
             .clone()
             .with_dst_callback(dst_callback.clone());
         let with_dst_callback = with_dst_callback_builder.clone().build();
@@ -263,83 +300,110 @@ mod tests {
 
         // assert all the different messages
         assert_eq!(
-            empty,
+            direct,
             IbcMsg::TransferV2 {
-                channel_id: "channel-0".to_string(),
+                transfer_type: TransferV2Type::Direct {
+                    channel_id: "channel-0".to_string(),
+                    ibc_timeout: Timestamp::from_seconds(12345).into()
+                },
                 to_address: "cosmos1example".to_string(),
                 tokens: vec![coin(10, "ucoin")],
-                timeout: Timestamp::from_seconds(12345).into(),
                 memo: None,
-                forwarding: None,
             }
         );
         assert_eq!(
             forwarding,
             IbcMsg::TransferV2 {
-                channel_id: "channel-0".to_string(),
+                transfer_type: TransferV2Type::MultiHop {
+                    channel_id: "channel-0".to_string(),
+                    hops: vec![Hop {
+                        port_id: "port-id".to_owned(),
+                        channel_id: "channel-id".to_owned()
+                    }],
+                    timeout: Timestamp::from_seconds(12345)
+                },
                 to_address: "cosmos1example".to_string(),
                 tokens: vec![coin(10, "ucoin")],
-                timeout: Timestamp::from_seconds(12345).into(),
                 memo: None,
-                forwarding: Some(Forwarding {
-                    hops: vec![Hop {
-                        port_id: "portid".to_owned(),
-                        channel_id: "chnid".to_owned()
-                    }],
-                    unwind: false
-                }),
             }
         );
         assert_eq!(
             with_memo,
             IbcMsg::TransferV2 {
-                channel_id: "channel-0".to_string(),
+                transfer_type: TransferV2Type::MultiHop {
+                    channel_id: "channel-0".to_string(),
+                    hops: vec![Hop {
+                        port_id: "port-id".to_owned(),
+                        channel_id: "channel-id".to_owned()
+                    }],
+                    timeout: Timestamp::from_seconds(12345)
+                },
                 to_address: "cosmos1example".to_string(),
                 tokens: vec![coin(10, "ucoin")],
-                timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some("memo".to_string()),
-                forwarding: None
             }
         );
         assert_eq!(
             with_src_callback,
             IbcMsg::TransferV2 {
-                channel_id: "channel-0".to_string(),
+                transfer_type: TransferV2Type::Direct {
+                    channel_id: "channel-0".to_string(),
+                    ibc_timeout: Timestamp::from_seconds(12345).into()
+                },
                 to_address: "cosmos1example".to_string(),
                 tokens: vec![coin(10, "ucoin")],
-                timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::source(src_callback.clone())).unwrap()
                 ),
-                forwarding: None
             }
         );
         assert_eq!(
             with_dst_callback,
             IbcMsg::TransferV2 {
-                channel_id: "channel-0".to_string(),
+                transfer_type: TransferV2Type::Direct {
+                    channel_id: "channel-0".to_string(),
+                    ibc_timeout: Timestamp::from_seconds(12345).into()
+                },
                 to_address: "cosmos1example".to_string(),
                 tokens: vec![coin(10, "ucoin")],
-                timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
                     to_json_string(&IbcCallbackRequest::destination(dst_callback.clone())).unwrap()
                 ),
-                forwarding: None
             }
         );
         assert_eq!(
             with_both_callbacks1,
             IbcMsg::TransferV2 {
-                channel_id: "channel-0".to_string(),
+                transfer_type: TransferV2Type::Direct {
+                    channel_id: "channel-0".to_string(),
+                    ibc_timeout: Timestamp::from_seconds(12345).into()
+                },
                 to_address: "cosmos1example".to_string(),
                 tokens: vec![coin(10, "ucoin")],
-                timeout: Timestamp::from_seconds(12345).into(),
                 memo: Some(
-                    to_json_string(&IbcCallbackRequest::both(src_callback, dst_callback)).unwrap()
+                    to_json_string(&IbcCallbackRequest::both(
+                        src_callback,
+                        dst_callback.clone()
+                    ))
+                    .unwrap()
                 ),
-                forwarding: None,
             }
         );
         assert_eq!(with_both_callbacks1, with_both_callbacks2);
+        assert_eq!(
+            unwinding,
+            IbcMsg::TransferV2 {
+                transfer_type: TransferV2Type::Unwinding {
+                    hops: vec![Hop {
+                        port_id: "port-id".to_owned(),
+                        channel_id: "channel-id".to_owned()
+                    }],
+                    timeout: Timestamp::from_seconds(12345)
+                },
+                to_address: "cosmos1example".to_string(),
+                tokens: vec![coin(10, "ucoin")],
+                memo: Some(to_json_string(&IbcCallbackRequest::destination(dst_callback)).unwrap()),
+            }
+        );
     }
 }

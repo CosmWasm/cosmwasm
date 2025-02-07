@@ -15,19 +15,16 @@ type TransferMsg struct {
 	ToAddress string `json:"to_address"`
 }
 type TransferV2Msg struct {
-	// Existing channel to send the tokens over.
-	ChannelID  string      `json:"channel_id"`
-	Forwarding *Forwarding `json:"forwarding,omitempty"`
 	// An optional memo. See the blog post ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b) for more information.
 	//
 	// There is no difference between setting this to `None` or an empty string.
 	Memo string `json:"memo,omitempty"`
-	// when packet times out, measured on remote chain.
-	Timeout IBCTimeout `json:"timeout"`
 	// Address on the remote chain to receive these tokens.
 	ToAddress string `json:"to_address"`
 	// MsgTransfer in v2 version supports multiple coins.
 	Tokens Array[Coin] `json:"tokens"`
+	// The transfer can be of type: * Direct, * Forwarding, * Forwarding with unwind flag set.
+	TransferType TransferV2Type `json:"transfer_type"`
 }
 type SendPacketMsg struct {
 	ChannelID string `json:"channel_id"`
@@ -102,10 +99,6 @@ type Coin struct {
 	Amount string `json:"amount"`
 	Denom  string `json:"denom"`
 }
-type Forwarding struct {
-	Hops   Array[Hop] `json:"hops"`
-	Unwind bool       `json:"unwind"`
-}
 type Hop struct {
 	ChannelID string `json:"channel_id"`
 	PortID    string `json:"port_id"`
@@ -131,4 +124,27 @@ type IBCTimeoutBlock struct {
 	Height uint64 `json:"height"`
 	// the version that the client is currently on (e.g. after resetting the chain this could increment 1 as height drops to 0)
 	Revision uint64 `json:"revision"`
+}
+type DirectType struct {
+	// Existing channel to send the tokens over.
+	ChannelID string `json:"channel_id"`
+	// When packet times out, measured on remote chain.
+	IBCTimeout IBCTimeout `json:"ibc_timeout"`
+}
+type MultiHopType struct {
+	// Existing channel to send the tokens over.
+	ChannelID string     `json:"channel_id"`
+	Hops      Array[Hop] `json:"hops"`
+	// When packet times out, measured on remote chain. TimestampHeight is not supported in ibc-go Transfer V2.
+	Timeout Uint64 `json:"timeout"`
+}
+type UnwindingType struct {
+	Hops Array[Hop] `json:"hops"`
+	// When packet times out, measured on remote chain. TimestampHeight is not supported in ibc-go Transfer V2.
+	Timeout Uint64 `json:"timeout"`
+}
+type TransferV2Type struct {
+	Direct    *DirectType    `json:"direct,omitempty"`
+	MultiHop  *MultiHopType  `json:"multi_hop,omitempty"`
+	Unwinding *UnwindingType `json:"unwinding,omitempty"`
 }

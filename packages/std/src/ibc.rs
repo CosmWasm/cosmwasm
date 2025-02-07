@@ -31,9 +31,35 @@ pub struct Hop {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct Forwarding {
-    pub unwind: bool,
-    pub hops: Vec<Hop>,
+pub enum TransferV2Type {
+    Direct {
+        /// Existing channel to send the tokens over.
+        channel_id: String,
+        /// When packet times out, measured on remote chain.
+        ibc_timeout: IbcTimeout,
+    },
+    MultiHop {
+        /// Existing channel to send the tokens over.
+        channel_id: String,
+        // A struct containing the list of next hops,
+        // determining where the tokens must be forwarded next.
+        // More info can be found in the `MsgTransfer` IBC docs:
+        // https://ibc.cosmos.network/main/apps/transfer/messages/
+        hops: Vec<Hop>,
+        /// When packet times out, measured on remote chain.
+        /// TimestampHeight is not supported in ibc-go Transfer V2.
+        timeout: Timestamp,
+    },
+    Unwinding {
+        // A struct containing the list of next hops,
+        // determining where the tokens must be forwarded next.
+        // More info can be found in the `MsgTransfer` IBC docs:
+        // https://ibc.cosmos.network/main/apps/transfer/messages/
+        hops: Vec<Hop>,
+        /// When packet times out, measured on remote chain.
+        /// TimestampHeight is not supported in ibc-go Transfer V2.
+        timeout: Timestamp,
+    },
 }
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
@@ -77,25 +103,21 @@ pub enum IbcMsg {
     /// module to.
     #[cfg(feature = "cosmwasm_3_0")]
     TransferV2 {
-        /// Existing channel to send the tokens over.
-        channel_id: String,
+        /// The transfer can be of type:
+        ///  * Direct,
+        ///  * Forwarding,
+        ///  * Forwarding with unwind flag set.
+        transfer_type: TransferV2Type,
         /// Address on the remote chain to receive these tokens.
         to_address: String,
         /// MsgTransfer in v2 version supports multiple coins.
         tokens: Vec<Coin>,
-        /// when packet times out, measured on remote chain.
-        timeout: IbcTimeout,
         /// An optional memo. See the blog post
         /// ["Moving Beyond Simple Token Transfers"](https://medium.com/the-interchain-foundation/moving-beyond-simple-token-transfers-d42b2b1dc29b)
         /// for more information.
         ///
         /// There is no difference between setting this to `None` or an empty string.
         memo: Option<String>,
-        // A struct containing the list of next hops,
-        // determining where the tokens must be forwarded next.
-        // More info can be found in the `MsgTransfer` IBC docs:
-        // https://ibc.cosmos.network/main/apps/transfer/messages/
-        forwarding: Option<Forwarding>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,

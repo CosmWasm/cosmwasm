@@ -93,9 +93,11 @@ fn execute_transfer(
         }
         ChannelVersion::V2 => {
             let builder = TransferMsgBuilderV2::new(
-                channel_id,
                 to_address.clone(),
                 info.funds.into_iter().map(Into::into).collect(),
+            )
+            .with_direct_transfer(
+                channel_id,
                 IbcTimeout::with_timestamp(env.block.time.plus_seconds(timeout_seconds as u64)),
             );
             match callback_type {
