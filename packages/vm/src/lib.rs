@@ -26,7 +26,7 @@ pub use crate::backend::{
 };
 pub use crate::cache::{AnalysisReport, Cache, Metrics, PerModuleMetrics, PinnedMetrics, Stats};
 #[cfg(feature = "eureka")]
-pub use crate::calls::call_eu_packet_receive;
+pub use crate::calls::{call_eu_packet_receive, call_eu_packet_receive_raw};
 pub use crate::calls::{
     call_execute, call_execute_raw, call_ibc_destination_callback,
     call_ibc_destination_callback_raw, call_ibc_source_callback, call_ibc_source_callback_raw,

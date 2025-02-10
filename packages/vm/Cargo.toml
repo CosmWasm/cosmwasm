@@ -30,6 +30,8 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
+# eureka enables eureka-dependent messages, entrypoints and queries
+eureka = ["cosmwasm-std/eureka"]
 
 # Legacy no-op feature. This is kept for compatibility with older contracts.
 # Delete this with the next major release.

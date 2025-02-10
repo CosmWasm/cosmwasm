@@ -13,6 +13,7 @@ use core::{marker::PhantomData, ptr};
 use serde::de::DeserializeOwned;
 
 use crate::deps::OwnedDeps;
+#[cfg(feature = "eureka")]
 use crate::eureka::EurekaPacketReceiveMsg;
 #[cfg(any(feature = "stargate", feature = "eureka"))]
 use crate::ibc::IbcReceiveResponse;

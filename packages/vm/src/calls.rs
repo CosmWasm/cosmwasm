@@ -11,6 +11,9 @@ use cosmwasm_std::{
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
+#[cfg(feature = "eureka")]
+use cosmwasm_std::EurekaPayload;
+
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
 use crate::errors::{VmError, VmResult};
@@ -766,8 +769,6 @@ where
     S: Storage + 'static,
     Q: Querier + 'static,
 {
-    use cosmwasm_std::EurekaPayload;
-
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_eu_packet_receive_raw(instance, &env, &msg)?;
