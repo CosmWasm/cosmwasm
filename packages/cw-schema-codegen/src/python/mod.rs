@@ -24,6 +24,13 @@ fn expand_node_name<'a>(
             let inner = &schema.definitions[inner];
             format!("typing.Optional[{}]", expand_node_name(schema, inner)).into()
         }
+
+        cw_schema::NodeType::Map { key, value, .. } => {
+            let key = expand_node_name(schema, &schema.definitions[key]);
+            let value = expand_node_name(schema, &schema.definitions[value]);
+
+            format!("typing.Dict[{key}, {value}]").into()
+        }
         cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
         cw_schema::NodeType::Tuple { ref items } => {
             let items = items

@@ -65,6 +65,15 @@ pub enum EnumValue {
     },
 }
 
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub enum MapKind {
+    BTree,
+    Hash,
+}
+
 #[skip_serializing_none]
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(feature = "std", derive(::schemars::JsonSchema))]
@@ -104,6 +113,12 @@ pub enum NodeType {
     Enum {
         discriminator: Option<Cow<'static, str>>,
         cases: BTreeMap<Cow<'static, str>, EnumCase>,
+    },
+
+    Map {
+        kind: MapKind,
+        key: DefinitionReference,
+        value: DefinitionReference,
     },
 
     Optional {

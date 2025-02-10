@@ -28,6 +28,13 @@ fn expand_node_name<'a>(
             let inner = &schema.definitions[inner];
             format!("{}", expand_node_name(schema, inner)).into()
         }
+
+        cw_schema::NodeType::Map { key, value, .. } => {
+            let key = expand_node_name(schema, &schema.definitions[key]);
+            let value = expand_node_name(schema, &schema.definitions[value]);
+
+            format!("map[{key}]{value}").into()
+        }
         cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
         cw_schema::NodeType::Tuple { ref items } => if items.len() == 1 {
             "interface{}"
