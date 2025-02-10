@@ -184,6 +184,9 @@ pub trait Api {
         recovery_param: u8,
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
+    /// Add up points of the G1 subgroup on the BLS12-381 curve
+    ///
+    /// The length of `g1s` must be a multiple of 48 (each point is encoded in 48 bytes).
     #[allow(unused_variables)]
     fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
         // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
@@ -193,6 +196,9 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Add up points of the G2 subgroup on the BLS12-381 curve
+    ///
+    /// The length of `g2s` must be a multiple of 96 (each point is encoded in 96 bytes)
     #[allow(unused_variables)]
     fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
         // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
@@ -243,6 +249,9 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Take some arbitrary data and hash it to a point on the G1 subgroup of the curve.
+    ///
+    /// The `dst` parameter should be a constant is actually something similar to the "context" parameter in key derivation functions.
     #[allow(unused_variables)]
     fn bls12_381_hash_to_g1(
         &self,
@@ -257,6 +266,9 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Take some arbitrary data and hash it to a point on the G2 subgroup of the curve.
+    ///
+    /// The `dst` parameter should be a constant is actually something similar to the "context" parameter in key derivation functions.
     #[allow(unused_variables)]
     fn bls12_381_hash_to_g2(
         &self,
