@@ -100,246 +100,6 @@ impl FunctionMiddleware for FunctionGatekeeper {
         operator: Operator<'a>,
         state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
-        struct ProposalValidator<'a, 'b> {
-            config: &'b GatekeeperConfig,
-            state: &'b mut MiddlewareReaderState<'a>,
-        }
-        impl<'a, 'b> ProposalValidator<'a, 'b> {
-            /// Internal helper to deduplicate code
-            fn _ref_types(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                if self.config.allow_feature_reference_types {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!("Reference type operation detected: {operator:?}. Reference types are not supported.");
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            /// Internal helper to deduplicate code
-            fn _floats(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                if self.config.allow_floats {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!(
-                        "Float operator detected: {operator:?}. The use of floats is not supported."
-                    );
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            /// Internal helper to deduplicate code
-            fn _exceptions(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                if self.config.allow_feature_exception_handling {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!("Exception handling operation detected: {operator:?}. Exception handling is not supported.");
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            fn mvp(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                // special handling for float operators
-                match operator {
-                    Operator::F32Load { .. }
-                    | Operator::F64Load { .. }
-                    | Operator::F32Store { .. }
-                    | Operator::F64Store { .. }
-                    | Operator::F32Const { .. }
-                    | Operator::F64Const { .. }
-                    | Operator::F32Eq
-                    | Operator::F32Ne
-                    | Operator::F32Lt
-                    | Operator::F32Gt
-                    | Operator::F32Le
-                    | Operator::F32Ge
-                    | Operator::F64Eq
-                    | Operator::F64Ne
-                    | Operator::F64Lt
-                    | Operator::F64Gt
-                    | Operator::F64Le
-                    | Operator::F64Ge
-                    | Operator::F32Abs
-                    | Operator::F32Neg
-                    | Operator::F32Ceil
-                    | Operator::F32Floor
-                    | Operator::F32Trunc
-                    | Operator::F32Nearest
-                    | Operator::F32Sqrt
-                    | Operator::F32Add
-                    | Operator::F32Sub
-                    | Operator::F32Mul
-                    | Operator::F32Div
-                    | Operator::F32Min
-                    | Operator::F32Max
-                    | Operator::F32Copysign
-                    | Operator::F64Abs
-                    | Operator::F64Neg
-                    | Operator::F64Ceil
-                    | Operator::F64Floor
-                    | Operator::F64Trunc
-                    | Operator::F64Nearest
-                    | Operator::F64Sqrt
-                    | Operator::F64Add
-                    | Operator::F64Sub
-                    | Operator::F64Mul
-                    | Operator::F64Div
-                    | Operator::F64Min
-                    | Operator::F64Max
-                    | Operator::F64Copysign
-                    | Operator::I32TruncF32S
-                    | Operator::I32TruncF32U
-                    | Operator::I32TruncF64S
-                    | Operator::I32TruncF64U
-                    | Operator::I64TruncF32S
-                    | Operator::I64TruncF32U
-                    | Operator::I64TruncF64S
-                    | Operator::I64TruncF64U
-                    | Operator::F32ConvertI32S
-                    | Operator::F32ConvertI32U
-                    | Operator::F32ConvertI64S
-                    | Operator::F32ConvertI64U
-                    | Operator::F32DemoteF64
-                    | Operator::F64ConvertI32S
-                    | Operator::F64ConvertI32U
-                    | Operator::F64ConvertI64S
-                    | Operator::F64ConvertI64U
-                    | Operator::F64PromoteF32
-                    | Operator::I32ReinterpretF32
-                    | Operator::I64ReinterpretF64
-                    | Operator::F32ReinterpretI32
-                    | Operator::F64ReinterpretI64 => self._floats(operator),
-                    // all other mvp operators
-                    _ => {
-                        self.state.push_operator(operator);
-                        Ok(())
-                    }
-                }
-            }
-
-            /// Sign-extension
-            /// https://github.com/bytecodealliance/wasm-tools/blob/wasmparser-0.107.0/crates/wasmparser/src/lib.rs#L307-L311
-            #[inline]
-            fn sign_extension(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                self.state.push_operator(operator);
-                Ok(())
-            }
-
-            #[inline]
-            fn function_references(
-                &'b mut self,
-                operator: Operator<'a>,
-            ) -> Result<(), MiddlewareError> {
-                self._ref_types(operator)
-            }
-
-            #[inline]
-            fn reference_types(
-                &'b mut self,
-                operator: Operator<'a>,
-            ) -> Result<(), MiddlewareError> {
-                self._ref_types(operator)
-            }
-
-            #[inline]
-            fn tail_call(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                self._ref_types(operator)
-            }
-
-            #[inline]
-            fn threads(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                if self.config.allow_feature_threads {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!("Threads operator detected: {operator:?}. The Wasm Threads extension is not supported.");
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            #[inline]
-            fn shared_everything_threads(
-                &'b mut self,
-                operator: Operator<'a>,
-            ) -> Result<(), MiddlewareError> {
-                if self.config.allow_shared_everything_threads {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!("Shared-Everything threads operator detected: {operator:?}. The Wasm Shared-Everything Threads extension is not supported.");
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            #[inline]
-            fn simd(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                if self.config.allow_feature_simd {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!(
-                        "SIMD operator detected: {operator:?}. The Wasm SIMD extension is not supported."
-                    );
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            #[inline]
-            fn relaxed_simd(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                let msg = format!(
-                    "Relaxed SIMD operator detected: {operator:?}. The Wasm Relaxed SIMD extension is not supported."
-                );
-                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-            }
-
-            #[inline]
-            fn saturating_float_to_int(
-                &'b mut self,
-                operator: Operator<'a>,
-            ) -> Result<(), MiddlewareError> {
-                self._floats(operator)
-            }
-
-            #[inline]
-            fn bulk_memory(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                if self.config.allow_feature_bulk_memory_operations {
-                    self.state.push_operator(operator);
-                    Ok(())
-                } else {
-                    let msg = format!("Bulk memory operation detected: {operator:?}. Bulk memory operations are not supported.");
-                    Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-                }
-            }
-
-            #[inline]
-            fn legacy_exceptions(
-                &'b mut self,
-                operator: Operator<'a>,
-            ) -> Result<(), MiddlewareError> {
-                self._exceptions(operator)
-            }
-
-            #[inline]
-            fn exceptions(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                self._exceptions(operator)
-            }
-
-            #[inline]
-            fn gc(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                let msg =
-                    format!("GC operation detected: {operator:?}. GC Proposal is not supported.");
-                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-            }
-
-            #[inline]
-            fn memory_control(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
-                let msg = format!("Memory control operation detected: {operator:?}. Memory control is not supported.");
-                Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
-            }
-        }
-
         /// Creates a match arm for the given operator.
         /// Intended to be used inside a `match`.
         macro_rules! match_op {
@@ -372,6 +132,239 @@ impl FunctionMiddleware for FunctionGatekeeper {
         }
 
         wasmer::wasmparser::for_each_operator!(gatekeep)
+    }
+}
+
+struct ProposalValidator<'a, 'b> {
+    config: &'b GatekeeperConfig,
+    state: &'b mut MiddlewareReaderState<'a>,
+}
+
+impl<'a, 'b> ProposalValidator<'a, 'b> {
+    /// Internal helper to deduplicate code
+    fn _ref_types(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        if self.config.allow_feature_reference_types {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!("Reference type operation detected: {operator:?}. Reference types are not supported.");
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    /// Internal helper to deduplicate code
+    fn _floats(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        if self.config.allow_floats {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!(
+                "Float operator detected: {operator:?}. The use of floats is not supported."
+            );
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    /// Internal helper to deduplicate code
+    fn _exceptions(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        if self.config.allow_feature_exception_handling {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!("Exception handling operation detected: {operator:?}. Exception handling is not supported.");
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    fn mvp(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        // special handling for float operators
+        match operator {
+            Operator::F32Load { .. }
+            | Operator::F64Load { .. }
+            | Operator::F32Store { .. }
+            | Operator::F64Store { .. }
+            | Operator::F32Const { .. }
+            | Operator::F64Const { .. }
+            | Operator::F32Eq
+            | Operator::F32Ne
+            | Operator::F32Lt
+            | Operator::F32Gt
+            | Operator::F32Le
+            | Operator::F32Ge
+            | Operator::F64Eq
+            | Operator::F64Ne
+            | Operator::F64Lt
+            | Operator::F64Gt
+            | Operator::F64Le
+            | Operator::F64Ge
+            | Operator::F32Abs
+            | Operator::F32Neg
+            | Operator::F32Ceil
+            | Operator::F32Floor
+            | Operator::F32Trunc
+            | Operator::F32Nearest
+            | Operator::F32Sqrt
+            | Operator::F32Add
+            | Operator::F32Sub
+            | Operator::F32Mul
+            | Operator::F32Div
+            | Operator::F32Min
+            | Operator::F32Max
+            | Operator::F32Copysign
+            | Operator::F64Abs
+            | Operator::F64Neg
+            | Operator::F64Ceil
+            | Operator::F64Floor
+            | Operator::F64Trunc
+            | Operator::F64Nearest
+            | Operator::F64Sqrt
+            | Operator::F64Add
+            | Operator::F64Sub
+            | Operator::F64Mul
+            | Operator::F64Div
+            | Operator::F64Min
+            | Operator::F64Max
+            | Operator::F64Copysign
+            | Operator::I32TruncF32S
+            | Operator::I32TruncF32U
+            | Operator::I32TruncF64S
+            | Operator::I32TruncF64U
+            | Operator::I64TruncF32S
+            | Operator::I64TruncF32U
+            | Operator::I64TruncF64S
+            | Operator::I64TruncF64U
+            | Operator::F32ConvertI32S
+            | Operator::F32ConvertI32U
+            | Operator::F32ConvertI64S
+            | Operator::F32ConvertI64U
+            | Operator::F32DemoteF64
+            | Operator::F64ConvertI32S
+            | Operator::F64ConvertI32U
+            | Operator::F64ConvertI64S
+            | Operator::F64ConvertI64U
+            | Operator::F64PromoteF32
+            | Operator::I32ReinterpretF32
+            | Operator::I64ReinterpretF64
+            | Operator::F32ReinterpretI32
+            | Operator::F64ReinterpretI64 => self._floats(operator),
+            // all other mvp operators
+            _ => {
+                self.state.push_operator(operator);
+                Ok(())
+            }
+        }
+    }
+
+    /// Sign-extension
+    /// https://github.com/bytecodealliance/wasm-tools/blob/wasmparser-0.107.0/crates/wasmparser/src/lib.rs#L307-L311
+    #[inline]
+    fn sign_extension(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        self.state.push_operator(operator);
+        Ok(())
+    }
+
+    #[inline]
+    fn function_references(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        self._ref_types(operator)
+    }
+
+    #[inline]
+    fn reference_types(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        self._ref_types(operator)
+    }
+
+    #[inline]
+    fn tail_call(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        self._ref_types(operator)
+    }
+
+    #[inline]
+    fn threads(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        if self.config.allow_feature_threads {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!("Threads operator detected: {operator:?}. The Wasm Threads extension is not supported.");
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    #[inline]
+    fn shared_everything_threads(
+        &'b mut self,
+        operator: Operator<'a>,
+    ) -> Result<(), MiddlewareError> {
+        if self.config.allow_shared_everything_threads {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!("Shared-Everything threads operator detected: {operator:?}. The Wasm Shared-Everything Threads extension is not supported.");
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    #[inline]
+    fn simd(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        if self.config.allow_feature_simd {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!(
+                "SIMD operator detected: {operator:?}. The Wasm SIMD extension is not supported."
+            );
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    #[inline]
+    fn relaxed_simd(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        let msg = format!(
+            "Relaxed SIMD operator detected: {operator:?}. The Wasm Relaxed SIMD extension is not supported."
+        );
+        Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+    }
+
+    #[inline]
+    fn saturating_float_to_int(
+        &'b mut self,
+        operator: Operator<'a>,
+    ) -> Result<(), MiddlewareError> {
+        self._floats(operator)
+    }
+
+    #[inline]
+    fn bulk_memory(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        if self.config.allow_feature_bulk_memory_operations {
+            self.state.push_operator(operator);
+            Ok(())
+        } else {
+            let msg = format!("Bulk memory operation detected: {operator:?}. Bulk memory operations are not supported.");
+            Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+        }
+    }
+
+    #[inline]
+    fn legacy_exceptions(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        self._exceptions(operator)
+    }
+
+    #[inline]
+    fn exceptions(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        self._exceptions(operator)
+    }
+
+    #[inline]
+    fn gc(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        let msg = format!("GC operation detected: {operator:?}. GC Proposal is not supported.");
+        Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+    }
+
+    #[inline]
+    fn memory_control(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        let msg = format!(
+            "Memory control operation detected: {operator:?}. Memory control is not supported."
+        );
+        Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
     }
 }
 
