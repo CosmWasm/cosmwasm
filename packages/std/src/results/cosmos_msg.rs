@@ -48,7 +48,10 @@ use super::Empty;
 ///
 /// impl CustomQuery for MyMsg {}
 /// ```
-pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema {}
+pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema
+//+ cw_schema::Schemaifier
+{
+}
 
 impl CustomMsg for Empty {}
 

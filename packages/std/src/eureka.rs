@@ -6,7 +6,9 @@ use crate::{Binary, Timestamp};
 /// Payload value should be encoded in a format defined by the channel version,
 /// and the module on the other side should know how to parse this.
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub struct EurekaPayload {
     /// The port id on the chain where the packet is sent to (external chain).
@@ -21,7 +23,9 @@ pub struct EurekaPayload {
 
 /// These are messages in the IBC lifecycle using the new Eureka approach. Only usable by IBC-enabled contracts
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum EurekaMsg {
     /// Sends an IBC packet with given payloads over the existing channel.

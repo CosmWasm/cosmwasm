@@ -123,7 +123,9 @@ pub struct ContractInfo {
 /// the contract's migrate version currently stored on the blockchain.
 /// The `old_migrate_version` is optional, since there is no guarantee
 /// that the currently stored contract's binary contains that information.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct MigrateInfo {
     /// Address of the sender.
     ///
