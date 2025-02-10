@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see init/execute(deps.as_mut(), ...) you must replace it with init/execute(&mut deps, ...)
 //! 5. Anywhere you see query(deps.as_ref(), ...) you must replace it with query(&mut deps, ...)
-//! (Use cosmwasm_vm::testing::{init, execute, query}, instead of the contract variants).
+//!    (Use cosmwasm_vm::testing::{init, execute, query}, instead of the contract variants).
 
 use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{
