@@ -27,6 +27,7 @@ and this project adheres to
 - cosmwasm-std: Make `instantiate2_address_impl` public and let it take a new
   `len` argument to allow truncating address data as part of the generation
   process. ([#2155])
+- cosmwasm-vm: Updated wasmer to 5.0.4 ([#2374])
 
 ## Fixed
 
@@ -40,6 +41,7 @@ and this project adheres to
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
+[#2374]: https://github.com/CosmWasm/cosmwasm/issues/2155
 
 ## [2.2.0] - 2024-12-17
 
