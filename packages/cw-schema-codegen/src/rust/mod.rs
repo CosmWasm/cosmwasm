@@ -28,15 +28,22 @@ fn expand_node_name<'a>(
             let inner = &schema.definitions[inner];
             format!("Option<{}>", expand_node_name(schema, inner)).into()
         }
-        cw_schema::NodeType::Map { ref kind, key, value } => {
+        cw_schema::NodeType::Map {
+            ref kind,
+            key,
+            value,
+        } => {
             let key = expand_node_name(schema, &schema.definitions[key]);
             let value = expand_node_name(schema, &schema.definitions[value]);
 
             match kind {
-                cw_schema::MapKind::BTree => format!("alloc::collections::BTreeMap<{key}, {value}>"),
+                cw_schema::MapKind::BTree => {
+                    format!("alloc::collections::BTreeMap<{key}, {value}>")
+                }
                 cw_schema::MapKind::Hash => format!("std::collections::HashMap<{key}, {value}>"),
                 _ => unimplemented!(),
-            }.into()
+            }
+            .into()
         }
         cw_schema::NodeType::Struct(..) => node.name.as_ref().into(),
         cw_schema::NodeType::Tuple { ref items } => {
