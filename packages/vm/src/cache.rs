@@ -226,16 +226,38 @@ where
     /// This performs static checks, compiles the bytescode to a module and
     /// stores the Wasm file on disk.
     ///
-    /// This does the same as [`save_wasm_unchecked`] plus the static checks.
+    /// This does the same as [`Cache::save_wasm_unchecked`] plus the static checks.
     /// When a Wasm blob is stored the first time, use this function.
+    #[deprecated = "Use `store_code(wasm, true, true)` instead"]
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(
-            wasm,
-            &self.available_capabilities,
-            &self.wasm_limits,
-            crate::internals::Logger::Off,
-        )?;
-        self.save_wasm_unchecked(wasm)
+        self.store_code(wasm, true, true)
+    }
+
+    /// Takes a Wasm bytecode and stores it to the cache.
+    ///
+    /// This performs static checks if `checked` is `true`,
+    /// compiles the bytescode to a module and
+    /// stores the Wasm file on disk if `persist` is `true`.
+    ///
+    /// Only set `checked = false` when a Wasm blob is stored which was previously checked
+    /// (e.g. as part of state sync).
+    pub fn store_code(&self, wasm: &[u8], checked: bool, persist: bool) -> VmResult<Checksum> {
+        if checked {
+            check_wasm(
+                wasm,
+                &self.available_capabilities,
+                &self.wasm_limits,
+                crate::internals::Logger::Off,
+            )?;
+        }
+
+        let module = compile_module(wasm)?;
+
+        if persist {
+            self.save_to_disk(wasm, &module)
+        } else {
+            Ok(Checksum::generate(wasm))
+        }
     }
 
     /// Takes a Wasm bytecode and stores it to the cache.
@@ -243,18 +265,18 @@ where
     /// This compiles the bytescode to a module and
     /// stores the Wasm file on disk.
     ///
-    /// This does the same as [`save_wasm`] but without the static checks.
+    /// This does the same as [`Cache::save_wasm`] but without the static checks.
     /// When a Wasm blob is stored which was previously checked (e.g. as part of state sync),
     /// use this function.
+    #[deprecated = "Use `store_code(wasm, false, true)` instead"]
     pub fn save_wasm_unchecked(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        // We need a new engine for each Wasm -> module compilation due to the metering middleware.
-        let compiling_engine = make_compiling_engine(None);
-        // This module cannot be executed directly as it was not created with the runtime engine
-        let module = compile(&compiling_engine, wasm)?;
+        self.store_code(wasm, false, true)
+    }
 
+    fn save_to_disk(&self, wasm: &[u8], module: &Module) -> VmResult<Checksum> {
         let mut cache = self.inner.lock().unwrap();
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
-        cache.fs_cache.store(&checksum, &module)?;
+        cache.fs_cache.store(&checksum, module)?;
         Ok(checksum)
     }
 
@@ -277,7 +299,7 @@ where
         Ok(())
     }
 
-    /// Retrieves a Wasm blob that was previously stored via save_wasm.
+    /// Retrieves a Wasm blob that was previously stored via [`Cache::store_code`].
     /// When the cache is instantiated with the same base dir, this finds Wasm files on disc across multiple cache instances (i.e. node restarts).
     /// This function is public to allow a checksum to Wasm lookup in the blockchain.
     ///
@@ -298,7 +320,7 @@ where
 
     /// Performs static anlyzation on this Wasm without compiling or instantiating it.
     ///
-    /// Once the contract was stored via [`save_wasm`], this can be called at any point in time.
+    /// Once the contract was stored via [`Cache::store_code`], this can be called at any point in time.
     /// It does not depend on any caching of the contract.
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
         // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
@@ -323,7 +345,7 @@ where
         })
     }
 
-    /// Pins a Module that was previously stored via save_wasm.
+    /// Pins a Module that was previously stored via [`Cache::store_code`].
     ///
     /// The module is lookup first in the file system cache. If not found,
     /// the code is loaded from the file system, compiled, and stored into the
@@ -458,7 +480,7 @@ where
         // Re-compile module from wasm
         //
         // This is needed for chains that upgrade their node software in a way that changes the module
-        // serialization format. If you do not replay all transactions, previous calls of `save_wasm`
+        // serialization format. If you do not replay all transactions, previous calls of `store_code`
         // stored the old module format.
         let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses = cache.stats.misses.saturating_add(1);
@@ -489,6 +511,12 @@ where
         let store = Store::new(engine);
         Ok((module, store))
     }
+}
+
+fn compile_module(wasm: &[u8]) -> Result<Module, VmError> {
+    let compiling_engine = make_compiling_engine(None);
+    let module = compile(&compiling_engine, wasm)?;
+    Ok(module)
 }
 
 unsafe impl<A, S, Q> Sync for Cache<A, S, Q>
@@ -672,28 +700,40 @@ mod tests {
     }
 
     #[test]
-    fn save_wasm_works() {
+    fn store_code_checked_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.save_wasm(CONTRACT).unwrap();
+        cache.store_code(CONTRACT, true, true).unwrap();
+    }
+
+    #[test]
+    fn store_code_without_persist_works() {
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+        let checksum = cache.store_code(CONTRACT, true, false).unwrap();
+
+        assert!(
+            cache.load_wasm(&checksum).is_err(),
+            "wasm file should not be saved to disk"
+        );
     }
 
     #[test]
     // This property is required when the same bytecode is uploaded multiple times
-    fn save_wasm_allows_saving_multiple_times() {
+    fn store_code_allows_saving_multiple_times() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.save_wasm(CONTRACT).unwrap();
-        cache.save_wasm(CONTRACT).unwrap();
+        cache.store_code(CONTRACT, true, true).unwrap();
+        cache.store_code(CONTRACT, true, true).unwrap();
     }
 
     #[test]
-    fn save_wasm_rejects_invalid_contract() {
+    fn store_code_checked_rejects_invalid_contract() {
         let wasm = wat::parse_str(INVALID_CONTRACT_WAT).unwrap();
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        let save_result = cache.save_wasm(&wasm);
+        let save_result = cache.store_code(&wasm, true, true);
         match save_result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract must contain exactly one memory")
@@ -703,12 +743,12 @@ mod tests {
     }
 
     #[test]
-    fn save_wasm_fills_file_system_but_not_memory_cache() {
+    fn store_code_fills_file_system_but_not_memory_cache() {
         // Who knows if and when the uploaded contract will be executed. Don't pollute
         // memory cache before the init call.
 
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         let backend = mock_backend(&[]);
         let _ = cache
@@ -721,26 +761,26 @@ mod tests {
     }
 
     #[test]
-    fn save_wasm_unchecked_works() {
+    fn store_code_unchecked_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.save_wasm_unchecked(CONTRACT).unwrap();
+        cache.store_code(CONTRACT, false, true).unwrap();
     }
 
     #[test]
-    fn save_wasm_unchecked_accepts_invalid_contract() {
+    fn store_code_unchecked_accepts_invalid_contract() {
         let wasm = wat::parse_str(INVALID_CONTRACT_WAT).unwrap();
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.save_wasm_unchecked(&wasm).unwrap();
+        cache.store_code(&wasm, false, true).unwrap();
     }
 
     #[test]
     fn load_wasm_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         let restored = cache.load_wasm(&checksum).unwrap();
         assert_eq!(restored, CONTRACT);
@@ -760,7 +800,7 @@ mod tests {
             };
             let cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
-            id = cache1.save_wasm(CONTRACT).unwrap();
+            id = cache1.store_code(CONTRACT, true, true).unwrap();
         }
 
         {
@@ -805,7 +845,7 @@ mod tests {
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // Corrupt cache file
         let filepath = tmp_dir
@@ -831,7 +871,7 @@ mod tests {
             unsafe { Cache::new(make_testing_options()).unwrap() };
 
         // Store
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // Exists
         cache.load_wasm(&checksum).unwrap();
@@ -859,7 +899,7 @@ mod tests {
     #[test]
     fn get_instance_finds_cached_module() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
         let backend = mock_backend(&[]);
         let _instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
@@ -873,7 +913,7 @@ mod tests {
     #[test]
     fn get_instance_finds_cached_modules_and_stores_to_memory() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
         let backend3 = mock_backend(&[]);
@@ -937,7 +977,7 @@ mod tests {
     fn get_instance_recompiles_module() {
         let options = make_testing_options();
         let cache = unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // Remove compiled module from disk
         remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
@@ -966,7 +1006,7 @@ mod tests {
     #[test]
     fn call_instantiate_on_cached_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // from file system
         {
@@ -1052,7 +1092,7 @@ mod tests {
     #[test]
     fn call_execute_on_cached_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // from file system
         {
@@ -1163,7 +1203,7 @@ mod tests {
     fn call_execute_on_recompiled_contract() {
         let options = make_testing_options();
         let cache = unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // Remove compiled module from disk
         remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
@@ -1183,7 +1223,7 @@ mod tests {
     #[test]
     fn use_multiple_cached_instances_of_same_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // these differentiate the two instances of the same contract
         let backend1 = mock_backend(&[]);
@@ -1243,7 +1283,7 @@ mod tests {
     #[test]
     fn resets_gas_when_reusing_instance() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
@@ -1282,7 +1322,7 @@ mod tests {
     #[test]
     fn recovers_from_out_of_gas() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
@@ -1398,7 +1438,7 @@ mod tests {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_stargate_testing_options()).unwrap() };
 
-        let checksum1 = cache.save_wasm(CONTRACT).unwrap();
+        let checksum1 = cache.store_code(CONTRACT, true, true).unwrap();
         let report1 = cache.analyze(&checksum1).unwrap();
         assert_eq!(
             report1,
@@ -1416,7 +1456,7 @@ mod tests {
             }
         );
 
-        let checksum2 = cache.save_wasm(IBC_CONTRACT).unwrap();
+        let checksum2 = cache.store_code(IBC_CONTRACT, true, true).unwrap();
         let report2 = cache.analyze(&checksum2).unwrap();
         let mut ibc_contract_entrypoints =
             BTreeSet::from([E::Instantiate, E::Migrate, E::Reply, E::Query]);
@@ -1434,7 +1474,7 @@ mod tests {
             }
         );
 
-        let checksum3 = cache.save_wasm(EMPTY_CONTRACT).unwrap();
+        let checksum3 = cache.store_code(EMPTY_CONTRACT, true, true).unwrap();
         let report3 = cache.analyze(&checksum3).unwrap();
         assert_eq!(
             report3,
@@ -1453,7 +1493,7 @@ mod tests {
         };
         custom_section.append_to_component(&mut wasm_with_version);
 
-        let checksum4 = cache.save_wasm(&wasm_with_version).unwrap();
+        let checksum4 = cache.store_code(&wasm_with_version, true, true).unwrap();
         let report4 = cache.analyze(&checksum4).unwrap();
         assert_eq!(
             report4,
@@ -1469,7 +1509,7 @@ mod tests {
     #[test]
     fn pinned_metrics_works() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         cache.pin(&checksum).unwrap();
 
@@ -1488,7 +1528,7 @@ mod tests {
         assert_eq!(pinned_metrics.per_module[0].0, checksum);
         assert_eq!(pinned_metrics.per_module[0].1.hits, 1);
 
-        let empty_checksum = cache.save_wasm(EMPTY_CONTRACT).unwrap();
+        let empty_checksum = cache.store_code(EMPTY_CONTRACT, true, true).unwrap();
         cache.pin(&empty_checksum).unwrap();
 
         let pinned_metrics = cache.pinned_metrics();
@@ -1511,7 +1551,7 @@ mod tests {
     #[test]
     fn pin_unpin_works() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // check not pinned
         let backend = mock_backend(&[]);
@@ -1576,7 +1616,7 @@ mod tests {
         let options = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // Remove compiled module from disk
         remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
@@ -1611,7 +1651,7 @@ mod tests {
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
-        let checksum = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
 
         // Move the saved wasm to the old path (without extension)
         let old_path = tmp_dir
@@ -1646,7 +1686,7 @@ mod tests {
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new_with_config(config).unwrap() };
-        let err = cache.save_wasm(CONTRACT).unwrap_err();
+        let err = cache.store_code(CONTRACT, true, true).unwrap_err();
         assert!(matches!(err, VmError::StaticValidationErr { .. }));
     }
 }

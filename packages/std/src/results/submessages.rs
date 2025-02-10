@@ -288,12 +288,18 @@ impl From<SubMsgResult> for Result<SubMsgResponse, String> {
     }
 }
 
-/// The information we get back from a successful sub message execution,
-/// with full Cosmos SDK events.
+/// The information we get back from a successful sub message execution
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
 )]
 pub struct SubMsgResponse {
+    /// The Cosmos SDK events emitted by the submessage.
+    ///
+    /// This is only filled if the submessage was itself a [`crate::WasmMsg`].
+    /// The reason for this is that events are [not part of consensus] and therefore not guaranteed to be deterministic,
+    /// so the VM only returns events of wasm messages, which we know are deterministic.
+    ///
+    /// [not part of consensus]: https://github.com/tendermint/tendermint/blob/eed27addecb339cfaeba8fda774e6ab37cdb3774/spec/abci/abci.md#events
     pub events: Vec<Event>,
     #[deprecated = "Deprecated in the Cosmos SDK in favor of msg_responses. If your chain is running on CosmWasm 2.0 or higher, msg_responses will be filled. For older versions, the data field is still needed since msg_responses is empty in those cases."]
     pub data: Option<Binary>,

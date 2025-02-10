@@ -13,8 +13,8 @@ pre-release-replacements = [
     { file = "../../CHANGELOG.md", search = "## \\[Unreleased\\]", replace = "## [{{version}}] - {{date}}", exactly = 1 },
     { file = "../../CHANGELOG.md", search = "(U|u)nreleased", replace = "{{version}}" },
     { file = "../../CHANGELOG.md", search = "<!-- next-header -->", replace = "<!-- next-header -->\n\n## [Unreleased]", exactly = 1 },
-    { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
     { file = "../../CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
+    { file = "../../CHANGELOG.md", search = "<!-- next-url -->\n", replace = "<!-- next-url -->\n\n[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/{{tag_name}}...HEAD", exactly = 1 },
 ]
 
 [features]
@@ -52,7 +52,9 @@ cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", default-features = fal
 ] }
 cosmwasm-crypto = { version = "2.2.0-rc.1", path = "../crypto" }
 cosmwasm-vm-derive = { version = "2.2.0-rc.1", path = "../vm-derive" }
-derivative = "2"
+derive_more = { version = "=1.0.0-beta.6", default-features = false, features = [
+    "debug",
+] }
 hex = "0.4"
 rand_core = { version = "0.6", features = ["getrandom"] }
 schemars = { workspace = true }

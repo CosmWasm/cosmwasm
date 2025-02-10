@@ -21,6 +21,7 @@ mod conversion;
 mod deps;
 mod encoding;
 mod errors;
+mod eureka;
 mod forward_ref;
 mod hex_binary;
 mod ibc;
@@ -51,7 +52,9 @@ pub(crate) mod prelude;
 /// contract devs to use it directly.
 pub mod storage_keys;
 
-pub use crate::addresses::{instantiate2_address, Addr, CanonicalAddr, Instantiate2AddressError};
+pub use crate::addresses::{
+    instantiate2_address, instantiate2_address_impl, Addr, CanonicalAddr, Instantiate2AddressError,
+};
 pub use crate::binary::Binary;
 pub use crate::checksum::{Checksum, ChecksumError};
 pub use crate::coin::{coin, coins, has_coins, Coin};
@@ -65,6 +68,7 @@ pub use crate::errors::{
     RecoverPubkeyError, RoundDownOverflowError, RoundUpOverflowError, StdError, StdResult,
     SystemError, VerificationError,
 };
+pub use crate::eureka::{EurekaMsg, EurekaPayload};
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
@@ -118,8 +122,18 @@ pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
-// Exposed in wasm build only
+#[cfg(feature = "abort")]
+mod _warning {
+    #[must_use = "cosmwasm-std feature `abort` is deprecated and will be removed in the next major release. You can just remove the feature as this functionality is now the default"]
+    struct CompileWarning;
 
+    #[allow(dead_code, path_statements)]
+    fn trigger_warning() {
+        CompileWarning;
+    }
+}
+
+// Exposed in wasm build only
 #[cfg(target_arch = "wasm32")]
 mod exports;
 #[cfg(target_arch = "wasm32")]

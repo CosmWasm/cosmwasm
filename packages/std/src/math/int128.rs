@@ -13,7 +13,10 @@ use crate::{
     __internal::forward_ref_partial_eq,
 };
 
-use super::conversion::{forward_try_from, try_from_int_to_int};
+use super::conversion::{
+    forward_try_from, from_and_to_bytes, primitive_to_wrapped_int, try_from_int_to_int,
+    wrapped_int_to_primitive,
+};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -77,27 +80,7 @@ impl Int128 {
         self.0
     }
 
-    #[must_use]
-    pub const fn from_be_bytes(data: [u8; 16]) -> Self {
-        Self(i128::from_be_bytes(data))
-    }
-
-    #[must_use]
-    pub const fn from_le_bytes(data: [u8; 16]) -> Self {
-        Self(i128::from_le_bytes(data))
-    }
-
-    /// Returns a copy of the number as big endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_be_bytes(self) -> [u8; 16] {
-        self.0.to_be_bytes()
-    }
-
-    /// Returns a copy of the number as little endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_le_bytes(self) -> [u8; 16] {
-        self.0.to_le_bytes()
-    }
+    from_and_to_bytes!(i128, 16);
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
@@ -318,29 +301,10 @@ forward_try_from!(Uint256, Int128);
 forward_try_from!(Uint512, Int128);
 
 // uint to Int
-impl From<u64> for Int128 {
-    fn from(val: u64) -> Self {
-        Int128(val.into())
-    }
-}
-
-impl From<u32> for Int128 {
-    fn from(val: u32) -> Self {
-        Int128(val.into())
-    }
-}
-
-impl From<u16> for Int128 {
-    fn from(val: u16) -> Self {
-        Int128(val.into())
-    }
-}
-
-impl From<u8> for Int128 {
-    fn from(val: u8) -> Self {
-        Int128(val.into())
-    }
-}
+primitive_to_wrapped_int!(u8, Int128);
+primitive_to_wrapped_int!(u16, Int128);
+primitive_to_wrapped_int!(u32, Int128);
+primitive_to_wrapped_int!(u64, Int128);
 
 // Int to Int
 impl From<Int64> for Int128 {
@@ -353,35 +317,14 @@ try_from_int_to_int!(Int256, Int128);
 try_from_int_to_int!(Int512, Int128);
 
 // int to Int
-impl From<i128> for Int128 {
-    fn from(val: i128) -> Self {
-        Int128(val)
-    }
-}
+primitive_to_wrapped_int!(i8, Int128);
+primitive_to_wrapped_int!(i16, Int128);
+primitive_to_wrapped_int!(i32, Int128);
+primitive_to_wrapped_int!(i64, Int128);
+primitive_to_wrapped_int!(i128, Int128);
 
-impl From<i64> for Int128 {
-    fn from(val: i64) -> Self {
-        Int128(val.into())
-    }
-}
-
-impl From<i32> for Int128 {
-    fn from(val: i32) -> Self {
-        Int128(val.into())
-    }
-}
-
-impl From<i16> for Int128 {
-    fn from(val: i16) -> Self {
-        Int128(val.into())
-    }
-}
-
-impl From<i8> for Int128 {
-    fn from(val: i8) -> Self {
-        Int128(val.into())
-    }
-}
+// Int to int
+wrapped_int_to_primitive!(Int128, i128);
 
 impl TryFrom<&str> for Int128 {
     type Error = StdError;
@@ -571,16 +514,64 @@ mod tests {
 
     #[test]
     fn int128_from_be_bytes_works() {
-        let num = Int128::from_be_bytes([1; 16]);
-        let a: [u8; 16] = num.to_be_bytes();
-        assert_eq!(a, [1; 16]);
+        // zero
+        let original = [0; 16];
+        let num = Int128::from_be_bytes(original);
+        assert!(num.is_zero());
 
-        let be_bytes = [
+        // one
+        let original = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+        let num = Int128::from_be_bytes(original);
+        assert_eq!(num.i128(), 1);
+
+        // 258
+        let original = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2];
+        let num = Int128::from_be_bytes(original);
+        assert_eq!(num.i128(), 258);
+
+        // 2x roundtrip
+        let original = [1; 16];
+        let num = Int128::from_be_bytes(original);
+        let a: [u8; 16] = num.to_be_bytes();
+        assert_eq!(a, original);
+
+        let original = [
             0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Int128::from_be_bytes(be_bytes);
+        let num = Int128::from_be_bytes(original);
         let resulting_bytes: [u8; 16] = num.to_be_bytes();
-        assert_eq!(be_bytes, resulting_bytes);
+        assert_eq!(resulting_bytes, original);
+    }
+
+    #[test]
+    fn int128_from_le_bytes_works() {
+        // zero
+        let original = [0; 16];
+        let num = Int128::from_le_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let num = Int128::from_le_bytes(original);
+        assert_eq!(num.i128(), 1);
+
+        // 258
+        let original = [2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let num = Int128::from_le_bytes(original);
+        assert_eq!(num.i128(), 258);
+
+        // 2x roundtrip
+        let original = [1; 16];
+        let num = Int128::from_le_bytes(original);
+        let a: [u8; 16] = num.to_le_bytes();
+        assert_eq!(a, original);
+
+        let original = [
+            0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
+        ];
+        let num = Int128::from_le_bytes(original);
+        let resulting_bytes: [u8; 16] = num.to_le_bytes();
+        assert_eq!(resulting_bytes, original);
     }
 
     #[test]
@@ -636,6 +627,12 @@ mod tests {
         let num2 = Int128::from_le_bytes(le_bytes);
         assert_eq!(num1, Int128::from(65536u32 + 512 + 3));
         assert_eq!(num1, num2);
+    }
+
+    #[test]
+    fn int128_convert_to() {
+        let a = Int128::new(5);
+        assert_eq!(i128::from(a), 5);
     }
 
     #[test]

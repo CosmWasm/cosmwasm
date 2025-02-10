@@ -243,7 +243,7 @@ impl<'de> Deserialize<'de> for Binary {
 
 struct Base64Visitor;
 
-impl<'de> de::Visitor<'de> for Base64Visitor {
+impl de::Visitor<'_> for Base64Visitor {
     type Value = Binary;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -263,7 +263,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 
 struct BytesVisitor;
 
-impl<'de> de::Visitor<'de> for BytesVisitor {
+impl de::Visitor<'_> for BytesVisitor {
     type Value = Binary;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

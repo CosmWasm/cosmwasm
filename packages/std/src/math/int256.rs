@@ -17,7 +17,9 @@ use crate::{
 /// the implementation in the future.
 use bnum::types::{I256, U256};
 
-use super::conversion::{grow_be_int, try_from_int_to_int, try_from_uint_to_int};
+use super::conversion::{
+    grow_be_int, primitive_to_wrapped_int, try_from_int_to_int, try_from_uint_to_int,
+};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -382,35 +384,11 @@ impl From<Uint64> for Int256 {
 }
 
 // uint to Int
-impl From<u128> for Int256 {
-    fn from(val: u128) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<u64> for Int256 {
-    fn from(val: u64) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<u32> for Int256 {
-    fn from(val: u32) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<u16> for Int256 {
-    fn from(val: u16) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<u8> for Int256 {
-    fn from(val: u8) -> Self {
-        Int256(val.into())
-    }
-}
+primitive_to_wrapped_int!(u8, Int256);
+primitive_to_wrapped_int!(u16, Int256);
+primitive_to_wrapped_int!(u32, Int256);
+primitive_to_wrapped_int!(u64, Int256);
+primitive_to_wrapped_int!(u128, Int256);
 
 // Int to Int
 try_from_int_to_int!(Int512, Int256);
@@ -428,35 +406,11 @@ impl From<Int64> for Int256 {
 }
 
 // int to Int
-impl From<i128> for Int256 {
-    fn from(val: i128) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<i64> for Int256 {
-    fn from(val: i64) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<i32> for Int256 {
-    fn from(val: i32) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<i16> for Int256 {
-    fn from(val: i16) -> Self {
-        Int256(val.into())
-    }
-}
-
-impl From<i8> for Int256 {
-    fn from(val: i8) -> Self {
-        Int256(val.into())
-    }
-}
+primitive_to_wrapped_int!(i8, Int256);
+primitive_to_wrapped_int!(i16, Int256);
+primitive_to_wrapped_int!(i32, Int256);
+primitive_to_wrapped_int!(i64, Int256);
+primitive_to_wrapped_int!(i128, Int256);
 
 impl TryFrom<&str> for Int256 {
     type Error = StdError;

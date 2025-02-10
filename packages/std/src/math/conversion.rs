@@ -82,6 +82,34 @@ macro_rules! forward_try_from {
 }
 pub(crate) use forward_try_from;
 
+/// Helper macro to implement `From` for a type that is just a wrapper around another type.
+/// This can be used for all our integer conversions where `bnum` implements `From`.
+macro_rules! wrapped_int_to_primitive {
+    ($input: ty, $output: ty) => {
+        impl From<$input> for $output {
+            fn from(value: $input) -> Self {
+                // By convention all our Uint*/Int* types store the value in .0
+                value.0.into()
+            }
+        }
+    };
+}
+pub(crate) use wrapped_int_to_primitive;
+
+/// Helper macro to implement `From` for a type that is just a wrapper around another type.
+/// This can be used for all our integer conversions where `bnum` implements `From`.
+macro_rules! primitive_to_wrapped_int {
+    ($input: ty, $output: ty) => {
+        impl From<$input> for $output {
+            fn from(value: $input) -> Self {
+                // By convention all our Uint*/Int* types store the value in .0
+                Self(value.into())
+            }
+        }
+    };
+}
+pub(crate) use primitive_to_wrapped_int;
+
 /// Helper macro to implement `TryFrom` for a conversion from a bigger signed int to a smaller one.
 /// This is needed because `bnum` does not implement `TryFrom` for those conversions
 /// because of limitations of const generics.
@@ -104,7 +132,7 @@ macro_rules! try_from_int_to_int {
 }
 pub(crate) use try_from_int_to_int;
 
-/// Helper macro to implement `TryFrom` for a conversion from a unsigned int to a smaller or
+/// Helper macro to implement `TryFrom` for a conversion from an unsigned int to a smaller or
 /// equal sized signed int.
 /// This is needed because `bnum` does not implement `TryFrom` for all of those conversions.
 macro_rules! try_from_uint_to_int {
@@ -297,6 +325,35 @@ macro_rules! try_from_int_to_uint {
     };
 }
 pub(crate) use try_from_int_to_uint;
+
+macro_rules! from_and_to_bytes {
+    ($inner: ty, $byte_size: literal) => {
+        /// Constructs new value from big endian bytes
+        #[must_use]
+        pub const fn from_be_bytes(data: [u8; $byte_size]) -> Self {
+            Self(<$inner>::from_be_bytes(data))
+        }
+
+        /// Constructs new value from little endian bytes
+        #[must_use]
+        pub const fn from_le_bytes(data: [u8; $byte_size]) -> Self {
+            Self(<$inner>::from_le_bytes(data))
+        }
+
+        /// Returns a copy of the number as big endian bytes.
+        #[must_use = "this returns the result of the operation, without modifying the original"]
+        pub const fn to_be_bytes(self) -> [u8; $byte_size] {
+            self.0.to_be_bytes()
+        }
+
+        /// Returns a copy of the number as little endian bytes.
+        #[must_use = "this returns the result of the operation, without modifying the original"]
+        pub const fn to_le_bytes(self) -> [u8; $byte_size] {
+            self.0.to_le_bytes()
+        }
+    };
+}
+pub(crate) use from_and_to_bytes;
 
 #[cfg(test)]
 mod tests {

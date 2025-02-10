@@ -9,10 +9,12 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "cosmwasm_2_2", "staking", "stargate"]
+features = ["abort", "cosmwasm_2_2", "staking", "stargate", "eureka"]
 
 [features]
-default = ["abort", "iterator", "std"]
+default = ["iterator", "std"]
+# abort used to enable the panic handler that hands a nice error message back to the host.
+# The feature is now deprecated and the panic handler is always enabled.
 abort = []
 std = []
 # iterator allows us to iterate over all DB items in a given range
@@ -20,13 +22,15 @@ std = []
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = []
-# staking exposes bindings to a required staking moudle in the runtime, via new
+# staking exposes bindings to a required staking module in the runtime, via new
 # CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
 # that require these types, so other contracts can be used on systems with eg. PoA consensus
 staking = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
 stargate = []
+# eureka enables eureka-dependent messages and queries
+eureka = []
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []
@@ -58,7 +62,7 @@ bnum = "0.11.0"
 cosmwasm-core = { version = "2.2.0-rc.1", path = "../core" }
 cosmwasm-derive = { version = "2.2.0-rc.1", path = "../derive" }
 cw-schema = { version = "2.2.0-rc.1", path = "../cw-schema" }
-derive_more = { version = "1.0.0-beta.6", default-features = false, features = [
+derive_more = { version = "=1.0.0-beta.6", default-features = false, features = [
     "debug",
 ] }
 hex = "0.4"

@@ -34,7 +34,7 @@ you can customize.
 
 ## Create a Repo
 
-After generating, you have a initialized local git repo, but no commits, and no
+After generating, you have an initialized local git repo, but no commits, and no
 remote. Go to a server (eg. github) and create a new upstream repo (called
 `YOUR-GIT-URL` below). Then run the following:
 
@@ -50,7 +50,7 @@ git push -u origin main
 ## CI Support
 
 We have templates for both github actions and Circle CI in the generated
-project, so you can get up an running with CI right away. One note is that the
+project, so you can get up and running with CI right away. One note is that the
 CI runs all `cargo` commands with `--locked` to ensure it uses the exact same
 versions as you have locally. This also means you must have an up-to-date
 `Cargo.lock` file, which is not auto-generated.

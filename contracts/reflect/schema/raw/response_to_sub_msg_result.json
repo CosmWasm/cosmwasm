@@ -96,7 +96,7 @@
       "additionalProperties": false
     },
     "SubMsgResponse": {
-      "description": "The information we get back from a successful sub message execution, with full Cosmos SDK events.",
+      "description": "The information we get back from a successful sub message execution",
       "type": "object",
       "required": [
         "events"
@@ -114,6 +114,7 @@
           ]
         },
         "events": {
+          "description": "The Cosmos SDK events emitted by the submessage.\n\nThis is only filled if the submessage was itself a [`crate::WasmMsg`]. The reason for this is that events are [not part of consensus] and therefore not guaranteed to be deterministic, so the VM only returns events of wasm messages, which we know are deterministic.\n\n[not part of consensus]: https://github.com/tendermint/tendermint/blob/eed27addecb339cfaeba8fda774e6ab37cdb3774/spec/abci/abci.md#events",
           "type": "array",
           "items": {
             "$ref": "#/definitions/Event"

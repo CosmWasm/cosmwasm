@@ -771,7 +771,7 @@ impl<'de> Deserialize<'de> for Decimal {
 
 struct DecimalVisitor;
 
-impl<'de> de::Visitor<'de> for DecimalVisitor {
+impl de::Visitor<'_> for DecimalVisitor {
     type Value = Decimal;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

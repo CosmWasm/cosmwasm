@@ -246,7 +246,7 @@ impl<'de> Deserialize<'de> for HexBinary {
 
 struct HexVisitor;
 
-impl<'de> de::Visitor<'de> for HexVisitor {
+impl de::Visitor<'_> for HexVisitor {
     type Value = HexBinary;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -266,7 +266,7 @@ impl<'de> de::Visitor<'de> for HexVisitor {
 
 struct BytesVisitor;
 
-impl<'de> de::Visitor<'de> for BytesVisitor {
+impl de::Visitor<'_> for BytesVisitor {
     type Value = HexBinary;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

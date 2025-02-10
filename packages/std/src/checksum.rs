@@ -96,7 +96,7 @@ impl<'de> Deserialize<'de> for Checksum {
 
 struct ChecksumVisitor;
 
-impl<'de> de::Visitor<'de> for ChecksumVisitor {
+impl de::Visitor<'_> for ChecksumVisitor {
     type Value = Checksum;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -116,7 +116,7 @@ impl<'de> de::Visitor<'de> for ChecksumVisitor {
 
 struct ChecksumBytesVisitor;
 
-impl<'de> de::Visitor<'de> for ChecksumBytesVisitor {
+impl de::Visitor<'_> for ChecksumBytesVisitor {
     type Value = Checksum;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

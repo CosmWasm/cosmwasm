@@ -458,7 +458,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm-derive",
  "crc32fast",
- "derivative",
+ "derive_more",
  "hex",
  "rand_core",
  "schemars 0.8.21",

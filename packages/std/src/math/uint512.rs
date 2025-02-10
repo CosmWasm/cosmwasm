@@ -18,7 +18,7 @@ use crate::{
 /// the implementation in the future.
 use bnum::types::U512;
 
-use super::conversion::{forward_try_from, try_from_int_to_uint};
+use super::conversion::{forward_try_from, primitive_to_wrapped_int, try_from_int_to_uint};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -360,6 +360,13 @@ impl NumConsts for Uint512 {
     const MIN: Self = Self::MIN;
 }
 
+// uint to Uint
+primitive_to_wrapped_int!(u8, Uint512);
+primitive_to_wrapped_int!(u16, Uint512);
+primitive_to_wrapped_int!(u32, Uint512);
+primitive_to_wrapped_int!(u64, Uint512);
+primitive_to_wrapped_int!(u128, Uint512);
+
 impl From<Uint256> for Uint512 {
     fn from(val: Uint256) -> Self {
         let mut bytes = [0u8; 64];
@@ -378,36 +385,6 @@ impl From<Uint128> for Uint512 {
 impl From<Uint64> for Uint512 {
     fn from(val: Uint64) -> Self {
         val.u64().into()
-    }
-}
-
-impl From<u128> for Uint512 {
-    fn from(val: u128) -> Self {
-        Uint512(val.into())
-    }
-}
-
-impl From<u64> for Uint512 {
-    fn from(val: u64) -> Self {
-        Uint512(val.into())
-    }
-}
-
-impl From<u32> for Uint512 {
-    fn from(val: u32) -> Self {
-        Uint512(val.into())
-    }
-}
-
-impl From<u16> for Uint512 {
-    fn from(val: u16) -> Self {
-        Uint512(val.into())
-    }
-}
-
-impl From<u8> for Uint512 {
-    fn from(val: u8) -> Self {
-        Uint512(val.into())
     }
 }
 

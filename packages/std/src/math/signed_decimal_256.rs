@@ -117,7 +117,7 @@ impl SignedDecimal256 {
     /// Create a -1.0 SignedDecimal256
     #[inline]
     pub const fn negative_one() -> Self {
-        // -DECIMAL_FRATIONAL
+        // -DECIMAL_FRACTIONAL
         Self(Int256::from_i128(-1_000_000_000_000_000_000))
     }
 
@@ -897,7 +897,7 @@ impl<'de> Deserialize<'de> for SignedDecimal256 {
 
 struct SignedDecimal256Visitor;
 
-impl<'de> de::Visitor<'de> for SignedDecimal256Visitor {
+impl de::Visitor<'_> for SignedDecimal256Visitor {
     type Value = SignedDecimal256;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

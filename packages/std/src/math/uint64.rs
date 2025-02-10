@@ -15,7 +15,9 @@ use crate::{
     Uint128,
 };
 
-use super::conversion::forward_try_from;
+use super::conversion::{
+    forward_try_from, from_and_to_bytes, primitive_to_wrapped_int, wrapped_int_to_primitive,
+};
 use super::impl_int_serde;
 use super::num_consts::NumConsts;
 
@@ -81,17 +83,7 @@ impl Uint64 {
         self.0
     }
 
-    /// Returns a copy of the number as big endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_be_bytes(self) -> [u8; 8] {
-        self.0.to_be_bytes()
-    }
-
-    /// Returns a copy of the number as little endian bytes.
-    #[must_use = "this returns the result of the operation, without modifying the original"]
-    pub const fn to_le_bytes(self) -> [u8; 8] {
-        self.0.to_le_bytes()
-    }
+    from_and_to_bytes!(u64, 8);
 
     #[must_use]
     pub const fn is_zero(&self) -> bool {
@@ -330,29 +322,14 @@ impl_mul_fraction!(Uint64);
 // https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
 
 // uint to Uint
-impl From<u64> for Uint64 {
-    fn from(val: u64) -> Self {
-        Uint64(val)
-    }
-}
+primitive_to_wrapped_int!(u8, Uint64);
+primitive_to_wrapped_int!(u16, Uint64);
+primitive_to_wrapped_int!(u32, Uint64);
+primitive_to_wrapped_int!(u64, Uint64);
 
-impl From<u32> for Uint64 {
-    fn from(val: u32) -> Self {
-        Uint64(val.into())
-    }
-}
-
-impl From<u16> for Uint64 {
-    fn from(val: u16) -> Self {
-        Uint64(val.into())
-    }
-}
-
-impl From<u8> for Uint64 {
-    fn from(val: u8) -> Self {
-        Uint64(val.into())
-    }
-}
+// Uint to uint
+wrapped_int_to_primitive!(Uint64, u64);
+wrapped_int_to_primitive!(Uint64, u128);
 
 // Int to Uint
 forward_try_from!(Int64, Uint64);
@@ -374,12 +351,6 @@ impl TryFrom<&str> for Uint64 {
 impl From<Uint64> for String {
     fn from(original: Uint64) -> Self {
         original.to_string()
-    }
-}
-
-impl From<Uint64> for u64 {
-    fn from(original: Uint64) -> Self {
-        original.0
     }
 }
 
@@ -606,9 +577,71 @@ mod tests {
     }
 
     #[test]
+    fn uint64_from_be_bytes_works() {
+        // zero
+        let original = [0; 8];
+        let num = Uint64::from_be_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [0, 0, 0, 0, 0, 0, 0, 1];
+        let num = Uint64::from_be_bytes(original);
+        assert_eq!(num.u64(), 1);
+
+        // 258
+        let original = [0, 0, 0, 0, 0, 0, 1, 2];
+        let num = Uint64::from_be_bytes(original);
+        assert_eq!(num.u64(), 258);
+
+        // 2x roundtrip
+        let original = [1; 8];
+        let num = Uint64::from_be_bytes(original);
+        let a: [u8; 8] = num.to_be_bytes();
+        assert_eq!(a, original);
+
+        let original = [0u8, 222u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8];
+        let num = Uint64::from_be_bytes(original);
+        let resulting_bytes: [u8; 8] = num.to_be_bytes();
+        assert_eq!(resulting_bytes, original);
+    }
+
+    #[test]
+    fn uint64_from_le_bytes_works() {
+        // zero
+        let original = [0; 8];
+        let num = Uint64::from_le_bytes(original);
+        assert!(num.is_zero());
+
+        // one
+        let original = [1, 0, 0, 0, 0, 0, 0, 0];
+        let num = Uint64::from_le_bytes(original);
+        assert_eq!(num.u64(), 1);
+
+        // 258
+        let original = [2, 1, 0, 0, 0, 0, 0, 0];
+        let num = Uint64::from_le_bytes(original);
+        assert_eq!(num.u64(), 258);
+
+        // 2x roundtrip
+        let original = [1; 8];
+        let num = Uint64::from_le_bytes(original);
+        let a: [u8; 8] = num.to_le_bytes();
+        assert_eq!(a, original);
+
+        let original = [0u8, 222u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8];
+        let num = Uint64::from_le_bytes(original);
+        let resulting_bytes: [u8; 8] = num.to_le_bytes();
+        assert_eq!(resulting_bytes, original);
+    }
+
+    #[test]
     fn uint64_convert_into() {
         let original = Uint64(12345);
         let a = u64::from(original);
+        assert_eq!(a, 12345);
+
+        let original = Uint64(12345);
+        let a = u128::from(original);
         assert_eq!(a, 12345);
 
         let original = Uint64(12345);
