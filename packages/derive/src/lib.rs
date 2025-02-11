@@ -287,7 +287,7 @@ mod test {
 
         let actual = entry_point_impl(TokenStream::new(), code);
         let expected = quote! {
-            ::core::compile_error! { "To use the new migrate function signature, you should provide a \"migrate\" entry point, not \"migrate_with_info\"" }
+            ::core::compile_error! { "To use the new migrate function signature, you should provide a \"migrate\" entry point with 4 arguments, not \"migrate_with_info\"" }
         };
 
         assert_eq!(actual.to_string(), expected.to_string());
