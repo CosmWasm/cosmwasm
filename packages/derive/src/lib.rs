@@ -134,11 +134,11 @@ fn expand_bindings(crate_path: &syn::Path, mut function: syn::ItemFn) -> TokenSt
     if fn_name == "migrate_with_info" {
         return syn::Error::new_spanned(
             &function.sig.ident,
-            r#"To use the new migrate function signature, you should provide a "migrate" entry point, not "migrate_with_info""#,
+            r#"To use the new migrate function signature, you should provide a "migrate" entry point with 4 arguments, not "migrate_with_info""#,
         ).into_compile_error();
     }
 
-    // Migrate entry point can take 2 or 3 arguments
+    // Migrate entry point can take 2 or 3 arguments (not counting deps)
     let do_call = if fn_name == "migrate" && args == 3 {
         format_ident!("do_migrate_with_info")
     } else {
