@@ -166,11 +166,8 @@ impl<Memo: AddDstCallbackPossible, TransferType> TransferMsgBuilderV2<Memo, Tran
     }
 }
 
-impl<Memo: ForwardingPossible> TransferMsgBuilderV2<Memo, EmptyTransferType> {
-    /// Adds forwarding data.
-    /// It is worth to notice that the builder does not allow to add forwarding data along with
-    /// source callback. It is discouraged in the IBC docs:
-    /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
+impl<Memo> TransferMsgBuilderV2<Memo, EmptyTransferType> {
+    /// Creates a direct transfer without forwarding data.
     pub fn with_direct_transfer(
         self,
         channel_id: String,
@@ -188,8 +185,13 @@ impl<Memo: ForwardingPossible> TransferMsgBuilderV2<Memo, EmptyTransferType> {
             memo: self.memo,
         }
     }
+}
 
+impl<Memo: ForwardingPossible> TransferMsgBuilderV2<Memo, EmptyTransferType> {
     /// Adds forwarding data.
+    /// More information can be found in the IBC doc:
+    /// https://ibc.cosmos.network/main/apps/transfer/messages/#msgtransfer
+    ///
     /// It is worth to notice that the builder does not allow to add forwarding data along with
     /// source callback. It is discouraged in the IBC docs:
     /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations
@@ -213,7 +215,10 @@ impl<Memo: ForwardingPossible> TransferMsgBuilderV2<Memo, EmptyTransferType> {
         }
     }
 
-    /// Adds forwarding data.
+    /// Adds forwarding data with an unwinding flag set.
+    /// More information can be found in the IBC doc:
+    /// https://ibc.cosmos.network/main/apps/transfer/messages/#msgtransfer
+    ///
     /// It is worth to notice that the builder does not allow to add forwarding data along with
     /// source callback. It is discouraged in the IBC docs:
     /// https://ibc.cosmos.network/v9/middleware/callbacks/overview/#known-limitations

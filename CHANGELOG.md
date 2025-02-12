@@ -13,8 +13,10 @@ and this project adheres to
 - cosmwasm-std: Implement `From<Uint64> for u{64,128}`,
   `From<Uint128> for u128`, `From<Int64> for i{64,128}`, and
   `From<Int128> for i128` ([#2268])
+- cosmwasm-std: Add ICS-20 TransferV2 ([#2317])
 
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
+[#2317]: https://github.com/CosmWasm/cosmwasm/pull/2317
 
 ## Fixed
 
