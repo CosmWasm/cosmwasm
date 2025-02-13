@@ -28,11 +28,13 @@ and this project adheres to
   `len` argument to allow truncating address data as part of the generation
   process. ([#2155])
 - cosmwasm-vm: Updated wasmer to 5.0.4 ([#2374])
+- cosmwasm-vm: Charge gas for `write_region` ([#2378])
 
 ## Fixed
 
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
+- cosmwasm-vm: Fix CWA-2025-002.
 
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
@@ -41,7 +43,8 @@ and this project adheres to
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
-[#2374]: https://github.com/CosmWasm/cosmwasm/issues/2155
+[#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
+[#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 
 ## [2.2.0] - 2024-12-17
 

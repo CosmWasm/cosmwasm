@@ -478,17 +478,17 @@ where
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&mut self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        read_region(&env.memory(&store), region_ptr, max_length)
+        read_region(env, &mut store, region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        write_region(&env.memory(&store), region_ptr, data)?;
+        write_region(env, &mut store, region_ptr, data)?;
         Ok(())
     }
 
@@ -752,7 +752,7 @@ mod tests {
 
     #[test]
     fn write_and_read_memory_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance_with_gas_limit(CONTRACT, 6_000_000_000);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -763,7 +763,7 @@ mod tests {
             40 * KIB,
             400 * KIB,
             4 * MIB,
-            // disabled for performance reasons, but pass as well
+            // disabled for performance reasons, but pass as well (with much more gas)
             // 40 * MIB,
             // 400 * MIB,
         ];
@@ -914,7 +914,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 21589990);
+        assert_eq!(report2.used_internally, 23938680);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1106,7 +1106,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 21590241);
+        assert_eq!(init_used, 23938931);
     }
 
     #[test]
@@ -1131,7 +1131,7 @@ mod tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 26961511);
+        assert_eq!(execute_used, 29167931);
     }
 
     #[test]
@@ -1174,6 +1174,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 15938086);
+        assert_eq!(query_used, 17327451);
     }
 }
