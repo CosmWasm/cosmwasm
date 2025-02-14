@@ -17,6 +17,8 @@ use super::limiting_tunables::LimitingTunables;
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_PAGES: u32 = 65536;
 
+// This function is hashed and put into the `module_version_discriminator` because it is used as
+// part of the compilation process. If it changes, modules need to be recompiled.
 #[hash_function(const_name = "COST_FUNCTION_HASH")]
 fn cost(operator: &Operator) -> u64 {
     // A flat fee for each operation
@@ -25,13 +27,18 @@ fn cost(operator: &Operator) -> u64 {
     // In https://github.com/CosmWasm/cosmwasm/pull/1042 a profiler is developed to
     // identify runtime differences between different Wasm operation, but this is not yet
     // precise enough to derive insights from it.
-    //
-    // Please note that any changes to this function need to be accompanied by a bump of
-    // `MODULE_SERIALIZATION_VERSION` to avoid cached modules from using different amounts of gas
-    // compared to newly compiled ones.
     const GAS_PER_OPERATION: u64 = 115;
 
     if is_accounting(operator) {
+        // Accounting operators are operators where the `Metering` middleware injects instructions
+        // to count the gas usage and check for gas exhaustion. Therefore they are more expensive.
+        //
+        // Benchmarks show that the overhead is about 14 times the cost of a normal operation.
+        // To benchmark this, set `GAS_PER_OPERATION = 100` and run the "infinite loop" and
+        // "argon2" benchmarks. From the "Gas used" output, you can calculate the number of
+        // operations and from that together with the run time the expected gas value per operation:
+        // GAS_PER_OP = GAS_TARGET_PER_SEC / (NUM_OPS / RUNTIME_IN_SECS)
+        // This is repeated with different multipliers to bring the two benchmarks closer together.
         GAS_PER_OPERATION * 14
     } else {
         GAS_PER_OPERATION

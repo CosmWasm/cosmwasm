@@ -65,13 +65,8 @@ fn execute_argon2(mem_cost: u32, time_cost: u32) -> Result<Response, ContractErr
 }
 
 fn execute_cpu_loop() -> Result<Response, ContractError> {
-    let mut counter = 0u64;
-    loop {
-        counter += 1;
-        if counter >= 9_000_000_000 {
-            counter = 0;
-        }
-    }
+    #[allow(clippy::empty_loop)]
+    loop {}
 }
 
 fn execute_storage_loop(deps: DepsMut) -> Result<Response, ContractError> {
