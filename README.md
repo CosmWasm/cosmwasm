@@ -5,7 +5,6 @@
 **WebAssembly Smart Contracts for the Cosmos SDK.**
 
 ## Packages
-
 The following packages are maintained here:
 
 | Crate           | Usage                | Download                                                                                                                         | Docs                                                                                  | Coverage                                         |
