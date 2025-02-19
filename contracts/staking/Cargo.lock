@@ -551,7 +551,6 @@ dependencies = [
  "derive_more 1.0.0-beta.6",
  "hex",
  "rand_core",
- "schemars",
  "serde",
  "serde_json",
  "sha2",
