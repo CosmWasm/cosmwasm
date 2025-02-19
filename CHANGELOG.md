@@ -39,6 +39,8 @@ and this project adheres to
 - cosmwasm-vm: The testing functions `cosmwasm_vm::testing::*` do not require
   the contract's message types to implement `schemars::JsonSchema` anymore. This
   makes the use of `schemars` optional for contracts. ([#2201])
+- cosmwasm-std: Remove `schemars::JsonSchema` requirement from `CustomMsg`.
+  ([#2201])
 
 ## Fixed
 
