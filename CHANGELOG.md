@@ -8,6 +8,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
+  enabled. ([#2384])
+
+[#2384]: https://github.com/CosmWasm/cosmwasm/pull/2384
+
 ## [2.2.1] - 2025-02-04
 
 ## Added
