@@ -190,10 +190,11 @@ extern "C" fn ibc_packet_ack(env_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn ibc_packet_timeout(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
-`allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
-you're using Rust, you can implement them by simply
-[re-exporting them from cosmwasm::exports](https://github.com/CosmWasm/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
-`instantiate`, `execute` and `query` must be defined by your contract.
+`allocate` and `deallocate` allow the host to manage data within the Wasm VM. If
+you're using Rust, you get them automatically by using the `cosmwasm-std` crate.
+Your contract can define the other entrypoints using the
+`cosmwasm_std::entry_point` macro to get strong typing instead of raw memory
+offsets.
 
 ### Imports
 
