@@ -31,6 +31,8 @@ and this project adheres to
   process. ([#2155])
 - cosmwasm-vm: Updated wasmer to 5.0.4 ([#2374])
 - cosmwasm-vm: Charge gas for `write_region` ([#2378])
+- cosmwasm-vm: Remove the `cranelift` feature. This was doing nothing since
+  2.2.0 already. ([#2262])
 
 ## Fixed
 
@@ -39,6 +41,7 @@ and this project adheres to
 - cosmwasm-vm: Fix CWA-2025-002.
 
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
+[#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 [#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
