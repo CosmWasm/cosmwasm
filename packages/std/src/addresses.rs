@@ -1,6 +1,7 @@
 use alloc::{borrow::Cow, string::String, vec::Vec};
 use core::fmt;
 use core::ops::Deref;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{
     digest::{Digest, Update},
@@ -27,7 +28,7 @@ use crate::{HexBinary, __internal::forward_ref_partial_eq};
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
 #[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, schemars::JsonSchema,
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
 )]
 pub struct Addr(String);
 
