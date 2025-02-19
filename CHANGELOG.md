@@ -16,6 +16,8 @@ and this project adheres to
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
 - cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
+- cosmwasm-std: Implement downcasting for `Api` trait. This allows using
+  `MockApi::addr_make` from `DepsMut`. ([#2383])
 
 ## Changed
 
@@ -45,6 +47,7 @@ and this project adheres to
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
+[#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
 
 ## [2.2.0] - 2024-12-17
 
