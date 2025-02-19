@@ -45,7 +45,7 @@ fn cost(operator: &Operator) -> u64 {
     }
 }
 
-/// Use Cranelift as the compiler backend if the feature is enabled
+/// Creates a compiler config using Singlepass
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
     wasmer::Singlepass::new()
 }
@@ -108,6 +108,12 @@ mod tests {
         // anything else
         assert_eq!(cost(&Operator::I64Const { value: 7 }), 115);
         assert_eq!(cost(&Operator::I64Extend8S {}), 115);
+    }
+
+    #[test]
+    fn make_compiler_config_returns_singlepass() {
+        let cc = Box::new(make_compiler_config());
+        assert_eq!(cc.compiler().name(), "singlepass");
     }
 
     #[test]
