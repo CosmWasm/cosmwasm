@@ -49,6 +49,7 @@ and this project adheres to
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
+[#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
 
 ## [2.2.0] - 2024-12-17
 
