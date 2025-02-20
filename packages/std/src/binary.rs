@@ -80,7 +80,7 @@ impl fmt::Display for Binary {
 impl fmt::Debug for Binary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Use an output inspired by tuples (https://doc.rust-lang.org/std/fmt/struct.Formatter.html#method.debug_tuple)
-        // but with a custom implementation to avoid the need for an intemediate hex string.
+        // but with a custom implementation to avoid the need for an intermediate hex string.
         write!(f, "Binary(")?;
         for byte in self.0.iter() {
             write!(f, "{byte:02x}")?;
