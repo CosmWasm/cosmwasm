@@ -44,6 +44,8 @@ pub struct ContractInfoResponse {
     pub pinned: bool,
     /// set if this contract has bound an IBC port
     pub ibc_port: Option<String>,
+    /// set if this contract has bound an Eureka port
+    pub eureka_port: Option<String>,
 }
 
 impl QueryResponseType for ContractInfoResponse {}
@@ -54,7 +56,8 @@ impl_response_constructor!(
     creator: Addr,
     admin: Option<Addr>,
     pinned: bool,
-    ibc_port: Option<String>
+    ibc_port: Option<String>,
+    eureka_port: Option<String>
 );
 
 /// The essential data from wasmd's [CodeInfo]/[CodeInfoResponse].
@@ -119,11 +122,12 @@ mod tests {
             admin: Some(Addr::unchecked("king")),
             pinned: true,
             ibc_port: Some("wasm.123".to_string()),
+            eureka_port: Some("wasm.123".to_string()),
         };
         let json = to_json_binary(&response).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
-            r#"{"code_id":67,"creator":"jane","admin":"king","pinned":true,"ibc_port":"wasm.123"}"#,
+            r#"{"code_id":67,"creator":"jane","admin":"king","pinned":true,"ibc_port":"wasm.123","eureka_port":"wasm.123"}"#,
         );
     }
 

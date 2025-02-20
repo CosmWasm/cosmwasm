@@ -18,6 +18,7 @@ and this project adheres to
 - cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
 - cosmwasm-std: Implement downcasting for `Api` trait. This allows using
   `MockApi::addr_make` from `DepsMut`. ([#2383])
+- cosmwasm-std: Added `eureka_port` to `ContractInfoResponse`. ([#2390])
 
 ## Changed
 
@@ -51,6 +52,7 @@ and this project adheres to
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
+[#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
 
 ## [2.2.0] - 2024-12-17
 

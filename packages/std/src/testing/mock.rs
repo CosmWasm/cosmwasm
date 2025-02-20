@@ -2576,6 +2576,7 @@ mod tests {
                             admin: None,
                             pinned: false,
                             ibc_port: None,
+                            eureka_port: None,
                         };
                         SystemResult::Ok(ContractResult::Ok(to_json_binary(&response).unwrap()))
                     } else {
@@ -2656,7 +2657,7 @@ mod tests {
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                 value,
-                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null}"#
+                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null,"eureka_port":null}"#
                     as &[u8]
             ),
             res => panic!("Unexpected result: {res:?}"),
