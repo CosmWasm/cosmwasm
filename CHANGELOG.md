@@ -18,7 +18,7 @@ and this project adheres to
 - cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
 - cosmwasm-std: Implement downcasting for `Api` trait. This allows using
   `MockApi::addr_make` from `DepsMut`. ([#2383])
-- cosmwasm-std: Added `EurekaPort` to `ContractInfoResponse`. ([#2390])
+- cosmwasm-std: Added `eureka_port` to `ContractInfoResponse`. ([#2390])
 
 ## Changed
 
