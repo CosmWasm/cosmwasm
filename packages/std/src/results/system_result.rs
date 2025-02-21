@@ -16,19 +16,19 @@ use crate::SystemError;
 /// Success:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult};
+/// # use cosmwasm_std::{to_json_string, Binary, ContractResult, SystemResult};
 /// let data = Binary::from(b"hello, world");
 /// let result = SystemResult::Ok(ContractResult::Ok(data));
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"ok":"aGVsbG8sIHdvcmxk"}}"#);
+/// assert_eq!(to_json_string(&result).unwrap(), r#"{"ok":{"ok":"aGVsbG8sIHdvcmxk"}}"#);
 /// ```
 ///
 /// Failure:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult, SystemError};
+/// # use cosmwasm_std::{to_json_string, Binary, ContractResult, SystemResult, SystemError};
 /// let error = SystemError::Unknown {};
 /// let result: SystemResult<Binary> = SystemResult::Err(error);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
+/// assert_eq!(to_json_string(&result).unwrap(), r#"{"error":{"unknown":{}}}"#);
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
