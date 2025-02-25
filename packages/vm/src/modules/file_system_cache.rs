@@ -52,7 +52,7 @@ use super::CachedModule;
 ///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
 ///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
 /// - **v6**:<br>
-///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identifier for the modules.
 /// - **v7**:<br>
 ///   New version because of Wasmer 2.3.0 -> 4 upgrade.
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
@@ -268,7 +268,7 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
 }
 
 /// Creates an identifier for the Wasmer `Target` that is used for
-/// cache invalidation. The output is reasonable human friendly to be useable
+/// cache invalidation. The output is reasonable human friendly to be usable
 /// in file path component.
 fn target_id(target: &Target) -> String {
     // Use a custom Hasher implementation to avoid randomization.
