@@ -13,6 +13,9 @@ fixes:
   - "/root/project/::" # reduce root, e.g. "/root/project/path/" => "path/"
 
 flags:
+  cosmwasm-check:
+    paths:
+      - packages/check/
   cosmwasm-core:
     paths:
       - packages/core/
@@ -31,3 +34,9 @@ flags:
   cosmwasm-std:
     paths:
       - packages/std/
+  cosmwasm-vm:
+    paths:
+      - packages/vm/
+  cosmwasm-vm-derive:
+    paths:
+      - packages/vm-derive/
