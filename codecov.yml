@@ -12,15 +12,6 @@ coverage:
 fixes:
   - "/root/project/::" # reduce root, e.g. "/root/project/path/" => "path/"
 
-ignore:
-  - "contracts"
-  - usr/local
-  - "rustc"
-  - "src"
-  - "target"
-  - "tests"
-  - "examples"
-
 flags:
   cosmwasm-core:
     paths:
