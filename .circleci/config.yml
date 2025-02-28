@@ -1187,9 +1187,6 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - coverage-rust-1.84.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Install necessary packages
           command: |
@@ -1217,7 +1214,7 @@ jobs:
           name: Install codecov uploader
           command: |
             #download Codecov wrapper
-            curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/codecov/wrapper/refs/tags/v0.1.0/dist/codecov.sh
+            curl -L --proto '=https' --tlsv1.2 -OsSf https://raw.githubusercontent.com/codecov/wrapper/refs/tags/v0.1.0/dist/codecov.sh
             chmod +x codecov.sh
       - run:
           name: Run tests with coverage
@@ -1249,13 +1246,6 @@ jobs:
             CC_GIT_SERVICE: "github"
             CC_BRANCH: << pipeline.git.branch >>
             CC_SHA: << pipeline.git.revision >>
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: coverage-rust-1.84.1-{{ checksum "Cargo.lock" }}
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:
