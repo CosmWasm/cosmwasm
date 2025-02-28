@@ -1222,8 +1222,9 @@ jobs:
             mkdir reports
 
             cargo llvm-cov --no-report nextest
-            cargo llvm-cov --no-report --doc
-            cargo llvm-cov report --doctests --lcov --output-path reports/lcov.info
+            # cargo llvm-cov --no-report --doc # requires nightly
+            # cargo llvm-cov report --doctests --lcov --output-path reports/lcov.info
+            cargo llvm-cov report --lcov --output-path reports/lcov.info
           environment:
             RUSTFLAGS: "-Clinker=clang -Clink-arg=-fuse-ld=/usr/bin/mold"
             LLVM_PROFILE_FILE: "cosmwasm-%p-%m.profraw"
