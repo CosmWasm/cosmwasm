@@ -26,13 +26,14 @@ use super::num_consts::NumConsts;
 ///
 /// # Examples
 ///
-/// Use `from` to create instances out of primitive uint types or `new` to provide big
-/// endian bytes:
+/// Use `new` to create instances out of i128, `from` for other primitive uint/int types
+/// or `from_be_bytes` to provide big endian bytes:
 ///
 /// ```
 /// # use cosmwasm_std::Int512;
-/// let a = Int512::from(258u128);
-/// let b = Int512::new([
+/// let a = Int512::new(258i128);
+/// let b = Int512::from(258u128);
+/// let c = Int512::from_be_bytes([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -43,6 +44,7 @@ use super::num_consts::NumConsts;
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,
 /// ]);
 /// assert_eq!(a, b);
+/// assert_eq!(a, c);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Int512(#[schemars(with = "String")] pub(crate) I512);
@@ -54,11 +56,33 @@ impl Int512 {
     pub const MAX: Int512 = Int512(I512::MAX);
     pub const MIN: Int512 = Int512(I512::MIN);
 
-    /// Creates a Int512(value) from a big endian representation. It's just an alias for
-    /// `from_be_bytes`.
+    /// Creates a Int512(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
+    ///
+    /// Before CosmWasm 3 this took a byte array as an argument. You can get this behaviour
+    /// with [`from_be_bytes`].
+    ///
+    /// [`from_be_bytes`]: Self::from_be_bytes
     #[inline]
-    pub const fn new(value: [u8; 64]) -> Self {
-        Self::from_be_bytes(value)
+    pub const fn new(value: i128) -> Self {
+        // See https://en.wikipedia.org/wiki/Sign_extension
+        let b = value.to_be_bytes();
+        if value.is_negative() {
+            Self::from_be_bytes([
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
+                b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15],
+            ])
+        } else {
+            Self::from_be_bytes([
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, b[0], b[1], b[2], b[3],
+                b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15],
+            ])
+        }
     }
 
     /// Creates a Int512(0)
@@ -585,7 +609,37 @@ mod tests {
 
     #[test]
     fn int512_new_works() {
-        let num = Int512::new([1; 64]);
+        let num = Int512::new(1);
+        assert_eq!(
+            num.to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 1
+            ]
+        );
+
+        let num = Int512::new(-1);
+        assert_eq!(
+            num.to_be_bytes(),
+            [
+                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            ]
+        );
+
+        for v in [0, 1, -4, 18, 875786576, -11763498739, i128::MAX, i128::MIN] {
+            // From is implemented by bnum, so we test two independent implementations against each other
+            let uut = Int512::new(v);
+            assert_eq!(uut, Int512::from(v));
+        }
+    }
+
+    #[test]
+    fn int512_from_be_bytes_works() {
+        let num = Int512::from_be_bytes([1; 64]);
         let a: [u8; 64] = num.to_be_bytes();
         assert_eq!(a, [1; 64]);
 
@@ -595,14 +649,14 @@ mod tests {
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Int512::new(be_bytes);
+        let num = Int512::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 64] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
     }
 
     #[test]
     fn int512_not_works() {
-        let num = Int512::new([1; 64]);
+        let num = Int512::from_be_bytes([1; 64]);
         let a = (!num).to_be_bytes();
         assert_eq!(a, [254; 64]);
 
@@ -643,12 +697,10 @@ mod tests {
         ];
 
         // These should all be the same.
-        let num1 = Int512::new(be_bytes);
-        let num2 = Int512::from_be_bytes(be_bytes);
-        let num3 = Int512::from_le_bytes(le_bytes);
-        assert_eq!(num1, Int512::from(65536u32 + 512 + 3));
-        assert_eq!(num1, num2);
-        assert_eq!(num1, num3);
+        let a = Int512::from_be_bytes(be_bytes);
+        let b = Int512::from_le_bytes(le_bytes);
+        assert_eq!(a, Int512::from(65536u32 + 512 + 3));
+        assert_eq!(a, b);
     }
 
     #[test]
@@ -1028,14 +1080,14 @@ mod tests {
 
     #[test]
     fn int512_shr_works() {
-        let original = Int512::new([
+        let original = Int512::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
         ]);
 
-        let shifted = Int512::new([
+        let shifted = Int512::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,

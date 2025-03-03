@@ -41,8 +41,8 @@ and this project adheres to
   makes the use of `schemars` optional for contracts. ([#2201])
 - cosmwasm-std: Remove `schemars::JsonSchema` requirement from `CustomMsg`.
   ([#2201])
-- cosmwasm-std: `Int256::new` now takes an `i128` argument instead of bytes. Use
-  `Int256::from_be_bytes` if you need the old behaviour.
+- cosmwasm-std: `Int256::new`/`Int512::new` now take an `i128` argument instead
+  of bytes. Use `::from_be_bytes` if you need the old behaviour.
 
 ## Fixed
 
