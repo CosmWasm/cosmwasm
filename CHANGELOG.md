@@ -42,9 +42,10 @@ and this project adheres to
 - cosmwasm-std: Remove `schemars::JsonSchema` requirement from `CustomMsg`.
   ([#2201])
 - cosmwasm-std: `Int256::new`/`Int512::new` now take an `i128` argument instead
-  of bytes. Use `::from_be_bytes` if you need the old behaviour.
+  of bytes. Use `::from_be_bytes` if you need the old behaviour. ([#2367])
 - cosmwasm-std: `Uint256::new`/`Uint512::new` now take an `u128` argument
   instead of bytes. Use `::from_be_bytes` if you need the old behaviour.
+  ([#2367])
 
 ## Fixed
 
@@ -62,6 +63,7 @@ and this project adheres to
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
+[#2367]: https://github.com/CosmWasm/cosmwasm/issues/2367
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
