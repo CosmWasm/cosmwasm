@@ -43,8 +43,8 @@ and this project adheres to
   ([#2201])
 - cosmwasm-std: `Int256::new`/`Int512::new` now take an `i128` argument instead
   of bytes. Use `::from_be_bytes` if you need the old behaviour.
-- cosmwasm-std: `Uint256::new` now takes an `u128` argument instead of bytes.
-  Use `::from_be_bytes` if you need the old behaviour.
+- cosmwasm-std: `Uint256::new`/`Uint512::new` now take an `u128` argument
+  instead of bytes. Use `::from_be_bytes` if you need the old behaviour.
 
 ## Fixed
 
