@@ -28,13 +28,14 @@ use super::num_consts::NumConsts;
 ///
 /// # Examples
 ///
-/// Use `from` to create instances out of primitive uint types or `new` to provide big
-/// endian bytes:
+/// Use `new` to create instances out of u128, `from` for other primitive uint types
+/// or `from_be_bytes` to provide big endian bytes:
 ///
 /// ```
 /// # use cosmwasm_std::Uint512;
-/// let a = Uint512::from(258u128);
-/// let b = Uint512::new([
+/// let a = Uint512::new(258u128);
+/// let b = Uint512::from(258u16);
+/// let c = Uint512::from_be_bytes([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -45,6 +46,7 @@ use super::num_consts::NumConsts;
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,
 /// ]);
 /// assert_eq!(a, b);
+/// assert_eq!(a, c);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Uint512(#[schemars(with = "String")] pub(crate) U512);
@@ -56,10 +58,21 @@ impl Uint512 {
     pub const MAX: Uint512 = Uint512(U512::MAX);
     pub const MIN: Uint512 = Uint512(U512::ZERO);
 
-    /// Creates a Uint512(value) from a big endian representation. It's just an alias for
-    /// `from_be_bytes`.
-    pub const fn new(value: [u8; 64]) -> Self {
-        Self::from_be_bytes(value)
+    /// Creates a Uint512(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
+    ///
+    /// Before CosmWasm 3 this took a byte array as an argument. You can get this behaviour
+    /// with [`from_be_bytes`].
+    ///
+    /// [`from_be_bytes`]: Self::from_be_bytes
+    pub const fn new(value: u128) -> Self {
+        let b = value.to_be_bytes();
+        Self::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, b[0], b[1], b[2], b[3], b[4],
+            b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15],
+        ])
     }
 
     /// Creates a Uint512(0)
@@ -645,7 +658,26 @@ mod tests {
 
     #[test]
     fn uint512_new_works() {
-        let num = Uint512::new([1; 64]);
+        let num = Uint512::new(1);
+        assert_eq!(
+            num.to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 1
+            ]
+        );
+
+        for v in [0, 1, 18, 875786576, u128::MAX] {
+            // From is implemented by bnum, so we test two independent implementations against each other
+            let uut = Uint512::new(v);
+            assert_eq!(uut, Uint512::from(v));
+        }
+    }
+
+    #[test]
+    fn uint512_from_be_bytes_works() {
+        let num = Uint512::from_be_bytes([1; 64]);
         let a: [u8; 64] = num.to_be_bytes();
         assert_eq!(a, [1; 64]);
 
@@ -655,14 +687,14 @@ mod tests {
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Uint512::new(be_bytes);
+        let num = Uint512::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 64] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
     }
 
     #[test]
     fn uint512_not_works() {
-        let num = Uint512::new([1; 64]);
+        let num = Uint512::from_be_bytes([1; 64]);
         let a = (!num).to_be_bytes();
         assert_eq!(a, [254; 64]);
 
@@ -712,12 +744,10 @@ mod tests {
         ];
 
         // These should all be the same.
-        let num1 = Uint512::new(be_bytes);
-        let num2 = Uint512::from_be_bytes(be_bytes);
-        let num3 = Uint512::from_le_bytes(le_bytes);
-        assert_eq!(num1, Uint512::from(65536u32 + 512 + 3));
-        assert_eq!(num1, num2);
-        assert_eq!(num1, num3);
+        let a = Uint512::from_be_bytes(be_bytes);
+        let b = Uint512::from_le_bytes(le_bytes);
+        assert_eq!(a, Uint512::from(65536u32 + 512 + 3));
+        assert_eq!(a, b);
     }
 
     #[test]
@@ -1163,14 +1193,14 @@ mod tests {
 
     #[test]
     fn uint512_shr_works() {
-        let original = Uint512::new([
+        let original = Uint512::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
         ]);
 
-        let shifted = Uint512::new([
+        let shifted = Uint512::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
@@ -1188,14 +1218,14 @@ mod tests {
 
     #[test]
     fn uint512_shl_works() {
-        let original = Uint512::new([
+        let original = Uint512::from_be_bytes([
             64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
         ]);
 
-        let shifted = Uint512::new([
+        let shifted = Uint512::from_be_bytes([
             2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
