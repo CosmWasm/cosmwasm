@@ -825,9 +825,9 @@ pub fn do_debug<A: BackendApi + 'static, S: Storage + 'static, Q: Querier + 'sta
     let (data, mut store) = env.data_and_store_mut();
 
     charge_host_call_gas(data, &mut store)?;
+    let message_data = read_region(data, &mut store, message_ptr, MAX_LENGTH_DEBUG)?;
 
     if let Some(debug_handler) = data.debug_handler() {
-        let message_data = read_region(data, &mut store, message_ptr, MAX_LENGTH_DEBUG)?;
         let msg = String::from_utf8_lossy(&message_data);
         let gas_remaining = data.get_gas_left(&mut store);
         debug_handler.borrow_mut()(
