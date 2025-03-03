@@ -1,4 +1,5 @@
 use core::fmt;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::Uint64;
@@ -22,17 +23,7 @@ use crate::Uint64;
 /// assert_eq!(ts.subsec_nanos(), 202);
 /// ```
 #[derive(
-    Serialize,
-    Deserialize,
-    Copy,
-    Clone,
-    Default,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    schemars::JsonSchema,
+    Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
 )]
 pub struct Timestamp(Uint64);
 
