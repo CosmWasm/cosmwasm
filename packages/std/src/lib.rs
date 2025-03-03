@@ -205,7 +205,7 @@ pub use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 /// ```
 ///
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
-/// types that implement `DeserializeOwned + JsonSchema`.
+/// types that implement `DeserializeOwned`.
 ///
 /// ## Set the version of the state of your contract
 ///

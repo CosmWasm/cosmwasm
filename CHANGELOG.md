@@ -36,6 +36,9 @@ and this project adheres to
   2.2.0 already. ([#2262])
 - cosmwasm-std: Remove previously deprecated `from_slice`, `from_binary`,
   `to_vec` and `to_binary`. ([#2156])
+- cosmwasm-vm: The testing functions `cosmwasm_vm::testing::*` do not require
+  the contract's message types to implement `schemars::JsonSchema` anymore. This
+  makes the use of `schemars` optional for contracts. ([#2201])
 
 ## Fixed
 
@@ -45,6 +48,7 @@ and this project adheres to
 
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
+[#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
 [#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269

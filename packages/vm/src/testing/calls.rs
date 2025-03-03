@@ -1,7 +1,6 @@
 //! This file has some helpers for integration tests.
 //! They should be imported via full path to ensure there is no confusion
 //! use cosmwasm_vm::testing::X
-use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
 use cosmwasm_std::{
@@ -40,7 +39,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    M: Serialize + JsonSchema,
+    M: Serialize,
     U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
@@ -60,7 +59,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    M: Serialize + JsonSchema,
+    M: Serialize,
     U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
@@ -79,7 +78,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    M: Serialize + JsonSchema,
+    M: Serialize,
     U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
@@ -99,7 +98,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    M: Serialize + JsonSchema,
+    M: Serialize,
     U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
@@ -118,7 +117,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    M: Serialize + JsonSchema,
+    M: Serialize,
     U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
@@ -154,7 +153,7 @@ where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    M: Serialize + JsonSchema,
+    M: Serialize,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_query(instance, &env, &serialized_msg).expect("VM error")
