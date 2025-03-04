@@ -1189,7 +1189,7 @@ jobs:
           command: |
             apk update
             # needed for grcov and compiling tests
-            apk add --no-cache mold clang curl llvm19-dev zlib-static clang19-static
+            apk add --no-cache mold clang curl llvm19-dev zlib-static clang19-static lcov
       - run:
           name: Install cargo-llvm-cov and cargo-nextest
           command: |
@@ -1212,19 +1212,46 @@ jobs:
       - run:
           name: Run tests with coverage
           command: |
-            cargo llvm-cov --no-report nextest
-            cargo llvm-cov report --lcov --output-path lcov.info
+            # Generate full coverage report
+            cargo llvm-cov nextest --lcov --output-path lcov.info
+
+            # List of package directories and their flags
+            set -- \
+              "check:cosmwasm-check" \
+              "core:cosmwasm-core" \
+              "crypto:cosmwasm-crypto" \
+              "derive:cosmwasm-derive" \
+              "schema:cosmwasm-schema" \
+              "schema-derive:cosmwasm-schema-derive" \
+              "std:cosmwasm-std" \
+              "vm:cosmwasm-vm" \
+              "vm-derive:cosmwasm-vm-derive"
+
+            # Process each package-flag pair
+            for entry in "$@"; do
+              dir="${entry%%:*}"
+              flag="${entry#*:}"
+
+              echo "Processing directory: $dir with flag: $flag"
+
+              # Extract coverage for specific directory using lcov
+              lcov \
+                --ignore-errors empty,unused \
+                --extract lcov.info "packages/$dir/**/*" \
+                --output-file "lcov-$dir.info"
+
+              # Upload filtered report
+              ./codecov upload-coverage -t "$CODECOV_TOKEN" \
+                --disable-search \
+                --git-service github \
+                --pr "${CIRCLE_PULL_REQUEST##*/}" \
+                --branch "$CIRCLE_BRANCH" \
+                --sha "$CIRCLE_SHA1" \
+                -f "lcov-$dir.info" \
+                -F "$flag"
+            done
           environment:
             RUSTFLAGS: "-Clinker=clang -Clink-arg=-fuse-ld=/usr/bin/mold"
-      - run:
-          name: Upload coverage to Codecov
-          command: |
-            ./codecov upload-coverage -t "$CODECOV_TOKEN" \
-              --git-service github \
-              --pr ${CIRCLE_PULL_REQUEST##*/} \
-              --branch "$CIRCLE_BRANCH" \
-              --sha $CIRCLE_SHA1 \
-              -f lcov.info
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:
