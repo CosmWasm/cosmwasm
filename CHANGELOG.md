@@ -46,6 +46,9 @@ and this project adheres to
 - cosmwasm-std: `Uint256::new`/`Uint512::new` now take an `u128` argument
   instead of bytes. Use `::from_be_bytes` if you need the old behaviour.
   ([#2367])
+- cosmwasm-std: Deprecate `{Decimal,Decimal256}::raw` and
+  `{SignedDecimal,SignedDecimal256}::raw` in favour of e.g.
+  `Decimal::new(Uint128::new(value))`. ([#2399])
 
 ## Fixed
 
@@ -68,6 +71,7 @@ and this project adheres to
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
 [#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
+[#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 
 ## [2.2.0] - 2024-12-17
 

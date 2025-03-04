@@ -59,6 +59,10 @@ impl Decimal {
 
     /// Creates a Decimal(Uint128(value))
     /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    #[deprecated(
+        since = "3.0.0",
+        note = "Use Decimal::new(Uint128::new(value)) instead"
+    )]
     pub const fn raw(value: u128) -> Self {
         Self(Uint128::new(value))
     }
@@ -805,6 +809,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn decimal_raw() {
         let value = 300u128;
         assert_eq!(Decimal::raw(value).0.u128(), value);
@@ -867,7 +872,7 @@ mod tests {
     fn decimal_try_from_signed_works() {
         assert_eq!(
             Decimal::try_from(SignedDecimal::MAX).unwrap(),
-            Decimal::raw(SignedDecimal::MAX.atomics().i128() as u128)
+            Decimal::new(Uint128::new(SignedDecimal::MAX.atomics().i128() as u128))
         );
         assert_eq!(
             Decimal::try_from(SignedDecimal::zero()).unwrap(),
