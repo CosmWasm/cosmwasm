@@ -80,6 +80,7 @@ impl SignedDecimal256 {
     /// # use cosmwasm_std::{SignedDecimal256, Int256};
     /// assert_eq!(SignedDecimal256::new(Int256::one()).to_string(), "0.000000000000000001");
     /// ```
+    #[inline]
     pub const fn new(value: Int256) -> Self {
         Self(value)
     }

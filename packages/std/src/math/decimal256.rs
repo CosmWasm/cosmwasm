@@ -57,6 +57,7 @@ impl Decimal256 {
     /// let value = Decimal256::new(atoms);
     /// assert_eq!(value.to_string(), "141183460469231731687.303715884105727125");
     /// ```
+    #[inline]
     pub const fn new(value: Uint256) -> Self {
         Self(value)
     }

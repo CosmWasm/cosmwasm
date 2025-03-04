@@ -68,6 +68,7 @@ impl SignedDecimal {
     /// # use cosmwasm_std::{SignedDecimal, Int128};
     /// assert_eq!(SignedDecimal::new(Int128::one()).to_string(), "0.000000000000000001");
     /// ```
+    #[inline]
     pub const fn new(value: Int128) -> Self {
         Self(value)
     }
