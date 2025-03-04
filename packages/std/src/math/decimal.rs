@@ -43,6 +43,15 @@ impl Decimal {
 
     /// Creates a Decimal(value)
     /// This is equivalent to `Decimal::from_atomics(value, 18)` but usable in a const context.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Uint128, Decimal};
+    /// let atoms = Uint128::new(141_183_460_469_231_731_687_303_715_884_105_727_125);
+    /// let value = Decimal::new(atoms);
+    /// assert_eq!(value.to_string(), "141183460469231731687.303715884105727125");
+    /// ```
     pub const fn new(value: Uint128) -> Self {
         Self(value)
     }

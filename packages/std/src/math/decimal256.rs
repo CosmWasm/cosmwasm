@@ -48,6 +48,15 @@ impl Decimal256 {
 
     /// Creates a Decimal256 from Uint256
     /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Uint256, Decimal256};
+    /// let atoms = Uint256::new(141_183_460_469_231_731_687_303_715_884_105_727_125);
+    /// let value = Decimal256::new(atoms);
+    /// assert_eq!(value.to_string(), "141183460469231731687.303715884105727125");
+    /// ```
     pub const fn new(value: Uint256) -> Self {
         Self(value)
     }
