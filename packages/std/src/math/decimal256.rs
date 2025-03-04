@@ -64,6 +64,10 @@ impl Decimal256 {
 
     /// Creates a Decimal256 from u128
     /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.
+    #[deprecated(
+        since = "3.0.0",
+        note = "Use Decimal256::new(Uint256::new(value)) instead"
+    )]
     pub const fn raw(value: u128) -> Self {
         Self(Uint256::from_u128(value))
     }
@@ -808,6 +812,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn decimal256_raw() {
         let value = 300u128;
         let expected = Uint256::from(value);

@@ -98,6 +98,10 @@ impl SignedDecimal256 {
     /// # use cosmwasm_std::SignedDecimal256;
     /// assert_eq!(SignedDecimal256::raw(1234i128).to_string(), "0.000000000000001234");
     /// ```
+    #[deprecated(
+        since = "3.0.0",
+        note = "Use SignedDecimal256::new(Int256::new(value)) instead"
+    )]
     pub const fn raw(value: i128) -> Self {
         Self(Int256::from_i128(value))
     }
@@ -936,6 +940,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn signed_decimal_256_raw() {
         let value = 300i128;
         assert_eq!(SignedDecimal256::raw(value).0, Int256::from(value));

@@ -86,6 +86,10 @@ impl SignedDecimal {
     /// # use cosmwasm_std::SignedDecimal;
     /// assert_eq!(SignedDecimal::raw(1234i128).to_string(), "0.000000000000001234");
     /// ```
+    #[deprecated(
+        since = "3.0.0",
+        note = "Use SignedDecimal::new(Int128::new(value)) instead"
+    )]
     pub const fn raw(value: i128) -> Self {
         Self(Int128::new(value))
     }
@@ -910,6 +914,8 @@ impl de::Visitor<'_> for SignedDecimalVisitor {
 
 #[cfg(test)]
 mod tests {
+    use crate::Uint128;
+
     use super::*;
 
     use alloc::vec::Vec;
@@ -928,6 +934,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn signed_decimal_raw() {
         let value = 300i128;
         assert_eq!(SignedDecimal::raw(value).0.i128(), value);
@@ -1461,8 +1468,8 @@ mod tests {
             SignedDecimal::try_from(Decimal::MAX).unwrap_err(),
             SignedDecimalRangeExceeded
         );
-        let max = Decimal::raw(SignedDecimal::MAX.atomics().i128() as u128);
-        let too_big = max + Decimal::raw(1);
+        let max = Decimal::new(Uint128::new(SignedDecimal::MAX.atomics().i128() as u128));
+        let too_big = max + Decimal::new(Uint128::one());
         assert_eq!(
             SignedDecimal::try_from(too_big).unwrap_err(),
             SignedDecimalRangeExceeded
