@@ -1954,7 +1954,7 @@ All helper functions have been moved into a new `cosmwasm-schema` package.
 - Remove `serde_json` `[dev-dependency]` if there, as cosmwasm-schema will
   handle JSON output internally.
 - Update `examples/schema.rs` to look
-  [more like queue](https://github.com/CosmWasm/cosmwasm/blob/main/contracts/queue/src/bin/schema.rs),
+  [more like queue](https://github.com/CosmWasm/cosmwasm/blob/v0.8.0/contracts/queue/examples/schema.rs),
   but replacing all the imports and type names with those you currently have.
 - Regenerate schemas with `cargo schema`
 
