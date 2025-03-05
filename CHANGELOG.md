@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.2.2] - 2025-03-05
+
 ### Changed
 
 - cosmwasm-std: Deprecate `abort` feature. The panic handler is now always
@@ -984,7 +986,8 @@ The CHANGELOG for versions before 1.0.0 was moved to
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/CosmWasm/cosmwasm/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.3...v2.2.0
 [2.1.3]: https://github.com/CosmWasm/cosmwasm/compare/v2.1.2...v2.1.3
