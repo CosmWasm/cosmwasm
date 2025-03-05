@@ -10,8 +10,8 @@ release = false
 
 [dependencies]
 schemars = "0.8.3"
-cosmwasm-std = { path = "../std", version = "1.5.10", features = ["cosmwasm_1_4", "staking", "stargate", "ibc3"] }
-cosmwasm-schema = { path = "../schema", version = "1.5.10" }
+cosmwasm-std = { path = "../std", version = "1.5.11", features = ["cosmwasm_1_4", "staking", "stargate", "ibc3"] }
+cosmwasm-schema = { path = "../schema", version = "1.5.11" }
 anyhow = "1"
 Inflector = "0.11.4"
 indenter = "0.3.3"
