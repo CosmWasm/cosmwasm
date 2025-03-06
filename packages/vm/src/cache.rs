@@ -19,7 +19,9 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
-use crate::static_analysis::{Entrypoint, ExportInfo, REQUIRED_IBC_EXPORTS};
+use crate::static_analysis::{
+    Entrypoint, ExportInfo, REQUIRED_IBC_EXPORTS, REQUIRED_IBC_V2_EXPORT,
+};
 use crate::wasm_backend::{compile, make_compiling_engine};
 
 const STATE_DIR: &str = "state";
@@ -100,6 +102,9 @@ pub struct AnalysisReport {
     /// `true` if and only if all [`REQUIRED_IBC_EXPORTS`] exist as exported functions.
     /// This does not guarantee they are functional or even have the correct signatures.
     pub has_ibc_entry_points: bool,
+    /// `true` if and only if all [`REQUIRED_IBC_V2_EXPORT`] exist as exported functions.
+    /// This does not guarantee they are functional or even have the correct signatures.
+    pub has_ibc_v2_entry_points: bool,
     /// A set of all entrypoints that are exported by the contract.
     pub entrypoints: BTreeSet<Entrypoint>,
     /// The set of capabilities the contract requires.
@@ -337,6 +342,7 @@ where
             has_ibc_entry_points: REQUIRED_IBC_EXPORTS
                 .iter()
                 .all(|required| exports.contains(required.as_ref())),
+            has_ibc_v2_entry_points: exports.contains(REQUIRED_IBC_V2_EXPORT.as_ref()),
             entrypoints,
             required_capabilities: required_capabilities_from_module(&module)
                 .into_iter()
@@ -624,6 +630,7 @@ mod tests {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+    static IBC_V2_CONTRACT: &[u8] = include_bytes!("../testdata/ibcv2.wasm");
     static EMPTY_CONTRACT: &[u8] = include_bytes!("../testdata/empty.wasm");
     // Invalid because it doesn't contain required memory and exports
     static INVALID_CONTRACT_WAT: &str = r#"(module
@@ -650,6 +657,17 @@ mod tests {
     fn make_stargate_testing_options() -> CacheOptions {
         let mut capabilities = default_capabilities();
         capabilities.insert("stargate".into());
+        CacheOptions {
+            base_dir: TempDir::new().unwrap().into_path(),
+            available_capabilities: capabilities,
+            memory_cache_size_bytes: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit_bytes: TESTING_MEMORY_LIMIT,
+        }
+    }
+
+    fn make_ibc_v2_testing_options() -> CacheOptions {
+        let mut capabilities = default_capabilities();
+        capabilities.insert("ibcv2".into());
         CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),
             available_capabilities: capabilities,
@@ -1444,6 +1462,7 @@ mod tests {
             report1,
             AnalysisReport {
                 has_ibc_entry_points: false,
+                has_ibc_v2_entry_points: false,
                 entrypoints: BTreeSet::from([
                     E::Instantiate,
                     E::Migrate,
@@ -1465,6 +1484,7 @@ mod tests {
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
+                has_ibc_v2_entry_points: false,
                 entrypoints: ibc_contract_entrypoints,
                 required_capabilities: BTreeSet::from_iter([
                     "iterator".to_string(),
@@ -1480,6 +1500,7 @@ mod tests {
             report3,
             AnalysisReport {
                 has_ibc_entry_points: false,
+                has_ibc_v2_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
                 contract_migrate_version: None,
@@ -1499,9 +1520,30 @@ mod tests {
             report4,
             AnalysisReport {
                 has_ibc_entry_points: false,
+                has_ibc_v2_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
                 contract_migrate_version: Some(21),
+            }
+        );
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_ibc_v2_testing_options()).unwrap() };
+        let checksum5 = cache.store_code(IBC_V2_CONTRACT, true, true).unwrap();
+        let report5 = cache.analyze(&checksum5).unwrap();
+        let mut ibc_v2_contract_entrypoints = BTreeSet::from([E::Instantiate, E::Query]);
+        ibc_v2_contract_entrypoints.extend([REQUIRED_IBC_V2_EXPORT]);
+        assert_eq!(
+            report5,
+            AnalysisReport {
+                has_ibc_entry_points: false,
+                has_ibc_v2_entry_points: true,
+                entrypoints: ibc_v2_contract_entrypoints,
+                required_capabilities: BTreeSet::from_iter([
+                    "iterator".to_string(),
+                    "ibcv2".to_string()
+                ]),
+                contract_migrate_version: None,
             }
         );
     }
