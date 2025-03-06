@@ -53,6 +53,7 @@ impl Decimal {
     /// assert_eq!(value.to_string(), "141183460469231731687.303715884105727125");
     /// ```
     #[inline]
+    #[must_use]
     pub const fn new(value: Uint128) -> Self {
         Self(value)
     }

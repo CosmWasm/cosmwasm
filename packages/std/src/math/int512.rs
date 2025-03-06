@@ -65,6 +65,7 @@ impl Int512 {
     ///
     /// [`from_be_bytes`]: Self::from_be_bytes
     #[inline]
+    #[must_use]
     pub const fn new(value: i128) -> Self {
         Self::from_be_bytes(grow_be_int(value.to_be_bytes()))
     }

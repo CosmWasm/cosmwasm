@@ -66,6 +66,7 @@ impl Uint512 {
     /// with [`from_be_bytes`].
     ///
     /// [`from_be_bytes`]: Self::from_be_bytes
+    #[must_use]
     pub const fn new(value: u128) -> Self {
         let b = value.to_be_bytes();
         Self::from_be_bytes([

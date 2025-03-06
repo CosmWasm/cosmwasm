@@ -47,6 +47,7 @@ impl Int128 {
     ///
     /// This method is less flexible than `from` but can be called in a const context.
     #[inline]
+    #[must_use]
     pub const fn new(value: i128) -> Self {
         Self(value)
     }
