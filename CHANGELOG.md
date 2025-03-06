@@ -49,6 +49,8 @@ and this project adheres to
 - cosmwasm-std: Deprecate `{Decimal,Decimal256}::raw` and
   `{SignedDecimal,SignedDecimal256}::raw` in favour of e.g.
   `Decimal::new(Uint128::new(value))`. ([#2399])
+- cosmwasm-std: Deprecate `Uint256::from_u128` and `Int256::from_i128` in favour
+  of `::new`. ([#2399])
 
 ## Fixed
 

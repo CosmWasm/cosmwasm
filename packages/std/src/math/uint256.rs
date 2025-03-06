@@ -126,21 +126,16 @@ impl Uint256 {
     /// A conversion from `u128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
     #[must_use]
-    pub const fn from_u128(num: u128) -> Self {
-        let bytes = num.to_le_bytes();
-
-        Self::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        ])
+    #[deprecated(since = "3.0.0", note = "Use Uint256::new(value) instead")]
+    pub const fn from_u128(value: u128) -> Self {
+        Self::new(value)
     }
 
     /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
     #[must_use]
     pub const fn from_uint128(num: Uint128) -> Self {
-        Self::from_u128(num.u128())
+        Self::new(num.u128())
     }
 
     /// Returns a copy of the number as big endian bytes.
@@ -1103,6 +1098,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn uint256_from_u128() {
         assert_eq!(
             Uint256::from_u128(123u128),

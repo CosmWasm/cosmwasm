@@ -37,9 +37,9 @@ pub struct SignedDecimal256RangeExceeded;
 
 impl SignedDecimal256 {
     const DECIMAL_FRACTIONAL: Int256 = // 1*10**18
-        Int256::from_i128(1_000_000_000_000_000_000);
+        Int256::new(1_000_000_000_000_000_000);
     const DECIMAL_FRACTIONAL_SQUARED: Int256 = // 1*10**36
-        Int256::from_i128(1_000_000_000_000_000_000_000_000_000_000_000_000);
+        Int256::new(1_000_000_000_000_000_000_000_000_000_000_000_000);
 
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
@@ -104,7 +104,7 @@ impl SignedDecimal256 {
         note = "Use SignedDecimal256::new(Int256::new(value)) instead"
     )]
     pub const fn raw(value: i128) -> Self {
-        Self(Int256::from_i128(value))
+        Self(Int256::new(value))
     }
 
     /// Create a 1.0 SignedDecimal256
@@ -117,7 +117,7 @@ impl SignedDecimal256 {
     #[inline]
     pub const fn negative_one() -> Self {
         // -DECIMAL_FRACTIONAL
-        Self(Int256::from_i128(-1_000_000_000_000_000_000))
+        Self(Int256::new(-1_000_000_000_000_000_000))
     }
 
     /// Create a 0.0 SignedDecimal256
@@ -926,7 +926,7 @@ mod tests {
 
     #[test]
     fn try_from_integer() {
-        let int = Int256::from_i128(0xDEADBEEF);
+        let int = Int256::new(0xDEADBEEF);
         let decimal = SignedDecimal256::try_from(int).unwrap();
         assert_eq!(int.to_string(), decimal.to_string());
     }
@@ -1481,7 +1481,7 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal256::from(SignedDecimal::MAX),
-            SignedDecimal256::new(Int256::from_i128(i128::MAX))
+            SignedDecimal256::new(Int256::new(i128::MAX))
         );
         assert_eq!(
             SignedDecimal256::from(SignedDecimal::percent(-50)),
@@ -1489,7 +1489,7 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal256::from(SignedDecimal::MIN),
-            SignedDecimal256::new(Int256::from_i128(i128::MIN))
+            SignedDecimal256::new(Int256::new(i128::MIN))
         );
     }
 
