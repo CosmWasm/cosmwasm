@@ -93,8 +93,9 @@ impl Int256 {
 
     /// A conversion from `i128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
-    pub const fn from_i128(v: i128) -> Self {
-        Self::from_be_bytes(grow_be_int(v.to_be_bytes()))
+    #[deprecated(since = "3.0.0", note = "Use Int256::new(value) instead")]
+    pub const fn from_i128(value: i128) -> Self {
+        Self::new(value)
     }
 
     #[must_use]
@@ -789,6 +790,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn int256_from_i128() {
         assert_eq!(Int256::from_i128(123i128), Int256::from_str("123").unwrap());
 
@@ -1092,7 +1094,7 @@ mod tests {
 
     #[test]
     fn int256_checked_multiply_ratio_works() {
-        let base = Int256::from_i128(500);
+        let base = Int256::new(500);
 
         // factor 1/1
         assert_eq!(base.checked_multiply_ratio(1i128, 1i128).unwrap(), base);
@@ -1109,38 +1111,38 @@ mod tests {
         // factor 3/2
         assert_eq!(
             base.checked_multiply_ratio(3i128, 2i128).unwrap(),
-            Int256::from_i128(750)
+            Int256::new(750)
         );
         assert_eq!(
             base.checked_multiply_ratio(333333i128, 222222i128).unwrap(),
-            Int256::from_i128(750)
+            Int256::new(750)
         );
 
         // factor 2/3 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(2i128, 3i128).unwrap(),
-            Int256::from_i128(333)
+            Int256::new(333)
         );
         assert_eq!(
             base.checked_multiply_ratio(222222i128, 333333i128).unwrap(),
-            Int256::from_i128(333)
+            Int256::new(333)
         );
 
         // factor 5/6 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(5i128, 6i128).unwrap(),
-            Int256::from_i128(416)
+            Int256::new(416)
         );
         assert_eq!(
             base.checked_multiply_ratio(100i128, 120i128).unwrap(),
-            Int256::from_i128(416)
+            Int256::new(416)
         );
     }
 
     #[test]
     fn int256_checked_multiply_ratio_does_not_panic() {
         assert_eq!(
-            Int256::from_i128(500i128).checked_multiply_ratio(1i128, 0i128),
+            Int256::new(500i128).checked_multiply_ratio(1i128, 0i128),
             Err(CheckedMultiplyRatioError::DivideByZero),
         );
         assert_eq!(
