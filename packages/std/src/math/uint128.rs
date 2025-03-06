@@ -54,6 +54,8 @@ impl Uint128 {
     /// Creates a Uint128(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
+    #[inline]
+    #[must_use]
     pub const fn new(value: u128) -> Self {
         Uint128(value)
     }

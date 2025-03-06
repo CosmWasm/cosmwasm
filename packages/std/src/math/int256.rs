@@ -29,19 +29,21 @@ use super::num_consts::NumConsts;
 ///
 /// # Examples
 ///
-/// Use `from` to create instances out of primitive uint types or `new` to provide big
-/// endian bytes:
+/// Use `new` to create instances out of i128, `from` for other primitive uint/int types
+/// or `from_be_bytes` to provide big endian bytes:
 ///
 /// ```
 /// # use cosmwasm_std::Int256;
-/// let a = Int256::from(258u128);
-/// let b = Int256::new([
+/// let a = Int256::new(258i128);
+/// let b = Int256::from(258u16);
+/// let c = Int256::from_be_bytes([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,
 /// ]);
 /// assert_eq!(a, b);
+/// assert_eq!(a, c);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Int256(#[schemars(with = "String")] pub(crate) I256);
@@ -53,11 +55,18 @@ impl Int256 {
     pub const MAX: Int256 = Int256(I256::MAX);
     pub const MIN: Int256 = Int256(I256::MIN);
 
-    /// Creates a Int256(value) from a big endian representation. It's just an alias for
-    /// `from_be_bytes`.
+    /// Creates a Int256(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
+    ///
+    /// Before CosmWasm 3 this took a byte array as an argument. You can get this behaviour
+    /// with [`from_be_bytes`].
+    ///
+    /// [`from_be_bytes`]: Self::from_be_bytes
     #[inline]
-    pub const fn new(value: [u8; 32]) -> Self {
-        Self::from_be_bytes(value)
+    #[must_use]
+    pub const fn new(value: i128) -> Self {
+        Self::from_be_bytes(grow_be_int(value.to_be_bytes()))
     }
 
     /// Creates a Int256(0)
@@ -74,8 +83,9 @@ impl Int256 {
 
     /// A conversion from `i128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
-    pub const fn from_i128(v: i128) -> Self {
-        Self::from_be_bytes(grow_be_int(v.to_be_bytes()))
+    #[deprecated(since = "3.0.0", note = "Use Int256::new(value) instead")]
+    pub const fn from_i128(value: i128) -> Self {
+        Self::new(value)
     }
 
     #[must_use]
@@ -588,7 +598,34 @@ mod tests {
 
     #[test]
     fn int256_new_works() {
-        let num = Int256::new([1; 32]);
+        let num = Int256::new(1);
+        assert_eq!(
+            num.to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1
+            ]
+        );
+
+        let num = Int256::new(-1);
+        assert_eq!(
+            num.to_be_bytes(),
+            [
+                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            ]
+        );
+
+        for v in [0, 1, -4, 18, 875786576, -11763498739, i128::MAX, i128::MIN] {
+            // From is implemented by bnum, so we test two independent implementations against each other
+            let uut = Int256::new(v);
+            assert_eq!(uut, Int256::from(v));
+        }
+    }
+
+    #[test]
+    fn int256_from_be_bytes_works() {
+        let num = Int256::from_be_bytes([1; 32]);
         let a: [u8; 32] = num.to_be_bytes();
         assert_eq!(a, [1; 32]);
 
@@ -596,14 +633,14 @@ mod tests {
             0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Int256::new(be_bytes);
+        let num = Int256::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 32] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
     }
 
     #[test]
     fn int256_not_works() {
-        let num = Int256::new([1; 32]);
+        let num = Int256::from_be_bytes([1; 32]);
         let a = (!num).to_be_bytes();
         assert_eq!(a, [254; 32]);
 
@@ -640,12 +677,10 @@ mod tests {
         ];
 
         // These should all be the same.
-        let num1 = Int256::new(be_bytes);
-        let num2 = Int256::from_be_bytes(be_bytes);
-        let num3 = Int256::from_le_bytes(le_bytes);
-        assert_eq!(num1, Int256::from(65536u32 + 512 + 3));
-        assert_eq!(num1, num2);
-        assert_eq!(num1, num3);
+        let a = Int256::from_be_bytes(be_bytes);
+        let b = Int256::from_le_bytes(le_bytes);
+        assert_eq!(a, Int256::from(65536u32 + 512 + 3));
+        assert_eq!(a, b);
     }
 
     #[test]
@@ -697,6 +732,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn int256_from_i128() {
         assert_eq!(Int256::from_i128(123i128), Int256::from_str("123").unwrap());
 
@@ -1000,7 +1036,7 @@ mod tests {
 
     #[test]
     fn int256_checked_multiply_ratio_works() {
-        let base = Int256::from_i128(500);
+        let base = Int256::new(500);
 
         // factor 1/1
         assert_eq!(base.checked_multiply_ratio(1i128, 1i128).unwrap(), base);
@@ -1017,38 +1053,38 @@ mod tests {
         // factor 3/2
         assert_eq!(
             base.checked_multiply_ratio(3i128, 2i128).unwrap(),
-            Int256::from_i128(750)
+            Int256::new(750)
         );
         assert_eq!(
             base.checked_multiply_ratio(333333i128, 222222i128).unwrap(),
-            Int256::from_i128(750)
+            Int256::new(750)
         );
 
         // factor 2/3 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(2i128, 3i128).unwrap(),
-            Int256::from_i128(333)
+            Int256::new(333)
         );
         assert_eq!(
             base.checked_multiply_ratio(222222i128, 333333i128).unwrap(),
-            Int256::from_i128(333)
+            Int256::new(333)
         );
 
         // factor 5/6 (integer division always floors the result)
         assert_eq!(
             base.checked_multiply_ratio(5i128, 6i128).unwrap(),
-            Int256::from_i128(416)
+            Int256::new(416)
         );
         assert_eq!(
             base.checked_multiply_ratio(100i128, 120i128).unwrap(),
-            Int256::from_i128(416)
+            Int256::new(416)
         );
     }
 
     #[test]
     fn int256_checked_multiply_ratio_does_not_panic() {
         assert_eq!(
-            Int256::from_i128(500i128).checked_multiply_ratio(1i128, 0i128),
+            Int256::new(500i128).checked_multiply_ratio(1i128, 0i128),
             Err(CheckedMultiplyRatioError::DivideByZero),
         );
         assert_eq!(
@@ -1059,12 +1095,12 @@ mod tests {
 
     #[test]
     fn int256_shr_works() {
-        let original = Int256::new([
+        let original = Int256::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
         ]);
 
-        let shifted = Int256::new([
+        let shifted = Int256::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
         ]);

@@ -50,6 +50,8 @@ impl Uint64 {
     /// Creates a Uint64(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
+    #[inline]
+    #[must_use]
     pub const fn new(value: u64) -> Self {
         Uint64(value)
     }

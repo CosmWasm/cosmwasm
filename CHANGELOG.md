@@ -41,6 +41,16 @@ and this project adheres to
   makes the use of `schemars` optional for contracts. ([#2201])
 - cosmwasm-std: Remove `schemars::JsonSchema` requirement from `CustomMsg`.
   ([#2201])
+- cosmwasm-std: `Int256::new`/`Int512::new` now take an `i128` argument instead
+  of bytes. Use `::from_be_bytes` if you need the old behaviour. ([#2367])
+- cosmwasm-std: `Uint256::new`/`Uint512::new` now take an `u128` argument
+  instead of bytes. Use `::from_be_bytes` if you need the old behaviour.
+  ([#2367])
+- cosmwasm-std: Deprecate `{Decimal,Decimal256}::raw` and
+  `{SignedDecimal,SignedDecimal256}::raw` in favour of e.g.
+  `Decimal::new(Uint128::new(value))`. ([#2399])
+- cosmwasm-std: Deprecate `Uint256::from_u128` and `Int256::from_i128` in favour
+  of `::new`. ([#2399])
 
 ## Fixed
 
@@ -58,10 +68,12 @@ and this project adheres to
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
+[#2367]: https://github.com/CosmWasm/cosmwasm/issues/2367
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
 [#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
+[#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 
 ## [2.2.0] - 2024-12-17
 

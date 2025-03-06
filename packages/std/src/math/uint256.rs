@@ -30,19 +30,21 @@ use super::num_consts::NumConsts;
 ///
 /// # Examples
 ///
-/// Use `from` to create instances out of primitive uint types or `new` to provide big
-/// endian bytes:
+/// Use `new` to create instances out of u128, `from` for other primitive uint types
+/// or `from_be_bytes` to provide big endian bytes:
 ///
 /// ```
 /// # use cosmwasm_std::Uint256;
-/// let a = Uint256::from(258u128);
-/// let b = Uint256::new([
+/// let a = Uint256::new(258u128);
+/// let b = Uint256::from(258u16);
+/// let c = Uint256::from_be_bytes([
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
 ///     0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,
 /// ]);
 /// assert_eq!(a, b);
+/// assert_eq!(a, c);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
 pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
@@ -54,12 +56,21 @@ impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
     pub const MIN: Uint256 = Uint256(U256::ZERO);
 
-    /// Creates a Uint256(value) from a big endian representation. It's just an alias for
-    /// [`Uint256::from_be_bytes`].
+    /// Creates a Uint256(value).
     ///
     /// This method is less flexible than `from` but can be called in a const context.
-    pub const fn new(value: [u8; 32]) -> Self {
-        Self::from_be_bytes(value)
+    ///
+    /// Before CosmWasm 3 this took a byte array as an argument. You can get this behaviour
+    /// with [`from_be_bytes`].
+    ///
+    /// [`from_be_bytes`]: Self::from_be_bytes
+    #[must_use]
+    pub const fn new(value: u128) -> Self {
+        let b = value.to_be_bytes();
+        Self::from_be_bytes([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, b[0], b[1], b[2], b[3], b[4], b[5],
+            b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15],
+        ])
     }
 
     /// Creates a Uint256(0)
@@ -115,21 +126,16 @@ impl Uint256 {
     /// A conversion from `u128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
     #[must_use]
-    pub const fn from_u128(num: u128) -> Self {
-        let bytes = num.to_le_bytes();
-
-        Self::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-            bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15],
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        ])
+    #[deprecated(since = "3.0.0", note = "Use Uint256::new(value) instead")]
+    pub const fn from_u128(value: u128) -> Self {
+        Self::new(value)
     }
 
     /// A conversion from `Uint128` that, unlike the one provided by the `From` trait,
     /// can be used in a `const` context.
     #[must_use]
     pub const fn from_uint128(num: Uint128) -> Self {
-        Self::from_u128(num.u128())
+        Self::new(num.u128())
     }
 
     /// Returns a copy of the number as big endian bytes.
@@ -649,7 +655,25 @@ mod tests {
 
     #[test]
     fn uint256_new_works() {
-        let num = Uint256::new([1; 32]);
+        let num = Uint256::new(1);
+        assert_eq!(
+            num.to_be_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1
+            ]
+        );
+
+        for v in [0, 1, 18, 875786576, u128::MAX] {
+            // From is implemented by bnum, so we test two independent implementations against each other
+            let uut = Uint256::new(v);
+            assert_eq!(uut, Uint256::from(v));
+        }
+    }
+
+    #[test]
+    fn uint256_from_be_bytes_works() {
+        let num = Uint256::from_be_bytes([1; 32]);
         let a: [u8; 32] = num.to_be_bytes();
         assert_eq!(a, [1; 32]);
 
@@ -657,14 +681,14 @@ mod tests {
             0u8, 222u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, 3u8,
         ];
-        let num = Uint256::new(be_bytes);
+        let num = Uint256::from_be_bytes(be_bytes);
         let resulting_bytes: [u8; 32] = num.to_be_bytes();
         assert_eq!(be_bytes, resulting_bytes);
     }
 
     #[test]
     fn uint256_not_works() {
-        let num = Uint256::new([1; 32]);
+        let num = Uint256::from_be_bytes([1; 32]);
         let a = (!num).to_be_bytes();
         assert_eq!(a, [254; 32]);
 
@@ -1000,12 +1024,10 @@ mod tests {
         ];
 
         // These should all be the same.
-        let num1 = Uint256::new(be_bytes);
-        let num2 = Uint256::from_be_bytes(be_bytes);
-        let num3 = Uint256::from_le_bytes(le_bytes);
-        assert_eq!(num1, Uint256::from(65536u32 + 512 + 3));
-        assert_eq!(num1, num2);
-        assert_eq!(num1, num3);
+        let a = Uint256::from_be_bytes(be_bytes);
+        let b = Uint256::from_le_bytes(le_bytes);
+        assert_eq!(a, Uint256::from(65536u32 + 512 + 3));
+        assert_eq!(a, b);
     }
 
     #[test]
@@ -1076,6 +1098,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn uint256_from_u128() {
         assert_eq!(
             Uint256::from_u128(123u128),
@@ -1335,7 +1358,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "attempt to add with overflow")]
     fn uint256_add_overflow_panics() {
-        let max = Uint256::new([255u8; 32]);
+        let max = Uint256::from_be_bytes([255u8; 32]);
         let _ = max + Uint256::from(12u32);
     }
 
@@ -1495,12 +1518,12 @@ mod tests {
 
     #[test]
     fn uint256_shr_works() {
-        let original = Uint256::new([
+        let original = Uint256::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 2u8, 0u8, 4u8, 2u8,
         ]);
 
-        let shifted = Uint256::new([
+        let shifted = Uint256::from_be_bytes([
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 128u8, 1u8, 0u8,
         ]);
@@ -1516,12 +1539,12 @@ mod tests {
 
     #[test]
     fn uint256_shl_works() {
-        let original = Uint256::new([
+        let original = Uint256::from_be_bytes([
             64u8, 128u8, 1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
         ]);
 
-        let shifted = Uint256::new([
+        let shifted = Uint256::from_be_bytes([
             2u8, 0u8, 4u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
             0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
         ]);
