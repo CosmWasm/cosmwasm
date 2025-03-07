@@ -737,7 +737,7 @@ mod tests {
                 admin: None,
                 pinned: false,
                 ibc_port: None,
-                eureka_port: None,
+                ibcv2_port: None,
             }
         }
 
@@ -769,7 +769,7 @@ mod tests {
                 admin: None,
                 pinned: false,
                 ibc_port: None,
-                eureka_port: None,
+                ibcv2_port: None,
             }
         }
 

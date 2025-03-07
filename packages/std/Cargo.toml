@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "cosmwasm_2_2", "staking", "stargate", "eureka"]
+features = ["abort", "cosmwasm_2_2", "staking", "stargate", "ibcv2"]
 
 [features]
 default = ["iterator", "std"]
@@ -29,8 +29,8 @@ staking = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
 stargate = []
-# eureka enables eureka-dependent messages and queries
-eureka = []
+# ibcv2 enables ibcv2-dependent messages, entrypoints and queries
+ibcv2 = []
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []

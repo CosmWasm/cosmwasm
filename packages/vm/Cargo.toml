@@ -30,6 +30,8 @@ staking = ["cosmwasm-std/staking"]
 stargate = ["cosmwasm-std/stargate"]
 # For heap profiling. Only used in the "heap_profiling" example.
 dhat-heap = ["dep:dhat"]
+# ibcv2 enables ibcv2-dependent messages, entrypoints and queries
+ibcv2 = ["cosmwasm-std/ibcv2"]
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
