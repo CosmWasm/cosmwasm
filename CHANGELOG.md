@@ -15,10 +15,11 @@ and this project adheres to
   `From<Int128> for i128` ([#2268])
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
-- cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
+- cosmwasm-std: Added new `IBCv2Msg` and `CosmosMsg::IBCv2` variant ([#2390],
+  [#2403])
 - cosmwasm-std: Implement downcasting for `Api` trait. This allows using
   `MockApi::addr_make` from `DepsMut`. ([#2383])
-- cosmwasm-std: Added `eureka_port` to `ContractInfoResponse`. ([#2390])
+- cosmwasm-std: Added `ibcv2_port` to `ContractInfoResponse`. ([#2390], [#2403])
 - cosmwasm-vm: Added `ibcv2_packet_receive` entrypoint ([#2403])
 
 ## Changed
@@ -52,9 +53,6 @@ and this project adheres to
   `Decimal::new(Uint128::new(value))`. ([#2399])
 - cosmwasm-std: Deprecate `Uint256::from_u128` and `Int256::from_i128` in favour
   of `::new`. ([#2399])
-- cosmwasm-vm: Renamed `EurekaMsg` and `CosmosMsg::Eureka` to `IBCv2Msg` and
-  `CosmosMsg::IBCv2` ([#2403])
-- cosmwasm-std: Renamed `eureka_port` to `ibcv2_port` ([#2403])
 
 ## Fixed
 

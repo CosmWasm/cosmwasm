@@ -12,7 +12,7 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "ibcv2")]
-use cosmwasm_std::IBCv2Payload;
+use cosmwasm_std::IBCv2PacketReceiveMsg;
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -762,7 +762,7 @@ where
 pub fn call_ibcv2_packet_receive<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    msg: &IBCv2Payload,
+    msg: &IBCv2PacketReceiveMsg,
 ) -> VmResult<ContractResult<Option<IbcReceiveResponse>>>
 where
     A: BackendApi + 'static,
