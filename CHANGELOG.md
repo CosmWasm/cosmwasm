@@ -15,10 +15,12 @@ and this project adheres to
   `From<Int128> for i128` ([#2268])
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
-- cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
+- cosmwasm-std: Added new `Ibc2Msg` and `CosmosMsg::Ibc2` variant ([#2390],
+  [#2403])
 - cosmwasm-std: Implement downcasting for `Api` trait. This allows using
   `MockApi::addr_make` from `DepsMut`. ([#2383])
-- cosmwasm-std: Added `eureka_port` to `ContractInfoResponse`. ([#2390])
+- cosmwasm-std: Added `ibc2_port` to `ContractInfoResponse`. ([#2390], [#2403])
+- cosmwasm-vm: Added `ibc2_packet_receive` entrypoint ([#2403])
 
 ## Changed
 
@@ -74,6 +76,7 @@ and this project adheres to
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
 [#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
+[#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
 
 ## [2.2.0] - 2024-12-17
 
