@@ -759,21 +759,21 @@ where
 }
 
 #[cfg(feature = "ibcv2")]
-pub fn call_ibcv2_packet_receive<A, S, Q>(
+pub fn call_ibcv2_packet_receive<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &IBCv2PacketReceiveMsg,
-) -> VmResult<ContractResult<Option<IbcReceiveResponse>>>
+) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_ibcv2_packet_receive_raw(instance, &env, &msg)?;
-    let result: ContractResult<Option<IbcReceiveResponse>> =
-        from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
     Ok(result)
 }
 
@@ -1266,6 +1266,30 @@ mod tests {
             .unwrap();
             assert_eq!(1, stats.ibc_ack_callbacks.len());
             assert_eq!(1, stats.ibc_timeout_callbacks.len());
+        }
+    }
+
+    #[cfg(feature = "ibcv2")]
+    mod ibc2 {
+        use super::*;
+        use cosmwasm_std::testing::mock_ibc2_packet_recv;
+        const CONTRACT: &[u8] = include_bytes!("../testdata/ibcv2.wasm");
+
+        #[test]
+        fn call_ibc2_packet_receive_works() {
+            // init
+            let mut instance = mock_instance(CONTRACT, &[]);
+            let info = mock_info("creator", &[]);
+            let instantiate_msg = br#"{}"#;
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+                .unwrap()
+                .unwrap();
+
+            let ibc2_msg = br#"SomeRandomMsg"#;
+            let ibc2_msg = mock_ibc2_packet_recv(ibc2_msg).unwrap();
+            call_ibcv2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
+                .unwrap()
+                .unwrap();
         }
     }
 }
