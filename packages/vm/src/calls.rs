@@ -5,10 +5,14 @@ use cosmwasm_std::{
     ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationCallbackMsg,
     IbcSourceCallbackMsg, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
 };
+
+#[cfg(any(feature = "stargate", feature = "ibc2"))]
+use cosmwasm_std::IbcReceiveResponse;
+
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     Ibc3ChannelOpenResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
 };
 
 #[cfg(feature = "ibc2")]
@@ -51,7 +55,7 @@ mod read_limits {
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CLOSE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_receive call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_ack call.
     #[cfg(feature = "stargate")]
@@ -94,7 +98,7 @@ mod deserialization_limits {
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CLOSE: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a ibc_packet_receive call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a ibc_packet_ack call.
     #[cfg(feature = "stargate")]

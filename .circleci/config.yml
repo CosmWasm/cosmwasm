@@ -200,7 +200,7 @@ jobs:
           name: "packages/vm: test"
           working_directory: ~/project/packages/vm
           # use all features
-          command: cargo test --locked --features iterator,staking,stargate
+          command: cargo test --locked --features iterator,staking,stargate,ibc2
       - save_cache:
           key: v4-arm64-workspace-rust:1.81-{{ checksum "Cargo.lock" }}
           paths:
