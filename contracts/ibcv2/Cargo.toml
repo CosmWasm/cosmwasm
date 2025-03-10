@@ -22,7 +22,7 @@ overflow-checks = true
 
 [dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-std = { path = "../../packages/std", features = ["ibcv2"] }
+cosmwasm-std = { path = "../../packages/std", features = ["ibc2"] }
 schemars = "0.8.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 thiserror = "1.0.26"

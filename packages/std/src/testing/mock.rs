@@ -11,7 +11,7 @@ use core::marker::PhantomData;
 use core::ops::Bound;
 use rand_core::OsRng;
 use serde::de::DeserializeOwned;
-#[cfg(feature = "stargate")]
+#[cfg(any(feature = "stargate", feature = "ibc2"))]
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
@@ -23,8 +23,8 @@ use crate::ibc::{
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
-#[cfg(feature = "ibcv2")]
-use crate::ibcv2::{IBCv2PacketReceiveMsg, IBCv2Payload};
+#[cfg(feature = "ibc2")]
+use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2Payload};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -529,10 +529,10 @@ pub fn mock_ibc_packet_recv(
 
 /// Creates a IbcPacketReceiveMsg for testing ibc_packet_receive. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields
-#[cfg(feature = "ibcv2")]
-pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<IBCv2PacketReceiveMsg> {
-    Ok(IBCv2PacketReceiveMsg::new(
-        IBCv2Payload {
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<Ibc2PacketReceiveMsg> {
+    Ok(Ibc2PacketReceiveMsg::new(
+        Ibc2Payload {
             source_port: "wasm2srcport".to_string(),
             destination_port: "wasm2destport".to_string(),
             version: "v2".to_string(),
@@ -2595,7 +2595,7 @@ mod tests {
                             admin: None,
                             pinned: false,
                             ibc_port: None,
-                            ibcv2_port: None,
+                            ibc2_port: None,
                         };
                         SystemResult::Ok(ContractResult::Ok(to_json_binary(&response).unwrap()))
                     } else {
@@ -2676,7 +2676,7 @@ mod tests {
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                 value,
-                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null,"ibcv2_port":null}"#
+                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null,"ibc2_port":null}"#
                     as &[u8]
             ),
             res => panic!("Unexpected result: {res:?}"),

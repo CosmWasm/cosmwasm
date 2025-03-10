@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, IBCv2PacketReceiveMsg,
+    entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2PacketReceiveMsg,
     IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdError, StdResult,
 };
 use schemars::JsonSchema;
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct State {
-    ibcv2_packet_receive_counter: u32,
+    ibc2_packet_receive_counter: u32,
 }
 
 #[cw_serde]
@@ -47,10 +47,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 }
 
 #[entry_point]
-pub fn ibcv2_packet_receive(
+pub fn ibc2_packet_receive(
     deps: DepsMut,
     _env: Env,
-    _msg: IBCv2PacketReceiveMsg,
+    _msg: Ibc2PacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
     let data = deps
         .storage
@@ -60,7 +60,7 @@ pub fn ibcv2_packet_receive(
     deps.storage.set(
         STATE_KEY,
         &to_json_vec(&State {
-            ibcv2_packet_receive_counter: state.ibcv2_packet_receive_counter + 1,
+            ibc2_packet_receive_counter: state.ibc2_packet_receive_counter + 1,
         })?,
     );
 

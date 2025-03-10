@@ -24,7 +24,7 @@ mod errors;
 mod forward_ref;
 mod hex_binary;
 mod ibc;
-mod ibcv2;
+mod ibc2;
 mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
@@ -78,7 +78,7 @@ pub use crate::ibc::{
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
     TransferMsgBuilder,
 };
-pub use crate::ibcv2::{IBCv2Msg, IBCv2PacketReceiveMsg, IBCv2Payload};
+pub use crate::ibc2::{Ibc2Msg, Ibc2PacketReceiveMsg, Ibc2Payload};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
@@ -137,8 +137,8 @@ mod imports;
 #[cfg(target_arch = "wasm32")]
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
-#[cfg(all(feature = "ibcv2", target_arch = "wasm32"))]
-pub use crate::exports::do_ibcv2_packet_receive;
+#[cfg(all(feature = "ibc2", target_arch = "wasm32"))]
+pub use crate::exports::do_ibc2_packet_receive;
 #[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
 pub use crate::exports::do_migrate_with_info;
 #[cfg(target_arch = "wasm32")]

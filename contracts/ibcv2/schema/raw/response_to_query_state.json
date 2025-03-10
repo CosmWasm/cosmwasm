@@ -3,10 +3,10 @@
   "title": "State",
   "type": "object",
   "required": [
-    "ibcv2_packet_receive_counter"
+    "ibc2_packet_receive_counter"
   ],
   "properties": {
-    "ibcv2_packet_receive_counter": {
+    "ibc2_packet_receive_counter": {
       "type": "integer",
       "format": "uint32",
       "minimum": 0.0

@@ -11,8 +11,8 @@ use cosmwasm_std::{
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
-#[cfg(feature = "ibcv2")]
-use cosmwasm_std::IBCv2PacketReceiveMsg;
+#[cfg(feature = "ibc2")]
+use cosmwasm_std::Ibc2PacketReceiveMsg;
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -673,8 +673,8 @@ where
     )
 }
 
-#[cfg(feature = "ibcv2")]
-pub fn call_ibcv2_packet_receive_raw<A, S, Q>(
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_packet_receive_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
@@ -687,7 +687,7 @@ where
     instance.set_storage_readonly(false);
     call_raw(
         instance,
-        "ibcv2_packet_receive",
+        "ibc2_packet_receive",
         &[env, msg],
         read_limits::RESULT_IBC_PACKET_RECEIVE,
     )
@@ -758,11 +758,11 @@ where
     Ok(data)
 }
 
-#[cfg(feature = "ibcv2")]
-pub fn call_ibcv2_packet_receive<A, S, Q, U>(
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_packet_receive<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    msg: &IBCv2PacketReceiveMsg,
+    msg: &Ibc2PacketReceiveMsg,
 ) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -772,7 +772,7 @@ where
 {
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
-    let data = call_ibcv2_packet_receive_raw(instance, &env, &msg)?;
+    let data = call_ibc2_packet_receive_raw(instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
     Ok(result)
 }
@@ -1269,7 +1269,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "ibcv2")]
+    #[cfg(feature = "ibc2")]
     mod ibc2 {
         use super::*;
         use cosmwasm_std::testing::mock_ibc2_packet_recv;
@@ -1287,7 +1287,7 @@ mod tests {
 
             let ibc2_msg = br#"SomeRandomMsg"#;
             let ibc2_msg = mock_ibc2_packet_recv(ibc2_msg).unwrap();
-            call_ibcv2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
+            call_ibc2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
                 .unwrap()
                 .unwrap();
         }

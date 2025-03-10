@@ -12,7 +12,7 @@ pub use assertions::assert_approx_eq_impl;
 pub use assertions::assert_hash_works_impl;
 
 pub use message_info::message_info;
-#[cfg(feature = "ibcv2")]
+#[cfg(feature = "ibc2")]
 pub use mock::mock_ibc2_packet_recv;
 #[allow(deprecated)]
 pub use mock::mock_info;

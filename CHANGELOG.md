@@ -15,12 +15,12 @@ and this project adheres to
   `From<Int128> for i128` ([#2268])
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
-- cosmwasm-std: Added new `IBCv2Msg` and `CosmosMsg::IBCv2` variant ([#2390],
+- cosmwasm-std: Added new `Ibc2Msg` and `CosmosMsg::Ibc2` variant ([#2390],
   [#2403])
 - cosmwasm-std: Implement downcasting for `Api` trait. This allows using
   `MockApi::addr_make` from `DepsMut`. ([#2383])
-- cosmwasm-std: Added `ibcv2_port` to `ContractInfoResponse`. ([#2390], [#2403])
-- cosmwasm-vm: Added `ibcv2_packet_receive` entrypoint ([#2403])
+- cosmwasm-std: Added `ibc2_port` to `ContractInfoResponse`. ([#2390], [#2403])
+- cosmwasm-vm: Added `ibc2_packet_receive` entrypoint ([#2403])
 
 ## Changed
 
