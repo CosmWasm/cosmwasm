@@ -115,9 +115,9 @@ docker run --rm -v "$(pwd)":/code \
   cosmwasm/optimizer:0.15.0 ./contracts/empty
 
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="devcontract_cache_ibcv2",target=/target \
+  --mount type=volume,source="devcontract_cache_ibc2",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0 ./contracts/ibcv2
+  cosmwasm/optimizer:0.15.0 ./contracts/ibc2
 ```
 
 ## Entry points

@@ -78,7 +78,7 @@ workflows:
       - contract_crypto_verify
       - contract_cyberpunk
       - contract_empty
-      - contract_ibcv2
+      - contract_ibc2
       - contract_replier
       # - contract_floaty # This contract needs nightly Rust to compile
       - contract_hackatom
@@ -169,9 +169,9 @@ jobs:
           working_directory: ~/project/contracts/hackatom
           command: cargo wasm --locked && cargo integration-test --locked
       - run:
-          name: "contracts/ibcv2: integration-test"
-          working_directory: ~/project/contracts/ibcv2
-          command: cargo wasm --locked && cargo integration-test --locked
+          name: "contracts/ibc2: integration-test"
+          working_directory: ~/project/contracts/ibc2
+          command: cargo wasm --locked
       - run:
           name: "contracts/queue: integration-test"
           working_directory: ~/project/contracts/queue
@@ -226,13 +226,13 @@ jobs:
             - contracts/hackatom/target/wasm32-unknown-unknown/release/.fingerprint
             - contracts/hackatom/target/wasm32-unknown-unknown/release/build
             - contracts/hackatom/target/wasm32-unknown-unknown/release/deps
-            # ibcv2
-            - contracts/ibcv2/target/debug/.fingerprint
-            - contracts/ibcv2/target/debug/build
-            - contracts/ibcv2/target/debug/deps
-            - contracts/ibcv2/target/wasm32-unknown-unknown/release/.fingerprint
-            - contracts/ibcv2/target/wasm32-unknown-unknown/release/build
-            - contracts/ibcv2/target/wasm32-unknown-unknown/release/deps
+            # ibc2
+            - contracts/ibc2/target/debug/.fingerprint
+            - contracts/ibc2/target/debug/build
+            - contracts/ibc2/target/debug/deps
+            - contracts/ibc2/target/wasm32-unknown-unknown/release/.fingerprint
+            - contracts/ibc2/target/wasm32-unknown-unknown/release/build
+            - contracts/ibc2/target/wasm32-unknown-unknown/release/deps
             # queue
             - contracts/queue/target/debug/.fingerprint
             - contracts/queue/target/debug/build
@@ -700,12 +700,12 @@ jobs:
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_cyberpunk-rust:1.81-{{ checksum "Cargo.lock" }}
 
-  contract_ibcv2:
+  contract_ibc2:
     docker:
       - image: rust:1.81
     environment:
       RUST_BACKTRACE: 1
-    working_directory: ~/cosmwasm/contracts/ibcv2
+    working_directory: ~/cosmwasm/contracts/ibc2
     steps:
       - checkout:
           path: ~/cosmwasm
@@ -714,7 +714,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibcv2-rust:1.74-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_ibc2-rust:1.74-{{ checksum "Cargo.lock" }}
       - check_contract:
           skip_cosmwasm_check: true
           min_version: "2.2"
@@ -727,7 +727,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibcv2-rust:1.74-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc2-rust:1.74-{{ checksum "Cargo.lock" }}
 
   contract_hackatom:
     docker:

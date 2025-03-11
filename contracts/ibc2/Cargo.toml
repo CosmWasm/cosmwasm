@@ -1,5 +1,5 @@
 [package]
-name = "ibcv2"
+name = "ibc2"
 version = "0.0.0"
 authors = ["Tomasz Kulik <tomek.k@confio.gmbh>"]
 edition = "2021"

@@ -18,7 +18,7 @@ pull_request_rules:
       - "status-success=ci/circleci: contract_burner"
       - "status-success=ci/circleci: contract_crypto_verify"
       - "status-success=ci/circleci: contract_cyberpunk"
-      - "status-success=ci/circleci: contract_ibcv2"
+      - "status-success=ci/circleci: contract_ibc2"
       - "status-success=ci/circleci: contract_floaty"
       - "status-success=ci/circleci: contract_hackatom"
       - "status-success=ci/circleci: contract_hackatom"

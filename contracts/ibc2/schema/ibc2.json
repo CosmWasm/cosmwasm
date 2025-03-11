@@ -1,5 +1,5 @@
 {
-  "contract_name": "ibcv2",
+  "contract_name": "ibc2",
   "contract_version": "0.0.0",
   "idl_version": "1.0.0",
   "instantiate": {

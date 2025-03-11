@@ -570,7 +570,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ibcv2"
+name = "ibc2"
 version = "0.0.0"
 dependencies = [
  "cosmwasm-schema",

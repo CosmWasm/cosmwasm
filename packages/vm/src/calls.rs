@@ -1277,7 +1277,7 @@ mod tests {
     mod ibc2 {
         use super::*;
         use cosmwasm_std::testing::mock_ibc2_packet_recv;
-        const CONTRACT: &[u8] = include_bytes!("../testdata/ibcv2.wasm");
+        const CONTRACT: &[u8] = include_bytes!("../testdata/ibc2.wasm");
 
         #[test]
         fn call_ibc2_packet_receive_works() {
