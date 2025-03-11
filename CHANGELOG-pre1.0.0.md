@@ -1310,7 +1310,7 @@ https://github.com/CosmWasm/cosmwasm/issues/451).
 
 ## 0.6
 
-[Define canonical address callbacks](https://github.com/confio/cosmwasm/issues/73)
+[Define canonical address callbacks](https://github.com/CosmWasm/cosmwasm/issues/73)
 
 - Use `&[u8]` for addresses in params
 - Allow contracts to resolve human readable addresses (`&str`) in their json
