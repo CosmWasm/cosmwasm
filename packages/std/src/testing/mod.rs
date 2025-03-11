@@ -6,6 +6,7 @@
 mod assertions;
 mod message_info;
 mod mock;
+mod storage;
 
 pub use assertions::assert_approx_eq_impl;
 #[cfg(test)]
@@ -21,7 +22,7 @@ pub use mock::StakingQuerier;
 pub use mock::{
     mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances, mock_env,
     mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
-    MockStorage, MOCK_CONTRACT_ADDR,
+    MOCK_CONTRACT_ADDR,
 };
 #[cfg(feature = "stargate")]
 pub use mock::{
@@ -29,3 +30,5 @@ pub use mock::{
     mock_ibc_channel_connect_ack, mock_ibc_channel_connect_confirm, mock_ibc_channel_open_init,
     mock_ibc_channel_open_try, mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
 };
+
+pub use storage::MockStorage;

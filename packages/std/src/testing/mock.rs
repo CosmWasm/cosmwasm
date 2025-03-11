@@ -36,7 +36,6 @@ use crate::query::{
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::storage::MemoryStorage;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
 use crate::{from_json, to_json_binary, Binary, Uint128};
@@ -51,6 +50,8 @@ use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+
+use super::MockStorage;
 
 pub const MOCK_CONTRACT_ADDR: &str =
     "cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs";
@@ -89,10 +90,6 @@ pub fn mock_dependencies_with_balances(
         custom_query_type: PhantomData,
     }
 }
-
-// Use MemoryStorage implementation (which is valid in non-testcode)
-// We can later make simplifications here if needed
-pub type MockStorage = MemoryStorage;
 
 /// Default prefix used when creating Bech32 encoded address.
 const BECH32_PREFIX: &str = "cosmwasm";

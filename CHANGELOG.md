@@ -51,6 +51,8 @@ and this project adheres to
   `Decimal::new(Uint128::new(value))`. ([#2399])
 - cosmwasm-std: Deprecate `Uint256::from_u128` and `Int256::from_i128` in favour
   of `::new`. ([#2399])
+- cosmwasm-std: Move `MemoryStorage` to `cosmwasm_std::testing::MockStorage`.
+  ([#2237])
 
 ## Fixed
 
@@ -61,6 +63,7 @@ and this project adheres to
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
 [#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
+[#2237]: https://github.com/CosmWasm/cosmwasm/issues/2237
 [#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
