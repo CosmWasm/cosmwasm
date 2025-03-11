@@ -4,38 +4,10 @@ expression: schema
 ---
 {
   "type": "v1",
-  "root": 4,
+  "root": 0,
   "definitions": [
     {
-      "name": "usize",
-      "type": "integer",
-      "precision": 64,
-      "signed": false
-    },
-    {
-      "name": "Test",
-      "type": "struct",
-      "properties": {
-        "foo": {
-          "value": 0
-        }
-      }
-    },
-    {
-      "name": "f32",
-      "type": "float"
-    },
-    {
-      "name": "Test",
-      "type": "struct",
-      "properties": {
-        "bar": {
-          "value": 2
-        }
-      }
-    },
-    {
-      "name": "Combined",
+      "name": "same_name_Combined",
       "type": "struct",
       "properties": {
         "module1": {
@@ -45,6 +17,34 @@ expression: schema
           "value": 3
         }
       }
+    },
+    {
+      "name": "same_name_module1_Test",
+      "type": "struct",
+      "properties": {
+        "foo": {
+          "value": 2
+        }
+      }
+    },
+    {
+      "name": "usize",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "same_name_module2_Test",
+      "type": "struct",
+      "properties": {
+        "bar": {
+          "value": 4
+        }
+      }
+    },
+    {
+      "name": "f32",
+      "type": "float"
     }
   ]
 }

@@ -1,13 +1,9 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "String",
-      "type": "string"
-    },
-    {
-      "name": "QueryMsg",
+      "name": "staking_msg_QueryMsg",
       "type": "enum",
       "cases": {
         "balance": {
@@ -15,7 +11,7 @@
           "type": "named",
           "properties": {
             "address": {
-              "value": 0
+              "value": 1
             }
           }
         },
@@ -24,7 +20,7 @@
           "type": "named",
           "properties": {
             "address": {
-              "value": 0
+              "value": 1
             }
           }
         },
@@ -39,6 +35,10 @@
           "properties": {}
         }
       }
+    },
+    {
+      "name": "String",
+      "type": "string"
     }
   ]
 }

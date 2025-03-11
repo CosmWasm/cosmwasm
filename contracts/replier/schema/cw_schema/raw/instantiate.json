@@ -3,8 +3,7 @@
   "root": 0,
   "definitions": [
     {
-      "name": "burner_msg_InstantiateMsg",
-      "description": "A placeholder where we don't take any input",
+      "name": "replier_InstantiateMsg",
       "type": "struct",
       "properties": {}
     }

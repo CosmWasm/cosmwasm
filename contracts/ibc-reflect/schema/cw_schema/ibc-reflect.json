@@ -4,57 +4,32 @@
   "idl_version": "1.0.0",
   "instantiate": {
     "type": "v1",
-    "root": 1,
+    "root": 0,
     "definitions": [
+      {
+        "name": "ibc_reflect_msg_InstantiateMsg",
+        "description": "Just needs to know the code_id of a reflect contract to spawn sub-accounts",
+        "type": "struct",
+        "properties": {
+          "reflect_code_id": {
+            "value": 1
+          }
+        }
+      },
       {
         "name": "u64",
         "type": "integer",
         "precision": 64,
         "signed": false
-      },
-      {
-        "name": "InstantiateMsg",
-        "description": "Just needs to know the code_id of a reflect contract to spawn sub-accounts",
-        "type": "struct",
-        "properties": {
-          "reflect_code_id": {
-            "value": 0
-          }
-        }
       }
     ]
   },
   "execute": {
     "type": "v1",
-    "root": 4,
+    "root": 0,
     "definitions": [
       {
-        "name": "String",
-        "type": "string"
-      },
-      {
-        "name": "Uint64",
-        "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding,\nsuch that the full u64 range can be used for clients that convert JSON numbers to floats,\nlike JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n```\n# use cosmwasm_std::Uint64;\nlet a = Uint64::from(42u64);\nassert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32);\nassert_eq!(b.u64(), 70);\n```",
-        "type": "integer",
-        "precision": 64,
-        "signed": false
-      },
-      {
-        "name": "Binary",
-        "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
-        "type": "binary"
-      },
-      {
-        "name": "IbcAcknowledgement",
-        "type": "struct",
-        "properties": {
-          "data": {
-            "value": 2
-          }
-        }
-      },
-      {
-        "name": "ExecuteMsg",
+        "name": "ibc_reflect_msg_ExecuteMsg",
         "type": "enum",
         "cases": {
           "async_ack": {
@@ -66,28 +41,49 @@
               },
               "channel_id": {
                 "description": "Existing channel where the packet was received",
-                "value": 0
+                "value": 1
               },
               "packet_sequence": {
                 "description": "Sequence number of the packet that was received",
-                "value": 1
+                "value": 2
               }
             }
           }
         }
-      }
-    ]
-  },
-  "query": {
-    "type": "v1",
-    "root": 1,
-    "definitions": [
+      },
       {
         "name": "String",
         "type": "string"
       },
       {
-        "name": "QueryMsg",
+        "name": "cosmwasm_std_math_uint64_Uint64",
+        "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding,\nsuch that the full u64 range can be used for clients that convert JSON numbers to floats,\nlike JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n```\n# use cosmwasm_std::Uint64;\nlet a = Uint64::from(42u64);\nassert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32);\nassert_eq!(b.u64(), 70);\n```",
+        "type": "integer",
+        "precision": 64,
+        "signed": false
+      },
+      {
+        "name": "cosmwasm_std_ibc_IbcAcknowledgement",
+        "type": "struct",
+        "properties": {
+          "data": {
+            "value": 4
+          }
+        }
+      },
+      {
+        "name": "cosmwasm_std_binary_Binary",
+        "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+        "type": "binary"
+      }
+    ]
+  },
+  "query": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "ibc_reflect_msg_QueryMsg",
         "type": "enum",
         "cases": {
           "account": {
@@ -95,7 +91,7 @@
             "type": "named",
             "properties": {
               "channel_id": {
-                "value": 0
+                "value": 1
               }
             }
           },
@@ -105,6 +101,10 @@
             "properties": {}
           }
         }
+      },
+      {
+        "name": "String",
+        "type": "string"
       }
     ]
   },
@@ -113,7 +113,7 @@
     "root": 0,
     "definitions": [
       {
-        "name": "Empty",
+        "name": "cosmwasm_std_results_empty_Empty",
         "description": "An empty struct that serves as a placeholder in different places,\nsuch as contracts that don't set a custom message.\n\nIt is designed to be expressible in correct JSON and JSON Schema but\ncontains no meaningful data. Previously we used enums without cases,\nbut those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
         "type": "struct",
         "properties": {}
@@ -124,8 +124,17 @@
   "responses": {
     "account": {
       "type": "v1",
-      "root": 2,
+      "root": 0,
       "definitions": [
+        {
+          "name": "ibc_reflect_msg_AccountResponse",
+          "type": "struct",
+          "properties": {
+            "account": {
+              "value": 2
+            }
+          }
+        },
         {
           "name": "String",
           "type": "string"
@@ -133,52 +142,43 @@
         {
           "name": "core::option::Option<alloc::string::String>",
           "type": "optional",
-          "inner": 0
-        },
-        {
-          "name": "AccountResponse",
-          "type": "struct",
-          "properties": {
-            "account": {
-              "value": 1
-            }
-          }
+          "inner": 1
         }
       ]
     },
     "list_accounts": {
       "type": "v1",
-      "root": 3,
+      "root": 0,
       "definitions": [
+        {
+          "name": "ibc_reflect_msg_ListAccountsResponse",
+          "type": "struct",
+          "properties": {
+            "accounts": {
+              "value": 3
+            }
+          }
+        },
+        {
+          "name": "ibc_reflect_msg_AccountInfo",
+          "type": "struct",
+          "properties": {
+            "account": {
+              "value": 2
+            },
+            "channel_id": {
+              "value": 2
+            }
+          }
+        },
         {
           "name": "String",
           "type": "string"
         },
         {
-          "name": "AccountInfo",
-          "type": "struct",
-          "properties": {
-            "account": {
-              "value": 0
-            },
-            "channel_id": {
-              "value": 0
-            }
-          }
-        },
-        {
           "name": "alloc::vec::Vec<ibc_reflect::msg::AccountInfo>",
           "type": "array",
           "items": 1
-        },
-        {
-          "name": "ListAccountsResponse",
-          "type": "struct",
-          "properties": {
-            "accounts": {
-              "value": 2
-            }
-          }
         }
       ]
     }

@@ -1,21 +1,21 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
+    {
+      "name": "queue_msg_SumResponse",
+      "type": "struct",
+      "properties": {
+        "sum": {
+          "value": 1
+        }
+      }
+    },
     {
       "name": "i32",
       "type": "integer",
       "precision": 32,
       "signed": true
-    },
-    {
-      "name": "SumResponse",
-      "type": "struct",
-      "properties": {
-        "sum": {
-          "value": 0
-        }
-      }
     }
   ]
 }

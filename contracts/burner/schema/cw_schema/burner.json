@@ -7,7 +7,7 @@
     "root": 0,
     "definitions": [
       {
-        "name": "InstantiateMsg",
+        "name": "burner_msg_InstantiateMsg",
         "description": "A placeholder where we don't take any input",
         "type": "struct",
         "properties": {}
@@ -18,8 +18,22 @@
   "query": null,
   "migrate": {
     "type": "v1",
-    "root": 2,
+    "root": 0,
     "definitions": [
+      {
+        "name": "burner_msg_MigrateMsg",
+        "type": "struct",
+        "properties": {
+          "delete": {
+            "description": "Optional amount of items to delete in this call.\nIf it is not provided, nothing will be deleted.\nYou can delete further items in a subsequent execute call.",
+            "value": 2
+          },
+          "payout": {
+            "description": "The address we send all remaining balance to",
+            "value": 1
+          }
+        }
+      },
       {
         "name": "String",
         "type": "string"
@@ -29,20 +43,6 @@
         "type": "integer",
         "precision": 32,
         "signed": false
-      },
-      {
-        "name": "MigrateMsg",
-        "type": "struct",
-        "properties": {
-          "delete": {
-            "description": "Optional amount of items to delete in this call.\nIf it is not provided, nothing will be deleted.\nYou can delete further items in a subsequent execute call.",
-            "value": 1
-          },
-          "payout": {
-            "description": "The address we send all remaining balance to",
-            "value": 0
-          }
-        }
       }
     ]
   },

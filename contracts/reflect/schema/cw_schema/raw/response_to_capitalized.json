@@ -1,19 +1,19 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "String",
-      "type": "string"
-    },
-    {
-      "name": "CapitalizedResponse",
+      "name": "reflect_msg_CapitalizedResponse",
       "type": "struct",
       "properties": {
         "text": {
-          "value": 0
+          "value": 1
         }
       }
+    },
+    {
+      "name": "String",
+      "type": "string"
     }
   ]
 }

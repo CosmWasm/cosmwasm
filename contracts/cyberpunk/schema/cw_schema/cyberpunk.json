@@ -7,7 +7,7 @@
     "root": 0,
     "definitions": [
       {
-        "name": "Empty",
+        "name": "cosmwasm_std_results_empty_Empty",
         "description": "An empty struct that serves as a placeholder in different places,\nsuch as contracts that don't set a custom message.\n\nIt is designed to be expressible in correct JSON and JSON Schema but\ncontains no meaningful data. Previously we used enums without cases,\nbut those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
         "type": "struct",
         "properties": {}
@@ -16,16 +16,10 @@
   },
   "execute": {
     "type": "v1",
-    "root": 1,
+    "root": 0,
     "definitions": [
       {
-        "name": "u32",
-        "type": "integer",
-        "precision": 32,
-        "signed": false
-      },
-      {
-        "name": "ExecuteMsg",
+        "name": "cyberpunk_msg_ExecuteMsg",
         "type": "enum",
         "cases": {
           "allocate_large_memory": {
@@ -33,7 +27,7 @@
             "type": "named",
             "properties": {
               "pages": {
-                "value": 0
+                "value": 1
               }
             }
           },
@@ -43,11 +37,11 @@
             "properties": {
               "mem_cost": {
                 "description": "The amount of memory requested (KB).",
-                "value": 0
+                "value": 1
               },
               "time_cost": {
                 "description": "The number of passes.",
-                "value": 0
+                "value": 1
               }
             }
           },
@@ -97,19 +91,21 @@
             "properties": {}
           }
         }
+      },
+      {
+        "name": "u32",
+        "type": "integer",
+        "precision": 32,
+        "signed": false
       }
     ]
   },
   "query": {
     "type": "v1",
-    "root": 1,
+    "root": 0,
     "definitions": [
       {
-        "name": "String",
-        "type": "string"
-      },
-      {
-        "name": "QueryMsg",
+        "name": "cyberpunk_msg_QueryMsg",
         "type": "enum",
         "cases": {
           "denom": {
@@ -117,7 +113,7 @@
             "type": "named",
             "properties": {
               "denom": {
-                "value": 0
+                "value": 1
               }
             }
           },
@@ -132,6 +128,10 @@
             "properties": {}
           }
         }
+      },
+      {
+        "name": "String",
+        "type": "string"
       }
     ]
   },
@@ -140,11 +140,58 @@
   "responses": {
     "denom": {
       "type": "v1",
-      "root": 5,
+      "root": 0,
       "definitions": [
+        {
+          "name": "cosmwasm_std_metadata_DenomMetadata",
+          "description": "Replicates the cosmos-sdk bank module Metadata type",
+          "type": "struct",
+          "properties": {
+            "base": {
+              "value": 1
+            },
+            "denom_units": {
+              "value": 5
+            },
+            "description": {
+              "value": 1
+            },
+            "display": {
+              "value": 1
+            },
+            "name": {
+              "value": 1
+            },
+            "symbol": {
+              "value": 1
+            },
+            "uri": {
+              "value": 1
+            },
+            "uri_hash": {
+              "value": 1
+            }
+          }
+        },
         {
           "name": "String",
           "type": "string"
+        },
+        {
+          "name": "cosmwasm_std_metadata_DenomUnit",
+          "description": "Replicates the cosmos-sdk bank module DenomUnit type",
+          "type": "struct",
+          "properties": {
+            "aliases": {
+              "value": 4
+            },
+            "denom": {
+              "value": 1
+            },
+            "exponent": {
+              "value": 3
+            }
+          }
         },
         {
           "name": "u32",
@@ -155,59 +202,12 @@
         {
           "name": "alloc::vec::Vec<alloc::string::String>",
           "type": "array",
-          "items": 0
-        },
-        {
-          "name": "DenomUnit",
-          "description": "Replicates the cosmos-sdk bank module DenomUnit type",
-          "type": "struct",
-          "properties": {
-            "aliases": {
-              "value": 2
-            },
-            "denom": {
-              "value": 0
-            },
-            "exponent": {
-              "value": 1
-            }
-          }
+          "items": 1
         },
         {
           "name": "alloc::vec::Vec<cosmwasm_std::metadata::DenomUnit>",
           "type": "array",
-          "items": 3
-        },
-        {
-          "name": "DenomMetadata",
-          "description": "Replicates the cosmos-sdk bank module Metadata type",
-          "type": "struct",
-          "properties": {
-            "base": {
-              "value": 0
-            },
-            "denom_units": {
-              "value": 4
-            },
-            "description": {
-              "value": 0
-            },
-            "display": {
-              "value": 0
-            },
-            "name": {
-              "value": 0
-            },
-            "symbol": {
-              "value": 0
-            },
-            "uri": {
-              "value": 0
-            },
-            "uri_hash": {
-              "value": 0
-            }
-          }
+          "items": 2
         }
       ]
     },
@@ -216,8 +216,55 @@
       "root": 6,
       "definitions": [
         {
+          "name": "cosmwasm_std_metadata_DenomMetadata",
+          "description": "Replicates the cosmos-sdk bank module Metadata type",
+          "type": "struct",
+          "properties": {
+            "base": {
+              "value": 1
+            },
+            "denom_units": {
+              "value": 5
+            },
+            "description": {
+              "value": 1
+            },
+            "display": {
+              "value": 1
+            },
+            "name": {
+              "value": 1
+            },
+            "symbol": {
+              "value": 1
+            },
+            "uri": {
+              "value": 1
+            },
+            "uri_hash": {
+              "value": 1
+            }
+          }
+        },
+        {
           "name": "String",
           "type": "string"
+        },
+        {
+          "name": "cosmwasm_std_metadata_DenomUnit",
+          "description": "Replicates the cosmos-sdk bank module DenomUnit type",
+          "type": "struct",
+          "properties": {
+            "aliases": {
+              "value": 4
+            },
+            "denom": {
+              "value": 1
+            },
+            "exponent": {
+              "value": 3
+            }
+          }
         },
         {
           "name": "u32",
@@ -228,71 +275,57 @@
         {
           "name": "alloc::vec::Vec<alloc::string::String>",
           "type": "array",
-          "items": 0
-        },
-        {
-          "name": "DenomUnit",
-          "description": "Replicates the cosmos-sdk bank module DenomUnit type",
-          "type": "struct",
-          "properties": {
-            "aliases": {
-              "value": 2
-            },
-            "denom": {
-              "value": 0
-            },
-            "exponent": {
-              "value": 1
-            }
-          }
+          "items": 1
         },
         {
           "name": "alloc::vec::Vec<cosmwasm_std::metadata::DenomUnit>",
           "type": "array",
-          "items": 3
-        },
-        {
-          "name": "DenomMetadata",
-          "description": "Replicates the cosmos-sdk bank module Metadata type",
-          "type": "struct",
-          "properties": {
-            "base": {
-              "value": 0
-            },
-            "denom_units": {
-              "value": 4
-            },
-            "description": {
-              "value": 0
-            },
-            "display": {
-              "value": 0
-            },
-            "name": {
-              "value": 0
-            },
-            "symbol": {
-              "value": 0
-            },
-            "uri": {
-              "value": 0
-            },
-            "uri_hash": {
-              "value": 0
-            }
-          }
+          "items": 2
         },
         {
           "name": "alloc::vec::Vec<cosmwasm_std::metadata::DenomMetadata>",
           "type": "array",
-          "items": 5
+          "items": 0
         }
       ]
     },
     "mirror_env": {
       "type": "v1",
-      "root": 9,
+      "root": 0,
       "definitions": [
+        {
+          "name": "cosmwasm_std_types_Env",
+          "type": "struct",
+          "properties": {
+            "block": {
+              "value": 1
+            },
+            "contract": {
+              "value": 8
+            },
+            "transaction": {
+              "description": "Information on the transaction this message was executed in.\nThe field is unset when the `MsgExecuteContract`/`MsgInstantiateContract`/`MsgMigrateContract`\nis not executed as part of a transaction.",
+              "value": 7
+            }
+          }
+        },
+        {
+          "name": "cosmwasm_std_types_BlockInfo",
+          "type": "struct",
+          "properties": {
+            "chain_id": {
+              "value": 4
+            },
+            "height": {
+              "description": "The height of a block is the number of blocks preceding it in the blockchain.",
+              "value": 2
+            },
+            "time": {
+              "description": "Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).\n\nThe source of this is the [BFT Time in Tendermint](https://github.com/tendermint/tendermint/blob/58dc1726/spec/consensus/bft-time.md),\nwhich has the same nanosecond precision as the `Timestamp` type.\n\n# Examples\n\nUsing chrono:\n\n```\n# use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};\n# let env = Env {\n#     block: BlockInfo {\n#         height: 12_345,\n#         time: Timestamp::from_nanos(1_571_797_419_879_305_533),\n#         chain_id: \"cosmos-testnet-14002\".to_string(),\n#     },\n#     transaction: Some(TransactionInfo { index: 3 }),\n#     contract: ContractInfo {\n#         address: Addr::unchecked(\"contract\"),\n#     },\n# };\n# extern crate chrono;\nuse chrono::NaiveDateTime;\nlet seconds = env.block.time.seconds();\nlet nsecs = env.block.time.subsec_nanos();\nlet dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32);\n```\n\nCreating a simple millisecond-precision timestamp (as used in JavaScript):\n\n```\n# use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};\n# let env = Env {\n#     block: BlockInfo {\n#         height: 12_345,\n#         time: Timestamp::from_nanos(1_571_797_419_879_305_533),\n#         chain_id: \"cosmos-testnet-14002\".to_string(),\n#     },\n#     transaction: Some(TransactionInfo { index: 3 }),\n#     contract: ContractInfo {\n#         address: Addr::unchecked(\"contract\"),\n#     },\n# };\nlet millis = env.block.time.nanos() / 1_000_000;\n```",
+              "value": 3
+            }
+          }
+        },
         {
           "name": "u64",
           "type": "integer",
@@ -300,7 +333,7 @@
           "signed": false
         },
         {
-          "name": "Timestamp",
+          "name": "cosmwasm_std_timestamp_Timestamp",
           "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n```\n# use cosmwasm_std::Timestamp;\nlet ts = Timestamp::from_nanos(1_000_000_202);\nassert_eq!(ts.nanos(), 1_000_000_202);\nassert_eq!(ts.seconds(), 1);\nassert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2);\nassert_eq!(ts.nanos(), 3_000_000_202);\nassert_eq!(ts.seconds(), 3);\nassert_eq!(ts.subsec_nanos(), 202);\n```",
           "type": "timestamp"
         },
@@ -309,19 +342,12 @@
           "type": "string"
         },
         {
-          "name": "BlockInfo",
+          "name": "cosmwasm_std_types_TransactionInfo",
           "type": "struct",
           "properties": {
-            "chain_id": {
-              "value": 2
-            },
-            "height": {
-              "description": "The height of a block is the number of blocks preceding it in the blockchain.",
-              "value": 0
-            },
-            "time": {
-              "description": "Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).\n\nThe source of this is the [BFT Time in Tendermint](https://github.com/tendermint/tendermint/blob/58dc1726/spec/consensus/bft-time.md),\nwhich has the same nanosecond precision as the `Timestamp` type.\n\n# Examples\n\nUsing chrono:\n\n```\n# use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};\n# let env = Env {\n#     block: BlockInfo {\n#         height: 12_345,\n#         time: Timestamp::from_nanos(1_571_797_419_879_305_533),\n#         chain_id: \"cosmos-testnet-14002\".to_string(),\n#     },\n#     transaction: Some(TransactionInfo { index: 3 }),\n#     contract: ContractInfo {\n#         address: Addr::unchecked(\"contract\"),\n#     },\n# };\n# extern crate chrono;\nuse chrono::NaiveDateTime;\nlet seconds = env.block.time.seconds();\nlet nsecs = env.block.time.subsec_nanos();\nlet dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32);\n```\n\nCreating a simple millisecond-precision timestamp (as used in JavaScript):\n\n```\n# use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};\n# let env = Env {\n#     block: BlockInfo {\n#         height: 12_345,\n#         time: Timestamp::from_nanos(1_571_797_419_879_305_533),\n#         chain_id: \"cosmos-testnet-14002\".to_string(),\n#     },\n#     transaction: Some(TransactionInfo { index: 3 }),\n#     contract: ContractInfo {\n#         address: Addr::unchecked(\"contract\"),\n#     },\n# };\nlet millis = env.block.time.nanos() / 1_000_000;\n```",
-              "value": 1
+            "index": {
+              "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
+              "value": 6
             }
           }
         },
@@ -332,49 +358,23 @@
           "signed": false
         },
         {
-          "name": "TransactionInfo",
-          "type": "struct",
-          "properties": {
-            "index": {
-              "description": "The position of this transaction in the block. The first\ntransaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain\nusing the pair (`env.block.height`, `env.transaction.index`).\n",
-              "value": 4
-            }
-          }
-        },
-        {
           "name": "core::option::Option<cosmwasm_std::types::TransactionInfo>",
           "type": "optional",
           "inner": 5
         },
         {
-          "name": "Addr",
-          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no\nassumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways\n1. Use `Addr::unchecked(input)`\n2. Use `let checked: Addr = deps.api.addr_validate(input)?`\n3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`\n4. Deserialize from JSON. This must only be done from JSON that was validated before\nsuch as a contract's state. `Addr` must not be used in messages sent by the user\nbecause this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create\na mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`\ninstance.",
-          "type": "address"
-        },
-        {
-          "name": "ContractInfo",
+          "name": "cosmwasm_std_types_ContractInfo",
           "type": "struct",
           "properties": {
             "address": {
-              "value": 7
+              "value": 9
             }
           }
         },
         {
-          "name": "Env",
-          "type": "struct",
-          "properties": {
-            "block": {
-              "value": 3
-            },
-            "contract": {
-              "value": 8
-            },
-            "transaction": {
-              "description": "Information on the transaction this message was executed in.\nThe field is unset when the `MsgExecuteContract`/`MsgInstantiateContract`/`MsgMigrateContract`\nis not executed as part of a transaction.",
-              "value": 6
-            }
-          }
+          "name": "cosmwasm_std_addresses_Addr",
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no\nassumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways\n1. Use `Addr::unchecked(input)`\n2. Use `let checked: Addr = deps.api.addr_validate(input)?`\n3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`\n4. Deserialize from JSON. This must only be done from JSON that was validated before\nsuch as a contract's state. `Addr` must not be used in messages sent by the user\nbecause this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create\na mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`\ninstance.",
+          "type": "address"
         }
       ]
     }

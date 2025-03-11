@@ -98,6 +98,13 @@ expression: schema
         }
       ]
     },
+    "MapKind": {
+      "type": "string",
+      "enum": [
+        "bTree",
+        "hash"
+      ]
+    },
     "Node": {
       "type": "object",
       "properties": {
@@ -373,6 +380,34 @@ expression: schema
           "required": [
             "type",
             "cases"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "map"
+            },
+            "key": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "kind": {
+              "$ref": "#/$defs/MapKind"
+            },
+            "value": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "type",
+            "kind",
+            "key",
+            "value"
           ]
         },
         {

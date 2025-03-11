@@ -1,15 +1,9 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "u32",
-      "type": "integer",
-      "precision": 32,
-      "signed": false
-    },
-    {
-      "name": "ExecuteMsg",
+      "name": "hackatom_msg_ExecuteMsg",
       "type": "enum",
       "cases": {
         "allocate_large_memory": {
@@ -17,7 +11,7 @@
           "type": "named",
           "properties": {
             "pages": {
-              "value": 0
+              "value": 1
             }
           }
         },
@@ -57,6 +51,12 @@
           "properties": {}
         }
       }
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
     }
   ]
 }

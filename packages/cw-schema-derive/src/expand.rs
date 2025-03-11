@@ -386,6 +386,12 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
         #[automatically_derived]
         impl #impl_generics #crate_path::Schemaifier for #name #ty_generics #where_clause {
             fn visit_schema(visitor: &mut #crate_path::SchemaVisitor) -> #crate_path::DefinitionReference {
+                if let Some(reference) = visitor.get_reference::<Self>() {
+                    return reference;
+                }
+
+                visitor.reserve_spot(Self::id());
+
                 let node = #crate_path::Node {
                     name: std::any::type_name::<Self>()
                         .replace("::", "_")
@@ -479,6 +485,12 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
         #[automatically_derived]
         impl #impl_generics #crate_path::Schemaifier for #name #ty_generics #where_clause {
             fn visit_schema(visitor: &mut #crate_path::SchemaVisitor) -> #crate_path::DefinitionReference {
+                if let Some(reference) = visitor.get_reference::<Self>() {
+                    return reference;
+                }
+
+                visitor.reserve_spot(Self::id());
+
                 let node = {
                     #node
                 };

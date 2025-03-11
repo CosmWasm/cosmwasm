@@ -3,7 +3,7 @@
   "root": 0,
   "definitions": [
     {
-      "name": "InstantiateMsg",
+      "name": "ibc_reflect_send_msg_InstantiateMsg",
       "description": "This needs no info. Owner of the contract is whoever signed the InstantiateMsg.",
       "type": "struct",
       "properties": {}

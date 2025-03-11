@@ -7,7 +7,7 @@
     "root": 0,
     "definitions": [
       {
-        "name": "InstantiateMsg",
+        "name": "virus_msg_InstantiateMsg",
         "type": "struct",
         "properties": {}
       }
@@ -15,8 +15,27 @@
   },
   "execute": {
     "type": "v1",
-    "root": 2,
+    "root": 0,
     "definitions": [
+      {
+        "name": "virus_msg_ExecuteMsg",
+        "type": "enum",
+        "cases": {
+          "spread": {
+            "type": "named",
+            "properties": {
+              "levels": {
+                "description": "The number of levels of spreading. When set to 0, the contract performs a no-op.",
+                "value": 2
+              },
+              "parent_path": {
+                "description": "A slash separated path to the instance creating this one.\nThe root is the empty string.",
+                "value": 1
+              }
+            }
+          }
+        }
+      },
       {
         "name": "String",
         "type": "string"
@@ -26,25 +45,6 @@
         "type": "integer",
         "precision": 32,
         "signed": false
-      },
-      {
-        "name": "ExecuteMsg",
-        "type": "enum",
-        "cases": {
-          "spread": {
-            "type": "named",
-            "properties": {
-              "levels": {
-                "description": "The number of levels of spreading. When set to 0, the contract performs a no-op.",
-                "value": 1
-              },
-              "parent_path": {
-                "description": "A slash separated path to the instance creating this one.\nThe root is the empty string.",
-                "value": 0
-              }
-            }
-          }
-        }
       }
     ]
   },

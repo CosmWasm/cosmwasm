@@ -1,19 +1,19 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "String",
-      "type": "string"
-    },
-    {
-      "name": "AdminResponse",
+      "name": "ibc_reflect_send_msg_AdminResponse",
       "type": "struct",
       "properties": {
         "admin": {
-          "value": 0
+          "value": 1
         }
       }
+    },
+    {
+      "name": "String",
+      "type": "string"
     }
   ]
 }

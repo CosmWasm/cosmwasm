@@ -1,18 +1,86 @@
 {
   "type": "v1",
-  "root": 18,
+  "root": 0,
   "definitions": [
     {
-      "name": "Binary",
+      "name": "ibc_callbacks_state_CallbackStats",
+      "description": "A counter for the number of times the respective callback has been called",
+      "type": "struct",
+      "properties": {
+        "ibc_ack_callbacks": {
+          "value": 14
+        },
+        "ibc_destination_callbacks": {
+          "value": 18
+        },
+        "ibc_timeout_callbacks": {
+          "value": 16
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_ibc_callbacks_IbcAckCallbackMsg",
+      "type": "struct",
+      "properties": {
+        "acknowledgement": {
+          "value": 2
+        },
+        "original_packet": {
+          "value": 4
+        },
+        "relayer": {
+          "value": 13
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_ibc_IbcAcknowledgement",
+      "type": "struct",
+      "properties": {
+        "data": {
+          "value": 3
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_binary_Binary",
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
       "type": "binary"
     },
     {
-      "name": "IbcAcknowledgement",
+      "name": "cosmwasm_std_ibc_IbcPacket",
       "type": "struct",
       "properties": {
         "data": {
-          "value": 0
+          "description": "The raw data sent from the other side in the packet",
+          "value": 3
+        },
+        "dest": {
+          "description": "identifies the channel and port on the receiving chain.",
+          "value": 5
+        },
+        "sequence": {
+          "description": "The sequence number of the packet on the given channel",
+          "value": 7
+        },
+        "src": {
+          "description": "identifies the channel and port on the sending chain.",
+          "value": 5
+        },
+        "timeout": {
+          "value": 8
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_ibc_IbcEndpoint",
+      "type": "struct",
+      "properties": {
+        "channel_id": {
+          "value": 6
+        },
+        "port_id": {
+          "value": 6
         }
       }
     },
@@ -21,166 +89,98 @@
       "type": "string"
     },
     {
-      "name": "IbcEndpoint",
-      "type": "struct",
-      "properties": {
-        "channel_id": {
-          "value": 2
-        },
-        "port_id": {
-          "value": 2
-        }
-      }
-    },
-    {
       "name": "u64",
       "type": "integer",
       "precision": 64,
       "signed": false
     },
     {
-      "name": "IbcTimeoutBlock",
+      "name": "cosmwasm_std_ibc_IbcTimeout",
+      "description": "In IBC each package must set at least one type of timeout:\nthe timestamp or the block height. Using this rather complex enum instead of\ntwo timeout fields we ensure that at least one timeout is set.",
+      "type": "struct",
+      "properties": {
+        "block": {
+          "value": 10
+        },
+        "timestamp": {
+          "value": 12
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_ibc_IbcTimeoutBlock",
       "description": "IBCTimeoutHeight Height is a monotonically increasing data type\nthat can be compared against another Height for the purposes of updating and\nfreezing clients.\nOrdering is (revision_number, timeout_height)",
       "type": "struct",
       "properties": {
         "height": {
           "description": "block height after which the packet times out.\nthe height within the given revision",
-          "value": 4
+          "value": 7
         },
         "revision": {
           "description": "the version that the client is currently on\n(e.g. after resetting the chain this could increment 1 as height drops to 0)",
-          "value": 4
+          "value": 7
         }
       }
     },
     {
       "name": "core::option::Option<cosmwasm_std::ibc::IbcTimeoutBlock>",
       "type": "optional",
-      "inner": 5
+      "inner": 9
     },
     {
-      "name": "Timestamp",
+      "name": "cosmwasm_std_timestamp_Timestamp",
       "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n```\n# use cosmwasm_std::Timestamp;\nlet ts = Timestamp::from_nanos(1_000_000_202);\nassert_eq!(ts.nanos(), 1_000_000_202);\nassert_eq!(ts.seconds(), 1);\nassert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2);\nassert_eq!(ts.nanos(), 3_000_000_202);\nassert_eq!(ts.seconds(), 3);\nassert_eq!(ts.subsec_nanos(), 202);\n```",
       "type": "timestamp"
     },
     {
       "name": "core::option::Option<cosmwasm_std::timestamp::Timestamp>",
       "type": "optional",
-      "inner": 7
+      "inner": 11
     },
     {
-      "name": "IbcTimeout",
-      "description": "In IBC each package must set at least one type of timeout:\nthe timestamp or the block height. Using this rather complex enum instead of\ntwo timeout fields we ensure that at least one timeout is set.",
-      "type": "struct",
-      "properties": {
-        "block": {
-          "value": 6
-        },
-        "timestamp": {
-          "value": 8
-        }
-      }
-    },
-    {
-      "name": "IbcPacket",
-      "type": "struct",
-      "properties": {
-        "data": {
-          "description": "The raw data sent from the other side in the packet",
-          "value": 0
-        },
-        "dest": {
-          "description": "identifies the channel and port on the receiving chain.",
-          "value": 3
-        },
-        "sequence": {
-          "description": "The sequence number of the packet on the given channel",
-          "value": 4
-        },
-        "src": {
-          "description": "identifies the channel and port on the sending chain.",
-          "value": 3
-        },
-        "timeout": {
-          "value": 9
-        }
-      }
-    },
-    {
-      "name": "Addr",
+      "name": "cosmwasm_std_addresses_Addr",
       "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no\nassumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways\n1. Use `Addr::unchecked(input)`\n2. Use `let checked: Addr = deps.api.addr_validate(input)?`\n3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`\n4. Deserialize from JSON. This must only be done from JSON that was validated before\nsuch as a contract's state. `Addr` must not be used in messages sent by the user\nbecause this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create\na mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`\ninstance.",
       "type": "address"
     },
     {
-      "name": "IbcAckCallbackMsg",
-      "type": "struct",
-      "properties": {
-        "acknowledgement": {
-          "value": 1
-        },
-        "original_packet": {
-          "value": 10
-        },
-        "relayer": {
-          "value": 11
-        }
-      }
-    },
-    {
       "name": "alloc::vec::Vec<cosmwasm_std::ibc::callbacks::IbcAckCallbackMsg>",
       "type": "array",
-      "items": 12
+      "items": 1
     },
     {
-      "name": "IbcTimeoutCallbackMsg",
+      "name": "cosmwasm_std_ibc_callbacks_IbcTimeoutCallbackMsg",
       "type": "struct",
       "properties": {
         "packet": {
-          "value": 10
+          "value": 4
         },
         "relayer": {
-          "value": 11
+          "value": 13
         }
       }
     },
     {
       "name": "alloc::vec::Vec<cosmwasm_std::ibc::callbacks::IbcTimeoutCallbackMsg>",
       "type": "array",
-      "items": 14
+      "items": 15
     },
     {
-      "name": "IbcDestinationCallbackMsg",
+      "name": "cosmwasm_std_ibc_callbacks_IbcDestinationCallbackMsg",
       "description": "The message type of the IBC destination callback.\n\nThe IBC destination callback is needed for cases where someone triggers the sending of an\nIBC packet through some other message (i.e. not through [`crate::IbcMsg::SendPacket`]) and\nyour contract needs to know that it received this.\nA prominent example is the [`crate::IbcMsg::Transfer`] message. Without callbacks, you cannot know\nthat someone sent you IBC coins.\n\nIt is important to validate that the packet and acknowledgement are what you expect them to be.\nFor example for a transfer message, the receiver is not necessarily the contract itself.\n\nThe callback is called when the packet is being acknowledged on the destination chain.\nThis happens for both synchronous and asynchronous acknowledgements.\n\nNote that there are some prerequisites that need to be fulfilled to receive destination callbacks:\n- The contract must implement the `ibc_destination_callback` entrypoint.\n- The IBC application in the destination chain must have support for the callbacks middleware.\n- You have to add serialized [`IbcCallbackRequest`] to a specific field of the message.\nFor `IbcMsg::Transfer`, this is the `memo` field and it needs to be json-encoded.",
       "type": "struct",
       "properties": {
         "ack": {
-          "value": 1
+          "value": 2
         },
         "packet": {
-          "value": 10
+          "value": 4
         }
       }
     },
     {
       "name": "alloc::vec::Vec<cosmwasm_std::ibc::callbacks::IbcDestinationCallbackMsg>",
       "type": "array",
-      "items": 16
-    },
-    {
-      "name": "CallbackStats",
-      "description": "A counter for the number of times the respective callback has been called",
-      "type": "struct",
-      "properties": {
-        "ibc_ack_callbacks": {
-          "value": 13
-        },
-        "ibc_destination_callbacks": {
-          "value": 17
-        },
-        "ibc_timeout_callbacks": {
-          "value": 15
-        }
-      }
+      "items": 17
     }
   ]
 }

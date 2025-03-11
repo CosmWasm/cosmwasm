@@ -3,7 +3,7 @@
   "root": 0,
   "definitions": [
     {
-      "name": "MigrateMsg",
+      "name": "queue_msg_MigrateMsg",
       "type": "struct",
       "properties": {}
     }

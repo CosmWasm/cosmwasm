@@ -191,9 +191,14 @@ impl Identifier {
     }
 }
 
+enum NodeSpot {
+    Reserved,
+    Occupied(Node),
+}
+
 #[derive(Default)]
 pub struct SchemaVisitor {
-    schemas: IndexMap<Identifier, Node, BuildHasherDefault<SipHasher>>,
+    schemas: IndexMap<Identifier, NodeSpot, BuildHasherDefault<SipHasher>>,
 }
 
 impl SchemaVisitor {
@@ -202,18 +207,32 @@ impl SchemaVisitor {
     }
 
     pub fn get_schema<T: Schemaifier>(&self) -> Option<&Node> {
-        self.schemas.get(&T::id())
+        self.schemas.get(&T::id()).and_then(|node_spot| match node_spot {
+            NodeSpot::Occupied(node) => Some(node),
+            NodeSpot::Reserved => None,
+        })
     }
 
     pub fn insert(&mut self, id: Identifier, node: Node) -> DefinitionReference {
-        let (id, _) = self.schemas.insert_full(id, node);
+        let (id, _) = self.schemas.insert_full(id, NodeSpot::Occupied(node));
+        id
+    }
+
+    pub fn reserve_spot(&mut self, id: Identifier) -> DefinitionReference {
+        let (id, _) = self.schemas.insert_full(id, NodeSpot::Reserved);
         id
     }
 
     /// Transform this visitor into a vector where the `DefinitionReference` can be used as an index
     /// to access the schema of the particular node.
     pub fn into_vec(self) -> Vec<Node> {
-        self.schemas.into_values().collect()
+        self.schemas.into_values().map(|node_spot| {
+            if let NodeSpot::Occupied(node) = node_spot {
+                node
+            } else {
+                panic!("reserved and never filled spot");
+            }
+        }).collect()
     }
 }
 

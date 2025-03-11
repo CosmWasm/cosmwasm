@@ -1,21 +1,21 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "Binary",
-      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
-      "type": "binary"
-    },
-    {
-      "name": "RecurseResponse",
+      "name": "hackatom_msg_RecurseResponse",
       "type": "struct",
       "properties": {
         "hashed": {
           "description": "hashed is the result of running sha256 \"work+1\" times on the contract's human address",
-          "value": 0
+          "value": 1
         }
       }
+    },
+    {
+      "name": "cosmwasm_std_binary_Binary",
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "binary"
     }
   ]
 }

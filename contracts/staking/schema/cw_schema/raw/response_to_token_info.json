@@ -1,7 +1,26 @@
 {
   "type": "v1",
-  "root": 2,
+  "root": 0,
   "definitions": [
+    {
+      "name": "staking_msg_TokenInfoResponse",
+      "description": "TokenInfoResponse is info to display the derivative token in a UI",
+      "type": "struct",
+      "properties": {
+        "decimals": {
+          "description": "decimal places of the derivative token (for UI)",
+          "value": 2
+        },
+        "name": {
+          "description": "name of the derivative token",
+          "value": 1
+        },
+        "symbol": {
+          "description": "symbol / ticker of the derivative token",
+          "value": 1
+        }
+      }
+    },
     {
       "name": "String",
       "type": "string"
@@ -11,25 +30,6 @@
       "type": "integer",
       "precision": 8,
       "signed": false
-    },
-    {
-      "name": "TokenInfoResponse",
-      "description": "TokenInfoResponse is info to display the derivative token in a UI",
-      "type": "struct",
-      "properties": {
-        "decimals": {
-          "description": "decimal places of the derivative token (for UI)",
-          "value": 1
-        },
-        "name": {
-          "description": "name of the derivative token",
-          "value": 0
-        },
-        "symbol": {
-          "description": "symbol / ticker of the derivative token",
-          "value": 0
-        }
-      }
     }
   ]
 }

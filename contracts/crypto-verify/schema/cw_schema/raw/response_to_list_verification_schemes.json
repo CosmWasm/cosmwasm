@@ -1,7 +1,16 @@
 {
   "type": "v1",
-  "root": 2,
+  "root": 0,
   "definitions": [
+    {
+      "name": "crypto_verify_msg_ListVerificationsResponse",
+      "type": "struct",
+      "properties": {
+        "verification_schemes": {
+          "value": 2
+        }
+      }
+    },
     {
       "name": "String",
       "type": "string"
@@ -9,16 +18,7 @@
     {
       "name": "alloc::vec::Vec<alloc::string::String>",
       "type": "array",
-      "items": 0
-    },
-    {
-      "name": "ListVerificationsResponse",
-      "type": "struct",
-      "properties": {
-        "verification_schemes": {
-          "value": 1
-        }
-      }
+      "items": 1
     }
   ]
 }

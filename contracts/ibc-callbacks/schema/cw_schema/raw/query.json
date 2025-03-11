@@ -3,7 +3,7 @@
   "root": 0,
   "definitions": [
     {
-      "name": "QueryMsg",
+      "name": "ibc_callbacks_msg_QueryMsg",
       "type": "enum",
       "cases": {
         "callback_stats": {

@@ -4,29 +4,29 @@ expression: schema
 ---
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "str",
-      "type": "string"
-    },
-    {
-      "name": "NonStatic",
+      "name": "non_static_NonStatic",
       "type": "struct",
       "properties": {
         "test1": {
-          "value": 0
+          "value": 1
         },
         "test2": {
-          "value": 0
+          "value": 1
         },
         "test3": {
-          "value": 0
+          "value": 1
         },
         "test4": {
-          "value": 0
+          "value": 1
         }
       }
+    },
+    {
+      "name": "str",
+      "type": "string"
     }
   ]
 }

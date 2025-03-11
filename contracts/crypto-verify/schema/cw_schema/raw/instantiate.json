@@ -3,7 +3,7 @@
   "root": 0,
   "definitions": [
     {
-      "name": "InstantiateMsg",
+      "name": "crypto_verify_msg_InstantiateMsg",
       "type": "struct",
       "properties": {}
     }

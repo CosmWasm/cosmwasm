@@ -1,21 +1,21 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "Binary",
-      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
-      "type": "binary"
-    },
-    {
-      "name": "RawResponse",
+      "name": "reflect_msg_RawResponse",
       "type": "struct",
       "properties": {
         "data": {
           "description": "The returned value of the raw query. Empty data can be the\nresult of a non-existent key or an empty value. We cannot\ndifferentiate those two cases in cross contract queries.",
-          "value": 0
+          "value": 1
         }
       }
+    },
+    {
+      "name": "cosmwasm_std_binary_Binary",
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "binary"
     }
   ]
 }

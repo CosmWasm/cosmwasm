@@ -1,19 +1,9 @@
 {
   "type": "v1",
-  "root": 2,
+  "root": 0,
   "definitions": [
     {
-      "name": "String",
-      "type": "string"
-    },
-    {
-      "name": "u32",
-      "type": "integer",
-      "precision": 32,
-      "signed": false
-    },
-    {
-      "name": "QueryMsg",
+      "name": "hackatom_msg_QueryMsg",
       "type": "enum",
       "cases": {
         "get_int": {
@@ -26,7 +16,7 @@
           "type": "named",
           "properties": {
             "address": {
-              "value": 0
+              "value": 1
             }
           }
         },
@@ -35,10 +25,10 @@
           "type": "named",
           "properties": {
             "depth": {
-              "value": 1
+              "value": 2
             },
             "work": {
-              "value": 1
+              "value": 2
             }
           }
         },
@@ -48,6 +38,16 @@
           "properties": {}
         }
       }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
     }
   ]
 }

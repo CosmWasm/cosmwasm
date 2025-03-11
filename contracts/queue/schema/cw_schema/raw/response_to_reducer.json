@@ -1,7 +1,16 @@
 {
   "type": "v1",
-  "root": 3,
+  "root": 0,
   "definitions": [
+    {
+      "name": "queue_msg_ReducerResponse",
+      "type": "struct",
+      "properties": {
+        "counters": {
+          "value": 3
+        }
+      }
+    },
     {
       "name": "i32",
       "type": "integer",
@@ -12,23 +21,14 @@
       "name": "(i32, i32)",
       "type": "tuple",
       "items": [
-        0,
-        0
+        1,
+        1
       ]
     },
     {
       "name": "alloc::vec::Vec<(i32, i32)>",
       "type": "array",
-      "items": 1
-    },
-    {
-      "name": "ReducerResponse",
-      "type": "struct",
-      "properties": {
-        "counters": {
-          "value": 2
-        }
-      }
+      "items": 2
     }
   ]
 }

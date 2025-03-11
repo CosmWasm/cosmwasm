@@ -1,20 +1,16 @@
 {
   "type": "v1",
-  "root": 1,
+  "root": 0,
   "definitions": [
     {
-      "name": "String",
-      "type": "string"
-    },
-    {
-      "name": "QueryMsg",
+      "name": "ibc_reflect_send_msg_QueryMsg",
       "type": "enum",
       "cases": {
         "account": {
           "type": "named",
           "properties": {
             "channel_id": {
-              "value": 0
+              "value": 1
             }
           }
         },
@@ -27,6 +23,10 @@
           "properties": {}
         }
       }
+    },
+    {
+      "name": "String",
+      "type": "string"
     }
   ]
 }

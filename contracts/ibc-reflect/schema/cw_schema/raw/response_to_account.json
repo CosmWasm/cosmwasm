@@ -1,7 +1,16 @@
 {
   "type": "v1",
-  "root": 2,
+  "root": 0,
   "definitions": [
+    {
+      "name": "ibc_reflect_msg_AccountResponse",
+      "type": "struct",
+      "properties": {
+        "account": {
+          "value": 2
+        }
+      }
+    },
     {
       "name": "String",
       "type": "string"
@@ -9,16 +18,7 @@
     {
       "name": "core::option::Option<alloc::string::String>",
       "type": "optional",
-      "inner": 0
-    },
-    {
-      "name": "AccountResponse",
-      "type": "struct",
-      "properties": {
-        "account": {
-          "value": 1
-        }
-      }
+      "inner": 1
     }
   ]
 }
