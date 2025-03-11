@@ -58,7 +58,7 @@ pub const REQUIRED_IBC_EXPORTS: &[Entrypoint] = &[
     Entrypoint::IbcPacketTimeout,
 ];
 
-pub const REQUIRED_IBC_V2_EXPORT: &Entrypoint = &Entrypoint::IBCv2PacketReceive;
+pub const REQUIRED_IBC2_EXPORT: &Entrypoint = &Entrypoint::Ibc2PacketReceive;
 
 /// A trait that allows accessing shared functionality of `parity_wasm::elements::Module`
 /// and `wasmer::Module` in a shared fashion.

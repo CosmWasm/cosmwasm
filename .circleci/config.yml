@@ -171,7 +171,7 @@ jobs:
       - run:
           name: "contracts/ibc2: integration-test"
           working_directory: ~/project/contracts/ibc2
-          command: cargo wasm --locked
+          command: cargo wasm --locked && cargo integration-test --locked
       - run:
           name: "contracts/queue: integration-test"
           working_directory: ~/project/contracts/queue
