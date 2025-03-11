@@ -5,11 +5,18 @@ use cosmwasm_std::{
     ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationCallbackMsg,
     IbcSourceCallbackMsg, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
 };
+
+#[cfg(any(feature = "stargate", feature = "ibc2"))]
+use cosmwasm_std::IbcReceiveResponse;
+
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     Ibc3ChannelOpenResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
 };
+
+#[cfg(feature = "ibc2")]
+use cosmwasm_std::Ibc2PacketReceiveMsg;
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -48,7 +55,7 @@ mod read_limits {
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CLOSE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_receive call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_ack call.
     #[cfg(feature = "stargate")]
@@ -91,7 +98,7 @@ mod deserialization_limits {
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_CHANNEL_CLOSE: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a ibc_packet_receive call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a ibc_packet_ack call.
     #[cfg(feature = "stargate")]
@@ -670,6 +677,26 @@ where
     )
 }
 
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_packet_receive_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "ibc2_packet_receive",
+        &[env, msg],
+        read_limits::RESULT_IBC_PACKET_RECEIVE,
+    )
+}
+
 pub fn call_ibc_source_callback_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
@@ -733,6 +760,25 @@ where
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
+}
+
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_packet_receive<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &Ibc2PacketReceiveMsg,
+) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc2_packet_receive_raw(instance, &env, &msg)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -1224,6 +1270,30 @@ mod tests {
             .unwrap();
             assert_eq!(1, stats.ibc_ack_callbacks.len());
             assert_eq!(1, stats.ibc_timeout_callbacks.len());
+        }
+    }
+
+    #[cfg(feature = "ibc2")]
+    mod ibc2 {
+        use super::*;
+        use cosmwasm_std::testing::mock_ibc2_packet_recv;
+        const CONTRACT: &[u8] = include_bytes!("../testdata/ibc2.wasm");
+
+        #[test]
+        fn call_ibc2_packet_receive_works() {
+            // init
+            let mut instance = mock_instance(CONTRACT, &[]);
+            let info = mock_info("creator", &[]);
+            let instantiate_msg = br#"{}"#;
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+                .unwrap()
+                .unwrap();
+
+            let ibc2_msg = br#"SomeRandomMsg"#;
+            let ibc2_msg = mock_ibc2_packet_recv(ibc2_msg).unwrap();
+            call_ibc2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
+                .unwrap()
+                .unwrap();
         }
     }
 }

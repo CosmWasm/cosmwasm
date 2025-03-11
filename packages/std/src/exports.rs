@@ -13,13 +13,17 @@ use core::{marker::PhantomData, ptr};
 use serde::de::DeserializeOwned;
 
 use crate::deps::OwnedDeps;
+#[cfg(any(feature = "stargate", feature = "ibc2"))]
+use crate::ibc::IbcReceiveResponse;
 use crate::ibc::{IbcBasicResponse, IbcDestinationCallbackMsg, IbcSourceCallbackMsg};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
     IbcChannelCloseMsg, IbcChannelConnectMsg, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcPacketTimeoutMsg,
 };
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
+#[cfg(feature = "ibc2")]
+use crate::ibc2::Ibc2PacketReceiveMsg;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{Owned, Region};
 use crate::panic::install_panic_handler;
@@ -44,9 +48,9 @@ extern "C" fn requires_staking() {}
 #[no_mangle]
 extern "C" fn requires_stargate() {}
 
-#[cfg(feature = "eureka")]
+#[cfg(feature = "ibc2")]
 #[no_mangle]
-extern "C" fn requires_eureka() {}
+extern "C" fn requires_ibc2() {}
 
 #[cfg(feature = "cosmwasm_1_1")]
 #[no_mangle]
@@ -522,6 +526,35 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
+/// do_ibc2_packet_receive is designed for use with #[entry_point] to make a "C" extern
+///
+/// contract_fn is called when this chain receives an Ibc2 payload on port belonging
+/// to this contract
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+#[cfg(feature = "ibc2")]
+pub fn do_ibc2_packet_receive<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    install_panic_handler();
+    let res = _do_ibc2_packet_receive(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
+    let v = to_json_vec(&res).unwrap();
+    Region::from_vec(v).to_heap_ptr() as u32
+}
+
 fn _do_instantiate<Q, M, C, E>(
     instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region<Owned>,
@@ -888,4 +921,27 @@ where
         querier: ExternalQuerier::new(),
         custom_query_type: PhantomData,
     }
+}
+
+#[cfg(feature = "ibc2")]
+fn _do_ibc2_packet_receive<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
+) -> ContractResult<IbcReceiveResponse<C>>
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
+
+    let env: Env = try_into_contract_result!(from_json(env));
+    let msg: Ibc2PacketReceiveMsg = try_into_contract_result!(from_json(msg));
+
+    let mut deps = make_dependencies();
+    contract_fn(deps.as_mut(), env, msg).into()
 }

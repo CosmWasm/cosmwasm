@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "State",
+  "type": "object",
+  "required": [
+    "ibc2_packet_receive_counter"
+  ],
+  "properties": {
+    "ibc2_packet_receive_counter": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": false
+}
