@@ -84,8 +84,6 @@ pub fn coins(amount: u128, denom: impl Into<String>) -> Vec<Coin> {
 ///
 /// ```
 /// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, Response, SubMsg};
-/// # use cosmwasm_std::testing::{mock_env, mock_info};
-/// # let env = mock_env();
 /// # let recipient = "blub".to_string();
 /// let tip = vec![
 ///     coin(123, "ucosm"),
