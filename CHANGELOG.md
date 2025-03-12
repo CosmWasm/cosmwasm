@@ -53,6 +53,7 @@ and this project adheres to
   `Decimal::new(Uint128::new(value))`. ([#2399])
 - cosmwasm-std: Deprecate `Uint256::from_u128` and `Int256::from_i128` in favour
   of `::new`. ([#2399])
+- cosmwasm-std: Remove abort feature. ([#2141])
 
 ## Fixed
 
@@ -60,6 +61,7 @@ and this project adheres to
   `additionalProperties` values anymore ([#2310])
 - cosmwasm-vm: Fix CWA-2025-002.
 
+[#2141]: https://github.com/CosmWasm/cosmwasm/issues/2141
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
 [#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201

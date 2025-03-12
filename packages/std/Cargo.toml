@@ -9,13 +9,10 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "cosmwasm_2_2", "staking", "stargate", "ibc2"]
+features = ["cosmwasm_2_2", "staking", "stargate", "ibc2"]
 
 [features]
 default = ["iterator", "std"]
-# abort used to enable the panic handler that hands a nice error message back to the host.
-# The feature is now deprecated and the panic handler is always enabled.
-abort = []
 std = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
