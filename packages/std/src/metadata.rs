@@ -21,5 +21,5 @@ pub struct DenomMetadata {
 pub struct DenomUnit {
     pub denom: String,
     pub exponent: u32,
-    pub aliases: Vec<String>,
+    pub aliases: Option<Vec<String>>,
 }
