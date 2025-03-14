@@ -1974,7 +1974,7 @@ mod tests {
                     denom_units: vec![DenomUnit {
                         denom: "ufoo".to_string(),
                         exponent: 8,
-                        aliases: vec!["microfoo".to_string(), "foobar".to_string()],
+                        aliases: Some(vec!["microfoo".to_string(), "foobar".to_string()]),
                     }],
                     display: "FOO".to_string(),
                     base: format!("ufoo{i}"),
