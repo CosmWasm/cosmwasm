@@ -10,9 +10,7 @@ use crate::prelude::*;
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, NullableDenomMetadataResponse, QueryRequest, WasmQuery};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
@@ -30,6 +28,7 @@ use crate::{Addr, CanonicalAddr};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{DenomMetadata, PageRequest};
 use crate::{RecoverPubkeyError, StdError, StdResult, VerificationError};
+use crate::metadata::NullableDenomMetadata;
 
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
@@ -451,6 +450,16 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
         .into();
         let res: DenomMetadataResponse = self.query(&request)?;
+        Ok(res.metadata)
+    }
+
+    #[cfg(feature = "cosmwasm_1_3")]
+    pub fn query_nullable_denom_metadata(&self, denom: impl Into<String>) -> StdResult<NullableDenomMetadata> {
+        let request = BankQuery::DenomMetadata {
+            denom: denom.into(),
+        }
+            .into();
+        let res: NullableDenomMetadataResponse = self.query(&request)?;
         Ok(res.metadata)
     }
 

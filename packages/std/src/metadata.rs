@@ -23,3 +23,25 @@ pub struct DenomUnit {
     pub exponent: u32,
     pub aliases: Vec<String>,
 }
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+pub struct NullableDenomMetadata {
+    pub description: String,
+    // https://github.com/cosmos/cosmos-sdk/blob/main/api/cosmos/bank/v1beta1/bank.pulsar.go#L4539
+    pub denom_units: Option<Vec<NullableDenomUnit>>,
+    pub base: String,
+    pub display: String,
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+    pub uri_hash: String,
+}
+
+/// Replicates the cosmos-sdk bank module DenomUnit type
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
+pub struct NullableDenomUnit {
+    pub denom: String,
+    pub exponent: u32,
+    // https://github.com/cosmos/cosmos-sdk/blob/main/api/cosmos/bank/v1beta1/bank.pulsar.go#L4478
+    pub aliases: Option<Vec<String>>,
+}
