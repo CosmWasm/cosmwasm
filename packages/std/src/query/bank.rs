@@ -7,7 +7,7 @@ use crate::prelude::*;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
-
+use crate::metadata::NullableDenomMetadata;
 use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
@@ -81,6 +81,14 @@ impl QueryResponseType for AllBalanceResponse {}
 pub struct DenomMetadataResponse {
     /// The metadata for the queried denom.
     pub metadata: DenomMetadata,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub struct NullableDenomMetadataResponse {
+    /// The metadata for the queried denom.
+    pub metadata: NullableDenomMetadata,
 }
 
 impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
