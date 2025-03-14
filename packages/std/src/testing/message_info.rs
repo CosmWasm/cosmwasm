@@ -72,7 +72,7 @@ mod tests {
             MessageInfo {
                 sender: addr.clone(),
                 funds: vec![Coin {
-                    amount: Uint128::new(123),
+                    amount: crate::Uint256::new(123),
                     denom: "foo".to_string(),
                 }],
             }

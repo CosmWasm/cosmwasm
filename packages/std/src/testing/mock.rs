@@ -1,5 +1,7 @@
 use crate::prelude::*;
+use crate::uint256;
 use crate::HashFunction;
+use crate::Uint256;
 use crate::{Addr, CanonicalAddr, Timestamp};
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
@@ -757,7 +759,7 @@ impl Default for WasmQuerier {
 pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
-    supplies: BTreeMap<String, Uint128>,
+    supplies: BTreeMap<String, Uint256>,
     /// A map from address to balance. The address is the String conversion of `Addr`,
     /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
@@ -798,7 +800,7 @@ impl BankQuerier {
             .collect();
     }
 
-    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
+    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint256> {
         let mut supplies = BTreeMap::new();
 
         let all_coins = balances.iter().flat_map(|(_, coins)| coins);
@@ -806,7 +808,7 @@ impl BankQuerier {
         for coin in all_coins {
             *supplies
                 .entry(coin.denom.clone())
-                .or_insert_with(Uint128::zero) += coin.amount;
+                .or_insert_with(Uint256::zero) += coin.amount;
         }
 
         supplies
@@ -820,10 +822,10 @@ impl BankQuerier {
                     .supplies
                     .get(denom)
                     .cloned()
-                    .unwrap_or_else(Uint128::zero);
+                    .unwrap_or_else(Uint256::zero);
                 let bank_res = SupplyResponse {
                     amount: Coin {
-                        amount,
+                        amount: uint256!(amount),
                         denom: denom.to_string(),
                     },
                 };

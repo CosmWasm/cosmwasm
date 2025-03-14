@@ -665,7 +665,7 @@ mod tests {
 
     use super::*;
     use crate::testing::MockQuerier;
-    use crate::{coins, Uint128};
+    use crate::{coins, Uint128, Uint256};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -702,7 +702,7 @@ mod tests {
             .unwrap()
             .unwrap();
         let balance: BalanceResponse = from_json(raw).unwrap();
-        assert_eq!(balance.amount.amount, Uint128::new(5));
+        assert_eq!(balance.amount.amount, Uint256::new(5));
     }
 
     #[cfg(feature = "cosmwasm_1_1")]

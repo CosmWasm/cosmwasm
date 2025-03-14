@@ -542,7 +542,7 @@ mod tests {
         mock_instance_with_options, MockInstanceOptions,
     };
     use cosmwasm_std::{
-        coin, coins, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty, QueryRequest,
+        coin, coins, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty, QueryRequest, Uint256,
     };
     use wasmer::FunctionEnvMut;
 
@@ -1000,7 +1000,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.amount, Uint256::new(8000));
                 assert_eq!(amount.denom, "silver");
                 Ok(())
             })
@@ -1022,9 +1022,9 @@ mod tests {
                     .unwrap();
                 let AllBalanceResponse { amount, .. } = from_json(response).unwrap();
                 assert_eq!(amount.len(), 2);
-                assert_eq!(amount[0].amount.u128(), 10000);
+                assert_eq!(amount[0].amount, Uint256::new(10000));
                 assert_eq!(amount[0].denom, "gold");
-                assert_eq!(amount[1].amount.u128(), 8000);
+                assert_eq!(amount[1].amount, Uint256::new(8000));
                 assert_eq!(amount[1].denom, "silver");
 
                 Ok(())
@@ -1056,7 +1056,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 500);
+                assert_eq!(amount.amount, Uint256::new(500));
                 Ok(())
             })
             .unwrap();
@@ -1085,7 +1085,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.amount, Uint256::new(8000));
                 Ok(())
             })
             .unwrap();

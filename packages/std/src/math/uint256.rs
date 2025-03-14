@@ -52,6 +52,14 @@ pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
 impl_int_serde!(Uint256);
 forward_ref_partial_eq!(Uint256, Uint256);
 
+#[macro_export]
+macro_rules! uint256 {
+    ($val:expr) => {
+        Uint256::from($val)
+    };
+}
+
+
 impl Uint256 {
     pub const MAX: Uint256 = Uint256(U256::MAX);
     pub const MIN: Uint256 = Uint256(U256::ZERO);
