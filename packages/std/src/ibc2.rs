@@ -21,6 +21,24 @@ pub struct Ibc2Payload {
     pub value: Binary,
 }
 
+impl Ibc2Payload {
+    pub fn new(
+        source_port: String,
+        destination_port: String,
+        version: String,
+        encoding: String,
+        value: Binary,
+    ) -> Self {
+        Self {
+            source_port,
+            destination_port,
+            version,
+            encoding,
+            value,
+        }
+    }
+}
+
 /// These are messages in the IBC lifecycle using the new Ibc2 approach.
 /// Only usable by Ibc2-enabled contracts
 #[non_exhaustive]
