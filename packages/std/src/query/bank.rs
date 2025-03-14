@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::Coin;
 
+use super::query_response::QueryResponseType;
+use crate::metadata::NullableDenomMetadata;
 use crate::prelude::*;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
-use crate::metadata::NullableDenomMetadata;
-use super::query_response::QueryResponseType;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
