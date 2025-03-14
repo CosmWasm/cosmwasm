@@ -25,7 +25,7 @@ point), it will create a new `reflect` contract instance. The reflect `code_id`
 must be set when initializing the factory. This `reflect` contract address will
 be saved and connected to the channel.
 
-Once the channel is fully established and the reflect contract instantiated it
+Once the channel is fully established and the reflected contract instantiated it
 will expect a `RunTx` message, which contains `Vec<CosmosMsg>`. When this
 message is received, it will execute it on the `reflect` contract, performing
 the requested action on behalf of the remote user.
