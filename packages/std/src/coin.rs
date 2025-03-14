@@ -4,16 +4,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 use crate::CoinFromStrError;
-use crate::Uint128;
+use crate::Uint256;
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
     pub denom: String,
-    pub amount: Uint128,
+    pub amount: Uint256,
 }
 
 impl Coin {
-    pub fn new(amount: impl Into<Uint128>, denom: impl Into<String>) -> Self {
+    pub fn new(amount: impl Into<Uint256>, denom: impl Into<String>) -> Self {
         Coin {
             amount: amount.into(),
             denom: denom.into(),
@@ -113,12 +113,14 @@ pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::uint256;
+
     use super::*;
 
     #[test]
     fn coin_implements_display() {
         let a = Coin {
-            amount: Uint128::new(123),
+            amount: Uint256::new(123),
             denom: "ucosm".to_string(),
         };
 
@@ -133,7 +135,7 @@ mod tests {
         assert_eq!(
             a,
             Coin {
-                amount: Uint128::new(123),
+                amount: Uint256::new(123),
                 denom: "ucosm".to_string()
             }
         );
@@ -142,7 +144,7 @@ mod tests {
         assert_eq!(
             zero,
             Coin {
-                amount: Uint128::new(0),
+                amount: Uint256::new(0),
                 denom: "ucosm".to_string()
             }
         );
@@ -151,7 +153,7 @@ mod tests {
         assert_eq!(
             string_denom,
             Coin {
-                amount: Uint128::new(42),
+                amount: Uint256::new(42),
                 denom: "ucosm".to_string()
             }
         );
@@ -163,7 +165,7 @@ mod tests {
         assert_eq!(
             a,
             vec![Coin {
-                amount: Uint128::new(123),
+                amount: Uint256::new(123),
                 denom: "ucosm".to_string()
             }]
         );
@@ -172,7 +174,7 @@ mod tests {
         assert_eq!(
             zero,
             vec![Coin {
-                amount: Uint128::new(0),
+                amount: Uint256::new(0),
                 denom: "ucosm".to_string()
             }]
         );
@@ -181,7 +183,7 @@ mod tests {
         assert_eq!(
             string_denom,
             vec![Coin {
-                amount: Uint128::new(42),
+                amount: Uint256::new(42),
                 denom: "ucosm".to_string()
             }]
         );
@@ -197,16 +199,19 @@ mod tests {
 
     #[test]
     fn parse_coin() {
-        let expected = Coin::new(123u128, "ucosm");
+        let expected = Coin::new(uint256!(123u128), "ucosm");
         assert_eq!("123ucosm".parse::<Coin>().unwrap(), expected);
         // leading zeroes should be ignored
         assert_eq!("00123ucosm".parse::<Coin>().unwrap(), expected);
         // 0 amount parses correctly
-        assert_eq!("0ucosm".parse::<Coin>().unwrap(), Coin::new(0u128, "ucosm"));
+        assert_eq!(
+            "0ucosm".parse::<Coin>().unwrap(),
+            Coin::new(uint256!(0u128), "ucosm")
+        );
         // ibc denom should work
         let ibc_str = "11111ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2";
         let ibc_coin = Coin::new(
-            11111u128,
+            uint256!(11111u128),
             "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
         );
         assert_eq!(ibc_str.parse::<Coin>().unwrap(), ibc_coin);
@@ -246,7 +251,7 @@ mod tests {
 
     #[test]
     fn debug_coin() {
-        let coin = Coin::new(123u128, "ucosm");
+        let coin = Coin::new(uint256!(123u128), "ucosm");
         assert_eq!(format!("{coin:?}"), r#"Coin { 123 "ucosm" }"#);
     }
 }
