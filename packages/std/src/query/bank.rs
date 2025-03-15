@@ -4,11 +4,10 @@ use serde::{Deserialize, Serialize};
 use crate::Coin;
 
 use super::query_response::QueryResponseType;
-use crate::metadata::NullableDenomMetadata;
 use crate::prelude::*;
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::PageRequest;
-use crate::{Binary, DenomMetadata};
+use crate::{Binary, DenomMetadata, NullableDenomMetadata};
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -83,6 +82,8 @@ pub struct DenomMetadataResponse {
     pub metadata: DenomMetadata,
 }
 
+impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
@@ -91,7 +92,7 @@ pub struct NullableDenomMetadataResponse {
     pub metadata: NullableDenomMetadata,
 }
 
-impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
+impl_response_constructor!(NullableDenomMetadataResponse, metadata: NullableDenomMetadata);
 
 impl QueryResponseType for DenomMetadataResponse {}
 
