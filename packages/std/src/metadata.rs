@@ -27,7 +27,7 @@ pub struct DenomUnit {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct NullableDenomMetadata {
     pub description: String,
-    // https://github.com/cosmos/cosmos-sdk/blob/main/api/cosmos/bank/v1beta1/bank.pulsar.go#L4539
+    // denom_units is nullable: https://github.com/cosmos/cosmos-sdk/blob/main/api/cosmos/bank/v1beta1/bank.pulsar.go#L4539
     pub denom_units: Option<Vec<NullableDenomUnit>>,
     pub base: String,
     pub display: String,
@@ -42,6 +42,6 @@ pub struct NullableDenomMetadata {
 pub struct NullableDenomUnit {
     pub denom: String,
     pub exponent: u32,
-    // https://github.com/cosmos/cosmos-sdk/blob/main/api/cosmos/bank/v1beta1/bank.pulsar.go#L4478
+    // aliases is nullable: https://github.com/cosmos/cosmos-sdk/blob/main/api/cosmos/bank/v1beta1/bank.pulsar.go#L4478
     pub aliases: Option<Vec<String>>,
 }
