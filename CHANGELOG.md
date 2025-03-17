@@ -58,6 +58,8 @@ and this project adheres to
 - cosmwasm-std: Remove previously deprecated `cosmwast_std::testing::mock_info`.
   Use `cosmwasm_std::testing::message_info` instead. ([#2393])
 - cosmwasm-std: Remove abort feature. ([#2141])
+- cosmwasm-std: Replace dependency `serde-json-wasm` with `serde_json`.
+  ([#2195])
 
 ## Fixed
 
@@ -68,6 +70,7 @@ and this project adheres to
 [#2141]: https://github.com/CosmWasm/cosmwasm/issues/2141
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
+[#2195]: https://github.com/CosmWasm/cosmwasm/issues/2195
 [#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
 [#2237]: https://github.com/CosmWasm/cosmwasm/issues/2237
 [#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
