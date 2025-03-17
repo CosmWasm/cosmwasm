@@ -55,6 +55,8 @@ and this project adheres to
   of `::new`. ([#2399])
 - cosmwasm-std: Move `MemoryStorage` to `cosmwasm_std::testing::MockStorage`.
   ([#2237])
+- cosmwasm-std: Remove previously deprecated `cosmwast_std::testing::mock_info`.
+  Use `cosmwasm_std::testing::message_info` instead. ([#2393])
 
 ## Fixed
 
@@ -78,6 +80,7 @@ and this project adheres to
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
 [#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
 [#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
+[#2393]: https://github.com/CosmWasm/cosmwasm/issues/2393
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
 
