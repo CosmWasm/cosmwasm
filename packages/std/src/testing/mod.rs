@@ -15,8 +15,6 @@ pub use assertions::assert_hash_works_impl;
 pub use message_info::message_info;
 #[cfg(feature = "ibc2")]
 pub use mock::mock_ibc2_packet_recv;
-#[allow(deprecated)]
-pub use mock::mock_info;
 #[cfg(feature = "cosmwasm_1_3")]
 pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
