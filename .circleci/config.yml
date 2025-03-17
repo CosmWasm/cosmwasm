@@ -604,7 +604,7 @@ jobs:
           keys:
             - cargocache-v2-contract_burner-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -632,7 +632,7 @@ jobs:
           keys:
             - cargocache-v2-contract_replier-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -829,7 +829,7 @@ jobs:
           keys:
             - cargocache-v2-contract_ibc_reflect_send-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -857,7 +857,7 @@ jobs:
           keys:
             - cargocache-v2-contract_floaty-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -885,7 +885,7 @@ jobs:
           keys:
             - cargocache-v2-contract_nested_contracts-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -913,7 +913,7 @@ jobs:
           keys:
             - cargocache-v2-contract_queue-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -969,7 +969,7 @@ jobs:
           keys:
             - cargocache-v2-contract_staking-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -997,7 +997,7 @@ jobs:
           keys:
             - cargocache-v2-contract_virus-rust:1.81-{{ checksum "Cargo.lock" }}
       - check_contract:
-          min_version: "1.4"
+          min_version: "1.5"
       - save_cache:
           paths:
             - /usr/local/cargo/registry

@@ -13,8 +13,7 @@ use crate::{StdError, StdResult};
 ///
 /// Errors if the input is not valid JSON or cannot be deserialized to the given type.
 pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> StdResult<T> {
-    serde_json_wasm::from_slice(value.as_ref())
-        .map_err(|e| StdError::parse_err(type_name::<T>(), e))
+    serde_json::from_slice(value.as_ref()).map_err(|e| StdError::parse_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as a JSON byte vector.
@@ -22,7 +21,7 @@ pub fn to_json_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    serde_json::to_vec(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as a JSON string.
@@ -30,7 +29,7 @@ pub fn to_json_string<T>(data: &T) -> StdResult<String>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_string(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
+    serde_json::to_string(data).map_err(|e| StdError::serialize_err(type_name::<T>(), e))
 }
 
 /// Serializes the given data structure as JSON bytes.
