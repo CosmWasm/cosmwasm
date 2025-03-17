@@ -11,17 +11,17 @@ use crate::prelude::*;
 use crate::traits::Storage;
 
 #[derive(Default)]
-pub struct MemoryStorage {
+pub struct MockStorage {
     data: BTreeMap<Vec<u8>, Vec<u8>>,
 }
 
-impl MemoryStorage {
+impl MockStorage {
     pub fn new() -> Self {
-        MemoryStorage::default()
+        MockStorage::default()
     }
 }
 
-impl Storage for MemoryStorage {
+impl Storage for MockStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         self.data.get(key).cloned()
     }
@@ -68,7 +68,7 @@ impl Storage for MemoryStorage {
 
 /// This debug implementation is made for inspecting storages in unit testing.
 /// It is made for human readability only and the output can change at any time.
-impl fmt::Debug for MemoryStorage {
+impl fmt::Debug for MockStorage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "MemoryStorage ({} entries)", self.data.len())?;
         f.write_str(" {\n")?;
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn get_and_set() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         assert_eq!(store.get(b"foo"), None);
         store.set(b"foo", b"bar");
         assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
@@ -125,13 +125,13 @@ mod tests {
         expected = "Getting empty values from storage is not well supported at the moment."
     )]
     fn set_panics_for_empty() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(b"foo", b"");
     }
 
     #[test]
     fn delete() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(b"foo", b"bar");
         store.set(b"food", b"bank");
         store.remove(b"foo");
@@ -143,7 +143,7 @@ mod tests {
     #[test]
     #[cfg(feature = "iterator")]
     fn iterator() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(b"foo", b"bar");
 
         // ensure we had previously set "foo" = "bar"
@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn memory_storage_implements_debug() {
-        let store = MemoryStorage::new();
+        let store = MockStorage::new();
         assert_eq!(
             format!("{store:?}"),
             "MemoryStorage (0 entries) {\n\
@@ -291,7 +291,7 @@ mod tests {
         );
 
         // With one element
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(&[0x00, 0xAB, 0xDD], &[0xFF, 0xD5]);
         assert_eq!(
             format!("{store:?}"),
@@ -301,7 +301,7 @@ mod tests {
         );
 
         // Sorted by key
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(&[0x00, 0xAB, 0xDD], &[0xFF, 0xD5]);
         store.set(&[0x00, 0xAB, 0xEE], &[0xFF, 0xD5]);
         store.set(&[0x00, 0xAB, 0xCC], &[0xFF, 0xD5]);
@@ -315,7 +315,7 @@ mod tests {
         );
 
         // Different lengths
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(&[0xAA], &[0x11]);
         store.set(&[0xAA, 0xBB], &[0x11, 0x22]);
         store.set(&[0xAA, 0xBB, 0xCC], &[0x11, 0x22, 0x33]);
