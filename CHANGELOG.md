@@ -57,6 +57,7 @@ and this project adheres to
   ([#2237])
 - cosmwasm-std: Remove previously deprecated `cosmwast_std::testing::mock_info`.
   Use `cosmwasm_std::testing::message_info` instead. ([#2393])
+- cosmwasm-std: Remove abort feature. ([#2141])
 
 ## Fixed
 
@@ -64,6 +65,7 @@ and this project adheres to
   `additionalProperties` values anymore ([#2310])
 - cosmwasm-vm: Fix CWA-2025-002.
 
+[#2141]: https://github.com/CosmWasm/cosmwasm/issues/2141
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
 [#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
