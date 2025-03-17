@@ -75,9 +75,9 @@ dhat = { version = "0.3.3", optional = true }
 tracing = "0.1.32"
 
 # Wasmer git/local (used for quick local debugging or patching)
-# wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["cranelift", "singlepass"] }
+# wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["singlepass"] }
 # wasmer-middlewares = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c" }
-# wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["cranelift", "singlepass"] }
+# wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["singlepass"] }
 # wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
 
 [dev-dependencies]

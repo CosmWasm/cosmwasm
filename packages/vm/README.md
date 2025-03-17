@@ -100,30 +100,18 @@ cp target/wasm32-unknown-unknown/release/floaty.wasm ../../packages/vm/testdata/
 
 ## Testing
 
-By default, this repository is built and tested with the singlepass backend. You
-can enable the `cranelift` feature to override the default backend with
-Cranelift
+By default, this repository is built and tested with the singlepass backend.
 
 ```sh
 cd packages/vm
 cargo test --features iterator
-cargo test --features cranelift,iterator
 ```
 
 ## Benchmarking
 
-Using Singlepass:
-
 ```
 cd packages/vm
 cargo bench --no-default-features
-```
-
-Using Cranelift:
-
-```
-cd packages/vm
-cargo bench --no-default-features --features cranelift
 ```
 
 ## Tools
