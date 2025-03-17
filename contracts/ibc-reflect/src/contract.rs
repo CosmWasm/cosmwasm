@@ -638,7 +638,7 @@ mod tests {
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> =
             from_json(res.acknowledgement.unwrap()).unwrap();
-        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`, `no_ack`");
+        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`, `no_ack` at line 1 column 18");
     }
 
     #[test]
