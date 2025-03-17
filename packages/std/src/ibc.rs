@@ -896,7 +896,7 @@ impl<T> IbcReceiveResponse<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json_wasm::to_string;
+    use crate::to_json_string;
 
     #[test]
     // added this to check json format for go compat, as I was unsure how some messages are snake encoded
@@ -908,7 +908,7 @@ mod tests {
             timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
             memo: None,
         };
-        let encoded = to_string(&msg).unwrap();
+        let encoded = to_json_string(&msg).unwrap();
         let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"},"memo":null}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
@@ -917,14 +917,14 @@ mod tests {
     fn ibc_timeout_serialize() {
         let timestamp = IbcTimeout::with_timestamp(Timestamp::from_nanos(684816844));
         let expected = r#"{"block":null,"timestamp":"684816844"}"#;
-        assert_eq!(to_string(&timestamp).unwrap(), expected);
+        assert_eq!(to_json_string(&timestamp).unwrap(), expected);
 
         let block = IbcTimeout::with_block(IbcTimeoutBlock {
             revision: 12,
             height: 129,
         });
         let expected = r#"{"block":{"revision":12,"height":129},"timestamp":null}"#;
-        assert_eq!(to_string(&block).unwrap(), expected);
+        assert_eq!(to_json_string(&block).unwrap(), expected);
 
         let both = IbcTimeout::with_both(
             IbcTimeoutBlock {
@@ -934,7 +934,7 @@ mod tests {
             Timestamp::from_nanos(684816844),
         );
         let expected = r#"{"block":{"revision":12,"height":129},"timestamp":"684816844"}"#;
-        assert_eq!(to_string(&both).unwrap(), expected);
+        assert_eq!(to_json_string(&both).unwrap(), expected);
     }
 
     #[test]
@@ -998,7 +998,7 @@ mod tests {
             ),
         };
         let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout":{"block":{"revision":1,"height":12345678},"timestamp":"4611686018427387904"}}"#;
-        assert_eq!(to_string(&packet).unwrap(), expected);
+        assert_eq!(to_json_string(&packet).unwrap(), expected);
 
         let no_timestamp = IbcPacket {
             data: b"foo".into(),
@@ -1017,6 +1017,6 @@ mod tests {
             }),
         };
         let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout":{"block":{"revision":1,"height":12345678},"timestamp":null}}"#;
-        assert_eq!(to_string(&no_timestamp).unwrap(), expected);
+        assert_eq!(to_json_string(&no_timestamp).unwrap(), expected);
     }
 }
