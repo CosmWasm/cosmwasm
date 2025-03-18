@@ -367,6 +367,7 @@ pub enum WasmMsg {
 /// }
 /// ```
 #[cfg(feature = "stargate")]
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum GovMsg {
