@@ -528,6 +528,7 @@ pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<Ibc2PacketRecei
         },
         Addr::unchecked("relayer"),
         "channel_id23".to_string(),
+        42,
     ))
 }
 
