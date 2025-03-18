@@ -60,6 +60,7 @@ and this project adheres to
 - cosmwasm-std: Remove abort feature. ([#2141])
 - cosmwasm-std: Replace dependency `serde-json-wasm` with `serde_json`.
   ([#2195])
+- cosmwasm-std: Make `GovMsg` `#[non_exhaustive]` for consistency. ([#2347])
 
 ## Fixed
 
@@ -80,6 +81,7 @@ and this project adheres to
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
+[#2347]: https://github.com/CosmWasm/cosmwasm/issues/2347
 [#2367]: https://github.com/CosmWasm/cosmwasm/issues/2367
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
