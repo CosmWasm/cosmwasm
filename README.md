@@ -84,11 +84,6 @@ This code is compiled into Wasm bytecode as part of the smart contract.
   [leak some information about the directory structure of your system](https://github.com/CosmWasm/cosmwasm/issues/1918)
   and makes the build non-reproducible.
 
-- [serde-json-wasm](https://github.com/CosmWasm/serde-json-wasm) - A custom json
-  library, forked from `serde-json-core`. This provides an interface similar to
-  `serde-json`, but without any floating-point instructions (non-deterministic)
-  and producing builds around 40% of the code size.
-
 **Executing contracts:**
 
 - [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm) - A
