@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, Binary, Timestamp};
+use crate::{Addr, Binary, IbcAcknowledgement, Timestamp};
 
 /// Payload value should be encoded in a format defined by the channel version,
 /// and the module on the other side should know how to parse this.
@@ -32,6 +32,16 @@ pub enum Ibc2Msg {
         channel_id: String,
         timeout: Timestamp,
         payloads: Vec<Ibc2Payload>,
+    },
+    /// Acknowledges a packet that this contract received over IBC.
+    /// This allows acknowledging a packet that was not acknowledged yet in the `ibc2_packet_receive` call.
+    WriteAcknowledgement {
+        /// Existing channel where the packet was received
+        channel_id: String,
+        /// Sequence number of the packet that was received
+        packet_sequence: u64,
+        /// The acknowledgement to send back
+        ack: IbcAcknowledgement,
     },
 }
 
