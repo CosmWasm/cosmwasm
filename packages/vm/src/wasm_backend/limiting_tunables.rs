@@ -38,7 +38,7 @@ impl<T: Tunables> LimitingTunables<T> {
         adjusted
     }
 
-    /// Ensures the a given memory type does not exceed the memory limit.
+    /// Ensures a given memory type does not exceed the memory limit.
     /// Call this after adjusting the memory.
     fn validate_memory(&self, ty: &MemoryType) -> Result<(), MemoryError> {
         if ty.minimum > self.limit {
