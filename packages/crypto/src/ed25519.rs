@@ -12,7 +12,7 @@ pub const EDDSA_PUBKEY_LEN: usize = 32;
 /// using the ed25519 elliptic curve digital signature parametrization / algorithm.
 ///
 /// The maximum currently supported message length is 4096 bytes.
-/// The signature and public key are in [Tendermint](https://docs.tendermint.com/v0.32/spec/blockchain/encoding.html#public-key-cryptography)
+/// The signature and public key are in [Tendermint](https://docs.tendermint.com/master/spec/core/encoding.html#public-key-cryptography)
 /// format:
 /// - signature: raw ED25519 signature (64 bytes).
 /// - public key: raw ED25519 public key (32 bytes).
