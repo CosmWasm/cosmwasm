@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "AcknowledgementMsgBalances",
+  "title": "AcknowledgementMsgBalance",
   "description": "A custom acknowledgement type. The success type `T` depends on the PacketMsg variant.\n\nThis could be refactored to use [StdAck] at some point. However, it has a different success variant name (\"ok\" vs. \"result\") and a JSON payload instead of a binary payload.\n\n[StdAck]: https://github.com/CosmWasm/cosmwasm/issues/1512",
   "oneOf": [
     {
@@ -10,7 +10,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/BalancesResponse"
+          "$ref": "#/definitions/BalanceResponse"
         }
       },
       "additionalProperties": false
@@ -29,22 +29,19 @@
     }
   ],
   "definitions": {
-    "BalancesResponse": {
+    "BalanceResponse": {
       "description": "This is the success response we send on ack for PacketMsg::Balance. Just acknowledge success or error",
       "type": "object",
       "required": [
         "account",
-        "balances"
+        "balance"
       ],
       "properties": {
         "account": {
           "type": "string"
         },
-        "balances": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Coin"
-          }
+        "balance": {
+          "$ref": "#/definitions/Coin"
         }
       },
       "additionalProperties": false
