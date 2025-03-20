@@ -17,28 +17,6 @@
       "additionalProperties": false
     },
     {
-      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
-      "type": "object",
-      "required": [
-        "other_balance"
-      ],
-      "properties": {
-        "other_balance": {
-          "type": "object",
-          "required": [
-            "address"
-          ],
-          "properties": {
-            "address": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
       "description": "Recurse will execute a query into itself up to depth-times and return Each step of the recursion may perform some extra work to test gas metering (`work` rounds of sha256 on contract). Now that we have Env, we can auto-calculate the address to recurse into",
       "type": "object",
       "required": [

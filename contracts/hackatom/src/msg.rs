@@ -35,8 +35,9 @@ pub enum SudoMsg {
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[cw_serde]
 pub enum ExecuteMsg {
-    /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
-    Release {},
+    /// Releasing all funds of the given denom in the contract to the beneficiary.
+    /// This is the only "proper" action of this demo contract.
+    Release { denom: String },
     /// Infinite loop to burn cpu cycles (only run when metering is enabled)
     CpuLoop {},
     /// Infinite loop making storage calls (to test when their limit hits)
@@ -61,9 +62,6 @@ pub enum QueryMsg {
     /// use to ensure query path works in integration tests
     #[returns(VerifierResponse)]
     Verifier {},
-    /// This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
-    #[returns(cosmwasm_std::AllBalanceResponse)]
-    OtherBalance { address: String },
     /// Recurse will execute a query into itself up to depth-times and return
     /// Each step of the recursion may perform some extra work to test gas metering
     /// (`work` rounds of sha256 on contract).
