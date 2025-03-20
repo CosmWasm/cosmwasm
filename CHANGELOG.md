@@ -61,6 +61,7 @@ and this project adheres to
 - cosmwasm-std: Replace dependency `serde-json-wasm` with `serde_json`.
   ([#2195])
 - cosmwasm-std: Make `GovMsg` `#[non_exhaustive]` for consistency. ([#2347])
+- cosmwasm-crypto: Upgrade ark-\* dependencies to 0.5.0. ([#2432])
 
 ## Fixed
 
@@ -90,6 +91,7 @@ and this project adheres to
 [#2393]: https://github.com/CosmWasm/cosmwasm/issues/2393
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
+[#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
 
 ## [2.2.0] - 2024-12-17
 
