@@ -1015,8 +1015,8 @@ fn to_low_half(data: u32) -> u64 {
 mod tests {
     use super::*;
     use cosmwasm_std::{
-        coins, from_json, AllBalanceResponse, BankQuery, Binary, Empty, QueryRequest, SystemError,
-        SystemResult, WasmQuery,
+        coin, coins, from_json, BalanceResponse, BankQuery, Binary, Empty, QueryRequest,
+        SystemError, SystemResult, WasmQuery,
     };
     use hex_literal::hex;
     use std::ptr::NonNull;
@@ -2608,8 +2608,9 @@ mod tests {
         let (fe, mut store, _instance) = make_instance(api);
         let mut fe_mut = fe.into_mut(&mut store);
 
-        let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
+        let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::Balance {
             address: INIT_ADDR.to_string(),
+            denom: INIT_DENOM.to_string(),
         });
         let request_data = cosmwasm_std::to_json_vec(&request).unwrap();
         let request_ptr = write_data(&mut fe_mut, &request_data);
@@ -2622,8 +2623,8 @@ mod tests {
         let query_result: cosmwasm_std::QuerierResult = cosmwasm_std::from_json(response).unwrap();
         let query_result_inner = query_result.unwrap();
         let query_result_inner_inner = query_result_inner.unwrap();
-        let parsed_again: AllBalanceResponse = from_json(query_result_inner_inner).unwrap();
-        assert_eq!(parsed_again.amount, coins(INIT_AMOUNT, INIT_DENOM));
+        let parsed_again: BalanceResponse = from_json(query_result_inner_inner).unwrap();
+        assert_eq!(parsed_again.amount, coin(INIT_AMOUNT, INIT_DENOM));
     }
 
     #[test]

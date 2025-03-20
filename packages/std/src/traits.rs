@@ -11,9 +11,6 @@ use crate::prelude::*;
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
@@ -24,6 +21,7 @@ use crate::query::{
     AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
     DistributionQuery,
 };
+use crate::query::{BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
@@ -434,17 +432,6 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         Ok(res.amount)
     }
 
-    #[deprecated]
-    pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
-        #[allow(deprecated)]
-        let request = BankQuery::AllBalances {
-            address: address.into(),
-        }
-        .into();
-        let res: AllBalanceResponse = self.query(&request)?;
-        Ok(res.amount)
-    }
-
     #[cfg(feature = "cosmwasm_1_3")]
     pub fn query_delegator_withdraw_address(
         &self,
@@ -721,10 +708,6 @@ mod tests {
 
         let balance = wrapper.query_balance("foo", "ELF").unwrap();
         assert_eq!(balance, coin(123, "ELF"));
-
-        #[allow(deprecated)]
-        let all_balances = wrapper.query_all_balances("foo").unwrap();
-        assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
 
     #[test]

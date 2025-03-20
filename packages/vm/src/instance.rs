@@ -541,9 +541,7 @@ mod tests {
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         mock_instance_with_options, MockInstanceOptions,
     };
-    use cosmwasm_std::{
-        coin, coins, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty, QueryRequest,
-    };
+    use cosmwasm_std::{coin, coins, from_json, BalanceResponse, BankQuery, Empty, QueryRequest};
     use wasmer::FunctionEnvMut;
 
     const KIB: usize = 1024;
@@ -1002,31 +1000,6 @@ mod tests {
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
                 assert_eq!(amount.amount.u128(), 8000);
                 assert_eq!(amount.denom, "silver");
-                Ok(())
-            })
-            .unwrap();
-
-        // query all
-        instance
-            .with_querier(|querier| {
-                let response = querier
-                    .query::<Empty>(
-                        &QueryRequest::Bank(BankQuery::AllBalances {
-                            address: rich_addr.clone(),
-                        }),
-                        DEFAULT_QUERY_GAS_LIMIT,
-                    )
-                    .0
-                    .unwrap()
-                    .unwrap()
-                    .unwrap();
-                let AllBalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.len(), 2);
-                assert_eq!(amount[0].amount.u128(), 10000);
-                assert_eq!(amount[0].denom, "gold");
-                assert_eq!(amount[1].amount.u128(), 8000);
-                assert_eq!(amount[1].denom, "silver");
-
                 Ok(())
             })
             .unwrap();

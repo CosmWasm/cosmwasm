@@ -113,7 +113,7 @@ impl MockQuerier {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::{coin, from_json, AllBalanceResponse, BalanceResponse, BankQuery};
+    use cosmwasm_std::{coin, from_json, BalanceResponse, BankQuery};
 
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
@@ -132,28 +132,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(deprecated)]
-    fn bank_querier_all_balances() {
-        let addr = String::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let querier = MockQuerier::new(&[(&addr, &balance)]);
-
-        // all
-        let all = querier
-            .query::<Empty>(
-                &BankQuery::AllBalances { address: addr }.into(),
-                DEFAULT_QUERY_GAS_LIMIT,
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(&res.amount, &balance);
-    }
-
-    #[test]
-    fn bank_querier_one_balance() {
+    fn bank_querier_balance() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let querier = MockQuerier::new(&[(&addr, &balance)]);
@@ -199,22 +178,6 @@ mod tests {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let querier = MockQuerier::new(&[(&addr, &balance)]);
-
-        // all balances on empty account is empty vec
-        let all = querier
-            .query::<Empty>(
-                &BankQuery::AllBalances {
-                    address: String::from("elsewhere"),
-                }
-                .into(),
-                DEFAULT_QUERY_GAS_LIMIT,
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
         let miss = querier
