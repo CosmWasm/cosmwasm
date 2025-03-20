@@ -22,11 +22,6 @@ pub enum BankQuery {
     /// This calls into the native bank module for one denomination
     /// Return value is BalanceResponse
     Balance { address: String, denom: String },
-    /// This calls into the native bank module for all denominations.
-    /// Note that this may be much more expensive than Balance and should be avoided if possible.
-    /// Return value is AllBalanceResponse.
-    #[deprecated = "Returns a potentially unbound number of results. If you think you have a valid usecase, please open an issue."]
-    AllBalances { address: String },
     /// This calls into the native bank module for querying metadata for a specific bank token.
     /// Return value is DenomMetadataResponse
     #[cfg(feature = "cosmwasm_1_3")]
@@ -66,18 +61,6 @@ impl QueryResponseType for BalanceResponse {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
-pub struct AllBalanceResponse {
-    /// Returns all non-zero coins held by this account.
-    pub amount: Vec<Coin>,
-}
-
-impl_response_constructor!(AllBalanceResponse, amount: Vec<Coin>);
-
-impl QueryResponseType for AllBalanceResponse {}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-#[non_exhaustive]
 pub struct DenomMetadataResponse {
     /// The metadata for the queried denom.
     pub metadata: DenomMetadata,
@@ -110,11 +93,11 @@ mod tests {
 
     #[test]
     fn private_constructor_works() {
-        let response = AllBalanceResponse::new(vec![Coin::new(1234u128, "uatom")]);
+        let response = BalanceResponse::new(Coin::new(1234u128, "uatom"));
         assert_eq!(
             response,
-            AllBalanceResponse {
-                amount: vec![Coin::new(1234u128, "uatom")]
+            BalanceResponse {
+                amount: Coin::new(1234u128, "uatom")
             }
         );
     }

@@ -339,7 +339,6 @@ mod tests {
         // bank
         compare_codes!(cosmwasm_std::SupplyResponse);
         compare_codes!(cosmwasm_std::BalanceResponse);
-        // compare_codes!(cosmwasm_std::AllBalanceResponse); // has different name in wasmvm
         compare_codes!(cosmwasm_std::DenomMetadataResponse);
         // compare_codes!(cosmwasm_std::AllDenomMetadataResponse); // uses `[]byte` instead of `*[]byte`
         // staking
