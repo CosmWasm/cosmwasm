@@ -114,7 +114,7 @@ pub enum IbcMsg {
     /// ```
     #[cfg(feature = "cosmwasm_2_2")]
     #[deprecated(
-        since = "3.0.0",
+        since = "2.2.3",
         note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
     )]
     PayPacketFee {
@@ -135,7 +135,7 @@ pub enum IbcMsg {
     /// They are added to the existing fees on the packet.
     #[cfg(feature = "cosmwasm_2_2")]
     #[deprecated(
-        since = "3.0.0",
+        since = "2.2.3",
         note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
     )]
     PayPacketFeeAsync {
@@ -155,7 +155,7 @@ pub enum IbcMsg {
 }
 
 #[deprecated(
-    since = "3.0.0",
+    since = "2.2.3",
     note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
 )]
 #[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
