@@ -1,9 +1,9 @@
 use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
-    entry_point, from_json, to_json_binary, to_json_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    BankQuery, CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, MigrateInfo, QueryRequest,
-    QueryResponse, Response, StdError, StdResult, WasmMsg, WasmQuery,
+    entry_point, from_json, to_json_binary, to_json_vec, Addr, Api, BankMsg, CanonicalAddr, Deps,
+    DepsMut, Env, Event, MessageInfo, MigrateInfo, QueryRequest, QueryResponse, Response, StdError,
+    StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -82,7 +82,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, HackError> {
     match msg {
-        ExecuteMsg::Release {} => do_release(deps, env, info),
+        ExecuteMsg::Release { denom } => do_release(deps, env, info, denom),
         ExecuteMsg::CpuLoop {} => do_cpu_loop(),
         ExecuteMsg::StorageLoop {} => do_storage_loop(deps),
         ExecuteMsg::MemoryLoop {} => do_memory_loop(),
@@ -93,7 +93,12 @@ pub fn execute(
     }
 }
 
-fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, HackError> {
+fn do_release(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    denom: String,
+) -> Result<Response, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -102,8 +107,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
 
     if info.sender == state.verifier {
         let to_addr = state.beneficiary;
-        #[allow(deprecated)]
-        let balance = deps.querier.query_all_balances(env.contract.address)?;
+        let balance = deps.querier.query_balance(env.contract.address, denom)?;
 
         let resp = Response::new()
             .add_attribute("action", "release")
@@ -111,7 +115,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
             .add_event(Event::new("hackatom").add_attribute("action", "release"))
             .add_message(BankMsg::Send {
                 to_address: to_addr.into(),
-                amount: balance,
+                amount: vec![balance],
             })
             .set_data([0xF0, 0x0B, 0xAA]);
         Ok(resp)
@@ -250,7 +254,6 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_json_binary(&query_verifier(deps)?),
-        QueryMsg::OtherBalance { address } => to_json_binary(&query_other_balance(deps, address)?),
         QueryMsg::Recurse { depth, work } => {
             to_json_binary(&query_recurse(deps, depth, work, env.contract.address)?)
         }
@@ -267,12 +270,6 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     Ok(VerifierResponse {
         verifier: state.verifier.into(),
     })
-}
-
-#[allow(deprecated)]
-fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
-    deps.querier
-        .query(&BankQuery::AllBalances { address }.into())
 }
 
 fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
@@ -308,12 +305,9 @@ fn query_int() -> IntResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{
-        message_info, mock_dependencies, mock_dependencies_with_balances, mock_env,
-        MOCK_CONTRACT_ADDR,
-    };
+    use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env, MOCK_CONTRACT_ADDR};
     // import trait Storage to get access to read
-    use cosmwasm_std::{coins, Binary, Storage, SubMsg};
+    use cosmwasm_std::{coin, coins, Binary, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
@@ -441,21 +435,6 @@ mod tests {
     }
 
     #[test]
-    fn querier_callbacks_work() {
-        let rich_addr = String::from("foobar");
-        let rich_balance = coins(10000, "gold");
-        let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
-
-        // querying with balance gets the balance
-        let bal = query_other_balance(deps.as_ref(), rich_addr).unwrap();
-        assert_eq!(bal.amount, rich_balance);
-
-        // querying other accounts gets none
-        let bal = query_other_balance(deps.as_ref(), String::from("someone else")).unwrap();
-        assert_eq!(bal.amount, vec![]);
-    }
-
-    #[test]
     fn execute_release_works() {
         let mut deps = mock_dependencies();
 
@@ -484,7 +463,9 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             execute_info,
-            ExecuteMsg::Release {},
+            ExecuteMsg::Release {
+                denom: "earth".to_string(),
+            },
         )
         .unwrap();
         assert_eq!(execute_res.messages.len(), 1);
@@ -501,6 +482,71 @@ mod tests {
             vec![("action", "release"), ("destination", beneficiary.as_str())],
         );
         assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
+    }
+
+    #[test]
+    fn execute_release_can_be_called_multiple_times() {
+        let mut deps = mock_dependencies();
+
+        // initialize the store
+        let creator = deps.api.addr_make("creator");
+        let verifier = deps.api.addr_make("verifies");
+        let beneficiary = deps.api.addr_make("benefits");
+
+        let instantiate_msg = InstantiateMsg {
+            verifier: verifier.to_string(),
+            beneficiary: beneficiary.to_string(),
+        };
+        let init_amount = vec![coin(1000, "earth"), coin(70, "sun")];
+        let info = message_info(&creator, &init_amount);
+        instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
+
+        // balance changed in init
+        deps.querier
+            .bank
+            .update_balance(MOCK_CONTRACT_ADDR, init_amount);
+
+        // beneficiary can release it
+        let execute_info = message_info(&verifier, &[]);
+        let execute_res = execute(
+            deps.as_mut(),
+            mock_env(),
+            execute_info,
+            ExecuteMsg::Release {
+                denom: "sun".to_string(),
+            },
+        )
+        .unwrap();
+        assert_eq!(execute_res.messages.len(), 1);
+        let msg = execute_res.messages.first().expect("no message");
+        assert_eq!(
+            msg,
+            &SubMsg::new(BankMsg::Send {
+                to_address: beneficiary.to_string(),
+                amount: coins(70, "sun"),
+            }),
+        );
+
+        // beneficiary can release it again
+        let execute_info = message_info(&verifier, &[]);
+        let execute_res = execute(
+            deps.as_mut(),
+            mock_env(),
+            execute_info,
+            ExecuteMsg::Release {
+                denom: "earth".to_string(),
+            },
+        )
+        .unwrap();
+        assert_eq!(execute_res.messages.len(), 1);
+        let msg = execute_res.messages.first().expect("no message");
+        assert_eq!(
+            msg,
+            &SubMsg::new(BankMsg::Send {
+                to_address: beneficiary.to_string(),
+                amount: coins(1000, "earth"),
+            }),
+        );
     }
 
     #[test]
@@ -532,7 +578,9 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             execute_info,
-            ExecuteMsg::Release {},
+            ExecuteMsg::Release {
+                denom: "earth".to_string(),
+            },
         );
         assert_eq!(execute_res.unwrap_err(), HackError::Unauthorized {});
 
