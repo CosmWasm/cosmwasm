@@ -12,10 +12,10 @@ license = "Apache-2.0"
 bench = false
 
 [dependencies]
-ark-bls12-381 = "0.4.0"
-ark-ec = { version = "0.4.2", features = ["parallel"] }
-ark-ff = { version = "0.4.2", features = ["asm", "parallel"] }
-ark-serialize = "0.4.2"
+ark-bls12-381 = "0.5.0"
+ark-ec = { version = "0.5.0", features = ["parallel"] }
+ark-ff = { version = "0.5.0", features = ["asm", "parallel"] }
+ark-serialize = "0.5.0"
 cosmwasm-core = { version = "2.2.0-rc.1", path = "../core" }
 digest = "0.10"
 ecdsa = "0.16.2"                                                              # Not used directly, but needed to bump transitive dependency, see: https://github.com/CosmWasm/cosmwasm/pull/1899 for details.
