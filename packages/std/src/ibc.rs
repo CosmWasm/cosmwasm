@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 // The CosmosMsg variants are defined in results/cosmos_msg.rs
 // The rest of the IBC related functionality is defined here
 
@@ -111,6 +113,10 @@ pub enum IbcMsg {
     ///     .add_message(CosmosMsg::Ibc(transfer));
     /// ```
     #[cfg(feature = "cosmwasm_2_2")]
+    #[deprecated(
+        since = "2.2.3",
+        note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
+    )]
     PayPacketFee {
         /// The port id on the chain where the packet is sent from (this chain).
         port_id: String,
@@ -128,6 +134,10 @@ pub enum IbcMsg {
     /// The fees are taken from the contract's balance immediately and locked until the packet is handled.
     /// They are added to the existing fees on the packet.
     #[cfg(feature = "cosmwasm_2_2")]
+    #[deprecated(
+        since = "2.2.3",
+        note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
+    )]
     PayPacketFeeAsync {
         /// The port id on the chain where the packet is sent from (this chain).
         port_id: String,
@@ -144,6 +154,10 @@ pub enum IbcMsg {
     },
 }
 
+#[deprecated(
+    since = "2.2.3",
+    note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
+)]
 #[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcFee {
     // the packet receive fee
