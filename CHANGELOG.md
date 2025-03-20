@@ -114,9 +114,9 @@ and this project adheres to
 - cosmwasm-derive: Add support for migrate method with
   `migrate_info: MigrateInfo` argument. ([#2212])
 - cosmwasm-vm: Add `Cache::store_code`
-- cosmwasm-vm: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC fees have been
-  removed from ibc-go in version 10. The mentioned struct and enum fields are deprecated
-  and will be removed in cosmwasm `3.0` ([#2431])
+- cosmwasm-vm: Deprecate `PayPacketFee`, `PayPacketFeeAsync`, `IbcFee`. IBC fees
+  have been removed from ibc-go in version 10. The mentioned struct and enum
+  fields are deprecated and will be removed in cosmwasm `3.0` ([#2431])
 
 [#2118]: https://github.com/CosmWasm/cosmwasm/pull/2118
 [#2196]: https://github.com/CosmWasm/cosmwasm/pull/2196
