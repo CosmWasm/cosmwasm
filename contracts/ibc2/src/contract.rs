@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct State {
     ibc2_packet_receive_counter: u32,
+    ibc2_timeout_counter: u32,
 }
 
 #[cw_serde]
@@ -16,6 +17,8 @@ pub struct State {
 pub enum QueryMsg {
     #[returns(State)]
     QueryState {},
+    #[returns(u32)]
+    QueryTimeoutCounter {},
 }
 
 const STATE_KEY: &[u8] = b"state";
@@ -43,6 +46,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
                 .ok_or_else(|| StdError::generic_err("State not found."))?;
             Ok(Binary::from(data))
         }
+        QueryMsg::QueryTimeoutCounter {} => {
+            let data = deps
+                .storage
+                .get(STATE_KEY)
+                .ok_or_else(|| StdError::generic_err("State not found."))?;
+            let state: State = from_json(&data)?;
+            Ok(Binary::from(to_json_vec(&state.ibc2_timeout_counter)?))
+        }
     }
 }
 
@@ -61,6 +72,29 @@ pub fn ibc2_packet_receive(
         STATE_KEY,
         &to_json_vec(&State {
             ibc2_packet_receive_counter: state.ibc2_packet_receive_counter + 1,
+            ibc2_timeout_counter: state.ibc2_timeout_counter,
+        })?,
+    );
+
+    Ok(IbcReceiveResponse::new([1, 2, 3]))
+}
+
+#[entry_point]
+pub fn ibc2_timeout(
+    deps: DepsMut,
+    _env: Env,
+    _msg: Ibc2PacketReceiveMsg,
+) -> StdResult<IbcReceiveResponse> {
+    let data = deps
+        .storage
+        .get(STATE_KEY)
+        .ok_or_else(|| StdError::generic_err("State not found."))?;
+    let state: State = from_json(data)?;
+    deps.storage.set(
+        STATE_KEY,
+        &to_json_vec(&State {
+            ibc2_packet_receive_counter: state.ibc2_packet_receive_counter,
+            ibc2_timeout_counter: state.ibc2_timeout_counter + 1,
         })?,
     );
 
