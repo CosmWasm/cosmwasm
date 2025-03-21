@@ -38,7 +38,8 @@ fn test_ibc2_timeout_counter_increments() {
     // Call ibc2_timeout multiple times and verify the timeout counter increments correctly
     let msg = Ibc2PacketReceiveMsg::default();
     for i in 1..=3 {
-        let res: IbcReceiveResponse = ibc2_timeout(deps.as_mut(), env.clone(), msg.clone()).unwrap();
+        let res: IbcReceiveResponse =
+            ibc2_timeout(deps.as_mut(), env.clone(), msg.clone()).unwrap();
         assert_eq!(res, IbcReceiveResponse::new([1, 2, 3]));
 
         let query_msg = QueryMsg::QueryTimeoutCounter {};
