@@ -1,6 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    ibc2_timeout, entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2PacketReceiveMsg,
+    entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2PacketReceiveMsg,
     IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdError, StdResult,
 };
 use schemars::JsonSchema;
@@ -51,8 +51,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
                 .storage
                 .get(STATE_KEY)
                 .ok_or_else(|| StdError::generic_err("State not found."))?;
-            let state: State = from_json(&data)?;
-            Ok(Binary::from(to_json_vec(&state.ibc2_timeout_counter)?))
+            let state: State = from_json(data)?;
+            Ok(to_json_vec(&state.ibc2_timeout_counter)?.into())
         }
     }
 }
