@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-use cosmwasm_std::{from_binary, Ibc2PacketReceiveMsg, IbcReceiveResponse, Response, StdError};
+use cosmwasm_std::{from_binary, Ibc2PacketReceiveMsg, IbcReceiveResponse, Response, StdError, Empty};
 
 use crate::contract::{ibc2_packet_receive, ibc2_timeout, instantiate, query};
 use crate::contract::{QueryMsg, State};
