@@ -1,7 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2PacketReceiveMsg,
-    IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdError, StdResult,
+    IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdError, StdResult, do_ibc2_timeout,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
