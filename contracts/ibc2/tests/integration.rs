@@ -1,5 +1,7 @@
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-use cosmwasm_std::{from_binary, Ibc2PacketReceiveMsg, IbcReceiveResponse, Response, StdError, Empty};
+use cosmwasm_std::{
+    from_binary, Empty, Ibc2PacketReceiveMsg, IbcReceiveResponse, Response, StdError,
+};
 
 use crate::contract::{ibc2_packet_receive, ibc2_timeout, instantiate, query};
 use crate::contract::{QueryMsg, State};
@@ -11,29 +13,9 @@ fn test_ibc2_timeout() {
     let info = mock_info("sender", &[]);
 
     // Instantiate the contract
-    let res = instantiate(deps.as_mut(), env.clone(), info.clone(), Empty {}).unwrap();
-    assert_eq!(res, Response::default());
-
-    // Call ibc2_timeout and verify the timeout counter increments
-    let msg = Ibc2PacketReceiveMsg::default();
-    let res: IbcReceiveResponse = ibc2_timeout(deps.as_mut(), env.clone(), msg).unwrap();
-    assert_eq!(res, IbcReceiveResponse::new([1, 2, 3]));
-
-    let query_msg = QueryMsg::QueryTimeoutCounter {};
-    let bin = query(deps.as_ref(), env.clone(), query_msg).unwrap();
-    let counter: u32 = from_binary(&bin).unwrap();
-    assert_eq!(counter, 1);
-}
-
-#[test]
-fn test_ibc2_timeout_counter_increments() {
-    let mut deps = mock_dependencies();
-    let env = mock_env();
-    let info = mock_info("sender", &[]);
-
-    // Instantiate the contract
-    let res = instantiate(deps.as_mut(), env.clone(), info.clone(), Empty {}).unwrap();
-    assert_eq!(res, Response::default());
+    let msg = Empty {};
+    let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
+    assert_eq!(res, Response::new());
 
     // Call ibc2_timeout multiple times and verify the timeout counter increments correctly
     let msg = Ibc2PacketReceiveMsg::default();
@@ -43,30 +25,8 @@ fn test_ibc2_timeout_counter_increments() {
         assert_eq!(res, IbcReceiveResponse::new([1, 2, 3]));
 
         let query_msg = QueryMsg::QueryTimeoutCounter {};
-        let bin = query(deps.as_ref(), env.clone(), query_msg).unwrap();
-        let counter: u32 = from_binary(&bin).unwrap();
-        assert_eq!(counter, i);
+        let query_res = query(deps.as_ref(), env.clone(), query_msg).unwrap();
+        let timeout_counter: u32 = from_binary(&query_res).unwrap();
+        assert_eq!(timeout_counter, i);
     }
-}
-
-#[test]
-fn test_query_timeout_counter() {
-    let mut deps = mock_dependencies();
-    let env = mock_env();
-    let info = mock_info("sender", &[]);
-
-    // Instantiate the contract
-    let res = instantiate(deps.as_mut(), env.clone(), info.clone(), Empty {}).unwrap();
-    assert_eq!(res, Response::default());
-
-    // Call ibc2_timeout and verify the timeout counter increments
-    let msg = Ibc2PacketReceiveMsg::default();
-    let res: IbcReceiveResponse = ibc2_timeout(deps.as_mut(), env.clone(), msg).unwrap();
-    assert_eq!(res, IbcReceiveResponse::new([1, 2, 3]));
-
-    // Query the timeout counter
-    let query_msg = QueryMsg::QueryTimeoutCounter {};
-    let bin = query(deps.as_ref(), env.clone(), query_msg).unwrap();
-    let counter: u32 = from_binary(&bin).unwrap();
-    assert_eq!(counter, 1);
 }
