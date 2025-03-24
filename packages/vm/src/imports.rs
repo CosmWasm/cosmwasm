@@ -1026,7 +1026,7 @@ mod tests {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, make_compiling_engine};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     // prepared data
     const KEY1: &[u8] = b"ant";
@@ -1067,7 +1067,7 @@ mod tests {
         let env = Environment::new(api, gas_limit);
 
         let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = compile(&engine, CONTRACT).unwrap();
+        let module = compile(&engine, HACKATOM).unwrap();
         let mut store = Store::new(engine);
 
         let fe = FunctionEnv::new(&mut store, env);

@@ -337,9 +337,9 @@ mod tests {
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
-    static CONTRACT_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
+    static CYBERPUNK_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
         capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking,stargate")
@@ -349,7 +349,7 @@ mod tests {
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(
-            CONTRACT,
+            HACKATOM,
             &default_capabilities(),
             &WasmLimits::default(),
             Off,
@@ -368,7 +368,7 @@ mod tests {
     fn check_wasm_allows_sign_ext() {
         // See https://github.com/CosmWasm/cosmwasm/issues/1727
         check_wasm(
-            CONTRACT_RUST_170,
+            CYBERPUNK_RUST_170,
             &default_capabilities(),
             &WasmLimits::default(),
             Off,

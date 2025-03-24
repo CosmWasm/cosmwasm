@@ -626,10 +626,10 @@ mod tests {
     };
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
-    static IBC_CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
-    static IBC2_CONTRACT: &[u8] = include_bytes!("../testdata/ibc2.wasm");
-    static EMPTY_CONTRACT: &[u8] = include_bytes!("../testdata/empty.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static IBC_REFLECT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+    static IBC2: &[u8] = include_bytes!("../testdata/ibc2.wasm");
+    static EMPTY: &[u8] = include_bytes!("../testdata/empty.wasm");
     // Invalid because it doesn't contain required memory and exports
     static INVALID_CONTRACT_WAT: &str = r#"(module
         (type $t0 (func (param i32) (result i32)))
@@ -719,14 +719,14 @@ mod tests {
     fn store_code_checked_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.store_code(CONTRACT, true, true).unwrap();
+        cache.store_code(HACKATOM, true, true).unwrap();
     }
 
     #[test]
     fn store_code_without_persist_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, false).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, false).unwrap();
 
         assert!(
             cache.load_wasm(&checksum).is_err(),
@@ -739,8 +739,8 @@ mod tests {
     fn store_code_allows_saving_multiple_times() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.store_code(CONTRACT, true, true).unwrap();
-        cache.store_code(CONTRACT, true, true).unwrap();
+        cache.store_code(HACKATOM, true, true).unwrap();
+        cache.store_code(HACKATOM, true, true).unwrap();
     }
 
     #[test]
@@ -764,7 +764,7 @@ mod tests {
         // memory cache before the init call.
 
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let backend = mock_backend(&[]);
         let _ = cache
@@ -780,7 +780,7 @@ mod tests {
     fn store_code_unchecked_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        cache.store_code(CONTRACT, false, true).unwrap();
+        cache.store_code(HACKATOM, false, true).unwrap();
     }
 
     #[test]
@@ -796,10 +796,10 @@ mod tests {
     fn load_wasm_works() {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let restored = cache.load_wasm(&checksum).unwrap();
-        assert_eq!(restored, CONTRACT);
+        assert_eq!(restored, HACKATOM);
     }
 
     #[test]
@@ -816,7 +816,7 @@ mod tests {
             };
             let cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
-            id = cache1.store_code(CONTRACT, true, true).unwrap();
+            id = cache1.store_code(HACKATOM, true, true).unwrap();
         }
 
         {
@@ -829,7 +829,7 @@ mod tests {
             let cache2: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options2).unwrap() };
             let restored = cache2.load_wasm(&id).unwrap();
-            assert_eq!(restored, CONTRACT);
+            assert_eq!(restored, HACKATOM);
         }
     }
 
@@ -861,7 +861,7 @@ mod tests {
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Corrupt cache file
         let filepath = tmp_dir
@@ -887,7 +887,7 @@ mod tests {
             unsafe { Cache::new(make_testing_options()).unwrap() };
 
         // Store
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Exists
         cache.load_wasm(&checksum).unwrap();
@@ -915,7 +915,7 @@ mod tests {
     #[test]
     fn get_instance_finds_cached_module() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
         let backend = mock_backend(&[]);
         let _instance = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
@@ -929,7 +929,7 @@ mod tests {
     #[test]
     fn get_instance_finds_cached_modules_and_stores_to_memory() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
         let backend3 = mock_backend(&[]);
@@ -993,7 +993,7 @@ mod tests {
     fn get_instance_recompiles_module() {
         let options = make_testing_options();
         let cache = unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Remove compiled module from disk
         remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
@@ -1022,7 +1022,7 @@ mod tests {
     #[test]
     fn call_instantiate_on_cached_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // from file system
         {
@@ -1108,7 +1108,7 @@ mod tests {
     #[test]
     fn call_execute_on_cached_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // from file system
         {
@@ -1219,7 +1219,7 @@ mod tests {
     fn call_execute_on_recompiled_contract() {
         let options = make_testing_options();
         let cache = unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Remove compiled module from disk
         remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
@@ -1239,7 +1239,7 @@ mod tests {
     #[test]
     fn use_multiple_cached_instances_of_same_contract() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // these differentiate the two instances of the same contract
         let backend1 = mock_backend(&[]);
@@ -1299,7 +1299,7 @@ mod tests {
     #[test]
     fn resets_gas_when_reusing_instance() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
@@ -1338,7 +1338,7 @@ mod tests {
     #[test]
     fn recovers_from_out_of_gas() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
@@ -1454,7 +1454,7 @@ mod tests {
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_stargate_testing_options()).unwrap() };
 
-        let checksum1 = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum1 = cache.store_code(HACKATOM, true, true).unwrap();
         let report1 = cache.analyze(&checksum1).unwrap();
         assert_eq!(
             report1,
@@ -1473,7 +1473,7 @@ mod tests {
             }
         );
 
-        let checksum2 = cache.store_code(IBC_CONTRACT, true, true).unwrap();
+        let checksum2 = cache.store_code(IBC_REFLECT, true, true).unwrap();
         let report2 = cache.analyze(&checksum2).unwrap();
         let mut ibc_contract_entrypoints =
             BTreeSet::from([E::Instantiate, E::Migrate, E::Reply, E::Query]);
@@ -1492,7 +1492,7 @@ mod tests {
             }
         );
 
-        let checksum3 = cache.store_code(EMPTY_CONTRACT, true, true).unwrap();
+        let checksum3 = cache.store_code(EMPTY, true, true).unwrap();
         let report3 = cache.analyze(&checksum3).unwrap();
         assert_eq!(
             report3,
@@ -1505,7 +1505,7 @@ mod tests {
             }
         );
 
-        let mut wasm_with_version = EMPTY_CONTRACT.to_vec();
+        let mut wasm_with_version = EMPTY.to_vec();
         let custom_section = wasm_encoder::CustomSection {
             name: Cow::Borrowed("cw_migrate_version"),
             data: Cow::Borrowed(b"21"),
@@ -1527,7 +1527,7 @@ mod tests {
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_ibc2_testing_options()).unwrap() };
-        let checksum5 = cache.store_code(IBC2_CONTRACT, true, true).unwrap();
+        let checksum5 = cache.store_code(IBC2, true, true).unwrap();
         let report5 = cache.analyze(&checksum5).unwrap();
         let mut ibc2_contract_entrypoints = BTreeSet::from([E::Instantiate, E::Query]);
         ibc2_contract_entrypoints.extend([REQUIRED_IBC2_EXPORT]);
@@ -1549,7 +1549,7 @@ mod tests {
     #[test]
     fn pinned_metrics_works() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         cache.pin(&checksum).unwrap();
 
@@ -1568,7 +1568,7 @@ mod tests {
         assert_eq!(pinned_metrics.per_module[0].0, checksum);
         assert_eq!(pinned_metrics.per_module[0].1.hits, 1);
 
-        let empty_checksum = cache.store_code(EMPTY_CONTRACT, true, true).unwrap();
+        let empty_checksum = cache.store_code(EMPTY, true, true).unwrap();
         cache.pin(&empty_checksum).unwrap();
 
         let pinned_metrics = cache.pinned_metrics();
@@ -1591,7 +1591,7 @@ mod tests {
     #[test]
     fn pin_unpin_works() {
         let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // check not pinned
         let backend = mock_backend(&[]);
@@ -1656,7 +1656,7 @@ mod tests {
         let options = make_testing_options();
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Remove compiled module from disk
         remove_dir_all(options.base_dir.join(CACHE_DIR).join(MODULES_DIR)).unwrap();
@@ -1691,7 +1691,7 @@ mod tests {
         };
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
-        let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+        let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Move the saved wasm to the old path (without extension)
         let old_path = tmp_dir
@@ -1704,7 +1704,7 @@ mod tests {
 
         // loading wasm from before the wasm extension was added should still work
         let restored = cache.load_wasm(&checksum).unwrap();
-        assert_eq!(restored, CONTRACT);
+        assert_eq!(restored, HACKATOM);
     }
 
     #[test]
@@ -1726,7 +1726,7 @@ mod tests {
 
         let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new_with_config(config).unwrap() };
-        let err = cache.store_code(CONTRACT, true, true).unwrap_err();
+        let err = cache.store_code(HACKATOM, true, true).unwrap_err();
         assert!(matches!(err, VmError::StaticValidationErr { .. }));
     }
 }

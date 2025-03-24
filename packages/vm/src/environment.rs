@@ -560,7 +560,7 @@ mod tests {
     };
     use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     // prepared data
     const INIT_KEY: &[u8] = b"foo";
@@ -584,7 +584,7 @@ mod tests {
         let env = Environment::new(MockApi::default(), gas_limit);
 
         let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = compile(&engine, CONTRACT).unwrap();
+        let module = compile(&engine, HACKATOM).unwrap();
         let mut store = Store::new(engine);
 
         // we need stubs for all required imports

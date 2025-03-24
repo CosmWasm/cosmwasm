@@ -790,14 +790,14 @@ mod tests {
     use cosmwasm_std::{coins, from_json, to_json_string, Addr, Empty};
     use sha2::{Digest, Sha256};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
     static FLOATY2: &[u8] = include_bytes!("../testdata/floaty_2.0.wasm");
     static EMPTY: &[u8] = include_bytes!("../testdata/empty.wasm");
 
     #[test]
     fn call_instantiate_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -833,7 +833,7 @@ mod tests {
 
     #[test]
     fn call_execute_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -919,7 +919,7 @@ mod tests {
 
     #[test]
     fn call_migrate_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -949,7 +949,7 @@ mod tests {
 
     #[test]
     fn call_migrate_with_info_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -988,7 +988,7 @@ mod tests {
 
     #[test]
     fn call_query_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -1102,8 +1102,8 @@ mod tests {
             Event, IbcAckCallbackMsg, IbcAcknowledgement, IbcOrder, IbcTimeoutCallbackMsg, ReplyOn,
             SubMsgResponse, SubMsgResult,
         };
-        const CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
-        const IBC_CALLBACKS: &[u8] = include_bytes!("../testdata/ibc_callbacks.wasm");
+        static IBC_REFLECT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+        static IBC_CALLBACKS: &[u8] = include_bytes!("../testdata/ibc_callbacks.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
 
         fn setup(
@@ -1165,13 +1165,13 @@ mod tests {
 
         #[test]
         fn call_ibc_channel_open_and_connect_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let mut instance = mock_instance(IBC_REFLECT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
         }
 
         #[test]
         fn call_ibc_channel_close_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let mut instance = mock_instance(IBC_REFLECT, &[]);
             let account = instance.api().addr_make(ACCOUNT);
             setup(&mut instance, CHANNEL_ID, &account);
             let handshake_close =
@@ -1183,7 +1183,7 @@ mod tests {
 
         #[test]
         fn call_ibc_packet_ack_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let mut instance = mock_instance(IBC_REFLECT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let ack = IbcAcknowledgement::new(br#"{}"#);
             let msg = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap();
@@ -1194,7 +1194,7 @@ mod tests {
 
         #[test]
         fn call_ibc_packet_timeout_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let mut instance = mock_instance(IBC_REFLECT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
             call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
@@ -1204,7 +1204,7 @@ mod tests {
 
         #[test]
         fn call_ibc_packet_receive_works() {
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let mut instance = mock_instance(IBC_REFLECT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
             let msg = mock_ibc_packet_recv(CHANNEL_ID, who_am_i).unwrap();
@@ -1277,12 +1277,12 @@ mod tests {
     mod ibc2 {
         use super::*;
         use cosmwasm_std::testing::mock_ibc2_packet_recv;
-        const CONTRACT: &[u8] = include_bytes!("../testdata/ibc2.wasm");
+        static IBC2: &[u8] = include_bytes!("../testdata/ibc2.wasm");
 
         #[test]
         fn call_ibc2_packet_receive_works() {
             // init
-            let mut instance = mock_instance(CONTRACT, &[]);
+            let mut instance = mock_instance(IBC2, &[]);
             let info = mock_info("creator", &[]);
             let instantiate_msg = br#"{}"#;
             call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)

@@ -117,12 +117,12 @@ mod tests {
     use super::*;
     use wasmer::Store;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     #[test]
     fn deserialize_exports_works() {
-        let module = ParsedWasm::parse(CONTRACT).unwrap();
+        let module = ParsedWasm::parse(HACKATOM).unwrap();
         assert_eq!(module.version, 1);
 
         let exported_functions = module
