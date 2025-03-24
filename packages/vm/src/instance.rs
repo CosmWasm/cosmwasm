@@ -549,7 +549,7 @@ mod tests {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
     #[test]
@@ -557,7 +557,7 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let _instance =
-            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
+            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
     }
 
     #[test]
@@ -602,7 +602,7 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let instance =
-            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
+            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_capabilities().len(), 0);
     }
 
@@ -694,7 +694,7 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         instance
             .call_function0("interface_version_8", &[])
@@ -703,7 +703,7 @@ mod tests {
 
     #[test]
     fn call_function1_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // can call function few times
         let result = instance
@@ -725,7 +725,7 @@ mod tests {
     #[test]
     fn allocate_deallocate_works() {
         let mut instance = mock_instance_with_options(
-            CONTRACT,
+            HACKATOM,
             MockInstanceOptions {
                 memory_limit: Some(Size::mebi(500)),
                 ..Default::default()
@@ -752,7 +752,7 @@ mod tests {
 
     #[test]
     fn write_and_read_memory_works() {
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, 6_000_000_000);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, 6_000_000_000);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -785,7 +785,7 @@ mod tests {
     fn errors_in_imports() {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
-        let mut instance = mock_instance_with_failing_api(CONTRACT, &[], error_message);
+        let mut instance = mock_instance_with_failing_api(HACKATOM, &[], error_message);
         let init_result = call_instantiate::<_, _, _, Empty>(
             &mut instance,
             &mock_env(),
@@ -803,7 +803,7 @@ mod tests {
     fn read_memory_errors_when_when_length_is_too_long() {
         let length = 6;
         let max_length = 5;
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // Allocate sets length to 0. Write some data to increase length.
         let region_ptr = instance.allocate(length).expect("error allocating");
@@ -871,7 +871,7 @@ mod tests {
 
     #[test]
     fn memory_pages_grows_with_usage() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         assert_eq!(instance.memory_pages(), 17);
 
@@ -887,7 +887,7 @@ mod tests {
 
     #[test]
     fn get_gas_left_works() {
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, 123321);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
@@ -895,7 +895,7 @@ mod tests {
     #[test]
     fn create_gas_report_works() {
         const LIMIT: u64 = 700_000_000;
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, LIMIT);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, LIMIT);
 
         let report1 = instance.create_gas_report();
         assert_eq!(report1.used_externally, 0);
@@ -924,7 +924,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         assert!(instance.is_storage_readonly());
 
@@ -940,7 +940,7 @@ mod tests {
 
     #[test]
     fn with_storage_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // initial check
         instance
@@ -971,7 +971,7 @@ mod tests {
     #[should_panic]
     fn with_storage_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
@@ -982,7 +982,7 @@ mod tests {
     fn with_querier_works_readonly() {
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance)]);
+        let mut instance = mock_instance_with_balances(HACKATOM, &[(&rich_addr, &rich_balance)]);
 
         // query one
         instance
@@ -1038,7 +1038,7 @@ mod tests {
         let rich_addr = String::from("foobar");
         let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
         let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance1)]);
+        let mut instance = mock_instance_with_balances(HACKATOM, &[(&rich_addr, &rich_balance1)]);
 
         // Get initial state
         instance
@@ -1093,7 +1093,7 @@ mod tests {
 
     #[test]
     fn contract_deducts_gas_init() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
         let orig_gas = instance.get_gas_left();
 
         // init contract
@@ -1111,7 +1111,7 @@ mod tests {
 
     #[test]
     fn contract_deducts_gas_execute() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init contract
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -1136,7 +1136,7 @@ mod tests {
 
     #[test]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, 20_000);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, 20_000);
 
         // init contract
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -1150,7 +1150,7 @@ mod tests {
 
     #[test]
     fn query_works_with_gas_metering() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init contract
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
