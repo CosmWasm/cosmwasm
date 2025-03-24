@@ -847,7 +847,7 @@ mod tests {
 
         // execute
         let info = mock_info(&verifier, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();

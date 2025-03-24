@@ -548,6 +548,7 @@ mod tests {
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM_1_3: &[u8] = include_bytes!("../testdata/hackatom_1.3.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
     #[test]
@@ -600,8 +601,14 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let instance =
-            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
+            Instance::from_code(HACKATOM_1_3, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_capabilities().len(), 0);
+
+        let backend = mock_backend(&[]);
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance =
+            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
+        assert_eq!(instance.required_capabilities().len(), 7);
     }
 
     #[test]
@@ -1098,7 +1105,7 @@ mod tests {
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_execute = instance.get_gas_left();
         let info = mock_info(&verifier, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();

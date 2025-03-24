@@ -611,7 +611,6 @@ fn remove_wasm_from_disk(dir: impl Into<PathBuf>, checksum: &Checksum) -> VmResu
 mod tests {
     use super::*;
     use crate::calls::{call_execute, call_instantiate};
-    use crate::capabilities::capabilities_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
     use std::borrow::Cow;
@@ -640,7 +639,19 @@ mod tests {
     "#;
 
     fn default_capabilities() -> HashSet<String> {
-        capabilities_from_csv("iterator,staking")
+        HashSet::from([
+            "cosmwasm_1_1".to_string(),
+            "cosmwasm_1_2".to_string(),
+            "cosmwasm_1_3".to_string(),
+            "cosmwasm_1_4".to_string(),
+            "cosmwasm_1_4".to_string(),
+            "cosmwasm_2_0".to_string(),
+            "cosmwasm_2_1".to_string(),
+            "cosmwasm_2_2".to_string(),
+            "iterator".to_string(),
+            "staking".to_string(),
+            "stargate".to_string(),
+        ])
     }
 
     fn make_testing_options() -> CacheOptions {
@@ -693,7 +704,7 @@ mod tests {
 
         // execute
         let info = mock_info(&verifier, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         let response = call_execute::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
@@ -1137,7 +1148,7 @@ mod tests {
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
@@ -1171,7 +1182,7 @@ mod tests {
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
@@ -1207,7 +1218,7 @@ mod tests {
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
@@ -1280,7 +1291,7 @@ mod tests {
             .get_instance(&checksum, backend2, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info(&bob, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
@@ -1290,7 +1301,7 @@ mod tests {
             .get_instance(&checksum, backend1, TESTING_OPTIONS)
             .unwrap();
         let info = mock_info(&sue, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
@@ -1468,15 +1479,24 @@ mod tests {
                     E::Execute,
                     E::Query
                 ]),
-                required_capabilities: BTreeSet::new(),
-                contract_migrate_version: Some(42),
+                required_capabilities: BTreeSet::from([
+                    "cosmwasm_1_1".to_string(),
+                    "cosmwasm_1_2".to_string(),
+                    "cosmwasm_1_3".to_string(),
+                    "cosmwasm_1_4".to_string(),
+                    "cosmwasm_1_4".to_string(),
+                    "cosmwasm_2_0".to_string(),
+                    "cosmwasm_2_1".to_string(),
+                    "cosmwasm_2_2".to_string(),
+                ]),
+                contract_migrate_version: Some(420),
             }
         );
 
         let checksum2 = cache.store_code(IBC_REFLECT, true, true).unwrap();
         let report2 = cache.analyze(&checksum2).unwrap();
         let mut ibc_contract_entrypoints =
-            BTreeSet::from([E::Instantiate, E::Migrate, E::Reply, E::Query]);
+            BTreeSet::from([E::Instantiate, E::Migrate, E::Execute, E::Reply, E::Query]);
         ibc_contract_entrypoints.extend(REQUIRED_IBC_EXPORTS);
         assert_eq!(
             report2,
@@ -1485,6 +1505,14 @@ mod tests {
                 has_ibc2_entry_points: false,
                 entrypoints: ibc_contract_entrypoints,
                 required_capabilities: BTreeSet::from_iter([
+                    "cosmwasm_1_1".to_string(),
+                    "cosmwasm_1_2".to_string(),
+                    "cosmwasm_1_3".to_string(),
+                    "cosmwasm_1_4".to_string(),
+                    "cosmwasm_1_4".to_string(),
+                    "cosmwasm_2_0".to_string(),
+                    "cosmwasm_2_1".to_string(),
+                    "cosmwasm_2_2".to_string(),
                     "iterator".to_string(),
                     "stargate".to_string()
                 ]),

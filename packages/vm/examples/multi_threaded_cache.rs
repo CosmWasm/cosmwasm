@@ -69,7 +69,7 @@ pub fn main() {
             assert!(contract_result.into_result().is_ok());
 
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
