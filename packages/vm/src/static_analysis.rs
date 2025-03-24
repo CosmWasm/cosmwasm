@@ -33,6 +33,10 @@ pub enum Entrypoint {
     IbcPacketAck,
     #[strum(serialize = "ibc_packet_timeout")]
     IbcPacketTimeout,
+    #[strum(serialize = "ibc_source_callback")]
+    IbcSourceCallback,
+    #[strum(serialize = "ibc_destination_callback")]
+    IbcDestinationCallback,
     #[strum(serialize = "ibc2_packet_receive")]
     Ibc2PacketReceive,
 }
