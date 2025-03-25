@@ -21,6 +21,8 @@ and this project adheres to
   `MockApi::addr_make` from `DepsMut`. ([#2383])
 - cosmwasm-std: Added `ibc2_port` to `ContractInfoResponse`. ([#2390], [#2403])
 - cosmwasm-vm: Added `ibc2_packet_receive` entrypoint ([#2403])
+- cosmwasm-vm: Add IBC Callbacks entrypoints to the `Entrypoints` enum.
+  ([#2438])
 
 ## Changed
 
@@ -92,6 +94,7 @@ and this project adheres to
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
+[#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
 
 ## [2.2.0] - 2024-12-17
 
