@@ -64,6 +64,8 @@ and this project adheres to
   ([#2195])
 - cosmwasm-std: Make `GovMsg` `#[non_exhaustive]` for consistency. ([#2347])
 - cosmwasm-crypto: Upgrade ark-\* dependencies to 0.5.0. ([#2432])
+- cosmwasm-std: Remove support for `BankQuery::AllBalances` and
+  `query_all_balances`. ([#2433])
 
 ## Fixed
 
@@ -94,6 +96,7 @@ and this project adheres to
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
+[#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
 
 ## [2.2.0] - 2024-12-17
