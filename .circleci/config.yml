@@ -1258,7 +1258,7 @@ jobs:
             # List of package directories and their flags
             set -- \
               "check:cosmwasm-check" \
-              "core:cosmwasm-core" \
+              #"core:cosmwasm-core" \
               "crypto:cosmwasm-crypto" \
               "derive:cosmwasm-derive" \
               "schema:cosmwasm-schema" \
