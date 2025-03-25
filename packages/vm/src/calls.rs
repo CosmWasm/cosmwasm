@@ -791,6 +791,7 @@ mod tests {
     use sha2::{Digest, Sha256};
 
     static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM_1_3: &[u8] = include_bytes!("../testdata/hackatom_1.3.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
     static FLOATY2: &[u8] = include_bytes!("../testdata/floaty_2.0.wasm");
     static EMPTY: &[u8] = include_bytes!("../testdata/empty.wasm");
@@ -919,7 +920,10 @@ mod tests {
 
     #[test]
     fn call_migrate_works() {
-        let mut instance = mock_instance(HACKATOM, &[]);
+        let mut instance = mock_instance(
+            HACKATOM_1_3, // only old version of hackatom supports classic migrate signature
+            &[],
+        );
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -948,8 +952,11 @@ mod tests {
     }
 
     #[test]
-    fn call_migrate_with_info_works() {
-        let mut instance = mock_instance(HACKATOM, &[]);
+    fn call_migrate_with_info_works_for_classic_migrate_signature() {
+        let mut instance = mock_instance(
+            HACKATOM_1_3, // we test again the old version of hackatom which did not implement the migrate info argument
+            &[],
+        );
 
         // init
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));

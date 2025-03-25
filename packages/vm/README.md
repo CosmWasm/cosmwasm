@@ -58,7 +58,7 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/optimizer:0.15.0 ./contracts/hackatom \
-  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_1.2.wasm
+  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_reflect",target=/target \
