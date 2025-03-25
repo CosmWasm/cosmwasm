@@ -18,14 +18,14 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    assert_approx_eq, coins, from_json, to_json_vec, Addr, AllBalanceResponse, BankMsg, Binary,
-    ContractResult, Empty, MigrateInfo, Response, SubMsg,
+    assert_approx_eq, coins, to_json_vec, Addr, BankMsg, Binary, ContractResult, Empty,
+    MigrateInfo, Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
     testing::{
-        execute, instantiate, migrate_with_info, mock_env, mock_info, mock_instance,
-        mock_instance_with_balances, query, sudo, test_io, MockApi, MOCK_CONTRACT_ADDR,
+        execute, instantiate, migrate_with_info, mock_env, mock_info, mock_instance, query, sudo,
+        test_io, MockApi, MOCK_CONTRACT_ADDR,
     },
     Storage, VmError,
 };
@@ -110,7 +110,7 @@ fn instantiate_and_query() {
     );
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
-    let qres = query(&mut deps, mock_env(), ExecuteMsg::Release {});
+    let qres = query(&mut deps, mock_env(), ExecuteMsg::Panic {});
     let msg = qres.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -186,33 +186,12 @@ fn sudo_can_steal_tokens() {
 }
 
 #[test]
-fn querier_callbacks_work() {
-    let rich_addr = String::from("cosmwasm1qqvk2mde");
-    let rich_balance = coins(10000, "gold");
-    let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr, &rich_balance)]);
-
-    // querying with balance gets the balance
-    let query_msg = QueryMsg::OtherBalance { address: rich_addr };
-    let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_json(query_response).unwrap();
-    assert_eq!(bal.amount, rich_balance);
-
-    // querying other accounts gets none
-    let query_msg = QueryMsg::OtherBalance {
-        address: String::from("someone else"),
-    };
-    let query_response = query(&mut deps, mock_env(), query_msg).unwrap();
-    let bal: AllBalanceResponse = from_json(query_response).unwrap();
-    assert_eq!(bal.amount, vec![]);
-}
-
-#[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
     let info = mock_info("creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res: ContractResult<Response> =
-        instantiate(&mut deps, mock_env(), info, ExecuteMsg::Release {});
+        instantiate(&mut deps, mock_env(), info, ExecuteMsg::Panic {});
     let msg = res.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -245,8 +224,15 @@ fn execute_release_works() {
 
     // beneficiary can release it
     let execute_info = mock_info(&verifier, &[]);
-    let execute_res: Response =
-        execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {}).unwrap();
+    let execute_res: Response = execute(
+        &mut deps,
+        mock_env(),
+        execute_info,
+        ExecuteMsg::Release {
+            denom: "earth".to_string(),
+        },
+    )
+    .unwrap();
     assert_eq!(execute_res.messages.len(), 1);
     let msg = execute_res.messages.first().expect("no message");
     assert_eq!(
@@ -291,8 +277,14 @@ fn execute_release_fails_for_wrong_sender() {
 
     // beneficiary cannot release it
     let execute_info = mock_info(&beneficiary, &[]);
-    let execute_res: ContractResult<Response> =
-        execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {});
+    let execute_res: ContractResult<Response> = execute(
+        &mut deps,
+        mock_env(),
+        execute_info,
+        ExecuteMsg::Release {
+            denom: "earth".to_string(),
+        },
+    );
     let msg = execute_res.unwrap_err();
     assert!(msg.contains("Unauthorized"));
 

@@ -162,29 +162,6 @@
           "additionalProperties": false
         },
         {
-          "description": "This calls into the native bank module for all denominations. Note that this may be much more expensive than Balance and should be avoided if possible. Return value is AllBalanceResponse.",
-          "deprecated": true,
-          "type": "object",
-          "required": [
-            "all_balances"
-          ],
-          "properties": {
-            "all_balances": {
-              "type": "object",
-              "required": [
-                "address"
-              ],
-              "properties": {
-                "address": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
           "description": "This calls into the native bank module for querying metadata for a specific bank token. Return value is DenomMetadataResponse",
           "type": "object",
           "required": [
