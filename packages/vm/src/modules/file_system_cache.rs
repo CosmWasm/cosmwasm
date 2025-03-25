@@ -367,7 +367,7 @@ mod tests {
 
         let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/{}-wasmer8/**/{}.module",
+            "{}/{}-wasmer9/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             discriminator,
             checksum
@@ -480,6 +480,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "1ddad79af7");
+        assert_eq!(version, "a3ce752341");
     }
 }
