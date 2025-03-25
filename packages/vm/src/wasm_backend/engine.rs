@@ -1,9 +1,7 @@
 use cosmwasm_vm_derive::hash_function;
 use std::sync::Arc;
-use wasmer::NativeEngineExt;
-use wasmer::{
-    sys::BaseTunables, wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
-};
+use wasmer::sys::{engine::NativeEngineExt, BaseTunables, CompilerConfig, Target};
+use wasmer::{wasmparser::Operator, Engine, Pages, WASM_PAGE_SIZE};
 use wasmer_middlewares::metering::{is_accounting, Metering};
 
 use crate::size::Size;
@@ -47,7 +45,7 @@ fn cost(operator: &Operator) -> u64 {
 
 /// Creates a compiler config using Singlepass
 pub fn make_compiler_config() -> impl CompilerConfig + Into<Engine> {
-    wasmer::Singlepass::new()
+    wasmer::sys::Singlepass::new()
 }
 
 /// Creates an engine without a compiler.
