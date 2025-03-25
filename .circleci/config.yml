@@ -1256,9 +1256,9 @@ jobs:
             cargo llvm-cov nextest --lcov --output-path lcov.info
 
             # List of package directories and their flags
+            # ToDo: Re-add "core:cosmwasm-core" when enabling core coverage again
             set -- \
               "check:cosmwasm-check" \
-              #"core:cosmwasm-core" \
               "crypto:cosmwasm-crypto" \
               "derive:cosmwasm-derive" \
               "schema:cosmwasm-schema" \
