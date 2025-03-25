@@ -72,7 +72,7 @@ pub enum CosmosMsg<T = Empty> {
         type_url: String,
         value: Binary,
     },
-    /// `CosmosMsg::Any` is the replaces the "stargate message" – a message wrapped
+    /// `CosmosMsg::Any` replaces the "stargate message" – a message wrapped
     /// in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)
     /// that is supported by the chain. It behaves the same as
     /// `CosmosMsg::Stargate` but has a better name and slightly improved syntax.
@@ -176,7 +176,7 @@ pub enum DistributionMsg {
         /// The `withdraw_address`
         address: String,
     },
-    /// This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
+    /// This is translated to a [MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
     /// `delegator_address` is automatically filled with the current contract's address.
     WithdrawDelegatorReward {
         /// The `validator_address`
