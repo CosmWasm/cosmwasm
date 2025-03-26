@@ -19,7 +19,7 @@ pub use mock::DistributionQuerier;
 pub use mock::StakingQuerier;
 pub use mock::{
     mock_dependencies, mock_dependencies_with_balance, mock_dependencies_with_balances, mock_env,
-    mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
+    mock_wasmd_attr, BankQuerier, Envs, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
     MOCK_CONTRACT_ADDR,
 };
 #[cfg(feature = "ibc2")]
