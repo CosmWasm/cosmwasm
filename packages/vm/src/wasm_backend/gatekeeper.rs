@@ -465,4 +465,52 @@ mod tests {
             .to_string()
             .contains("Bulk memory operation"));
     }
+
+    #[test]
+    fn bulk_table_operations_not_supported() {
+        // these operations can take a long time with big tables
+        let deterministic = Arc::new(Gatekeeper::default());
+        let mut compiler = make_compiler_config();
+        compiler.push_middleware(deterministic);
+        let store = Store::new(compiler);
+
+        let wasm = wat::parse_str(
+            r#"
+            (module
+                (table 2 funcref)
+                (func (export "test") (param $i i32) (result i32)
+                    ;; grow table to size of $i
+                    ref.null func
+                    local.get $i
+                    table.grow 0))
+            "#,
+        )
+        .unwrap();
+
+        let result = Module::new(&store, wasm);
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Reference type operation"));
+
+        let wasm = wat::parse_str(
+            r#"
+            (module
+                (table 1000000000 funcref)
+                (func (export "test") (param $i i32)
+                    ;; fill with nulls
+                    i32.const 0
+                    ref.null func
+                    i32.const 1000000000
+                    table.fill 0))
+            "#,
+        )
+        .unwrap();
+
+        let result = Module::new(&store, wasm);
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Reference type operation"));
+    }
 }
