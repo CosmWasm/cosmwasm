@@ -20,4 +20,17 @@ mod tests {
         let engine = make_compiling_engine(None);
         assert!(compile(&engine, FLOATY).is_ok());
     }
+
+    #[test]
+    fn reference_types_dont_panic() {
+        const WASM: &str = r#"(module
+            (type $t0 (func (param funcref externref)))
+            (import "" "" (func $hello (type $t0)))
+        )"#;
+
+        let wasm = wat::parse_str(WASM).unwrap();
+        let engine = make_compiling_engine(None);
+        let error = compile(&engine, &wasm).unwrap_err();
+        assert!(error.to_string().contains("FuncRef"));
+    }
 }
