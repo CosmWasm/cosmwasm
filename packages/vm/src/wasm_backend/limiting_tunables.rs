@@ -1,11 +1,14 @@
 use std::ptr::NonNull;
 
 use wasmer::{
-    vm::{
-        MemoryError, MemoryStyle, TableStyle, VMMemory, VMMemoryDefinition, VMTable,
-        VMTableDefinition,
+    sys::{
+        vm::{
+            MemoryError, MemoryStyle, TableStyle, VMMemory, VMMemoryDefinition, VMTable,
+            VMTableDefinition,
+        },
+        Tunables,
     },
-    MemoryType, Pages, TableType, Tunables,
+    MemoryType, Pages, TableType,
 };
 
 /// A custom tunables that allows you to set a memory limit.
@@ -128,7 +131,7 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasmer::{sys::BaseTunables, Target};
+    use wasmer::sys::{BaseTunables, Target};
 
     #[test]
     fn adjust_memory_works() {
