@@ -85,7 +85,7 @@ pub use crate::math::{
     Int512, Int64, Isqrt, SignedDecimal, SignedDecimal256, SignedDecimal256RangeExceeded,
     SignedDecimalRangeExceeded, Uint128, Uint256, Uint512, Uint64,
 };
-pub use crate::metadata::{DenomMetadata, DenomUnit, NullableDenomMetadata, NullableDenomUnit};
+pub use crate::metadata::{DenomMetadata, DenomUnit};
 pub use crate::msgpack::{from_msgpack, to_msgpack_binary, to_msgpack_vec};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
@@ -96,8 +96,8 @@ pub use crate::query::{
     DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
     DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
     DistributionQuery, FeeEnabledChannelResponse, FullDelegation, GrpcQuery, IbcQuery,
-    ListChannelsResponse, NullableDenomMetadataResponse, PortIdResponse, QueryRequest,
-    StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
+    ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator,
+    ValidatorResponse, WasmQuery,
 };
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;

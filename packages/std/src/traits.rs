@@ -22,14 +22,14 @@ use crate::query::{
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{
     AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
-    DistributionQuery, NullableDenomMetadataResponse,
+    DistributionQuery,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
 use crate::{Addr, CanonicalAddr};
 #[cfg(feature = "cosmwasm_1_3")]
-use crate::{DenomMetadata, NullableDenomMetadata, PageRequest};
+use crate::{DenomMetadata, PageRequest};
 use crate::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 
 #[derive(Clone, Copy, Debug)]
@@ -465,19 +465,6 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
         .into();
         let res: DenomMetadataResponse = self.query(&request)?;
-        Ok(res.metadata)
-    }
-
-    #[cfg(feature = "cosmwasm_1_3")]
-    pub fn query_nullable_denom_metadata(
-        &self,
-        denom: impl Into<String>,
-    ) -> StdResult<NullableDenomMetadata> {
-        let request = BankQuery::DenomMetadata {
-            denom: denom.into(),
-        }
-        .into();
-        let res: NullableDenomMetadataResponse = self.query(&request)?;
         Ok(res.metadata)
     }
 
