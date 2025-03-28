@@ -56,8 +56,12 @@ mod tests {
             "uri_hash": "hash"
         });
 
-        let metadata_null_denom_units: DenomMetadata = serde_json::from_value(json_with_null_denom_units).unwrap();
-        assert_eq!(metadata_null_denom_units.denom_units, Vec::<DenomUnit>::default());
+        let metadata_null_denom_units: DenomMetadata =
+            serde_json::from_value(json_with_null_denom_units).unwrap();
+        assert_eq!(
+            metadata_null_denom_units.denom_units,
+            Vec::<DenomUnit>::default()
+        );
         assert!(metadata_null_denom_units.denom_units.is_empty());
 
         // Test normal case with provided denom_units
@@ -100,9 +104,13 @@ mod tests {
             "uri_hash": "hash"
         });
 
-        let metadata_with_null_aliases: DenomMetadata = serde_json::from_value(json_with_null_aliases).unwrap();
+        let metadata_with_null_aliases: DenomMetadata =
+            serde_json::from_value(json_with_null_aliases).unwrap();
         assert_eq!(metadata_with_null_aliases.denom_units.len(), 1);
-        assert_eq!(metadata_with_null_aliases.denom_units[0].aliases, Vec::<String>::default());
+        assert_eq!(
+            metadata_with_null_aliases.denom_units[0].aliases,
+            Vec::<String>::default()
+        );
         assert!(metadata_with_null_aliases.denom_units[0].aliases.is_empty());
     }
 
@@ -119,7 +127,8 @@ mod tests {
             "uri_hash": "hash"
         });
 
-        let metadata: Result<DenomMetadata, Error> = serde_json::from_value(json_missing_denom_units);
+        let metadata: Result<DenomMetadata, Error> =
+            serde_json::from_value(json_missing_denom_units);
         assert!(metadata.is_err());
 
         let json_missing_alias = json!({
@@ -138,7 +147,8 @@ mod tests {
             "uri_hash": "hash"
         });
 
-        let metadata_missing_alias: Result<DenomMetadata, Error> = serde_json::from_value(json_missing_alias);
+        let metadata_missing_alias: Result<DenomMetadata, Error> =
+            serde_json::from_value(json_missing_alias);
         assert!(metadata_missing_alias.is_err());
     }
 }
