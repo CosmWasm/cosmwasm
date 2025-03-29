@@ -28,7 +28,6 @@ cosmwasm-std = { path = "../../packages/std", default-features = false, features
 ] }
 rust-argon2 = "2.1"
 thiserror = "1.0.26"
-serde_json = "1.0.117"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }

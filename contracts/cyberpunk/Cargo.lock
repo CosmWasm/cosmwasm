@@ -590,7 +590,6 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-vm",
  "rust-argon2",
- "serde_json",
  "tempfile",
  "thiserror",
 ]
