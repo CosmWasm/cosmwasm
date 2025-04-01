@@ -175,9 +175,7 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
         } else {
             // Exactly one interface version found
             let version_str = first_interface_version_export.as_str();
-            if SUPPORTED_INTERFACE_VERSIONS
-                .iter()
-                .any(|&v| v == version_str)
+            if SUPPORTED_INTERFACE_VERSIONS.contains(&version_str)
             {
                 Ok(())
             } else {
