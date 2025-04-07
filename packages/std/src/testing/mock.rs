@@ -1277,9 +1277,22 @@ mod tests {
         include_bytes!("../../../crypto/testdata/eth-headers/1699693797.394876721s.json");
 
     #[test]
-    fn mock_env_matches_mock_contract_addr() {
-        let contract_address = mock_env().contract.address;
-        assert_eq!(contract_address, Addr::unchecked(MOCK_CONTRACT_ADDR));
+    fn mock_env_works() {
+        let env = mock_env();
+        assert_eq!(
+            env,
+            Env {
+                block: BlockInfo {
+                    height: 12345,
+                    time: Timestamp::from_nanos(1571797419879305533),
+                    chain_id: "cosmos-testnet-14002".to_string()
+                },
+                transaction: Some(TransactionInfo { index: 3 }),
+                contract: ContractInfo {
+                    address: Addr::unchecked(MOCK_CONTRACT_ADDR)
+                }
+            }
+        )
     }
 
     #[test]
