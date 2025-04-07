@@ -224,9 +224,8 @@ mod integration_tests {
         assert_eq!(metadata_with_null_aliases.denom_units.len(), 1);
         assert_eq!(
             metadata_with_null_aliases.denom_units[0].aliases,
-            Vec::<String>::default()
+            Vec::<String>::new()
         );
-        assert!(metadata_with_null_aliases.denom_units[0].aliases.is_empty());
     }
 
     #[test]
