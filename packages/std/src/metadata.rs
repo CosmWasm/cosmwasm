@@ -60,9 +60,8 @@ mod unit_tests {
             serde_json::from_value(json_with_null_denom_units).unwrap();
         assert_eq!(
             metadata_null_denom_units.denom_units,
-            Vec::<DenomUnit>::default()
+            Vec::<DenomUnit>::new()
         );
-        assert!(metadata_null_denom_units.denom_units.is_empty());
 
         // Test normal case with provided denom_units
         let json_with_units = json!({
