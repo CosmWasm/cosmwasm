@@ -234,7 +234,7 @@ mod integration_tests {
 
     #[test]
     fn query_denom_metadata_with_missing_fields_fails() {
-        // Missing denom_units should be treated as default value (empty vec)
+        // Missing denom_units should throw an error
         let json_missing_denom_units = json!({
             "description": "Test Token",
             "base": "utest",
@@ -249,7 +249,7 @@ mod integration_tests {
             serde_json::from_value(json_missing_denom_units);
         assert!(json_missing_denom_units_metadata.is_err());
 
-        // Missing aliases field should be treated as default (empty vec)
+        // Missing aliases field should throw an error
         let json_missing_aliases = json!({
             "description": "Test Token",
             "denom_units": [
