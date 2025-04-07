@@ -60,9 +60,8 @@ mod unit_tests {
             serde_json::from_value(json_with_null_denom_units).unwrap();
         assert_eq!(
             metadata_null_denom_units.denom_units,
-            Vec::<DenomUnit>::default()
+            Vec::<DenomUnit>::new()
         );
-        assert!(metadata_null_denom_units.denom_units.is_empty());
 
         // Test normal case with provided denom_units
         let json_with_units = json!({
@@ -109,9 +108,8 @@ mod unit_tests {
         assert_eq!(metadata_with_null_aliases.denom_units.len(), 1);
         assert_eq!(
             metadata_with_null_aliases.denom_units[0].aliases,
-            Vec::<String>::default()
+            Vec::<String>::new()
         );
-        assert!(metadata_with_null_aliases.denom_units[0].aliases.is_empty());
     }
 
     #[test]
@@ -176,9 +174,8 @@ mod integration_tests {
             serde_json::from_value(json_with_null_denom_units).unwrap();
         assert_eq!(
             metadata_with_null_denom_units.denom_units,
-            Vec::<DenomUnit>::default()
+            Vec::<DenomUnit>::new()
         );
-        assert!(metadata_with_null_denom_units.denom_units.is_empty());
 
         // Test normal case with provided denom_units
         let json_with_units = json!({
@@ -227,9 +224,8 @@ mod integration_tests {
         assert_eq!(metadata_with_null_aliases.denom_units.len(), 1);
         assert_eq!(
             metadata_with_null_aliases.denom_units[0].aliases,
-            Vec::<String>::default()
+            Vec::<String>::new()
         );
-        assert!(metadata_with_null_aliases.denom_units[0].aliases.is_empty());
     }
 
     #[test]
