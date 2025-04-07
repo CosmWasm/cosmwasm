@@ -54,6 +54,17 @@ impl Ibc2PacketReceiveMsg {
     }
 }
 
+/// Message sent to the IBCv2 app upon receiving an acknowledgement packet
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct Ibc2AcknowledgeMsg {
+    pub source_channel: String,
+    pub destination_channel: String,
+    pub data: Ibc2Payload,
+    pub acknowledgement: Vec<u8>,
+    pub relayer: Addr,
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::to_string;

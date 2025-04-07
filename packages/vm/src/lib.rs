@@ -33,7 +33,10 @@ pub use crate::calls::{
     call_sudo_raw,
 };
 #[cfg(feature = "ibc2")]
-pub use crate::calls::{call_ibc2_packet_receive, call_ibc2_packet_receive_raw};
+pub use crate::calls::{
+    call_ibc2_acknowledge_receive, call_ibc2_acknowledge_receive_raw, call_ibc2_packet_receive,
+    call_ibc2_packet_receive_raw,
+};
 #[cfg(feature = "stargate")]
 pub use crate::calls::{
     call_ibc_channel_close, call_ibc_channel_close_raw, call_ibc_channel_connect,
