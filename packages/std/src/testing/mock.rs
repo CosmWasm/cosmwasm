@@ -450,14 +450,15 @@ pub struct Envs {
     envs_produced: u64,
 }
 
+#[derive(Clone)]
 pub struct EnvsOptions {
-    bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
-    block_time: u64,
+    pub bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
+    pub block_time: u64,
     // The height before the first `make` call
-    initial_height: u64,
+    pub initial_height: u64,
     // The block time before the first `make` call
-    initial_time: Timestamp,
-    chain_id: String,
+    pub initial_time: Timestamp,
+    pub chain_id: String,
 }
 
 impl Default for EnvsOptions {
