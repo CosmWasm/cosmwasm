@@ -441,6 +441,7 @@ pub fn mock_env() -> Env {
 /// }
 /// ```
 pub struct Envs {
+    chain_id: String,
     contract_address: Addr,
     /// The number of nanoseconds between two consecutive blocks
     block_time: u64,
@@ -449,17 +450,45 @@ pub struct Envs {
     envs_produced: u64,
 }
 
+pub struct EnvsOptions {
+    bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
+    block_time: u64,
+    // The height before the first `make` call
+    initial_height: u64,
+    // The block time before the first `make` call
+    initial_time: Timestamp,
+    chain_id: String,
+}
+
+impl Default for EnvsOptions {
+    fn default() -> Self {
+        EnvsOptions {
+            bech32_prefix: BECH32_PREFIX,
+            block_time: 5_000_000_000, // 5s
+            initial_height: 12_344,
+            initial_time: Timestamp::from_nanos(1_571_797_419_879_305_533).minus_seconds(5),
+            chain_id: "cosmos-testnet-14002".to_string(),
+        }
+    }
+}
+
 impl Envs {
-    pub fn new(
-        bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
-    ) -> Self {
-        let api = MockApi::default().with_prefix(bech32_prefix);
+    pub fn new(bech32_prefix: &'static str) -> Self {
+        Self::with_options(EnvsOptions {
+            bech32_prefix,
+            ..Default::default()
+        })
+    }
+
+    pub fn with_options(options: EnvsOptions) -> Self {
+        let api = MockApi::default().with_prefix(options.bech32_prefix);
         Envs {
+            chain_id: options.chain_id,
             // Default values here for compatibility with old `mock_env` function. They could be changed to anything else if there is a good reason.
             contract_address: api.addr_make("cosmos2contract"),
-            block_time: 5_000_000_000, // 5s
-            last_height: 12_344,
-            last_time: Timestamp::from_nanos(1_571_797_419_879_305_533).minus_seconds(5),
+            block_time: options.block_time,
+            last_height: options.initial_height,
+            last_time: options.initial_time,
             envs_produced: 0,
         }
     }
@@ -480,13 +509,19 @@ impl Envs {
             block: BlockInfo {
                 height,
                 time,
-                chain_id: "cosmos-testnet-14002".to_string(),
+                chain_id: self.chain_id.clone(),
             },
             transaction: Some(TransactionInfo { index: 3 }),
             contract: ContractInfo {
                 address: self.contract_address.clone(),
             },
         })
+    }
+}
+
+impl Default for Envs {
+    fn default() -> Self {
+        Envs::with_options(EnvsOptions::default())
     }
 }
 
