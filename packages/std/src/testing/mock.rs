@@ -442,6 +442,8 @@ pub fn mock_env() -> Env {
 /// ```
 pub struct Envs {
     contract_address: Addr,
+    /// The number of nanoseconds between two consecutive blocks
+    block_time: u64,
     last_height: u64,
     last_time: Timestamp,
     envs_produced: u64,
@@ -455,6 +457,7 @@ impl Envs {
         Envs {
             // Default values here for compatibility with old `mock_env` function. They could be changed to anything else if there is a good reason.
             contract_address: api.addr_make("cosmos2contract"),
+            block_time: 5_000_000_000, // 5s
             last_height: 12_344,
             last_time: Timestamp::from_nanos(1_571_797_419_879_305_533).minus_seconds(5),
             envs_produced: 0,
@@ -462,14 +465,18 @@ impl Envs {
     }
 
     pub fn make(&mut self) -> Env {
-        let height = self.last_height + 1;
-        let time = self.last_time.plus_seconds(5);
+        self.checked_make().unwrap()
+    }
+
+    fn checked_make(&mut self) -> Option<Env> {
+        let height = self.last_height.checked_add(1)?;
+        let time = Timestamp::from_nanos(self.last_time.nanos().checked_add(self.block_time)?);
 
         self.last_height = height;
         self.last_time = time;
-        self.envs_produced += 1;
+        self.envs_produced += 1; // does not overflow because height increment fails first
 
-        Env {
+        Some(Env {
             block: BlockInfo {
                 height,
                 time,
@@ -479,21 +486,17 @@ impl Envs {
             contract: ContractInfo {
                 address: self.contract_address.clone(),
             },
-        }
+        })
     }
 }
 
-// The iterator implementation can produce 1 million envs and then stops for no good reason.
+// The iterator implementation ends in case of overflows to avoid panics.
+// Using this is recommended for very long running test suites.
 impl Iterator for Envs {
     type Item = Env;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.envs_produced < 1_000_000 {
-            let item = self.make();
-            Some(item)
-        } else {
-            None
-        }
+        self.checked_make()
     }
 }
 
@@ -1427,7 +1430,7 @@ mod tests {
     }
 
     #[test]
-    fn envs_implements_iteratorworks() {
+    fn envs_implements_iterator() {
         let envs = Envs::new("food");
 
         let result: Vec<_> = envs.into_iter().take(5).collect();
@@ -1450,6 +1453,17 @@ mod tests {
         assert_eq!(
             result[4].block.time,
             Timestamp::from_nanos(1_571_797_439_879_305_533)
+        );
+
+        // Get a millions envs through iterator
+        let mut envs = Envs::new("yo");
+        let first = envs.next().unwrap();
+        let last = envs.take(1_000_000).last().unwrap();
+        assert_eq!(first.block.height, 12_345);
+        assert_eq!(last.block.height, 1_012_345);
+        assert_eq!(
+            last.block.time,
+            first.block.time.plus_seconds(1_000_000 * 5)
         );
     }
 
