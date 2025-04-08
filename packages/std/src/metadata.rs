@@ -38,8 +38,9 @@ where
 }
 
 #[cfg(test)]
-mod unit_tests {
+mod tests {
     use super::*;
+    use crate::{DenomMetadata, DenomUnit};
     use serde_json::{json, Error};
 
     #[test]
@@ -149,12 +150,6 @@ mod unit_tests {
             serde_json::from_value(json_missing_alias);
         assert!(metadata_missing_alias.is_err());
     }
-}
-
-#[cfg(test)]
-mod integration_tests {
-    use crate::{DenomMetadata, DenomUnit};
-    use serde_json::{json, Error};
 
     #[test]
     fn query_denom_metadata_with_null_denom_units_works() {
