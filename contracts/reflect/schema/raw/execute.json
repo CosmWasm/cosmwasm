@@ -247,7 +247,7 @@
           "additionalProperties": false
         },
         {
-          "description": "`CosmosMsg::Any` is the replaces the \"stargate message\" – a message wrapped in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any) that is supported by the chain. It behaves the same as `CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because a chain running CosmWasm < 2.0 cannot process this.",
+          "description": "`CosmosMsg::Any` replaces the \"stargate message\" – a message wrapped in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any) that is supported by the chain. It behaves the same as `CosmosMsg::Stargate` but has a better name and slightly improved syntax.\n\nThis is feature-gated at compile time with `cosmwasm_2_0` because a chain running CosmWasm < 2.0 cannot process this.",
           "type": "object",
           "required": [
             "any"
@@ -357,7 +357,7 @@
           "additionalProperties": false
         },
         {
-          "description": "This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50). `delegator_address` is automatically filled with the current contract's address.",
+          "description": "This is translated to a [MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50). `delegator_address` is automatically filled with the current contract's address.",
           "type": "object",
           "required": [
             "withdraw_delegator_reward"
