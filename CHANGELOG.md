@@ -70,6 +70,7 @@ and this project adheres to
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
 - cosmwasm-vm: Fix CWA-2025-002.
+- cosmwasm-std: Fix deserialization of `DenomMetadata`. ([#2417])
 
 [#2141]: https://github.com/CosmWasm/cosmwasm/issues/2141
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
@@ -93,6 +94,7 @@ and this project adheres to
 [#2393]: https://github.com/CosmWasm/cosmwasm/issues/2393
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
 
