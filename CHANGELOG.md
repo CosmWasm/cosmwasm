@@ -8,6 +8,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- cosmwasm-std: Fix deserialization of `DenomMetadata`. ([#2417])
+
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+
 ## [2.2.2] - 2025-03-05
 
 ### Changed
