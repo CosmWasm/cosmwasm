@@ -39,7 +39,7 @@ use crate::results::{ContractResult, Empty, SystemResult};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
-use crate::{from_json, to_json_binary, Binary, Uint128};
+use crate::{from_json, to_json_binary, Binary, Uint256};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
     query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},
@@ -738,7 +738,7 @@ impl Default for WasmQuerier {
 pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
-    supplies: BTreeMap<String, Uint128>,
+    supplies: BTreeMap<String, Uint256>,
     /// A map from address to balance. The address is the String conversion of `Addr`,
     /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
@@ -779,7 +779,7 @@ impl BankQuerier {
             .collect();
     }
 
-    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
+    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint256> {
         let mut supplies = BTreeMap::new();
 
         let all_coins = balances.iter().flat_map(|(_, coins)| coins);
@@ -787,7 +787,7 @@ impl BankQuerier {
         for coin in all_coins {
             *supplies
                 .entry(coin.denom.clone())
-                .or_insert_with(Uint128::zero) += coin.amount;
+                .or_insert_with(Uint256::zero) += coin.amount;
         }
 
         supplies
@@ -801,7 +801,7 @@ impl BankQuerier {
                     .supplies
                     .get(denom)
                     .cloned()
-                    .unwrap_or_else(Uint128::zero);
+                    .unwrap_or_else(Uint256::zero);
                 let bank_res = SupplyResponse {
                     amount: Coin {
                         amount,
