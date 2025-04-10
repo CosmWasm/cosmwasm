@@ -7,8 +7,6 @@ use cosmwasm_std::{
 use crate::msg::QueryMsg;
 use crate::state::{State, STATE_KEY};
 
-pub const PACKET_LIFETIME: u64 = 60 * 60;
-
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
@@ -19,7 +17,7 @@ pub fn instantiate(
     deps.storage.set(
         STATE_KEY,
         &to_json_vec(&State {
-            ibc2_packet_receive_counter: 1000,
+            ibc2_packet_receive_counter: 0,
         })?,
     );
 
