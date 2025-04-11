@@ -60,8 +60,10 @@ fn migrate_sends_funds() {
 
     // change the verifier via migrate
     let payout = String::from("someone else");
+
     let msg = MigrateMsg {
         payout: payout.clone(),
+        denoms: vec!["gold".to_string()],
         delete: 0,
     };
     let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
@@ -95,7 +97,11 @@ fn execute_cleans_up_data() {
 
     // change the verifier via migrate
     let payout = String::from("someone else");
-    let msg = MigrateMsg { payout, delete: 0 };
+    let msg = MigrateMsg {
+        payout,
+        denoms: vec![],
+        delete: 0,
+    };
     let _res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
 
     let res: Response = execute(

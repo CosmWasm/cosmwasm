@@ -1,6 +1,8 @@
 use cosmwasm_std::{
-    entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
+    entry_point, BankMsg, Coin, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
+    Storage,
 };
+use std::collections::BTreeSet;
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
 
@@ -18,12 +20,22 @@ pub fn instantiate(
 
 #[entry_point]
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
-    // get balance and send all to recipient
-    #[allow(deprecated)]
-    let balance = deps.querier.query_all_balances(env.contract.address)?;
+    let denom_len = msg.denoms.len();
+    let denoms = BTreeSet::<String>::from_iter(msg.denoms); // Ensure uniqueness
+    if denoms.len() != denom_len {
+        return Err(StdError::generic_err("Denoms not unique"));
+    }
+
+    // get balance and send to recipient
+    let mut balances = Vec::<Coin>::with_capacity(denoms.len());
+    for denom in denoms {
+        let balance = deps.querier.query_balance(&env.contract.address, denom)?;
+        balances.push(balance);
+    }
+
     let send = BankMsg::Send {
         to_address: msg.payout.clone(),
-        amount: balance,
+        amount: balances,
     };
 
     let deleted = cleanup(deps.storage, msg.delete as usize);
@@ -86,7 +98,7 @@ mod tests {
     use cosmwasm_std::testing::{
         message_info, mock_dependencies, mock_dependencies_with_balance, mock_env,
     };
-    use cosmwasm_std::{coins, Attribute, StdError, Storage, SubMsg};
+    use cosmwasm_std::{coin, coins, Attribute, StdError, Storage, SubMsg};
 
     /// Gets the value of the first attribute with the given key
     fn first_attr(data: impl AsRef<[Attribute]>, search_key: &str) -> Option<String> {
@@ -118,24 +130,64 @@ mod tests {
     }
 
     #[test]
-    fn migrate_sends_funds() {
-        let mut deps = mock_dependencies_with_balance(&coins(123456, "gold"));
-
-        // change the verifier via migrate
+    fn migrate_sends_one_balance() {
+        let initial_balance = vec![coin(123456, "gold"), coin(77, "silver")];
+        let mut deps = mock_dependencies_with_balance(&initial_balance);
         let payout = String::from("someone else");
+
+        // malformed denoms
         let msg = MigrateMsg {
             payout: payout.clone(),
+            denoms: vec!["gold".to_string(), "silver".to_string(), "gold".to_string()],
+            delete: 0,
+        };
+        let err = migrate(deps.as_mut(), mock_env(), msg).unwrap_err();
+        match err {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Denoms not unique"),
+            err => panic!("Unexpected error: {err:?}"),
+        }
+
+        // One denom
+        let msg = MigrateMsg {
+            payout: payout.clone(),
+            denoms: vec!["gold".to_string()],
             delete: 0,
         };
         let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         // check payout
-        assert_eq!(1, res.messages.len());
+        assert_eq!(res.messages.len(), 1);
         let msg = res.messages.first().expect("no message");
         assert_eq!(
             msg,
             &SubMsg::new(BankMsg::Send {
                 to_address: payout,
                 amount: coins(123456, "gold"),
+            })
+        );
+    }
+
+    // as above but this time we want all gold and silver
+    #[test]
+    fn migrate_sends_two_balances() {
+        let initial_balance = vec![coin(123456, "gold"), coin(77, "silver")];
+        let mut deps = mock_dependencies_with_balance(&initial_balance);
+
+        // change the verifier via migrate
+        let payout = String::from("someone else");
+        let msg = MigrateMsg {
+            payout: payout.clone(),
+            denoms: vec!["silver".to_string(), "gold".to_string()],
+            delete: 0,
+        };
+        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
+        // check payout
+        assert_eq!(res.messages.len(), 1);
+        let msg = res.messages.first().expect("no message");
+        assert_eq!(
+            msg,
+            &SubMsg::new(BankMsg::Send {
+                to_address: payout,
+                amount: vec![coin(123456, "gold"), coin(77, "silver")],
             })
         );
     }
@@ -154,6 +206,7 @@ mod tests {
         // migrate all of the data in one go
         let msg = MigrateMsg {
             payout: "user".to_string(),
+            denoms: vec![],
             delete: 100,
         };
         migrate(deps.as_mut(), mock_env(), msg).unwrap();
@@ -178,7 +231,11 @@ mod tests {
 
         // change the verifier via migrate
         let payout = String::from("someone else");
-        let msg = MigrateMsg { payout, delete: 0 };
+        let msg = MigrateMsg {
+            payout,
+            denoms: vec![],
+            delete: 0,
+        };
         let _res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
 
         let res = execute(

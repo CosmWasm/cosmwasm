@@ -27,14 +27,12 @@ use crate::ibc::{
 use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2Payload};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+use crate::query::{BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
@@ -829,14 +827,6 @@ impl BankQuerier {
                         amount,
                         denom: denom.to_string(),
                     },
-                };
-                to_json_binary(&bank_res).into()
-            }
-            #[allow(deprecated)]
-            BankQuery::AllBalances { address } => {
-                // proper error on not found, serialize result on found
-                let bank_res = AllBalanceResponse {
-                    amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 to_json_binary(&bank_res).into()
             }
@@ -1863,21 +1853,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(deprecated)]
-    fn bank_querier_all_balances() {
-        let addr = String::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let bank = BankQuerier::new(&[(&addr, &balance)]);
-
-        let all = bank
-            .query(&BankQuery::AllBalances { address: addr })
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(&res.amount, &balance);
-    }
-
-    #[test]
     fn bank_querier_one_balance() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -1912,16 +1887,6 @@ mod tests {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let bank = BankQuerier::new(&[(&addr, &balance)]);
-
-        // all balances on empty account is empty vec
-        let all = bank
-            .query(&BankQuery::AllBalances {
-                address: String::from("elsewhere"),
-            })
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
         let miss = bank

@@ -328,7 +328,6 @@ fn check_wasm_functions(module: &ParsedWasm, limits: &WasmLimits, logs: Logger) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::capabilities_from_csv;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
@@ -339,7 +338,19 @@ mod tests {
     static CYBERPUNK_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
-        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking,stargate")
+        HashSet::from([
+            "cosmwasm_1_1".to_string(),
+            "cosmwasm_1_2".to_string(),
+            "cosmwasm_1_3".to_string(),
+            "cosmwasm_1_4".to_string(),
+            "cosmwasm_1_4".to_string(),
+            "cosmwasm_2_0".to_string(),
+            "cosmwasm_2_1".to_string(),
+            "cosmwasm_2_2".to_string(),
+            "iterator".to_string(),
+            "staking".to_string(),
+            "stargate".to_string(),
+        ])
     }
 
     #[test]

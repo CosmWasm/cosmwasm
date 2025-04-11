@@ -541,15 +541,14 @@ mod tests {
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         mock_instance_with_options, MockInstanceOptions,
     };
-    use cosmwasm_std::{
-        coin, coins, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty, QueryRequest,
-    };
+    use cosmwasm_std::{coin, coins, from_json, BalanceResponse, BankQuery, Empty, QueryRequest};
     use wasmer::FunctionEnvMut;
 
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM_1_3: &[u8] = include_bytes!("../testdata/hackatom_1.3.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
     #[test]
@@ -602,8 +601,14 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let instance =
-            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
+            Instance::from_code(HACKATOM_1_3, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_capabilities().len(), 0);
+
+        let backend = mock_backend(&[]);
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance =
+            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
+        assert_eq!(instance.required_capabilities().len(), 7);
     }
 
     #[test]
@@ -914,7 +919,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 24140405);
+        assert_eq!(report2.used_internally, 17646125);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -1005,31 +1010,6 @@ mod tests {
                 Ok(())
             })
             .unwrap();
-
-        // query all
-        instance
-            .with_querier(|querier| {
-                let response = querier
-                    .query::<Empty>(
-                        &QueryRequest::Bank(BankQuery::AllBalances {
-                            address: rich_addr.clone(),
-                        }),
-                        DEFAULT_QUERY_GAS_LIMIT,
-                    )
-                    .0
-                    .unwrap()
-                    .unwrap()
-                    .unwrap();
-                let AllBalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.len(), 2);
-                assert_eq!(amount[0].amount.u128(), 10000);
-                assert_eq!(amount[0].denom, "gold");
-                assert_eq!(amount[1].amount.u128(), 8000);
-                assert_eq!(amount[1].denom, "silver");
-
-                Ok(())
-            })
-            .unwrap();
     }
 
     /// This is needed for writing integration tests in which the balance of a contract changes over time.
@@ -1106,7 +1086,7 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 24140656);
+        assert_eq!(init_used, 17646376);
     }
 
     #[test]
@@ -1125,13 +1105,13 @@ mod tests {
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_execute = instance.get_gas_left();
         let info = mock_info(&verifier, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 29167931);
+        assert_eq!(execute_used, 24409471);
     }
 
     #[test]
@@ -1174,6 +1154,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 17327451);
+        assert_eq!(query_used, 10789586);
     }
 }
