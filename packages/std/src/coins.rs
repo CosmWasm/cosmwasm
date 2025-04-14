@@ -2,7 +2,7 @@ use alloc::collections::BTreeMap;
 use core::fmt;
 use core::str::FromStr;
 
-use crate::prelude::*;
+use crate::{prelude::*, Uint256};
 use crate::{Coin, CoinsError, OverflowError, OverflowOperation, StdError, StdResult, Uint128};
 
 /// A collection of coins, similar to Cosmos SDK's `sdk.Coins` struct.
@@ -133,11 +133,11 @@ impl Coins {
     }
 
     /// Returns the amount of the given denom or zero if the denom is not present.
-    pub fn amount_of(&self, denom: &str) -> Uint128 {
+    pub fn amount_of(&self, denom: &str) -> Uint256 {
         self.0
             .get(denom)
             .map(|c| c.amount)
-            .unwrap_or_else(Uint128::zero)
+            .unwrap_or_else(Uint256::zero)
     }
 
     /// Returns the amount of the given denom if and only if this collection contains only
@@ -159,7 +159,7 @@ impl Coins {
     /// let coins: Coins = [coin(100, "uatom"), coin(200, "uusd")].try_into().unwrap();
     /// assert_eq!(coins.contains_only("uatom"), None);
     /// ```
-    pub fn contains_only(&self, denom: &str) -> Option<Uint128> {
+    pub fn contains_only(&self, denom: &str) -> Option<Uint256> {
         if self.len() == 1 {
             self.0.get(denom).map(|c| c.amount)
         } else {
@@ -398,14 +398,14 @@ mod tests {
     fn handling_zero_amount() {
         // create a Vec<Coin> that contains zero amounts
         let mut vec = mock_vec();
-        vec[0].amount = Uint128::zero();
+        vec[0].amount = Uint256::zero();
 
         let coins = Coins::try_from(vec).unwrap();
         assert_eq!(coins.len(), 2);
-        assert_ne!(coins.amount_of("ibc/1234ABCD"), Uint128::zero());
+        assert_ne!(coins.amount_of("ibc/1234ABCD"), Uint256::zero());
         assert_ne!(
             coins.amount_of("factory/osmo1234abcd/subdenom"),
-            Uint128::zero()
+            Uint256::zero()
         );
 
         // adding a coin with zero amount should not be added
@@ -432,7 +432,7 @@ mod tests {
         // existing denom
         coins.add(coin(12345, "uatom")).unwrap();
         assert_eq!(coins.len(), 3);
-        assert_eq!(coins.amount_of("uatom").u128(), 24690);
+        assert_eq!(coins.amount_of("uatom"), Uint256::new(24690));
 
         // new denom
         coins.add(coin(123, "uusd")).unwrap();
@@ -440,7 +440,7 @@ mod tests {
 
         // zero amount
         coins.add(coin(0, "uusd")).unwrap();
-        assert_eq!(coins.amount_of("uusd").u128(), 123);
+        assert_eq!(coins.amount_of("uusd"), Uint256::new(123));
 
         // zero amount, new denom
         coins.add(coin(0, "utest")).unwrap();
@@ -462,7 +462,7 @@ mod tests {
         // partial sub
         coins.sub(coin(1, "uatom")).unwrap();
         assert_eq!(coins.len(), 1);
-        assert_eq!(coins.amount_of("uatom").u128(), 12344);
+        assert_eq!(coins.amount_of("uatom"), Uint256::new(12344));
 
         // full sub
         coins.sub(coin(12344, "uatom")).unwrap();
@@ -476,7 +476,7 @@ mod tests {
         // sub zero, non-existent denom
         coins.sub(coin(0, "uatom")).unwrap();
         assert_eq!(coins.len(), 1);
-        assert_eq!(coins.amount_of("uatom").u128(), 12345);
+        assert_eq!(coins.amount_of("uatom"), Uint256::new(12345));
     }
 
     #[test]
@@ -488,7 +488,7 @@ mod tests {
         // happy path
         let coins = Coins::from(coin(12345, "uatom"));
         assert_eq!(coins.len(), 1);
-        assert_eq!(coins.amount_of("uatom").u128(), 12345);
+        assert_eq!(coins.amount_of("uatom"), Uint256::new(12345));
     }
 
     #[test]
@@ -524,6 +524,6 @@ mod tests {
             .eq(coins.to_vec().iter().map(|c| &c.denom)));
 
         // can still use the coins afterwards
-        assert_eq!(coins.amount_of("uatom").u128(), 12345);
+        assert_eq!(coins.amount_of("uatom"), Uint256::new(12345));
     }
 }
