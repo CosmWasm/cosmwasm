@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2Msg,
     Ibc2PacketReceiveMsg, Ibc2Payload, IbcAcknowledgement, IbcReceiveResponse, MessageInfo,
-    QueryResponse, Response, StdAck, StdError, StdResult, Timestamp,
+    QueryResponse, Response, StdAck, StdError, StdResult,
 };
 
 use crate::msg::{IbcPayload, QueryMsg};
@@ -42,7 +42,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 #[entry_point]
 pub fn ibc2_packet_receive(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     msg: Ibc2PacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
     let binary_payload = &msg.payload.value;
@@ -62,8 +62,6 @@ pub fn ibc2_packet_receive(
             last_packet_seq: msg.packet_sequence,
         })?,
     );
-    // Workaround for now.
-    let ts = Timestamp::from_nanos(1_577_933_900);
     let new_payload = Ibc2Payload::new(
         msg.payload.destination_port,
         msg.payload.source_port,
@@ -74,9 +72,7 @@ pub fn ibc2_packet_receive(
     let new_msg = Ibc2Msg::SendPacket {
         channel_id: msg.source_client,
         payloads: vec![new_payload],
-        timeout: ts,
-        // This causes "timeout exceeds the maximum expected value" error returned from the ibc-go.
-        // timeout: _env.block.time.plus_seconds(5_u64),
+        timeout: env.block.time.plus_seconds(60_u64),
     };
 
     let resp = if json_payload.response_without_ack {
