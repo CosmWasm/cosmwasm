@@ -47,7 +47,7 @@ impl Ibc2Payload {
 pub enum Ibc2Msg {
     /// Sends an Ibc2 packet with given payloads over the existing channel.
     SendPacket {
-        channel_id: String,
+        source_client: String,
         timeout: Timestamp,
         payloads: Vec<Ibc2Payload>,
     },
@@ -55,7 +55,7 @@ pub enum Ibc2Msg {
     /// This allows acknowledging a packet that was not acknowledged yet in the `ibc2_packet_receive` call.
     WriteAcknowledgement {
         /// Existing channel where the packet was received
-        channel_id: String,
+        source_client: String,
         /// Sequence number of the packet that was received
         packet_sequence: u64,
         /// The acknowledgement to send back
