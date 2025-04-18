@@ -91,7 +91,7 @@ pub enum CosmosMsg<T = Empty> {
 }
 
 impl<T> CosmosMsg<T> {
-    /// Convert this this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
+    /// Convert this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
     /// This allows easier interactions between code written for a specific chain and
     /// code written for multiple chains.
     /// If this is the [`CosmosMsg::Custom`] variant, the function returns `None`.
