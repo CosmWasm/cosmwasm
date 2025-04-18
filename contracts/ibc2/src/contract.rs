@@ -18,7 +18,7 @@ pub fn instantiate(
         STATE_KEY,
         &to_json_vec(&State {
             ibc2_packet_receive_counter: 0,
-            last_channel_id: "".to_owned(),
+            last_source_client: "".to_owned(),
             last_packet_seq: 0,
         })?,
     );
@@ -58,7 +58,7 @@ pub fn ibc2_packet_receive(
         STATE_KEY,
         &to_json_vec(&State {
             ibc2_packet_receive_counter: state.ibc2_packet_receive_counter + 1,
-            last_channel_id: msg.source_client.clone(),
+            last_source_client: msg.source_client.clone(),
             last_packet_seq: msg.packet_sequence,
         })?,
     );
@@ -70,7 +70,7 @@ pub fn ibc2_packet_receive(
         msg.payload.value,
     );
     let new_msg = Ibc2Msg::SendPacket {
-        channel_id: msg.source_client,
+        source_client: msg.source_client,
         payloads: vec![new_payload],
         timeout: env.block.time.plus_seconds(60_u64),
     };
@@ -86,7 +86,7 @@ pub fn ibc2_packet_receive(
     if json_payload.send_async_ack_for_prev_msg {
         Ok(
             resp.add_message(cosmwasm_std::Ibc2Msg::WriteAcknowledgement {
-                channel_id: state.last_channel_id,
+                source_client: state.last_source_client,
                 packet_sequence: state.last_packet_seq,
                 ack: IbcAcknowledgement::new([1, 2, 3]),
             }),
