@@ -1,7 +1,7 @@
 use wasmer::wasmparser::Operator;
 use wasmer::{
-    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware,
+    sys::{FunctionMiddleware, MiddlewareError, MiddlewareReaderState, ModuleMiddleware},
+    LocalFunctionIndex,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -112,7 +112,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
         }
         /// Matches on the given operator and calls the corresponding handler function.
         macro_rules! gatekeep {
-            ($( @$proposal:ident $op:ident $({ $($payload:tt)* })? => $visit:ident)*) => {{
+            ($( @$proposal:ident $op:ident $({ $($payload:tt)* })? => $visit:ident ($($ann:tt)*))*) => {{
                 use wasmer::wasmparser::Operator::*;
 
                 let mut proposal_validator = ProposalValidator {
@@ -126,7 +126,8 @@ impl FunctionMiddleware for FunctionGatekeeper {
                         match_op!($op $({ $($payload)* })?) => {
                             proposal_validator.$proposal(operator)
                         }
-                    )*
+                    )*,
+                    _ => unreachable!(), // required because `Operator` enum is non-exhaustive
                 }
             }}
         }
@@ -366,6 +367,22 @@ impl<'a, 'b> ProposalValidator<'a, 'b> {
         );
         Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
     }
+
+    #[inline]
+    fn stack_switching(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        let msg = format!(
+            "Stack switching operation detected: {operator:?}. Stack switching is not supported."
+        );
+        Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+    }
+
+    #[inline]
+    fn wide_arithmetic(&'b mut self, operator: Operator<'a>) -> Result<(), MiddlewareError> {
+        let msg = format!(
+            "Stack switching operation detected: {operator:?}. Stack switching is not supported."
+        );
+        Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
+    }
 }
 
 #[cfg(test)]
@@ -373,7 +390,7 @@ mod tests {
     use super::*;
     use crate::wasm_backend::make_compiler_config;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Module, Store};
+    use wasmer::{sys::CompilerConfig, Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {
