@@ -24,7 +24,7 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 #[cfg(feature = "ibc2")]
-use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2Payload};
+use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 use crate::query::{
@@ -529,6 +529,27 @@ pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<Ibc2PacketRecei
         Addr::unchecked("relayer"),
         "channel_id23".to_string(),
         42,
+    ))
+}
+
+/// Creates a Ibc2PacketTimeoutMsg for testing ibc2_packet_timeout. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields.
+/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_timeout(data: &impl Serialize) -> StdResult<Ibc2PacketTimeoutMsg> {
+    let payload = Ibc2Payload {
+        source_port: "wasm2srcport".to_string(),
+        destination_port: "wasm2destport".to_string(),
+        version: "v2".to_string(),
+        encoding: "json".to_string(),
+        value: to_json_binary(data)?,
+    };
+    Ok(Ibc2PacketTimeoutMsg::new(
+        payload,
+        "source_client".to_string(),
+        "destination_client".to_string(),
+        1,
+        Addr::unchecked("relayer"),
     ))
 }
 
