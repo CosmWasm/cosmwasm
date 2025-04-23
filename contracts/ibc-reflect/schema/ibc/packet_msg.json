@@ -42,11 +42,19 @@
     {
       "type": "object",
       "required": [
-        "balances"
+        "balance"
       ],
       "properties": {
-        "balances": {
+        "balance": {
           "type": "object",
+          "required": [
+            "denom"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            }
+          },
           "additionalProperties": false
         }
       },

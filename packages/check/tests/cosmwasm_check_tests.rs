@@ -86,7 +86,7 @@ fn custom_capabilities_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("cosmwasm-check")?;
 
     cmd.arg("--available-capabilities")
-        .arg("iterator,osmosis,friendship")
+        .arg("iterator,osmosis,friendship,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2")
         .arg("../vm/testdata/hackatom.wasm");
     cmd.assert()
         .success()
