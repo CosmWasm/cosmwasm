@@ -31,7 +31,7 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
-const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_1_5,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2,iterator,staking";
+const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2,iterator,staking";
 static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
