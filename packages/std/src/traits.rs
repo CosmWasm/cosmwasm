@@ -1,6 +1,6 @@
+use core::any::Any;
 use core::marker::PhantomData;
 use core::ops::Deref;
-use downcast_rs::{impl_downcast, Downcast};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::coin::Coin;
@@ -129,7 +129,7 @@ pub trait Storage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api: Downcast {
+pub trait Api: Any {
     /// Takes a human readable address and validates if it is valid.
     /// If it the validation succeeds, a `Addr` containing the same data as the input is returned.
     ///
@@ -328,7 +328,34 @@ pub trait Api: Downcast {
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);
 }
-impl_downcast!(Api);
+
+#[rustversion::since(1.86)]
+impl dyn Api {
+    /// Casts the Api trait object to the underlying [`MockApi`] type.
+    /// Returns `None` if the underlying type is not a [`MockApi`].
+    /// This function is only available since Rust 1.86.0.
+    ///
+    /// This is useful in places where you only have access to `Deps` or `DepsMut` during testing,
+    /// but need to use features from the [`MockApi`]:
+    ///
+    /// ```rust
+    /// use cosmwasm_std::{testing::mock_dependencies, Addr, Deps, Api};
+    ///
+    /// fn admin_address(deps: Deps) -> Addr {
+    ///    let mock_api = deps.api.cast_to_mockapi().unwrap();
+    ///    mock_api.addr_make("admin")
+    /// }
+    ///
+    /// let mut deps = mock_dependencies();
+    /// let addr = admin_address(deps.as_ref());
+    /// assert_eq!(deps.api.addr_validate(addr.as_str()).unwrap(), addr);
+    /// ```
+    ///
+    /// [`MockApi`]: crate::testing::MockApi
+    pub fn cast_to_mockapi(&self) -> Option<&crate::testing::MockApi> {
+        (self as &dyn Any).downcast_ref()
+    }
+}
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
 pub type QuerierResult = SystemResult<ContractResult<Binary>>;
