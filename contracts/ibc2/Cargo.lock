@@ -281,7 +281,6 @@ dependencies = [
  "hex",
  "rand_core",
  "rmp-serde",
- "rustversion",
  "schemars",
  "serde",
  "serde_json",
@@ -831,12 +830,6 @@ checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
 dependencies = [
  "semver",
 ]
-
-[[package]]
-name = "rustversion"
-version = "1.0.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eded382c5f5f786b989652c49544c4877d9f015cc22e145a5ea8ea66c2921cd2"
 
 [[package]]
 name = "ryu"

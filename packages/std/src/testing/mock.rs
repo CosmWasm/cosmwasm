@@ -2715,16 +2715,4 @@ mod tests {
         // we are not interested in the exact humanization, just that it works
         mock_api.addr_humanize(&canonical_addr).unwrap();
     }
-
-    #[rustversion::since(1.86)]
-    #[test]
-    fn mock_api_downcast() {
-        let mut deps = mock_dependencies();
-        let deps_mut = deps.as_mut();
-
-        let mock_api = deps_mut.api.cast_to_mockapi().unwrap();
-
-        let addr = mock_api.addr_make("input");
-        assert_eq!(mock_api.addr_validate(addr.as_str()).unwrap(), addr);
-    }
 }

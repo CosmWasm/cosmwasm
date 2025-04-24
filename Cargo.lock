@@ -787,7 +787,6 @@ dependencies = [
  "proptest",
  "rand_core",
  "rmp-serde",
- "rustversion",
  "schemars",
  "serde",
  "serde_json",
