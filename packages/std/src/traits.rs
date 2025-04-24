@@ -1,6 +1,6 @@
+use core::any::Any;
 use core::marker::PhantomData;
 use core::ops::Deref;
-use downcast_rs::{impl_downcast, Downcast};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::coin::Coin;
@@ -129,7 +129,7 @@ pub trait Storage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api: Downcast {
+pub trait Api: Any {
     /// Takes a human readable address and validates if it is valid.
     /// If it the validation succeeds, a `Addr` containing the same data as the input is returned.
     ///
@@ -328,7 +328,6 @@ pub trait Api: Downcast {
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);
 }
-impl_downcast!(Api);
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
 pub type QuerierResult = SystemResult<ContractResult<Binary>>;
