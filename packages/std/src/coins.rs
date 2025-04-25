@@ -146,10 +146,10 @@ impl Coins {
     /// # Examples
     ///
     /// ```rust
-    /// use cosmwasm_std::{Coin, Coins, coin};
+    /// use cosmwasm_std::{Coin, Coins, coin, Uint256};
     ///
     /// let coins: Coins = [coin(100, "uatom")].try_into().unwrap();
-    /// assert_eq!(coins.contains_only("uatom").unwrap().u128(), 100);
+    /// assert_eq!(coins.contains_only("uatom").unwrap(), Uint256::new(100));
     /// assert_eq!(coins.contains_only("uluna"), None);
     /// ```
     ///
@@ -214,7 +214,7 @@ impl Coins {
     /// # Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{coin, Coin, Coins, Uint128};
+    /// # use cosmwasm_std::{coin, Coin, Coins, Uint256};
     /// let mut coins = Coins::default();
     /// coins.add(coin(500, "uluna")).unwrap();
     /// coins.add(coin(1000, "uatom")).unwrap();
