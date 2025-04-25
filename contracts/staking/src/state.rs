@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use cosmwasm_std::{
     from_json,
     storage_keys::{namespace_with_key, to_length_prefixed},
-    to_json_vec, Addr, CanonicalAddr, Decimal, StdError, StdResult, Storage, Uint128,
+    to_json_vec, Addr, CanonicalAddr, Decimal, StdError, StdResult, Storage, Uint128, Uint256,
 };
 
 pub const KEY_INVESTMENT: &[u8] = b"invest";
@@ -16,11 +16,11 @@ pub const KEY_TOTAL_SUPPLY: &[u8] = b"total_supply";
 pub const PREFIX_BALANCE: &[u8] = b"balance";
 pub const PREFIX_CLAIMS: &[u8] = b"claim";
 
-pub fn may_load_map(
+pub fn may_load_map<T: DeserializeOwned>(
     storage: &dyn Storage,
     prefix: &[u8],
     key: &CanonicalAddr,
-) -> StdResult<Option<Uint128>> {
+) -> StdResult<Option<T>> {
     storage
         .get(&namespace_with_key(&[prefix], key))
         .map(from_json)
@@ -31,13 +31,17 @@ pub fn save_map(
     storage: &mut dyn Storage,
     prefix: &[u8],
     key: &CanonicalAddr,
-    value: Uint128,
+    value: impl Serialize,
 ) -> StdResult<()> {
     storage.set(&namespace_with_key(&[prefix], key), &to_json_vec(&value)?);
     Ok(())
 }
 
-pub fn load_map(storage: &dyn Storage, prefix: &[u8], key: &CanonicalAddr) -> StdResult<Uint128> {
+pub fn load_map<T: DeserializeOwned>(
+    storage: &dyn Storage,
+    prefix: &[u8],
+    key: &CanonicalAddr,
+) -> StdResult<T> {
     may_load_map(storage, prefix, key)?
         .ok_or_else(|| StdError::not_found(format!("map value for {key}")))
 }
@@ -76,9 +80,9 @@ pub struct Supply {
     /// issued is how many derivative tokens this contract has issued
     pub issued: Uint128,
     /// bonded is how many native tokens exist bonded to the validator
-    pub bonded: Uint128,
+    pub bonded: Uint256,
     /// claims is how many tokens need to be reserved paying back those who unbonded
-    pub claims: Uint128,
+    pub claims: Uint256,
 }
 
 pub fn load_item<T: DeserializeOwned>(storage: &dyn Storage, key: &[u8]) -> StdResult<T> {
