@@ -555,7 +555,7 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
-/// do_ibc_packet_timeout is designed for use with #[entry_point] to make a "C" extern
+/// do_ibc2_packet_timeout is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is called when a packet that this contract previously sent has provably
 /// timedout and will never be relayed to the calling chain. This generally behaves
