@@ -58,14 +58,14 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 serde = { workspace = true }
 serde_json = "1.0.140"
 sha2 = "0.10.3"
-thiserror = "1.0.26"
+thiserror = "2.0.12"
 # We pin wasmer to a specific version because the layout of cached modules can change between patch versions.
-wasmer = { version = "=6.0.0-beta.1", default-features = false, features = [
+wasmer = { version = "=6.0.0", default-features = false, features = [
     "singlepass",
 ] }
-wasmer-middlewares = "=6.0.0-beta.1"
-wasmer-types = "=6.0.0-beta.1"
-strum = { version = "0.26.2", default-features = false, features = ["derive"] }
+wasmer-middlewares = "=6.0.0"
+wasmer-types = "=6.0.0"
+strum = { version = "0.27.1", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.
 dhat = { version = "0.3.3", optional = true }
@@ -83,14 +83,14 @@ tracing = "0.1.32"
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
 glob = "0.3.1"
-hex-literal = "0.4.1"
-rand = "0.8"
+hex-literal = "1.0.0"
+rand = "0.9.1"
 tempfile = "3.1.0"
 wat = "1.0"
-wasm-encoder = "0.205.0"
+wasm-encoder = "0.229.0"
 clap = "4"
 leb128 = "0.2"
-target-lexicon = "0.12"
+target-lexicon = "0.13.2"
 time = { version = "0.3.28", features = ["formatting"] }
 
 [[bench]]
