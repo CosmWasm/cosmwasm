@@ -103,6 +103,15 @@ pub fn check_wasm(
 ) -> VmResult<()> {
     logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
 
+    // Check module size limit before parsing
+    if wasm_code.len() > limits.module_size_limit() {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm module size ({} bytes) exceeds limit ({} bytes)",
+            wasm_code.len(),
+            limits.module_size_limit()
+        )));
+    }
+
     let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module, limits)?;
@@ -175,10 +184,7 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
         } else {
             // Exactly one interface version found
             let version_str = first_interface_version_export.as_str();
-            if SUPPORTED_INTERFACE_VERSIONS
-                .iter()
-                .any(|&v| v == version_str)
-            {
+            if SUPPORTED_INTERFACE_VERSIONS.contains(&version_str) {
                 Ok(())
             } else {
                 Err(VmError::static_validation_err(

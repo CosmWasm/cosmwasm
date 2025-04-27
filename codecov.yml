@@ -16,9 +16,9 @@ flags:
   cosmwasm-check:
     paths:
       - packages/check/
-  cosmwasm-core:
-    paths:
-      - packages/core/
+  #cosmwasm-core:
+  #  paths:
+  #    - packages/core/
   cosmwasm-crypto:
     paths:
       - packages/crypto/

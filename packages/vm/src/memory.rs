@@ -167,7 +167,7 @@ fn get_region(memory: &wasmer::MemoryView, offset: u32) -> CommunicationResult<R
 
 /// Performs plausibility checks in the given Region. Regions are always created by the
 /// contract and this can be used to detect problems in the standard library of the contract.
-fn validate_region(region: &Region) -> RegionValidationResult<()> {
+pub(crate) fn validate_region(region: &Region) -> RegionValidationResult<()> {
     if region.offset == 0 {
         return Err(RegionValidationError::zero_offset());
     }
@@ -177,12 +177,22 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
             region.capacity,
         ));
     }
-    if region.capacity > (u32::MAX - region.offset) {
-        return Err(RegionValidationError::out_of_range(
-            region.offset,
-            region.capacity,
-        ));
-    }
+
+    // Prevent integer overflow when calculating the end address of the region
+    // Use checked_add to explicitly handle overflow
+    match region.offset.checked_add(region.capacity) {
+        Some(_) => {} // Valid range
+        None => {
+            return Err(RegionValidationError::out_of_range(
+                region.offset,
+                region.capacity,
+            ))
+        }
+    };
+
+    // Remove redundant check since end_offset is a u32 and can't exceed u32::MAX
+    // This was flagged by Clippy
+
     Ok(())
 }
 
@@ -195,6 +205,12 @@ fn set_region(memory: &wasmer::MemoryView, offset: u32, data: Region) -> Communi
             CommunicationError::deref_err(offset, "Could not dereference this pointer to a Region")
         })?;
     Ok(())
+}
+
+// Add a public function for testing
+#[cfg(test)]
+pub fn test_validate_region(region: &Region) -> RegionValidationResult<()> {
+    validate_region(region)
 }
 
 #[cfg(test)]

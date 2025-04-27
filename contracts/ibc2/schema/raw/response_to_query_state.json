@@ -3,12 +3,22 @@
   "title": "State",
   "type": "object",
   "required": [
-    "ibc2_packet_receive_counter"
+    "ibc2_packet_receive_counter",
+    "last_channel_id",
+    "last_packet_seq"
   ],
   "properties": {
     "ibc2_packet_receive_counter": {
       "type": "integer",
       "format": "uint32",
+      "minimum": 0.0
+    },
+    "last_channel_id": {
+      "type": "string"
+    },
+    "last_packet_seq": {
+      "type": "integer",
+      "format": "uint64",
       "minimum": 0.0
     }
   },
