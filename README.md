@@ -64,7 +64,7 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 **Building contracts:**
 
 - [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A
-  starter-pack to get you quickly building your custom contract compatible with
+  starter pack to get you quickly building your custom contract compatible with
   the cosmwasm system.
 - [cosmwasm-plus](https://github.com/CosmWasm/cosmwasm-plus) - Some sample
   contracts for use and inspiration. These provide usable primitives and
