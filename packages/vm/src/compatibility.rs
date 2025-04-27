@@ -103,6 +103,15 @@ pub fn check_wasm(
 ) -> VmResult<()> {
     logs.add(|| format!("Size of Wasm blob: {}", wasm_code.len()));
 
+    // Check module size limit before parsing
+    if wasm_code.len() > limits.module_size_limit() {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm module size ({} bytes) exceeds limit ({} bytes)",
+            wasm_code.len(),
+            limits.module_size_limit()
+        )));
+    }
+
     let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module, limits)?;

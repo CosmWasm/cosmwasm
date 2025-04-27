@@ -130,6 +130,15 @@ impl Default for GasConfig {
 
 impl GasConfig {
     pub fn read_region_cost(&self, bytes: usize) -> VmResult<u64> {
+        // Add a hard cap on the maximum size we'll process to prevent overflow and DoS attacks
+        const MAX_ALLOWED_BYTES: usize = 512 * 1024 * 1024; // 512 MiB
+        if bytes > MAX_ALLOWED_BYTES {
+            return Err(VmError::generic_err(format!(
+                "Cannot read region larger than {} bytes. Got {} bytes.",
+                MAX_ALLOWED_BYTES, bytes
+            )));
+        }
+
         const THRESHOLD: usize = 8 * 1000 * 1000;
         if bytes <= THRESHOLD {
             self.read_region_small_cost.total_cost(bytes as u64)
@@ -159,7 +168,17 @@ impl LinearGasCost {
     }
 
     fn total_cost_opt(&self, items: u64) -> Option<u64> {
-        self.base.checked_add(self.per_item.checked_mul(items)?)
+        // First check if items is unreasonably large (> u32::MAX)
+        // This is a simple defense against excessive resource usage
+        if items > u32::MAX as u64 {
+            return None;
+        }
+
+        // Calculate the item cost with overflow protection
+        let item_cost = self.per_item.checked_mul(items)?;
+
+        // Calculate the total with overflow protection
+        self.base.checked_add(item_cost)
     }
 }
 
