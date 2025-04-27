@@ -133,7 +133,7 @@ mod tests {
             .exports
             .iter()
             .filter(|entry| matches!(entry.kind, ExternalKind::Func));
-        assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
+        assert_eq!(exported_functions.count(), 15);
 
         let exported_memories = module
             .exports

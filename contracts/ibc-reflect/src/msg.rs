@@ -57,7 +57,7 @@ pub enum ReflectExecuteMsg {
 pub enum PacketMsg {
     Dispatch { msgs: Vec<CosmosMsg> },
     WhoAmI {},
-    Balances {},
+    Balance { denom: String },
     Panic {},
     ReturnErr { text: String },
     ReturnMsgs { msgs: Vec<CosmosMsg> },
@@ -108,9 +108,9 @@ pub struct WhoAmIResponse {
 /// This is the success response we send on ack for PacketMsg::Balance.
 /// Just acknowledge success or error
 #[cw_serde]
-pub struct BalancesResponse {
+pub struct BalanceResponse {
     pub account: String,
-    pub balances: Vec<Coin>,
+    pub balance: Coin,
 }
 
 /// This is the success response we send on ack for PacketMsg::ReturnMsgs.

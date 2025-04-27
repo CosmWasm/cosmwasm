@@ -29,3 +29,7 @@ might define others.
   running CosmWasm `2.0.0` or higher support this.
 - `cosmwasm_2_1` enables `IbcMsg::WriteAcknowledgement`. Only chains running
   CosmWasm `2.1.0` or higher support this.
+- `cosmwasm_2_2` enables an optional additional `MigrateInfo` parameter for the
+  `migrate` entrypoint, as well as IBC Fees support with `IbcMsg::PayPacketFee`,
+  `IbcMsg::PayPacketFeeAsync` and `IbcQuery::FeeEnabledChannel`. Only chains
+  running CosmWasm `2.2.0` or higher support this.

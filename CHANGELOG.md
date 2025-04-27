@@ -15,10 +15,8 @@ and this project adheres to
   `From<Int128> for i128` ([#2268])
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
-- cosmwasm-std: Added new `Ibc2Msg` and `CosmosMsg::Ibc2` variant ([#2390],
-  [#2403])
-- cosmwasm-std: Implement downcasting for `Api` trait. This allows using
-  `MockApi::addr_make` from `DepsMut`. ([#2383])
+- cosmwasm-std: Added new `Ibc2Msg` and `CosmosMsg::Ibc2` variant ([#2340],
+  [#2390], [#2403])
 - cosmwasm-std: Added `ibc2_port` to `ContractInfoResponse`. ([#2390], [#2403])
 - cosmwasm-vm: Added `ibc2_packet_receive` entrypoint ([#2403])
 - cosmwasm-vm: Add IBC Callbacks entrypoints to the `Entrypoints` enum.
@@ -64,6 +62,8 @@ and this project adheres to
   ([#2195])
 - cosmwasm-std: Make `GovMsg` `#[non_exhaustive]` for consistency. ([#2347])
 - cosmwasm-crypto: Upgrade ark-\* dependencies to 0.5.0. ([#2432])
+- cosmwasm-std: Remove support for `BankQuery::AllBalances` and
+  `query_all_balances`. ([#2433])
 
 ## Fixed
 
@@ -89,13 +89,13 @@ and this project adheres to
 [#2367]: https://github.com/CosmWasm/cosmwasm/issues/2367
 [#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
 [#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
-[#2383]: https://github.com/CosmWasm/cosmwasm/issues/2383
 [#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
 [#2393]: https://github.com/CosmWasm/cosmwasm/issues/2393
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
 [#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
+[#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
 
 ## [2.2.0] - 2024-12-17

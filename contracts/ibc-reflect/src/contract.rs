@@ -1,14 +1,14 @@
 use cosmwasm_std::{
-    entry_point, from_json, to_json_binary, wasm_execute, BankMsg, Binary, CosmosMsg, Deps,
-    DepsMut, Empty, Env, Event, Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg,
-    IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
-    MessageInfo, Never, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
-    SubMsgResponse, SubMsgResult, WasmMsg,
+    entry_point, from_json, to_json_binary, wasm_execute, Binary, CosmosMsg, Deps, DepsMut, Empty,
+    Env, Event, Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse, IbcMsg, IbcOrder,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo,
+    Never, QueryResponse, Reply, Response, StdError, StdResult, SubMsg, SubMsgResponse,
+    SubMsgResult, WasmMsg,
 };
 
 use crate::msg::{
-    AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
+    AccountInfo, AccountResponse, AcknowledgementMsg, BalanceResponse, DispatchResponse,
     ExecuteMsg, InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
     ReturnMsgsResponse, WhoAmIResponse,
 };
@@ -206,42 +206,20 @@ pub fn ibc_channel_connect(
 }
 
 #[entry_point]
-/// On closed channel, we take all tokens from reflect contract to this contract.
-/// We also delete the channel entry from accounts.
+/// On closed channel, we delete the channel entry from accounts.
 pub fn ibc_channel_close(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     msg: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
     let channel = msg.channel();
     // get contract address and remove lookup
     let channel_id = channel.endpoint.channel_id.as_str();
-    let reflect_addr = load_account(deps.storage, channel_id)?;
     remove_account(deps.storage, channel_id);
 
-    // transfer current balance if any (steal the money)
-    #[allow(deprecated)]
-    let amount = deps.querier.query_all_balances(&reflect_addr)?;
-    let messages: Vec<SubMsg<Empty>> = if !amount.is_empty() {
-        let bank_msg = BankMsg::Send {
-            to_address: env.contract.address.into(),
-            amount,
-        };
-        let reflect_msg = ReflectExecuteMsg::ReflectMsg {
-            msgs: vec![bank_msg.into()],
-        };
-        let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-        vec![SubMsg::new(wasm_msg)]
-    } else {
-        vec![]
-    };
-    let steal_funds = !messages.is_empty();
-
     Ok(IbcBasicResponse::new()
-        .add_submessages(messages)
         .add_attribute("action", "ibc_close")
-        .add_attribute("channel_id", channel_id)
-        .add_attribute("steal_funds", steal_funds.to_string()))
+        .add_attribute("channel_id", channel_id))
 }
 
 /// this is a no-op just to test how this integrates with wasmd
@@ -274,7 +252,7 @@ pub fn ibc_packet_receive(
         match msg {
             PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
             PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
-            PacketMsg::Balances {} => receive_balances(deps, caller),
+            PacketMsg::Balance { denom } => receive_balance(deps, caller, denom),
             PacketMsg::Panic {} => execute_panic(),
             PacketMsg::ReturnErr { text } => execute_error(text),
             PacketMsg::ReturnMsgs { msgs } => execute_return_msgs(msgs),
@@ -301,18 +279,17 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     Ok(IbcReceiveResponse::new(acknowledgement).add_attribute("action", "receive_who_am_i"))
 }
 
-// processes PacketMsg::Balances variant
-fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
+// processes PacketMsg::Balance variant
+fn receive_balance(deps: DepsMut, caller: String, denom: String) -> StdResult<IbcReceiveResponse> {
     let account = load_account(deps.storage, &caller)?;
-    #[allow(deprecated)]
-    let balances = deps.querier.query_all_balances(&account)?;
-    let response = BalancesResponse {
+    let balance = deps.querier.query_balance(&account, denom)?;
+    let response = BalanceResponse {
         account: account.into(),
-        balances,
+        balance,
     };
     let acknowledgement = to_json_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
-    Ok(IbcReceiveResponse::new(acknowledgement).add_attribute("action", "receive_balances"))
+    Ok(IbcReceiveResponse::new(acknowledgement).add_attribute("action", "receive_balance"))
 }
 
 // processes PacketMsg::Dispatch variant
@@ -381,7 +358,6 @@ mod tests {
         message_info, mock_dependencies, mock_env, mock_ibc_channel_close_init,
         mock_ibc_channel_connect_ack, mock_ibc_channel_open_init, mock_ibc_channel_open_try,
         mock_ibc_packet_recv, mock_wasmd_attr, MockApi, MockQuerier, MockStorage,
-        MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{attr, coin, coins, from_json, BankMsg, OwnedDeps, WasmMsg};
 
@@ -638,7 +614,7 @@ mod tests {
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> =
             from_json(res.acknowledgement.unwrap()).unwrap();
-        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`, `panic`, `return_err`, `return_msgs`, `no_ack` at line 1 column 18");
+        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balance`, `panic`, `return_err`, `return_msgs`, `no_ack` at line 1 column 18");
     }
 
     #[test]
@@ -658,38 +634,11 @@ mod tests {
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
         let res: ListAccountsResponse = from_json(raw).unwrap();
         assert_eq!(1, res.accounts.len());
-        #[allow(deprecated)]
-        let balance = deps.as_ref().querier.query_all_balances(&account).unwrap();
-        assert_eq!(funds, balance);
 
         // close the channel
         let channel = mock_ibc_channel_close_init(channel_id, IbcOrder::Ordered, IBC_APP_VERSION);
         let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
-
-        // it pulls out all money from the reflect contract
-        assert_eq!(1, res.messages.len());
-        if let CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr, msg, ..
-        }) = &res.messages[0].msg
-        {
-            assert_eq!(contract_addr, account.as_str());
-            let reflect: ReflectExecuteMsg = from_json(msg).unwrap();
-            match reflect {
-                ReflectExecuteMsg::ReflectMsg { msgs } => {
-                    assert_eq!(1, msgs.len());
-                    assert_eq!(
-                        &msgs[0],
-                        &BankMsg::Send {
-                            to_address: MOCK_CONTRACT_ADDR.into(),
-                            amount: funds
-                        }
-                        .into()
-                    )
-                }
-            }
-        } else {
-            panic!("Unexpected message: {:?}", &res.messages[0]);
-        }
+        assert_eq!(res.messages.len(), 0);
 
         // and removes the account lookup
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();

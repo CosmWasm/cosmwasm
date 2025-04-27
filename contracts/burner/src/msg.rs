@@ -2,8 +2,12 @@ use cosmwasm_schema::cw_serde;
 
 #[cw_serde]
 pub struct MigrateMsg {
-    /// The address we send all remaining balance to
+    /// The address we send all remaining balance to. See denoms
+    /// below for the denoms to consider.
     pub payout: String,
+    /// The denoms of the final payout. Balances of tokens not listed here
+    /// will remain in the account untouched.
+    pub denoms: Vec<String>,
     /// Optional amount of items to delete in this call.
     /// If it is not provided, nothing will be deleted.
     /// You can delete further items in a subsequent execute call.

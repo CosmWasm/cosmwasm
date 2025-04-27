@@ -16,7 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - id: files
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
+        with:
+          files_ignore: |
+            contracts/**/schema/**
+            packages/crypto/**/*.json
+            packages/vm/**/*.wasm
       - name: Run spell-check
         uses: crate-ci/typos@master
         with:

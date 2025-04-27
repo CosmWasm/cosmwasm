@@ -575,7 +575,7 @@ mod tests {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, make_compiling_engine};
     use cosmwasm_std::{
-        coins, from_json, to_json_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
+        coin, coins, from_json, to_json_vec, BalanceResponse, BankQuery, Empty, QueryRequest,
     };
     use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
@@ -620,6 +620,11 @@ mod tests {
                 "addr_validate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "addr_canonicalize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "addr_humanize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "bls12_381_aggregate_g1" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "bls12_381_aggregate_g2" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "bls12_381_pairing_equality" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32, _d: u32| -> u32 { 0 }),
+                "bls12_381_hash_to_g1" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32, _d: u32| -> u32 { 0 }),
+                "bls12_381_hash_to_g2" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32, _d: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "secp256r1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
@@ -1013,8 +1018,9 @@ mod tests {
 
         let res = env
             .with_querier_from_context::<_, _>(|querier| {
-                let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
+                let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::Balance {
                     address: INIT_ADDR.to_string(),
+                    denom: INIT_DENOM.to_string(),
                 });
                 let (result, _gas_info) =
                     querier.query_raw(&to_json_vec(&req).unwrap(), DEFAULT_QUERY_GAS_LIMIT);
@@ -1023,9 +1029,9 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let balance: AllBalanceResponse = from_json(res).unwrap();
+        let balance: BalanceResponse = from_json(res).unwrap();
 
-        assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
+        assert_eq!(balance.amount, coin(INIT_AMOUNT, INIT_DENOM));
     }
 
     #[test]
