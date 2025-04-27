@@ -126,9 +126,12 @@ impl<'a> ParsedWasm<'a> {
                                     this.max_func_results =
                                         core::cmp::max(ft.results().len(), this.max_func_results);
                                 }
-                                CompositeInnerType::Array(_) | CompositeInnerType::Struct(_) => {
-                                    // ignoring these for now, as they are only available with the GC
-                                    // proposal and we explicitly disabled that above
+                                CompositeInnerType::Array(_)
+                                | CompositeInnerType::Struct(_)
+                                | CompositeInnerType::Cont(_) => {
+                                    // ignoring these for now, as they are only available with the
+                                    // GC / stack switching proposal and we explicitly disabled
+                                    // that above
                                 }
                             }
                         }

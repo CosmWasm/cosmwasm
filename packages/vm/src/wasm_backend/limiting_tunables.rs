@@ -2,10 +2,17 @@ use std::sync::Arc;
 
 use tracing::warn;
 use wasmer::{
-    Memory, MemoryError, MemoryType, Pages, TableType, Target, Tunables as WasmerTunables,
+    sys::{
+        vm::{
+            MemoryError, MemoryStyle, TableStyle, VMMemory, VMMemoryDefinition, VMTable,
+            VMTableDefinition,
+        },
+        Tunables,
+    },
+    MemoryType, Pages, TableType,
 };
-use wasmer_engines::universal::Universal;
-use wasmer_vm::{LinearMemory, MemoryStyle, Table, TableStyle, VMMemoryDefinition};
+use wasmer_engine::universal::Universal;
+use wasmer_middlewares::{LinearMemory, MemoryStyle, Table, TableStyle, VMMemoryDefinition};
 
 use crate::size::Size;
 
@@ -177,7 +184,7 @@ mod tests {
     use super::*;
     use crate::size::Size;
     use wasmer::{MemoryType, Pages, Target};
-    use wasmer_engines::universal::Universal;
+    use wasmer_engine::universal::Universal;
 
     #[test]
     fn create_host_memory_caps_memory_size() {

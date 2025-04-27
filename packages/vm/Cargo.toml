@@ -50,7 +50,7 @@ cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", default-features = fal
 ] }
 cosmwasm-crypto = { version = "2.2.0-rc.1", path = "../crypto" }
 cosmwasm-vm-derive = { version = "2.2.0-rc.1", path = "../vm-derive" }
-derive_more = { version = "=1.0.0-beta.6", default-features = false, features = [
+derive_more = { version = "1.0.0", default-features = false, features = [
     "debug",
 ] }
 hex = "0.4"
@@ -60,12 +60,11 @@ serde_json = "1.0.140"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
 # We pin wasmer to a specific version because the layout of cached modules can change between patch versions.
-wasmer = { version = "=5.0.4", default-features = false, features = [
+wasmer = { version = "=6.0.0-beta.1", default-features = false, features = [
     "singlepass",
 ] }
-wasmer-middlewares = "=5.0.4"
-wasmer-types = "=5.0.4"
-wasmer-vm = "=5.0.4"
+wasmer-middlewares = "=6.0.0-beta.1"
+wasmer-types = "=6.0.0-beta.1"
 strum = { version = "0.26.2", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.

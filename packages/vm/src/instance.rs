@@ -9,6 +9,7 @@ use wasmer::{
 };
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
+use crate::cache::Cache;
 use crate::capabilities::required_capabilities_from_module;
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
@@ -24,7 +25,8 @@ use crate::imports::{
 use crate::imports::{do_db_next, do_db_next_key, do_db_next_value, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile, make_compiling_engine};
+use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
+use tracing::warn;
 
 pub use crate::environment::DebugInfo; // Re-exported as public via to be usable for set_debug_handler
 
@@ -75,15 +77,15 @@ where
         // Enforce a hard memory limit for security
         let memory_limit = memory_limit.unwrap_or(Size::mebi(64));
 
-        let module = Cache::analyze(code, memory_limit, |code| {
-            let engine = make_runtime_engine(Some(memory_limit));
-            let module = compile(&engine, code).map_err(|err| {
-                warn!("Wasm bytecode could not be compiled: {}", err);
-                VmError::from(err)
-            })?;
-            Ok((module, engine))
+        // Compile the module
+        let engine = make_runtime_engine(Some(memory_limit));
+        let module = compile(&engine, code).map_err(|err| {
+            warn!("Wasm bytecode could not be compiled: {}", err);
+            VmError::from(err)
         })?;
-        Self::from_module(module, backend, options, memory_limit)
+        let store = Store::new(engine);
+
+        Self::from_module(store, &module, backend, options.gas_limit, None, None)
     }
 
     #[allow(clippy::too_many_arguments)]
