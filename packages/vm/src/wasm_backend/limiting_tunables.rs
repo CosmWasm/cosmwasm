@@ -1,214 +1,246 @@
-use std::ptr::NonNull;
+use std::sync::Arc;
 
+use tracing::warn;
 use wasmer::{
-    vm::{
-        MemoryError, MemoryStyle, TableStyle, VMMemory, VMMemoryDefinition, VMTable,
-        VMTableDefinition,
-    },
-    MemoryType, Pages, TableType, Tunables,
+    Memory, MemoryError, MemoryType, Pages, TableType, Target, Tunables as WasmerTunables,
 };
+use wasmer_engines::universal::Universal;
+use wasmer_vm::{LinearMemory, MemoryStyle, Table, TableStyle, VMMemoryDefinition};
 
-/// A custom tunables that allows you to set a memory limit.
-///
-/// After adjusting the memory limits, it delegates all other logic
-/// to the base tunables.
-pub struct LimitingTunables<T: Tunables> {
-    /// The maximum a linear memory is allowed to be (in Wasm pages, 65 KiB each).
-    /// Since Wasmer ensures there is only none or one memory, this is practically
-    /// an upper limit for the guest memory.
-    limit: Pages,
-    /// The base implementation we delegate all the logic to
-    base: T,
+use crate::size::Size;
+
+/// Enforces a maximum memory size for Wasm memory.
+pub struct LimitingTunables {
+    /// The parent tunables.
+    parent: Universal,
+    /// The maximum allowed memory size in bytes.
+    memory_size: Size,
 }
 
-impl<T: Tunables> LimitingTunables<T> {
-    pub fn new(base: T, limit: Pages) -> Self {
-        Self { limit, base }
+impl LimitingTunables {
+    /// Creates a new instance with the given maximum memory size in bytes.
+    pub fn new(parent: Universal, memory_size: Size) -> Self {
+        Self {
+            parent,
+            memory_size,
+        }
     }
 
-    /// Takes in input memory type as requested by the guest and sets
-    /// a maximum if missing. The resulting memory type is final if
-    /// valid. However, this can produce invalid types, such that
-    /// validate_memory must be called before creating the memory.
-    fn adjust_memory(&self, requested: &MemoryType) -> MemoryType {
-        let mut adjusted = *requested;
-        if requested.maximum.is_none() {
-            adjusted.maximum = Some(self.limit);
-        }
-        adjusted
-    }
-
-    /// Ensures a given memory type does not exceed the memory limit.
-    /// Call this after adjusting the memory.
-    fn validate_memory(&self, ty: &MemoryType) -> Result<(), MemoryError> {
-        if ty.minimum > self.limit {
-            return Err(MemoryError::Generic(
-                "Minimum exceeds the allowed memory limit".to_string(),
-            ));
-        }
-
-        if let Some(max) = ty.maximum {
-            if max > self.limit {
-                return Err(MemoryError::Generic(
-                    "Maximum exceeds the allowed memory limit".to_string(),
-                ));
-            }
-        } else {
-            return Err(MemoryError::Generic("Maximum unset".to_string()));
-        }
-
-        Ok(())
+    /// The maximum amount of pages the user can increase memory by.
+    fn max_pages(&self) -> Pages {
+        // Round the byte limit down to the nearest Wasm page size, as we can't have fractional pages.
+        let pages_u64 = self.memory_size.0 / u64::from(wasmer_vm::WASM_PAGE_SIZE);
+        // Ensure we don't exceed the maximum Pages
+        let pages_u32 = u32::try_from(pages_u64).unwrap_or(u32::MAX);
+        Pages(pages_u32)
     }
 }
 
-impl<T: Tunables> Tunables for LimitingTunables<T> {
-    /// Construct a `MemoryStyle` for the provided `MemoryType`
-    ///
-    /// Delegated to base.
+// We must implement this manually because derive(Clone) would require
+// Universal to be Clone, which it is not.
+impl Clone for LimitingTunables {
+    fn clone(&self) -> Self {
+        Self {
+            parent: Universal::new(self.parent.target().clone()),
+            memory_size: self.memory_size,
+        }
+    }
+}
+
+impl WasmerTunables for LimitingTunables {
+    /// Creates a memory owned by the host given a [`MemoryType`].
     fn memory_style(&self, memory: &MemoryType) -> MemoryStyle {
-        let adjusted = self.adjust_memory(memory);
-        self.base.memory_style(&adjusted)
+        self.parent.memory_style(memory)
     }
 
-    /// Construct a `TableStyle` for the provided `TableType`
-    ///
-    /// Delegated to base.
-    fn table_style(&self, table: &TableType) -> TableStyle {
-        self.base.table_style(table)
-    }
-
-    /// Create a memory owned by the host given a [`MemoryType`] and a [`MemoryStyle`].
-    ///
-    /// The requested memory type is validated, adjusted to the limited and then passed to base.
+    /// Construct a `VMMemory` for the provided [`MemoryType`].
     fn create_host_memory(
         &self,
         ty: &MemoryType,
         style: &MemoryStyle,
-    ) -> Result<VMMemory, MemoryError> {
-        let adjusted = self.adjust_memory(ty);
-        self.validate_memory(&adjusted)?;
-        self.base.create_host_memory(&adjusted, style)
+    ) -> Result<Arc<dyn LinearMemory>, MemoryError> {
+        let max_pages = self.max_pages();
+
+        // Enforce a maximum size for Wasm memories
+        let limited_ty = MemoryType::new(
+            ty.minimum,
+            Some(std::cmp::min(ty.maximum.unwrap_or(max_pages), max_pages)),
+            ty.shared,
+        );
+        self.parent.create_host_memory(&limited_ty, style)
     }
 
-    /// Create a memory owned by the VM given a [`MemoryType`] and a [`MemoryStyle`].
-    ///
-    /// Delegated to base.
-    unsafe fn create_vm_memory(
+    /// Create a VM memory with the given memory definition.
+    fn create_vm_memory(
         &self,
         ty: &MemoryType,
         style: &MemoryStyle,
-        vm_definition_location: NonNull<VMMemoryDefinition>,
-    ) -> Result<VMMemory, MemoryError> {
-        let adjusted = self.adjust_memory(ty);
-        self.validate_memory(&adjusted)?;
-        self.base
-            .create_vm_memory(&adjusted, style, vm_definition_location)
+        vm_definition: VMMemoryDefinition,
+    ) -> Result<Arc<dyn LinearMemory>, MemoryError> {
+        let max_pages = self.max_pages();
+
+        // Enforce a maximum size for Wasm memories
+        let limited_ty = MemoryType::new(
+            ty.minimum,
+            Some(std::cmp::min(ty.maximum.unwrap_or(max_pages), max_pages)),
+            ty.shared,
+        );
+        self.parent
+            .create_vm_memory(&limited_ty, style, vm_definition)
     }
 
-    /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].
-    ///
-    /// Delegated to base.
-    fn create_host_table(&self, ty: &TableType, style: &TableStyle) -> Result<VMTable, String> {
-        self.base.create_host_table(ty, style)
-    }
-
-    /// Create a table owned by the VM given a [`TableType`] and a [`TableStyle`].
-    ///
-    /// Delegated to base.
-    unsafe fn create_vm_table(
+    /// Memory grow operation for host memories.
+    /// Returns `None` if memory can't be grown by the specified amount of pages.
+    fn grow_host_memory(
         &self,
-        ty: &TableType,
-        style: &TableStyle,
-        vm_definition_location: NonNull<VMTableDefinition>,
-    ) -> Result<VMTable, String> {
-        self.base.create_vm_table(ty, style, vm_definition_location)
+        memory: &mut dyn LinearMemory,
+        delta_pages: Pages,
+    ) -> Result<Pages, MemoryError> {
+        let old_pages = memory.size();
+        let new_pages = old_pages.checked_add(delta_pages).ok_or_else(|| {
+            warn!(
+                "Memory growth failed: growing by {} pages would overflow",
+                delta_pages.0
+            );
+            MemoryError::CouldNotGrow {
+                current: old_pages,
+                attempted_delta: delta_pages,
+            }
+        })?;
+
+        let max_pages = self.max_pages();
+        if new_pages > max_pages {
+            warn!(
+                "Memory growth failed: new memory size of {} pages exceeds limit of {} pages",
+                new_pages.0, max_pages.0
+            );
+            return Err(MemoryError::CouldNotGrow {
+                current: old_pages,
+                attempted_delta: delta_pages,
+            });
+        }
+
+        self.parent.grow_host_memory(memory, delta_pages)
+    }
+
+    /// Memory grow operation for VM memories.
+    /// Returns `None` if memory can't be grown by the specified amount of pages.
+    fn grow_vm_memory(
+        &self,
+        memory: &mut dyn LinearMemory,
+        delta_pages: Pages,
+    ) -> Result<Pages, MemoryError> {
+        let old_pages = memory.size();
+        let new_pages = old_pages.checked_add(delta_pages).ok_or_else(|| {
+            warn!(
+                "Memory growth failed: growing by {} pages would overflow",
+                delta_pages.0
+            );
+            MemoryError::CouldNotGrow {
+                current: old_pages,
+                attempted_delta: delta_pages,
+            }
+        })?;
+
+        let max_pages = self.max_pages();
+        if new_pages > max_pages {
+            warn!(
+                "Memory growth failed: new memory size of {} pages exceeds limit of {} pages",
+                new_pages.0, max_pages.0
+            );
+            return Err(MemoryError::CouldNotGrow {
+                current: old_pages,
+                attempted_delta: delta_pages,
+            });
+        }
+
+        self.parent.grow_vm_memory(memory, delta_pages)
+    }
+
+    /// Returns the table style for the specified [`TableType`].
+    fn table_style(&self, table: &TableType) -> TableStyle {
+        self.parent.table_style(table)
+    }
+
+    /// Create a table owned by the host from the given [`TableType`].
+    fn create_host_table(&self, ty: &TableType) -> Result<Arc<dyn Table>, String> {
+        self.parent.create_host_table(ty)
+    }
+
+    fn target(&self) -> &Target {
+        self.parent.target()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasmer::{sys::BaseTunables, Target};
+    use crate::size::Size;
+    use wasmer::{MemoryType, Pages, Target};
+    use wasmer_engines::universal::Universal;
 
     #[test]
-    fn adjust_memory_works() {
-        let limit = Pages(12);
-        let limiting = LimitingTunables::new(BaseTunables::for_target(&Target::default()), limit);
+    fn create_host_memory_caps_memory_size() {
+        let universal = Universal::new(Target::default());
+        let tunables = LimitingTunables::new(universal, Size::mebi(64));
+        let memory_ty = MemoryType::new(Pages(0), Some(Pages(10_000)), false);
+        let memory_style = tunables.memory_style(&memory_ty);
 
-        // No maximum
-        let requested = MemoryType::new(3, None, true);
-        let adjusted = limiting.adjust_memory(&requested);
-        assert_eq!(adjusted, MemoryType::new(3, Some(12), true));
+        let memory = tunables
+            .create_host_memory(&memory_ty, &memory_style)
+            .expect("Memory creation failed");
 
-        // Maximum smaller than limit
-        let requested = MemoryType::new(3, Some(7), true);
-        let adjusted = limiting.adjust_memory(&requested);
-        assert_eq!(adjusted, requested);
-
-        // Maximum equal to limit
-        let requested = MemoryType::new(3, Some(12), true);
-        let adjusted = limiting.adjust_memory(&requested);
-        assert_eq!(adjusted, requested);
-
-        // Maximum greater than limit
-        let requested = MemoryType::new(3, Some(20), true);
-        let adjusted = limiting.adjust_memory(&requested);
-        assert_eq!(adjusted, requested);
-
-        // Minimum greater than maximum (not our problem)
-        let requested = MemoryType::new(5, Some(3), true);
-        let adjusted = limiting.adjust_memory(&requested);
-        assert_eq!(adjusted, requested);
-
-        // Minimum greater than limit
-        let requested = MemoryType::new(20, Some(20), true);
-        let adjusted = limiting.adjust_memory(&requested);
-        assert_eq!(adjusted, requested);
+        // We should be capped to 64 MiB of memory, regardless of the requested size
+        assert!(memory.size() <= tunables.max_pages());
     }
 
     #[test]
-    fn validate_memory_works() {
-        let limit = Pages(12);
-        let limiting = LimitingTunables::new(BaseTunables::for_target(&Target::default()), limit);
+    fn create_host_memory_allows_valid_size() {
+        let universal = Universal::new(Target::default());
+        let tunables = LimitingTunables::new(universal, Size::mebi(64));
+        let memory_ty = MemoryType::new(Pages(10), Some(Pages(20)), false);
+        let memory_style = tunables.memory_style(&memory_ty);
 
-        // Maximum smaller than limit
-        let memory = MemoryType::new(3, Some(7), true);
-        limiting.validate_memory(&memory).unwrap();
+        let memory = tunables
+            .create_host_memory(&memory_ty, &memory_style)
+            .expect("Memory creation failed");
 
-        // Maximum equal to limit
-        let memory = MemoryType::new(3, Some(12), true);
-        limiting.validate_memory(&memory).unwrap();
+        // Should allow creation of memories that are smaller than the cap
+        assert_eq!(memory.size(), Pages(10));
+    }
 
-        // Maximum greater than limit
-        let memory = MemoryType::new(3, Some(20), true);
-        let result = limiting.validate_memory(&memory);
-        match result.unwrap_err() {
-            MemoryError::Generic(msg) => {
-                assert_eq!(msg, "Maximum exceeds the allowed memory limit")
-            }
-            err => panic!("Unexpected error: {err:?}"),
-        }
+    #[test]
+    fn grow_host_memory_prevents_growing_beyond_limit() {
+        let universal = Universal::new(Target::default());
+        let limit = Size::mebi(1); // 1 MiB limit = 16 pages
+        let tunables = LimitingTunables::new(universal, limit);
+        let memory_ty = MemoryType::new(Pages(10), Some(Pages(20)), false);
+        let memory_style = tunables.memory_style(&memory_ty);
 
-        // Maximum not set
-        let memory = MemoryType::new(3, None, true);
-        let result = limiting.validate_memory(&memory);
-        match result.unwrap_err() {
-            MemoryError::Generic(msg) => assert_eq!(msg, "Maximum unset"),
-            err => panic!("Unexpected error: {err:?}"),
-        }
+        let mut memory = tunables
+            .create_host_memory(&memory_ty, &memory_style)
+            .expect("Memory creation failed");
 
-        // Minimum greater than maximum (not our problem)
-        let memory = MemoryType::new(5, Some(3), true);
-        limiting.validate_memory(&memory).unwrap();
+        // Growth that would exceed the limit should fail
+        let result = tunables.grow_host_memory(&mut *memory, Pages(10));
+        assert!(result.is_err());
+    }
 
-        // Minimum greater than limit
-        let memory = MemoryType::new(20, Some(20), true);
-        let result = limiting.validate_memory(&memory);
-        match result.unwrap_err() {
-            MemoryError::Generic(msg) => {
-                assert_eq!(msg, "Minimum exceeds the allowed memory limit")
-            }
-            err => panic!("Unexpected error: {err:?}"),
-        }
+    #[test]
+    fn grow_host_memory_allows_valid_growth() {
+        let universal = Universal::new(Target::default());
+        let limit = Size::mebi(2); // 2 MiB limit = 32 pages
+        let tunables = LimitingTunables::new(universal, limit);
+        let memory_ty = MemoryType::new(Pages(10), Some(Pages(32)), false);
+        let memory_style = tunables.memory_style(&memory_ty);
+
+        let mut memory = tunables
+            .create_host_memory(&memory_ty, &memory_style)
+            .expect("Memory creation failed");
+
+        // Growth within the limit should succeed
+        let result = tunables.grow_host_memory(&mut *memory, Pages(5));
+        assert!(result.is_ok());
+        assert_eq!(memory.size(), Pages(15));
     }
 }

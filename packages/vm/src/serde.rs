@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::any::type_name;
 
 use crate::errors::{VmError, VmResult};
+use crate::security_limits::{
+    enforce_deserialization_limit, MAX_DESERIALIZATION_BYTES, MAX_DESERIALIZATION_DEPTH,
+};
 
 /// Deserializes JSON data into a document of type `T`.
 ///
@@ -15,13 +18,27 @@ pub fn from_slice<'a, T>(value: &'a [u8], deserialization_limit: usize) -> VmRes
 where
     T: Deserialize<'a>,
 {
-    if value.len() > deserialization_limit {
+    // Enforce a global maximum regardless of what limit is passed in
+    let enforced_limit = enforce_deserialization_limit(value.len(), deserialization_limit);
+
+    if value.len() > enforced_limit {
         return Err(VmError::deserialization_limit_exceeded(
             value.len(),
-            deserialization_limit,
+            enforced_limit,
         ));
     }
-    serde_json::from_slice(value).map_err(|e| VmError::parse_err(type_name::<T>(), e))
+
+    // Create a depth-limiting deserializer
+    let mut deserializer = serde_json::Deserializer::from_slice(value);
+    deserializer.disable_recursion_limit();
+    let deserializer = serde_json::Deserializer::with_recursion_limit(
+        deserializer,
+        MAX_DESERIALIZATION_DEPTH as usize,
+    );
+
+    // Use the depth-limited deserializer
+    let result = T::deserialize(deserializer);
+    result.map_err(|e| VmError::parse_err(type_name::<T>(), e))
 }
 
 pub fn to_vec<T>(data: &T) -> VmResult<Vec<u8>>
@@ -94,6 +111,52 @@ mod tests {
             } => {
                 assert_eq!(length, 13);
                 assert_eq!(max_length, 5);
+            }
+            err => panic!("Unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn from_slice_enforces_global_limit() {
+        // Test that even if a large limit is provided, it's capped by MAX_DESERIALIZATION_BYTES
+        let very_large_limit = MAX_DESERIALIZATION_BYTES * 2;
+        let data = vec![b'{'; MAX_DESERIALIZATION_BYTES + 1000]; // Data slightly larger than the max
+        let result = from_slice::<serde_json::Value>(&data, very_large_limit);
+        match result.unwrap_err() {
+            VmError::DeserializationLimitExceeded {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, MAX_DESERIALIZATION_BYTES + 1000);
+                assert_eq!(max_length, MAX_DESERIALIZATION_BYTES);
+            }
+            err => panic!("Unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn from_slice_prevents_deeply_nested_json() {
+        // Create a deeply nested JSON structure beyond our recursion limit
+        let mut json = String::from("{\"data\":");
+        for _ in 0..MAX_DESERIALIZATION_DEPTH as usize + 5 {
+            json.push_str("{\"data\":");
+        }
+        json.push_str("\"value\"");
+        for _ in 0..MAX_DESERIALIZATION_DEPTH as usize + 5 {
+            json.push('}');
+        }
+
+        // This should fail due to recursion depth
+        let result = from_slice::<serde_json::Value>(json.as_bytes(), LIMIT);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        match err {
+            VmError::ParseErr { .. } => {
+                // We expect a parsing error related to recursion depth
+                assert!(
+                    err.to_string().contains("recursion")
+                        || err.to_string().contains("depth")
+                        || err.to_string().contains("nested")
+                );
             }
             err => panic!("Unexpected error: {err:?}"),
         }

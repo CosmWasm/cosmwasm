@@ -15,6 +15,7 @@ mod memory;
 mod modules;
 mod parsed_wasm;
 mod sections;
+mod security_limits;
 mod security_tests;
 mod serde;
 mod size;
@@ -49,6 +50,10 @@ pub use crate::errors::{
     VmError, VmResult,
 };
 pub use crate::instance::{DebugInfo, GasReport, Instance, InstanceOptions};
+pub use crate::security_limits::{
+    DEFAULT_MEMORY_LIMIT_PAGES, MAX_DESERIALIZATION_BYTES, MAX_DESERIALIZATION_DEPTH,
+    MAX_MEMORY_GROWTH_PAGES,
+};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
 
@@ -61,5 +66,6 @@ pub mod internals {
 
     pub use crate::compatibility::{check_wasm, LogOutput, Logger};
     pub use crate::instance::instance_from_module;
+    pub use crate::security_limits::{check_memory_growth, enforce_deserialization_limit};
     pub use crate::wasm_backend::{compile, make_compiling_engine, make_runtime_engine};
 }

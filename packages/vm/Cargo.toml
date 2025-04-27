@@ -65,6 +65,7 @@ wasmer = { version = "=5.0.4", default-features = false, features = [
 ] }
 wasmer-middlewares = "=5.0.4"
 wasmer-types = "=5.0.4"
+wasmer-vm = "=5.0.4"
 strum = { version = "0.26.2", default-features = false, features = ["derive"] }
 # For heap profiling. Only used in the "heap_profiling" example. This has to be a non-dev dependency
 # because cargo currently does not support optional dev-dependencies.

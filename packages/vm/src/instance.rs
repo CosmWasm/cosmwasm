@@ -72,10 +72,18 @@ where
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let engine = make_compiling_engine(memory_limit);
-        let module = compile(&engine, code)?;
-        let store = Store::new(engine);
-        Instance::from_module(store, &module, backend, options.gas_limit, None, None)
+        // Enforce a hard memory limit for security
+        let memory_limit = memory_limit.unwrap_or(Size::mebi(64));
+
+        let module = Cache::analyze(code, memory_limit, |code| {
+            let engine = make_runtime_engine(Some(memory_limit));
+            let module = compile(&engine, code).map_err(|err| {
+                warn!("Wasm bytecode could not be compiled: {}", err);
+                VmError::from(err)
+            })?;
+            Ok((module, engine))
+        })?;
+        Self::from_module(module, backend, options, memory_limit)
     }
 
     #[allow(clippy::too_many_arguments)]

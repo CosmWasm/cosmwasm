@@ -8,6 +8,18 @@ efficient writing of unit tests, as well as a public API to run contracts in eg.
 [wasmvm](https://github.com/CosmWasm/wasmvm). As such it includes all glue code
 needed for typical actions, like fs caching.
 
+## Security
+
+The VM implements several security measures to prevent malicious or resource-exhausting contracts:
+
+1. **Memory Safety**: Robust validation of memory regions to prevent buffer overflows and invalid memory access
+2. **Module Size Limits**: Maximum WebAssembly module size is configurable (defaults to 3 MiB)
+3. **Gas Metering**: Comprehensive gas accounting with overflow protection to prevent denial of service attacks
+4. **Memory Limits**: Configurable memory page limits to restrict contract memory usage
+5. **Import/Export Validation**: Strict validation of imports and exports to prevent unauthorized access
+
+For custom security configurations, see the `WasmLimits` and `Config` structs.
+
 ## Compatibility
 
 A VM can support one or more contract-VM interface versions. The interface
