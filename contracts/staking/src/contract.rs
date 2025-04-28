@@ -404,7 +404,6 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
         nominal_value: if supply.issued.is_zero() {
             FALLBACK_RATIO
         } else {
-            // TODO: use Decimal256???
             Decimal256::from_ratio(supply.bonded, supply.issued)
                 .try_into()
                 .map_err(|_| StdError::generic_err("nominal value too high"))?
