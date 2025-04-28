@@ -541,7 +541,9 @@ mod tests {
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         mock_instance_with_options, MockInstanceOptions,
     };
-    use cosmwasm_std::{coin, coins, from_json, BalanceResponse, BankQuery, Empty, QueryRequest};
+    use cosmwasm_std::{
+        coin, coins, from_json, BalanceResponse, BankQuery, Empty, QueryRequest, Uint256,
+    };
     use wasmer::FunctionEnvMut;
 
     const KIB: usize = 1024;
@@ -1005,7 +1007,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.amount, Uint256::new(8000));
                 assert_eq!(amount.denom, "silver");
                 Ok(())
             })
@@ -1036,7 +1038,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 500);
+                assert_eq!(amount.amount, Uint256::new(500));
                 Ok(())
             })
             .unwrap();
@@ -1065,7 +1067,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.amount, Uint256::new(8000));
                 Ok(())
             })
             .unwrap();

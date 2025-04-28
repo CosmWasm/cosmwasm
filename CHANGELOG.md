@@ -58,6 +58,8 @@ and this project adheres to
 - cosmwasm-std: Remove previously deprecated `cosmwast_std::testing::mock_info`.
   Use `cosmwasm_std::testing::message_info` instead. ([#2393])
 - cosmwasm-std: Remove abort feature. ([#2141])
+- cosmwasm-std: Change `Coin::amount` to `Uint256` instead of `Uint128`.
+  ([#2458])
 - cosmwasm-std: Replace dependency `serde-json-wasm` with `serde_json`.
   ([#2195])
 - cosmwasm-std: Make `GovMsg` `#[non_exhaustive]` for consistency. ([#2347])
@@ -97,6 +99,7 @@ and this project adheres to
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
 [#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
+[#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
 
 ## [2.2.0] - 2024-12-17
 
