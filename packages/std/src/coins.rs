@@ -526,4 +526,15 @@ mod tests {
         // can still use the coins afterwards
         assert_eq!(coins.amount_of("uatom"), Uint256::new(12345));
     }
+
+    #[test]
+    fn contains_only_works() {
+        // doctests copied here because coverage does not work for doctests
+        let coins: Coins = [coin(100, "uatom")].try_into().unwrap();
+        assert_eq!(coins.contains_only("uatom").unwrap(), Uint256::new(100));
+        assert_eq!(coins.contains_only("uluna"), None);
+
+        let coins: Coins = [coin(100, "uatom"), coin(200, "uusd")].try_into().unwrap();
+        assert_eq!(coins.contains_only("uatom"), None);
+    }
 }
