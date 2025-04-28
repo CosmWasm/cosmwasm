@@ -4,7 +4,6 @@ use std::hash::Hash;
 use std::io;
 use std::panic::catch_unwind;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::OnceLock;
 use thiserror::Error;
 

@@ -2,7 +2,7 @@
 mod security_tests {
     use crate::compatibility::check_wasm;
     use crate::config::WasmLimits;
-    
+
     use crate::errors::RegionValidationError;
     use crate::memory::{test_validate_region, Region};
     use std::collections::HashSet;
