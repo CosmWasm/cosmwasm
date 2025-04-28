@@ -4,6 +4,7 @@ use std::hash::Hash;
 use std::io;
 use std::panic::catch_unwind;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::OnceLock;
 use thiserror::Error;
 
@@ -366,10 +367,12 @@ mod tests {
         cache.store(&checksum, &module).unwrap();
 
         let discriminator = raw_module_version_discriminator();
+        let module_version = current_wasmer_module_version();
         let mut globber = glob::glob(&format!(
-            "{}/{}-wasmer9/**/{}.module",
+            "{}/{}-wasmer{}/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             discriminator,
+            module_version,
             checksum
         ))
         .expect("Failed to read glob pattern");
@@ -414,27 +417,34 @@ mod tests {
 
     #[test]
     fn target_id_works() {
-        // Use Target::default() but modify the string representation for testing
-        let target = Target::default();
-        let custom_target_str = "x86_64-nintendo-fuchsia-gnu-coff";
+        // Test with default target
+        let default_target = Target::default();
+        let default_id = target_id(&default_target);
+        assert!(!default_id.is_empty());
+        assert!(default_id.contains(&default_target.triple().to_string()));
 
-        // Test that the function works in general (not the exact values)
-        let id = target_id(&target);
-        assert!(!id.is_empty());
-        assert!(id.contains(&target.triple().to_string()));
-
-        // Test with a different target to ensure different hash
-        let other_target = wasmer::sys::Target::new(
-            target.triple().clone(),
+        // Test with different CPU features on same architecture
+        let with_feature_target = wasmer::sys::Target::new(
+            default_target.triple().clone(),
             wasmer::sys::CpuFeature::AVX512DQ.into(),
         );
-        let other_id = target_id(&other_target);
-        assert_ne!(id, other_id);
+        let with_feature_id = target_id(&with_feature_target);
+        assert_ne!(default_id, with_feature_id);
 
-        // Test determinism
-        let id1 = target_id(&target);
-        let id2 = target_id(&target);
+        // Verify determinism
+        let id1 = target_id(&default_target);
+        let id2 = target_id(&default_target);
         assert_eq!(id1, id2);
+    }
+
+    #[test]
+    fn target_id_includes_triple_elements() {
+        let target = Target::default();
+        let id = target_id(&target);
+
+        // Basic verification that target ID contains arch
+        let arch_str = format!("{}", target.triple().architecture);
+        assert!(id.contains(&arch_str.to_lowercase()));
     }
 
     #[test]
@@ -466,6 +476,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "a3ce752341");
+        assert_eq!(version, "78e713cf6c");
     }
 }
