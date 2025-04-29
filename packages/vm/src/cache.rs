@@ -340,7 +340,9 @@ where
             has_ibc_entry_points: REQUIRED_IBC_EXPORTS
                 .iter()
                 .all(|required| exports.contains(required.as_ref())),
-            has_ibc2_entry_points: exports.contains(REQUIRED_IBC2_EXPORT.as_ref()),
+            has_ibc2_entry_points: REQUIRED_IBC2_EXPORT
+                .iter()
+                .all(|required| exports.contains(required.as_ref())),
             entrypoints,
             required_capabilities: required_capabilities_from_module(&module)
                 .into_iter()
@@ -1558,7 +1560,7 @@ mod tests {
         let checksum5 = cache.store_code(IBC2, true, true).unwrap();
         let report5 = cache.analyze(&checksum5).unwrap();
         let mut ibc2_contract_entrypoints = BTreeSet::from([E::Instantiate, E::Query]);
-        ibc2_contract_entrypoints.extend([REQUIRED_IBC2_EXPORT]);
+        ibc2_contract_entrypoints.extend(REQUIRED_IBC2_EXPORT);
         assert_eq!(
             report5,
             AnalysisReport {

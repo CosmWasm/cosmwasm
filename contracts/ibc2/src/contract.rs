@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2Msg,
-    Ibc2PacketReceiveMsg, Ibc2Payload, IbcAcknowledgement, IbcReceiveResponse, MessageInfo,
-    QueryResponse, Response, StdAck, StdError, StdResult,
+    Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload, IbcAcknowledgement, IbcBasicResponse,
+    IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdAck, StdError, StdResult,
 };
 
 use crate::msg::{IbcPayload, QueryMsg};
@@ -18,6 +18,7 @@ pub fn instantiate(
         STATE_KEY,
         &to_json_vec(&State {
             ibc2_packet_receive_counter: 0,
+            ibc2_packet_timeout_counter: 0,
             last_source_client: "".to_owned(),
             last_packet_seq: 0,
         })?,
@@ -60,6 +61,7 @@ pub fn ibc2_packet_receive(
             ibc2_packet_receive_counter: state.ibc2_packet_receive_counter + 1,
             last_source_client: msg.source_client.clone(),
             last_packet_seq: msg.packet_sequence,
+            ..state
         })?,
     );
     let new_payload = Ibc2Payload::new(
@@ -72,7 +74,7 @@ pub fn ibc2_packet_receive(
     let new_msg = Ibc2Msg::SendPacket {
         source_client: msg.source_client,
         payloads: vec![new_payload],
-        timeout: env.block.time.plus_seconds(60_u64),
+        timeout: env.block.time.plus_minutes(1_u64),
     };
 
     let resp = if json_payload.response_without_ack {
@@ -94,4 +96,27 @@ pub fn ibc2_packet_receive(
     } else {
         Ok(resp)
     }
+}
+
+#[entry_point]
+pub fn ibc2_packet_timeout(
+    deps: DepsMut,
+    _env: Env,
+    _msg: Ibc2PacketTimeoutMsg,
+) -> StdResult<IbcBasicResponse> {
+    let data = deps
+        .storage
+        .get(STATE_KEY)
+        .ok_or_else(|| StdError::generic_err("State not found."))?;
+    let state: State = from_json(data)?;
+
+    deps.storage.set(
+        STATE_KEY,
+        &to_json_vec(&State {
+            ibc2_packet_timeout_counter: state.ibc2_packet_timeout_counter + 1,
+            ..state
+        })?,
+    );
+
+    Ok(IbcBasicResponse::default())
 }

@@ -13,8 +13,6 @@ pub use assertions::assert_approx_eq_impl;
 pub use assertions::assert_hash_works_impl;
 
 pub use message_info::message_info;
-#[cfg(feature = "ibc2")]
-pub use mock::mock_ibc2_packet_recv;
 #[cfg(feature = "cosmwasm_1_3")]
 pub use mock::DistributionQuerier;
 #[cfg(feature = "staking")]
@@ -24,6 +22,8 @@ pub use mock::{
     mock_wasmd_attr, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
     MOCK_CONTRACT_ADDR,
 };
+#[cfg(feature = "ibc2")]
+pub use mock::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout};
 #[cfg(feature = "stargate")]
 pub use mock::{
     mock_ibc_channel, mock_ibc_channel_close_confirm, mock_ibc_channel_close_init,

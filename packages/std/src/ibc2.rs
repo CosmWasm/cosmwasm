@@ -63,13 +63,19 @@ pub enum Ibc2Msg {
     },
 }
 
-/// The message that is passed into `ibc2_packet_receive`
+/// IBC2PacketReceiveMsg represents a message received via the IBC2 protocol.
+/// The message that is passed into `ibc2_packet_receive`.
+/// It contains the payload data along with metadata about the source and relayer.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct Ibc2PacketReceiveMsg {
+    /// The actual data being transmitted via IBC2.
     pub payload: Ibc2Payload,
+    /// The address of the entity that relayed the packet.
     pub relayer: Addr,
+    /// The identifier of the source IBC client.
     pub source_client: String,
+    /// The unique sequence number of the received packet.
     pub packet_sequence: u64,
 }
 
@@ -85,6 +91,43 @@ impl Ibc2PacketReceiveMsg {
             relayer,
             source_client,
             packet_sequence,
+        }
+    }
+}
+
+/// IBC2PacketTimeoutMsg represents a timeout event for a packet that was not
+/// successfully delivered within the expected timeframe in the IBC2 protocol.
+/// It includes details about the source and destination clients, and the sequence
+/// number of the timed-out packet.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct Ibc2PacketTimeoutMsg {
+    /// The data associated with the timed-out packet.
+    pub payload: Ibc2Payload,
+    /// The identifier of the client that originally sent the packet.
+    pub source_client: String,
+    /// The identifier of the client that was the intended recipient.
+    pub destination_client: String,
+    /// The sequence number of the timed-out packet.
+    pub packet_sequence: u64,
+    /// The address of the relayer responsible for the packet.
+    pub relayer: Addr,
+}
+
+impl Ibc2PacketTimeoutMsg {
+    pub fn new(
+        payload: Ibc2Payload,
+        source_client: String,
+        destination_client: String,
+        packet_sequence: u64,
+        relayer: Addr,
+    ) -> Self {
+        Self {
+            payload,
+            source_client,
+            destination_client,
+            packet_sequence,
+            relayer,
         }
     }
 }
