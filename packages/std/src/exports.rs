@@ -455,8 +455,7 @@ where
 /// do_ibc_packet_timeout is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is called when a packet that this contract previously sent has provably
-/// timedout and will never be relayed to the calling chain. This generally behaves
-/// like ick_ack_fn upon an acknowledgement containing an error.
+/// timed out and will never be relayed to the destination chain.
 ///
 /// - `Q`: custom query type (see QueryRequest)
 /// - `C`: custom response message type (see CosmosMsg)
@@ -558,8 +557,7 @@ where
 /// do_ibc2_packet_timeout is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is called when a packet that this contract previously sent has provably
-/// timedout and will never be relayed to the calling chain. This generally behaves
-/// like ick_ack_fn upon an acknowledgement containing an error.
+/// timed out and will never be relayed to the destination chain.
 ///
 /// - `Q`: custom query type (see QueryRequest)
 /// - `C`: custom response message type (see CosmosMsg)

@@ -532,9 +532,7 @@ pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<Ibc2PacketRecei
     ))
 }
 
-/// Creates a Ibc2PacketTimeoutMsg for testing ibc2_packet_timeout. You set a few key parameters that are
-/// often parsed. If you want to set more, use this as a default and mutate other fields.
-/// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+/// Creates a Ibc2PacketTimeoutMsg for testing ibc2_packet_timeout.
 #[cfg(feature = "ibc2")]
 pub fn mock_ibc2_packet_timeout(data: &impl Serialize) -> StdResult<Ibc2PacketTimeoutMsg> {
     let payload = Ibc2Payload {
