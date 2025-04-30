@@ -447,7 +447,6 @@ pub struct Envs {
     block_time: u64,
     last_height: u64,
     last_time: Timestamp,
-    envs_produced: u64,
 }
 
 #[derive(Clone)]
@@ -490,7 +489,6 @@ impl Envs {
             block_time: options.block_time,
             last_height: options.initial_height,
             last_time: options.initial_time,
-            envs_produced: 0,
         }
     }
 
@@ -504,7 +502,6 @@ impl Envs {
 
         self.last_height = height;
         self.last_time = time;
-        self.envs_produced += 1; // does not overflow because height increment fails first
 
         Some(Env {
             block: BlockInfo {
