@@ -999,7 +999,8 @@ mod tests {
     #[test]
     fn get_instance_recompiles_module() {
         let options = make_testing_options();
-        let cache = unsafe { Cache::new(options.clone()).unwrap() };
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Remove compiled module from disk
@@ -1140,7 +1141,8 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            assert_eq!(response.messages.len(), 0);
+            let msgs = res.unwrap().messages;
+            assert_eq!(msgs.len(), 0);
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
@@ -1174,7 +1176,8 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            assert_eq!(response.messages.len(), 0);
+            let msgs = res.unwrap().messages;
+            assert_eq!(msgs.len(), 0);
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
@@ -1202,7 +1205,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let response = call_instantiate::<_, _, _, Empty>(
+            let res = call_instantiate::<_, _, _, Empty>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1210,7 +1213,8 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            assert_eq!(response.messages.len(), 0);
+            let msgs = res.unwrap().messages;
+            assert_eq!(msgs.len(), 0);
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
@@ -1549,7 +1553,12 @@ mod tests {
             unsafe { Cache::new(make_ibc2_testing_options()).unwrap() };
         let checksum5 = cache.store_code(IBC2, true, true).unwrap();
         let report5 = cache.analyze(&checksum5).unwrap();
-        let ibc2_contract_entrypoints = BTreeSet::from([E::Instantiate, E::Query, E::Ibc2PacketReceive, E::Ibc2PacketTimeout]);
+        let ibc2_contract_entrypoints = BTreeSet::from([
+            E::Instantiate,
+            E::Query,
+            E::Ibc2PacketReceive,
+            E::Ibc2PacketTimeout,
+        ]);
         assert_eq!(
             report5,
             AnalysisReport {
