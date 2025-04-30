@@ -449,7 +449,27 @@ pub struct Envs {
     last_time: Timestamp,
 }
 
+/// Options to create an `Envs` instance.
+///
+/// ## Examples
+///
+/// Must be constructed with the help of `Default` since new options might be added later.
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::{Envs, EnvsOptions};
+///
+/// let mut options = EnvsOptions::default();
+/// options.chain_id = "megachain".to_string();
+/// options.bech32_prefix = "mega";
+/// let mut envs = Envs::with_options(options);
+///
+/// let env = envs.make();
+/// assert_eq!(env.block.chain_id, "megachain");
+/// assert_eq!(env.contract.address.as_str(), "mega1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts7vnj8h");
+/// ```
 #[derive(Clone)]
+#[non_exhaustive]
 pub struct EnvsOptions {
     pub bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
     pub block_time: u64,
