@@ -19,7 +19,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{CachedModule, FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::parsed_wasm::ParsedWasm;
 use crate::size::Size;
-use crate::static_analysis::{Entrypoint, ExportInfo, REQUIRED_IBC2_EXPORT, REQUIRED_IBC_EXPORTS};
+use crate::static_analysis::{Entrypoint, ExportInfo, REQUIRED_IBC_EXPORTS};
 use crate::wasm_backend::{compile, make_compiling_engine};
 
 const STATE_DIR: &str = "state";
@@ -100,9 +100,6 @@ pub struct AnalysisReport {
     /// `true` if and only if all [`REQUIRED_IBC_EXPORTS`] exist as exported functions.
     /// This does not guarantee they are functional or even have the correct signatures.
     pub has_ibc_entry_points: bool,
-    /// `true` if and only if all [`REQUIRED_IBC2_EXPORT`] exist as exported functions.
-    /// This does not guarantee they are functional or even have the correct signatures.
-    pub has_ibc2_entry_points: bool,
     /// A set of all entrypoints that are exported by the contract.
     pub entrypoints: BTreeSet<Entrypoint>,
     /// The set of capabilities the contract requires.
@@ -338,9 +335,6 @@ where
 
         Ok(AnalysisReport {
             has_ibc_entry_points: REQUIRED_IBC_EXPORTS
-                .iter()
-                .all(|required| exports.contains(required.as_ref())),
-            has_ibc2_entry_points: REQUIRED_IBC2_EXPORT
                 .iter()
                 .all(|required| exports.contains(required.as_ref())),
             entrypoints,
@@ -1473,7 +1467,6 @@ mod tests {
             report1,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                has_ibc2_entry_points: false,
                 entrypoints: BTreeSet::from([
                     E::Instantiate,
                     E::Migrate,
@@ -1504,7 +1497,6 @@ mod tests {
             report2,
             AnalysisReport {
                 has_ibc_entry_points: true,
-                has_ibc2_entry_points: false,
                 entrypoints: ibc_contract_entrypoints,
                 required_capabilities: BTreeSet::from_iter([
                     "cosmwasm_1_1".to_string(),
@@ -1528,7 +1520,6 @@ mod tests {
             report3,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                has_ibc2_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
                 contract_migrate_version: None,
@@ -1548,7 +1539,6 @@ mod tests {
             report4,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                has_ibc2_entry_points: false,
                 entrypoints: BTreeSet::new(),
                 required_capabilities: BTreeSet::from(["iterator".to_string()]),
                 contract_migrate_version: Some(21),
@@ -1559,13 +1549,11 @@ mod tests {
             unsafe { Cache::new(make_ibc2_testing_options()).unwrap() };
         let checksum5 = cache.store_code(IBC2, true, true).unwrap();
         let report5 = cache.analyze(&checksum5).unwrap();
-        let mut ibc2_contract_entrypoints = BTreeSet::from([E::Instantiate, E::Query]);
-        ibc2_contract_entrypoints.extend(REQUIRED_IBC2_EXPORT);
+        let ibc2_contract_entrypoints = BTreeSet::from([E::Instantiate, E::Query, E::Ibc2PacketReceive, E::Ibc2PacketTimeout]);
         assert_eq!(
             report5,
             AnalysisReport {
                 has_ibc_entry_points: false,
-                has_ibc2_entry_points: true,
                 entrypoints: ibc2_contract_entrypoints,
                 required_capabilities: BTreeSet::from_iter([
                     "iterator".to_string(),
