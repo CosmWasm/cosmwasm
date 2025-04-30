@@ -16,7 +16,7 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "ibc2")]
-use cosmwasm_std::Ibc2PacketReceiveMsg;
+use cosmwasm_std::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg};
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -61,7 +61,7 @@ mod read_limits {
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_ACK: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_source_callback call.
     pub const RESULT_IBC_SOURCE_CALLBACK: usize = 64 * MI;
@@ -107,7 +107,7 @@ mod deserialization_limits {
     #[cfg(feature = "stargate")]
     pub const RESULT_IBC_PACKET_ACK: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
     /// Max length (in bytes) of the result data from a ibc_source_callback call.
     pub const RESULT_IBC_SOURCE_CALLBACK: usize = 256 * KI;
@@ -739,6 +739,45 @@ where
     )
 }
 
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_packet_timeout<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &Ibc2PacketTimeoutMsg,
+) -> VmResult<ContractResult<IbcBasicResponse<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc2_packet_timeout_raw(instance, &env, &msg)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_TIMEOUT)?;
+    Ok(result)
+}
+
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_packet_timeout_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "ibc2_packet_timeout",
+        &[env, msg],
+        read_limits::RESULT_IBC_PACKET_TIMEOUT,
+    )
+}
+
 pub fn call_ibc_source_callback_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
@@ -889,7 +928,7 @@ mod tests {
 
         // execute
         let info = mock_info(&verifier, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
@@ -1325,8 +1364,14 @@ mod tests {
     #[cfg(feature = "ibc2")]
     mod ibc2 {
         use super::*;
-        use cosmwasm_std::testing::mock_ibc2_packet_recv;
+        use cosmwasm_std::testing::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout};
         static IBC2: &[u8] = include_bytes!("../testdata/ibc2.wasm");
+
+        #[derive(serde::Serialize)]
+        pub struct IbcPayload {
+            pub response_without_ack: bool,
+            pub send_async_ack_for_prev_msg: bool,
+        }
 
         #[test]
         fn call_ibc2_packet_receive_works() {
@@ -1338,9 +1383,29 @@ mod tests {
                 .unwrap()
                 .unwrap();
 
+            let ibc2_msg = IbcPayload {
+                response_without_ack: false,
+                send_async_ack_for_prev_msg: false,
+            };
+            let ibc2_timeout = mock_ibc2_packet_recv(&ibc2_msg).unwrap();
+            call_ibc2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_timeout)
+                .unwrap()
+                .unwrap();
+        }
+
+        #[test]
+        fn call_ibc2_packet_timeout_works() {
+            // init
+            let mut instance = mock_instance(IBC2, &[]);
+            let info = mock_info("creator", &[]);
+            let instantiate_msg = br#"{}"#;
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+                .unwrap()
+                .unwrap();
+
             let ibc2_msg = br#"SomeRandomMsg"#;
-            let ibc2_msg = mock_ibc2_packet_recv(ibc2_msg).unwrap();
-            call_ibc2_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
+            let ibc2_msg = mock_ibc2_packet_timeout(ibc2_msg).unwrap();
+            call_ibc2_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_msg)
                 .unwrap()
                 .unwrap();
         }

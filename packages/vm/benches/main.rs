@@ -31,7 +31,7 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
-const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking";
+const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2,iterator,staking";
 static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
@@ -101,7 +101,7 @@ fn bench_instance(c: &mut Criterion) {
 
         b.iter(|| {
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());

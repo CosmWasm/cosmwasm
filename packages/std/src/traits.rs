@@ -1,6 +1,6 @@
+use core::any::Any;
 use core::marker::PhantomData;
 use core::ops::Deref;
-use downcast_rs::{impl_downcast, Downcast};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::coin::Coin;
@@ -11,9 +11,6 @@ use crate::prelude::*;
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
@@ -24,6 +21,7 @@ use crate::query::{
     AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
     DistributionQuery,
 };
+use crate::query::{BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
@@ -131,7 +129,7 @@ pub trait Storage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api: Downcast {
+pub trait Api: Any {
     /// Takes a human readable address and validates if it is valid.
     /// If it the validation succeeds, a `Addr` containing the same data as the input is returned.
     ///
@@ -330,7 +328,6 @@ pub trait Api: Downcast {
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);
 }
-impl_downcast!(Api);
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
 pub type QuerierResult = SystemResult<ContractResult<Binary>>;
@@ -431,17 +428,6 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
         .into();
         let res: BalanceResponse = self.query(&request)?;
-        Ok(res.amount)
-    }
-
-    #[deprecated]
-    pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
-        #[allow(deprecated)]
-        let request = BankQuery::AllBalances {
-            address: address.into(),
-        }
-        .into();
-        let res: AllBalanceResponse = self.query(&request)?;
         Ok(res.amount)
     }
 
@@ -665,7 +651,7 @@ mod tests {
 
     use super::*;
     use crate::testing::MockQuerier;
-    use crate::{coins, Uint128};
+    use crate::{coins, Uint256};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -702,7 +688,7 @@ mod tests {
             .unwrap()
             .unwrap();
         let balance: BalanceResponse = from_json(raw).unwrap();
-        assert_eq!(balance.amount.amount, Uint128::new(5));
+        assert_eq!(balance.amount.amount, Uint256::new(5));
     }
 
     #[cfg(feature = "cosmwasm_1_1")]
@@ -721,10 +707,6 @@ mod tests {
 
         let balance = wrapper.query_balance("foo", "ELF").unwrap();
         assert_eq!(balance, coin(123, "ELF"));
-
-        #[allow(deprecated)]
-        let all_balances = wrapper.query_all_balances("foo").unwrap();
-        assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
 
     #[test]

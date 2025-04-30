@@ -39,6 +39,8 @@ pub enum Entrypoint {
     IbcDestinationCallback,
     #[strum(serialize = "ibc2_packet_receive")]
     Ibc2PacketReceive,
+    #[strum(serialize = "ibc2_packet_timeout")]
+    Ibc2PacketTimeout,
 }
 
 // sort entrypoints by their &str representation
@@ -62,7 +64,8 @@ pub const REQUIRED_IBC_EXPORTS: &[Entrypoint] = &[
     Entrypoint::IbcPacketTimeout,
 ];
 
-pub const REQUIRED_IBC2_EXPORT: &Entrypoint = &Entrypoint::Ibc2PacketReceive;
+pub const REQUIRED_IBC2_EXPORT: &[Entrypoint] =
+    &[Entrypoint::Ibc2PacketReceive, Entrypoint::Ibc2PacketTimeout];
 
 /// A trait that allows accessing shared functionality of `parity_wasm::elements::Module`
 /// and `wasmer::Module` in a shared fashion.
@@ -133,7 +136,7 @@ mod tests {
             .exports
             .iter()
             .filter(|entry| matches!(entry.kind, ExternalKind::Func));
-        assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
+        assert_eq!(exported_functions.count(), 15);
 
         let exported_memories = module
             .exports

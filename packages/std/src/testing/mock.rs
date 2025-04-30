@@ -24,23 +24,21 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 #[cfg(feature = "ibc2")]
-use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2Payload};
+use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+use crate::query::{BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, TransactionInfo};
-use crate::{from_json, to_json_binary, Binary, Uint128};
+use crate::{from_json, to_json_binary, Binary, Uint256};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
     query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},
@@ -528,6 +526,26 @@ pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<Ibc2PacketRecei
         },
         Addr::unchecked("relayer"),
         "channel_id23".to_string(),
+        42,
+    ))
+}
+
+/// Creates a Ibc2PacketTimeoutMsg for testing ibc2_packet_timeout.
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_timeout(data: &impl Serialize) -> StdResult<Ibc2PacketTimeoutMsg> {
+    let payload = Ibc2Payload {
+        source_port: "wasm2srcport".to_string(),
+        destination_port: "wasm2destport".to_string(),
+        version: "v2".to_string(),
+        encoding: "json".to_string(),
+        value: to_json_binary(data)?,
+    };
+    Ok(Ibc2PacketTimeoutMsg::new(
+        payload,
+        "source_client".to_string(),
+        "destination_client".to_string(),
+        1,
+        Addr::unchecked("relayer"),
     ))
 }
 
@@ -744,7 +762,7 @@ impl Default for WasmQuerier {
 pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
-    supplies: BTreeMap<String, Uint128>,
+    supplies: BTreeMap<String, Uint256>,
     /// A map from address to balance. The address is the String conversion of `Addr`,
     /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
@@ -785,7 +803,7 @@ impl BankQuerier {
             .collect();
     }
 
-    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
+    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint256> {
         let mut supplies = BTreeMap::new();
 
         let all_coins = balances.iter().flat_map(|(_, coins)| coins);
@@ -793,7 +811,7 @@ impl BankQuerier {
         for coin in all_coins {
             *supplies
                 .entry(coin.denom.clone())
-                .or_insert_with(Uint128::zero) += coin.amount;
+                .or_insert_with(Uint256::zero) += coin.amount;
         }
 
         supplies
@@ -807,7 +825,7 @@ impl BankQuerier {
                     .supplies
                     .get(denom)
                     .cloned()
-                    .unwrap_or_else(Uint128::zero);
+                    .unwrap_or_else(Uint256::zero);
                 let bank_res = SupplyResponse {
                     amount: Coin {
                         amount,
@@ -828,14 +846,6 @@ impl BankQuerier {
                         amount,
                         denom: denom.to_string(),
                     },
-                };
-                to_json_binary(&bank_res).into()
-            }
-            #[allow(deprecated)]
-            BankQuery::AllBalances { address } => {
-                // proper error on not found, serialize result on found
-                let bank_res = AllBalanceResponse {
-                    amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 to_json_binary(&bank_res).into()
             }
@@ -1862,21 +1872,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(deprecated)]
-    fn bank_querier_all_balances() {
-        let addr = String::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let bank = BankQuerier::new(&[(&addr, &balance)]);
-
-        let all = bank
-            .query(&BankQuery::AllBalances { address: addr })
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(&res.amount, &balance);
-    }
-
-    #[test]
     fn bank_querier_one_balance() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -1911,16 +1906,6 @@ mod tests {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let bank = BankQuerier::new(&[(&addr, &balance)]);
-
-        // all balances on empty account is empty vec
-        let all = bank
-            .query(&BankQuery::AllBalances {
-                address: String::from("elsewhere"),
-            })
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
         let miss = bank
@@ -2748,16 +2733,5 @@ mod tests {
         let canonical_addr = instantiate2_address(&checksum, &contract_addr, salt).unwrap();
         // we are not interested in the exact humanization, just that it works
         mock_api.addr_humanize(&canonical_addr).unwrap();
-    }
-
-    #[test]
-    fn mock_api_downcast() {
-        let mut deps = mock_dependencies();
-        let deps_mut = deps.as_mut();
-
-        let mock_api = deps_mut.api.downcast_ref::<MockApi>().unwrap();
-
-        let addr = mock_api.addr_make("input");
-        assert_eq!(mock_api.addr_validate(addr.as_str()).unwrap(), addr);
     }
 }

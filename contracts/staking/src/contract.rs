@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    coin, entry_point, to_json_binary, BankMsg, Decimal, Deps, DepsMut, DistributionMsg, Env,
-    MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128,
-    WasmMsg,
+    entry_point, to_json_binary, BankMsg, Coin, Decimal, Decimal256, Deps, DepsMut,
+    DistributionMsg, Env, MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg,
+    StdError, StdResult, Uint128, Uint256, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -85,14 +85,16 @@ pub fn transfer(
     let rcpt_raw = deps.api.addr_canonicalize(&recipient)?;
     let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
 
-    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
+    let balance: Uint128 =
+        may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
     save_map(
         deps.storage,
         PREFIX_BALANCE,
         &sender_raw,
         balance.checked_sub(send)?,
     )?;
-    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &rcpt_raw)?.unwrap_or_default();
+    let balance: Uint128 =
+        may_load_map(deps.storage, PREFIX_BALANCE, &rcpt_raw)?.unwrap_or_default();
     save_map(deps.storage, PREFIX_BALANCE, &rcpt_raw, balance + send)?;
 
     let res = Response::new()
@@ -105,13 +107,13 @@ pub fn transfer(
 
 // get_bonded returns the total amount of delegations from contract
 // it ensures they are all the same denom
-fn get_bonded(querier: &QuerierWrapper, contract_addr: impl Into<String>) -> StdResult<Uint128> {
+fn get_bonded(querier: &QuerierWrapper, contract_addr: impl Into<String>) -> StdResult<Uint256> {
     let bonds = querier.query_all_delegations(contract_addr)?;
     if bonds.is_empty() {
-        return Ok(Uint128::new(0));
+        return Ok(Uint256::zero());
     }
     let denom = bonds[0].amount.denom.as_str();
-    bonds.iter().try_fold(Uint128::zero(), |acc, d| {
+    bonds.iter().try_fold(Uint256::zero(), |acc, d| {
         if d.amount.denom.as_str() != denom {
             Err(StdError::generic_err(format!(
                 "different denoms in bonds: '{}' vs '{}'",
@@ -123,7 +125,7 @@ fn get_bonded(querier: &QuerierWrapper, contract_addr: impl Into<String>) -> Std
     })
 }
 
-fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
+fn assert_bonds(supply: &Supply, bonded: Uint256) -> StdResult<()> {
     if supply.bonded != bonded {
         Err(StdError::generic_err(format!(
             "Stored bonded {}, but query bonded: {}",
@@ -153,17 +155,19 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let mut supply: Supply = load_item(deps.storage, KEY_TOTAL_SUPPLY)?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
+    // note that the conversion to Uint128 limits payment amounts to `u128::MAX`
     let to_mint = if supply.issued.is_zero() || bonded.is_zero() {
-        payment.amount.mul_floor(FALLBACK_RATIO)
+        Uint128::try_from(payment.amount.mul_floor(FALLBACK_RATIO))?
     } else {
-        payment.amount.multiply_ratio(supply.issued, bonded)
+        Uint128::try_from(payment.amount.multiply_ratio(supply.issued, bonded))?
     };
     supply.bonded = bonded + payment.amount;
     supply.issued += to_mint;
     save_item(deps.storage, KEY_TOTAL_SUPPLY, &supply)?;
 
     // update the balance of the sender
-    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
+    let balance: Uint128 =
+        may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
     save_map(deps.storage, PREFIX_BALANCE, &sender_raw, balance + to_mint)?;
 
     // bond them to the validator
@@ -196,7 +200,8 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let tax = amount.mul_floor(invest.exit_tax);
 
     // deduct all from the account
-    let balance = may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
+    let balance: Uint128 =
+        may_load_map(deps.storage, PREFIX_BALANCE, &sender_raw)?.unwrap_or_default();
     save_map(
         deps.storage,
         PREFIX_BALANCE,
@@ -205,7 +210,8 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     )?;
     if tax > Uint128::new(0) {
         // add tax to the owner
-        let balance = may_load_map(deps.storage, PREFIX_BALANCE, &owner_raw)?.unwrap_or_default();
+        let balance: Uint128 =
+            may_load_map(deps.storage, PREFIX_BALANCE, &owner_raw)?.unwrap_or_default();
         save_map(deps.storage, PREFIX_BALANCE, &owner_raw, balance + tax)?;
     }
 
@@ -218,14 +224,15 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let mut supply: Supply = load_item(deps.storage, KEY_TOTAL_SUPPLY)?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
-    let unbond = remainder.multiply_ratio(bonded, supply.issued);
+    let unbond = Uint256::from(remainder).multiply_ratio(bonded, supply.issued);
     supply.bonded = bonded.checked_sub(unbond)?;
     supply.issued = supply.issued.checked_sub(remainder)?;
     supply.claims += unbond;
     save_item(deps.storage, KEY_TOTAL_SUPPLY, &supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
-    let claim = may_load_map(deps.storage, PREFIX_CLAIMS, &sender_raw)?.unwrap_or_default();
+    let claim: Uint256 =
+        may_load_map(deps.storage, PREFIX_CLAIMS, &sender_raw)?.unwrap_or_default();
     save_map(deps.storage, PREFIX_CLAIMS, &sender_raw, claim + unbond)?;
 
     // unbond them
@@ -236,7 +243,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
         .add_attribute("burnt", amount)
         .add_message(StakingMsg::Undelegate {
             validator: invest.validator,
-            amount: coin(unbond.u128(), &invest.bond_denom),
+            amount: Coin::new(unbond, &invest.bond_denom),
         });
     Ok(res)
 }
@@ -247,7 +254,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     let mut balance = deps
         .querier
         .query_balance(env.contract.address, invest.bond_denom)?;
-    if balance.amount < invest.min_withdrawal {
+    if balance.amount < invest.min_withdrawal.into() {
         return Err(StdError::generic_err(
             "Insufficient balance in contract to process claim",
         ));
@@ -325,7 +332,7 @@ pub fn _bond_all_tokens(
     let updated = update_item(deps.storage, KEY_TOTAL_SUPPLY, |mut supply: Supply| {
         balance.amount = balance.amount.checked_sub(supply.claims)?;
         // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
-        balance.amount.checked_sub(invest.min_withdrawal)?;
+        balance.amount.checked_sub(invest.min_withdrawal.into())?;
         supply.bonded += balance.amount;
         Ok(supply)
     });
@@ -393,11 +400,13 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
         validator: invest.validator,
         min_withdrawal: invest.min_withdrawal,
         token_supply: supply.issued,
-        staked_tokens: coin(supply.bonded.u128(), &invest.bond_denom),
+        staked_tokens: Coin::new(supply.bonded, invest.bond_denom),
         nominal_value: if supply.issued.is_zero() {
             FALLBACK_RATIO
         } else {
-            Decimal::from_ratio(supply.bonded, supply.issued)
+            Decimal256::from_ratio(supply.bonded, supply.issued)
+                .try_into()
+                .map_err(|_| StdError::generic_err("nominal value too high"))?
         },
     };
     Ok(res)
@@ -409,7 +418,7 @@ mod tests {
     use cosmwasm_std::testing::{
         message_info, mock_dependencies, mock_env, MockQuerier, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coins, Addr, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
+    use cosmwasm_std::{coin, coins, Addr, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
 
     fn sample_validator(addr: &str) -> Validator {

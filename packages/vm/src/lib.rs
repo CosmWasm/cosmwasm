@@ -35,7 +35,7 @@ pub use crate::calls::{
 #[cfg(feature = "ibc2")]
 pub use crate::calls::{
     call_ibc2_acknowledge_receive, call_ibc2_acknowledge_receive_raw, call_ibc2_packet_receive,
-    call_ibc2_packet_receive_raw,
+    call_ibc2_packet_receive_raw, call_ibc2_packet_timeout, call_ibc2_packet_timeout_raw,
 };
 #[cfg(feature = "stargate")]
 pub use crate::calls::{

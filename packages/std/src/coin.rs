@@ -4,16 +4,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 use crate::CoinFromStrError;
-use crate::Uint128;
+use crate::Uint256;
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, JsonSchema)]
 pub struct Coin {
     pub denom: String,
-    pub amount: Uint128,
+    pub amount: Uint256,
 }
 
 impl Coin {
-    pub fn new(amount: impl Into<Uint128>, denom: impl Into<String>) -> Self {
+    pub fn new(amount: impl Into<Uint256>, denom: impl Into<String>) -> Self {
         Coin {
             amount: amount.into(),
             denom: denom.into(),
@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn coin_implements_display() {
         let a = Coin {
-            amount: Uint128::new(123),
+            amount: Uint256::new(123),
             denom: "ucosm".to_string(),
         };
 
@@ -131,7 +131,7 @@ mod tests {
         assert_eq!(
             a,
             Coin {
-                amount: Uint128::new(123),
+                amount: Uint256::new(123),
                 denom: "ucosm".to_string()
             }
         );
@@ -140,7 +140,7 @@ mod tests {
         assert_eq!(
             zero,
             Coin {
-                amount: Uint128::new(0),
+                amount: Uint256::new(0),
                 denom: "ucosm".to_string()
             }
         );
@@ -149,7 +149,7 @@ mod tests {
         assert_eq!(
             string_denom,
             Coin {
-                amount: Uint128::new(42),
+                amount: Uint256::new(42),
                 denom: "ucosm".to_string()
             }
         );
@@ -161,7 +161,7 @@ mod tests {
         assert_eq!(
             a,
             vec![Coin {
-                amount: Uint128::new(123),
+                amount: Uint256::new(123),
                 denom: "ucosm".to_string()
             }]
         );
@@ -170,7 +170,7 @@ mod tests {
         assert_eq!(
             zero,
             vec![Coin {
-                amount: Uint128::new(0),
+                amount: Uint256::new(0),
                 denom: "ucosm".to_string()
             }]
         );
@@ -179,7 +179,7 @@ mod tests {
         assert_eq!(
             string_denom,
             vec![Coin {
-                amount: Uint128::new(42),
+                amount: Uint256::new(42),
                 denom: "ucosm".to_string()
             }]
         );
