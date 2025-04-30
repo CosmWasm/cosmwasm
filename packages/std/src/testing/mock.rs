@@ -468,7 +468,7 @@ pub struct Envs {
 /// assert_eq!(env.block.chain_id, "megachain");
 /// assert_eq!(env.contract.address.as_str(), "mega1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts7vnj8h");
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct EnvsOptions {
     pub bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
