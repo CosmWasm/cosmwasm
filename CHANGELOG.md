@@ -21,6 +21,9 @@ and this project adheres to
 - cosmwasm-vm: Added `ibc2_packet_receive` entrypoint ([#2403])
 - cosmwasm-vm: Add IBC Callbacks entrypoints to the `Entrypoints` enum.
   ([#2438])
+- cosmwasm-std: Add `WriteAcknowledgement` to `Ibc2Msg` - ([#2425])
+- cosmwasm-vm: Add `ibc2_packet_timeout` entrypoint - ([#2454])
+- cosmwasm-std: Add `Ibc2PacketTimeoutMsg` message - ([#2454])
 
 ## Changed
 
@@ -66,6 +69,7 @@ and this project adheres to
 - cosmwasm-crypto: Upgrade ark-\* dependencies to 0.5.0. ([#2432])
 - cosmwasm-std: Remove support for `BankQuery::AllBalances` and
   `query_all_balances`. ([#2433])
+- cosmwasm-std: source_client instead of channel_id in IBCv2 - ([#2450])
 
 ## Fixed
 
@@ -96,9 +100,12 @@ and this project adheres to
 [#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
 [#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
 [#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+[#2425]: https://github.com/CosmWasm/cosmwasm/pull/2425
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
 [#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
+[#2450]: https://github.com/CosmWasm/cosmwasm/pull/2450
+[#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
 [#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
 
 ## [2.2.0] - 2024-12-17
