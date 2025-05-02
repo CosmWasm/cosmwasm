@@ -999,8 +999,7 @@ mod tests {
     #[test]
     fn get_instance_recompiles_module() {
         let options = make_testing_options();
-        let cache: Cache<MockApi, MockStorage, MockQuerier> =
-            unsafe { Cache::new(options.clone()).unwrap() };
+        let cache = unsafe { Cache::new(options.clone()).unwrap() };
         let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
         // Remove compiled module from disk
