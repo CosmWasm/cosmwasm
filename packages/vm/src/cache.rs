@@ -1141,8 +1141,7 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            let msgs = res.unwrap().messages;
-            assert_eq!(msgs.len(), 0);
+            assert_eq!(response.messages.len(), 0);
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
@@ -1176,8 +1175,7 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            let msgs = res.unwrap().messages;
-            assert_eq!(msgs.len(), 0);
+            assert_eq!(response.messages.len(), 0);
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
@@ -1205,7 +1203,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let res = call_instantiate::<_, _, _, Empty>(
+            let response = call_instantiate::<_, _, _, Empty>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1213,8 +1211,7 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            let msgs = res.unwrap().messages;
-            assert_eq!(msgs.len(), 0);
+            assert_eq!(response.messages.len(), 0);
 
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
