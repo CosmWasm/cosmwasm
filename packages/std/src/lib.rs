@@ -95,9 +95,8 @@ pub use crate::query::{
     CustomQuery, DecCoin, Delegation, DelegationResponse, DelegationRewardsResponse,
     DelegationTotalRewardsResponse, DelegatorReward, DelegatorValidatorsResponse,
     DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery,
-    FeeEnabledChannelResponse, FullDelegation, GrpcQuery, IbcQuery, ListChannelsResponse,
-    PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator, ValidatorResponse,
-    WasmQuery,
+    FeeEnabledChannelResponse, FullDelegation, GrpcQuery, IbcQuery, PortIdResponse, QueryRequest,
+    StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;

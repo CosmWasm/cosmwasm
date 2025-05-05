@@ -73,6 +73,8 @@ and this project adheres to
 - cosmwasm-std: Remove support for `BankQuery::AllBalances` and
   `query_all_balances`. ([#2433])
 - cosmwasm-std: source_client instead of channel_id in IBCv2 - ([#2450])
+- cosmwasm-std: Remove previously deprecated `IbcQuery::ListChannels` and
+  `ListChannelsResponse`. ([#2223])
 
 ## Fixed
 
@@ -86,6 +88,7 @@ and this project adheres to
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
 [#2195]: https://github.com/CosmWasm/cosmwasm/issues/2195
 [#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
+[#2223]: https://github.com/CosmWasm/cosmwasm/issues/2223
 [#2237]: https://github.com/CosmWasm/cosmwasm/issues/2237
 [#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
