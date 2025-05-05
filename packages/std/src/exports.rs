@@ -938,19 +938,6 @@ where
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
-/// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
-fn deps_from_imports<Q>() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier, Q>
-where
-    Q: CustomQuery,
-{
-    OwnedDeps {
-        storage: ExternalStorage::new(),
-        api: ExternalApi::new(),
-        querier: ExternalQuerier::new(),
-        custom_query_type: PhantomData,
-    }
-}
-
 #[cfg(feature = "ibc2")]
 fn _do_ibc2_packet_receive<Q, C, E>(
     contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
@@ -995,4 +982,17 @@ where
 
     let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
+}
+
+/// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
+fn deps_from_imports<Q>() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier, Q>
+where
+    Q: CustomQuery,
+{
+    OwnedDeps {
+        storage: ExternalStorage::new(),
+        api: ExternalApi::new(),
+        querier: ExternalQuerier::new(),
+        custom_query_type: PhantomData,
+    }
 }
