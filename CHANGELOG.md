@@ -75,6 +75,9 @@ and this project adheres to
 - cosmwasm-std: source_client instead of channel_id in IBCv2 - ([#2450])
 - cosmwasm-std: Remove previously deprecated `IbcQuery::ListChannels` and
   `ListChannelsResponse`. ([#2223])
+- cosmwasm-std: Remove export of `ExternalApi`, `ExternalQuerier` and
+  `ExternalStorage` as those are only needed by export implementations in
+  cosmwasm-std. ([#2467])
 
 ## Fixed
 
@@ -114,6 +117,7 @@ and this project adheres to
 [#2450]: https://github.com/CosmWasm/cosmwasm/pull/2450
 [#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
 [#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
+[#2467]: https://github.com/CosmWasm/cosmwasm/pull/2467
 
 ## [2.2.0] - 2024-12-17
 
