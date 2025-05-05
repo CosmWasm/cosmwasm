@@ -390,17 +390,166 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 /// // `env3` is one block and 5.5 seconds later
 /// ```
 pub fn mock_env() -> Env {
-    let contract_addr = MockApi::default().addr_make("cosmos2contract");
-    Env {
-        block: BlockInfo {
-            height: 12_345,
-            time: Timestamp::from_nanos(1_571_797_419_879_305_533),
+    let mut envs = Envs::new(BECH32_PREFIX);
+    envs.make()
+}
+
+/// A factory type that stores chain information such as bech32 prefix and can make mock `Env`s from there.
+///
+/// It increments height for each mock call and block time by 5 seconds but is otherwise dumb.
+///
+/// In contrast to using `mock_env`, the bech32 prefix must always be specified.
+///
+/// ## Examples
+///
+/// Typical usage
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::Envs;
+///
+/// let mut envs = Envs::new("food");
+///
+/// let env = envs.make();
+/// assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+/// assert_eq!(env.block.height, 12_345);
+/// assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_419_879_305_533));
+///
+/// let env = envs.make();
+/// assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+/// assert_eq!(env.block.height, 12_346);
+/// assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_424_879_305_533));
+///
+/// let env = envs.make();
+/// assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+/// assert_eq!(env.block.height, 12_347);
+/// assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_429_879_305_533));
+/// ```
+///
+/// Or use with iterator
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::Envs;
+///
+/// let mut envs = Envs::new("food");
+///
+/// for (index, env) in envs.take(100).enumerate() {
+///     assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+///     assert_eq!(env.block.height, 12_345 + index as u64);
+///     assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_419_879_305_533).plus_seconds((index*5) as u64));
+/// }
+/// ```
+pub struct Envs {
+    chain_id: String,
+    contract_address: Addr,
+    /// The number of nanoseconds between two consecutive blocks
+    block_time: u64,
+    last_height: u64,
+    last_time: Timestamp,
+}
+
+/// Options to create an `Envs` instance.
+///
+/// ## Examples
+///
+/// Must be constructed with the help of `Default` since new options might be added later.
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::{Envs, EnvsOptions};
+///
+/// let mut options = EnvsOptions::default();
+/// options.chain_id = "megachain".to_string();
+/// options.bech32_prefix = "mega";
+/// let mut envs = Envs::with_options(options);
+///
+/// let env = envs.make();
+/// assert_eq!(env.block.chain_id, "megachain");
+/// assert_eq!(env.contract.address.as_str(), "mega1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts7vnj8h");
+/// ```
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct EnvsOptions {
+    pub bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
+    pub block_time: u64,
+    // The height before the first `make` call
+    pub initial_height: u64,
+    // The block time before the first `make` call
+    pub initial_time: Timestamp,
+    pub chain_id: String,
+}
+
+impl Default for EnvsOptions {
+    fn default() -> Self {
+        EnvsOptions {
+            bech32_prefix: BECH32_PREFIX,
+            block_time: 5_000_000_000, // 5s
+            initial_height: 12_344,
+            initial_time: Timestamp::from_nanos(1_571_797_419_879_305_533).minus_seconds(5),
             chain_id: "cosmos-testnet-14002".to_string(),
-        },
-        transaction: Some(TransactionInfo { index: 3 }),
-        contract: ContractInfo {
-            address: contract_addr,
-        },
+        }
+    }
+}
+
+impl Envs {
+    pub fn new(bech32_prefix: &'static str) -> Self {
+        Self::with_options(EnvsOptions {
+            bech32_prefix,
+            ..Default::default()
+        })
+    }
+
+    pub fn with_options(options: EnvsOptions) -> Self {
+        let api = MockApi::default().with_prefix(options.bech32_prefix);
+        Envs {
+            chain_id: options.chain_id,
+            // Default values here for compatibility with old `mock_env` function. They could be changed to anything else if there is a good reason.
+            contract_address: api.addr_make("cosmos2contract"),
+            block_time: options.block_time,
+            last_height: options.initial_height,
+            last_time: options.initial_time,
+        }
+    }
+
+    pub fn make(&mut self) -> Env {
+        self.checked_make().unwrap()
+    }
+
+    fn checked_make(&mut self) -> Option<Env> {
+        let height = self.last_height.checked_add(1)?;
+        let time = Timestamp::from_nanos(self.last_time.nanos().checked_add(self.block_time)?);
+
+        self.last_height = height;
+        self.last_time = time;
+
+        Some(Env {
+            block: BlockInfo {
+                height,
+                time,
+                chain_id: self.chain_id.clone(),
+            },
+            transaction: Some(TransactionInfo { index: 3 }),
+            contract: ContractInfo {
+                address: self.contract_address.clone(),
+            },
+        })
+    }
+}
+
+impl Default for Envs {
+    fn default() -> Self {
+        Envs::with_options(EnvsOptions::default())
+    }
+}
+
+// The iterator implementation ends in case of overflows to avoid panics.
+// Using this is recommended for very long running test suites.
+impl Iterator for Envs {
+    type Item = Env;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.checked_make()
     }
 }
 
@@ -1277,9 +1426,98 @@ mod tests {
         include_bytes!("../../../crypto/testdata/eth-headers/1699693797.394876721s.json");
 
     #[test]
-    fn mock_env_matches_mock_contract_addr() {
-        let contract_address = mock_env().contract.address;
-        assert_eq!(contract_address, Addr::unchecked(MOCK_CONTRACT_ADDR));
+    fn mock_env_works() {
+        let env = mock_env();
+        assert_eq!(
+            env,
+            Env {
+                block: BlockInfo {
+                    height: 12345,
+                    time: Timestamp::from_nanos(1571797419879305533),
+                    chain_id: "cosmos-testnet-14002".to_string()
+                },
+                transaction: Some(TransactionInfo { index: 3 }),
+                contract: ContractInfo {
+                    address: Addr::unchecked(MOCK_CONTRACT_ADDR)
+                }
+            }
+        )
+    }
+
+    #[test]
+    fn envs_works() {
+        let mut envs = Envs::new("food");
+
+        let env = envs.make();
+        assert_eq!(
+            env.contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(env.block.height, 12_345);
+        assert_eq!(
+            env.block.time,
+            Timestamp::from_nanos(1_571_797_419_879_305_533)
+        );
+
+        let env = envs.make();
+        assert_eq!(
+            env.contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(env.block.height, 12_346);
+        assert_eq!(
+            env.block.time,
+            Timestamp::from_nanos(1_571_797_424_879_305_533)
+        );
+
+        let env = envs.make();
+        assert_eq!(
+            env.contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(env.block.height, 12_347);
+        assert_eq!(
+            env.block.time,
+            Timestamp::from_nanos(1_571_797_429_879_305_533)
+        );
+    }
+
+    #[test]
+    fn envs_implements_iterator() {
+        let envs = Envs::new("food");
+
+        let result: Vec<_> = envs.into_iter().take(5).collect();
+
+        assert_eq!(
+            result[0].contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(result[0].block.height, 12_345);
+        assert_eq!(
+            result[0].block.time,
+            Timestamp::from_nanos(1_571_797_419_879_305_533)
+        );
+
+        assert_eq!(
+            result[4].contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(result[4].block.height, 12_349);
+        assert_eq!(
+            result[4].block.time,
+            Timestamp::from_nanos(1_571_797_439_879_305_533)
+        );
+
+        // Get a millions envs through iterator
+        let mut envs = Envs::new("yo");
+        let first = envs.next().unwrap();
+        let last = envs.take(1_000_000).last().unwrap();
+        assert_eq!(first.block.height, 12_345);
+        assert_eq!(last.block.height, 1_012_345);
+        assert_eq!(
+            last.block.time,
+            first.block.time.plus_seconds(1_000_000 * 5)
+        );
     }
 
     #[test]

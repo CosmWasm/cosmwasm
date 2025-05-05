@@ -24,6 +24,9 @@ and this project adheres to
 - cosmwasm-std: Add `WriteAcknowledgement` to `Ibc2Msg` - ([#2425])
 - cosmwasm-vm: Add `ibc2_packet_timeout` entrypoint - ([#2454])
 - cosmwasm-std: Add `Ibc2PacketTimeoutMsg` message - ([#2454])
+- cosmwasm-std: Add `cosmwasm_std::testing::Envs`, which is an `Env` factory for
+  testing environments. It auto-increments block heights and timestamps. It
+  allows for advanced configurations such as custom address prefixes. ([#2442])
 
 ## Changed
 
@@ -104,6 +107,7 @@ and this project adheres to
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
 [#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
+[#2442]: https://github.com/CosmWasm/cosmwasm/pull/2442
 [#2450]: https://github.com/CosmWasm/cosmwasm/pull/2450
 [#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
 [#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
