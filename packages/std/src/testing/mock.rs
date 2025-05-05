@@ -46,7 +46,7 @@ use crate::{
 };
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
-use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
+use crate::{ChannelResponse, IbcQuery, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
@@ -1100,20 +1100,6 @@ impl IbcQuerier {
                     })
                     .cloned();
                 let res = ChannelResponse { channel };
-                to_json_binary(&res).into()
-            }
-            #[allow(deprecated)]
-            IbcQuery::ListChannels { port_id } => {
-                let channels = self
-                    .channels
-                    .iter()
-                    .filter(|c| match port_id {
-                        Some(p) => c.endpoint.port_id.eq(p),
-                        None => c.endpoint.port_id == self.port_id,
-                    })
-                    .cloned()
-                    .collect();
-                let res = ListChannelsResponse { channels };
                 to_json_binary(&res).into()
             }
             IbcQuery::PortId {} => {
@@ -2432,40 +2418,6 @@ mod tests {
         let raw = ibc.query(query).unwrap().unwrap();
         let chan: ChannelResponse = from_json(raw).unwrap();
         assert_eq!(chan.channel, None);
-    }
-
-    #[cfg(feature = "stargate")]
-    #[test]
-    #[allow(deprecated)]
-    fn ibc_querier_channels_matching() {
-        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
-        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
-
-        let ibc = IbcQuerier::new("myport", &[chan1.clone(), chan2.clone()]);
-
-        // query channels matching "my_port" (should match both above)
-        let query = &IbcQuery::ListChannels {
-            port_id: Some("my_port".to_string()),
-        };
-        let raw = ibc.query(query).unwrap().unwrap();
-        let res: ListChannelsResponse = from_json(raw).unwrap();
-        assert_eq!(res.channels, vec![chan1, chan2]);
-    }
-
-    #[cfg(feature = "stargate")]
-    #[test]
-    #[allow(deprecated)]
-    fn ibc_querier_channels_no_matching() {
-        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
-        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
-
-        let ibc = IbcQuerier::new("myport", &[chan1, chan2]);
-
-        // query channels matching "myport" (should be none)
-        let query = &IbcQuery::ListChannels { port_id: None };
-        let raw = ibc.query(query).unwrap().unwrap();
-        let res: ListChannelsResponse = from_json(raw).unwrap();
-        assert_eq!(res.channels, vec![]);
     }
 
     #[cfg(feature = "stargate")]

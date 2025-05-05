@@ -15,12 +15,10 @@ pub enum IbcQuery {
     ///
     /// Returns a `PortIdResponse`.
     PortId {},
-    /// Lists all channels that are bound to a given port.
-    /// If `port_id` is omitted, this list all channels bound to the contract's port.
-    ///
-    /// Returns a `ListChannelsResponse`.
-    #[deprecated = "Returns a potentially unbound number of results. If you think you have a valid usecase, please open an issue."]
-    ListChannels { port_id: Option<String> },
+    //
+    // ListChannels was removed in CosmWasm 3 due to potentially unbound number of results.
+    // See https://github.com/CosmWasm/cosmwasm/issues/2223
+    //
     /// Lists all information for a (portID, channelID) pair.
     /// If port_id is omitted, it will default to the contract's own channel.
     /// (To save a PortId{} call)
@@ -49,14 +47,6 @@ pub struct PortIdResponse {
 }
 
 impl_response_constructor!(PortIdResponse, port_id: String);
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[non_exhaustive]
-pub struct ListChannelsResponse {
-    pub channels: Vec<IbcChannel>,
-}
-
-impl_response_constructor!(ListChannelsResponse, channels: Vec<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
