@@ -33,7 +33,6 @@ mod metadata;
 mod msgpack;
 mod never;
 mod pagination;
-mod panic;
 mod query;
 mod results;
 mod sections;
@@ -115,13 +114,8 @@ pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
-// Exposed in wasm build only
 #[cfg(target_arch = "wasm32")]
 mod exports;
-#[cfg(target_arch = "wasm32")]
-mod imports;
-#[cfg(target_arch = "wasm32")]
-mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
 #[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
 pub use crate::exports::do_migrate_with_info;
