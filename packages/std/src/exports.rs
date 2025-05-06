@@ -606,7 +606,7 @@ where
     let info: MessageInfo = try_into_contract_result!(from_json(info));
     let msg: M = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     instantiate_fn(deps.as_mut(), env, info, msg).into()
 }
 
@@ -633,7 +633,7 @@ where
     let info: MessageInfo = try_into_contract_result!(from_json(info));
     let msg: M = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     execute_fn(deps.as_mut(), env, info, msg).into()
 }
 
@@ -656,7 +656,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     migrate_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -683,7 +683,7 @@ where
     let msg: M = try_into_contract_result!(from_json(msg));
     let migrate_info: MigrateInfo = try_into_contract_result!(from_json(migrate_info));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     migrate_with_info_fn(deps.as_mut(), env, msg, migrate_info).into()
 }
 
@@ -706,7 +706,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     sudo_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -728,7 +728,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Reply = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     reply_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -750,7 +750,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: M = try_into_contract_result!(from_json(msg));
 
-    let deps = make_dependencies();
+    let deps = deps_from_imports();
     query_fn(deps.as_ref(), env, msg).into()
 }
 
@@ -771,7 +771,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelOpenMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -794,7 +794,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelConnectMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -817,7 +817,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcChannelCloseMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -840,7 +840,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketReceiveMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -863,7 +863,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketAckMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -886,7 +886,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcPacketTimeoutMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -908,7 +908,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcSourceCallbackMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -934,21 +934,8 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: IbcDestinationCallbackMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
-}
-
-/// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
-pub(crate) fn make_dependencies<Q>() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier, Q>
-where
-    Q: CustomQuery,
-{
-    OwnedDeps {
-        storage: ExternalStorage::new(),
-        api: ExternalApi::new(),
-        querier: ExternalQuerier::new(),
-        custom_query_type: PhantomData,
-    }
 }
 
 #[cfg(feature = "ibc2")]
@@ -970,7 +957,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Ibc2PacketReceiveMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
@@ -993,6 +980,19 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Ibc2PacketTimeoutMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
+}
+
+/// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
+fn deps_from_imports<Q>() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier, Q>
+where
+    Q: CustomQuery,
+{
+    OwnedDeps {
+        storage: ExternalStorage::new(),
+        api: ExternalApi::new(),
+        querier: ExternalQuerier::new(),
+        custom_query_type: PhantomData,
+    }
 }
