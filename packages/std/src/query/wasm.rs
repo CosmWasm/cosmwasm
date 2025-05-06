@@ -1,7 +1,10 @@
+use core::ops::RangeBounds;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::prelude::*;
+use crate::storage_keys::{range_to_bounds, ToByteVec};
+use crate::{prelude::*, Order};
 use crate::{Addr, Binary, Checksum};
 
 use super::query_response::QueryResponseType;
@@ -32,6 +35,58 @@ pub enum WasmQuery {
     /// Returns a [`CodeInfoResponse`] with metadata of the code
     #[cfg(feature = "cosmwasm_1_2")]
     CodeInfo { code_id: u64 },
+    /// Queries a range of keys from the storage of a (different) contract,
+    /// returning a [`RawRangeResponse`].
+    ///
+    /// This is a low-level query that allows you to query the storage of another contract.
+    /// Please keep in mind that the contract you are querying might change its storage layout using
+    /// migrations, which could break your queries, so it is recommended to only use this for
+    /// contracts you control.
+    RawRange {
+        /// The address of the contract to query
+        contract_addr: String,
+        /// Inclusive start bound. This is the first key you would like to get data for.
+        ///
+        /// If `start` is lexicographically greater than or equal to `end`,
+        /// an empty range is described, mo matter of the order.
+        start: Option<Binary>,
+        /// Exclusive end bound. This is the key after the last key you would like to get data for.
+        end: Option<Binary>,
+        /// Maximum number of elements to return.
+        ///
+        /// Make sure to set a reasonable limit to avoid running out of memory or into
+        /// the deserialization limits of the VM. Also keep in mind that these limitations depend
+        /// on the full JSON size of the response type.
+        limit: u16,
+        /// The order in which you want to receive the key-value pairs.
+        order: Order,
+    },
+}
+
+impl WasmQuery {
+    /// Creates a new [`WasmQuery::RawRange`] from the given parameters.
+    ///
+    /// This takes a [`RangeBounds`] to allow for specifying the range in a more idiomatic way.
+    pub fn raw_range<'a, R, B>(
+        contract_addr: impl Into<String>,
+        range: R,
+        limit: u16,
+        order: Order,
+    ) -> Self
+    where
+        R: RangeBounds<&'a B>,
+        B: ToByteVec + ?Sized + 'a,
+    {
+        let (start, end) = range_to_bounds(&range);
+
+        WasmQuery::RawRange {
+            contract_addr: contract_addr.into(),
+            start: start.map(Binary::new),
+            end: end.map(Binary::new),
+            limit,
+            order,
+        }
+    }
 }
 
 #[non_exhaustive]
@@ -87,6 +142,21 @@ impl_hidden_constructor!(
 );
 
 impl QueryResponseType for CodeInfoResponse {}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct RawRangeResponse {
+    /// The key-value pairs
+    pub data: Vec<(Binary, Binary)>,
+    /// `None` if there are no more key-value pairs within the given key range.
+    pub next_key: Option<Binary>,
+}
+
+impl_hidden_constructor!(
+    RawRangeResponse,
+    data: Vec<(Binary, Binary)>,
+    next_key: Option<Binary>
+);
 
 #[cfg(test)]
 mod tests {
@@ -150,6 +220,39 @@ mod tests {
         assert_eq!(
             String::from_utf8_lossy(&json),
             r#"{"code_id":67,"creator":"jane","checksum":"f7bb7b18fb01bbf425cf4ed2cd4b7fb26a019a7fc75a4dc87e8a0b768c501f00"}"#,
+        );
+    }
+
+    #[test]
+    fn raw_range_constructor_works() {
+        let query = WasmQuery::raw_range(
+            "contract_addr",
+            &b"asdf"[..]..&b"asdz"[..],
+            100,
+            Order::Ascending,
+        );
+
+        assert_eq!(
+            query,
+            WasmQuery::RawRange {
+                contract_addr: "contract_addr".to_string(),
+                start: Some(Binary::from(b"asdf")),
+                end: Some(Binary::from(b"asdz")),
+                limit: 100,
+                order: Order::Ascending,
+            }
+        );
+
+        let query = WasmQuery::raw_range("contract_addr", b"asdf"..=b"asdz", 100, Order::Ascending);
+        assert_eq!(
+            query,
+            WasmQuery::RawRange {
+                contract_addr: "contract_addr".to_string(),
+                start: Some(Binary::from(b"asdf")),
+                end: Some(Binary::from(b"asdz\0")),
+                limit: 100,
+                order: Order::Ascending,
+            }
         );
     }
 }
