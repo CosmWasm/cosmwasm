@@ -117,7 +117,7 @@ mod tests {
         fn assert_range<'a>(
             storage: &MockStorage,
             range: impl RangeBounds<&'a [u8]>,
-            expected_values: impl Iterator<Item = u8> + DoubleEndedIterator + Clone,
+            expected_values: impl DoubleEndedIterator<Item = u8> + Clone,
         ) {
             let (s, e) = range_to_bounds(&range);
             // ascending
