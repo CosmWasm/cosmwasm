@@ -288,6 +288,7 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
         "Uint128" => Some("string"),
         "Uint256" => Some("string"),
         "Uint512" => Some("string"),
+        "Order" => Some("string"),
         "Int64" => Some("Int64"),
         "Int128" => Some("string"),
         "Int256" => Some("string"),
