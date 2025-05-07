@@ -946,7 +946,7 @@ impl Default for WasmQuerier {
                 WasmQuery::CodeInfo { code_id, .. } => {
                     SystemError::NoSuchCode { code_id: *code_id }
                 }
-                // #[cfg(feature = "cosmwasm_3_0")]
+                #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
                 WasmQuery::RawRange { contract_addr, .. } => SystemError::NoSuchContract {
                     addr: contract_addr.clone(),
                 },
@@ -1422,10 +1422,7 @@ mod tests {
     use crate::coins;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{
-        coin, instantiate2_address, query::RawRangeResponse, ContractInfoResponse, HexBinary,
-        Response, Storage,
-    };
+    use crate::{coin, instantiate2_address, ContractInfoResponse, HexBinary, Response, Storage};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use base64::{engine::general_purpose, Engine};
@@ -2823,6 +2820,7 @@ mod tests {
                         SystemResult::Err(SystemError::NoSuchCode { code_id })
                     }
                 }
+                #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
                 WasmQuery::RawRange {
                     contract_addr,
                     start,
@@ -2852,7 +2850,7 @@ mod tests {
                         } else {
                             None
                         };
-                        let raw_range_response = RawRangeResponse { data, next_key };
+                        let raw_range_response = crate::RawRangeResponse { data, next_key };
 
                         SystemResult::Ok(ContractResult::Ok(
                             to_json_binary(&raw_range_response).unwrap(),
@@ -2936,7 +2934,7 @@ mod tests {
             }
         }
 
-        // #[cfg(feature = "cosmwasm_3_0")]
+        #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
         {
             let result = querier.query(&WasmQuery::RawRange {
                 contract_addr: contract_addr.clone().into(),

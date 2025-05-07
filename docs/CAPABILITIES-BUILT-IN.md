@@ -33,3 +33,5 @@ might define others.
   `migrate` entrypoint, as well as IBC Fees support with `IbcMsg::PayPacketFee`,
   `IbcMsg::PayPacketFeeAsync` and `IbcQuery::FeeEnabledChannel`. Only chains
   running CosmWasm `2.2.0` or higher support this.
+- `cosmwasm_3_0` enables `WasmQuery::RawRange`. Only chains running CosmWasm
+  `3.0.0` or higher support this.
