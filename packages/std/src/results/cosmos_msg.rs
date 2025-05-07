@@ -626,7 +626,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "cosmwasm_1_3")]
+    #[cfg(all(feature = "cosmwasm_1_3", feature = "staking"))]
     fn msg_distribution_serializes_to_correct_json() {
         // FundCommunityPool
         let fund_coins = vec![coin(200, "feathers"), coin(200, "stones")];
