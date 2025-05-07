@@ -1,11 +1,12 @@
-use core::ops::RangeBounds;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
+#[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
 use crate::storage_keys::{range_to_bounds, ToByteVec};
-use crate::{prelude::*, Order};
 use crate::{Addr, Binary, Checksum};
+#[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
+use core::ops::RangeBounds;
 
 use super::query_response::QueryResponseType;
 
@@ -42,6 +43,7 @@ pub enum WasmQuery {
     /// Please keep in mind that the contract you are querying might change its storage layout using
     /// migrations, which could break your queries, so it is recommended to only use this for
     /// contracts you control.
+    #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
     RawRange {
         /// The address of the contract to query
         contract_addr: String,
@@ -59,7 +61,7 @@ pub enum WasmQuery {
         /// on the full JSON size of the response type.
         limit: u16,
         /// The order in which you want to receive the key-value pairs.
-        order: Order,
+        order: crate::Order,
     },
 }
 
@@ -67,11 +69,12 @@ impl WasmQuery {
     /// Creates a new [`WasmQuery::RawRange`] from the given parameters.
     ///
     /// This takes a [`RangeBounds`] to allow for specifying the range in a more idiomatic way.
+    #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
     pub fn raw_range<'a, R, B>(
         contract_addr: impl Into<String>,
         range: R,
         limit: u16,
-        order: Order,
+        order: crate::Order,
     ) -> Self
     where
         R: RangeBounds<&'a B>,
@@ -224,7 +227,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
     fn raw_range_constructor_works() {
+        use crate::Order;
+
         let query = WasmQuery::raw_range(
             "contract_addr",
             &b"asdf"[..]..&b"asdz"[..],
