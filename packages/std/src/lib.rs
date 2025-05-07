@@ -114,19 +114,23 @@ pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
-#[cfg(target_arch = "wasm32")]
+//
+// Exports
+//
+
+#[cfg(all(feature = "exports", target_arch = "wasm32"))]
 mod exports;
 
-#[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
+#[cfg(all(feature = "exports", target_arch = "wasm32", feature = "cosmwasm_2_2"))]
 pub use crate::exports::do_migrate_with_info;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(feature = "exports", target_arch = "wasm32"))]
 pub use crate::exports::{
     do_execute, do_ibc_destination_callback, do_ibc_source_callback, do_instantiate, do_migrate,
     do_query, do_reply, do_sudo,
 };
-#[cfg(all(feature = "ibc2", target_arch = "wasm32"))]
+#[cfg(all(feature = "exports", target_arch = "wasm32", feature = "ibc2"))]
 pub use crate::exports::{do_ibc2_packet_receive, do_ibc2_packet_timeout};
-#[cfg(all(feature = "stargate", target_arch = "wasm32"))]
+#[cfg(all(feature = "exports", target_arch = "wasm32", feature = "stargate"))]
 pub use crate::exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
     do_ibc_packet_receive, do_ibc_packet_timeout,
