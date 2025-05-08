@@ -1229,7 +1229,7 @@ jobs:
           command: |
             apk update
             # needed for grcov and compiling tests
-            apk add --no-cache mold clang curl llvm19-dev zlib-static clang19-static lcov
+            apk add --no-cache mold clang curl llvm19-dev clang19-static lcov
       - run:
           name: Install cargo-llvm-cov and cargo-nextest
           command: |

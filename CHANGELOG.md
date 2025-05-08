@@ -78,6 +78,7 @@ and this project adheres to
 - cosmwasm-std: Remove export of `ExternalApi`, `ExternalQuerier` and
   `ExternalStorage` as those are only needed by export implementations in
   cosmwasm-std. ([#2467])
+- cosmwasm-vm: Update wasmer to 5.0.6. ([#2472])
 - cosmwasm-std: Add a new `exports` feature which needs to be enabled for the
   primary cosmwasm_std dependency of a contract.
 
@@ -120,6 +121,7 @@ and this project adheres to
 [#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
 [#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
 [#2467]: https://github.com/CosmWasm/cosmwasm/pull/2467
+[#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
 
 ## [2.2.0] - 2024-12-17
 
