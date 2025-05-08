@@ -26,6 +26,7 @@ overflow-checks = true
 cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-std = { path = "../../packages/std", default-features = false, features = [
     "cosmwasm_1_4",
+    "exports",
     "iterator",
     "std",
 ] }

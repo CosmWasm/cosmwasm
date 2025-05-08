@@ -78,6 +78,8 @@ and this project adheres to
 - cosmwasm-std: Remove export of `ExternalApi`, `ExternalQuerier` and
   `ExternalStorage` as those are only needed by export implementations in
   cosmwasm-std. ([#2467])
+- cosmwasm-std: Add a new `exports` feature which needs to be enabled for the
+  primary cosmwasm_std dependency of a contract.
 
 ## Fixed
 
