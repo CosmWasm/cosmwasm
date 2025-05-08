@@ -63,6 +63,10 @@ impl Default for Gatekeeper {
         Self::new(GatekeeperConfig {
             allow_floats: true,
             allow_feature_bulk_memory_operations: false,
+            // we allow the reference types proposal during compatibility checking because a subset
+            // of it is required since Rust 1.82, but we don't allow any of the instructions specific
+            // to the proposal here. Especially `table.grow` and `table.fill` can be abused to cause
+            // very long runtime and high memory usage.
             allow_feature_reference_types: false,
             allow_feature_simd: false,
             allow_feature_exception_handling: false,
