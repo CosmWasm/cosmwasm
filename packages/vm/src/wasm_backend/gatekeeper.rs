@@ -479,12 +479,12 @@ mod tests {
         let wasm = wat::parse_str(
             r#"
             (module
-                (table 1000000000 funcref)
+                (table 1000000 funcref)
                 (func (export "test") (param $i i32)
                     ;; fill with nulls
                     i32.const 0
                     ref.null func
-                    i32.const 1000000000
+                    i32.const 1000000
                     table.fill 0))
             "#,
         )
