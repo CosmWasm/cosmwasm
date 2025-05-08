@@ -15,6 +15,7 @@ mod memory;
 mod modules;
 mod parsed_wasm;
 mod sections;
+mod security_tests;
 mod serde;
 mod size;
 mod static_analysis;

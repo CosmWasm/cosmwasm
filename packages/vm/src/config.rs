@@ -21,6 +21,9 @@ const DEFAULT_MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
 
 const DEFAULT_MAX_FUNCTION_RESULTS: usize = 1;
 
+/// Maximum allowed size for a Wasm module in bytes (3MiB by default)
+const DEFAULT_MODULE_SIZE_LIMIT: usize = 3 * 1024 * 1024;
+
 /// Various configurations for the VM.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -85,6 +88,9 @@ pub struct WasmLimits {
 
     /// The maximum number of results a Wasm function type can have.
     pub max_function_results: Option<usize>,
+
+    /// The maximum size of a Wasm module in bytes
+    pub module_size_limit: Option<usize>,
 }
 
 impl WasmLimits {
@@ -119,6 +125,10 @@ impl WasmLimits {
     pub fn max_function_results(&self) -> usize {
         self.max_function_results
             .unwrap_or(DEFAULT_MAX_FUNCTION_RESULTS)
+    }
+
+    pub fn module_size_limit(&self) -> usize {
+        self.module_size_limit.unwrap_or(DEFAULT_MODULE_SIZE_LIMIT)
     }
 }
 
