@@ -1731,6 +1731,31 @@ mod tests {
     }
 
     #[test]
+    fn func_ref_test() {
+        let wasm = wat::parse_str(
+            r#"(module
+                (type (func))
+                (type (func (param funcref)))
+                (import "env" "abort" (func $f (type 1)))
+                (func (type 0) nop)
+                (export "add_one" (func 0))
+                (export "allocate" (func 0))
+                (export "interface_version_8" (func 0))
+                (export "deallocate" (func 0))
+                (export "memory" (memory 0))
+                (memory 3)
+            )"#,
+        )
+        .unwrap();
+
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
+
+        // making sure this doesn't panic
+        cache.store_code(&wasm, true, true).unwrap();
+    }
+
+    #[test]
     fn test_wasm_limits_checked() {
         let tmp_dir = TempDir::new().unwrap();
 
