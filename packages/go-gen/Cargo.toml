@@ -10,7 +10,7 @@ release = false
 
 [dependencies]
 cosmwasm-std = { version = "2.2.0-rc.1", path = "../std", features = [
-    "cosmwasm_2_2",
+    "cosmwasm_3_0",
     "staking",
     "stargate",
 ] }
