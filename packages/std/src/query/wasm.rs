@@ -261,4 +261,20 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn raw_range_response_serialization() {
+        let response = RawRangeResponse {
+            data: vec![
+                (Binary::from(b"key"), Binary::from(b"value")),
+                (Binary::from(b"foo"), Binary::from(b"bar")),
+            ],
+            next_key: Some(Binary::from(b"next")),
+        };
+        let json = to_json_binary(&response).unwrap();
+        assert_eq!(
+            String::from_utf8_lossy(&json),
+            r#"{"data":[["a2V5","dmFsdWU="],["Zm9v","YmFy"]],"next_key":"bmV4dA=="}"#,
+        );
+    }
 }
