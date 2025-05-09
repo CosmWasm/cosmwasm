@@ -67,6 +67,9 @@ mod read_limits {
     pub const RESULT_IBC_SOURCE_CALLBACK: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_destination_callback call.
     pub const RESULT_IBC_DESTINATION_CALLBACK: usize = 64 * MI;
+    /// Max length (in bytes) of the result data from a ibc2_acknowledge_receive call.
+    #[cfg(feature = "ibc2")]
+    pub const RESULT_IBC_ACKNOWLEDGE_RECEIVE: usize = 64 * MI;
 }
 
 /// The limits for the JSON deserialization.
@@ -674,6 +677,45 @@ where
         "ibc_packet_timeout",
         &[env, msg],
         read_limits::RESULT_IBC_PACKET_TIMEOUT,
+    )
+}
+
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_acknowledge_receive<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &Ibc2PacketReceiveMsg,
+) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + CustomMsg,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc2_acknowledge_receive_raw(instance, &env, &msg)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
+    Ok(result)
+}
+
+#[cfg(feature = "ibc2")]
+pub fn call_ibc2_acknowledge_receive_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "ibc2_acknowledge_receive",
+        &[env, msg],
+        read_limits::RESULT_IBC_ACKNOWLEDGE_RECEIVE,
     )
 }
 
