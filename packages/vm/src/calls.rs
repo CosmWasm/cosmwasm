@@ -58,7 +58,7 @@ mod read_limits {
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_RECEIVE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_ack call.
-    #[cfg(feature = "stargate")]
+    #[cfg(any(feature = "stargate", feature = "ibc2"))]
     pub const RESULT_IBC_PACKET_ACK: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(any(feature = "stargate", feature = "ibc2"))]
@@ -67,9 +67,6 @@ mod read_limits {
     pub const RESULT_IBC_SOURCE_CALLBACK: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_destination_callback call.
     pub const RESULT_IBC_DESTINATION_CALLBACK: usize = 64 * MI;
-    /// Max length (in bytes) of the result data from a ibc2_packet_ack call.
-    #[cfg(feature = "ibc2")]
-    pub const RESULT_IBC_ACKNOWLEDGE_RECEIVE: usize = 64 * MI;
 }
 
 /// The limits for the JSON deserialization.
@@ -695,7 +692,7 @@ where
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_ibc2_packet_ack_raw(instance, &env, &msg)?;
-    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_ACK)?;
     Ok(result)
 }
 
@@ -715,7 +712,7 @@ where
         instance,
         "ibc2_packet_ack",
         &[env, msg],
-        read_limits::RESULT_IBC_ACKNOWLEDGE_RECEIVE,
+        read_limits::RESULT_IBC_PACKET_ACK,
     )
 }
 
