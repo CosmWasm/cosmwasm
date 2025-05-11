@@ -136,8 +136,8 @@ impl Ibc2PacketTimeoutMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct Ibc2AcknowledgeMsg {
-    pub source_channel: String,
-    pub destination_channel: String,
+    pub source_client: String,
+    pub destination_client: String,
     pub data: Ibc2Payload,
     pub acknowledgement: Vec<u8>,
     pub relayer: Addr,
