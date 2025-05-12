@@ -162,7 +162,7 @@ impl Ibc2PacketAckMsg {
 }
 
 /// Ibc2PacketSendMsg represents a payload sent event in the IBC2 protocol.
-/// Since sending IBCv2 packet is permissionless, the IBC protocol indtroduces
+/// Since sending IBCv2 packet is permissionless, the IBC protocol introduces
 /// an extra entry point, in which the application can verify the message sent from
 /// a port ID belonging to the contract.
 ///
