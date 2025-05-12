@@ -16,7 +16,7 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "ibc2")]
-use cosmwasm_std::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg};
+use cosmwasm_std::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2PacketAckMsg};
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -681,14 +681,15 @@ where
 pub fn call_ibc2_packet_ack<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    msg: &Ibc2PacketReceiveMsg,
-) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
+    msg: &Ibc2PacketAckMsg,
+) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + CustomMsg,
 {
+
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_ibc2_packet_ack_raw(instance, &env, &msg)?;
@@ -1361,13 +1362,33 @@ mod tests {
     #[cfg(feature = "ibc2")]
     mod ibc2 {
         use super::*;
-        use cosmwasm_std::testing::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout};
+        use cosmwasm_std::testing::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout, mock_ibc2_packet_ack};
         static IBC2: &[u8] = include_bytes!("../testdata/ibc2.wasm");
 
         #[derive(serde::Serialize)]
         pub struct IbcPayload {
             pub response_without_ack: bool,
             pub send_async_ack_for_prev_msg: bool,
+        }
+
+        #[test]
+        fn call_ibc2_packet_ack_works() {
+            // init
+            let mut instance = mock_instance(IBC2, &[]);
+            let info = mock_info("creator", &[]);
+            let instantiate_msg = br#"{}"#;
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, instantiate_msg)
+                .unwrap()
+                .unwrap();
+
+            let ibc2_msg = IbcPayload {
+                response_without_ack: false,
+                send_async_ack_for_prev_msg: false,
+            };
+            let ibc2_ack = mock_ibc2_packet_ack(&ibc2_msg).unwrap();
+            call_ibc2_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ibc2_ack)
+                .unwrap()
+                .unwrap();
         }
 
         #[test]

@@ -77,7 +77,9 @@ pub use crate::ibc::{
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
     TransferMsgBuilder,
 };
-pub use crate::ibc2::{Ibc2Msg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload};
+pub use crate::ibc2::{
+    Ibc2Msg, Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload,
+};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
 pub use crate::math::{
@@ -132,7 +134,7 @@ pub use crate::exports::{
     do_query, do_reply, do_sudo,
 };
 #[cfg(all(feature = "ibc2", target_arch = "wasm32"))]
-pub use crate::exports::{do_ibc2_packet_receive, do_ibc2_packet_timeout};
+pub use crate::exports::{do_ibc2_packet_ack, do_ibc2_packet_receive, do_ibc2_packet_timeout};
 #[cfg(all(feature = "stargate", target_arch = "wasm32"))]
 pub use crate::exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,

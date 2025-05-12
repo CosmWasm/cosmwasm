@@ -23,7 +23,7 @@ pub use mock::{
     MOCK_CONTRACT_ADDR,
 };
 #[cfg(feature = "ibc2")]
-pub use mock::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout};
+pub use mock::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout, mock_ibc2_packet_ack};
 #[cfg(feature = "stargate")]
 pub use mock::{
     mock_ibc_channel, mock_ibc_channel_close_confirm, mock_ibc_channel_close_init,

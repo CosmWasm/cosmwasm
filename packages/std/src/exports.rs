@@ -23,7 +23,7 @@ use crate::ibc::{
 };
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
 #[cfg(feature = "ibc2")]
-use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg};
+use crate::ibc2::{Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg};
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{Owned, Region};
 use crate::panic::install_panic_handler;
@@ -525,6 +525,35 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
+/// do_ibc2_packet_ack is designed for use with #[entry_point] to make a "C" extern
+///
+/// contract_fn is called when this chain receives an Ibc2 acknowledge payload on port belonging
+/// to this contract
+///
+/// - `Q`: custom query type (see QueryRequest)
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+#[cfg(feature = "ibc2")]
+pub fn do_ibc2_packet_ack<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    install_panic_handler();
+    let res = _do_ibc2_packet_ack(
+        contract_fn,
+        env_ptr as *mut Region<Owned>,
+        msg_ptr as *mut Region<Owned>,
+    );
+    let v = to_json_vec(&res).unwrap();
+    Region::from_vec(v).to_heap_ptr() as u32
+}
+
 /// do_ibc2_packet_receive is designed for use with #[entry_point] to make a "C" extern
 ///
 /// contract_fn is called when this chain receives an Ibc2 payload on port belonging
@@ -949,6 +978,29 @@ where
         querier: ExternalQuerier::new(),
         custom_query_type: PhantomData,
     }
+}
+
+#[cfg(feature = "ibc2")]
+fn _do_ibc2_packet_ack<Q, C, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+    env_ptr: *mut Region<Owned>,
+    msg_ptr: *mut Region<Owned>,
+) -> ContractResult<IbcBasicResponse<C>>
+where
+    Q: CustomQuery,
+    C: CustomMsg,
+    E: ToString,
+{
+    let env: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(env_ptr).unwrap()).into_vec() };
+    let msg: Vec<u8> =
+        unsafe { Region::from_heap_ptr(ptr::NonNull::new(msg_ptr).unwrap()).into_vec() };
+
+    let env: Env = try_into_contract_result!(from_json(env));
+    let msg: Ibc2PacketAckMsg = try_into_contract_result!(from_json(msg));
+
+    let mut deps = make_dependencies();
+    contract_fn(deps.as_mut(), env, msg).into()
 }
 
 #[cfg(feature = "ibc2")]

@@ -135,12 +135,30 @@ impl Ibc2PacketTimeoutMsg {
 /// Message sent to the IBCv2 app upon receiving an acknowledgement packet
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
-pub struct Ibc2AcknowledgeMsg {
+pub struct Ibc2PacketAckMsg {
     pub source_client: String,
     pub destination_client: String,
     pub data: Ibc2Payload,
     pub acknowledgement: Vec<u8>,
     pub relayer: Addr,
+}
+
+impl Ibc2PacketAckMsg {
+    pub fn new(
+        source_client: String,
+        destination_client: String,
+        data: Ibc2Payload,
+        acknowledgement: Vec<u8>,
+        relayer: Addr,
+    ) -> Self {
+        Self {
+            source_client,
+            destination_client,
+            data,
+            acknowledgement,
+            relayer,
+        }
+    }
 }
 
 #[cfg(test)]

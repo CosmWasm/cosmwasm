@@ -24,7 +24,7 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 #[cfg(feature = "ibc2")]
-use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload};
+use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload, Ibc2PacketAckMsg};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 #[cfg(feature = "staking")]
@@ -508,6 +508,26 @@ pub fn mock_ibc_packet_recv(
             }
             .into(),
         },
+        Addr::unchecked("relayer"),
+    ))
+}
+
+/// Creates a Ibc2PacketAckMsg for testing ibc2_packet_ack. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_ack(data: &impl Serialize) -> StdResult<Ibc2PacketAckMsg> {
+    Ok(Ibc2PacketAckMsg::new(
+        
+        "source_id23".to_string(),
+        "channel_id23".to_string(),
+        Ibc2Payload {
+            source_port: "wasm2srcport".to_string(),
+            destination_port: "wasm2destport".to_string(),
+            version: "v2".to_string(),
+            encoding: "json".to_string(),
+            value: to_json_binary(data)?,
+        },
+        vec![],
         Addr::unchecked("relayer"),
     ))
 }

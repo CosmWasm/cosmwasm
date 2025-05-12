@@ -1,7 +1,8 @@
 use cosmwasm_std::{
     entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2Msg,
-    Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload, IbcAcknowledgement, IbcBasicResponse,
-    IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdAck, StdError, StdResult,
+    Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload, IbcAcknowledgement,
+    IbcBasicResponse, IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdAck, StdError,
+    StdResult,
 };
 
 use crate::msg::{IbcPayload, QueryMsg};
@@ -17,6 +18,7 @@ pub fn instantiate(
     deps.storage.set(
         STATE_KEY,
         &to_json_vec(&State {
+            ibc2_packet_ack_counter: 0,
             ibc2_packet_receive_counter: 0,
             ibc2_packet_timeout_counter: 0,
             last_source_client: "".to_owned(),
@@ -38,6 +40,29 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             Ok(Binary::from(data))
         }
     }
+}
+
+#[entry_point]
+pub fn ibc2_packet_ack(
+    deps: DepsMut,
+    _env: Env,
+    _msg: Ibc2PacketAckMsg,
+) -> StdResult<IbcBasicResponse> {
+    let data = deps
+        .storage
+        .get(STATE_KEY)
+        .ok_or_else(|| StdError::generic_err("State not found."))?;
+    let state: State = from_json(data)?;
+
+    deps.storage.set(
+        STATE_KEY,
+        &to_json_vec(&State {
+            ibc2_packet_ack_counter: state.ibc2_packet_ack_counter + 1,
+            ..state
+        })?,
+    );
+
+    Ok(IbcBasicResponse::default())
 }
 
 #[entry_point]
