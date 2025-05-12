@@ -161,6 +161,46 @@ impl Ibc2PacketAckMsg {
     }
 }
 
+/// Ibc2PacketSendMsg represents a payload sent event in the IBC2 protocol.
+/// Since sending IBCv2 packet is permissionless, the IBC protocol introduces
+/// an extra entry point, in which the application can verify the message sent from
+/// a port ID belonging to the contract.
+///
+/// It includes details about the source and destination clients, the sequence
+/// number of the packet and the signer that sent the message.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[non_exhaustive]
+pub struct Ibc2PacketSendMsg {
+    /// The payload to be sent.
+    pub payload: Ibc2Payload,
+    /// The identifier of the client that originally sent the packet.
+    pub source_client: String,
+    /// The identifier of the client that was the intended recipient.
+    pub destination_client: String,
+    /// The sequence number of the sent packet.
+    pub packet_sequence: u64,
+    /// The address of the signer that sent the packet.
+    pub signer: Addr,
+}
+
+impl Ibc2PacketSendMsg {
+    pub fn new(
+        payload: Ibc2Payload,
+        source_client: String,
+        destination_client: String,
+        packet_sequence: u64,
+        signer: Addr,
+    ) -> Self {
+        Self {
+            payload,
+            source_client,
+            destination_client,
+            packet_sequence,
+            signer,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::to_string;

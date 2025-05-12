@@ -1554,6 +1554,8 @@ mod tests {
             E::Query,
             E::Ibc2PacketReceive,
             E::Ibc2PacketTimeout,
+            E::Ibc2PacketAck,
+            E::Ibc2PacketSend,
         ]);
         assert_eq!(
             report5,
