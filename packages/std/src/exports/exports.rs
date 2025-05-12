@@ -986,7 +986,7 @@ where
     let env: Env = try_into_contract_result!(from_json(env));
     let msg: Ibc2PacketAckMsg = try_into_contract_result!(from_json(msg));
 
-    let mut deps = make_dependencies();
+    let mut deps = deps_from_imports();
     contract_fn(deps.as_mut(), env, msg).into()
 }
 

@@ -10,7 +10,7 @@ pub use exports::{
     do_query, do_reply, do_sudo,
 };
 #[cfg(feature = "ibc2")]
-pub use exports::{do_ibc2_packet_receive, do_ibc2_packet_timeout};
+pub use exports::{do_ibc2_packet_receive, do_ibc2_packet_timeout, do_ibc2_packet_ack};
 #[cfg(feature = "stargate")]
 pub use exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
