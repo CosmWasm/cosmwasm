@@ -27,6 +27,8 @@ and this project adheres to
 - cosmwasm-std: Add `cosmwasm_std::testing::Envs`, which is an `Env` factory for
   testing environments. It auto-increments block heights and timestamps. It
   allows for advanced configurations such as custom address prefixes. ([#2442])
+- cosmwasm-vm: Add support for `ibc2_packet_ack` endpoint ([#2474])
+- cosmwasm-std: Add support for `ibc2_packet_ack` endpoint ([#2474])
 
 ## Changed
 
