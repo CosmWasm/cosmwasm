@@ -1254,7 +1254,7 @@ jobs:
           name: Run tests with coverage
           command: |
             # Generate full coverage report
-            cargo llvm-cov nextest --lcov --output-path lcov.info
+            cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
 
             # List of package directories and their flags
             # ToDo: Re-add "core:cosmwasm-core" when enabling core coverage again
