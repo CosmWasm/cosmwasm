@@ -29,6 +29,8 @@ and this project adheres to
   allows for advanced configurations such as custom address prefixes. ([#2442])
 - cosmwasm-vm: Add support for `ibc2_packet_ack` endpoint ([#2474])
 - cosmwasm-std: Add support for `ibc2_packet_ack` endpoint ([#2474])
+- cosmwasm-std: Add `Ibc2PacketSendMsg` message - ([#2477])
+- cosmwasm-vm: Add `ibc2_packet_send` entrypoint ([#2477])
 
 ## Changed
 
@@ -127,6 +129,7 @@ and this project adheres to
 [#2467]: https://github.com/CosmWasm/cosmwasm/pull/2467
 [#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
 [#2473]: https://github.com/CosmWasm/cosmwasm/pull/2473
+[#2477]: https://github.com/CosmWasm/cosmwasm/pull/2477
 
 ## [2.2.0] - 2024-12-17
 

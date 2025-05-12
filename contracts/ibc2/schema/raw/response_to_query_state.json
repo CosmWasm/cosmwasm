@@ -25,6 +25,16 @@
       "format": "uint32",
       "minimum": 0.0
     },
+    "last_packet_sent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Ibc2PacketSendMsg"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "last_packet_seq": {
       "type": "integer",
       "format": "uint64",
@@ -34,5 +44,97 @@
       "type": "string"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "string"
+    },
+    "Ibc2PacketSendMsg": {
+      "description": "Ibc2PacketSendMsg represents a payload sent event in the IBC2 protocol. Since sending IBCv2 packet is permissionless, the IBC protocol indtroduces an extra entry point, in which the application can verify the message sent from a port ID belonging to the contract.\n\nIt includes details about the source and destination clients, the sequence number of the packet and the signer that sent the message.",
+      "type": "object",
+      "required": [
+        "destination_client",
+        "packet_sequence",
+        "payload",
+        "signer",
+        "source_client"
+      ],
+      "properties": {
+        "destination_client": {
+          "description": "The identifier of the client that was the intended recipient.",
+          "type": "string"
+        },
+        "packet_sequence": {
+          "description": "The sequence number of the sent packet.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "payload": {
+          "description": "The payload to be sent.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Ibc2Payload"
+            }
+          ]
+        },
+        "signer": {
+          "description": "The address of the signer that sent the packet.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Addr"
+            }
+          ]
+        },
+        "source_client": {
+          "description": "The identifier of the client that originally sent the packet.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Ibc2Payload": {
+      "description": "Payload value should be encoded in a format defined by the channel version, and the module on the other side should know how to parse this.",
+      "type": "object",
+      "required": [
+        "destination_port",
+        "encoding",
+        "source_port",
+        "value",
+        "version"
+      ],
+      "properties": {
+        "destination_port": {
+          "description": "The port id on the chain where the packet is sent to.",
+          "type": "string"
+        },
+        "encoding": {
+          "description": "Encoding used to serialize the [Ibc2Payload::value].",
+          "type": "string"
+        },
+        "source_port": {
+          "description": "The port id on the chain where the packet is sent from.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Encoded payload data.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            }
+          ]
+        },
+        "version": {
+          "description": "Version of the receiving contract.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
 }

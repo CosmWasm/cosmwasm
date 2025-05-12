@@ -41,6 +41,8 @@ pub enum Entrypoint {
     Ibc2PacketReceive,
     #[strum(serialize = "ibc2_packet_timeout")]
     Ibc2PacketTimeout,
+    #[strum(serialize = "ibc2_packet_send")]
+    Ibc2PacketSend,
 }
 
 // sort entrypoints by their &str representation

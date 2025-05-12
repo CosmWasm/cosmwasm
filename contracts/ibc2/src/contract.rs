@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     entry_point, from_json, to_json_vec, Binary, Deps, DepsMut, Empty, Env, Ibc2Msg,
-    Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload, IbcAcknowledgement,
-    IbcBasicResponse, IbcReceiveResponse, MessageInfo, QueryResponse, Response, StdAck, StdError,
-    StdResult,
+    Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketSendMsg, Ibc2PacketTimeoutMsg, Ibc2Payload,
+    IbcAcknowledgement, IbcBasicResponse, IbcReceiveResponse, MessageInfo, QueryResponse, Response,
+    StdAck, StdError, StdResult,
 };
 
 use crate::msg::{IbcPayload, QueryMsg};
@@ -23,6 +23,7 @@ pub fn instantiate(
             ibc2_packet_timeout_counter: 0,
             last_source_client: "".to_owned(),
             last_packet_seq: 0,
+            last_packet_sent: None,
         })?,
     );
 
@@ -139,6 +140,29 @@ pub fn ibc2_packet_timeout(
         STATE_KEY,
         &to_json_vec(&State {
             ibc2_packet_timeout_counter: state.ibc2_packet_timeout_counter + 1,
+            ..state
+        })?,
+    );
+
+    Ok(IbcBasicResponse::default())
+}
+
+#[entry_point]
+pub fn ibc2_packet_send(
+    deps: DepsMut,
+    _env: Env,
+    msg: Ibc2PacketSendMsg,
+) -> StdResult<IbcBasicResponse> {
+    let data = deps
+        .storage
+        .get(STATE_KEY)
+        .ok_or_else(|| StdError::generic_err("State not found."))?;
+    let state: State = from_json(data)?;
+
+    deps.storage.set(
+        STATE_KEY,
+        &to_json_vec(&State {
+            last_packet_sent: Some(msg),
             ..state
         })?,
     );
