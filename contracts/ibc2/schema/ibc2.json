@@ -89,7 +89,7 @@
           "type": "string"
         },
         "Ibc2PacketSendMsg": {
-          "description": "Ibc2PacketSendMsg represents a payload sent event in the IBC2 protocol. Since sending IBCv2 packet is permissionless, the IBC protocol indtroduces an extra entry point, in which the application can verify the message sent from a port ID belonging to the contract.\n\nIt includes details about the source and destination clients, the sequence number of the packet and the signer that sent the message.",
+          "description": "Ibc2PacketSendMsg represents a payload sent event in the IBC2 protocol. Since sending IBCv2 packet is permissionless, the IBC protocol introduces an extra entry point, in which the application can verify the message sent from a port ID belonging to the contract.\n\nIt includes details about the source and destination clients, the sequence number of the packet and the signer that sent the message.",
           "type": "object",
           "required": [
             "destination_client",
