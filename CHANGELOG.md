@@ -24,6 +24,9 @@ and this project adheres to
 - cosmwasm-std: Add `WriteAcknowledgement` to `Ibc2Msg` - ([#2425])
 - cosmwasm-vm: Add `ibc2_packet_timeout` entrypoint - ([#2454])
 - cosmwasm-std: Add `Ibc2PacketTimeoutMsg` message - ([#2454])
+- cosmwasm-std: Add `cosmwasm_std::testing::Envs`, which is an `Env` factory for
+  testing environments. It auto-increments block heights and timestamps. It
+  allows for advanced configurations such as custom address prefixes. ([#2442])
 
 ## Changed
 
@@ -70,6 +73,16 @@ and this project adheres to
 - cosmwasm-std: Remove support for `BankQuery::AllBalances` and
   `query_all_balances`. ([#2433])
 - cosmwasm-std: source_client instead of channel_id in IBCv2 - ([#2450])
+- cosmwasm-std: Remove previously deprecated `IbcQuery::ListChannels` and
+  `ListChannelsResponse`. ([#2223])
+- cosmwasm-std: Remove export of `ExternalApi`, `ExternalQuerier` and
+  `ExternalStorage` as those are only needed by export implementations in
+  cosmwasm-std. ([#2467])
+- cosmwasm-vm: Update wasmer to 5.0.6. ([#2472])
+- cosmwasm-std: Add a new `exports` feature which needs to be enabled for the
+  primary cosmwasm_std dependency of a contract.
+- cosmwasm-vm: Enable partial reference-type support, enabling contracts
+  compiled with Rust 1.82 or newer to be stored. ([#2473])
 
 ## Fixed
 
@@ -83,6 +96,7 @@ and this project adheres to
 [#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
 [#2195]: https://github.com/CosmWasm/cosmwasm/issues/2195
 [#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
+[#2223]: https://github.com/CosmWasm/cosmwasm/issues/2223
 [#2237]: https://github.com/CosmWasm/cosmwasm/issues/2237
 [#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
@@ -104,9 +118,13 @@ and this project adheres to
 [#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
 [#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
 [#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
+[#2442]: https://github.com/CosmWasm/cosmwasm/pull/2442
 [#2450]: https://github.com/CosmWasm/cosmwasm/pull/2450
 [#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
 [#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
+[#2467]: https://github.com/CosmWasm/cosmwasm/pull/2467
+[#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
+[#2473]: https://github.com/CosmWasm/cosmwasm/pull/2473
 
 ## [2.2.0] - 2024-12-17
 

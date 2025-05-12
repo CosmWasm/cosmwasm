@@ -12,7 +12,10 @@ readme = "README.md"
 features = ["cosmwasm_2_2", "staking", "stargate", "ibc2"]
 
 [features]
-default = ["iterator", "std"]
+default = ["exports", "iterator", "std"]
+# Enable if this cosmwasm-std is the primary version of cosmwas-std used in the contract. This
+# adds exports and imports needed for basic communication between contract and VM.
+exports = []
 std = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this

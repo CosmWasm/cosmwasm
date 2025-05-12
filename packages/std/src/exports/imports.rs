@@ -1,19 +1,18 @@
 use alloc::vec::Vec;
 use core::ptr;
 
+#[cfg(feature = "iterator")]
+use super::memory::get_optional_region_address;
+use super::memory::{Owned, Region};
 use crate::import_helpers::{from_high_half, from_low_half};
-use crate::memory::{Owned, Region};
+#[cfg(feature = "iterator")]
+use crate::iterator::{Order, Record};
 use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
 use crate::sections::decode_sections2;
 use crate::sections::encode_sections;
 use crate::serde::from_json;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
-#[cfg(feature = "iterator")]
-use crate::{
-    iterator::{Order, Record},
-    memory::get_optional_region_address,
-};
 use crate::{Addr, CanonicalAddr};
 #[cfg(feature = "cosmwasm_2_1")]
 use crate::{AggregationError, HashFunction, PairingEqualityError};

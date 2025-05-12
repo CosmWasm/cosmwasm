@@ -63,6 +63,10 @@ impl Default for Gatekeeper {
         Self::new(GatekeeperConfig {
             allow_floats: true,
             allow_feature_bulk_memory_operations: false,
+            // we allow the reference types proposal during compatibility checking because a subset
+            // of it is required since Rust 1.82, but we don't allow any of the instructions specific
+            // to the proposal here. Especially `table.grow` and `table.fill` can be abused to cause
+            // very long runtime and high memory usage.
             allow_feature_reference_types: false,
             allow_feature_simd: false,
             allow_feature_exception_handling: false,
@@ -443,5 +447,53 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("Bulk memory operation"));
+    }
+
+    #[test]
+    fn bulk_table_operations_not_supported() {
+        // these operations can take a long time with big tables
+        let deterministic = Arc::new(Gatekeeper::default());
+        let mut compiler = make_compiler_config();
+        compiler.push_middleware(deterministic);
+        let store = Store::new(compiler);
+
+        let wasm = wat::parse_str(
+            r#"
+            (module
+                (table 2 funcref)
+                (func (export "test") (param $i i32) (result i32)
+                    ;; grow table to size of $i
+                    ref.null func
+                    local.get $i
+                    table.grow 0))
+            "#,
+        )
+        .unwrap();
+
+        let result = Module::new(&store, wasm);
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Reference type operation"));
+
+        let wasm = wat::parse_str(
+            r#"
+            (module
+                (table 1000000 funcref)
+                (func (export "test") (param $i i32)
+                    ;; fill with nulls
+                    i32.const 0
+                    ref.null func
+                    i32.const 1000000
+                    table.fill 0))
+            "#,
+        )
+        .unwrap();
+
+        let result = Module::new(&store, wasm);
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Reference type operation"));
     }
 }
