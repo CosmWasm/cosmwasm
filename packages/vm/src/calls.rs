@@ -16,7 +16,7 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "ibc2")]
-use cosmwasm_std::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2PacketAckMsg};
+use cosmwasm_std::{Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg};
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -689,7 +689,6 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + CustomMsg,
 {
-
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_ibc2_packet_ack_raw(instance, &env, &msg)?;
@@ -1362,7 +1361,9 @@ mod tests {
     #[cfg(feature = "ibc2")]
     mod ibc2 {
         use super::*;
-        use cosmwasm_std::testing::{mock_ibc2_packet_recv, mock_ibc2_packet_timeout, mock_ibc2_packet_ack};
+        use cosmwasm_std::testing::{
+            mock_ibc2_packet_ack, mock_ibc2_packet_recv, mock_ibc2_packet_timeout,
+        };
         static IBC2: &[u8] = include_bytes!("../testdata/ibc2.wasm");
 
         #[derive(serde::Serialize)]

@@ -24,7 +24,7 @@ use crate::ibc::{
     IbcTimeoutBlock,
 };
 #[cfg(feature = "ibc2")]
-use crate::ibc2::{Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload, Ibc2PacketAckMsg};
+use crate::ibc2::{Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg, Ibc2Payload};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
 #[cfg(feature = "staking")]
@@ -666,7 +666,6 @@ pub fn mock_ibc_packet_recv(
 #[cfg(feature = "ibc2")]
 pub fn mock_ibc2_packet_ack(data: &impl Serialize) -> StdResult<Ibc2PacketAckMsg> {
     Ok(Ibc2PacketAckMsg::new(
-        
         "source_id23".to_string(),
         "channel_id23".to_string(),
         Ibc2Payload {

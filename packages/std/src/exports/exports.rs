@@ -27,9 +27,6 @@ use crate::ibc::{
 use crate::ibc::{IbcChannelOpenMsg, IbcChannelOpenResponse};
 #[cfg(feature = "ibc2")]
 use crate::ibc2::{Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketTimeoutMsg};
-use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
-use crate::memory::{Owned, Region};
-use crate::panic::install_panic_handler;
 use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_json, to_json_vec};
