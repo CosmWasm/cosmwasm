@@ -37,12 +37,18 @@
       "title": "State",
       "type": "object",
       "required": [
+        "ibc2_packet_ack_counter",
         "ibc2_packet_receive_counter",
         "ibc2_packet_timeout_counter",
         "last_packet_seq",
         "last_source_client"
       ],
       "properties": {
+        "ibc2_packet_ack_counter": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
         "ibc2_packet_receive_counter": {
           "type": "integer",
           "format": "uint32",
