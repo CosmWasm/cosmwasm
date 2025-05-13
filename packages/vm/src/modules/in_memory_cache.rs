@@ -11,7 +11,7 @@ use crate::{Size, VmError, VmResult};
 // Based on `examples/module_size.sh`, and the cosmwasm-plus contracts.
 // We use an estimated *minimum* module size in order to compute a number of pre-allocated entries
 // that are enough to handle a size-limited cache without requiring re-allocation / resizing.
-// This will incurr an extra memory cost for the unused entries, but it's negligible:
+// This will incur an extra memory cost for the unused entries, but it's negligible:
 // Assuming the cost per entry is 48 bytes, 10000 entries will have an extra cost of just ~500 kB.
 // Which is a very small percentage (~0.03%) of our typical cache memory budget (2 GB).
 const MINIMUM_MODULE_SIZE: Size = Size::kibi(250);
