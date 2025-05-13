@@ -30,16 +30,6 @@ pub enum IbcQuery {
         channel_id: String,
         port_id: Option<String>,
     },
-    /// Queries whether the given channel supports IBC fees.
-    /// If port_id is omitted, it will default to the contract's own channel.
-    /// (To save a PortId{} call)
-    ///
-    /// Returns a `FeeEnabledChannelResponse`.
-    #[cfg(feature = "cosmwasm_2_2")]
-    FeeEnabledChannel {
-        port_id: Option<String>,
-        channel_id: String,
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -57,11 +47,3 @@ pub struct ChannelResponse {
 }
 
 impl_hidden_constructor!(ChannelResponse, channel: Option<IbcChannel>);
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[non_exhaustive]
-pub struct FeeEnabledChannelResponse {
-    pub fee_enabled: bool,
-}
-
-impl_hidden_constructor!(FeeEnabledChannelResponse, fee_enabled: bool);

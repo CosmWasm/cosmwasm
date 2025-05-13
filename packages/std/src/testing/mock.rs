@@ -1154,12 +1154,6 @@ impl IbcQuerier {
                 };
                 to_json_binary(&res).into()
             }
-            #[cfg(feature = "cosmwasm_2_2")]
-            IbcQuery::FeeEnabledChannel { .. } => {
-                use crate::query::FeeEnabledChannelResponse;
-                // for now, we always return true
-                to_json_binary(&FeeEnabledChannelResponse::new(true)).into()
-            }
         };
         // system result is always ok in the mock implementation
         SystemResult::Ok(contract_result)

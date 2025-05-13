@@ -89,6 +89,7 @@ and this project adheres to
   primary cosmwasm_std dependency of a contract.
 - cosmwasm-vm: Enable partial reference-type support, enabling contracts
   compiled with Rust 1.82 or newer to be stored. ([#2473])
+- cosmwasm-std: Removed IBC fees ([#2479])
 
 ## Fixed
 
@@ -132,6 +133,7 @@ and this project adheres to
 [#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
 [#2473]: https://github.com/CosmWasm/cosmwasm/pull/2473
 [#2477]: https://github.com/CosmWasm/cosmwasm/pull/2477
+[#2479]: https://github.com/CosmWasm/cosmwasm/pull/2479
 [#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
 
 ## [2.2.0] - 2024-12-17
