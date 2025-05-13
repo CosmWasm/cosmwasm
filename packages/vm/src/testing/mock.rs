@@ -1,7 +1,7 @@
 use bech32::primitives::decode::CheckedHrpstring;
 use bech32::{encode, Bech32, Hrp};
 use cosmwasm_std::{
-    Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo,
+    Addr, BlockInfo, Checksum, Coin, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo,
 };
 use sha2::{Digest, Sha256};
 
@@ -233,7 +233,7 @@ fn validate_length(bytes: &[u8]) -> Result<(), BackendError> {
 /// Create an env:
 ///
 /// ```
-/// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, Timestamp, TransactionInfo};
+/// # use cosmwasm_std::{Addr, BlockInfo, Checksum, ContractInfo, Env, Timestamp, TransactionInfo};
 /// use cosmwasm_vm::testing::mock_env;
 ///
 /// let env = mock_env();
@@ -243,7 +243,7 @@ fn validate_length(bytes: &[u8]) -> Result<(), BackendError> {
 ///         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
 ///         chain_id: "cosmos-testnet-14002".to_string(),
 ///     },
-///     transaction: Some(TransactionInfo { index: 3 }),
+///     transaction: Some(TransactionInfo::new(3, Checksum::from_hex("AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011").unwrap())),
 ///     contract: ContractInfo {
 ///         address: Addr::unchecked("cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs"),
 ///     },
@@ -280,7 +280,11 @@ pub fn mock_env() -> Env {
             time: Timestamp::from_nanos(1_571_797_419_879_305_533),
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        transaction: Some(TransactionInfo { index: 3 }),
+        transaction: Some(TransactionInfo::new(
+            3,
+            Checksum::from_hex("AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011")
+                .unwrap(),
+        )),
         contract: ContractInfo {
             address: Addr::unchecked(contract_addr),
         },

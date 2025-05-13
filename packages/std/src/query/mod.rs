@@ -9,6 +9,7 @@ use crate::Binary;
 use crate::Empty;
 
 /// Implements a hidden constructor for query responses.
+#[macro_export]
 macro_rules! impl_response_constructor {
     ( $response:ty, $( $field: ident : $t: ty),* ) => {
         impl $response {
