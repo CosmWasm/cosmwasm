@@ -2,7 +2,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
-use crate::impl_hidden_constructor;
 use crate::prelude::*;
 use crate::Binary;
 use crate::{Addr, Timestamp};
