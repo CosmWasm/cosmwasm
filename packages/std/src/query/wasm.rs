@@ -50,7 +50,7 @@ pub struct ContractInfoResponse {
 
 impl QueryResponseType for ContractInfoResponse {}
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     ContractInfoResponse,
     code_id: u64,
     creator: Addr,
@@ -77,7 +77,7 @@ pub struct CodeInfoResponse {
     pub checksum: Checksum,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     CodeInfoResponse,
     code_id: u64,
     creator: Addr,

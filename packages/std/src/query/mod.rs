@@ -10,7 +10,7 @@ use crate::Empty;
 
 /// Implements a hidden constructor for query responses.
 #[macro_export]
-macro_rules! impl_response_constructor {
+macro_rules! impl_hidden_constructor {
     ( $response:ty, $( $field: ident : $t: ty),* ) => {
         impl $response {
             /// Constructor for testing frameworks such as cw-multi-test.

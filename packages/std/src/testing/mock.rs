@@ -1,6 +1,6 @@
 use crate::prelude::*;
+use crate::HashFunction;
 use crate::{Addr, CanonicalAddr, Timestamp};
-use crate::{Checksum, HashFunction};
 use alloc::collections::BTreeMap;
 #[cfg(feature = "cosmwasm_1_3")]
 use alloc::collections::BTreeSet;
@@ -352,7 +352,7 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 /// Create an env:
 ///
 /// ```
-/// # use cosmwasm_std::{Addr, BlockInfo, Checksum, ContractInfo, Env, Timestamp, TransactionInfo};
+/// # use cosmwasm_std::{Addr, Binary, BlockInfo, ContractInfo, Env, Timestamp, TransactionInfo};
 /// use cosmwasm_std::testing::mock_env;
 ///
 /// let env = mock_env();
@@ -362,7 +362,7 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 ///         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
 ///         chain_id: "cosmos-testnet-14002".to_string(),
 ///     },
-///     transaction: Some(TransactionInfo::new(3, Checksum::from_hex("AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011").unwrap())),
+///     transaction: Some(TransactionInfo::new(3, Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]))),
 ///     contract: ContractInfo {
 ///         address: Addr::unchecked("cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs"),
 ///     },
@@ -533,10 +533,7 @@ impl Envs {
             },
             transaction: Some(TransactionInfo::new(
                 3,
-                Checksum::from_hex(
-                    "AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011",
-                )
-                .unwrap(),
+                Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]),
             )),
             contract: ContractInfo {
                 address: self.contract_address.clone(),
@@ -1424,7 +1421,7 @@ mod tests {
     use crate::coins;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{coin, instantiate2_address, Checksum, ContractInfoResponse, HexBinary, Response};
+    use crate::{coin, instantiate2_address, ContractInfoResponse, HexBinary, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use base64::{engine::general_purpose, Engine};
@@ -1470,10 +1467,7 @@ mod tests {
                 },
                 transaction: Some(TransactionInfo::new(
                     3,
-                    Checksum::from_hex(
-                        "AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011AABBCCDDEEFF0011"
-                    )
-                    .unwrap()
+                    Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]),
                 )),
                 contract: ContractInfo {
                     address: Addr::unchecked(MOCK_CONTRACT_ADDR)

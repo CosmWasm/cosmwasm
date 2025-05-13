@@ -46,7 +46,7 @@ pub struct PortIdResponse {
     pub port_id: String,
 }
 
-impl_response_constructor!(PortIdResponse, port_id: String);
+impl_hidden_constructor!(PortIdResponse, port_id: String);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
@@ -54,7 +54,7 @@ pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,
 }
 
-impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);
+impl_hidden_constructor!(ChannelResponse, channel: Option<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
@@ -62,4 +62,4 @@ pub struct FeeEnabledChannelResponse {
     pub fee_enabled: bool,
 }
 
-impl_response_constructor!(FeeEnabledChannelResponse, fee_enabled: bool);
+impl_hidden_constructor!(FeeEnabledChannelResponse, fee_enabled: bool);
