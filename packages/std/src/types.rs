@@ -6,6 +6,8 @@ use crate::prelude::*;
 use crate::Binary;
 use crate::{Addr, Timestamp};
 
+use crate::utils::impl_hidden_constructor;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
     pub block: BlockInfo,

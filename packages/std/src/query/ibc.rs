@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::ibc::IbcChannel;
 use crate::prelude::*;
 
+use crate::utils::impl_hidden_constructor;
+
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection.
 /// Most of these will return errors if the contract is not "ibc enabled".

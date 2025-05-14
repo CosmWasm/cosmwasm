@@ -9,6 +9,7 @@ use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
 
 use super::query_response::QueryResponseType;
+use crate::utils::impl_hidden_constructor;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]

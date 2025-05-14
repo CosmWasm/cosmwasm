@@ -6,6 +6,8 @@ use crate::{Addr, Binary, Checksum};
 
 use super::query_response::QueryResponseType;
 
+use crate::utils::impl_hidden_constructor;
+
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

@@ -5,26 +5,6 @@ Builds without the std feature are currently not expected to work. If you need n
 "#
 );
 
-/// Implements a hidden constructor for query responses.
-// #[macro_export]
-macro_rules! impl_hidden_constructor {
-    ( $response:ty, $( $field: ident : $t: ty),* ) => {
-        impl $response {
-            /// Constructor for testing frameworks such as cw-multi-test.
-            /// This is required because query response types should be #[non_exhaustive].
-            /// As a contract developer you should not need this constructor since
-            /// query responses are constructed for you via deserialization.
-            ///
-            /// Warning: This can change in breaking ways in minor versions.
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            pub fn new($( $field: $t),*) -> Self {
-                Self { $( $field ),* }
-            }
-        }
-    };
-}
-
 #[macro_use]
 extern crate alloc;
 
@@ -61,6 +41,7 @@ mod stdack;
 mod timestamp;
 mod traits;
 mod types;
+mod utils;
 
 /// This module is to simplify no_std imports
 pub(crate) mod prelude;
