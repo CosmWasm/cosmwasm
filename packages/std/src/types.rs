@@ -60,7 +60,7 @@ pub struct BlockInfo {
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     transaction: Some(TransactionInfo::new(3, Binary::from_hex("0102030405060708").unwrap())),
+    /// #     transaction: Some(TransactionInfo::new(3, Binary::from_hex("E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3").unwrap())),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },
