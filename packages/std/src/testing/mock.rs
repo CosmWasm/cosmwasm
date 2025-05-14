@@ -2828,6 +2828,8 @@ mod tests {
                     limit,
                     order,
                 } => {
+                    use crate::RawRangeEntry;
+
                     let Ok(addr) = api.addr_validate(contract_addr) else {
                         return SystemResult::Err(SystemError::NoSuchContract {
                             addr: contract_addr.clone(),
@@ -2841,12 +2843,12 @@ mod tests {
                                 *order,
                             )
                             .take(*limit as usize + 1) // take one more entry than limit
-                            .map(|(key, value)| (Binary::new(key), Binary::new(value)))
+                            .map(|(key, value)| RawRangeEntry::new(key, value))
                             .collect();
 
                         // if we have more than limit, there are more entries to fetch
                         let next_key = if data.len() > *limit as usize {
-                            data.pop().map(|(k, _)| k)
+                            data.pop().map(|RawRangeEntry { key, .. }| key)
                         } else {
                             None
                         };
@@ -2946,7 +2948,7 @@ mod tests {
             match result {
                 SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                     value.as_slice(),
-                    br#"{"data":[["dGhlIGtleQ==","dGhlIHZhbHVl"]],"next_key":null}"#
+                    br#"{"data":[{"k":"dGhlIGtleQ==","v":"dGhlIHZhbHVl"}],"next_key":null}"#
                 ),
                 res => panic!("Unexpected result: {res:?}"),
             }
