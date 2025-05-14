@@ -69,6 +69,15 @@ impl Binary {
         out.copy_from_slice(&self.0);
         Ok(out)
     }
+
+    pub fn from_hex(input: &str) -> StdResult<Self> {
+        let binary = hex::decode(input).map_err(StdError::invalid_hex)?;
+        Ok(Self(binary))
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.0.clone())
+    }
 }
 
 impl fmt::Display for Binary {

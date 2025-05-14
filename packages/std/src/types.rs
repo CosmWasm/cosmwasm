@@ -29,15 +29,15 @@ pub struct TransactionInfo {
     ///
     pub index: u32,
 
-    /// Checksum of the transaction.
+    /// Hash of the transaction.
     ///
     /// If the blockchain's CosmWasm version is below 3.0, this field
     /// will default to being empty.
     #[serde(default)]
-    pub transaction_hash: Binary,
+    pub hash: Binary,
 }
 
-impl_hidden_constructor!(TransactionInfo, index: u32, transaction_hash: Binary);
+impl_hidden_constructor!(TransactionInfo, index: u32, hash: Binary);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct BlockInfo {
@@ -60,7 +60,7 @@ pub struct BlockInfo {
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     transaction: Some(TransactionInfo::new(3, Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]))),
+    /// #     transaction: Some(TransactionInfo::new(3, Binary::from_hex("0102030405060708").unwrap())),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },
@@ -82,7 +82,7 @@ pub struct BlockInfo {
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     transaction: Some(TransactionInfo::new(3, Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]))),
+    /// #     transaction: Some(TransactionInfo::new(3, Binary::from_hex("0102030405060708").unwrap())),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },

@@ -362,7 +362,7 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 ///         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
 ///         chain_id: "cosmos-testnet-14002".to_string(),
 ///     },
-///     transaction: Some(TransactionInfo::new(3, Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]))),
+///     transaction: Some(TransactionInfo::new(3, Binary::from_hex("0102030405060708").unwrap())),
 ///     contract: ContractInfo {
 ///         address: Addr::unchecked("cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs"),
 ///     },
@@ -533,7 +533,7 @@ impl Envs {
             },
             transaction: Some(TransactionInfo::new(
                 3,
-                Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]),
+                Binary::from_hex("0102030405060708").unwrap(),
             )),
             contract: ContractInfo {
                 address: self.contract_address.clone(),
@@ -1467,7 +1467,7 @@ mod tests {
                 },
                 transaction: Some(TransactionInfo::new(
                     3,
-                    Binary::new(vec![0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8]),
+                    Binary::from_hex("0102030405060708").unwrap(),
                 )),
                 contract: ContractInfo {
                     address: Addr::unchecked(MOCK_CONTRACT_ADDR)
