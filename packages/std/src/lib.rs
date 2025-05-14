@@ -41,6 +41,7 @@ mod stdack;
 mod timestamp;
 mod traits;
 mod types;
+mod utils;
 
 /// This module is to simplify no_std imports
 pub(crate) mod prelude;

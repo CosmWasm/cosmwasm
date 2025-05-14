@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::ibc::IbcChannel;
 use crate::prelude::*;
 
+use crate::utils::impl_hidden_constructor;
+
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection.
 /// Most of these will return errors if the contract is not "ibc enabled".
@@ -46,7 +48,7 @@ pub struct PortIdResponse {
     pub port_id: String,
 }
 
-impl_response_constructor!(PortIdResponse, port_id: String);
+impl_hidden_constructor!(PortIdResponse, port_id: String);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
@@ -54,7 +56,7 @@ pub struct ChannelResponse {
     pub channel: Option<IbcChannel>,
 }
 
-impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);
+impl_hidden_constructor!(ChannelResponse, channel: Option<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
@@ -62,4 +64,4 @@ pub struct FeeEnabledChannelResponse {
     pub fee_enabled: bool,
 }
 
-impl_response_constructor!(FeeEnabledChannelResponse, fee_enabled: bool);
+impl_hidden_constructor!(FeeEnabledChannelResponse, fee_enabled: bool);

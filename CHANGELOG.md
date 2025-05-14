@@ -31,6 +31,8 @@ and this project adheres to
 - cosmwasm-std: Add support for `ibc2_packet_ack` endpoint ([#2474])
 - cosmwasm-std: Add `Ibc2PacketSendMsg` message - ([#2477])
 - cosmwasm-vm: Add `ibc2_packet_send` entrypoint ([#2477])
+- cosmwasm-std: Add Tx hash to TransactionInfo and make it non exhaustive
+  ([#2480])
 
 ## Changed
 
@@ -130,6 +132,7 @@ and this project adheres to
 [#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
 [#2473]: https://github.com/CosmWasm/cosmwasm/pull/2473
 [#2477]: https://github.com/CosmWasm/cosmwasm/pull/2477
+[#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
 
 ## [2.2.0] - 2024-12-17
 

@@ -6,6 +6,8 @@ use crate::{Addr, Binary, Checksum};
 
 use super::query_response::QueryResponseType;
 
+use crate::utils::impl_hidden_constructor;
+
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -50,7 +52,7 @@ pub struct ContractInfoResponse {
 
 impl QueryResponseType for ContractInfoResponse {}
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     ContractInfoResponse,
     code_id: u64,
     creator: Addr,
@@ -77,7 +79,7 @@ pub struct CodeInfoResponse {
     pub checksum: Checksum,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     CodeInfoResponse,
     code_id: u64,
     creator: Addr,

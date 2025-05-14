@@ -443,6 +443,10 @@
           "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
           "type": "string"
         },
+        "Binary": {
+          "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+          "type": "string"
+        },
         "BlockInfo": {
           "type": "object",
           "required": [
@@ -461,7 +465,7 @@
               "minimum": 0.0
             },
             "time": {
-              "description": "Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).\n\nThe source of this is the [BFT Time in Tendermint](https://github.com/tendermint/tendermint/blob/58dc1726/spec/consensus/bft-time.md), which has the same nanosecond precision as the `Timestamp` type.\n\n# Examples\n\nUsing chrono:\n\n``` # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo}; # let env = Env { #     block: BlockInfo { #         height: 12_345, #         time: Timestamp::from_nanos(1_571_797_419_879_305_533), #         chain_id: \"cosmos-testnet-14002\".to_string(), #     }, #     transaction: Some(TransactionInfo { index: 3 }), #     contract: ContractInfo { #         address: Addr::unchecked(\"contract\"), #     }, # }; # extern crate chrono; use chrono::NaiveDateTime; let seconds = env.block.time.seconds(); let nsecs = env.block.time.subsec_nanos(); let dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32); ```\n\nCreating a simple millisecond-precision timestamp (as used in JavaScript):\n\n``` # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo}; # let env = Env { #     block: BlockInfo { #         height: 12_345, #         time: Timestamp::from_nanos(1_571_797_419_879_305_533), #         chain_id: \"cosmos-testnet-14002\".to_string(), #     }, #     transaction: Some(TransactionInfo { index: 3 }), #     contract: ContractInfo { #         address: Addr::unchecked(\"contract\"), #     }, # }; let millis = env.block.time.nanos() / 1_000_000; ```",
+              "description": "Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).\n\nThe source of this is the [BFT Time in Tendermint](https://github.com/tendermint/tendermint/blob/58dc1726/spec/consensus/bft-time.md), which has the same nanosecond precision as the `Timestamp` type.\n\n# Examples\n\nUsing chrono:\n\n``` # use cosmwasm_std::{Addr, Binary, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo}; # let env = Env { #     block: BlockInfo { #         height: 12_345, #         time: Timestamp::from_nanos(1_571_797_419_879_305_533), #         chain_id: \"cosmos-testnet-14002\".to_string(), #     }, #     transaction: Some(TransactionInfo::new(3, Binary::from_hex(\"E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3\").unwrap())), #     contract: ContractInfo { #         address: Addr::unchecked(\"contract\"), #     }, # }; # extern crate chrono; use chrono::NaiveDateTime; let seconds = env.block.time.seconds(); let nsecs = env.block.time.subsec_nanos(); let dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32); ```\n\nCreating a simple millisecond-precision timestamp (as used in JavaScript):\n\n``` # use cosmwasm_std::{Addr, Binary, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo}; # let env = Env { #     block: BlockInfo { #         height: 12_345, #         time: Timestamp::from_nanos(1_571_797_419_879_305_533), #         chain_id: \"cosmos-testnet-14002\".to_string(), #     }, #     transaction: Some(TransactionInfo::new(3, Binary::from_hex(\"E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3\").unwrap())), #     contract: ContractInfo { #         address: Addr::unchecked(\"contract\"), #     }, # }; let millis = env.block.time.nanos() / 1_000_000; ```",
               "allOf": [
                 {
                   "$ref": "#/definitions/Timestamp"
@@ -497,6 +501,15 @@
             "index"
           ],
           "properties": {
+            "hash": {
+              "description": "Hash of the transaction.\n\nIf the blockchain's CosmWasm version is below 3.0, this field will default to being empty.",
+              "default": "",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
             "index": {
               "description": "The position of this transaction in the block. The first transaction has index 0.\n\nThis allows you to get a unique transaction identifier in this chain using the pair (`env.block.height`, `env.transaction.index`).",
               "type": "integer",

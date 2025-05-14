@@ -9,6 +9,7 @@ use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
 
 use super::query_response::QueryResponseType;
+use crate::utils::impl_hidden_constructor;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -41,7 +42,7 @@ pub struct SupplyResponse {
     pub amount: Coin,
 }
 
-impl_response_constructor!(SupplyResponse, amount: Coin);
+impl_hidden_constructor!(SupplyResponse, amount: Coin);
 
 impl QueryResponseType for SupplyResponse {}
 
@@ -54,7 +55,7 @@ pub struct BalanceResponse {
     pub amount: Coin,
 }
 
-impl_response_constructor!(BalanceResponse, amount: Coin);
+impl_hidden_constructor!(BalanceResponse, amount: Coin);
 
 impl QueryResponseType for BalanceResponse {}
 
@@ -66,7 +67,7 @@ pub struct DenomMetadataResponse {
     pub metadata: DenomMetadata,
 }
 
-impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
+impl_hidden_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
 
 impl QueryResponseType for DenomMetadataResponse {}
 
@@ -79,7 +80,7 @@ pub struct AllDenomMetadataResponse {
     pub next_key: Option<Binary>,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     AllDenomMetadataResponse,
     metadata: Vec<DenomMetadata>,
     next_key: Option<Binary>

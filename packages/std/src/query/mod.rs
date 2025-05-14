@@ -8,25 +8,6 @@ use crate::prelude::*;
 use crate::Binary;
 use crate::Empty;
 
-/// Implements a hidden constructor for query responses.
-macro_rules! impl_response_constructor {
-    ( $response:ty, $( $field: ident : $t: ty),* ) => {
-        impl $response {
-            /// Constructor for testing frameworks such as cw-multi-test.
-            /// This is required because query response types should be #[non_exhaustive].
-            /// As a contract developer you should not need this constructor since
-            /// query responses are constructed for you via deserialization.
-            ///
-            /// Warning: This can change in breaking ways in minor versions.
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            pub fn new($( $field: $t),*) -> Self {
-                Self { $( $field ),* }
-            }
-        }
-    };
-}
-
 mod bank;
 mod distribution;
 mod ibc;
