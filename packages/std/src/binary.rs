@@ -76,7 +76,7 @@ impl Binary {
     }
 
     pub fn to_hex(&self) -> String {
-        hex::encode(self.0.clone())
+        hex::encode(&self.0)
     }
 }
 

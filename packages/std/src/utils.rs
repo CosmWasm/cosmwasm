@@ -1,8 +1,8 @@
 /// Implements a hidden constructor for non-exhaustive structures that need
 /// to be built in libraries like cw-multi-test.
 macro_rules! impl_hidden_constructor {
-    ( $response:ty, $( $field: ident : $t: ty),* ) => {
-        impl $response {
+    ( $type:ty, $( $field: ident : $t: ty),* ) => {
+        impl $type {
             /// Constructor for testing frameworks such as cw-multi-test.
             /// This is required because the type is #[non_exhaustive].
             /// As a contract developer you should not need this constructor since

@@ -533,7 +533,10 @@ impl Envs {
             },
             transaction: Some(TransactionInfo::new(
                 3,
-                Binary::from_hex("0102030405060708").unwrap(),
+                Binary::from_hex(
+                    "E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3",
+                )
+                .unwrap(),
             )),
             contract: ContractInfo {
                 address: self.contract_address.clone(),
@@ -1467,7 +1470,10 @@ mod tests {
                 },
                 transaction: Some(TransactionInfo::new(
                     3,
-                    Binary::from_hex("E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3").unwrap(),
+                    Binary::from_hex(
+                        "E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3"
+                    )
+                    .unwrap(),
                 )),
                 contract: ContractInfo {
                     address: Addr::unchecked(MOCK_CONTRACT_ADDR)
