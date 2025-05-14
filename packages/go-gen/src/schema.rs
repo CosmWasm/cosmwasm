@@ -246,16 +246,6 @@ pub fn array_item_type(
         Some(SingleOrVec::Single(array_validation)) => {
             schema_object_type(array_validation.object()?, type_context, additional_structs)
         }
-        Some(SingleOrVec::Vec(v))
-            if v.len() == 1 || v.len() > 1 && v.windows(2).all(|w| w[0] == w[1]) =>
-        {
-            // all items are the same type
-            schema_object_type(
-                v.first().unwrap().object()?,
-                type_context,
-                additional_structs,
-            )
-        }
         _ => bail!("array type with non-singular item type is not supported"),
     }
 }
