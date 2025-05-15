@@ -36,6 +36,10 @@ pub enum IbcQuery {
     ///
     /// Returns a `FeeEnabledChannelResponse`.
     #[cfg(feature = "cosmwasm_2_2")]
+    #[deprecated(
+        since = "2.2.3",
+        note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
+    )]
     FeeEnabledChannel {
         port_id: Option<String>,
         channel_id: String,
@@ -68,6 +72,10 @@ impl_response_constructor!(ChannelResponse, channel: Option<IbcChannel>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
+#[deprecated(
+    since = "2.2.3",
+    note = "IBC fees have been removed from ibc-go `v10`, which is used in wasmd `v0.55.0`."
+)]
 pub struct FeeEnabledChannelResponse {
     pub fee_enabled: bool,
 }
