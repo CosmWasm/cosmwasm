@@ -210,7 +210,7 @@ fn send_remote_funds() {
         transfer_channel_id: transfer_channel_id.into(),
     };
     let info = mock_info(CREATOR, &coins(12344, "utrgd"));
-    execute::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
+    execute::<_, _, _, _>(&mut deps, mock_env(), info, msg).unwrap_err();
 
     // let's try with no sent funds in the message
     let msg = ExecuteMsg::SendFunds {
@@ -218,7 +218,7 @@ fn send_remote_funds() {
         transfer_channel_id: transfer_channel_id.into(),
     };
     let info = mock_info(CREATOR, &[]);
-    execute::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
+    execute::<_, _, _, _>(&mut deps, mock_env(), info, msg).unwrap_err();
 
     // 3rd times the charm
     let msg = ExecuteMsg::SendFunds {
