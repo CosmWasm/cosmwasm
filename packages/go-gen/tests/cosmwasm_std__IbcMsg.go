@@ -21,34 +21,12 @@ type WriteAcknowledgementMsg struct {
 type CloseChannelMsg struct {
 	ChannelID string `json:"channel_id"`
 }
-type PayPacketFeeMsg struct {
-	// The channel id on the chain where the packet is sent from (this chain).
-	ChannelID string `json:"channel_id"`
-	Fee       IBCFee `json:"fee"`
-	// The port id on the chain where the packet is sent from (this chain).
-	PortID string `json:"port_id"`
-	// Allowlist of relayer addresses that can receive the fee. This is currently not implemented and *must* be empty.
-	Relayers Array[string] `json:"relayers"`
-}
-type PayPacketFeeAsyncMsg struct {
-	// The channel id on the chain where the packet is sent from (this chain).
-	ChannelID string `json:"channel_id"`
-	Fee       IBCFee `json:"fee"`
-	// The port id on the chain where the packet is sent from (this chain).
-	PortID string `json:"port_id"`
-	// Allowlist of relayer addresses that can receive the fee. This is currently not implemented and *must* be empty.
-	Relayers Array[string] `json:"relayers"`
-	// The sequence number of the packet that should be incentivized.
-	Sequence uint64 `json:"sequence"`
-}
 
 type IBCMsg struct {
 	Transfer             *TransferMsg             `json:"transfer,omitempty"`
 	SendPacket           *SendPacketMsg           `json:"send_packet,omitempty"`
 	WriteAcknowledgement *WriteAcknowledgementMsg `json:"write_acknowledgement,omitempty"`
 	CloseChannel         *CloseChannelMsg         `json:"close_channel,omitempty"`
-	PayPacketFee         *PayPacketFeeMsg         `json:"pay_packet_fee,omitempty"`
-	PayPacketFeeAsync    *PayPacketFeeAsyncMsg    `json:"pay_packet_fee_async,omitempty"`
 }
 
 // Coin is a string representation of the sdk.Coin type (more portable than sdk.Int)
@@ -59,11 +37,6 @@ type Coin struct {
 
 type IBCAcknowledgement struct {
 	Data []byte `json:"data"`
-}
-type IBCFee struct {
-	AckFee     Array[Coin] `json:"ack_fee"`
-	ReceiveFee Array[Coin] `json:"receive_fee"`
-	TimeoutFee Array[Coin] `json:"timeout_fee"`
 }
 
 // IBCTimeout is the timeout for an IBC packet. At least one of block and timestamp is required.

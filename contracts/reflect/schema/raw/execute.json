@@ -488,35 +488,6 @@
       },
       "additionalProperties": false
     },
-    "IbcFee": {
-      "type": "object",
-      "required": [
-        "ack_fee",
-        "receive_fee",
-        "timeout_fee"
-      ],
-      "properties": {
-        "ack_fee": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Coin"
-          }
-        },
-        "receive_fee": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Coin"
-          }
-        },
-        "timeout_fee": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Coin"
-          }
-        }
-      },
-      "additionalProperties": false
-    },
     "IbcMsg": {
       "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
       "oneOf": [
@@ -662,93 +633,6 @@
               "properties": {
                 "channel_id": {
                   "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Incentivizes the next IBC packet sent after this message with a fee. Note that this does not necessarily have to be a packet sent by this contract. The fees are taken from the contract's balance immediately and locked until the packet is handled.\n\n# Example\n\nMost commonly, you will attach this message to a response right before sending a packet using [`IbcMsg::SendPacket`] or [`IbcMsg::Transfer`].\n\n```rust # use cosmwasm_std::{IbcMsg, IbcEndpoint, IbcFee, IbcTimeout, Coin, coins, CosmosMsg, Response, Timestamp};\n\nlet incentivize = IbcMsg::PayPacketFee { port_id: \"transfer\".to_string(), channel_id: \"source-channel\".to_string(), fee: IbcFee { receive_fee: coins(100, \"token\"), ack_fee: coins(201, \"token\"), timeout_fee: coins(200, \"token\"), }, relayers: vec![], }; let transfer = IbcMsg::Transfer { channel_id: \"source-channel\".to_string(), to_address: \"receiver\".to_string(), amount: Coin::new(100u32, \"token\"), timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(0)), memo: None, };\n\n# #[cfg(feature = \"stargate\")] let _: Response = Response::new() .add_message(CosmosMsg::Ibc(incentivize)) .add_message(CosmosMsg::Ibc(transfer)); ```",
-          "type": "object",
-          "required": [
-            "pay_packet_fee"
-          ],
-          "properties": {
-            "pay_packet_fee": {
-              "type": "object",
-              "required": [
-                "channel_id",
-                "fee",
-                "port_id",
-                "relayers"
-              ],
-              "properties": {
-                "channel_id": {
-                  "description": "The channel id on the chain where the packet is sent from (this chain).",
-                  "type": "string"
-                },
-                "fee": {
-                  "$ref": "#/definitions/IbcFee"
-                },
-                "port_id": {
-                  "description": "The port id on the chain where the packet is sent from (this chain).",
-                  "type": "string"
-                },
-                "relayers": {
-                  "description": "Allowlist of relayer addresses that can receive the fee. An empty list means that any relayer can receive the fee.\n\nThis is currently not implemented and *must* be empty.",
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Incentivizes the existing IBC packet with the given port, channel and sequence with a fee. Note that this does not necessarily have to be a packet sent by this contract. The fees are taken from the contract's balance immediately and locked until the packet is handled. They are added to the existing fees on the packet.",
-          "type": "object",
-          "required": [
-            "pay_packet_fee_async"
-          ],
-          "properties": {
-            "pay_packet_fee_async": {
-              "type": "object",
-              "required": [
-                "channel_id",
-                "fee",
-                "port_id",
-                "relayers",
-                "sequence"
-              ],
-              "properties": {
-                "channel_id": {
-                  "description": "The channel id on the chain where the packet is sent from (this chain).",
-                  "type": "string"
-                },
-                "fee": {
-                  "$ref": "#/definitions/IbcFee"
-                },
-                "port_id": {
-                  "description": "The port id on the chain where the packet is sent from (this chain).",
-                  "type": "string"
-                },
-                "relayers": {
-                  "description": "Allowlist of relayer addresses that can receive the fee. An empty list means that any relayer can receive the fee.\n\nThis is currently not implemented and *must* be empty.",
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "sequence": {
-                  "description": "The sequence number of the packet that should be incentivized.",
-                  "type": "integer",
-                  "format": "uint64",
-                  "minimum": 0.0
                 }
               },
               "additionalProperties": false
