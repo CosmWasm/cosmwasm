@@ -26,7 +26,7 @@ type RawRangeQuery struct {
 	// The address of the contract to query
 	ContractAddr string `json:"contract_addr"`
 	// Exclusive end bound. This is the key after the last key you would like to get data for.
-	End []byte `json:"end,omitempty"`
+	End []byte `json:"end"`
 	// Maximum number of elements to return.
 	//
 	// Make sure to set a reasonable limit to avoid running out of memory or into the deserialization limits of the VM. Also keep in mind that these limitations depend on the full JSON size of the response type.
@@ -36,7 +36,7 @@ type RawRangeQuery struct {
 	// Inclusive start bound. This is the first key you would like to get data for.
 	//
 	// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
-	Start []byte `json:"start,omitempty"`
+	Start []byte `json:"start"`
 }
 
 type WasmQuery struct {
