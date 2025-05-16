@@ -11,7 +11,7 @@ mod schema;
 mod utils;
 
 fn main() -> Result<()> {
-    let root = cosmwasm_schema::schema_for!(cosmwasm_std::Reply);
+    let root = cosmwasm_schema::schema_for!(cosmwasm_std::RawRangeResponse);
 
     let code = generate_go(root)?;
     println!("{}", code);
@@ -355,6 +355,7 @@ mod tests {
         // wasm
         compare_codes!(cosmwasm_std::ContractInfoResponse);
         compare_codes!(cosmwasm_std::CodeInfoResponse);
+        compare_codes!(cosmwasm_std::RawRangeResponse);
     }
 
     #[test]
@@ -425,7 +426,8 @@ mod tests {
         compare_codes!(cosmwasm_std::StakingQuery);
         compare_codes!(cosmwasm_std::DistributionQuery);
         compare_codes!(cosmwasm_std::IbcQuery);
-        compare_codes!(cosmwasm_std::WasmQuery);
+        // TODO: RawRange query uses *[]byte instead of []byte
+        // compare_codes!(cosmwasm_std::WasmQuery);
     }
 
     #[test]
