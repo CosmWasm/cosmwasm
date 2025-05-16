@@ -2732,6 +2732,24 @@ mod tests {
             }
         }
 
+        #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
+        {
+            // By default, querier errors for WasmQuery::RawRange
+            let system_err = querier
+                .query(&WasmQuery::RawRange {
+                    contract_addr: any_addr.clone(),
+                    start: None,
+                    end: None,
+                    limit: 10,
+                    order: crate::Order::Ascending,
+                })
+                .unwrap_err();
+            match system_err {
+                SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
+                err => panic!("Unexpected error: {err:?}"),
+            }
+        }
+
         querier.update_handler(|request| {
             let api = MockApi::default();
             let contract1 = api.addr_make("contract1");
