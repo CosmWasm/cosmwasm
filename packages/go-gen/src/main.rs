@@ -198,6 +198,7 @@ mod tests {
 
     use super::*;
 
+    #[track_caller]
     fn assert_code_eq(actual: String, expected: &str) {
         let actual_no_ws = actual.split_whitespace().collect::<Vec<_>>();
         let expected_no_ws = expected.split_whitespace().collect::<Vec<_>>();
@@ -210,6 +211,7 @@ mod tests {
         );
     }
 
+    #[track_caller]
     fn assert_code_eq_ignore_docs(actual: String, expected: &str) {
         let actual_filtered = actual
             .lines()
@@ -251,7 +253,7 @@ mod tests {
                 Binary []byte `json:"binary"`
                 Checksum Checksum `json:"checksum"`
                 HexBinary string `json:"hex_binary"`
-                NestedBinary Array[*[]byte] `json:"nested_binary"`
+                NestedBinary Array[[]byte] `json:"nested_binary"`
                 Uint128 string `json:"uint128"`
             }"#,
         );
@@ -340,7 +342,7 @@ mod tests {
         compare_codes!(cosmwasm_std::SupplyResponse);
         compare_codes!(cosmwasm_std::BalanceResponse);
         compare_codes!(cosmwasm_std::DenomMetadataResponse);
-        // compare_codes!(cosmwasm_std::AllDenomMetadataResponse); // uses `[]byte` instead of `*[]byte`
+        // compare_codes!(cosmwasm_std::AllDenomMetadataResponse); // uses slice instead of `Array` type
         // staking
         compare_codes!(cosmwasm_std::BondedDenomResponse);
         compare_codes!(cosmwasm_std::AllDelegationsResponse);
@@ -355,7 +357,7 @@ mod tests {
         // wasm
         compare_codes!(cosmwasm_std::ContractInfoResponse);
         compare_codes!(cosmwasm_std::CodeInfoResponse);
-        // compare_codes!(cosmwasm_std::RawRangeResponse); // uses `[]byte` instead of `*[]byte`
+        compare_codes!(cosmwasm_std::RawRangeResponse);
     }
 
     #[test]
@@ -426,8 +428,7 @@ mod tests {
         compare_codes!(cosmwasm_std::StakingQuery);
         compare_codes!(cosmwasm_std::DistributionQuery);
         compare_codes!(cosmwasm_std::IbcQuery);
-        // TODO: RawRange query uses *[]byte instead of []byte
-        // compare_codes!(cosmwasm_std::WasmQuery);
+        compare_codes!(cosmwasm_std::WasmQuery);
     }
 
     #[test]
@@ -477,6 +478,8 @@ mod tests {
 
         #[cw_serde]
         struct D {
+            // this should not get an `omitempty` because that prevents us from distinguishing between
+            // `None` and `Some(vec![])`
             d: Option<Vec<String>>,
             nested: Vec<Option<Vec<String>>>,
         }
@@ -485,8 +488,8 @@ mod tests {
             code,
             r#"
             type D struct {
-                D *[]string `json:"d,omitempty"`
-                Nested Array[*[]string] `json:"nested"`
+                D []string `json:"d"`
+                Nested Array[[]string] `json:"nested"`
             }"#,
         );
     }

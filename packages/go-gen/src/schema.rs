@@ -212,8 +212,8 @@ pub fn type_from_instance_type(
 
         // for nullable array item types, we have to use a pointer type, even for basic types,
         // so we can pass null as elements
-        // otherwise they would just be omitted from the array
-        let maybe_ptr = if item_type.nullability == Nullability::Nullable {
+        // otherwise they would just be omitted from the array, unless it's a slice itself
+        let maybe_ptr = if item_type.nullability == Nullability::Nullable && !item_type.is_slice() {
             "*"
         } else {
             ""
