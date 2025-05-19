@@ -139,7 +139,7 @@ pub struct Ibc2PacketAckMsg {
     pub source_client: String,
     pub destination_client: String,
     pub data: Ibc2Payload,
-    pub acknowledgement: Vec<u8>,
+    pub acknowledgement: Binary,
     pub relayer: Addr,
 }
 
@@ -148,7 +148,7 @@ impl Ibc2PacketAckMsg {
         source_client: String,
         destination_client: String,
         data: Ibc2Payload,
-        acknowledgement: Vec<u8>,
+        acknowledgement: Binary,
         relayer: Addr,
     ) -> Self {
         Self {
