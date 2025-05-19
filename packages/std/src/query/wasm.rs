@@ -161,23 +161,7 @@ impl_hidden_constructor!(
     next_key: Option<Binary>
 );
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct RawRangeEntry {
-    // keys renamed to reduce JSON size overhead
-    #[serde(rename = "k")]
-    pub key: Binary,
-    #[serde(rename = "v")]
-    pub value: Binary,
-}
-
-impl RawRangeEntry {
-    pub fn new(key: impl Into<Binary>, value: impl Into<Binary>) -> Self {
-        RawRangeEntry {
-            key: key.into(),
-            value: value.into(),
-        }
-    }
-}
+pub type RawRangeEntry = (Binary, Binary);
 
 #[cfg(test)]
 mod tests {
@@ -284,15 +268,15 @@ mod tests {
     fn raw_range_response_serialization() {
         let response = RawRangeResponse {
             data: vec![
-                RawRangeEntry::new(b"key", b"value"),
-                RawRangeEntry::new(b"foo", b"bar"),
+                (Binary::from(b"key"), Binary::from(b"value")),
+                (Binary::from(b"foo"), Binary::from(b"bar")),
             ],
             next_key: Some(Binary::from(b"next")),
         };
         let json = to_json_binary(&response).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
-            r#"{"data":[{"k":"a2V5","v":"dmFsdWU="},{"k":"Zm9v","v":"YmFy"}],"next_key":"bmV4dA=="}"#,
+            r#"{"data":[["a2V5","dmFsdWU="],["Zm9v","YmFy"]],"next_key":"bmV4dA=="}"#,
         );
     }
 }
