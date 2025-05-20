@@ -683,7 +683,7 @@ pub fn mock_ibc2_packet_ack(data: &impl Serialize) -> StdResult<Ibc2PacketAckMsg
             encoding: "json".to_string(),
             value: to_json_binary(data)?,
         },
-        vec![],
+        Binary::new(vec![]),
         Addr::unchecked("relayer"),
     ))
 }
