@@ -4,7 +4,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Addr, IbcAcknowledgement, IbcPacket, Uint64};
+use crate::{Addr, Coin, IbcAcknowledgement, IbcPacket, Uint64};
 
 /// This is just a type representing the data that has to be sent with the IBC message to receive
 /// callbacks. It should be serialized and sent with the IBC message.
@@ -191,6 +191,15 @@ impl IbcTimeoutCallbackMsg {
 pub struct IbcDestinationCallbackMsg {
     pub packet: IbcPacket,
     pub ack: IbcAcknowledgement,
+    /// When the underlying packet is a transfer message and the receiver is the contract that receives
+    /// the callback, this field contains the coins that were transferred. Otherwise it is empty.
+    ///
+    /// When the callback is executed, the transfer is completed already and the coins are now owned
+    /// by the contract.
+    ///
+    /// This is always empty on chains using CosmWasm < 3.0
+    #[serde(default)]
+    pub funds: Vec<Coin>,
 }
 
 #[cfg(test)]
