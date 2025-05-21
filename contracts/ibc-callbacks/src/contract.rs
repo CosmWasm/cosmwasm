@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, IbcBasicResponse,
+    ensure, entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, IbcBasicResponse,
     IbcDestinationCallbackMsg, IbcDstCallback, IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout,
     MessageInfo, Response, StdError, StdResult, TransferMsgBuilder,
 };
@@ -127,10 +127,25 @@ pub fn ibc_source_callback(
 #[entry_point]
 pub fn ibc_destination_callback(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     msg: IbcDestinationCallbackMsg,
 ) -> StdResult<IbcBasicResponse> {
     let mut counts = load_stats(deps.storage)?;
+
+    // Assert that we have the funds we expect.
+    // This is just for testing purposes and to show that the funds are already available during
+    // the callback.
+    for coin in &msg.funds {
+        let balance = deps
+            .querier
+            .query_balance(&env.contract.address, &coin.denom)?;
+        ensure!(
+            balance.amount >= coin.amount,
+            StdError::generic_err(format!(
+                "Didn't receive expected funds. expected: {coin}, have: {balance}"
+            ))
+        );
+    }
 
     // save the receive
     counts.ibc_destination_callbacks.push(msg);
