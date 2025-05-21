@@ -262,7 +262,7 @@ extern "C" {
 ```
 
 (from
-[imports.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/imports.rs))
+[imports.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/src/imports.rs))
 
 You could actually implement a WebAssembly module in any language, and as long
 as you implement these functions, it will be interoperable, given the JSON data
