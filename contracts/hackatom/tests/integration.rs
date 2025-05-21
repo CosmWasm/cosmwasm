@@ -321,7 +321,7 @@ fn execute_cpu_loop() {
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let execute_res = call_execute::<_, _, _, Empty>(
+    let execute_res = call_execute::<_, _, _>(
         &mut deps,
         &mock_env(),
         &execute_info,
@@ -343,7 +343,7 @@ fn execute_storage_loop() {
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let execute_res = call_execute::<_, _, _, Empty>(
+    let execute_res = call_execute::<_, _, _>(
         &mut deps,
         &mock_env(),
         &execute_info,
@@ -365,7 +365,7 @@ fn execute_memory_loop() {
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let execute_res = call_execute::<_, _, _, Empty>(
+    let execute_res = call_execute::<_, _, _>(
         &mut deps,
         &mock_env(),
         &execute_info,
@@ -445,7 +445,7 @@ fn execute_panic() {
     let execute_info = mock_info(creator.as_str(), &[]);
     // panic inside contract should not panic out here
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let execute_res = call_execute::<_, _, _, Empty>(
+    let execute_res = call_execute::<_, _, _>(
         &mut deps,
         &mock_env(),
         &execute_info,

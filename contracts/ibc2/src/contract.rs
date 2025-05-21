@@ -71,7 +71,7 @@ pub fn ibc2_packet_receive(
     deps: DepsMut,
     env: Env,
     msg: Ibc2PacketReceiveMsg,
-) -> StdResult<IbcReceiveResponse> {
+) -> Result<IbcReceiveResponse, StdError> {
     let binary_payload = &msg.payload.value;
     let json_payload: IbcPayload = from_json(binary_payload)?;
 
