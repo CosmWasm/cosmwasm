@@ -207,16 +207,19 @@
             "ack": {
               "$ref": "#/definitions/IbcAcknowledgement"
             },
-            "funds": {
-              "description": "When the underlying packet is a transfer message and the receiver is the contract that receives the callback, this field contains the coins that were transferred. Otherwise it is empty.\n\nWhen the callback is executed, the transfer is completed already and the coins are now owned by the contract.\n\nThis is always empty on chains using CosmWasm < 3.0",
-              "default": [],
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Coin"
-              }
-            },
             "packet": {
               "$ref": "#/definitions/IbcPacket"
+            },
+            "transfer": {
+              "description": "When the underlying packet is a successful transfer message, this field contains information about the transfer. Otherwise it is empty.\n\nThis is always empty on chains using CosmWasm < 3.0",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/IbcTransferCallback"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "additionalProperties": false
@@ -345,6 +348,36 @@
             },
             "relayer": {
               "$ref": "#/definitions/Addr"
+            }
+          },
+          "additionalProperties": false
+        },
+        "IbcTransferCallback": {
+          "type": "object",
+          "required": [
+            "funds",
+            "receiver",
+            "sender"
+          ],
+          "properties": {
+            "funds": {
+              "description": "The funds that were transferred.\n\nWhen the callback is executed, the transfer is completed already and the coins are now owned by the receiver.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Coin"
+              }
+            },
+            "receiver": {
+              "description": "Address of the receiver of the transfer. Since this is on the destination chain, this is a valid address.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Addr"
+                }
+              ]
+            },
+            "sender": {
+              "description": "Address of the sender of the transfer. Note that this is *not* a valid address on the destination chain.",
+              "type": "string"
             }
           },
           "additionalProperties": false
