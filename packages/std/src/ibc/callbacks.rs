@@ -191,14 +191,25 @@ impl IbcTimeoutCallbackMsg {
 pub struct IbcDestinationCallbackMsg {
     pub packet: IbcPacket,
     pub ack: IbcAcknowledgement,
-    /// When the underlying packet is a transfer message and the receiver is the contract that receives
-    /// the callback, this field contains the coins that were transferred. Otherwise it is empty.
-    ///
-    /// When the callback is executed, the transfer is completed already and the coins are now owned
-    /// by the contract.
+    /// When the underlying packet is a successful transfer message,
+    /// this field contains information about the transfer. Otherwise it is empty.
     ///
     /// This is always empty on chains using CosmWasm < 3.0
     #[serde(default)]
+    pub transfer: Option<TransferCallback>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct TransferCallback {
+    /// The address of the contract that received the callback.
+    /// Note that this is *not* a valid address on the destination chain.
+    pub sender: String,
+    /// Receiver of the transfer.
+    pub receiver: Addr,
+    /// The funds that were transferred.
+    ///
+    /// When the callback is executed, the transfer is completed already and the coins are now owned
+    /// by the receiver.
     pub funds: Vec<Coin>,
 }
 
