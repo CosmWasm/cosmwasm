@@ -196,15 +196,16 @@ pub struct IbcDestinationCallbackMsg {
     ///
     /// This is always empty on chains using CosmWasm < 3.0
     #[serde(default)]
-    pub transfer: Option<TransferCallback>,
+    pub transfer: Option<IbcTransferCallback>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct TransferCallback {
-    /// The address of the contract that received the callback.
+pub struct IbcTransferCallback {
+    /// Address of the sender of the transfer.
     /// Note that this is *not* a valid address on the destination chain.
     pub sender: String,
-    /// Receiver of the transfer.
+    /// Address of the receiver of the transfer.
+    /// Since this is on the destination chain, this is a valid address.
     pub receiver: Addr,
     /// The funds that were transferred.
     ///
