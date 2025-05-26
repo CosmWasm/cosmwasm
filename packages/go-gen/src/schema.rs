@@ -212,8 +212,8 @@ pub fn type_from_instance_type(
 
         // for nullable array item types, we have to use a pointer type, even for basic types,
         // so we can pass null as elements
-        // otherwise they would just be omitted from the array
-        let maybe_ptr = if item_type.nullability == Nullability::Nullable {
+        // otherwise they would just be omitted from the array, unless it's a slice itself
+        let maybe_ptr = if item_type.nullability == Nullability::Nullable && !item_type.is_slice() {
             "*"
         } else {
             ""
@@ -245,6 +245,16 @@ pub fn array_item_type(
     match schema.array.as_ref().and_then(|a| a.items.as_ref()) {
         Some(SingleOrVec::Single(array_validation)) => {
             schema_object_type(array_validation.object()?, type_context, additional_structs)
+        }
+        Some(SingleOrVec::Vec(v))
+            if v.len() == 1 || v.len() > 1 && v.windows(2).all(|w| w[0] == w[1]) =>
+        {
+            // all items are the same type
+            schema_object_type(
+                v.first().unwrap().object()?,
+                type_context,
+                additional_structs,
+            )
         }
         _ => bail!("array type with non-singular item type is not supported"),
     }
@@ -288,6 +298,7 @@ pub fn custom_type_of(ty: &str) -> Option<&str> {
         "Uint128" => Some("string"),
         "Uint256" => Some("string"),
         "Uint512" => Some("string"),
+        "Order" => Some("string"),
         "Int64" => Some("Int64"),
         "Int128" => Some("string"),
         "Int256" => Some("string"),

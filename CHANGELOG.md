@@ -33,6 +33,8 @@ and this project adheres to
 - cosmwasm-vm: Add `ibc2_packet_send` entrypoint ([#2477])
 - cosmwasm-std: Add Tx hash to TransactionInfo and make it non exhaustive
   ([#2480])
+- cosmwasm-std: Add `WasmQuery::RawRange` query to allow querying raw storage
+  ranges of different contracts. ([#2471])
 
 ## Changed
 
@@ -130,6 +132,7 @@ and this project adheres to
 [#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
 [#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
 [#2467]: https://github.com/CosmWasm/cosmwasm/pull/2467
+[#2471]: https://github.com/CosmWasm/cosmwasm/pull/2471
 [#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
 [#2473]: https://github.com/CosmWasm/cosmwasm/pull/2473
 [#2477]: https://github.com/CosmWasm/cosmwasm/pull/2477
