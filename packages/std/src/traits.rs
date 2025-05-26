@@ -1,3 +1,4 @@
+use core::any::Any;
 use core::marker::PhantomData;
 use core::ops::Deref;
 use serde::{de::DeserializeOwned, Serialize};
@@ -10,9 +11,6 @@ use crate::prelude::*;
 use crate::query::CodeInfoResponse;
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
@@ -23,6 +21,7 @@ use crate::query::{
     AllDenomMetadataResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
     DistributionQuery,
 };
+use crate::query::{BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::ContractInfoResponse;
 use crate::{from_json, to_json_binary, to_json_vec, Binary};
@@ -130,7 +129,7 @@ pub trait Storage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api {
+pub trait Api: Any {
     /// Takes a human readable address and validates if it is valid.
     /// If it the validation succeeds, a `Addr` containing the same data as the input is returned.
     ///
@@ -184,6 +183,9 @@ pub trait Api {
         recovery_param: u8,
     ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
+    /// Add up points of the G1 subgroup on the BLS12-381 curve
+    ///
+    /// The length of `g1s` must be a multiple of 48 (each point is encoded in 48 bytes).
     #[allow(unused_variables)]
     fn bls12_381_aggregate_g1(&self, g1s: &[u8]) -> Result<[u8; 48], VerificationError> {
         // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
@@ -193,6 +195,9 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Add up points of the G2 subgroup on the BLS12-381 curve
+    ///
+    /// The length of `g2s` must be a multiple of 96 (each point is encoded in 96 bytes)
     #[allow(unused_variables)]
     fn bls12_381_aggregate_g2(&self, g2s: &[u8]) -> Result<[u8; 96], VerificationError> {
         // Support for BLS12-381 is added in 2.1, i.e. we can't add a compile time requirement for new function.
@@ -243,6 +248,9 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Take some arbitrary data and hash it to a point on the G1 subgroup of the curve.
+    ///
+    /// The `dst` parameter should be a constant is actually something similar to the "context" parameter in key derivation functions.
     #[allow(unused_variables)]
     fn bls12_381_hash_to_g1(
         &self,
@@ -257,6 +265,9 @@ pub trait Api {
         unimplemented!()
     }
 
+    /// Take some arbitrary data and hash it to a point on the G2 subgroup of the curve.
+    ///
+    /// The `dst` parameter should be a constant is actually something similar to the "context" parameter in key derivation functions.
     #[allow(unused_variables)]
     fn bls12_381_hash_to_g2(
         &self,
@@ -417,17 +428,6 @@ impl<'a, C: CustomQuery> QuerierWrapper<'a, C> {
         }
         .into();
         let res: BalanceResponse = self.query(&request)?;
-        Ok(res.amount)
-    }
-
-    #[deprecated]
-    pub fn query_all_balances(&self, address: impl Into<String>) -> StdResult<Vec<Coin>> {
-        #[allow(deprecated)]
-        let request = BankQuery::AllBalances {
-            address: address.into(),
-        }
-        .into();
-        let res: AllBalanceResponse = self.query(&request)?;
         Ok(res.amount)
     }
 
@@ -651,7 +651,7 @@ mod tests {
 
     use super::*;
     use crate::testing::MockQuerier;
-    use crate::{coins, Uint128};
+    use crate::{coins, Uint256};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -688,7 +688,7 @@ mod tests {
             .unwrap()
             .unwrap();
         let balance: BalanceResponse = from_json(raw).unwrap();
-        assert_eq!(balance.amount.amount, Uint128::new(5));
+        assert_eq!(balance.amount.amount, Uint256::new(5));
     }
 
     #[cfg(feature = "cosmwasm_1_1")]
@@ -707,10 +707,6 @@ mod tests {
 
         let balance = wrapper.query_balance("foo", "ELF").unwrap();
         assert_eq!(balance, coin(123, "ELF"));
-
-        #[allow(deprecated)]
-        let all_balances = wrapper.query_all_balances("foo").unwrap();
-        assert_eq!(all_balances, vec![coin(123, "ELF"), coin(777, "FLY")]);
     }
 
     #[test]
@@ -723,6 +719,7 @@ mod tests {
                 admin: None,
                 pinned: false,
                 ibc_port: None,
+                ibc2_port: None,
             }
         }
 
@@ -754,6 +751,7 @@ mod tests {
                 admin: None,
                 pinned: false,
                 ibc_port: None,
+                ibc2_port: None,
             }
         }
 

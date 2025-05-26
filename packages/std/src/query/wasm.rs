@@ -6,6 +6,8 @@ use crate::{Addr, Binary, Checksum};
 
 use super::query_response::QueryResponseType;
 
+use crate::utils::impl_hidden_constructor;
+
 #[non_exhaustive]
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
@@ -48,17 +50,20 @@ pub struct ContractInfoResponse {
     pub pinned: bool,
     /// set if this contract has bound an IBC port
     pub ibc_port: Option<String>,
+    /// set if this contract has bound an Ibc2 port
+    pub ibc2_port: Option<String>,
 }
 
 impl QueryResponseType for ContractInfoResponse {}
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     ContractInfoResponse,
     code_id: u64,
     creator: Addr,
     admin: Option<Addr>,
     pinned: bool,
-    ibc_port: Option<String>
+    ibc_port: Option<String>,
+    ibc2_port: Option<String>
 );
 
 /// The essential data from wasmd's [CodeInfo]/[CodeInfoResponse].
@@ -80,7 +85,7 @@ pub struct CodeInfoResponse {
     pub checksum: Checksum,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     CodeInfoResponse,
     code_id: u64,
     creator: Addr,
@@ -125,11 +130,12 @@ mod tests {
             admin: Some(Addr::unchecked("king")),
             pinned: true,
             ibc_port: Some("wasm.123".to_string()),
+            ibc2_port: Some("wasm.123".to_string()),
         };
         let json = to_json_binary(&response).unwrap();
         assert_eq!(
             String::from_utf8_lossy(&json),
-            r#"{"code_id":67,"creator":"jane","admin":"king","pinned":true,"ibc_port":"wasm.123"}"#,
+            r#"{"code_id":67,"creator":"jane","admin":"king","pinned":true,"ibc_port":"wasm.123","ibc2_port":"wasm.123"}"#,
         );
     }
 

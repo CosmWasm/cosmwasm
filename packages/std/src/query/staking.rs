@@ -6,6 +6,8 @@ use crate::{Addr, Coin, Decimal};
 
 use super::query_response::QueryResponseType;
 
+use crate::utils::impl_hidden_constructor;
+
 #[non_exhaustive]
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
@@ -48,7 +50,7 @@ pub struct BondedDenomResponse {
 
 impl QueryResponseType for BondedDenomResponse {}
 
-impl_response_constructor!(BondedDenomResponse, denom: String);
+impl_hidden_constructor!(BondedDenomResponse, denom: String);
 
 /// DelegationsResponse is data format returned from StakingRequest::AllDelegations query
 #[derive(
@@ -62,7 +64,7 @@ pub struct AllDelegationsResponse {
 
 impl QueryResponseType for AllDelegationsResponse {}
 
-impl_response_constructor!(AllDelegationsResponse, delegations: Vec<Delegation>);
+impl_hidden_constructor!(AllDelegationsResponse, delegations: Vec<Delegation>);
 
 /// Delegation is basic (cheap to query) data about a delegation.
 ///
@@ -79,7 +81,7 @@ pub struct Delegation {
     pub amount: Coin,
 }
 
-impl_response_constructor!(Delegation, delegator: Addr, validator: String, amount: Coin);
+impl_hidden_constructor!(Delegation, delegator: Addr, validator: String, amount: Coin);
 
 impl From<FullDelegation> for Delegation {
     fn from(full: FullDelegation) -> Self {
@@ -103,7 +105,7 @@ pub struct DelegationResponse {
 
 impl QueryResponseType for DelegationResponse {}
 
-impl_response_constructor!(DelegationResponse, delegation: Option<FullDelegation>);
+impl_hidden_constructor!(DelegationResponse, delegation: Option<FullDelegation>);
 
 /// FullDelegation is all the info on the delegation, some (like accumulated_reward and can_redelegate)
 /// is expensive to query.
@@ -127,7 +129,7 @@ pub struct FullDelegation {
     pub accumulated_rewards: Vec<Coin>,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     FullDelegation,
     delegator: Addr,
     validator: String,
@@ -169,7 +171,7 @@ pub struct AllValidatorsResponse {
 
 impl QueryResponseType for AllValidatorsResponse {}
 
-impl_response_constructor!(AllValidatorsResponse, validators: Vec<Validator>);
+impl_hidden_constructor!(AllValidatorsResponse, validators: Vec<Validator>);
 
 /// The data format returned from StakingRequest::Validator query
 #[derive(
@@ -182,7 +184,7 @@ pub struct ValidatorResponse {
 
 impl QueryResponseType for ValidatorResponse {}
 
-impl_response_constructor!(ValidatorResponse, validator: Option<Validator>);
+impl_hidden_constructor!(ValidatorResponse, validator: Option<Validator>);
 
 /// Instances are created in the querier.
 #[derive(
@@ -203,7 +205,7 @@ pub struct Validator {
     pub max_change_rate: Decimal,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     Validator,
     address: String,
     commission: Decimal,

@@ -45,9 +45,9 @@ pub struct Decimal256RangeExceeded;
 
 impl Decimal256 {
     const DECIMAL_FRACTIONAL: Uint256 = // 1*10**18
-        Uint256::from_u128(1_000_000_000_000_000_000);
+        Uint256::new(1_000_000_000_000_000_000);
     const DECIMAL_FRACTIONAL_SQUARED: Uint256 = // 1*10**36
-        Uint256::from_u128(1_000_000_000_000_000_000_000_000_000_000_000_000);
+        Uint256::new(1_000_000_000_000_000_000_000_000_000_000_000_000);
 
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
@@ -59,14 +59,29 @@ impl Decimal256 {
 
     /// Creates a Decimal256 from Uint256
     /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Uint256, Decimal256};
+    /// let atoms = Uint256::new(141_183_460_469_231_731_687_303_715_884_105_727_125);
+    /// let value = Decimal256::new(atoms);
+    /// assert_eq!(value.to_string(), "141183460469231731687.303715884105727125");
+    /// ```
+    #[inline]
+    #[must_use]
     pub const fn new(value: Uint256) -> Self {
         Self(value)
     }
 
     /// Creates a Decimal256 from u128
     /// This is equivalent to `Decimal256::from_atomics(value, 18)` but usable in a const context.
+    #[deprecated(
+        since = "3.0.0",
+        note = "Use Decimal256::new(Uint256::new(value)) instead"
+    )]
     pub const fn raw(value: u128) -> Self {
-        Self(Uint256::from_u128(value))
+        Self(Uint256::new(value))
     }
 
     /// Create a 1.0 Decimal256
@@ -95,7 +110,7 @@ impl Decimal256 {
     pub const fn percent(x: u64) -> Self {
         // multiplication does not overflow since `u64::MAX` * 10**16 is well in u128 range
         let atomics = (x as u128) * 10_000_000_000_000_000;
-        Self(Uint256::from_u128(atomics))
+        Self(Uint256::new(atomics))
     }
 
     /// Convert permille (x/1000) into Decimal256
@@ -112,7 +127,7 @@ impl Decimal256 {
     pub const fn permille(x: u64) -> Self {
         // multiplication does not overflow since `u64::MAX` * 10**15 is well in u128 range
         let atomics = (x as u128) * 1_000_000_000_000_000;
-        Self(Uint256::from_u128(atomics))
+        Self(Uint256::new(atomics))
     }
 
     /// Convert basis points (x/10000) into Decimal256
@@ -131,7 +146,7 @@ impl Decimal256 {
     pub const fn bps(x: u64) -> Self {
         // multiplication does not overflow since `u64::MAX` * 10**14 is well in u128 range
         let atomics = (x as u128) * 100_000_000_000_000;
-        Self(Uint256::from_u128(atomics))
+        Self(Uint256::new(atomics))
     }
 
     /// Creates a decimal from a number of atomic units and the number
@@ -809,6 +824,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn decimal256_raw() {
         let value = 300u128;
         let expected = Uint256::from(value);
@@ -2229,18 +2245,18 @@ mod tests {
     #[test]
     fn decimal256_to_uint_floor_works() {
         let d = Decimal256::from_str("12.000000000000000001").unwrap();
-        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        assert_eq!(d.to_uint_floor(), Uint256::new(12));
         let d = Decimal256::from_str("12.345").unwrap();
-        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        assert_eq!(d.to_uint_floor(), Uint256::new(12));
         let d = Decimal256::from_str("12.999").unwrap();
-        assert_eq!(d.to_uint_floor(), Uint256::from_u128(12));
+        assert_eq!(d.to_uint_floor(), Uint256::new(12));
         let d = Decimal256::from_str("0.98451384").unwrap();
-        assert_eq!(d.to_uint_floor(), Uint256::from_u128(0));
+        assert_eq!(d.to_uint_floor(), Uint256::new(0));
 
         let d = Decimal256::from_str("75.0").unwrap();
-        assert_eq!(d.to_uint_floor(), Uint256::from_u128(75));
+        assert_eq!(d.to_uint_floor(), Uint256::new(75));
         let d = Decimal256::from_str("0.0").unwrap();
-        assert_eq!(d.to_uint_floor(), Uint256::from_u128(0));
+        assert_eq!(d.to_uint_floor(), Uint256::new(0));
 
         let d = Decimal256::MAX;
         assert_eq!(
@@ -2278,16 +2294,16 @@ mod tests {
     #[test]
     fn decimal256_to_uint_ceil_works() {
         let d = Decimal256::from_str("12.000000000000000001").unwrap();
-        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        assert_eq!(d.to_uint_ceil(), Uint256::new(13));
         let d = Decimal256::from_str("12.345").unwrap();
-        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        assert_eq!(d.to_uint_ceil(), Uint256::new(13));
         let d = Decimal256::from_str("12.999").unwrap();
-        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(13));
+        assert_eq!(d.to_uint_ceil(), Uint256::new(13));
 
         let d = Decimal256::from_str("75.0").unwrap();
-        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(75));
+        assert_eq!(d.to_uint_ceil(), Uint256::new(75));
         let d = Decimal256::from_str("0.0").unwrap();
-        assert_eq!(d.to_uint_ceil(), Uint256::from_u128(0));
+        assert_eq!(d.to_uint_ceil(), Uint256::new(0));
 
         let d = Decimal256::MAX;
         assert_eq!(

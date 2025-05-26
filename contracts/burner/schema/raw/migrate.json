@@ -3,6 +3,7 @@
   "title": "MigrateMsg",
   "type": "object",
   "required": [
+    "denoms",
     "payout"
   ],
   "properties": {
@@ -13,8 +14,15 @@
       "format": "uint32",
       "minimum": 0.0
     },
+    "denoms": {
+      "description": "The denoms of the final payout. Balances of tokens not listed here will remain in the account untouched.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "payout": {
-      "description": "The address we send all remaining balance to",
+      "description": "The address we send all remaining balance to. See denoms below for the denoms to consider.",
       "type": "string"
     }
   },

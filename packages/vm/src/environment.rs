@@ -55,6 +55,16 @@ pub struct GasConfig {
     pub bls12_381_hash_to_g2_cost: u64,
     /// bls12-381 pairing equality check cost
     pub bls12_381_pairing_equality_cost: LinearGasCost,
+    /// cost for writing memory regions
+    pub write_region_cost: LinearGasCost,
+    /// cost for reading memory regions <= 8MB
+    pub read_region_small_cost: LinearGasCost,
+    /// cost for reading memory regions > 8MB
+    pub read_region_large_cost: LinearGasCost,
+    /// cost for validating bytes into a String
+    pub string_from_bytes_cost: LinearGasCost,
+    /// cost for calling a host function
+    pub host_call_cost: u64,
 }
 
 impl Default for GasConfig {
@@ -97,6 +107,34 @@ impl Default for GasConfig {
                 base: 2112 * GAS_PER_US,
                 per_item: 163 * GAS_PER_US,
             },
+            write_region_cost: LinearGasCost {
+                base: 230000,
+                per_item: 570,
+            },
+            read_region_small_cost: LinearGasCost {
+                base: 200000,
+                per_item: 115,
+            },
+            read_region_large_cost: LinearGasCost {
+                base: 0,
+                per_item: 520,
+            },
+            string_from_bytes_cost: LinearGasCost {
+                base: 28700,
+                per_item: 1400,
+            },
+            host_call_cost: 18000,
+        }
+    }
+}
+
+impl GasConfig {
+    pub fn read_region_cost(&self, bytes: usize) -> VmResult<u64> {
+        const THRESHOLD: usize = 8 * 1000 * 1000;
+        if bytes <= THRESHOLD {
+            self.read_region_small_cost.total_cost(bytes as u64)
+        } else {
+            self.read_region_large_cost.total_cost(bytes as u64)
         }
     }
 }
@@ -115,8 +153,13 @@ pub struct LinearGasCost {
 }
 
 impl LinearGasCost {
-    pub fn total_cost(&self, items: u64) -> u64 {
-        self.base + self.per_item * items
+    pub fn total_cost(&self, items: u64) -> VmResult<u64> {
+        self.total_cost_opt(items)
+            .ok_or_else(VmError::gas_depletion)
+    }
+
+    fn total_cost_opt(&self, items: u64) -> Option<u64> {
+        self.base.checked_add(self.per_item.checked_mul(items)?)
     }
 }
 
@@ -513,11 +556,11 @@ mod tests {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, make_compiling_engine};
     use cosmwasm_std::{
-        coins, from_json, to_json_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
+        coin, coins, from_json, to_json_vec, BalanceResponse, BankQuery, Empty, QueryRequest,
     };
     use wasmer::{imports, Function, Instance as WasmerInstance, Store};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     // prepared data
     const INIT_KEY: &[u8] = b"foo";
@@ -541,7 +584,7 @@ mod tests {
         let env = Environment::new(MockApi::default(), gas_limit);
 
         let engine = make_compiling_engine(TESTING_MEMORY_LIMIT);
-        let module = compile(&engine, CONTRACT).unwrap();
+        let module = compile(&engine, HACKATOM).unwrap();
         let mut store = Store::new(engine);
 
         // we need stubs for all required imports
@@ -558,6 +601,11 @@ mod tests {
                 "addr_validate" => Function::new_typed(&mut store, |_a: u32| -> u32 { 0 }),
                 "addr_canonicalize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "addr_humanize" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "bls12_381_aggregate_g1" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "bls12_381_aggregate_g2" => Function::new_typed(&mut store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "bls12_381_pairing_equality" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32, _d: u32| -> u32 { 0 }),
+                "bls12_381_hash_to_g1" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32, _d: u32| -> u32 { 0 }),
+                "bls12_381_hash_to_g2" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32, _d: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "secp256r1_verify" => Function::new_typed(&mut store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
@@ -951,8 +999,9 @@ mod tests {
 
         let res = env
             .with_querier_from_context::<_, _>(|querier| {
-                let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
+                let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::Balance {
                     address: INIT_ADDR.to_string(),
+                    denom: INIT_DENOM.to_string(),
                 });
                 let (result, _gas_info) =
                     querier.query_raw(&to_json_vec(&req).unwrap(), DEFAULT_QUERY_GAS_LIMIT);
@@ -961,9 +1010,9 @@ mod tests {
             .unwrap()
             .unwrap()
             .unwrap();
-        let balance: AllBalanceResponse = from_json(res).unwrap();
+        let balance: BalanceResponse = from_json(res).unwrap();
 
-        assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
+        assert_eq!(balance.amount, coin(INIT_AMOUNT, INIT_DENOM));
     }
 
     #[test]

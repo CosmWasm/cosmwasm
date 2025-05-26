@@ -9,6 +9,7 @@ use crate::PageRequest;
 use crate::{Binary, DenomMetadata};
 
 use super::query_response::QueryResponseType;
+use crate::utils::impl_hidden_constructor;
 
 #[non_exhaustive]
 #[derive(
@@ -24,11 +25,6 @@ pub enum BankQuery {
     /// This calls into the native bank module for one denomination
     /// Return value is BalanceResponse
     Balance { address: String, denom: String },
-    /// This calls into the native bank module for all denominations.
-    /// Note that this may be much more expensive than Balance and should be avoided if possible.
-    /// Return value is AllBalanceResponse.
-    #[deprecated = "Returns a potentially unbound number of results. If you think you have a valid usecase, please open an issue."]
-    AllBalances { address: String },
     /// This calls into the native bank module for querying metadata for a specific bank token.
     /// Return value is DenomMetadataResponse
     #[cfg(feature = "cosmwasm_1_3")]
@@ -50,7 +46,7 @@ pub struct SupplyResponse {
     pub amount: Coin,
 }
 
-impl_response_constructor!(SupplyResponse, amount: Coin);
+impl_hidden_constructor!(SupplyResponse, amount: Coin);
 
 impl QueryResponseType for SupplyResponse {}
 
@@ -65,23 +61,9 @@ pub struct BalanceResponse {
     pub amount: Coin,
 }
 
-impl_response_constructor!(BalanceResponse, amount: Coin);
+impl_hidden_constructor!(BalanceResponse, amount: Coin);
 
 impl QueryResponseType for BalanceResponse {}
-
-#[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
-)]
-#[serde(rename_all = "snake_case")]
-#[non_exhaustive]
-pub struct AllBalanceResponse {
-    /// Returns all non-zero coins held by this account.
-    pub amount: Vec<Coin>,
-}
-
-impl_response_constructor!(AllBalanceResponse, amount: Vec<Coin>);
-
-impl QueryResponseType for AllBalanceResponse {}
 
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
@@ -93,7 +75,7 @@ pub struct DenomMetadataResponse {
     pub metadata: DenomMetadata,
 }
 
-impl_response_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
+impl_hidden_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
 
 impl QueryResponseType for DenomMetadataResponse {}
 
@@ -108,7 +90,7 @@ pub struct AllDenomMetadataResponse {
     pub next_key: Option<Binary>,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     AllDenomMetadataResponse,
     metadata: Vec<DenomMetadata>,
     next_key: Option<Binary>
@@ -122,11 +104,11 @@ mod tests {
 
     #[test]
     fn private_constructor_works() {
-        let response = AllBalanceResponse::new(vec![Coin::new(1234u128, "uatom")]);
+        let response = BalanceResponse::new(Coin::new(1234u128, "uatom"));
         assert_eq!(
             response,
-            AllBalanceResponse {
-                amount: vec![Coin::new(1234u128, "uatom")]
+            BalanceResponse {
+                amount: Coin::new(1234u128, "uatom")
             }
         );
     }

@@ -9,12 +9,16 @@ coverage:
       default:
         threshold: 0.05%
 
-ignore:
-  - "contracts"
-  # Disabled due to "cargo_tarpaulin: Failed to get test coverage! Error: Failed to run tests: Error running test - SIGILL raised in 5835"
-  - "packages/vm"
+fixes:
+  - "/root/project/::" # reduce root, e.g. "/root/project/path/" => "path/"
 
 flags:
+  cosmwasm-check:
+    paths:
+      - packages/check/
+  #cosmwasm-core:
+  #  paths:
+  #    - packages/core/
   cosmwasm-crypto:
     paths:
       - packages/crypto/
@@ -30,3 +34,9 @@ flags:
   cosmwasm-std:
     paths:
       - packages/std/
+  cosmwasm-vm:
+    paths:
+      - packages/vm/
+  cosmwasm-vm-derive:
+    paths:
+      - packages/vm-derive/

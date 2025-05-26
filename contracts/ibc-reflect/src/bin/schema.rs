@@ -4,7 +4,7 @@ use cosmwasm_schema::{export_schema, export_schema_with_title, schema_for, write
 use cosmwasm_std::Empty;
 
 use ibc_reflect::msg::{
-    AcknowledgementMsg, BalancesResponse, DispatchResponse, ExecuteMsg, InstantiateMsg, PacketMsg,
+    AcknowledgementMsg, BalanceResponse, DispatchResponse, ExecuteMsg, InstantiateMsg, PacketMsg,
     QueryMsg, WhoAmIResponse,
 };
 
@@ -23,9 +23,9 @@ fn main() {
     out_dir.push("ibc");
     export_schema(&schema_for!(PacketMsg), &out_dir);
     export_schema_with_title(
-        &schema_for!(AcknowledgementMsg<BalancesResponse>),
+        &schema_for!(AcknowledgementMsg<BalanceResponse>),
         &out_dir,
-        "AcknowledgementMsgBalances",
+        "AcknowledgementMsgBalance",
     );
     export_schema_with_title(
         &schema_for!(AcknowledgementMsg<DispatchResponse>),

@@ -5,6 +5,7 @@ use crate::prelude::*;
 use crate::{Addr, Decimal256};
 
 use super::query_response::QueryResponseType;
+use crate::utils::impl_hidden_constructor;
 
 #[non_exhaustive]
 #[derive(
@@ -38,7 +39,7 @@ pub struct DelegatorWithdrawAddressResponse {
     pub withdraw_address: Addr,
 }
 
-impl_response_constructor!(DelegatorWithdrawAddressResponse, withdraw_address: Addr);
+impl_hidden_constructor!(DelegatorWithdrawAddressResponse, withdraw_address: Addr);
 impl QueryResponseType for DelegatorWithdrawAddressResponse {}
 
 /// See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L169-L178>
@@ -51,7 +52,7 @@ pub struct DelegationRewardsResponse {
     pub rewards: Vec<DecCoin>,
 }
 
-impl_response_constructor!(DelegationRewardsResponse, rewards: Vec<DecCoin>);
+impl_hidden_constructor!(DelegationRewardsResponse, rewards: Vec<DecCoin>);
 impl QueryResponseType for DelegationRewardsResponse {}
 
 /// A coin type with decimal amount.
@@ -95,7 +96,7 @@ pub struct DelegationTotalRewardsResponse {
     pub total: Vec<DecCoin>,
 }
 
-impl_response_constructor!(
+impl_hidden_constructor!(
     DelegationTotalRewardsResponse,
     rewards: Vec<DelegatorReward>,
     total: Vec<DecCoin>
@@ -110,7 +111,7 @@ pub struct DelegatorReward {
     pub validator_address: String,
     pub reward: Vec<DecCoin>,
 }
-impl_response_constructor!(
+impl_hidden_constructor!(
     DelegatorReward,
     validator_address: String,
     reward: Vec<DecCoin>
@@ -125,5 +126,5 @@ pub struct DelegatorValidatorsResponse {
     pub validators: Vec<String>,
 }
 
-impl_response_constructor!(DelegatorValidatorsResponse, validators: Vec<String>);
+impl_hidden_constructor!(DelegatorValidatorsResponse, validators: Vec<String>);
 impl QueryResponseType for DelegatorValidatorsResponse {}

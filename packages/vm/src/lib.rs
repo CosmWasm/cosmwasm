@@ -32,6 +32,12 @@ pub use crate::calls::{
     call_migrate_with_info_raw, call_query, call_query_raw, call_reply, call_reply_raw, call_sudo,
     call_sudo_raw,
 };
+#[cfg(feature = "ibc2")]
+pub use crate::calls::{
+    call_ibc2_packet_ack, call_ibc2_packet_ack_raw, call_ibc2_packet_receive,
+    call_ibc2_packet_receive_raw, call_ibc2_packet_send, call_ibc2_packet_send_raw,
+    call_ibc2_packet_timeout, call_ibc2_packet_timeout_raw,
+};
 #[cfg(feature = "stargate")]
 pub use crate::calls::{
     call_ibc_channel_close, call_ibc_channel_close_raw, call_ibc_channel_connect,

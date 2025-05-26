@@ -11,8 +11,8 @@ might define others.
   "Stargate". It primarily includes protobuf messages and IBC support.
 - `staking` is for chains with the Cosmos SDK staking module. There are Cosmos
   chains that don't use this (e.g. Tgrade).
-- `eureka` is for messages and queries that came with the Cosmos SDK upgrade
-  "Eureka".
+- `ibc2` is for messages and queries that came with the Cosmos SDK upgrade
+  "Ibc2".
 - `cosmwasm_1_1` enables the `BankQuery::Supply` query. Only chains running
   CosmWasm `1.1.0` or higher support this.
 - `cosmwasm_1_2` enables the `GovMsg::VoteWeighted` and `WasmMsg::Instantiate2`
@@ -29,3 +29,7 @@ might define others.
   running CosmWasm `2.0.0` or higher support this.
 - `cosmwasm_2_1` enables `IbcMsg::WriteAcknowledgement`. Only chains running
   CosmWasm `2.1.0` or higher support this.
+- `cosmwasm_2_2` enables an optional additional `MigrateInfo` parameter for the
+  `migrate` entrypoint, as well as IBC Fees support with `IbcMsg::PayPacketFee`,
+  `IbcMsg::PayPacketFeeAsync` and `IbcQuery::FeeEnabledChannel`. Only chains
+  running CosmWasm `2.2.0` or higher support this.

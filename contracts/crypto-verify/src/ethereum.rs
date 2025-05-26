@@ -117,7 +117,7 @@ pub fn decode_address(input: &str) -> StdResult<[u8; 20]> {
         ));
     }
     if !input.starts_with("0x") {
-        return Err(StdError::generic_err("Ethereum address must start wit 0x"));
+        return Err(StdError::generic_err("Ethereum address must start with 0x"));
     }
     let data = hex::decode(&input[2..]).map_err(|_| StdError::generic_err("hex decoding error"))?;
     Ok(data.try_into().unwrap())

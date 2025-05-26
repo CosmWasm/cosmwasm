@@ -1,6 +1,7 @@
 use alloc::{borrow::Cow, string::String, vec::Vec};
 use core::fmt;
 use core::ops::Deref;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{
     digest::{Digest, Update},

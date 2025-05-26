@@ -122,7 +122,7 @@ fn check_wasm_tables(module: &ParsedWasm, wasm_limits: &WasmLimits) -> VmResult<
         1 => {
             let limits = &module.tables[0];
             if let Some(maximum) = limits.maximum {
-                if maximum > wasm_limits.table_size_limit_elements() {
+                if maximum > wasm_limits.table_size_limit_elements() as u64 {
                     return Err(VmError::static_validation_err(
                         "Wasm contract's first table section has a too large max limit",
                     ));
@@ -175,10 +175,7 @@ fn check_interface_version(module: &ParsedWasm) -> VmResult<()> {
         } else {
             // Exactly one interface version found
             let version_str = first_interface_version_export.as_str();
-            if SUPPORTED_INTERFACE_VERSIONS
-                .iter()
-                .any(|&v| v == version_str)
-            {
+            if SUPPORTED_INTERFACE_VERSIONS.contains(&version_str) {
                 Ok(())
             } else {
                 Err(VmError::static_validation_err(
@@ -331,25 +328,36 @@ fn check_wasm_functions(module: &ParsedWasm, limits: &WasmLimits, logs: Logger) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::capabilities_from_csv;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT_0_12: &[u8] = include_bytes!("../testdata/hackatom_0.12.wasm");
     static CONTRACT_0_14: &[u8] = include_bytes!("../testdata/hackatom_0.14.wasm");
     static CONTRACT_0_15: &[u8] = include_bytes!("../testdata/hackatom_0.15.wasm");
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
-    static CONTRACT_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
+    static CYBERPUNK_RUST_170: &[u8] = include_bytes!("../testdata/cyberpunk_rust170.wasm");
 
     fn default_capabilities() -> HashSet<String> {
-        capabilities_from_csv("cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking,stargate")
+        HashSet::from([
+            "cosmwasm_1_1".to_string(),
+            "cosmwasm_1_2".to_string(),
+            "cosmwasm_1_3".to_string(),
+            "cosmwasm_1_4".to_string(),
+            "cosmwasm_1_4".to_string(),
+            "cosmwasm_2_0".to_string(),
+            "cosmwasm_2_1".to_string(),
+            "cosmwasm_2_2".to_string(),
+            "iterator".to_string(),
+            "staking".to_string(),
+            "stargate".to_string(),
+        ])
     }
 
     #[test]
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(
-            CONTRACT,
+            HACKATOM,
             &default_capabilities(),
             &WasmLimits::default(),
             Off,
@@ -368,7 +376,7 @@ mod tests {
     fn check_wasm_allows_sign_ext() {
         // See https://github.com/CosmWasm/cosmwasm/issues/1727
         check_wasm(
-            CONTRACT_RUST_170,
+            CYBERPUNK_RUST_170,
             &default_capabilities(),
             &WasmLimits::default(),
             Off,

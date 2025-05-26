@@ -77,7 +77,7 @@ fn contracts() -> Vec<Contract> {
                     .into_bytes(),
             ),
             execute_msgs: vec![Execute {
-                msg: br#"{"release":{}}"#,
+                msg: br#"{"release":{"denom":"earth"}}"#,
                 expect_error: false,
             }],
         },
@@ -88,7 +88,7 @@ fn contracts() -> Vec<Contract> {
                     .into_bytes(),
             ),
             execute_msgs: vec![Execute {
-                msg: br#"{"release":{}}"#,
+                msg: br#"{"release":{"denom":"earth"}}"#,
                 expect_error: false,
             }],
         },

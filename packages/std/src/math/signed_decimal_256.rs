@@ -48,9 +48,9 @@ pub struct SignedDecimal256RangeExceeded;
 
 impl SignedDecimal256 {
     const DECIMAL_FRACTIONAL: Int256 = // 1*10**18
-        Int256::from_i128(1_000_000_000_000_000_000);
+        Int256::new(1_000_000_000_000_000_000);
     const DECIMAL_FRACTIONAL_SQUARED: Int256 = // 1*10**36
-        Int256::from_i128(1_000_000_000_000_000_000_000_000_000_000_000_000);
+        Int256::new(1_000_000_000_000_000_000_000_000_000_000_000_000);
 
     /// The number of decimal places. Since decimal types are fixed-point rather than
     /// floating-point, this is a constant.
@@ -90,7 +90,13 @@ impl SignedDecimal256 {
     /// ```
     /// # use cosmwasm_std::{SignedDecimal256, Int256};
     /// assert_eq!(SignedDecimal256::new(Int256::one()).to_string(), "0.000000000000000001");
+    ///
+    /// let atoms = Int256::new(-141_183_460_469_231_731_687_303_715_884_105_727_125);
+    /// let value = SignedDecimal256::new(atoms);
+    /// assert_eq!(value.to_string(), "-141183460469231731687.303715884105727125");
     /// ```
+    #[inline]
+    #[must_use]
     pub const fn new(value: Int256) -> Self {
         Self(value)
     }
@@ -104,8 +110,12 @@ impl SignedDecimal256 {
     /// # use cosmwasm_std::SignedDecimal256;
     /// assert_eq!(SignedDecimal256::raw(1234i128).to_string(), "0.000000000000001234");
     /// ```
+    #[deprecated(
+        since = "3.0.0",
+        note = "Use SignedDecimal256::new(Int256::new(value)) instead"
+    )]
     pub const fn raw(value: i128) -> Self {
-        Self(Int256::from_i128(value))
+        Self(Int256::new(value))
     }
 
     /// Create a 1.0 SignedDecimal256
@@ -118,7 +128,7 @@ impl SignedDecimal256 {
     #[inline]
     pub const fn negative_one() -> Self {
         // -DECIMAL_FRACTIONAL
-        Self(Int256::from_i128(-1_000_000_000_000_000_000))
+        Self(Int256::new(-1_000_000_000_000_000_000))
     }
 
     /// Create a 0.0 SignedDecimal256
@@ -927,7 +937,7 @@ mod tests {
 
     #[test]
     fn try_from_integer() {
-        let int = Int256::from_i128(0xDEADBEEF);
+        let int = Int256::new(0xDEADBEEF);
         let decimal = SignedDecimal256::try_from(int).unwrap();
         assert_eq!(int.to_string(), decimal.to_string());
     }
@@ -942,6 +952,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn signed_decimal_256_raw() {
         let value = 300i128;
         assert_eq!(SignedDecimal256::raw(value).0, Int256::from(value));
@@ -1481,7 +1492,7 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal256::from(SignedDecimal::MAX),
-            SignedDecimal256::new(Int256::from_i128(i128::MAX))
+            SignedDecimal256::new(Int256::new(i128::MAX))
         );
         assert_eq!(
             SignedDecimal256::from(SignedDecimal::percent(-50)),
@@ -1489,7 +1500,7 @@ mod tests {
         );
         assert_eq!(
             SignedDecimal256::from(SignedDecimal::MIN),
-            SignedDecimal256::new(Int256::from_i128(i128::MIN))
+            SignedDecimal256::new(Int256::new(i128::MIN))
         );
     }
 

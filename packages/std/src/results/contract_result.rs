@@ -17,19 +17,19 @@ use crate::prelude::*;
 /// Success:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, ContractResult, Response};
+/// # use cosmwasm_std::{to_json_string, ContractResult, Response};
 /// let response: Response = Response::default();
 /// let result: ContractResult<Response> = ContractResult::Ok(response);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"events":[],"data":null}}"#);
+/// assert_eq!(to_json_string(&result).unwrap(), r#"{"ok":{"messages":[],"attributes":[],"events":[],"data":null}}"#);
 /// ```
 ///
 /// Failure:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, ContractResult, Response};
+/// # use cosmwasm_std::{to_json_string, ContractResult, Response};
 /// let error_msg = String::from("Something went wrong");
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#);
+/// assert_eq!(to_json_string(&result).unwrap(), r#"{"error":"Something went wrong"}"#);
 /// ```
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,

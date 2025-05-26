@@ -18,7 +18,7 @@ const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
 const STORE_CODE_THREADS: usize = 32;
 const INSTANTIATION_THREADS: usize = 2048;
@@ -27,7 +27,7 @@ const THREADS: usize = STORE_CODE_THREADS + INSTANTIATION_THREADS;
 pub fn main() {
     let options = CacheOptions::new(
         TempDir::new().unwrap().into_path(),
-        capabilities_from_csv("iterator,staking"),
+        capabilities_from_csv("iterator,staking,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2"),
         MEMORY_CACHE_SIZE,
         DEFAULT_MEMORY_LIMIT,
     );
@@ -35,14 +35,14 @@ pub fn main() {
     let cache: Cache<MockApi, MockStorage, MockQuerier> = unsafe { Cache::new(options).unwrap() };
     let cache = Arc::new(cache);
 
-    let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+    let checksum = cache.store_code(HACKATOM, true, true).unwrap();
 
     let mut threads = Vec::with_capacity(THREADS);
     for _ in 0..STORE_CODE_THREADS {
         let cache = Arc::clone(&cache);
 
         threads.push(thread::spawn(move || {
-            let checksum = cache.store_code(CONTRACT, true, true).unwrap();
+            let checksum = cache.store_code(HACKATOM, true, true).unwrap();
             println!("Done saving Wasm {checksum}");
         }));
     }
@@ -69,7 +69,7 @@ pub fn main() {
             assert!(contract_result.into_result().is_ok());
 
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());

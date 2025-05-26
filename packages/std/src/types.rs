@@ -3,11 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
 use crate::prelude::*;
+use crate::Binary;
 use crate::{Addr, Timestamp};
 
-#[derive(
-    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
-)]
+use crate::utils::impl_hidden_constructor;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
@@ -20,6 +21,7 @@ pub struct Env {
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
 )]
+#[non_exhaustive]
 pub struct TransactionInfo {
     /// The position of this transaction in the block. The first
     /// transaction has index 0.
@@ -28,7 +30,16 @@ pub struct TransactionInfo {
     /// using the pair (`env.block.height`, `env.transaction.index`).
     ///
     pub index: u32,
+
+    /// Hash of the transaction.
+    ///
+    /// If the blockchain's CosmWasm version is below 3.0, this field
+    /// will default to being empty.
+    #[serde(default)]
+    pub hash: Binary,
 }
+
+impl_hidden_constructor!(TransactionInfo, index: u32, hash: Binary);
 
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
@@ -46,14 +57,14 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
+    /// # use cosmwasm_std::{Addr, Binary, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     transaction: Some(TransactionInfo { index: 3 }),
+    /// #     transaction: Some(TransactionInfo::new(3, Binary::from_hex("E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3").unwrap())),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },
@@ -68,14 +79,14 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
+    /// # use cosmwasm_std::{Addr, Binary, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp, TransactionInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
     /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     transaction: Some(TransactionInfo { index: 3 }),
+    /// #     transaction: Some(TransactionInfo::new(3, Binary::from_hex("E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3").unwrap())),
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },

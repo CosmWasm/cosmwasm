@@ -162,7 +162,7 @@ where
         // Four parameters, "ps", "qs", "r", "s", which all represent elements on the BLS12-381 curve (where "ps" and "r" are elements of the G1 subgroup, and "qs" and "s" elements of G2).
         // The "ps" and "qs" are interpreted as a continuous list of points in the subgroups G1 and G2 respectively.
         // Returns a single u32 which signifies the validity of the pairing equality.
-        // Returns 0 if the pairing equality exists, 1 if it doesnt, and any other code may be interpreted as a `CryptoError`.
+        // Returns 0 if the pairing equality exists, 1 if it doesn't, and any other code may be interpreted as a `CryptoError`.
         env_imports.insert(
             "bls12_381_pairing_equality",
             Function::new_typed_with_env(&mut store, &fe, do_bls12_381_pairing_equality),
@@ -478,17 +478,17 @@ where
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&mut self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        read_region(&env.memory(&store), region_ptr, max_length)
+        read_region(env, &mut store, region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
         let mut fe_mut = self.fe.clone().into_mut(&mut self.store);
-        let (env, store) = fe_mut.data_and_store_mut();
+        let (env, mut store) = fe_mut.data_and_store_mut();
 
-        write_region(&env.memory(&store), region_ptr, data)?;
+        write_region(env, &mut store, region_ptr, data)?;
         Ok(())
     }
 
@@ -542,14 +542,15 @@ mod tests {
         mock_instance_with_options, MockInstanceOptions,
     };
     use cosmwasm_std::{
-        coin, coins, from_json, AllBalanceResponse, BalanceResponse, BankQuery, Empty, QueryRequest,
+        coin, coins, from_json, BalanceResponse, BankQuery, Empty, QueryRequest, Uint256,
     };
     use wasmer::FunctionEnvMut;
 
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM_1_3: &[u8] = include_bytes!("../testdata/hackatom_1.3.wasm");
     static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
     #[test]
@@ -557,7 +558,7 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let _instance =
-            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
+            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
     }
 
     #[test]
@@ -602,8 +603,14 @@ mod tests {
         let backend = mock_backend(&[]);
         let (instance_options, memory_limit) = mock_instance_options();
         let instance =
-            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
+            Instance::from_code(HACKATOM_1_3, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_capabilities().len(), 0);
+
+        let backend = mock_backend(&[]);
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance =
+            Instance::from_code(HACKATOM, backend, instance_options, memory_limit).unwrap();
+        assert_eq!(instance.required_capabilities().len(), 7);
     }
 
     #[test]
@@ -694,7 +701,7 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         instance
             .call_function0("interface_version_8", &[])
@@ -703,7 +710,7 @@ mod tests {
 
     #[test]
     fn call_function1_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // can call function few times
         let result = instance
@@ -725,7 +732,7 @@ mod tests {
     #[test]
     fn allocate_deallocate_works() {
         let mut instance = mock_instance_with_options(
-            CONTRACT,
+            HACKATOM,
             MockInstanceOptions {
                 memory_limit: Some(Size::mebi(500)),
                 ..Default::default()
@@ -752,7 +759,7 @@ mod tests {
 
     #[test]
     fn write_and_read_memory_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, 6_000_000_000);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -763,7 +770,7 @@ mod tests {
             40 * KIB,
             400 * KIB,
             4 * MIB,
-            // disabled for performance reasons, but pass as well
+            // disabled for performance reasons, but pass as well (with much more gas)
             // 40 * MIB,
             // 400 * MIB,
         ];
@@ -785,7 +792,7 @@ mod tests {
     fn errors_in_imports() {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
-        let mut instance = mock_instance_with_failing_api(CONTRACT, &[], error_message);
+        let mut instance = mock_instance_with_failing_api(HACKATOM, &[], error_message);
         let init_result = call_instantiate::<_, _, _, Empty>(
             &mut instance,
             &mock_env(),
@@ -803,7 +810,7 @@ mod tests {
     fn read_memory_errors_when_when_length_is_too_long() {
         let length = 6;
         let max_length = 5;
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // Allocate sets length to 0. Write some data to increase length.
         let region_ptr = instance.allocate(length).expect("error allocating");
@@ -871,7 +878,7 @@ mod tests {
 
     #[test]
     fn memory_pages_grows_with_usage() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         assert_eq!(instance.memory_pages(), 17);
 
@@ -887,7 +894,7 @@ mod tests {
 
     #[test]
     fn get_gas_left_works() {
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, 123321);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
@@ -895,7 +902,7 @@ mod tests {
     #[test]
     fn create_gas_report_works() {
         const LIMIT: u64 = 700_000_000;
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, LIMIT);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, LIMIT);
 
         let report1 = instance.create_gas_report();
         assert_eq!(report1.used_externally, 0);
@@ -914,7 +921,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 251);
-        assert_eq!(report2.used_internally, 21589990);
+        assert_eq!(report2.used_internally, 18034325);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -924,7 +931,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         assert!(instance.is_storage_readonly());
 
@@ -940,7 +947,7 @@ mod tests {
 
     #[test]
     fn with_storage_works() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // initial check
         instance
@@ -971,7 +978,7 @@ mod tests {
     #[should_panic]
     fn with_storage_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
@@ -982,7 +989,7 @@ mod tests {
     fn with_querier_works_readonly() {
         let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance)]);
+        let mut instance = mock_instance_with_balances(HACKATOM, &[(&rich_addr, &rich_balance)]);
 
         // query one
         instance
@@ -1000,33 +1007,8 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.amount, Uint256::new(8000));
                 assert_eq!(amount.denom, "silver");
-                Ok(())
-            })
-            .unwrap();
-
-        // query all
-        instance
-            .with_querier(|querier| {
-                let response = querier
-                    .query::<Empty>(
-                        &QueryRequest::Bank(BankQuery::AllBalances {
-                            address: rich_addr.clone(),
-                        }),
-                        DEFAULT_QUERY_GAS_LIMIT,
-                    )
-                    .0
-                    .unwrap()
-                    .unwrap()
-                    .unwrap();
-                let AllBalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.len(), 2);
-                assert_eq!(amount[0].amount.u128(), 10000);
-                assert_eq!(amount[0].denom, "gold");
-                assert_eq!(amount[1].amount.u128(), 8000);
-                assert_eq!(amount[1].denom, "silver");
-
                 Ok(())
             })
             .unwrap();
@@ -1038,7 +1020,7 @@ mod tests {
         let rich_addr = String::from("foobar");
         let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
         let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
-        let mut instance = mock_instance_with_balances(CONTRACT, &[(&rich_addr, &rich_balance1)]);
+        let mut instance = mock_instance_with_balances(HACKATOM, &[(&rich_addr, &rich_balance1)]);
 
         // Get initial state
         instance
@@ -1056,7 +1038,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 500);
+                assert_eq!(amount.amount, Uint256::new(500));
                 Ok(())
             })
             .unwrap();
@@ -1085,7 +1067,7 @@ mod tests {
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount, .. } = from_json(response).unwrap();
-                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.amount, Uint256::new(8000));
                 Ok(())
             })
             .unwrap();
@@ -1093,7 +1075,7 @@ mod tests {
 
     #[test]
     fn contract_deducts_gas_init() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
         let orig_gas = instance.get_gas_left();
 
         // init contract
@@ -1106,12 +1088,12 @@ mod tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 21590241);
+        assert_eq!(init_used, 18034576);
     }
 
     #[test]
     fn contract_deducts_gas_execute() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init contract
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -1125,18 +1107,18 @@ mod tests {
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_execute = instance.get_gas_left();
         let info = mock_info(&verifier, &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
+        let msg = br#"{"release":{"denom":"earth"}}"#;
         call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 26961511);
+        assert_eq!(execute_used, 24624251);
     }
 
     #[test]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(CONTRACT, 20_000);
+        let mut instance = mock_instance_with_gas_limit(HACKATOM, 20_000);
 
         // init contract
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -1150,7 +1132,7 @@ mod tests {
 
     #[test]
     fn query_works_with_gas_metering() {
-        let mut instance = mock_instance(CONTRACT, &[]);
+        let mut instance = mock_instance(HACKATOM, &[]);
 
         // init contract
         let info = mock_info(&instance.api().addr_make("creator"), &coins(1000, "earth"));
@@ -1174,6 +1156,6 @@ mod tests {
         );
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 15938086);
+        assert_eq!(query_used, 11105221);
     }
 }

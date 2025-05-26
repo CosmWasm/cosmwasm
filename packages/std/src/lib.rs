@@ -21,10 +21,10 @@ mod conversion;
 mod deps;
 mod encoding;
 mod errors;
-mod eureka;
 mod forward_ref;
 mod hex_binary;
 mod ibc;
+mod ibc2;
 mod import_helpers;
 #[cfg(feature = "iterator")]
 mod iterator;
@@ -33,16 +33,15 @@ mod metadata;
 mod msgpack;
 mod never;
 mod pagination;
-mod panic;
 mod query;
 mod results;
 mod sections;
 mod serde;
 mod stdack;
-mod storage;
 mod timestamp;
 mod traits;
 mod types;
+mod utils;
 
 /// This module is to simplify no_std imports
 pub(crate) mod prelude;
@@ -68,16 +67,19 @@ pub use crate::errors::{
     RecoverPubkeyError, RoundDownOverflowError, RoundUpOverflowError, StdError, StdResult,
     SystemError, VerificationError,
 };
-pub use crate::eureka::{EurekaMsg, EurekaPayload};
 pub use crate::hex_binary::HexBinary;
 pub use crate::ibc::IbcChannelOpenResponse;
 pub use crate::ibc::{
     Ibc3ChannelOpenResponse, IbcAckCallbackMsg, IbcAcknowledgement, IbcBasicResponse,
     IbcCallbackRequest, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcFee, IbcMsg, IbcOrder, IbcPacket,
+    IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
     TransferMsgBuilder,
+};
+pub use crate::ibc2::{
+    Ibc2Msg, Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketSendMsg, Ibc2PacketTimeoutMsg,
+    Ibc2Payload,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, Record};
@@ -91,13 +93,12 @@ pub use crate::msgpack::{from_msgpack, to_msgpack_binary, to_msgpack_vec};
 pub use crate::never::Never;
 pub use crate::pagination::PageRequest;
 pub use crate::query::{
-    AllBalanceResponse, AllDelegationsResponse, AllDenomMetadataResponse, AllValidatorsResponse,
-    BalanceResponse, BankQuery, BondedDenomResponse, ChannelResponse, CodeInfoResponse,
-    ContractInfoResponse, CustomQuery, DecCoin, Delegation, DelegationResponse,
-    DelegationRewardsResponse, DelegationTotalRewardsResponse, DelegatorReward,
-    DelegatorValidatorsResponse, DelegatorWithdrawAddressResponse, DenomMetadataResponse,
-    DistributionQuery, FeeEnabledChannelResponse, FullDelegation, GrpcQuery, IbcQuery,
-    ListChannelsResponse, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator,
+    AllDelegationsResponse, AllDenomMetadataResponse, AllValidatorsResponse, BalanceResponse,
+    BankQuery, BondedDenomResponse, ChannelResponse, CodeInfoResponse, ContractInfoResponse,
+    CustomQuery, DecCoin, Delegation, DelegationResponse, DelegationRewardsResponse,
+    DelegationTotalRewardsResponse, DelegatorReward, DelegatorValidatorsResponse,
+    DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery, FullDelegation,
+    GrpcQuery, IbcQuery, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator,
     ValidatorResponse, WasmQuery,
 };
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
@@ -111,50 +112,35 @@ pub use crate::results::{
 pub use crate::results::{DistributionMsg, StakingMsg};
 #[cfg(feature = "stargate")]
 pub use crate::results::{GovMsg, VoteOption};
-#[allow(deprecated)]
-pub use crate::serde::{
-    from_binary, from_json, from_slice, to_binary, to_json_binary, to_json_string, to_json_vec,
-    to_vec,
-};
+pub use crate::serde::{from_json, to_json_binary, to_json_string, to_json_vec};
 pub use crate::stdack::StdAck;
-pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, HashFunction, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, MigrateInfo, TransactionInfo};
 
-#[cfg(feature = "abort")]
-mod _warning {
-    #[must_use = "cosmwasm-std feature `abort` is deprecated and will be removed in the next major release. You can just remove the feature as this functionality is now the default"]
-    struct CompileWarning;
+//
+// Exports
+//
 
-    #[allow(dead_code, path_statements)]
-    fn trigger_warning() {
-        CompileWarning;
-    }
-}
-
-// Exposed in wasm build only
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(feature = "exports", target_arch = "wasm32"))]
 mod exports;
-#[cfg(target_arch = "wasm32")]
-mod imports;
-#[cfg(target_arch = "wasm32")]
-mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
-#[cfg(all(feature = "cosmwasm_2_2", target_arch = "wasm32"))]
+#[cfg(all(feature = "exports", target_arch = "wasm32", feature = "cosmwasm_2_2"))]
 pub use crate::exports::do_migrate_with_info;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(feature = "exports", target_arch = "wasm32"))]
 pub use crate::exports::{
     do_execute, do_ibc_destination_callback, do_ibc_source_callback, do_instantiate, do_migrate,
     do_query, do_reply, do_sudo,
 };
-#[cfg(all(feature = "stargate", target_arch = "wasm32"))]
+#[cfg(all(feature = "exports", target_arch = "wasm32", feature = "ibc2"))]
+pub use crate::exports::{
+    do_ibc2_packet_ack, do_ibc2_packet_receive, do_ibc2_packet_send, do_ibc2_packet_timeout,
+};
+#[cfg(all(feature = "exports", target_arch = "wasm32", feature = "stargate"))]
 pub use crate::exports::{
     do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
     do_ibc_packet_receive, do_ibc_packet_timeout,
 };
-#[cfg(target_arch = "wasm32")]
-pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 
 /// Exposed for testing only
 /// Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
@@ -209,7 +195,7 @@ pub use cosmwasm_core::{BLS12_381_G1_GENERATOR, BLS12_381_G2_GENERATOR};
 /// ```
 ///
 /// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
-/// types that implement `DeserializeOwned + JsonSchema`.
+/// types that implement `DeserializeOwned`.
 ///
 /// ## Set the version of the state of your contract
 ///

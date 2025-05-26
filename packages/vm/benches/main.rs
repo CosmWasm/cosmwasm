@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 
 use rand::Rng;
 use std::sync::Arc;
@@ -12,7 +12,7 @@ use cosmwasm_vm::testing::{
 };
 use cosmwasm_vm::{
     call_execute, call_instantiate, capabilities_from_csv, Cache, CacheOptions, Instance,
-    InstanceOptions, Size,
+    InstanceOptions, Size, VmError,
 };
 
 // Instance
@@ -22,6 +22,7 @@ const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,
 };
 const HIGH_GAS_LIMIT: u64 = 20_000_000_000_000; // ~20s, allows many calls on one instance
+const MEDIUM_GAS_LIMIT: u64 = 1_000_000_000_000; // ~1s
 
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
@@ -30,7 +31,7 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 const INSTANTIATION_THREADS: usize = 128;
 const CONTRACTS: u64 = 10;
 
-const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,iterator,staking";
+const DEFAULT_CAPABILITIES: &str = "cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0,cosmwasm_2_1,cosmwasm_2_2,iterator,staking";
 static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 static CYBERPUNK: &[u8] = include_bytes!("../testdata/cyberpunk.wasm");
 
@@ -100,7 +101,7 @@ fn bench_instance(c: &mut Criterion) {
 
         b.iter(|| {
             let info = mock_info(&verifier, &coins(15, "earth"));
-            let msg = br#"{"release":{}}"#;
+            let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
@@ -130,6 +131,48 @@ fn bench_instance(c: &mut Criterion) {
             assert!(contract_result.into_result().is_ok());
             gas_used = gas_before - instance.get_gas_left();
         });
+        println!("Gas used: {gas_used}");
+    });
+
+    group.bench_function("execute execute (infinite loop)", |b| {
+        let backend = mock_backend(&[]);
+        let medium_gas: InstanceOptions = InstanceOptions {
+            gas_limit: MEDIUM_GAS_LIMIT,
+        };
+        let mut instance =
+            Instance::from_code(CYBERPUNK, backend, medium_gas, Some(DEFAULT_MEMORY_LIMIT))
+                .unwrap();
+
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let contract_result =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, b"{}").unwrap();
+        assert!(contract_result.into_result().is_ok());
+
+        let mut gas_used = 0;
+        b.iter_batched(
+            || {
+                // setup new instance for each iteration because cpu loop will consume all gas
+                Instance::from_code(
+                    CYBERPUNK,
+                    mock_backend(&[]),
+                    medium_gas,
+                    Some(DEFAULT_MEMORY_LIMIT),
+                )
+                .unwrap()
+            },
+            |mut instance| {
+                let gas_before = instance.get_gas_left();
+                let info = mock_info("hasher", &[]);
+                let msg = br#"{"cpu_loop":{}}"#;
+
+                let vm_result =
+                    call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+
+                assert!(matches!(vm_result, Err(VmError::GasDepletion { .. })));
+                gas_used = gas_before - instance.get_gas_left();
+            },
+            BatchSize::SmallInput,
+        );
         println!("Gas used: {gas_used}");
     });
 

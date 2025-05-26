@@ -176,7 +176,7 @@ mod tests {
     use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
-        coin, coins, from_json, AllBalanceResponse, BankMsg, BankQuery, Binary, Event, StakingMsg,
+        coin, coins, from_json, BalanceResponse, BankMsg, BankQuery, Binary, Event, StakingMsg,
         StdError, SubMsgResponse, SubMsgResult,
     };
 
@@ -385,17 +385,17 @@ mod tests {
         let deps = mock_dependencies_with_custom_querier(&coins(123, "ucosm"));
 
         // with bank query
-        #[allow(deprecated)]
         let msg = QueryMsg::Chain {
-            request: BankQuery::AllBalances {
+            request: BankQuery::Balance {
                 address: MOCK_CONTRACT_ADDR.to_string(),
+                denom: "ucosm".to_string(),
             }
             .into(),
         };
         let response = query(deps.as_ref(), mock_env(), msg).unwrap();
         let outer: ChainResponse = from_json(response).unwrap();
-        let inner: AllBalanceResponse = from_json(outer.data).unwrap();
-        assert_eq!(inner.amount, coins(123, "ucosm"));
+        let inner: BalanceResponse = from_json(outer.data).unwrap();
+        assert_eq!(inner.amount, coin(123, "ucosm"));
 
         // with custom query
         let msg = QueryMsg::Chain {

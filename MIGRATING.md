@@ -24,7 +24,7 @@ major releases of `cosmwasm`. Note that you can also view the
   `stargate` feature instead, since it was previously implied by `ibc3`.
 
   Also remove any uses of the `backtraces` feature. You can use a
-  `RUST_BACKTRACE=1` env variable for this now.
+  `RUST_BACKTRACE=1` environment variable for this now.
 
   If you were using `cosmwasm-std` with `default-features = false`, you probably
   want to enable the `std` feature now, as we might move certain existing
@@ -156,10 +156,10 @@ major releases of `cosmwasm`. Note that you can also view the
   +StdError::generic_err(msg)
   ```
 
-- Replace addresses in unit tests with valid bech32 addresses. This has to be
+- Replace addresses in unit tests with valid Bech32 addresses. This has to be
   done for all addresses that are validated or canonicalized during the test or
   within the contract. The easiest way to do this is by using
-  `MockApi::addr_make`. It generates a bech32 address from any string:
+  `MockApi::addr_make`. It generates a Bech32 address from any string:
 
   ```diff
   -let msg = InstantiateMsg {
@@ -172,10 +172,10 @@ major releases of `cosmwasm`. Note that you can also view the
   +};
   ```
 
-- Replace addresses in integration tests using `cosmwasm-vm` with valid bech32
+- Replace addresses in integration tests using `cosmwasm-vm` with valid Bech32
   addresses. This has to be done for all addresses that are validated or
   canonicalized during the test or within the contract. The easiest way to do
-  this is by using `MockApi::addr_make`. It generates a bech32 address from any
+  this is by using `MockApi::addr_make`. It generates a Bech32 address from any
   string:
 
   ```diff
@@ -206,9 +206,9 @@ major releases of `cosmwasm`. Note that you can also view the
 
 - If you were using `QueryRequest::Stargate`, you might want to enable the
   `cosmwasm_2_0` cargo feature and migrate to `QueryRequest::Grpc` instead.
-  While the stargate query sometimes returns protobuf encoded data and sometimes
+  While the stargate query sometimes returns protobuf-encoded data and sometimes
   JSON encoded data, depending on the chain, the gRPC query always returns
-  protobuf encoded data.
+  protobuf-encoded data.
 
   ```diff
   -deps.querier.query(&QueryRequest::Stargate {
@@ -1311,7 +1311,7 @@ arbitrary ones.
 
   The existing `CanonicalAddr` remains unchanged and can be used in cases in
   which a compact binary representation is desired. For JSON state this does not
-  save much data (e.g. the bech32 address
+  save much data (e.g. the Bech32 address
   cosmos1pfq05em6sfkls66ut4m2257p7qwlk448h8mysz takes 45 bytes as direct ASCII
   and 28 bytes when its canonical representation is base64 encoded). For
   fixed-length database keys `CanonicalAddr` remains handy though.
@@ -1954,7 +1954,7 @@ All helper functions have been moved into a new `cosmwasm-schema` package.
 - Remove `serde_json` `[dev-dependency]` if there, as cosmwasm-schema will
   handle JSON output internally.
 - Update `examples/schema.rs` to look
-  [more like queue](https://github.com/CosmWasm/cosmwasm/blob/main/contracts/queue/examples/schema.rs),
+  [more like queue](https://github.com/CosmWasm/cosmwasm/blob/v0.8.0/contracts/queue/examples/schema.rs),
   but replacing all the imports and type names with those you currently have.
 - Regenerate schemas with `cargo schema`
 

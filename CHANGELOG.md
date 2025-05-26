@@ -15,7 +15,24 @@ and this project adheres to
   `From<Int128> for i128` ([#2268])
 - cosmwasm-std: Implement `Uint128::from_{be,le}_bytes` and
   `Uint64::from_{be,le}_bytes`. ([#2269])
-- cosmwasm-std: Added new `EurekaMsg` and `CosmosMsg::Eureka` variant ([#2340])
+- cosmwasm-std: Added new `Ibc2Msg` and `CosmosMsg::Ibc2` variant ([#2340],
+  [#2390], [#2403])
+- cosmwasm-std: Added `ibc2_port` to `ContractInfoResponse`. ([#2390], [#2403])
+- cosmwasm-vm: Added `ibc2_packet_receive` entrypoint ([#2403])
+- cosmwasm-vm: Add IBC Callbacks entrypoints to the `Entrypoints` enum.
+  ([#2438])
+- cosmwasm-std: Add `WriteAcknowledgement` to `Ibc2Msg` - ([#2425])
+- cosmwasm-vm: Add `ibc2_packet_timeout` entrypoint - ([#2454])
+- cosmwasm-std: Add `Ibc2PacketTimeoutMsg` message - ([#2454])
+- cosmwasm-std: Add `cosmwasm_std::testing::Envs`, which is an `Env` factory for
+  testing environments. It auto-increments block heights and timestamps. It
+  allows for advanced configurations such as custom address prefixes. ([#2442])
+- cosmwasm-vm: Add support for `ibc2_packet_ack` endpoint ([#2474])
+- cosmwasm-std: Add support for `ibc2_packet_ack` endpoint ([#2474])
+- cosmwasm-std: Add `Ibc2PacketSendMsg` message - ([#2477])
+- cosmwasm-vm: Add `ibc2_packet_send` entrypoint ([#2477])
+- cosmwasm-std: Add Tx hash to TransactionInfo and make it non exhaustive
+  ([#2480])
 
 ## Changed
 
@@ -27,19 +44,97 @@ and this project adheres to
 - cosmwasm-std: Make `instantiate2_address_impl` public and let it take a new
   `len` argument to allow truncating address data as part of the generation
   process. ([#2155])
+- cosmwasm-vm: Updated wasmer to 5.0.4 ([#2374])
+- cosmwasm-vm: Charge gas for `write_region` ([#2378])
+- cosmwasm-vm: Remove the `cranelift` feature. This was doing nothing since
+  2.2.0 already. ([#2262])
+- cosmwasm-std: Remove previously deprecated `from_slice`, `from_binary`,
+  `to_vec` and `to_binary`. ([#2156])
+- cosmwasm-vm: The testing functions `cosmwasm_vm::testing::*` do not require
+  the contract's message types to implement `schemars::JsonSchema` anymore. This
+  makes the use of `schemars` optional for contracts. ([#2201])
+- cosmwasm-std: Remove `schemars::JsonSchema` requirement from `CustomMsg`.
+  ([#2201])
+- cosmwasm-std: `Int256::new`/`Int512::new` now take an `i128` argument instead
+  of bytes. Use `::from_be_bytes` if you need the old behaviour. ([#2367])
+- cosmwasm-std: `Uint256::new`/`Uint512::new` now take an `u128` argument
+  instead of bytes. Use `::from_be_bytes` if you need the old behaviour.
+  ([#2367])
+- cosmwasm-std: Deprecate `{Decimal,Decimal256}::raw` and
+  `{SignedDecimal,SignedDecimal256}::raw` in favour of e.g.
+  `Decimal::new(Uint128::new(value))`. ([#2399])
+- cosmwasm-std: Deprecate `Uint256::from_u128` and `Int256::from_i128` in favour
+  of `::new`. ([#2399])
+- cosmwasm-std: Move `MemoryStorage` to `cosmwasm_std::testing::MockStorage`.
+  ([#2237])
+- cosmwasm-std: Remove previously deprecated `cosmwast_std::testing::mock_info`.
+  Use `cosmwasm_std::testing::message_info` instead. ([#2393])
+- cosmwasm-std: Remove abort feature. ([#2141])
+- cosmwasm-std: Change `Coin::amount` to `Uint256` instead of `Uint128`.
+  ([#2458])
+- cosmwasm-std: Replace dependency `serde-json-wasm` with `serde_json`.
+  ([#2195])
+- cosmwasm-std: Make `GovMsg` `#[non_exhaustive]` for consistency. ([#2347])
+- cosmwasm-crypto: Upgrade ark-\* dependencies to 0.5.0. ([#2432])
+- cosmwasm-std: Remove support for `BankQuery::AllBalances` and
+  `query_all_balances`. ([#2433])
+- cosmwasm-std: source_client instead of channel_id in IBCv2 - ([#2450])
+- cosmwasm-std: Remove previously deprecated `IbcQuery::ListChannels` and
+  `ListChannelsResponse`. ([#2223])
+- cosmwasm-std: Remove export of `ExternalApi`, `ExternalQuerier` and
+  `ExternalStorage` as those are only needed by export implementations in
+  cosmwasm-std. ([#2467])
+- cosmwasm-vm: Update wasmer to 5.0.6. ([#2472])
+- cosmwasm-std: Add a new `exports` feature which needs to be enabled for the
+  primary cosmwasm_std dependency of a contract.
+- cosmwasm-vm: Enable partial reference-type support, enabling contracts
+  compiled with Rust 1.82 or newer to be stored. ([#2473])
+- cosmwasm-std: Removed IBC fees ([#2479])
 
 ## Fixed
 
 - cosmwasm-schema: The schema export now doesn't overwrite existing
   `additionalProperties` values anymore ([#2310])
+- cosmwasm-vm: Fix CWA-2025-002.
+- cosmwasm-std: Fix deserialization of `DenomMetadata`. ([#2417])
 
+[#2141]: https://github.com/CosmWasm/cosmwasm/issues/2141
 [#2155]: https://github.com/CosmWasm/cosmwasm/issues/2155
+[#2156]: https://github.com/CosmWasm/cosmwasm/issues/2156
+[#2195]: https://github.com/CosmWasm/cosmwasm/issues/2195
+[#2201]: https://github.com/CosmWasm/cosmwasm/issues/2201
+[#2223]: https://github.com/CosmWasm/cosmwasm/issues/2223
+[#2237]: https://github.com/CosmWasm/cosmwasm/issues/2237
+[#2262]: https://github.com/CosmWasm/cosmwasm/issues/2262
 [#2268]: https://github.com/CosmWasm/cosmwasm/issues/2268
 [#2269]: https://github.com/CosmWasm/cosmwasm/issues/2269
 [#2310]: https://github.com/CosmWasm/cosmwasm/pull/2310
 [#2337]: https://github.com/CosmWasm/cosmwasm/issues/2337
 [#2340]: https://github.com/CosmWasm/cosmwasm/pull/2340
 [#2344]: https://github.com/CosmWasm/cosmwasm/pull/2344
+[#2347]: https://github.com/CosmWasm/cosmwasm/issues/2347
+[#2367]: https://github.com/CosmWasm/cosmwasm/issues/2367
+[#2374]: https://github.com/CosmWasm/cosmwasm/issues/2374
+[#2378]: https://github.com/CosmWasm/cosmwasm/issues/2378
+[#2390]: https://github.com/CosmWasm/cosmwasm/issues/2390
+[#2393]: https://github.com/CosmWasm/cosmwasm/issues/2393
+[#2399]: https://github.com/CosmWasm/cosmwasm/pull/2399
+[#2403]: https://github.com/CosmWasm/cosmwasm/pull/2403
+[#2417]: https://github.com/CosmWasm/cosmwasm/pull/2417
+[#2425]: https://github.com/CosmWasm/cosmwasm/pull/2425
+[#2432]: https://github.com/CosmWasm/cosmwasm/pull/2432
+[#2433]: https://github.com/CosmWasm/cosmwasm/pull/2433
+[#2438]: https://github.com/CosmWasm/cosmwasm/pull/2438
+[#2442]: https://github.com/CosmWasm/cosmwasm/pull/2442
+[#2450]: https://github.com/CosmWasm/cosmwasm/pull/2450
+[#2454]: https://github.com/CosmWasm/cosmwasm/pull/2454
+[#2458]: https://github.com/CosmWasm/cosmwasm/pull/2458
+[#2467]: https://github.com/CosmWasm/cosmwasm/pull/2467
+[#2472]: https://github.com/CosmWasm/cosmwasm/pull/2472
+[#2473]: https://github.com/CosmWasm/cosmwasm/pull/2473
+[#2477]: https://github.com/CosmWasm/cosmwasm/pull/2477
+[#2479]: https://github.com/CosmWasm/cosmwasm/pull/2479
+[#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
 
 ## [2.2.0] - 2024-12-17
 

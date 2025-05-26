@@ -49,7 +49,7 @@ pub fn message_info(sender: &Addr, funds: &[Coin]) -> MessageInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::{coins, Uint128};
+    use crate::{coins, Uint256};
 
     use super::*;
 
@@ -72,7 +72,7 @@ mod tests {
             MessageInfo {
                 sender: addr.clone(),
                 funds: vec![Coin {
-                    amount: Uint128::new(123),
+                    amount: Uint256::new(123),
                     denom: "foo".to_string(),
                 }],
             }

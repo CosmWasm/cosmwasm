@@ -33,16 +33,16 @@ in the dependency tree. Otherwise conflicting C exports are created.
 
 The library comes with the following features:
 
-| Feature      | Enabled by default | Description                                                                          |
-| ------------ | ------------------ | ------------------------------------------------------------------------------------ |
-| iterator     | x                  | Storage iterators                                                                    |
-| abort        | x                  | DEPRECATED A panic handler that aborts the contract execution with a helpful message |
-| stargate     |                    | Cosmos SDK 0.40+ features and IBC                                                    |
-| staking      |                    | Access to the staking module                                                         |
-| cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                                     |
-| cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                                     |
-| cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                                     |
-| cosmwasm_1_4 |                    | Features that require CosmWasm 1.4+ on the chain                                     |
+| Feature      | Enabled by default | Description                                                                      |
+| ------------ | ------------------ | -------------------------------------------------------------------------------- |
+| exports      | x                  | Adds exports and imports needed for basic communication between contract and VM. |
+| iterator     | x                  | Storage iterators                                                                |
+| stargate     |                    | Cosmos SDK 0.40+ features and IBC                                                |
+| staking      |                    | Access to the staking module                                                     |
+| cosmwasm_1_1 |                    | Features that require CosmWasm 1.1+ on the chain                                 |
+| cosmwasm_1_2 |                    | Features that require CosmWasm 1.2+ on the chain                                 |
+| cosmwasm_1_3 |                    | Features that require CosmWasm 1.3+ on the chain                                 |
+| cosmwasm_1_4 |                    | Features that require CosmWasm 1.4+ on the chain                                 |
 
 ## The cosmwasm-std dependency for contract developers
 
@@ -78,13 +78,13 @@ might move certain existing functionality to that feature in the future.
 
 Also libraries should define a loose version range that allows the contract
 developer to control which cosmwasm-std version they want to use in the final
-project. E.g. if your library does not work with 1.0.0 due to a bug fixed in
-1.0.1, your min version is 1.0.1 and not the latest stable.
+project. E.g. if your library does not work with 3.0.0 due to a bug fixed in
+3.0.1, your min version is 3.0.1 and not the latest stable.
 
 A typical dependency then looks like this:
 
 ```toml
-# We really need `stargate` here as this is an IBC related library. `abort` and `iterator` are not needed.
+# We really need `stargate` here as this is an IBC related library. `exports` and `iterator` are not needed.
 # `std` should always stay enabled.
-cosmwasm-std = { version = "1.0.1", default-features = false, features = ["std", "stargate"] }
+cosmwasm-std = { version = "3.0.1", default-features = false, features = ["std", "stargate"] }
 ```

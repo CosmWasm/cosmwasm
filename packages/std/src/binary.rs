@@ -80,6 +80,15 @@ impl Binary {
         out.copy_from_slice(&self.0);
         Ok(out)
     }
+
+    pub fn from_hex(input: &str) -> StdResult<Self> {
+        let binary = hex::decode(input).map_err(StdError::invalid_hex)?;
+        Ok(Self(binary))
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(&self.0)
+    }
 }
 
 impl fmt::Display for Binary {
@@ -91,7 +100,7 @@ impl fmt::Display for Binary {
 impl fmt::Debug for Binary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Use an output inspired by tuples (https://doc.rust-lang.org/std/fmt/struct.Formatter.html#method.debug_tuple)
-        // but with a custom implementation to avoid the need for an intemediate hex string.
+        // but with a custom implementation to avoid the need for an intermediate hex string.
         write!(f, "Binary(")?;
         for byte in self.0.iter() {
             write!(f, "{byte:02x}")?;
@@ -603,5 +612,21 @@ mod tests {
         assert_eq!([0xAA, 0xBB], a);
         assert_ne!(a, [0x11, 0x22]);
         assert_ne!([0x11, 0x22], a);
+    }
+
+    #[test]
+    fn hex_encoding_works() {
+        let hash = "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104";
+        let parsed = Binary::from_hex(hash).unwrap();
+        assert_eq!(parsed.to_hex(), hash);
+
+        // invalid hex
+        let odd_num_of_digits = "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227";
+        assert!(Binary::from_hex(odd_num_of_digits).is_err());
+        let invalid_char = "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a1428842271g4";
+        assert!(Binary::from_hex(invalid_char).is_err());
+        let hex_prefix_unexpected =
+            "0x722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104";
+        assert!(Binary::from_hex(hex_prefix_unexpected).is_err());
     }
 }

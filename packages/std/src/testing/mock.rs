@@ -11,7 +11,7 @@ use core::marker::PhantomData;
 use core::ops::Bound;
 use rand_core::OsRng;
 use serde::de::DeserializeOwned;
-#[cfg(feature = "stargate")]
+#[cfg(any(feature = "stargate", feature = "ibc2"))]
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
@@ -23,23 +23,24 @@ use crate::ibc::{
     IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
     IbcTimeoutBlock,
 };
+#[cfg(feature = "ibc2")]
+use crate::ibc2::{
+    Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketSendMsg, Ibc2PacketTimeoutMsg, Ibc2Payload,
+};
 #[cfg(feature = "cosmwasm_1_1")]
 use crate::query::SupplyResponse;
-use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
-};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
     FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
+use crate::query::{BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::query::{DelegatorWithdrawAddressResponse, DistributionQuery};
 use crate::results::{ContractResult, Empty, SystemResult};
-use crate::storage::MemoryStorage;
 use crate::traits::{Api, Querier, QuerierResult};
-use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo, TransactionInfo};
-use crate::{from_json, to_json_binary, Binary, Uint128};
+use crate::types::{BlockInfo, ContractInfo, Env, TransactionInfo};
+use crate::{from_json, to_json_binary, Binary, Uint256};
 #[cfg(feature = "cosmwasm_1_3")]
 use crate::{
     query::{AllDenomMetadataResponse, DecCoin, DenomMetadataResponse},
@@ -47,10 +48,12 @@ use crate::{
 };
 use crate::{Attribute, DenomMetadata};
 #[cfg(feature = "stargate")]
-use crate::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
+use crate::{ChannelResponse, IbcQuery, PortIdResponse};
 #[cfg(feature = "cosmwasm_1_4")]
 use crate::{Decimal256, DelegationRewardsResponse, DelegatorValidatorsResponse};
 use crate::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+
+use super::MockStorage;
 
 pub const MOCK_CONTRACT_ADDR: &str =
     "cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs";
@@ -89,10 +92,6 @@ pub fn mock_dependencies_with_balances(
         custom_query_type: PhantomData,
     }
 }
-
-// Use MemoryStorage implementation (which is valid in non-testcode)
-// We can later make simplifications here if needed
-pub type MockStorage = MemoryStorage;
 
 /// Default prefix used when creating Bech32 encoded address.
 const BECH32_PREFIX: &str = "cosmwasm";
@@ -353,7 +352,7 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 /// Create an env:
 ///
 /// ```
-/// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, Timestamp, TransactionInfo};
+/// # use cosmwasm_std::{Addr, Binary, BlockInfo, ContractInfo, Env, Timestamp, TransactionInfo};
 /// use cosmwasm_std::testing::mock_env;
 ///
 /// let env = mock_env();
@@ -363,7 +362,7 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 ///         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
 ///         chain_id: "cosmos-testnet-14002".to_string(),
 ///     },
-///     transaction: Some(TransactionInfo { index: 3 }),
+///     transaction: Some(TransactionInfo::new(3, Binary::from_hex("E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3").unwrap())),
 ///     contract: ContractInfo {
 ///         address: Addr::unchecked("cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs"),
 ///     },
@@ -393,27 +392,172 @@ fn validate_length(bytes: &[u8]) -> StdResult<()> {
 /// // `env3` is one block and 5.5 seconds later
 /// ```
 pub fn mock_env() -> Env {
-    let contract_addr = MockApi::default().addr_make("cosmos2contract");
-    Env {
-        block: BlockInfo {
-            height: 12_345,
-            time: Timestamp::from_nanos(1_571_797_419_879_305_533),
+    let mut envs = Envs::new(BECH32_PREFIX);
+    envs.make()
+}
+
+/// A factory type that stores chain information such as bech32 prefix and can make mock `Env`s from there.
+///
+/// It increments height for each mock call and block time by 5 seconds but is otherwise dumb.
+///
+/// In contrast to using `mock_env`, the bech32 prefix must always be specified.
+///
+/// ## Examples
+///
+/// Typical usage
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::Envs;
+///
+/// let mut envs = Envs::new("food");
+///
+/// let env = envs.make();
+/// assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+/// assert_eq!(env.block.height, 12_345);
+/// assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_419_879_305_533));
+///
+/// let env = envs.make();
+/// assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+/// assert_eq!(env.block.height, 12_346);
+/// assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_424_879_305_533));
+///
+/// let env = envs.make();
+/// assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+/// assert_eq!(env.block.height, 12_347);
+/// assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_429_879_305_533));
+/// ```
+///
+/// Or use with iterator
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::Envs;
+///
+/// let mut envs = Envs::new("food");
+///
+/// for (index, env) in envs.take(100).enumerate() {
+///     assert_eq!(env.contract.address.as_str(), "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj");
+///     assert_eq!(env.block.height, 12_345 + index as u64);
+///     assert_eq!(env.block.time, Timestamp::from_nanos(1_571_797_419_879_305_533).plus_seconds((index*5) as u64));
+/// }
+/// ```
+pub struct Envs {
+    chain_id: String,
+    contract_address: Addr,
+    /// The number of nanoseconds between two consecutive blocks
+    block_time: u64,
+    last_height: u64,
+    last_time: Timestamp,
+}
+
+/// Options to create an `Envs` instance.
+///
+/// ## Examples
+///
+/// Must be constructed with the help of `Default` since new options might be added later.
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// use cosmwasm_std::testing::{Envs, EnvsOptions};
+///
+/// let mut options = EnvsOptions::default();
+/// options.chain_id = "megachain".to_string();
+/// options.bech32_prefix = "mega";
+/// let mut envs = Envs::with_options(options);
+///
+/// let env = envs.make();
+/// assert_eq!(env.block.chain_id, "megachain");
+/// assert_eq!(env.contract.address.as_str(), "mega1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts7vnj8h");
+/// ```
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct EnvsOptions {
+    pub bech32_prefix: &'static str, /* static due to MockApi's Copy requirement. No better idea for now. */
+    pub block_time: u64,
+    // The height before the first `make` call
+    pub initial_height: u64,
+    // The block time before the first `make` call
+    pub initial_time: Timestamp,
+    pub chain_id: String,
+}
+
+impl Default for EnvsOptions {
+    fn default() -> Self {
+        EnvsOptions {
+            bech32_prefix: BECH32_PREFIX,
+            block_time: 5_000_000_000, // 5s
+            initial_height: 12_344,
+            initial_time: Timestamp::from_nanos(1_571_797_419_879_305_533).minus_seconds(5),
             chain_id: "cosmos-testnet-14002".to_string(),
-        },
-        transaction: Some(TransactionInfo { index: 3 }),
-        contract: ContractInfo {
-            address: contract_addr,
-        },
+        }
     }
 }
 
-/// Just set sender and funds for the message.
-/// This is intended for use in test code only.
-#[deprecated(note = "This is inconvenient and unsafe. Use message_info instead.")]
-pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
-    MessageInfo {
-        sender: Addr::unchecked(sender),
-        funds: funds.to_vec(),
+impl Envs {
+    pub fn new(bech32_prefix: &'static str) -> Self {
+        Self::with_options(EnvsOptions {
+            bech32_prefix,
+            ..Default::default()
+        })
+    }
+
+    pub fn with_options(options: EnvsOptions) -> Self {
+        let api = MockApi::default().with_prefix(options.bech32_prefix);
+        Envs {
+            chain_id: options.chain_id,
+            // Default values here for compatibility with old `mock_env` function. They could be changed to anything else if there is a good reason.
+            contract_address: api.addr_make("cosmos2contract"),
+            block_time: options.block_time,
+            last_height: options.initial_height,
+            last_time: options.initial_time,
+        }
+    }
+
+    pub fn make(&mut self) -> Env {
+        self.checked_make().unwrap()
+    }
+
+    fn checked_make(&mut self) -> Option<Env> {
+        let height = self.last_height.checked_add(1)?;
+        let time = Timestamp::from_nanos(self.last_time.nanos().checked_add(self.block_time)?);
+
+        self.last_height = height;
+        self.last_time = time;
+
+        Some(Env {
+            block: BlockInfo {
+                height,
+                time,
+                chain_id: self.chain_id.clone(),
+            },
+            transaction: Some(TransactionInfo::new(
+                3,
+                Binary::from_hex(
+                    "E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3",
+                )
+                .unwrap(),
+            )),
+            contract: ContractInfo {
+                address: self.contract_address.clone(),
+            },
+        })
+    }
+}
+
+impl Default for Envs {
+    fn default() -> Self {
+        Envs::with_options(EnvsOptions::default())
+    }
+}
+
+// The iterator implementation ends in case of overflows to avoid panics.
+// Using this is recommended for very long running test suites.
+impl Iterator for Envs {
+    type Item = Env;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.checked_make()
     }
 }
 
@@ -522,6 +666,81 @@ pub fn mock_ibc_packet_recv(
             .into(),
         },
         Addr::unchecked("relayer"),
+    ))
+}
+
+/// Creates a Ibc2PacketAckMsg for testing ibc2_packet_ack. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_ack(data: &impl Serialize) -> StdResult<Ibc2PacketAckMsg> {
+    Ok(Ibc2PacketAckMsg::new(
+        "source_id23".to_string(),
+        "channel_id23".to_string(),
+        Ibc2Payload {
+            source_port: "wasm2srcport".to_string(),
+            destination_port: "wasm2destport".to_string(),
+            version: "v2".to_string(),
+            encoding: "json".to_string(),
+            value: to_json_binary(data)?,
+        },
+        Binary::new(vec![]),
+        Addr::unchecked("relayer"),
+    ))
+}
+
+/// Creates a IbcPacketReceiveMsg for testing ibc_packet_receive. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_recv(data: &impl Serialize) -> StdResult<Ibc2PacketReceiveMsg> {
+    Ok(Ibc2PacketReceiveMsg::new(
+        Ibc2Payload {
+            source_port: "wasm2srcport".to_string(),
+            destination_port: "wasm2destport".to_string(),
+            version: "v2".to_string(),
+            encoding: "json".to_string(),
+            value: to_json_binary(data)?,
+        },
+        Addr::unchecked("relayer"),
+        "channel_id23".to_string(),
+        42,
+    ))
+}
+
+/// Creates a Ibc2PacketTimeoutMsg for testing ibc2_packet_timeout.
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_timeout(data: &impl Serialize) -> StdResult<Ibc2PacketTimeoutMsg> {
+    let payload = Ibc2Payload {
+        source_port: "wasm2srcport".to_string(),
+        destination_port: "wasm2destport".to_string(),
+        version: "v2".to_string(),
+        encoding: "json".to_string(),
+        value: to_json_binary(data)?,
+    };
+    Ok(Ibc2PacketTimeoutMsg::new(
+        payload,
+        "source_client".to_string(),
+        "destination_client".to_string(),
+        1,
+        Addr::unchecked("relayer"),
+    ))
+}
+
+/// Creates a Ibc2PacketTimeoutMsg for testing ibc2_packet_timeout.
+#[cfg(feature = "ibc2")]
+pub fn mock_ibc2_packet_send(data: &impl Serialize) -> StdResult<Ibc2PacketSendMsg> {
+    let payload = Ibc2Payload {
+        source_port: "wasm2srcport".to_string(),
+        destination_port: "wasm2destport".to_string(),
+        version: "v2".to_string(),
+        encoding: "json".to_string(),
+        value: to_json_binary(data)?,
+    };
+    Ok(Ibc2PacketSendMsg::new(
+        payload,
+        "source_client".to_string(),
+        "destination_client".to_string(),
+        1,
+        Addr::unchecked("signer_contract"),
     ))
 }
 
@@ -738,7 +957,7 @@ impl Default for WasmQuerier {
 pub struct BankQuerier {
     #[allow(dead_code)]
     /// BTreeMap<denom, amount>
-    supplies: BTreeMap<String, Uint128>,
+    supplies: BTreeMap<String, Uint256>,
     /// A map from address to balance. The address is the String conversion of `Addr`,
     /// i.e. the bech32 encoded address.
     balances: BTreeMap<String, Vec<Coin>>,
@@ -779,7 +998,7 @@ impl BankQuerier {
             .collect();
     }
 
-    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint128> {
+    fn calculate_supplies(balances: &BTreeMap<String, Vec<Coin>>) -> BTreeMap<String, Uint256> {
         let mut supplies = BTreeMap::new();
 
         let all_coins = balances.iter().flat_map(|(_, coins)| coins);
@@ -787,7 +1006,7 @@ impl BankQuerier {
         for coin in all_coins {
             *supplies
                 .entry(coin.denom.clone())
-                .or_insert_with(Uint128::zero) += coin.amount;
+                .or_insert_with(Uint256::zero) += coin.amount;
         }
 
         supplies
@@ -801,7 +1020,7 @@ impl BankQuerier {
                     .supplies
                     .get(denom)
                     .cloned()
-                    .unwrap_or_else(Uint128::zero);
+                    .unwrap_or_else(Uint256::zero);
                 let bank_res = SupplyResponse {
                     amount: Coin {
                         amount,
@@ -822,14 +1041,6 @@ impl BankQuerier {
                         amount,
                         denom: denom.to_string(),
                     },
-                };
-                to_json_binary(&bank_res).into()
-            }
-            #[allow(deprecated)]
-            BankQuery::AllBalances { address } => {
-                // proper error on not found, serialize result on found
-                let bank_res = AllBalanceResponse {
-                    amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 to_json_binary(&bank_res).into()
             }
@@ -937,31 +1148,11 @@ impl IbcQuerier {
                 let res = ChannelResponse { channel };
                 to_json_binary(&res).into()
             }
-            #[allow(deprecated)]
-            IbcQuery::ListChannels { port_id } => {
-                let channels = self
-                    .channels
-                    .iter()
-                    .filter(|c| match port_id {
-                        Some(p) => c.endpoint.port_id.eq(p),
-                        None => c.endpoint.port_id == self.port_id,
-                    })
-                    .cloned()
-                    .collect();
-                let res = ListChannelsResponse { channels };
-                to_json_binary(&res).into()
-            }
             IbcQuery::PortId {} => {
                 let res = PortIdResponse {
                     port_id: self.port_id.clone(),
                 };
                 to_json_binary(&res).into()
-            }
-            #[cfg(feature = "cosmwasm_2_2")]
-            IbcQuery::FeeEnabledChannel { .. } => {
-                use crate::query::FeeEnabledChannelResponse;
-                // for now, we always return true
-                to_json_binary(&FeeEnabledChannelResponse::new(true)).into()
             }
         };
         // system result is always ok in the mock implementation
@@ -1223,9 +1414,11 @@ pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attr
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused)]
+    use crate::coins;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{coin, coins, instantiate2_address, ContractInfoResponse, HexBinary, Response};
+    use crate::{coin, instantiate2_address, ContractInfoResponse, HexBinary, Response};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use base64::{engine::general_purpose, Engine};
@@ -1259,24 +1452,103 @@ mod tests {
         include_bytes!("../../../crypto/testdata/eth-headers/1699693797.394876721s.json");
 
     #[test]
-    fn mock_env_matches_mock_contract_addr() {
-        let contract_address = mock_env().contract.address;
-        assert_eq!(contract_address, Addr::unchecked(MOCK_CONTRACT_ADDR));
+    fn mock_env_works() {
+        let env = mock_env();
+        assert_eq!(
+            env,
+            Env {
+                block: BlockInfo {
+                    height: 12345,
+                    time: Timestamp::from_nanos(1571797419879305533),
+                    chain_id: "cosmos-testnet-14002".to_string()
+                },
+                transaction: Some(TransactionInfo::new(
+                    3,
+                    Binary::from_hex(
+                        "E5469DACEC17CEF8A260FD37675ED87E7FB6A2B5AD95193C51308006C7E494B3"
+                    )
+                    .unwrap(),
+                )),
+                contract: ContractInfo {
+                    address: Addr::unchecked(MOCK_CONTRACT_ADDR)
+                }
+            }
+        )
     }
 
     #[test]
-    fn mock_info_works() {
-        #[allow(deprecated)]
-        let info = mock_info("my name", &coins(100, "atom"));
+    fn envs_works() {
+        let mut envs = Envs::new("food");
+
+        let env = envs.make();
         assert_eq!(
-            info,
-            MessageInfo {
-                sender: Addr::unchecked("my name"),
-                funds: vec![Coin {
-                    amount: 100u128.into(),
-                    denom: "atom".into(),
-                }]
-            }
+            env.contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(env.block.height, 12_345);
+        assert_eq!(
+            env.block.time,
+            Timestamp::from_nanos(1_571_797_419_879_305_533)
+        );
+
+        let env = envs.make();
+        assert_eq!(
+            env.contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(env.block.height, 12_346);
+        assert_eq!(
+            env.block.time,
+            Timestamp::from_nanos(1_571_797_424_879_305_533)
+        );
+
+        let env = envs.make();
+        assert_eq!(
+            env.contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(env.block.height, 12_347);
+        assert_eq!(
+            env.block.time,
+            Timestamp::from_nanos(1_571_797_429_879_305_533)
+        );
+    }
+
+    #[test]
+    fn envs_implements_iterator() {
+        let envs = Envs::new("food");
+
+        let result: Vec<_> = envs.into_iter().take(5).collect();
+
+        assert_eq!(
+            result[0].contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(result[0].block.height, 12_345);
+        assert_eq!(
+            result[0].block.time,
+            Timestamp::from_nanos(1_571_797_419_879_305_533)
+        );
+
+        assert_eq!(
+            result[4].contract.address.as_str(),
+            "food1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922ts74yrjj"
+        );
+        assert_eq!(result[4].block.height, 12_349);
+        assert_eq!(
+            result[4].block.time,
+            Timestamp::from_nanos(1_571_797_439_879_305_533)
+        );
+
+        // Get a millions envs through iterator
+        let mut envs = Envs::new("yo");
+        let first = envs.next().unwrap();
+        let last = envs.take(1_000_000).last().unwrap();
+        assert_eq!(first.block.height, 12_345);
+        assert_eq!(last.block.height, 1_012_345);
+        assert_eq!(
+            last.block.time,
+            first.block.time.plus_seconds(1_000_000 * 5)
         );
     }
 
@@ -1870,21 +2142,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(deprecated)]
-    fn bank_querier_all_balances() {
-        let addr = String::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let bank = BankQuerier::new(&[(&addr, &balance)]);
-
-        let all = bank
-            .query(&BankQuery::AllBalances { address: addr })
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(&res.amount, &balance);
-    }
-
-    #[test]
     fn bank_querier_one_balance() {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
@@ -1919,16 +2176,6 @@ mod tests {
         let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let bank = BankQuerier::new(&[(&addr, &balance)]);
-
-        // all balances on empty account is empty vec
-        let all = bank
-            .query(&BankQuery::AllBalances {
-                address: String::from("elsewhere"),
-            })
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_json(all).unwrap();
-        assert_eq!(res.amount, vec![]);
 
         // any denom on balances on empty account is empty coin
         let miss = bank
@@ -2217,40 +2464,6 @@ mod tests {
         let raw = ibc.query(query).unwrap().unwrap();
         let chan: ChannelResponse = from_json(raw).unwrap();
         assert_eq!(chan.channel, None);
-    }
-
-    #[cfg(feature = "stargate")]
-    #[test]
-    #[allow(deprecated)]
-    fn ibc_querier_channels_matching() {
-        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
-        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
-
-        let ibc = IbcQuerier::new("myport", &[chan1.clone(), chan2.clone()]);
-
-        // query channels matching "my_port" (should match both above)
-        let query = &IbcQuery::ListChannels {
-            port_id: Some("my_port".to_string()),
-        };
-        let raw = ibc.query(query).unwrap().unwrap();
-        let res: ListChannelsResponse = from_json(raw).unwrap();
-        assert_eq!(res.channels, vec![chan1, chan2]);
-    }
-
-    #[cfg(feature = "stargate")]
-    #[test]
-    #[allow(deprecated)]
-    fn ibc_querier_channels_no_matching() {
-        let chan1 = mock_ibc_channel("channel-0", IbcOrder::Ordered, "ibc");
-        let chan2 = mock_ibc_channel("channel-1", IbcOrder::Ordered, "ibc");
-
-        let ibc = IbcQuerier::new("myport", &[chan1, chan2]);
-
-        // query channels matching "myport" (should be none)
-        let query = &IbcQuery::ListChannels { port_id: None };
-        let raw = ibc.query(query).unwrap().unwrap();
-        let res: ListChannelsResponse = from_json(raw).unwrap();
-        assert_eq!(res.channels, vec![]);
     }
 
     #[cfg(feature = "stargate")]
@@ -2576,6 +2789,7 @@ mod tests {
                             admin: None,
                             pinned: false,
                             ibc_port: None,
+                            ibc2_port: None,
                         };
                         SystemResult::Ok(ContractResult::Ok(to_json_binary(&response).unwrap()))
                     } else {
@@ -2644,7 +2858,7 @@ mod tests {
         });
         match result {
             SystemResult::Ok(ContractResult::Err(err)) => {
-                assert_eq!(err, "Error parsing into type cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg: Invalid type")
+                assert_eq!(err, "Error parsing into type cosmwasm_std::testing::mock::tests::wasm_querier_works::{{closure}}::MyMsg: expected value at line 1 column 1")
             }
             res => panic!("Unexpected result: {res:?}"),
         }
@@ -2656,7 +2870,7 @@ mod tests {
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                 value,
-                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null}"#
+                br#"{"code_id":4,"creator":"lalala","admin":null,"pinned":false,"ibc_port":null,"ibc2_port":null}"#
                     as &[u8]
             ),
             res => panic!("Unexpected result: {res:?}"),

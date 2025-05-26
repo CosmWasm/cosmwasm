@@ -124,6 +124,27 @@ mod tests {
     }
 
     #[test]
+    fn decode_sections_fails_for_invalid_length() {
+        // section length too long
+        assert!(decode_sections(b"\xAA\0\0\0\x02").is_err());
+        // section length without section
+        assert!(decode_sections(b"\xAA\0\0\0\x01\xBB\x03\0\0\0\x03").is_err());
+    }
+
+    #[test]
+    fn decode_sections_fails_for_extra_bytes() {
+        // extra data after successful section
+        assert!(decode_sections(b"\x44\xAA\0\0\0\x01").is_err());
+        assert!(decode_sections(b"\x44\x44\xAA\0\0\0\x01").is_err());
+        assert!(decode_sections(b"\x44\x44\x44\xAA\0\0\0\x01").is_err());
+
+        // Insufficient length for even a first section (or extra data of 0 sections)
+        assert!(decode_sections(b"\x44").is_err());
+        assert!(decode_sections(b"\x44\x44").is_err());
+        assert!(decode_sections(b"\x44\x44\x44").is_err());
+    }
+
+    #[test]
     fn encode_sections_works_for_empty_sections() {
         let enc = encode_sections(&[]).unwrap();
         assert_eq!(enc, b"" as &[u8]);

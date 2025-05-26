@@ -6,10 +6,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
-#[cfg(feature = "eureka")]
-use crate::eureka::EurekaMsg;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
+#[cfg(feature = "ibc2")]
+use crate::ibc2::Ibc2Msg;
 use crate::prelude::*;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 use crate::Decimal;
@@ -48,10 +48,7 @@ use super::Empty;
 ///
 /// impl CustomQuery for MyMsg {}
 /// ```
-pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema
-//+ cw_schema::Schemaifier
-{
-}
+pub trait CustomMsg: Serialize + Clone + fmt::Debug + PartialEq {}
 
 impl CustomMsg for Empty {}
 
@@ -77,7 +74,7 @@ pub enum CosmosMsg<T = Empty> {
         type_url: String,
         value: Binary,
     },
-    /// `CosmosMsg::Any` is the replaces the "stargate message" – a message wrapped
+    /// `CosmosMsg::Any` replaces the "stargate message" – a message wrapped
     /// in a [protobuf Any](https://protobuf.dev/programming-guides/proto3/#any)
     /// that is supported by the chain. It behaves the same as
     /// `CosmosMsg::Stargate` but has a better name and slightly improved syntax.
@@ -91,12 +88,12 @@ pub enum CosmosMsg<T = Empty> {
     Wasm(WasmMsg),
     #[cfg(feature = "stargate")]
     Gov(GovMsg),
-    #[cfg(feature = "eureka")]
-    Eureka(EurekaMsg),
+    #[cfg(feature = "ibc2")]
+    Ibc2(Ibc2Msg),
 }
 
 impl<T> CosmosMsg<T> {
-    /// Convert this this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
+    /// Convert this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
     /// This allows easier interactions between code written for a specific chain and
     /// code written for multiple chains.
     /// If this is the [`CosmosMsg::Custom`] variant, the function returns `None`.
@@ -117,8 +114,8 @@ impl<T> CosmosMsg<T> {
             CosmosMsg::Wasm(msg) => CosmosMsg::Wasm(msg),
             #[cfg(feature = "stargate")]
             CosmosMsg::Gov(msg) => CosmosMsg::Gov(msg),
-            #[cfg(feature = "eureka")]
-            CosmosMsg::Eureka(msg) => CosmosMsg::Eureka(msg),
+            #[cfg(feature = "ibc2")]
+            CosmosMsg::Ibc2(msg) => CosmosMsg::Ibc2(msg),
         })
     }
 }
@@ -187,7 +184,7 @@ pub enum DistributionMsg {
         /// The `withdraw_address`
         address: String,
     },
-    /// This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
+    /// This is translated to a [MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
     /// `delegator_address` is automatically filled with the current contract's address.
     WithdrawDelegatorReward {
         /// The `validator_address`
@@ -388,6 +385,7 @@ pub enum WasmMsg {
 /// }
 /// ```
 #[cfg(feature = "stargate")]
+#[non_exhaustive]
 #[derive(
     Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
 )]
@@ -512,10 +510,10 @@ impl<T> From<GovMsg> for CosmosMsg<T> {
     }
 }
 
-#[cfg(feature = "eureka")]
-impl<T> From<EurekaMsg> for CosmosMsg<T> {
-    fn from(msg: EurekaMsg) -> Self {
-        CosmosMsg::Eureka(msg)
+#[cfg(feature = "ibc2")]
+impl<T> From<Ibc2Msg> for CosmosMsg<T> {
+    fn from(msg: Ibc2Msg) -> Self {
+        CosmosMsg::Ibc2(msg)
     }
 }
 

@@ -162,29 +162,6 @@
           "additionalProperties": false
         },
         {
-          "description": "This calls into the native bank module for all denominations. Note that this may be much more expensive than Balance and should be avoided if possible. Return value is AllBalanceResponse.",
-          "deprecated": true,
-          "type": "object",
-          "required": [
-            "all_balances"
-          ],
-          "properties": {
-            "all_balances": {
-              "type": "object",
-              "required": [
-                "address"
-              ],
-              "properties": {
-                "address": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
           "description": "This calls into the native bank module for querying metadata for a specific bank token. Return value is DenomMetadataResponse",
           "type": "object",
           "required": [
@@ -375,29 +352,6 @@
           "additionalProperties": false
         },
         {
-          "description": "Lists all channels that are bound to a given port. If `port_id` is omitted, this list all channels bound to the contract's port.\n\nReturns a `ListChannelsResponse`.",
-          "deprecated": true,
-          "type": "object",
-          "required": [
-            "list_channels"
-          ],
-          "properties": {
-            "list_channels": {
-              "type": "object",
-              "properties": {
-                "port_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
           "description": "Lists all information for a (portID, channelID) pair. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call)\n\nReturns a `ChannelResponse`.",
           "type": "object",
           "required": [
@@ -405,34 +359,6 @@
           ],
           "properties": {
             "channel": {
-              "type": "object",
-              "required": [
-                "channel_id"
-              ],
-              "properties": {
-                "channel_id": {
-                  "type": "string"
-                },
-                "port_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Queries whether the given channel supports IBC fees. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call)\n\nReturns a `FeeEnabledChannelResponse`.",
-          "type": "object",
-          "required": [
-            "fee_enabled_channel"
-          ],
-          "properties": {
-            "fee_enabled_channel": {
               "type": "object",
               "required": [
                 "channel_id"

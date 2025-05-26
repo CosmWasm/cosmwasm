@@ -51,31 +51,31 @@ To rebuild the test contracts, go to the repo root and do
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_cyberpunk",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0 ./contracts/cyberpunk \
+  cosmwasm/optimizer:0.16.1 ./contracts/cyberpunk \
   && cp artifacts/cyberpunk.wasm packages/vm/testdata/cyberpunk.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0 ./contracts/hackatom \
-  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_1.2.wasm
+  cosmwasm/optimizer:0.16.1 ./contracts/hackatom \
+  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_reflect",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0 ./contracts/ibc-reflect \
-  && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_1.2.wasm
+  cosmwasm/optimizer:0.16.1 ./contracts/ibc-reflect \
+  && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_empty",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0 ./contracts/empty \
+  cosmwasm/optimizer:0.16.1 ./contracts/empty \
   && cp artifacts/empty.wasm packages/vm/testdata/empty.wasm
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_ibc_callback",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/optimizer:0.15.0 ./contracts/ibc-callbacks \
+  cosmwasm/optimizer:0.16.1 ./contracts/ibc-callbacks \
   && cp artifacts/ibc_callbacks.wasm packages/vm/testdata/ibc_callbacks.wasm
 ```
 
@@ -100,30 +100,18 @@ cp target/wasm32-unknown-unknown/release/floaty.wasm ../../packages/vm/testdata/
 
 ## Testing
 
-By default, this repository is built and tested with the singlepass backend. You
-can enable the `cranelift` feature to override the default backend with
-Cranelift
+By default, this repository is built and tested with the singlepass backend.
 
 ```sh
 cd packages/vm
 cargo test --features iterator
-cargo test --features cranelift,iterator
 ```
 
 ## Benchmarking
 
-Using Singlepass:
-
 ```
 cd packages/vm
 cargo bench --no-default-features
-```
-
-Using Cranelift:
-
-```
-cd packages/vm
-cargo bench --no-default-features --features cranelift
 ```
 
 ## Tools

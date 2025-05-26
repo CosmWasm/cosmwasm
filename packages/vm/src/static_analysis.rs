@@ -33,6 +33,18 @@ pub enum Entrypoint {
     IbcPacketAck,
     #[strum(serialize = "ibc_packet_timeout")]
     IbcPacketTimeout,
+    #[strum(serialize = "ibc_source_callback")]
+    IbcSourceCallback,
+    #[strum(serialize = "ibc_destination_callback")]
+    IbcDestinationCallback,
+    #[strum(serialize = "ibc2_packet_receive")]
+    Ibc2PacketReceive,
+    #[strum(serialize = "ibc2_packet_timeout")]
+    Ibc2PacketTimeout,
+    #[strum(serialize = "ibc2_packet_ack")]
+    Ibc2PacketAck,
+    #[strum(serialize = "ibc2_packet_send")]
+    Ibc2PacketSend,
 }
 
 // sort entrypoints by their &str representation
@@ -113,19 +125,19 @@ mod tests {
     use super::*;
     use wasmer::Store;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+    static HACKATOM: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     #[test]
     fn deserialize_exports_works() {
-        let module = ParsedWasm::parse(CONTRACT).unwrap();
+        let module = ParsedWasm::parse(HACKATOM).unwrap();
         assert_eq!(module.version, 1);
 
         let exported_functions = module
             .exports
             .iter()
             .filter(|entry| matches!(entry.kind, ExternalKind::Func));
-        assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
+        assert_eq!(exported_functions.count(), 15);
 
         let exported_memories = module
             .exports

@@ -52,7 +52,7 @@ use super::CachedModule;
 ///   [issues with module deserialization](https://github.com/CosmWasm/wasmvm/issues/426).
 ///   To work around this, the version was bumped to "v5" here to invalidate these corrupt caches.
 /// - **v6**:<br>
-///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identier for the modules.
+///   Version for cosmwasm_vm 1.3+ which adds a sub-folder with the target identifier for the modules.
 /// - **v7**:<br>
 ///   New version because of Wasmer 2.3.0 -> 4 upgrade.
 ///   This internally changes how rkyv is used for module serialization, making compatibility unlikely.
@@ -268,7 +268,7 @@ fn module_size(module_path: &Path) -> VmResult<usize> {
 }
 
 /// Creates an identifier for the Wasmer `Target` that is used for
-/// cache invalidation. The output is reasonable human friendly to be useable
+/// cache invalidation. The output is reasonable human friendly to be usable
 /// in file path component.
 fn target_id(target: &Target) -> String {
     // Use a custom Hasher implementation to avoid randomization.
@@ -367,7 +367,7 @@ mod tests {
 
         let discriminator = raw_module_version_discriminator();
         let mut globber = glob::glob(&format!(
-            "{}/{}-wasmer7/**/{}.module",
+            "{}/{}-wasmer8/**/{}.module",
             tmp_dir.path().to_string_lossy(),
             discriminator,
             checksum
@@ -423,11 +423,11 @@ mod tests {
         };
         let target = Target::new(triple.clone(), wasmer::CpuFeature::POPCNT.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-719EEF18");
         // Changing CPU features changes the hash part
         let target = Target::new(triple, wasmer::CpuFeature::AVX512DQ.into());
         let id = target_id(&target);
-        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-93001945");
+        assert_eq!(id, "x86_64-nintendo-fuchsia-gnu-coff-E3770FA3");
 
         // Works for durrect target (hashing is deterministic);
         let target = Target::default();
@@ -454,11 +454,11 @@ mod tests {
             p.as_os_str(),
             if cfg!(windows) {
                 format!(
-                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules\\{discriminator}-wasmer17\\x86_64-nintendo-fuchsia-gnu-coff-719EEF18"
                 )
             } else {
                 format!(
-                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-01E9F9FE"
+                    "modules/{discriminator}-wasmer17/x86_64-nintendo-fuchsia-gnu-coff-719EEF18"
                 )
             }
             .as_str()
@@ -480,6 +480,6 @@ mod tests {
     #[test]
     fn module_version_static() {
         let version = raw_module_version_discriminator();
-        assert_eq!(version, "5b35f8ce52");
+        assert_eq!(version, "6c36aacf76");
     }
 }

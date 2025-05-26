@@ -9,13 +9,13 @@ license = "Apache-2.0"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["abort", "cosmwasm_2_2", "staking", "stargate", "eureka"]
+features = ["cosmwasm_2_2", "staking", "stargate", "ibc2"]
 
 [features]
-default = ["iterator", "std"]
-# abort used to enable the panic handler that hands a nice error message back to the host.
-# The feature is now deprecated and the panic handler is always enabled.
-abort = []
+default = ["exports", "iterator", "std"]
+# Enable if this cosmwasm-std is the primary version of cosmwas-std used in the contract. This
+# adds exports and imports needed for basic communication between contract and VM.
+exports = []
 std = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
@@ -29,8 +29,8 @@ staking = []
 # stargate enables stargate-dependent messages and queries, like raw protobuf messages
 # as well as ibc-related functionality
 stargate = []
-# eureka enables eureka-dependent messages and queries
-eureka = []
+# ibc2 enables ibc2-dependent messages, entrypoints and queries
+ibc2 = []
 # This feature makes `BankQuery::Supply` available for the contract to call, but requires
 # the host blockchain to run CosmWasm `1.1.0` or higher.
 cosmwasm_1_1 = []
@@ -59,31 +59,27 @@ cosmwasm_2_2 = ["cosmwasm_2_1"]
 [dependencies]
 base64 = "0.22.0"
 bnum = "0.11.0"
-cosmwasm-core = { version = "2.2.0-rc.1", path = "../core" }
-cosmwasm-derive = { version = "2.2.0-rc.1", path = "../derive" }
+cosmwasm-core = { version = "3.0.0-ibc2.0", path = "../core" }
+cosmwasm-derive = { version = "3.0.0-ibc2.0", path = "../derive" }
 cw-schema = { version = "2.2.0-rc.1", path = "../cw-schema" }
-derive_more = { version = "=1.0.0-beta.6", default-features = false, features = [
-    "debug",
-] }
+derive_more = { version = "2.0.1", default-features = false, features = ["debug"] }
 hex = "0.4"
 schemars = { workspace = true }
 sha2 = "0.10.3"
 serde = { workspace = true, features = ["std"] }
-serde-json-wasm = { version = "1.0.1", default-features = false, features = [
-    "std",
-] }
+serde_json = "1.0.140"
 static_assertions = "1.1.0"
 thiserror = "1.0.26"
 rmp-serde = "1.3.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bech32 = "0.11.0"
-cosmwasm-crypto = { version = "2.2.0-rc.1", path = "../crypto" }
+cosmwasm-crypto = { version = "3.0.0-ibc2.0", path = "../crypto" }
 rand_core = { version = "0.6.4", features = ["getrandom"] }
 
 [dev-dependencies]
-cosmwasm-core = { path = "../core", version = "2.2.0-rc.1" }
-cosmwasm-schema = { version = "2.2.0-rc.1", path = "../schema" }
+cosmwasm-core = { path = "../core", version = "3.0.0-ibc2.0" }
+cosmwasm-schema = { version = "3.0.0-ibc2.0", path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
 chrono = { version = "0.4", default-features = false, features = [
     "alloc",
@@ -96,4 +92,3 @@ proptest = { version = "1.5.0", default-features = false, features = [
     "attr-macro",
     "std",
 ] }
-serde_json = "1.0.81"

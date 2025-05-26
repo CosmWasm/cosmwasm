@@ -1,9 +1,13 @@
 type ContractInfoResponse struct {
-	// Set to the admin who can migrate contract, if any
-	Admin   string `json:"admin,omitempty"`
-	CodeID  uint64 `json:"code_id"`
+	// admin who can run migrations (if any)
+	Admin  string `json:"admin,omitempty"`
+	CodeID uint64 `json:"code_id"`
+	// address that instantiated this contract
 	Creator string `json:"creator"`
-	// Set if the contract is IBC enabled
+	// set if this contract has bound an Ibc2 port
+	IBC2Port string `json:"ibc2_port,omitempty"`
+	// set if this contract has bound an IBC port
 	IBCPort string `json:"ibc_port,omitempty"`
-	Pinned  bool   `json:"pinned"`
+	// if set, the contract is pinned to the cache, and thus uses less gas when called
+	Pinned bool `json:"pinned"`
 }

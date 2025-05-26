@@ -59,6 +59,7 @@ impl Int64 {
     ///
     /// This method is less flexible than `from` but can be called in a const context.
     #[inline]
+    #[must_use]
     pub const fn new(value: i64) -> Self {
         Self(value)
     }

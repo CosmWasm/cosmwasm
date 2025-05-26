@@ -3,7 +3,7 @@
   "title": "ExecuteMsg",
   "oneOf": [
     {
-      "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
+      "description": "Releasing all funds of the given denom in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
       "type": "object",
       "required": [
         "release"
@@ -11,6 +11,14 @@
       "properties": {
         "release": {
           "type": "object",
+          "required": [
+            "denom"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            }
+          },
           "additionalProperties": false
         }
       },
