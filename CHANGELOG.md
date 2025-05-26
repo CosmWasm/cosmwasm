@@ -35,6 +35,8 @@ and this project adheres to
   ([#2480])
 - cosmwasm-std: Add `WasmQuery::RawRange` query to allow querying raw storage
   ranges of different contracts. ([#2471])
+- cosmwasm-std: Add `transfer` field to `IbcDestinationCallbackMsg`, providing
+  an easier way to handle an IBC transfer in a destination callback. ([#2484])
 
 ## Changed
 
@@ -138,6 +140,7 @@ and this project adheres to
 [#2477]: https://github.com/CosmWasm/cosmwasm/pull/2477
 [#2479]: https://github.com/CosmWasm/cosmwasm/pull/2479
 [#2480]: https://github.com/CosmWasm/cosmwasm/pull/2480
+[#2484]: https://github.com/CosmWasm/cosmwasm/pull/2484
 
 ## [2.2.0] - 2024-12-17
 
