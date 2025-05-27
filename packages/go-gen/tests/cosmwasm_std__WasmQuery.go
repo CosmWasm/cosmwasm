@@ -1,4 +1,3 @@
-
 // SmartQuery response is raw bytes ([]byte)
 type SmartQuery struct {
 	// Bech32 encoded sdk.AccAddress of the contract
