@@ -666,6 +666,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "k256",
+ "num-bigint",
  "num-traits",
  "p256",
  "rand_core",

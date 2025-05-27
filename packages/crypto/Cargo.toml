@@ -30,6 +30,8 @@ thiserror = "1.0.26"
 
 # Not directly used but bumps transitive dependency to avoid <RUSTSEC-2024-0344>
 curve25519-dalek = "4.1.3"
+# Not directly used, but needed to fix a compilation error
+num-bigint = { version = "0.4.2", default-features = false }
 
 [dev-dependencies]
 base64 = "0.22.0"
