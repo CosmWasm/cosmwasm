@@ -12,7 +12,7 @@
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
-    "oneOf": [
+    "anyOf": [
       {
         "description": "Hashes some data. Uses CPU and memory, but no external calls.",
         "type": "object",
@@ -200,7 +200,7 @@
   "query": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "QueryMsg",
-    "oneOf": [
+    "anyOf": [
       {
         "description": "Returns the env for testing",
         "type": "object",
