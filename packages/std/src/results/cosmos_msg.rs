@@ -56,11 +56,11 @@ impl CustomMsg for Empty {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
-pub enum CosmosMsg<T = Empty> {
+pub enum CosmosMsg {
     Bank(BankMsg),
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
-    Custom(T),
+    Custom(Binary),
     #[cfg(feature = "staking")]
     Staking(StakingMsg),
     #[cfg(feature = "staking")]
@@ -88,34 +88,6 @@ pub enum CosmosMsg<T = Empty> {
     Gov(GovMsg),
     #[cfg(feature = "ibc2")]
     Ibc2(Ibc2Msg),
-}
-
-impl<T> CosmosMsg<T> {
-    /// Convert this [`CosmosMsg<T>`] to a [`CosmosMsg<U>`] with a different custom message type.
-    /// This allows easier interactions between code written for a specific chain and
-    /// code written for multiple chains.
-    /// If this is the [`CosmosMsg::Custom`] variant, the function returns `None`.
-    pub fn change_custom<U>(self) -> Option<CosmosMsg<U>> {
-        Some(match self {
-            CosmosMsg::Bank(msg) => CosmosMsg::Bank(msg),
-            CosmosMsg::Custom(_) => return None,
-            #[cfg(feature = "staking")]
-            CosmosMsg::Staking(msg) => CosmosMsg::Staking(msg),
-            #[cfg(feature = "staking")]
-            CosmosMsg::Distribution(msg) => CosmosMsg::Distribution(msg),
-            #[cfg(feature = "stargate")]
-            CosmosMsg::Stargate { type_url, value } => CosmosMsg::Stargate { type_url, value },
-            #[cfg(feature = "cosmwasm_2_0")]
-            CosmosMsg::Any(msg) => CosmosMsg::Any(msg),
-            #[cfg(feature = "stargate")]
-            CosmosMsg::Ibc(msg) => CosmosMsg::Ibc(msg),
-            CosmosMsg::Wasm(msg) => CosmosMsg::Wasm(msg),
-            #[cfg(feature = "stargate")]
-            CosmosMsg::Gov(msg) => CosmosMsg::Gov(msg),
-            #[cfg(feature = "ibc2")]
-            CosmosMsg::Ibc2(msg) => CosmosMsg::Ibc2(msg),
-        })
-    }
 }
 
 /// The message types of the bank module.
@@ -443,21 +415,21 @@ pub fn wasm_execute(
     })
 }
 
-impl<T> From<BankMsg> for CosmosMsg<T> {
+impl From<BankMsg> for CosmosMsg {
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T> From<StakingMsg> for CosmosMsg<T> {
+impl From<StakingMsg> for CosmosMsg {
     fn from(msg: StakingMsg) -> Self {
         CosmosMsg::Staking(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T> From<DistributionMsg> for CosmosMsg<T> {
+impl From<DistributionMsg> for CosmosMsg {
     fn from(msg: DistributionMsg) -> Self {
         CosmosMsg::Distribution(msg)
     }
@@ -466,34 +438,34 @@ impl<T> From<DistributionMsg> for CosmosMsg<T> {
 // By implementing `From<MyType> for cosmwasm_std::AnyMsg`,
 // you automatically get a MyType -> CosmosMsg conversion.
 #[cfg(feature = "cosmwasm_2_0")]
-impl<S: Into<AnyMsg>, T> From<S> for CosmosMsg<T> {
+impl<S: Into<AnyMsg>> From<S> for CosmosMsg {
     fn from(source: S) -> Self {
-        CosmosMsg::<T>::Any(source.into())
+        CosmosMsg::Any(source.into())
     }
 }
 
-impl<T> From<WasmMsg> for CosmosMsg<T> {
+impl From<WasmMsg> for CosmosMsg {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T> From<IbcMsg> for CosmosMsg<T> {
+impl From<IbcMsg> for CosmosMsg {
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T> From<GovMsg> for CosmosMsg<T> {
+impl From<GovMsg> for CosmosMsg {
     fn from(msg: GovMsg) -> Self {
         CosmosMsg::Gov(msg)
     }
 }
 
 #[cfg(feature = "ibc2")]
-impl<T> From<Ibc2Msg> for CosmosMsg<T> {
+impl From<Ibc2Msg> for CosmosMsg {
     fn from(msg: Ibc2Msg) -> Self {
         CosmosMsg::Ibc2(msg)
     }
@@ -503,7 +475,6 @@ impl<T> From<Ibc2Msg> for CosmosMsg<T> {
 mod tests {
     use super::*;
     use crate::{coin, coins};
-    use fmt::Debug;
 
     #[test]
     fn from_bank_msg_works() {
@@ -735,32 +706,5 @@ mod tests {
                 r#"{"vote_weighted":{"proposal_id":25,"options":[{"option":"yes","weight":"0.25"},{"option":"no","weight":"0.25"},{"option":"abstain","weight":"0.5"}]}}"#,
             );
         }
-    }
-
-    #[test]
-    fn change_custom_works() {
-        #[derive(Debug, PartialEq, Eq, Clone)]
-        struct Custom {
-            _a: i32,
-        }
-        let send = BankMsg::Send {
-            to_address: "you".to_string(),
-            amount: coins(1015, "earth"),
-        };
-        // Custom to Empty
-        let msg: CosmosMsg<Custom> = send.clone().into();
-        let msg2: CosmosMsg<Empty> = msg.change_custom().unwrap();
-        assert_eq!(msg2, CosmosMsg::Bank(send.clone()));
-        let custom = CosmosMsg::Custom(Custom { _a: 5 });
-        let converted = custom.change_custom::<Empty>();
-        assert_eq!(converted, None);
-
-        // Empty to Custom
-        let msg: CosmosMsg<Empty> = send.clone().into();
-        let msg2: CosmosMsg<Custom> = msg.change_custom().unwrap();
-        assert_eq!(msg2, CosmosMsg::Bank(send));
-        let empty = CosmosMsg::Custom(Empty {});
-        let converted = empty.change_custom::<Custom>();
-        assert_eq!(converted, None);
     }
 }
