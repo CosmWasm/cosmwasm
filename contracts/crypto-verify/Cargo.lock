@@ -420,11 +420,11 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-core"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -447,7 +447,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -456,7 +456,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -467,7 +467,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -476,7 +476,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "base64",
  "bech32",
@@ -498,7 +498,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "bech32",
  "blake2",
@@ -525,7 +525,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm-derive"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "blake2",
  "proc-macro2",

@@ -44,12 +44,12 @@ crc32fast = "1.3.2"
 bech32 = "0.11.0"
 blake2 = "0.10.6"
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-core = { version = "3.0.0-ibc2.0", path = "../core" }
-cosmwasm-std = { version = "3.0.0-ibc2.0", path = "../std", default-features = false, features = [
+cosmwasm-core = { version = "3.0.0-rc.0", path = "../core" }
+cosmwasm-std = { version = "3.0.0-rc.0", path = "../std", default-features = false, features = [
     "std",
 ] }
-cosmwasm-crypto = { version = "3.0.0-ibc2.0", path = "../crypto" }
-cosmwasm-vm-derive = { version = "3.0.0-ibc2.0", path = "../vm-derive" }
+cosmwasm-crypto = { version = "3.0.0-rc.0", path = "../crypto" }
+cosmwasm-vm-derive = { version = "3.0.0-rc.0", path = "../vm-derive" }
 derive_more = { version = "=1.0.0-beta.6", default-features = false, features = [
     "debug",
 ] }

@@ -7,7 +7,7 @@ exclude = ["contracts"]
 resolver = "2"
 
 [workspace.package]
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 
 [workspace.dependencies]
 schemars = "0.8.4"

@@ -214,11 +214,11 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "cosmwasm-core"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "ark-bls12-381",
  "ark-ec",
@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -250,7 +250,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "cosmwasm-schema-derive",
  "schemars",
@@ -261,7 +261,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-schema-derive"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -270,7 +270,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "3.0.0-ibc2.0"
+version = "3.0.0-rc.0"
 dependencies = [
  "base64",
  "bech32",
