@@ -102,6 +102,7 @@
         },
         "transfer": {
           "description": "When the underlying packet is a successful transfer message, this field contains information about the transfer. Otherwise it is empty.\n\nThis is always empty on chains using CosmWasm < 3.0",
+          "default": null,
           "anyOf": [
             {
               "$ref": "#/definitions/IbcTransferCallback"
