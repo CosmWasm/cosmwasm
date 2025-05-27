@@ -1,0 +1,35 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "virus_msg_ExecuteMsg",
+      "type": "enum",
+      "cases": {
+        "spread": {
+          "type": "named",
+          "properties": {
+            "levels": {
+              "description": "The number of levels of spreading. When set to 0, the contract performs a no-op.",
+              "value": 2
+            },
+            "parent_path": {
+              "description": "A slash separated path to the instance creating this one.\nThe root is the empty string.",
+              "value": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    }
+  ]
+}

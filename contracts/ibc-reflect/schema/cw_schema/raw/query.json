@@ -1,0 +1,30 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "ibc_reflect_msg_QueryMsg",
+      "type": "enum",
+      "cases": {
+        "account": {
+          "description": "Returns (reflect) account that is attached to this channel,\nor none.",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 1
+            }
+          }
+        },
+        "list_accounts": {
+          "description": "Returns all (channel, reflect_account) pairs.\nNo pagination - this is a test contract",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    }
+  ]
+}

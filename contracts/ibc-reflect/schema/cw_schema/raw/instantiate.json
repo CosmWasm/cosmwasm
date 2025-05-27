@@ -1,0 +1,22 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "ibc_reflect_msg_InstantiateMsg",
+      "description": "Just needs to know the code_id of a reflect contract to spawn sub-accounts",
+      "type": "struct",
+      "properties": {
+        "reflect_code_id": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "u64",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    }
+  ]
+}

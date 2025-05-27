@@ -39,6 +39,8 @@ impl Parse for Options {
 pub fn cw_serde_impl(options: Options, input: DeriveInput) -> syn::Result<DeriveInput> {
     let crate_path = &options.crate_path;
     let crate_path_displayable = crate_path.to_token_stream();
+
+    let cw_schema_path = format!("{crate_path_displayable}::cw_schema");
     let serde_path = format!("{crate_path_displayable}::serde");
     let schemars_path = format!("{crate_path_displayable}::schemars");
 
@@ -49,10 +51,12 @@ pub fn cw_serde_impl(options: Options, input: DeriveInput) -> syn::Result<Derive
             ::std::clone::Clone,
             ::std::fmt::Debug,
             ::std::cmp::PartialEq,
-            #crate_path::schemars::JsonSchema
+            #crate_path::schemars::JsonSchema,
+            #crate_path::cw_schema::Schemaifier,
         )]
         #[allow(clippy::derive_partial_eq_without_eq)] // Allow users of `#[cw_serde]` to not implement Eq without clippy complaining
         #[serde(crate = #serde_path)]
+        #[schemaifier(crate = #cw_schema_path)]
         #[schemars(crate = #schemars_path)]
     };
 
@@ -95,10 +99,12 @@ mod tests {
                 ::std::clone::Clone,
                 ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
-                ::my_crate::cw_schema::schemars::JsonSchema
+                ::my_crate::cw_schema::schemars::JsonSchema,
+                ::my_crate::cw_schema::cw_schema::Schemaifier,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(crate = ":: my_crate :: cw_schema::serde")]
+            #[schemaifier(crate = ":: my_crate :: cw_schema::cw_schema")]
             #[schemars(crate = ":: my_crate :: cw_schema::schemars")]
             pub struct InstantiateMsg {
                 pub verifier: String,
@@ -129,10 +135,12 @@ mod tests {
                 ::std::clone::Clone,
                 ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
-                ::cosmwasm_schema::schemars::JsonSchema
+                ::cosmwasm_schema::schemars::JsonSchema,
+                ::cosmwasm_schema::cw_schema::Schemaifier,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(crate = ":: cosmwasm_schema::serde")]
+            #[schemaifier(crate = ":: cosmwasm_schema::cw_schema")]
             #[schemars(crate = ":: cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {
                 pub verifier: String,
@@ -160,10 +168,12 @@ mod tests {
                 ::std::clone::Clone,
                 ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
-                ::cosmwasm_schema::schemars::JsonSchema
+                ::cosmwasm_schema::schemars::JsonSchema,
+                ::cosmwasm_schema::cw_schema::Schemaifier,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(crate = ":: cosmwasm_schema::serde")]
+            #[schemaifier(crate = ":: cosmwasm_schema::cw_schema")]
             #[schemars(crate = ":: cosmwasm_schema::schemars")]
             pub struct InstantiateMsg {}
         };
@@ -193,10 +203,12 @@ mod tests {
                 ::std::clone::Clone,
                 ::std::fmt::Debug,
                 ::std::cmp::PartialEq,
-                ::cosmwasm_schema::schemars::JsonSchema
+                ::cosmwasm_schema::schemars::JsonSchema,
+                ::cosmwasm_schema::cw_schema::Schemaifier,
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #[serde(crate = ":: cosmwasm_schema::serde")]
+            #[schemaifier(crate = ":: cosmwasm_schema::cw_schema")]
             #[schemars(crate = ":: cosmwasm_schema::schemars")]
             #[serde(rename_all = "snake_case")]
             pub enum SudoMsg {

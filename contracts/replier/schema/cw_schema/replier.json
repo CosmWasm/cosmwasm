@@ -1,0 +1,78 @@
+{
+  "contract_name": "replier",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "replier_InstantiateMsg",
+        "type": "struct",
+        "properties": {}
+      }
+    ]
+  },
+  "execute": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "replier_ExecuteMsg",
+        "type": "struct",
+        "properties": {
+          "exec_error": {
+            "value": 2
+          },
+          "messages": {
+            "value": 3
+          },
+          "msg_id": {
+            "value": 1
+          },
+          "reply_error": {
+            "value": 2
+          },
+          "reply_on_never": {
+            "value": 2
+          },
+          "return_order_in_reply": {
+            "value": 2
+          },
+          "set_data_in_exec_and_reply": {
+            "value": 2
+          }
+        }
+      },
+      {
+        "name": "u8",
+        "type": "integer",
+        "precision": 8,
+        "signed": false
+      },
+      {
+        "name": "bool",
+        "type": "boolean"
+      },
+      {
+        "name": "alloc::vec::Vec<replier::ExecuteMsg>",
+        "type": "array",
+        "items": 0
+      }
+    ]
+  },
+  "query": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "replier_QueryMsg",
+        "type": "enum",
+        "cases": {}
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {}
+}

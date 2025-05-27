@@ -536,6 +536,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2df961d8c8a0d08aa9945718ccf584145eee3f3aa06cddbeac12933781102e04"
 dependencies = [
  "clap_builder",
+ "clap_derive",
 ]
 
 [[package]]
@@ -548,6 +549,18 @@ dependencies = [
  "anstyle",
  "clap_lex",
  "strsim",
+]
+
+[[package]]
+name = "clap_derive"
+version = "4.5.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ac6a0c7b1a9e9a5186361f67dfa1b88213572f427fb9ab038efb2bd8c582dab"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
@@ -693,8 +706,9 @@ version = "3.0.0-ibc2.0"
 dependencies = [
  "anyhow",
  "cosmwasm-schema-derive",
+ "cw-schema",
  "insta",
- "schemars",
+ "schemars 0.8.21",
  "semver",
  "serde",
  "serde_json",
@@ -731,7 +745,7 @@ dependencies = [
  "proptest",
  "rand_core",
  "rmp-serde",
- "schemars",
+ "schemars 0.8.21",
  "serde",
  "serde_json",
  "sha2",
@@ -932,6 +946,57 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-schema"
+version = "2.2.0-rc.1"
+dependencies = [
+ "cw-schema-derive",
+ "indexmap 2.4.0",
+ "insta",
+ "pretty_assertions",
+ "schemars 1.0.0-alpha.11",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "siphasher",
+]
+
+[[package]]
+name = "cw-schema-codegen"
+version = "2.2.0-rc.1"
+dependencies = [
+ "anyhow",
+ "arbitrary",
+ "askama",
+ "clap",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-schema",
+ "derive_arbitrary",
+ "either",
+ "heck",
+ "insta",
+ "log",
+ "mimalloc",
+ "rand",
+ "serde",
+ "serde_json",
+ "simple_logger",
+ "tempfile",
+]
+
+[[package]]
+name = "cw-schema-derive"
+version = "2.2.0-rc.1"
+dependencies = [
+ "heck",
+ "itertools 0.13.0",
+ "owo-colors",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
 name = "darling"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1066,6 +1131,12 @@ dependencies = [
  "serde_json",
  "thousands",
 ]
+
+[[package]]
+name = "diff"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
 
 [[package]]
 name = "difflib"
@@ -1438,7 +1509,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "indenter",
- "schemars",
+ "schemars 0.8.21",
 ]
 
 [[package]]
@@ -1702,6 +1773,12 @@ dependencies = [
  "libc",
  "windows-sys 0.59.0",
 ]
+
+[[package]]
+name = "is_ci"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7655c9839580ee829dfacba1d1278c2b7883e50a277ff7541299489d6bdfdc45"
 
 [[package]]
 name = "is_terminal_polyfill"
@@ -2629,7 +2706,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fbf2ae1b8bc8e02df939598064d22402220cd5bbcca1c76f7d6a310974d5615"
 dependencies = [
  "dyn-clone",
- "schemars_derive",
+ "schemars_derive 0.8.21",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars"
+version = "1.0.0-alpha.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ece152f3fb753f79c12387ad9f380b19acd4157e0fe9f000ae549007952d8421"
+dependencies = [
+ "dyn-clone",
+ "ref-cast",
+ "schemars_derive 1.0.0-alpha.11",
  "serde",
  "serde_json",
 ]
@@ -2729,6 +2819,29 @@ dependencies = [
  "memchr",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_with"
+version = "3.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69cecfa94848272156ea67b2b1a53f20fc7bc638c4a46d2f8abde08f05f4b857"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_with_macros",
+]
+
+[[package]]
+name = "serde_with_macros"
+version = "3.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8fee4991ef4f274617a51ad4af30519438dacb2f56ac773b08a1922ff743350"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
@@ -2945,7 +3058,9 @@ checksum = "8a7619e19bc266e0f9c5e6686659d394bc57973859340060a69221e57dbc0c40"
 dependencies = [
  "deranged",
  "itoa",
+ "libc",
  "num-conv",
+ "num_threads",
  "powerfmt",
  "serde",
  "time-core",
@@ -3055,6 +3170,15 @@ name = "unarray"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eaea85b334db583fe3274d12b4cd1880032beab409c0d774be044d4480ab9a94"
+
+[[package]]
+name = "unicase"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7d2d4dafb69621809a81864c9c1b864479e1235c0dd4e199924b9742439ed89"
+dependencies = [
+ "version_check",
+]
 
 [[package]]
 name = "unicode-ident"
