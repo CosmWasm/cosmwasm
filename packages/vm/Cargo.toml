@@ -91,7 +91,7 @@ wasm-encoder = "0.205.0"
 clap = "4"
 leb128 = "0.2"
 target-lexicon = "0.12"
-time = { version = "0.3.28", features = ["formatting"] }
+time = { version = "0.3.35", features = ["formatting"] }
 
 [[bench]]
 name = "main"
