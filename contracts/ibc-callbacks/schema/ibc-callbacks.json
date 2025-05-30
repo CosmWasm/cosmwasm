@@ -12,7 +12,7 @@
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
-    "oneOf": [
+    "anyOf": [
       {
         "type": "object",
         "required": [
@@ -59,28 +59,11 @@
     ],
     "definitions": {
       "CallbackType": {
-        "oneOf": [
-          {
-            "description": "Only this contract on the source chain should receive callbacks",
-            "type": "string",
-            "enum": [
-              "src"
-            ]
-          },
-          {
-            "description": "Only the destination address should receive callbacks",
-            "type": "string",
-            "enum": [
-              "dst"
-            ]
-          },
-          {
-            "description": "Both the source contract and the destination address should receive callbacks",
-            "type": "string",
-            "enum": [
-              "both"
-            ]
-          }
+        "type": "string",
+        "enum": [
+          "src",
+          "dst",
+          "both"
         ]
       }
     }
@@ -88,7 +71,7 @@
   "query": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "QueryMsg",
-    "oneOf": [
+    "anyOf": [
       {
         "description": "Returns stats about what callbacks have been received",
         "type": "object",
@@ -212,6 +195,7 @@
             },
             "transfer": {
               "description": "When the underlying packet is a successful transfer message, this field contains information about the transfer. Otherwise it is empty.\n\nThis is always empty on chains using CosmWasm < 3.0",
+              "default": null,
               "anyOf": [
                 {
                   "$ref": "#/definitions/IbcTransferCallback"

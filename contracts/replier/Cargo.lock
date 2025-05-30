@@ -220,6 +220,7 @@ version = "3.0.0-rc.0"
 name = "cosmwasm-crypto"
 version = "3.0.0-rc.0"
 dependencies = [
+ "ahash",
  "ark-bls12-381",
  "ark-ec",
  "ark-ff",
@@ -229,6 +230,7 @@ dependencies = [
  "digest",
  "ecdsa",
  "ed25519-zebra",
+ "enum-ordinalize",
  "k256",
  "num-bigint",
  "num-traits",
