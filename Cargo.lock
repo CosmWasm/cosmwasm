@@ -792,6 +792,7 @@ dependencies = [
  "glob",
  "hex",
  "hex-literal",
+ "lazy_static",
  "leb128",
  "rand 0.8.0",
  "rand_core 0.6.4",

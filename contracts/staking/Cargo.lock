@@ -508,6 +508,7 @@ dependencies = [
  "crc32fast",
  "derive_more 1.0.0-beta.6",
  "hex",
+ "lazy_static",
  "rand_core",
  "serde",
  "serde_json",
