@@ -28,6 +28,12 @@ impl WeightScale<Checksum, CachedModule> for SizeScale {
 
 /// An in-memory module cache
 pub struct InMemoryCache {
+    /// This is where the cached data is stored.
+    ///
+    /// `Some` means the cache is active (i.e. size > 0) and
+    /// `None` means it is inactive (size is 0). This is only needed because
+    /// the currently used `CLruCache` does not support zero capacity construction.
+    /// It can likely be simplified if the underlying implementation supports zero.
     modules: Option<CLruCache<Checksum, CachedModule, RandomState, SizeScale>>,
 }
 
@@ -37,16 +43,15 @@ impl InMemoryCache {
     pub fn new(size: Size) -> Self {
         let preallocated_entries = size.0 / MINIMUM_MODULE_SIZE.0;
 
+        let size = NonZeroUsize::new(size.0);
         InMemoryCache {
-            modules: if size.0 > 0 {
-                Some(CLruCache::with_config(
-                    CLruCacheConfig::new(NonZeroUsize::new(size.0).unwrap())
+            modules: size.map(|non_zero_size| {
+                CLruCache::with_config(
+                    CLruCacheConfig::new(non_zero_size)
                         .with_memory(preallocated_entries)
                         .with_scale(SizeScale),
-                ))
-            } else {
-                None
-            },
+                )
+            }),
         }
     }
 
