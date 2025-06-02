@@ -76,6 +76,7 @@ tracing = "0.1.32"
 cfg-if = { version = "0.1.5", default-features = false }
 target-lexicon = { version = "0.12.7", default-features = false }
 lazy_static = { version = "1.0.2", default-features = false }
+backtrace = { version = "0.3.3", default-features = false }
 
 # Wasmer git/local (used for quick local debugging or patching)
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "877ce1f7c44fad853c", default-features = false, features = ["singlepass"] }

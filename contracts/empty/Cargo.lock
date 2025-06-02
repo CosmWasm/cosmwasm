@@ -489,6 +489,7 @@ dependencies = [
 name = "cosmwasm-vm"
 version = "3.0.0-rc.0"
 dependencies = [
+ "backtrace",
  "bech32",
  "blake2",
  "bytes",
