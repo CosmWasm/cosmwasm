@@ -29,7 +29,7 @@ cargo generate --git https://github.com/confio/cosmwasm-template.git --name YOUR
 ```
 
 You will now have a new folder called `YOUR_NAME_HERE` (I hope you changed that
-to something else) containing a simple working contract and build system that
+to something else) containing a simple working contract and build a system that
 you can customize.
 
 ## Create a Repo
@@ -72,5 +72,5 @@ And [Importing](./Importing.md) contains information about pulling in other
 contracts or crates that have been published.
 
 Please replace this README file with information about your specific project.
-You can keep the `Developing.md` and `Publishing.md` files as useful referenced,
-but please set some proper description in the README.
+You can keep the `Developing.md` and `Publishing.md` files as useful references,
+but please set some proper descriptions in the README.
