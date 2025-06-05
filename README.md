@@ -289,7 +289,7 @@ pub struct Region {
 ```
 
 (from
-[memory.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/std/src/memory.rs))
+[memory.rs](https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/src/memory.rs))
 
 ## Implementing the Smart Contract
 
