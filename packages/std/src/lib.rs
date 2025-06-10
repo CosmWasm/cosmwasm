@@ -75,7 +75,7 @@ pub use crate::ibc::{
     IbcDestinationCallbackMsg, IbcDstCallback, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
     IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
     IbcSourceCallbackMsg, IbcSrcCallback, IbcTimeout, IbcTimeoutBlock, IbcTimeoutCallbackMsg,
-    TransferMsgBuilder,
+    IbcTransferCallback, TransferMsgBuilder,
 };
 pub use crate::ibc2::{
     Ibc2Msg, Ibc2PacketAckMsg, Ibc2PacketReceiveMsg, Ibc2PacketSendMsg, Ibc2PacketTimeoutMsg,
@@ -98,9 +98,10 @@ pub use crate::query::{
     CustomQuery, DecCoin, Delegation, DelegationResponse, DelegationRewardsResponse,
     DelegationTotalRewardsResponse, DelegatorReward, DelegatorValidatorsResponse,
     DelegatorWithdrawAddressResponse, DenomMetadataResponse, DistributionQuery, FullDelegation,
-    GrpcQuery, IbcQuery, PortIdResponse, QueryRequest, StakingQuery, SupplyResponse, Validator,
-    ValidatorResponse, WasmQuery,
+    GrpcQuery, IbcQuery, PortIdResponse, QueryRequest, RawRangeEntry, RawRangeResponse,
+    StakingQuery, SupplyResponse, Validator, ValidatorResponse, WasmQuery,
 };
+
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 pub use crate::results::WeightedVoteOption;
 pub use crate::results::{

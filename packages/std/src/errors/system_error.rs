@@ -13,7 +13,8 @@ use crate::Binary;
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
-#[derive(Serialize,
+#[derive(
+    Serialize,
     Deserialize,
     Clone,
     Debug,

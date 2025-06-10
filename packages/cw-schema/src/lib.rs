@@ -207,10 +207,12 @@ impl SchemaVisitor {
     }
 
     pub fn get_schema<T: Schemaifier>(&self) -> Option<&Node> {
-        self.schemas.get(&T::id()).and_then(|node_spot| match node_spot {
-            NodeSpot::Occupied(node) => Some(node),
-            NodeSpot::Reserved => None,
-        })
+        self.schemas
+            .get(&T::id())
+            .and_then(|node_spot| match node_spot {
+                NodeSpot::Occupied(node) => Some(node),
+                NodeSpot::Reserved => None,
+            })
     }
 
     pub fn insert(&mut self, id: Identifier, node: Node) -> DefinitionReference {
@@ -226,13 +228,16 @@ impl SchemaVisitor {
     /// Transform this visitor into a vector where the `DefinitionReference` can be used as an index
     /// to access the schema of the particular node.
     pub fn into_vec(self) -> Vec<Node> {
-        self.schemas.into_values().map(|node_spot| {
-            if let NodeSpot::Occupied(node) = node_spot {
-                node
-            } else {
-                panic!("reserved and never filled spot");
-            }
-        }).collect()
+        self.schemas
+            .into_values()
+            .map(|node_spot| {
+                if let NodeSpot::Occupied(node) = node_spot {
+                    node
+                } else {
+                    panic!("reserved and never filled spot");
+                }
+            })
+            .collect()
     }
 }
 

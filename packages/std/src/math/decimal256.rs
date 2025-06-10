@@ -2138,11 +2138,11 @@ mod tests {
         );
         assert!(matches!(
             Decimal256::MAX.checked_div(Decimal256::zero()),
-            Err(CheckedFromRatioError::DivideByZero { .. })
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             Decimal256::MAX.checked_div(Decimal256::percent(1)),
-            Err(CheckedFromRatioError::Overflow { .. })
+            Err(CheckedFromRatioError::Overflow)
         ));
 
         // checked rem

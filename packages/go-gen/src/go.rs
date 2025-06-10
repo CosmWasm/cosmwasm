@@ -50,8 +50,16 @@ impl Display for GoField {
             self.ty,
             self.rust_name
         )?;
-        if let Nullability::OmitEmpty | Nullability::Nullable = self.ty.nullability {
-            f.write_str(",omitempty")?;
+        match self.ty.nullability {
+            Nullability::OmitEmpty => {
+                f.write_str(",omitempty")?;
+            }
+            Nullability::Nullable if !self.ty.is_slice() => {
+                // if the type is nullable, we need to use a pointer type
+                // and add `omitempty` to the json tag
+                f.write_str(",omitempty")?;
+            }
+            _ => {}
         }
         f.write_str("\"`")
     }
@@ -100,12 +108,17 @@ impl GoType {
         ];
         BASIC_GO_TYPES.contains(&&*self.name)
     }
+
+    pub fn is_slice(&self) -> bool {
+        self.name.starts_with("[]")
+    }
 }
 
 impl Display for GoType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.nullability == Nullability::Nullable && !self.is_basic_type() {
+        if self.nullability == Nullability::Nullable && !self.is_basic_type() && !self.is_slice() {
             // if the type is nullable and not a basic type, use a pointer
+            // slices are already pointers, so we don't need to do anything for them
             f.write_char('*')?;
         }
         f.write_str(&self.name)

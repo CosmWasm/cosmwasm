@@ -946,6 +946,10 @@ impl Default for WasmQuerier {
                 WasmQuery::CodeInfo { code_id, .. } => {
                     SystemError::NoSuchCode { code_id: *code_id }
                 }
+                #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
+                WasmQuery::RawRange { contract_addr, .. } => SystemError::NoSuchContract {
+                    addr: contract_addr.clone(),
+                },
             };
             SystemResult::Err(err)
         });
@@ -1418,7 +1422,7 @@ mod tests {
     use crate::coins;
     #[cfg(feature = "cosmwasm_1_3")]
     use crate::DenomUnit;
-    use crate::{coin, instantiate2_address, ContractInfoResponse, HexBinary, Response};
+    use crate::{coin, instantiate2_address, ContractInfoResponse, HexBinary, Response, Storage};
     #[cfg(feature = "staking")]
     use crate::{Decimal, Delegation};
     use base64::{engine::general_purpose, Engine};
@@ -2728,11 +2732,29 @@ mod tests {
             }
         }
 
+        #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
+        {
+            // By default, querier errors for WasmQuery::RawRange
+            let system_err = querier
+                .query(&WasmQuery::RawRange {
+                    contract_addr: any_addr.clone(),
+                    start: None,
+                    end: None,
+                    limit: 10,
+                    order: crate::Order::Ascending,
+                })
+                .unwrap_err();
+            match system_err {
+                SystemError::NoSuchContract { addr } => assert_eq!(addr, any_addr),
+                err => panic!("Unexpected error: {err:?}"),
+            }
+        }
+
         querier.update_handler(|request| {
             let api = MockApi::default();
             let contract1 = api.addr_make("contract1");
-            let mut storage1 = BTreeMap::<Binary, Binary>::default();
-            storage1.insert(b"the key".into(), b"the value".into());
+            let mut storage1 = MockStorage::new();
+            storage1.set(b"the key", b"the value");
 
             match request {
                 WasmQuery::Raw { contract_addr, key } => {
@@ -2743,7 +2765,7 @@ mod tests {
                     };
                     if addr == contract1 {
                         if let Some(value) = storage1.get(key) {
-                            SystemResult::Ok(ContractResult::Ok(value.clone()))
+                            SystemResult::Ok(ContractResult::Ok(Binary::new(value)))
                         } else {
                             SystemResult::Ok(ContractResult::Ok(Binary::default()))
                         }
@@ -2816,6 +2838,47 @@ mod tests {
                         SystemResult::Err(SystemError::NoSuchCode { code_id })
                     }
                 }
+                #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
+                WasmQuery::RawRange {
+                    contract_addr,
+                    start,
+                    end,
+                    limit,
+                    order,
+                } => {
+                    let Ok(addr) = api.addr_validate(contract_addr) else {
+                        return SystemResult::Err(SystemError::NoSuchContract {
+                            addr: contract_addr.clone(),
+                        });
+                    };
+                    if addr == contract1 {
+                        let mut data: Vec<_> = storage1
+                            .range(
+                                start.as_ref().map(Binary::as_slice),
+                                end.as_ref().map(Binary::as_slice),
+                                *order,
+                            )
+                            .take(*limit as usize + 1) // take one more entry than limit
+                            .map(|(key, value)| (Binary::new(key), Binary::new(value)))
+                            .collect();
+
+                        // if we have more than limit, there are more entries to fetch
+                        let next_key = if data.len() > *limit as usize {
+                            data.pop().map(|(key, _)| key)
+                        } else {
+                            None
+                        };
+                        let raw_range_response = crate::RawRangeResponse { data, next_key };
+
+                        SystemResult::Ok(ContractResult::Ok(
+                            to_json_binary(&raw_range_response).unwrap(),
+                        ))
+                    } else {
+                        SystemResult::Err(SystemError::NoSuchContract {
+                            addr: contract_addr.clone(),
+                        })
+                    }
+                }
             }
         });
 
@@ -2865,7 +2928,7 @@ mod tests {
 
         // WasmQuery::ContractInfo
         let result = querier.query(&WasmQuery::ContractInfo {
-            contract_addr: contract_addr.into(),
+            contract_addr: contract_addr.clone().into(),
         });
         match result {
             SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
@@ -2884,6 +2947,24 @@ mod tests {
                 SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
                     value,
                     br#"{"code_id":4,"creator":"lalala","checksum":"84cf20810fd429caf58898c3210fcb71759a27becddae08dbde8668ea2f4725d"}"#
+                ),
+                res => panic!("Unexpected result: {res:?}"),
+            }
+        }
+
+        #[cfg(all(feature = "cosmwasm_3_0", feature = "iterator"))]
+        {
+            let result = querier.query(&WasmQuery::RawRange {
+                contract_addr: contract_addr.clone().into(),
+                start: Some(Binary::from(b"the key")),
+                end: Some(Binary::from(b"the keyasdf")),
+                limit: 10,
+                order: crate::Order::Ascending,
+            });
+            match result {
+                SystemResult::Ok(ContractResult::Ok(value)) => assert_eq!(
+                    value.as_slice(),
+                    br#"{"data":[["dGhlIGtleQ==","dGhlIHZhbHVl"]],"next_key":null}"#
                 ),
                 res => panic!("Unexpected result: {res:?}"),
             }

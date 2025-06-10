@@ -2784,11 +2784,11 @@ mod tests {
         );
         assert!(matches!(
             SignedDecimal256::MAX.checked_div(SignedDecimal256::zero()),
-            Err(CheckedFromRatioError::DivideByZero {})
+            Err(CheckedFromRatioError::DivideByZero)
         ));
         assert!(matches!(
             SignedDecimal256::MAX.checked_div(SignedDecimal256::percent(1)),
-            Err(CheckedFromRatioError::Overflow {})
+            Err(CheckedFromRatioError::Overflow)
         ));
         assert_eq!(
             SignedDecimal256::percent(-88)
