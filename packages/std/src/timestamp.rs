@@ -1,5 +1,4 @@
 use core::fmt;
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::Uint64;
@@ -23,8 +22,20 @@ use crate::Uint64;
 /// assert_eq!(ts.subsec_nanos(), 202);
 /// ```
 #[derive(
-    Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
+    Serialize,
+    Deserialize,
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    schemars::JsonSchema,
+    cw_schema::Schemaifier,
 )]
+#[schemaifier(type = cw_schema::NodeType::Timestamp)]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {

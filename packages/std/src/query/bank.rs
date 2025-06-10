@@ -12,7 +12,9 @@ use super::query_response::QueryResponseType;
 use crate::utils::impl_hidden_constructor;
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum BankQuery {
     /// This calls into the native bank module for querying the total supply of one denomination.
@@ -33,7 +35,9 @@ pub enum BankQuery {
     AllDenomMetadata { pagination: Option<PageRequest> },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct SupplyResponse {
@@ -46,7 +50,9 @@ impl_hidden_constructor!(SupplyResponse, amount: Coin);
 
 impl QueryResponseType for SupplyResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct BalanceResponse {
@@ -59,7 +65,9 @@ impl_hidden_constructor!(BalanceResponse, amount: Coin);
 
 impl QueryResponseType for BalanceResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct DenomMetadataResponse {
@@ -71,7 +79,9 @@ impl_hidden_constructor!(DenomMetadataResponse, metadata: DenomMetadata);
 
 impl QueryResponseType for DenomMetadataResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub struct AllDenomMetadataResponse {

@@ -13,7 +13,17 @@ use crate::Binary;
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, thiserror::Error)]
+#[derive(
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    JsonSchema,
+    thiserror::Error,
+    cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {

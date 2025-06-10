@@ -13,7 +13,8 @@ use crate::{StdError, StdResult};
 ///
 /// This is often referred to as "code ID" in go-cosmwasm, even if code ID
 /// usually refers to an auto-incrementing number.
-#[derive(JsonSchema, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(JsonSchema, Debug, Copy, Clone, PartialEq, Eq, Hash, cw_schema::Schemaifier)]
+#[schemaifier(type = cw_schema::NodeType::Checksum)]
 pub struct Checksum(#[schemars(with = "String")] [u8; 32]);
 
 impl Checksum {

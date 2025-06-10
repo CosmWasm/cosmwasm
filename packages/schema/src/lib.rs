@@ -6,7 +6,7 @@ mod remove;
 mod schema_for;
 
 pub use export::{export_schema, export_schema_with_title};
-pub use idl::{Api, IDL_VERSION};
+pub use idl::{Api, CwApi, IDL_VERSION};
 pub use query_response::{combine_subqueries, IntegrityError, QueryResponses};
 pub use remove::remove_schemas;
 
@@ -94,5 +94,9 @@ pub use cosmwasm_schema_derive::generate_api;
 pub use cosmwasm_schema_derive::write_api;
 
 // For use in macro expansions
+pub use cw_schema;
 pub use schemars;
 pub use serde;
+
+#[doc(hidden)]
+pub use self::idl::JsonCwApi;
