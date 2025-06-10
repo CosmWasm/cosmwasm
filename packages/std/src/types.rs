@@ -8,7 +8,9 @@ use crate::{Addr, Timestamp};
 
 use crate::utils::impl_hidden_constructor;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct Env {
     pub block: BlockInfo,
     /// Information on the transaction this message was executed in.
