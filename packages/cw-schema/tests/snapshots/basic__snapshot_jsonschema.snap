@@ -12,23 +12,11 @@ expression: schema
         "type": {
           "type": "string",
           "const": "v1"
-        },
-        "root": {
-          "type": "integer",
-          "format": "uint",
-          "minimum": 0
-        },
-        "definitions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/Node"
-          }
         }
       },
+      "$ref": "#/$defs/SchemaV1",
       "required": [
-        "type",
-        "root",
-        "definitions"
+        "type"
       ]
     }
   ],
@@ -297,41 +285,7 @@ expression: schema
               "const": "struct"
             }
           },
-          "anyOf": [
-            {
-              "type": "null"
-            },
-            {
-              "type": "object",
-              "properties": {
-                "properties": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/$defs/StructProperty"
-                  }
-                }
-              },
-              "required": [
-                "properties"
-              ]
-            },
-            {
-              "type": "object",
-              "properties": {
-                "items": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint",
-                    "minimum": 0
-                  }
-                }
-              },
-              "required": [
-                "items"
-              ]
-            }
-          ],
+          "$ref": "#/$defs/StructType",
           "required": [
             "type"
           ]
@@ -445,6 +399,26 @@ expression: schema
         "name"
       ]
     },
+    "SchemaV1": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0
+        },
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Node"
+          }
+        }
+      },
+      "required": [
+        "root",
+        "definitions"
+      ]
+    },
     "StructProperty": {
       "type": "object",
       "properties": {
@@ -462,6 +436,43 @@ expression: schema
       },
       "required": [
         "value"
+      ]
+    },
+    "StructType": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/StructProperty"
+              }
+            }
+          },
+          "required": [
+            "properties"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "items"
+          ]
+        }
       ]
     }
   }
