@@ -1,0 +1,22 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "hackatom_msg_InstantiateMsg",
+      "type": "struct",
+      "properties": {
+        "beneficiary": {
+          "value": 1
+        },
+        "verifier": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    }
+  ]
+}

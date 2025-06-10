@@ -1,0 +1,21 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "hackatom_msg_IntResponse",
+      "type": "struct",
+      "properties": {
+        "int": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    }
+  ]
+}

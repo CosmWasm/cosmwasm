@@ -1,0 +1,48 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "replier_ExecuteMsg",
+      "type": "struct",
+      "properties": {
+        "exec_error": {
+          "value": 2
+        },
+        "messages": {
+          "value": 3
+        },
+        "msg_id": {
+          "value": 1
+        },
+        "reply_error": {
+          "value": 2
+        },
+        "reply_on_never": {
+          "value": 2
+        },
+        "return_order_in_reply": {
+          "value": 2
+        },
+        "set_data_in_exec_and_reply": {
+          "value": 2
+        }
+      }
+    },
+    {
+      "name": "u8",
+      "type": "integer",
+      "precision": 8,
+      "signed": false
+    },
+    {
+      "name": "bool",
+      "type": "boolean"
+    },
+    {
+      "name": "alloc::vec::Vec<replier::ExecuteMsg>",
+      "type": "array",
+      "items": 0
+    }
+  ]
+}

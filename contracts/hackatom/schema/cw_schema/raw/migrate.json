@@ -1,0 +1,20 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "hackatom_msg_MigrateMsg",
+      "description": "MigrateMsg allows a privileged contract administrator to run\na migration on the contract. In this (demo) case it is just migrating\nfrom one hackatom code to the same code, but taking advantage of the\nmigration step to set a new validator.\n\nNote that the contract doesn't enforce permissions here, this is done\nby blockchain logic (in the future by blockchain governance)",
+      "type": "struct",
+      "properties": {
+        "verifier": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    }
+  ]
+}
