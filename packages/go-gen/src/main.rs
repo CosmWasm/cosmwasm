@@ -1,6 +1,6 @@
 use anyhow::{bail, ensure, Context, Result};
 use go::*;
-use inflector::cases::pascalcase::to_pascal_case;
+use heck::ToPascalCase;
 use schema::{documentation, schema_object_type, SchemaExt, TypeContext};
 use schemars::schema::{ObjectValidation, RootSchema, Schema, SchemaObject};
 use std::fmt::Write;
@@ -106,7 +106,7 @@ pub fn build_struct(
     let fields = fields.collect::<Result<Vec<_>>>()?;
 
     Ok(GoStruct {
-        name: replace_acronyms(to_pascal_case(name)),
+        name: replace_acronyms(name.to_pascal_case()),
         docs,
         fields,
     })
