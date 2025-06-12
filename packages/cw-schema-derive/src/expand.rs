@@ -1,5 +1,3 @@
-// TODO: CLEAN ALL THIS SHIT UP WHAT THE FUCK IS THIS
-
 use crate::bail;
 use owo_colors::{OwoColorize, Style};
 use proc_macro2::TokenStream;
