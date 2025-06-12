@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
 use crate::prelude::*;
-use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+use crate::results::{Attribute, CosmosMsg, Event, SubMsg};
 use crate::StdResult;
 use crate::{to_json_binary, Binary};
 use crate::{Addr, Timestamp};
@@ -483,12 +483,12 @@ impl IbcPacketTimeoutMsg {
 /// will use other Response types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
-pub struct IbcBasicResponse<T = Empty> {
+pub struct IbcBasicResponse {
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
-    pub messages: Vec<SubMsg<T>>,
+    pub messages: Vec<SubMsg>,
     /// The attributes that will be emitted as part of a `wasm` event.
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
@@ -505,7 +505,7 @@ pub struct IbcBasicResponse<T = Empty> {
 }
 
 // Custom implementation in order to implement it for all `T`, even if `T` is not `Default`.
-impl<T> Default for IbcBasicResponse<T> {
+impl Default for IbcBasicResponse {
     fn default() -> Self {
         IbcBasicResponse {
             messages: vec![],
@@ -515,7 +515,7 @@ impl<T> Default for IbcBasicResponse<T> {
     }
 }
 
-impl<T> IbcBasicResponse<T> {
+impl IbcBasicResponse {
     pub fn new() -> Self {
         Self::default()
     }
@@ -528,14 +528,14 @@ impl<T> IbcBasicResponse<T> {
 
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg>) -> Self {
         self.messages.push(SubMsg::new(msg));
         self
     }
 
     /// This takes an explicit SubMsg (creates via e.g. `reply_on_error`)
     /// and adds it to the list of messages to process.
-    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+    pub fn add_submessage(mut self, msg: SubMsg) -> Self {
         self.messages.push(msg);
         self
     }
@@ -587,7 +587,7 @@ impl<T> IbcBasicResponse<T> {
     ///     IbcBasicResponse::new().add_messages(msgs)
     /// }
     /// ```
-    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+    pub fn add_messages<M: Into<CosmosMsg>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
         self.add_submessages(msgs.into_iter().map(SubMsg::new))
     }
 
@@ -602,7 +602,7 @@ impl<T> IbcBasicResponse<T> {
     ///     IbcBasicResponse::new().add_submessages(msgs)
     /// }
     /// ```
-    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg>) -> Self {
         self.messages.extend(msgs);
         self
     }
@@ -625,7 +625,7 @@ impl<T> IbcBasicResponse<T> {
 /// and not inform the calling chain).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
-pub struct IbcReceiveResponse<T = Empty> {
+pub struct IbcReceiveResponse {
     /// The bytes we return to the contract that sent the packet.
     /// This may represent a success or error of execution.
     /// In case of `None`, no acknowledgement is written.
@@ -634,7 +634,7 @@ pub struct IbcReceiveResponse<T = Empty> {
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `call` or `msg.into()` to create messages with the older "fire and forget" semantics.
-    pub messages: Vec<SubMsg<T>>,
+    pub messages: Vec<SubMsg>,
     /// The attributes that will be emitted as part of a "wasm" event.
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
@@ -650,7 +650,7 @@ pub struct IbcReceiveResponse<T = Empty> {
     pub events: Vec<Event>,
 }
 
-impl<T> IbcReceiveResponse<T> {
+impl IbcReceiveResponse {
     /// Create a new response with the given acknowledgement.
     ///
     /// ## Examples
@@ -726,14 +726,14 @@ impl<T> IbcReceiveResponse<T> {
 
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg>) -> Self {
         self.messages.push(SubMsg::new(msg));
         self
     }
 
     /// This takes an explicit SubMsg (creates via e.g. `reply_on_error`)
     /// and adds it to the list of messages to process.
-    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+    pub fn add_submessage(mut self, msg: SubMsg) -> Self {
         self.messages.push(msg);
         self
     }
@@ -785,7 +785,7 @@ impl<T> IbcReceiveResponse<T> {
     ///     IbcReceiveResponse::new(StdAck::success(b"\x01")).add_messages(msgs)
     /// }
     /// ```
-    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+    pub fn add_messages<M: Into<CosmosMsg>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
         self.add_submessages(msgs.into_iter().map(SubMsg::new))
     }
 
@@ -800,7 +800,7 @@ impl<T> IbcReceiveResponse<T> {
     ///     IbcReceiveResponse::new(StdAck::success(b"\x01")).add_submessages(msgs)
     /// }
     /// ```
-    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg>) -> Self {
         self.messages.extend(msgs);
         self
     }

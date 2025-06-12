@@ -608,7 +608,7 @@ mod tests {
     use super::*;
     use crate::calls::{call_execute, call_instantiate};
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, Empty};
+    use cosmwasm_std::coins;
     use std::borrow::Cow;
     use std::fs::{create_dir_all, remove_dir_all};
     use tempfile::TempDir;
@@ -693,7 +693,7 @@ mod tests {
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
         let response =
-            call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg.as_bytes())
+            call_instantiate::<_, _, _>(instance, &mock_env(), &info, msg.as_bytes())
                 .unwrap()
                 .unwrap();
         assert_eq!(response.messages.len(), 0);
@@ -701,7 +701,7 @@ mod tests {
         // execute
         let info = mock_info(&verifier, &coins(15, "earth"));
         let msg = br#"{"release":{"denom":"earth"}}"#;
-        let response = call_execute::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+        let response = call_execute::<_, _, _>(instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
         assert_eq!(response.messages.len(), 1);
@@ -1046,7 +1046,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let res = call_instantiate::<_, _, _, Empty>(
+            let res = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1072,7 +1072,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let res = call_instantiate::<_, _, _, Empty>(
+            let res = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1100,7 +1100,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let res = call_instantiate::<_, _, _, Empty>(
+            let res = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1132,7 +1132,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let response = call_instantiate::<_, _, _, Empty>(
+            let response = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1145,7 +1145,7 @@ mod tests {
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{"denom":"earth"}}"#;
-            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            let response = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
@@ -1166,7 +1166,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let response = call_instantiate::<_, _, _, Empty>(
+            let response = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1179,7 +1179,7 @@ mod tests {
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{"denom":"earth"}}"#;
-            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            let response = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
@@ -1202,7 +1202,7 @@ mod tests {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let response = call_instantiate::<_, _, _, Empty>(
+            let response = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -1215,7 +1215,7 @@ mod tests {
             // execute
             let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{"denom":"earth"}}"#;
-            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            let response = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
@@ -1261,7 +1261,7 @@ mod tests {
         let mary = instance.api().addr_make("mary");
         let msg = format!(r#"{{"verifier": "{sue}", "beneficiary": "{mary}"}}"#);
         let res =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
                 .unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
@@ -1276,7 +1276,7 @@ mod tests {
         let john = instance.api().addr_make("john");
         let msg = format!(r#"{{"verifier": "{bob}", "beneficiary": "{john}"}}"#);
         let res =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg.as_bytes())
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
                 .unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
@@ -1288,7 +1288,7 @@ mod tests {
             .unwrap();
         let info = mock_info(&bob, &coins(15, "earth"));
         let msg = br#"{"release":{"denom":"earth"}}"#;
-        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        let res = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
@@ -1298,7 +1298,7 @@ mod tests {
             .unwrap();
         let info = mock_info(&sue, &coins(15, "earth"));
         let msg = br#"{"release":{"denom":"earth"}}"#;
-        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        let res = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
@@ -1326,7 +1326,7 @@ mod tests {
         let sue = instance1.api().addr_make("sue");
         let mary = instance1.api().addr_make("mary");
         let msg = format!(r#"{{"verifier": "{sue}", "beneficiary": "{mary}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance1, &mock_env(), &info, msg.as_bytes())
             .unwrap()
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
@@ -1362,7 +1362,7 @@ mod tests {
         let mary = instance1.api().addr_make("mary");
         let msg1 = format!(r#"{{"verifier": "{sue}", "beneficiary": "{mary}"}}"#);
 
-        match call_instantiate::<_, _, _, Empty>(
+        match call_instantiate::<_, _, _>(
             &mut instance1,
             &mock_env(),
             &info1,
@@ -1391,7 +1391,7 @@ mod tests {
         let bob = instance2.api().addr_make("bob");
         let john = instance2.api().addr_make("john");
         let msg2 = format!(r#"{{"verifier": "{bob}", "beneficiary": "{john}"}}"#);
-        call_instantiate::<_, _, _, Empty>(&mut instance2, &mock_env(), &info2, msg2.as_bytes())
+        call_instantiate::<_, _, _>(&mut instance2, &mock_env(), &info2, msg2.as_bytes())
             .unwrap()
             .unwrap();
     }
