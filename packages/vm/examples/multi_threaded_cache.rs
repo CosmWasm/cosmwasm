@@ -59,7 +59,7 @@ pub fn main() {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let contract_result = call_instantiate::<_, _, _, Empty>(
+            let contract_result = call_instantiate::<_, _, _>(
                 &mut instance,
                 &mock_env(),
                 &info,
@@ -71,7 +71,7 @@ pub fn main() {
             let info = mock_info(&verifier, &coins(15, "earth"));
             let msg = br#"{"release":{"denom":"earth"}}"#;
             let contract_result =
-                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         }));
     }

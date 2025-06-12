@@ -28,8 +28,8 @@ pub enum ReplyOn {
 /// Note: On error the submessage execution will revert any partial state changes due to this message,
 /// but not revert any state changes in the calling contract. If this is required, it must be done
 /// manually in the `reply` entry point.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct SubMsg<T = Empty> {
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct SubMsg {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
     pub id: u64,
@@ -47,7 +47,7 @@ pub struct SubMsg<T = Empty> {
     /// On chains running CosmWasm 1.x this field will be ignored.
     #[serde(default)]
     pub payload: Binary,
-    pub msg: CosmosMsg<T>,
+    pub msg: CosmosMsg,
     /// Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).
     ///
     /// Setting this to `None` means unlimited. Then the submessage execution can consume all gas of the
@@ -59,7 +59,7 @@ pub struct SubMsg<T = Empty> {
 /// This is used for cases when we use ReplyOn::Never and the id doesn't matter
 pub const UNUSED_MSG_ID: u64 = 0;
 
-impl<T> SubMsg<T> {
+impl SubMsg {
     /// Creates a "fire and forget" message with the pre-0.14 semantics.
     /// Since this is just an alias for [`SubMsg::reply_never`] it is somewhat recommended
     /// to use the latter in order to make the behaviour more explicit in the caller code.
@@ -67,7 +67,7 @@ impl<T> SubMsg<T> {
     ///
     /// By default, the submessage's gas limit will be unlimited. Use [`SubMsg::with_gas_limit`] to change it.
     /// Setting `payload` is not advised as this will never be used.
-    pub fn new(msg: impl Into<CosmosMsg<T>>) -> Self {
+    pub fn new(msg: impl Into<CosmosMsg>) -> Self {
         Self::reply_never(msg)
     }
 
@@ -75,7 +75,7 @@ impl<T> SubMsg<T> {
     ///
     /// By default, the submessage's `payload` will be empty and the gas limit will be unlimited. Use
     /// [`SubMsg::with_payload`] and [`SubMsg::with_gas_limit`] to change those.
-    pub fn reply_on_success(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
+    pub fn reply_on_success(msg: impl Into<CosmosMsg>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Success)
     }
 
@@ -83,7 +83,7 @@ impl<T> SubMsg<T> {
     ///
     /// By default, the submessage's `payload` will be empty and the gas limit will be unlimited. Use
     /// [`SubMsg::with_payload`] and [`SubMsg::with_gas_limit`] to change those.
-    pub fn reply_on_error(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
+    pub fn reply_on_error(msg: impl Into<CosmosMsg>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Error)
     }
 
@@ -91,7 +91,7 @@ impl<T> SubMsg<T> {
     ///
     /// By default, the submessage's `payload` will be empty and the gas limit will be unlimited. Use
     /// [`SubMsg::with_payload`] and [`SubMsg::with_gas_limit`] to change those.
-    pub fn reply_always(msg: impl Into<CosmosMsg<T>>, id: u64) -> Self {
+    pub fn reply_always(msg: impl Into<CosmosMsg>, id: u64) -> Self {
         Self::reply_on(msg.into(), id, ReplyOn::Always)
     }
 
@@ -99,7 +99,7 @@ impl<T> SubMsg<T> {
     ///
     /// By default, the submessage's gas limit will be unlimited. Use [`SubMsg::with_gas_limit`] to change it.
     /// Setting `payload` is not advised as this will never be used.
-    pub fn reply_never(msg: impl Into<CosmosMsg<T>>) -> Self {
+    pub fn reply_never(msg: impl Into<CosmosMsg>) -> Self {
         Self::reply_on(msg.into(), UNUSED_MSG_ID, ReplyOn::Never)
     }
 
@@ -139,7 +139,7 @@ impl<T> SubMsg<T> {
         self
     }
 
-    fn reply_on(msg: CosmosMsg<T>, id: u64, reply_on: ReplyOn) -> Self {
+    fn reply_on(msg: CosmosMsg, id: u64, reply_on: ReplyOn) -> Self {
         SubMsg {
             id,
             payload: Default::default(),
@@ -147,20 +147,6 @@ impl<T> SubMsg<T> {
             reply_on,
             gas_limit: None,
         }
-    }
-
-    /// Convert this [`SubMsg<T>`] to a [`SubMsg<U>`] with a different generic type.
-    /// This allows easier interactions between code written for a specific chain and
-    /// code written for multiple chains.
-    /// If this is a [`CosmosMsg::Custom`] submessage, the function returns `None`.
-    pub fn change_custom<U>(self) -> Option<SubMsg<U>> {
-        Some(SubMsg {
-            id: self.id,
-            payload: self.payload,
-            msg: self.msg.change_custom::<U>()?,
-            gas_limit: self.gas_limit,
-            reply_on: self.reply_on,
-        })
     }
 }
 

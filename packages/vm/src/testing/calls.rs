@@ -29,18 +29,17 @@ use crate::{BackendApi, Querier, Storage};
 /// Mimics the call signature of the smart contracts.
 /// Thus it moves env and msg rather than take them as reference.
 /// This is inefficient here, but only used in test code.
-pub fn instantiate<A, S, Q, M, U>(
+pub fn instantiate<A, S, Q, M>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     info: MessageInfo,
     msg: M,
-) -> ContractResult<Response<U>>
+) -> ContractResult<Response>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize,
-    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_instantiate(instance, &env, &info, &serialized_msg).expect("VM error")
@@ -49,18 +48,17 @@ where
 // execute mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn execute<A, S, Q, M, U>(
+pub fn execute<A, S, Q, M>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     info: MessageInfo,
     msg: M,
-) -> ContractResult<Response<U>>
+) -> ContractResult<Response>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize,
-    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_execute(instance, &env, &info, &serialized_msg).expect("VM error")
@@ -69,17 +67,16 @@ where
 // migrate mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn migrate<A, S, Q, M, U>(
+pub fn migrate<A, S, Q, M>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: M,
-) -> ContractResult<Response<U>>
+) -> ContractResult<Response>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize,
-    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_migrate(instance, &env, &serialized_msg).expect("VM error")
@@ -88,18 +85,17 @@ where
 // migrate mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn migrate_with_info<A, S, Q, M, U>(
+pub fn migrate_with_info<A, S, Q, M>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: M,
     migrate_info: MigrateInfo,
-) -> ContractResult<Response<U>>
+) -> ContractResult<Response>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize,
-    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_migrate_with_info(instance, &env, &serialized_msg, &migrate_info).expect("VM error")
@@ -108,17 +104,16 @@ where
 // sudo mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn sudo<A, S, Q, M, U>(
+pub fn sudo<A, S, Q, M>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: M,
-) -> ContractResult<Response<U>>
+) -> ContractResult<Response>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize,
-    U: DeserializeOwned + CustomMsg,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not serialize request message");
     call_sudo(instance, &env, &serialized_msg).expect("VM error")
@@ -127,16 +122,15 @@ where
 // reply mimics the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn reply<A, S, Q, U>(
+pub fn reply<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: Reply,
-) -> ContractResult<Response<U>>
+) -> ContractResult<Response>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     call_reply(instance, &env, &msg).expect("VM error")
 }
@@ -180,16 +174,15 @@ where
 // thus it moves env and channel rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
-pub fn ibc_channel_connect<A, S, Q, U>(
+pub fn ibc_channel_connect<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcChannelConnectMsg,
-) -> ContractResult<IbcBasicResponse<U>>
+) -> ContractResult<IbcBasicResponse>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_channel_connect(instance, &env, &msg).expect("VM error")
 }
@@ -198,16 +191,15 @@ where
 // thus it moves env and channel rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
-pub fn ibc_channel_close<A, S, Q, U>(
+pub fn ibc_channel_close<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcChannelCloseMsg,
-) -> ContractResult<IbcBasicResponse<U>>
+) -> ContractResult<IbcBasicResponse>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_channel_close(instance, &env, &msg).expect("VM error")
 }
@@ -216,16 +208,15 @@ where
 // thus it moves env and packet rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
-pub fn ibc_packet_receive<A, S, Q, U>(
+pub fn ibc_packet_receive<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcPacketReceiveMsg,
-) -> ContractResult<IbcReceiveResponse<U>>
+) -> ContractResult<IbcReceiveResponse>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_packet_receive(instance, &env, &msg).expect("VM error")
 }
@@ -234,16 +225,15 @@ where
 // thus it moves env and acknowledgement rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
-pub fn ibc_packet_ack<A, S, Q, U>(
+pub fn ibc_packet_ack<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcPacketAckMsg,
-) -> ContractResult<IbcBasicResponse<U>>
+) -> ContractResult<IbcBasicResponse>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_packet_ack(instance, &env, &msg).expect("VM error")
 }
@@ -252,16 +242,15 @@ where
 // thus it moves env and packet rather than take them as reference.
 // this is inefficient here, but only used in test code
 #[cfg(feature = "stargate")]
-pub fn ibc_packet_timeout<A, S, Q, U>(
+pub fn ibc_packet_timeout<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: IbcPacketTimeoutMsg,
-) -> ContractResult<IbcBasicResponse<U>>
+) -> ContractResult<IbcBasicResponse>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
-    U: DeserializeOwned + CustomMsg,
 {
     call_ibc_packet_timeout(instance, &env, &msg).expect("VM error")
 }

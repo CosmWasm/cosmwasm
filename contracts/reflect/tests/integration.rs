@@ -63,7 +63,7 @@ fn proper_initialization() {
     let info = mock_info("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
-    let res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
@@ -78,7 +78,7 @@ fn reflect() {
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let payload = vec![
         BankMsg::Send {
@@ -99,7 +99,7 @@ fn reflect() {
         msgs: payload.clone(),
     };
     let info = mock_info("creator", &[]);
-    let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
     let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
@@ -112,7 +112,7 @@ fn reflect_requires_owner() {
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
@@ -123,7 +123,7 @@ fn reflect_requires_owner() {
     let msg = ExecuteMsg::ReflectMsg { msgs: payload };
 
     let info = mock_info("someone", &[]);
-    let res: ContractResult<Response<CustomMsg>> = execute(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -134,14 +134,14 @@ fn transfer() {
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
     let new_owner = deps.api().addr_make("friend");
     let msg = ExecuteMsg::ChangeOwner {
         owner: new_owner.to_string(),
     };
-    let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
@@ -156,7 +156,7 @@ fn transfer_requires_owner() {
 
     let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("random", &[]);
     let new_owner = String::from("friend");
@@ -237,7 +237,7 @@ fn reflect_subcall() {
         msgs: vec![payload.clone()],
     };
     let info = mock_info("creator", &[]);
-    let mut res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
+    let mut res: Response = execute(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.pop().expect("must have a message");
     assert_eq!(payload, msg);

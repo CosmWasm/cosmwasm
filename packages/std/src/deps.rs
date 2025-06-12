@@ -72,7 +72,7 @@ impl<'a, C: CustomQuery> DepsMut<'a, C> {
 
     /// This allows to convert any `DepsMut` into one generic over `Empty` custom
     /// query type.
-    pub fn into_empty(self) -> DepsMut<'a, Empty> {
+    pub fn into_empty(self) -> DepsMut<'a> {
         DepsMut {
             storage: self.storage,
             api: self.api,
@@ -84,7 +84,7 @@ impl<'a, C: CustomQuery> DepsMut<'a, C> {
 impl<'a, C: CustomQuery> Deps<'a, C> {
     /// This allows to convert any `Deps` into one generic over `Empty` custom
     /// query type.
-    pub fn into_empty(self) -> Deps<'a, Empty> {
+    pub fn into_empty(self) -> Deps<'a> {
         Deps {
             storage: self.storage,
             api: self.api,

@@ -6,8 +6,8 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
-    ReflectSubMsg { msgs: Vec<SubMsg<CustomMsg>> },
+    ReflectMsg { msgs: Vec<CosmosMsg> },
+    ReflectSubMsg { msgs: Vec<SubMsg> },
     ChangeOwner { owner: String },
 }
 
@@ -64,7 +64,7 @@ pub enum CustomMsg {
 
 impl cosmwasm_std::CustomMsg for CustomMsg {}
 
-impl From<CustomMsg> for CosmosMsg<CustomMsg> {
+impl From<CustomMsg> for CosmosMsg {
     fn from(original: CustomMsg) -> Self {
         CosmosMsg::Custom(original)
     }
