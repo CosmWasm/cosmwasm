@@ -369,6 +369,24 @@ expression: schema
           "properties": {
             "type": {
               "type": "string",
+              "const": "boxed"
+            },
+            "inner": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "type",
+            "inner"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
               "const": "optional"
             },
             "inner": {

@@ -124,6 +124,9 @@ pub enum NodeType {
         value: DefinitionReference,
     },
 
+    Boxed {
+        inner: DefinitionReference,
+    },
     Optional {
         inner: DefinitionReference,
     },

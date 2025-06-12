@@ -1,6 +1,7 @@
 use crate::{MapKind, Node, NodeType, Schemaifier};
 use alloc::{
     borrow::{Cow, ToOwned},
+    boxed::Box,
     collections::BTreeMap,
     string::String,
     vec,
@@ -110,6 +111,24 @@ impl Schemaifier for bool {
                 value: NodeType::Boolean,
             },
         )
+    }
+}
+
+impl<T> Schemaifier for Box<T>
+where
+    T: Schemaifier + ?Sized,
+{
+    #[inline]
+    fn visit_schema(visitor: &mut crate::SchemaVisitor) -> crate::DefinitionReference {
+        let node = Node {
+            name: Cow::Borrowed(std::any::type_name::<Self>()),
+            description: None,
+            value: NodeType::Boxed {
+                inner: T::visit_schema(visitor),
+            },
+        };
+
+        visitor.insert(Self::id(), node)
     }
 }
 

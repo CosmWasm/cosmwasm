@@ -19,6 +19,9 @@ struct HelloWorld {
 
     /// Tuple field!
     tuple: (u32, u32),
+
+    /// Boxed field!
+    boxed: Box<str>,
 }
 
 #[derive(Schemaifier)]

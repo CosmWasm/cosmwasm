@@ -15,6 +15,10 @@ expression: schema
           "description": "Baz field!",
           "value": 5
         },
+        "boxed": {
+          "description": "Boxed field!",
+          "value": 9
+        },
         "foo": {
           "description": "Foo field!",
           "value": 4
@@ -106,6 +110,15 @@ expression: schema
         3,
         3
       ]
+    },
+    {
+      "name": "str",
+      "type": "string"
+    },
+    {
+      "name": "alloc::boxed::Box<str>",
+      "type": "boxed",
+      "inner": 8
     }
   ]
 }
