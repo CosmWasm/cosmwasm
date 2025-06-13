@@ -124,8 +124,7 @@ impl<'de> Deserialize<'de> for CustomMsgContainer {
     where
         D: serde::Deserializer<'de>,
     {
-        // Deserialize into a Box<dyn Test> by deserializing into a concrete type
-        // that implements the Test trait.
+        // Always deserialize into an UnknownCustomMsg because we do not know the type of the custom message.
         let concrete: UnknownCustomMsg = Deserialize::deserialize(deserializer)?;
         Ok(Self(Rc::new(concrete)))
     }
