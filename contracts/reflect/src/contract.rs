@@ -6,8 +6,8 @@ use cosmwasm_std::{
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse,
-    QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
+    CapitalizedResponse, ChainResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg,
+    RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{load_config, load_reply, save_config, save_reply, State};
 
@@ -17,7 +17,7 @@ pub fn instantiate(
     _env: Env,
     info: MessageInfo,
     _msg: InstantiateMsg,
-) -> StdResult<Response<CustomMsg>> {
+) -> StdResult<Response> {
     let state = State { owner: info.sender };
     save_config(deps.storage, &state)?;
     Ok(Response::default())
@@ -29,7 +29,7 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response<CustomMsg>, ReflectError> {
+) -> Result<Response, ReflectError> {
     match msg {
         ExecuteMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
         ExecuteMsg::ReflectSubMsg { msgs } => try_reflect_subcall(deps, env, info, msgs),
@@ -41,8 +41,8 @@ pub fn try_reflect(
     deps: DepsMut<SpecialQuery>,
     _env: Env,
     info: MessageInfo,
-    msgs: Vec<CosmosMsg<CustomMsg>>,
-) -> Result<Response<CustomMsg>, ReflectError> {
+    msgs: Vec<CosmosMsg>,
+) -> Result<Response, ReflectError> {
     let state = load_config(deps.storage)?;
 
     if info.sender != state.owner {
@@ -65,8 +65,8 @@ pub fn try_reflect_subcall(
     deps: DepsMut<SpecialQuery>,
     _env: Env,
     info: MessageInfo,
-    msgs: Vec<SubMsg<CustomMsg>>,
-) -> Result<Response<CustomMsg>, ReflectError> {
+    msgs: Vec<SubMsg>,
+) -> Result<Response, ReflectError> {
     let state = load_config(deps.storage)?;
     if info.sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
@@ -89,7 +89,7 @@ pub fn try_change_owner(
     _env: Env,
     info: MessageInfo,
     new_owner: String,
-) -> Result<Response<CustomMsg>, ReflectError> {
+) -> Result<Response, ReflectError> {
     let api = deps.api;
 
     let mut state = load_config(deps.storage)?;
@@ -173,6 +173,7 @@ fn query_raw(deps: Deps<SpecialQuery>, contract: String, key: Binary) -> StdResu
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::msg::CustomMsg;
     use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{

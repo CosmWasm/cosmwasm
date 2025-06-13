@@ -18,7 +18,7 @@
             "msgs": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/CosmosMsg_for_Empty"
+                "$ref": "#/definitions/CosmosMsg"
               }
             }
           },
@@ -134,7 +134,7 @@
       },
       "additionalProperties": false
     },
-    "CosmosMsg_for_Empty": {
+    "CosmosMsg": {
       "oneOf": [
         {
           "type": "object",
@@ -155,7 +155,7 @@
           ],
           "properties": {
             "custom": {
-              "$ref": "#/definitions/Empty"
+              "$ref": "#/definitions/CustomMsgContainer"
             }
           },
           "additionalProperties": false
@@ -249,6 +249,9 @@
         }
       ]
     },
+    "CustomMsgContainer": {
+      "description": "A wrapper type for CustomMsg to allow deserialization of any custom message, without knowing its type."
+    },
     "DistributionMsg": {
       "description": "The message types of the distribution module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto",
       "oneOf": [
@@ -299,11 +302,6 @@
           "additionalProperties": false
         }
       ]
-    },
-    "Empty": {
-      "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressible in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
-      "type": "object",
-      "additionalProperties": false
     },
     "GovMsg": {
       "description": "This message type allows the contract interact with the [x/gov] module in order to cast votes.\n\n[x/gov]: https://github.com/cosmos/cosmos-sdk/tree/v0.45.12/x/gov\n\n## Examples\n\nCast a simple vote:\n\n``` # use cosmwasm_std::{ #     HexBinary, #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo, #     Response, QueryResponse, # }; # type ExecuteMsg = (); use cosmwasm_std::{GovMsg, VoteOption};\n\n#[entry_point] pub fn execute( deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg, ) -> Result<Response, StdError> { // ... Ok(Response::new().add_message(GovMsg::Vote { proposal_id: 4, option: VoteOption::Yes, })) } ```\n\nCast a weighted vote:\n\n``` # use cosmwasm_std::{ #     HexBinary, #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo, #     Response, QueryResponse, # }; # type ExecuteMsg = (); # #[cfg(feature = \"cosmwasm_1_2\")] use cosmwasm_std::{Decimal, GovMsg, VoteOption, WeightedVoteOption};\n\n# #[cfg(feature = \"cosmwasm_1_2\")] #[entry_point] pub fn execute( deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg, ) -> Result<Response, StdError> { // ... Ok(Response::new().add_message(GovMsg::VoteWeighted { proposal_id: 4, options: vec![ WeightedVoteOption { option: VoteOption::Yes, weight: Decimal::percent(65), }, WeightedVoteOption { option: VoteOption::Abstain, weight: Decimal::percent(35), }, ], })) } ```",

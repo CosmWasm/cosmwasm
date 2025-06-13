@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::prelude::*;
 use crate::Binary;
 
-use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+use super::{Attribute, CosmosMsg, Event, SubMsg};
 
 /// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
@@ -60,15 +60,15 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     Ok(response)
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
-pub struct Response<T = Empty> {
+pub struct Response {
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn variant matches the result (Always, Success on Ok, Error on Err),
     /// the runtime will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
-    pub messages: Vec<SubMsg<T>>,
+    pub messages: Vec<SubMsg>,
     /// The attributes that will be emitted as part of a "wasm" event.
     ///
     /// More info about events (and their attributes) can be found in [*Cosmos SDK* docs].
@@ -86,18 +86,7 @@ pub struct Response<T = Empty> {
     pub data: Option<Binary>,
 }
 
-impl<T> Default for Response<T> {
-    fn default() -> Self {
-        Response {
-            messages: vec![],
-            attributes: vec![],
-            events: vec![],
-            data: None,
-        }
-    }
-}
-
-impl<T> Response<T> {
+impl Response {
     pub fn new() -> Self {
         Self::default()
     }
@@ -112,14 +101,14 @@ impl<T> Response<T> {
 
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg>) -> Self {
         self.messages.push(SubMsg::new(msg));
         self
     }
 
     /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
     /// and adds it to the list of messages to process.
-    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+    pub fn add_submessage(mut self, msg: SubMsg) -> Self {
         self.messages.push(msg);
         self
     }
@@ -194,7 +183,7 @@ impl<T> Response<T> {
     ///     Response::new().add_messages(msgs)
     /// }
     /// ```
-    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+    pub fn add_messages<M: Into<CosmosMsg>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
         self.add_submessages(msgs.into_iter().map(SubMsg::new))
     }
 
@@ -209,7 +198,7 @@ impl<T> Response<T> {
     ///     Response::new().add_submessages(msgs)
     /// }
     /// ```
-    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg>) -> Self {
         self.messages.extend(msgs);
         self
     }
@@ -232,23 +221,6 @@ impl<T> Response<T> {
         self.data = Some(data.into());
         self
     }
-
-    /// Convert this [`Response<T>`] to a [`Response<U>`] with a different custom message type.
-    /// This allows easier interactions between code written for a specific chain and
-    /// code written for multiple chains.
-    /// If this contains a [`CosmosMsg::Custom`] submessage, the function returns `None`.
-    pub fn change_custom<U>(self) -> Option<Response<U>> {
-        Some(Response {
-            messages: self
-                .messages
-                .into_iter()
-                .map(|msg| msg.change_custom())
-                .collect::<Option<Vec<_>>>()?,
-            attributes: self.attributes,
-            events: self.events,
-            data: self.data,
-        })
-    }
 }
 
 #[cfg(test)]
@@ -260,10 +232,10 @@ mod tests {
 
     #[test]
     fn response_add_attributes_works() {
-        let res = Response::<Empty>::new().add_attributes(core::iter::empty::<Attribute>());
+        let res = Response::new().add_attributes(core::iter::empty::<Attribute>());
         assert_eq!(res.attributes.len(), 0);
 
-        let res = Response::<Empty>::new().add_attributes([Attribute::new("test", "ing")]);
+        let res = Response::new().add_attributes([Attribute::new("test", "ing")]);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(
             res.attributes[0],
@@ -371,8 +343,8 @@ mod tests {
         let msg = "message".to_string();
         let our_event = OurEvent { msg };
         let event: Event = our_event.clone().into();
-        let actual = Response::<Empty>::new().add_event(our_event);
-        let expected = Response::<Empty>::new().add_event(event);
+        let actual = Response::new().add_event(our_event);
+        let expected = Response::new().add_event(event);
         assert_eq!(expected, actual);
     }
 
@@ -383,42 +355,8 @@ mod tests {
         let our_event1 = OurEvent { msg: msg1 };
         let our_event2 = OurEvent { msg: msg2 };
         let events: Vec<Event> = vec![our_event1.clone().into(), our_event2.clone().into()];
-        let actual = Response::<Empty>::new().add_events([our_event1, our_event2]);
-        let expected = Response::<Empty>::new().add_events(events);
+        let actual = Response::new().add_events([our_event1, our_event2]);
+        let expected = Response::new().add_events(events);
         assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn change_custom_works() {
-        let response: Response<Empty> = Response {
-            messages: vec![SubMsg::new(BankMsg::Send {
-                to_address: "address".to_string(),
-                amount: coins(123, "earth"),
-            })],
-            attributes: vec![Attribute::new("foo", "bar")],
-            events: vec![Event::new("our_event").add_attribute("msg", "hello")],
-            data: None,
-        };
-        let converted_resp: Response<String> = response.clone().change_custom().unwrap();
-        assert_eq!(
-            converted_resp.messages,
-            vec![SubMsg::new(BankMsg::Send {
-                to_address: "address".to_string(),
-                amount: coins(123, "earth"),
-            })]
-        );
-        assert_eq!(converted_resp.attributes, response.attributes);
-        assert_eq!(converted_resp.events, response.events);
-        assert_eq!(converted_resp.data, response.data);
-
-        // response with custom message
-        let response = Response {
-            messages: vec![SubMsg::new(CosmosMsg::Custom(Empty {}))],
-            attributes: vec![Attribute::new("foo", "bar")],
-            events: vec![Event::new("our_event").add_attribute("msg", "hello")],
-            data: None,
-        };
-
-        assert_eq!(response.change_custom::<String>(), None);
     }
 }

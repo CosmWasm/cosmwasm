@@ -1,3 +1,4 @@
+use dyn_partial_eq::DynPartialEq;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +8,9 @@ use serde::{Deserialize, Serialize};
 /// It is designed to be expressible in correct JSON and JSON Schema but
 /// contains no meaningful data. Previously we used enums without cases,
 /// but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, Default)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, DynPartialEq, PartialEq, Eq, JsonSchema, Default,
+)]
 pub struct Empty {}
 
 #[cfg(test)]

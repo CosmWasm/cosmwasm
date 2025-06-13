@@ -1,13 +1,14 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, QueryRequest, SubMsg};
+use dyn_partial_eq::DynPartialEq;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
-    ReflectSubMsg { msgs: Vec<SubMsg<CustomMsg>> },
+    ReflectMsg { msgs: Vec<CosmosMsg> },
+    ReflectSubMsg { msgs: Vec<SubMsg> },
     ChangeOwner { owner: String },
 }
 
@@ -56,6 +57,7 @@ pub struct RawResponse {
 }
 
 #[cw_serde]
+#[derive(DynPartialEq)]
 /// CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract
 pub enum CustomMsg {
     Debug(String),
@@ -64,9 +66,9 @@ pub enum CustomMsg {
 
 impl cosmwasm_std::CustomMsg for CustomMsg {}
 
-impl From<CustomMsg> for CosmosMsg<CustomMsg> {
+impl From<CustomMsg> for CosmosMsg {
     fn from(original: CustomMsg) -> Self {
-        CosmosMsg::Custom(original)
+        CosmosMsg::Custom(original.into())
     }
 }
 

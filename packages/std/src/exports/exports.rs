@@ -33,7 +33,7 @@ use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_json, to_json_vec};
 use crate::types::Env;
-use crate::{CustomMsg, Deps, DepsMut, MessageInfo, MigrateInfo};
+use crate::{Deps, DepsMut, MessageInfo, MigrateInfo};
 
 // These functions are used as markers for the chain to know which features this contract requires.
 // If the chain does not support all the required features, it will reject storing the contract.
@@ -130,8 +130,8 @@ macro_rules! r#try_into_contract_result {
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_instantiate<Q, M, C, E>(
-    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
+pub fn do_instantiate<Q, M, E>(
+    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -139,7 +139,6 @@ pub fn do_instantiate<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -159,8 +158,8 @@ where
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_execute<Q, M, C, E>(
-    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
+pub fn do_execute<Q, M, E>(
+    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -168,7 +167,6 @@ pub fn do_execute<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -188,15 +186,14 @@ where
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_migrate<Q, M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
+pub fn do_migrate<Q, M, E>(
+    migrate_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -217,8 +214,8 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "cosmwasm_2_2")]
-pub fn do_migrate_with_info<Q, M, C, E>(
-    migrate_with_info_fn: &dyn Fn(DepsMut<Q>, Env, M, MigrateInfo) -> Result<Response<C>, E>,
+pub fn do_migrate_with_info<Q, M, E>(
+    migrate_with_info_fn: &dyn Fn(DepsMut<Q>, Env, M, MigrateInfo) -> Result<Response, E>,
     env_ptr: u32,
     msg_ptr: u32,
     migrate_info_ptr: u32,
@@ -226,7 +223,6 @@ pub fn do_migrate_with_info<Q, M, C, E>(
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -246,15 +242,14 @@ where
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_sudo<Q, M, C, E>(
-    sudo_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
+pub fn do_sudo<Q, M, E>(
+    sudo_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -273,14 +268,13 @@ where
 /// - `Q`: custom query type (see QueryRequest)
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_reply<Q, C, E>(
-    reply_fn: &dyn Fn(DepsMut<Q>, Env, Reply) -> Result<Response<C>, E>,
+pub fn do_reply<Q, E>(
+    reply_fn: &dyn Fn(DepsMut<Q>, Env, Reply) -> Result<Response, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -352,14 +346,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_channel_connect<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_channel_connect<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -380,14 +373,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_channel_close<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_channel_close<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -409,14 +401,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_receive<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+pub fn do_ibc_packet_receive<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -438,14 +429,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_ack<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_packet_ack<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -467,14 +457,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "stargate")]
-pub fn do_ibc_packet_timeout<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_packet_timeout<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -487,14 +476,13 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
-pub fn do_ibc_source_callback<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcSourceCallbackMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_source_callback<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcSourceCallbackMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -507,18 +495,13 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
-pub fn do_ibc_destination_callback<Q, C, E>(
-    contract_fn: &dyn Fn(
-        DepsMut<Q>,
-        Env,
-        IbcDestinationCallbackMsg,
-    ) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc_destination_callback<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcDestinationCallbackMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -540,14 +523,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "ibc2")]
-pub fn do_ibc2_packet_ack<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc2_packet_ack<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketAckMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -569,14 +551,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "ibc2")]
-pub fn do_ibc2_packet_receive<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+pub fn do_ibc2_packet_receive<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -598,14 +579,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "ibc2")]
-pub fn do_ibc2_packet_timeout<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc2_packet_timeout<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketTimeoutMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -628,14 +608,13 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 #[cfg(feature = "ibc2")]
-pub fn do_ibc2_packet_send<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketSendMsg) -> Result<IbcBasicResponse<C>, E>,
+pub fn do_ibc2_packet_send<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketSendMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     install_panic_handler();
@@ -648,16 +627,15 @@ where
     Region::from_vec(v).to_heap_ptr() as u32
 }
 
-fn _do_instantiate<Q, M, C, E>(
-    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
+fn _do_instantiate<Q, M, E>(
+    instantiate_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response, E>,
     env_ptr: *mut Region<Owned>,
     info_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<Response<C>>
+) -> ContractResult<Response>
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -675,16 +653,15 @@ where
     instantiate_fn(deps.as_mut(), env, info, msg).into()
 }
 
-fn _do_execute<Q, M, C, E>(
-    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response<C>, E>,
+fn _do_execute<Q, M, E>(
+    execute_fn: &dyn Fn(DepsMut<Q>, Env, MessageInfo, M) -> Result<Response, E>,
     env_ptr: *mut Region<Owned>,
     info_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<Response<C>>
+) -> ContractResult<Response>
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -702,15 +679,14 @@ where
     execute_fn(deps.as_mut(), env, info, msg).into()
 }
 
-fn _do_migrate<Q, M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
+fn _do_migrate<Q, M, E>(
+    migrate_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<Response<C>>
+) -> ContractResult<Response>
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -725,16 +701,15 @@ where
     migrate_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_migrate_with_info<Q, M, C, E>(
-    migrate_with_info_fn: &dyn Fn(DepsMut<Q>, Env, M, MigrateInfo) -> Result<Response<C>, E>,
+fn _do_migrate_with_info<Q, M, E>(
+    migrate_with_info_fn: &dyn Fn(DepsMut<Q>, Env, M, MigrateInfo) -> Result<Response, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
     migrate_info_ptr: *mut Region<Owned>,
-) -> ContractResult<Response<C>>
+) -> ContractResult<Response>
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -752,15 +727,14 @@ where
     migrate_with_info_fn(deps.as_mut(), env, msg, migrate_info).into()
 }
 
-fn _do_sudo<Q, M, C, E>(
-    sudo_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response<C>, E>,
+fn _do_sudo<Q, M, E>(
+    sudo_fn: &dyn Fn(DepsMut<Q>, Env, M) -> Result<Response, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<Response<C>>
+) -> ContractResult<Response>
 where
     Q: CustomQuery,
     M: DeserializeOwned,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -775,14 +749,13 @@ where
     sudo_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_reply<Q, C, E>(
-    reply_fn: &dyn Fn(DepsMut<Q>, Env, Reply) -> Result<Response<C>, E>,
+fn _do_reply<Q, E>(
+    reply_fn: &dyn Fn(DepsMut<Q>, Env, Reply) -> Result<Response, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<Response<C>>
+) -> ContractResult<Response>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -841,14 +814,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_channel_connect<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_channel_connect<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelConnectMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -864,14 +836,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_channel_close<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_channel_close<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcChannelCloseMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -887,14 +858,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_receive<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+fn _do_ibc_packet_receive<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketReceiveMsg) -> Result<IbcReceiveResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcReceiveResponse<C>>
+) -> ContractResult<IbcReceiveResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -910,14 +880,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_ack<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_packet_ack<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketAckMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -933,14 +902,13 @@ where
 }
 
 #[cfg(feature = "stargate")]
-fn _do_ibc_packet_timeout<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_packet_timeout<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcPacketTimeoutMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -955,14 +923,13 @@ where
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_ibc_source_callback<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcSourceCallbackMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_source_callback<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcSourceCallbackMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -977,18 +944,13 @@ where
     contract_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_ibc_destination_callback<Q, C, E>(
-    contract_fn: &dyn Fn(
-        DepsMut<Q>,
-        Env,
-        IbcDestinationCallbackMsg,
-    ) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc_destination_callback<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, IbcDestinationCallbackMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -1004,14 +966,13 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-fn _do_ibc2_packet_ack<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketAckMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc2_packet_ack<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketAckMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -1027,14 +988,13 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-fn _do_ibc2_packet_receive<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse<C>, E>,
+fn _do_ibc2_packet_receive<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketReceiveMsg) -> Result<IbcReceiveResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcReceiveResponse<C>>
+) -> ContractResult<IbcReceiveResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -1050,14 +1010,13 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-fn _do_ibc2_packet_timeout<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketTimeoutMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc2_packet_timeout<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketTimeoutMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =
@@ -1073,14 +1032,13 @@ where
 }
 
 #[cfg(feature = "ibc2")]
-fn _do_ibc2_packet_send<Q, C, E>(
-    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketSendMsg) -> Result<IbcBasicResponse<C>, E>,
+fn _do_ibc2_packet_send<Q, E>(
+    contract_fn: &dyn Fn(DepsMut<Q>, Env, Ibc2PacketSendMsg) -> Result<IbcBasicResponse, E>,
     env_ptr: *mut Region<Owned>,
     msg_ptr: *mut Region<Owned>,
-) -> ContractResult<IbcBasicResponse<C>>
+) -> ContractResult<IbcBasicResponse>
 where
     Q: CustomQuery,
-    C: CustomMsg,
     E: ToString,
 {
     let env: Vec<u8> =

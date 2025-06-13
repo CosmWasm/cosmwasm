@@ -36,7 +36,7 @@ impl core::fmt::Debug for Never {
 }
 
 // The Display implementation is needed to fulfill the ToString requirement of
-// entry point errors: `Result<IbcReceiveResponse<C>, E>` with `E: ToString`.
+// entry point errors: `Result<IbcReceiveResponse, E>` with `E: ToString`.
 impl core::fmt::Display for Never {
     fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         // Unreachable because no instance of Never can exist

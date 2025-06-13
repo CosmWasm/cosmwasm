@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Coin, CosmosMsg, Empty, Timestamp};
+use cosmwasm_std::{Coin, CosmosMsg, Timestamp};
 
 use crate::state::AccountData;
 
@@ -16,7 +16,7 @@ pub enum ExecuteMsg {
     SendMsgs {
         channel_id: String,
         // Note: we don't handle custom messages on remote chains
-        msgs: Vec<CosmosMsg<Empty>>,
+        msgs: Vec<CosmosMsg>,
     },
     CheckRemoteBalance {
         channel_id: String,
