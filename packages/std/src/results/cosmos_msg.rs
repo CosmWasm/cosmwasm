@@ -5,6 +5,7 @@ use derive_more::Debug;
 use dyn_partial_eq::{dyn_partial_eq, DynPartialEq};
 use erased_serde::serialize_trait_object;
 use schemars::JsonSchema;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::rc::Rc;
 
@@ -13,10 +14,10 @@ use crate::coin::Coin;
 use crate::ibc::IbcMsg;
 #[cfg(feature = "ibc2")]
 use crate::ibc2::Ibc2Msg;
-use crate::prelude::*;
 #[cfg(all(feature = "stargate", feature = "cosmwasm_1_2"))]
 use crate::Decimal;
 use crate::StdResult;
+use crate::{prelude::*, StdError};
 use crate::{to_json_binary, Binary};
 
 use super::Empty;
@@ -56,8 +57,53 @@ pub trait CustomMsg: erased_serde::Serialize + fmt::Debug {}
 
 serialize_trait_object!(CustomMsg);
 
+// TODO: use `maybe-owned` crate?
+pub enum MaybeOwned<'a, T> {
+    Owned(T),
+    Borrowed(&'a T),
+}
+
+impl<'a, T> core::ops::Deref for MaybeOwned<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MaybeOwned::Owned(ref val) => val,
+            MaybeOwned::Borrowed(val) => val,
+        }
+    }
+}
+
+/// A wrapper type for CustomMsg to allow deserialization of any custom message, without knowing its type.
 #[derive(Serialize, Clone, Debug, DynPartialEq)]
 pub struct CustomMsgContainer(pub Rc<dyn CustomMsg>);
+
+impl CustomMsgContainer {
+    pub fn inner_msg(&self) -> &dyn CustomMsg {
+        self.0.as_ref()
+    }
+
+    /// Try to deserialize this custom message as a specific type.
+    pub fn deserialize<T: CustomMsg + DeserializeOwned + 'static>(
+        &self,
+    ) -> StdResult<MaybeOwned<'_, T>> {
+        let inner_any = self.inner_msg().as_any();
+        if let Some(already_cast) = inner_any.downcast_ref::<T>() {
+            // if the underlying message type is already correct, return it directly
+            return Ok(MaybeOwned::Borrowed(already_cast));
+        } else if let Some(unknown) = inner_any.downcast_ref::<UnknownCustomMsg>() {
+            // if the type is UnknownCustomMsg (which is the case for custom messages that were deserialized from JSON),
+            // we try to deserialize the inner JSON into the desired type
+            return serde_json::from_value(unknown.0.clone())
+                .map(|val| MaybeOwned::Owned(val))
+                .map_err(|e| StdError::generic_err(e.to_string()));
+        }
+        Err(StdError::generic_err(format!(
+            "Could not deserialize custom message as {}",
+            std::any::type_name::<T>()
+        )))
+    }
+}
 
 impl PartialEq for CustomMsgContainer {
     fn eq(&self, other: &Self) -> bool {
