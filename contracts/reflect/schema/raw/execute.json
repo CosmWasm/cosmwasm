@@ -17,7 +17,7 @@
             "msgs": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
+                "$ref": "#/definitions/CosmosMsg"
               }
             }
           },
@@ -41,7 +41,7 @@
             "msgs": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/SubMsg_for_CustomMsg"
+                "$ref": "#/definitions/SubMsg"
               }
             }
           },
@@ -169,7 +169,7 @@
       },
       "additionalProperties": false
     },
-    "CosmosMsg_for_CustomMsg": {
+    "CosmosMsg": {
       "oneOf": [
         {
           "type": "object",
@@ -297,35 +297,7 @@
         }
       ]
     },
-    "CustomMsg": {
-      "description": "CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract",
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "debug"
-          ],
-          "properties": {
-            "debug": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "raw"
-          ],
-          "properties": {
-            "raw": {
-              "$ref": "#/definitions/Binary"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
+    "CustomMsg": true,
     "Decimal": {
       "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
       "type": "string"
@@ -812,7 +784,7 @@
         }
       ]
     },
-    "SubMsg_for_CustomMsg": {
+    "SubMsg": {
       "description": "A submessage that will guarantee a `reply` call on success or error, depending on the `reply_on` setting. If you do not need to process the result, use regular messages instead.\n\nNote: On error the submessage execution will revert any partial state changes due to this message, but not revert any state changes in the calling contract. If this is required, it must be done manually in the `reply` entry point.",
       "type": "object",
       "required": [
@@ -837,7 +809,7 @@
           "minimum": 0.0
         },
         "msg": {
-          "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
+          "$ref": "#/definitions/CosmosMsg"
         },
         "payload": {
           "description": "Some arbitrary data that the contract can set in an application specific way. This is just passed into the `reply` entry point and is not stored to state. Any encoding can be used. If `id` is used to identify a particular action, the encoding can also be different for each of those actions since you can match `id` first and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit is environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
