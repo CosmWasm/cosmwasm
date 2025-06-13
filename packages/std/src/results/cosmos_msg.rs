@@ -75,8 +75,8 @@ impl<T> core::ops::Deref for MaybeOwned<'_, T> {
 }
 
 /// A wrapper type for CustomMsg to allow deserialization of any custom message, without knowing its type.
-#[derive(Serialize, Clone, Debug, DynPartialEq)]
-pub struct CustomMsgContainer(pub Rc<dyn CustomMsg>);
+#[derive(Serialize, Clone, Debug, DynPartialEq, JsonSchema)]
+pub struct CustomMsgContainer(#[schemars(with = "serde_json::Value")] pub Rc<dyn CustomMsg>);
 
 impl CustomMsgContainer {
     pub fn inner_msg(&self) -> &dyn CustomMsg {
@@ -114,16 +114,6 @@ impl PartialEq for CustomMsgContainer {
 impl<C: CustomMsg + 'static> From<C> for CustomMsgContainer {
     fn from(msg: C) -> Self {
         CustomMsgContainer(Rc::new(msg))
-    }
-}
-
-impl JsonSchema for CustomMsgContainer {
-    fn schema_name() -> String {
-        "CustomMsg".to_string()
-    }
-
-    fn json_schema(_generator: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
-        schemars::schema::Schema::Bool(true)
     }
 }
 
