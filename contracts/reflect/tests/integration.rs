@@ -101,9 +101,13 @@ fn reflect() {
     let info = mock_info("creator", &[]);
     let res: Response = execute(&mut deps, mock_env(), info, msg).unwrap();
 
-    // should return payload
-    let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
-    assert_eq!(payload, res.messages);
+    // should return payload. We're comparing the JSON representation because the underlying
+    // CustomMsg type is not the same.
+    let payload =
+        cosmwasm_std::to_json_string(&payload.into_iter().map(SubMsg::new).collect::<Vec<_>>())
+            .unwrap();
+    let messages = cosmwasm_std::to_json_string(&res.messages).unwrap();
+    assert_eq!(payload, messages);
 }
 
 #[test]

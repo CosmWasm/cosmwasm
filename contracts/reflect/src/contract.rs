@@ -6,8 +6,8 @@ use cosmwasm_std::{
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse,
-    QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
+    CapitalizedResponse, ChainResponse, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg,
+    RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{load_config, load_reply, save_config, save_reply, State};
 
@@ -173,6 +173,7 @@ fn query_raw(deps: Deps<SpecialQuery>, contract: String, key: Binary) -> StdResu
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::msg::CustomMsg;
     use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::{message_info, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{

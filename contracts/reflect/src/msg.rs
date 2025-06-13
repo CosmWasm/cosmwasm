@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, QueryRequest, SubMsg};
+use dyn_partial_eq::DynPartialEq;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -56,6 +57,7 @@ pub struct RawResponse {
 }
 
 #[cw_serde]
+#[derive(DynPartialEq)]
 /// CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract
 pub enum CustomMsg {
     Debug(String),
@@ -66,7 +68,7 @@ impl cosmwasm_std::CustomMsg for CustomMsg {}
 
 impl From<CustomMsg> for CosmosMsg {
     fn from(original: CustomMsg) -> Self {
-        CosmosMsg::Custom(original)
+        CosmosMsg::Custom(original.into())
     }
 }
 
