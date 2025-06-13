@@ -26,7 +26,18 @@ use super::Int256;
 /// and the smallest is
 /// -57896044618658097711785492504343953926634992332820282019728.792003956564819968
 /// (which is -2^255 / 10^18).
-#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    schemars::JsonSchema,
+    cw_schema::Schemaifier,
+)]
+#[schemaifier(type = cw_schema::NodeType::Decimal { precision: 256, signed: true })]
 pub struct SignedDecimal256(#[schemars(with = "String")] Int256);
 
 forward_ref_partial_eq!(SignedDecimal256, SignedDecimal256);

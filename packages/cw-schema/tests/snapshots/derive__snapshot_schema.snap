@@ -1,0 +1,111 @@
+---
+source: packages/cw-schema/tests/derive.rs
+expression: schema
+---
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "derive_HelloWorld",
+      "description": "Hello world struct!",
+      "type": "struct",
+      "properties": {
+        "baz": {
+          "description": "Baz field!",
+          "value": 5
+        },
+        "foo": {
+          "description": "Foo field!",
+          "value": 4
+        },
+        "name": {
+          "description": "Name field!",
+          "value": 1
+        },
+        "quux": {
+          "description": "Quux field!",
+          "value": 6
+        },
+        "tuple": {
+          "description": "Tuple field!",
+          "value": 7
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "derive_Bar",
+      "description": "Bar struct!",
+      "type": "struct",
+      "properties": {
+        "baz": {
+          "description": "Bar field!",
+          "value": 3
+        }
+      }
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "core::option::Option<derive::Bar>",
+      "type": "optional",
+      "inner": 2
+    },
+    {
+      "name": "derive_Baz",
+      "description": "Baz enum!",
+      "type": "enum",
+      "cases": {
+        "A": {
+          "description": "A variant!",
+          "type": "unit"
+        },
+        "B": {
+          "description": "B variant!",
+          "type": "named",
+          "properties": {
+            "c": {
+              "description": "C field!",
+              "value": 3
+            }
+          }
+        },
+        "D": {
+          "description": "D variant!",
+          "type": "tuple",
+          "items": [
+            3,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "derive_Quux",
+      "description": "Quux struct!",
+      "type": "struct",
+      "properties": {
+        "quuxField": {
+          "description": "Quux field!",
+          "value": 3
+        }
+      }
+    },
+    {
+      "name": "(u32, u32)",
+      "type": "tuple",
+      "items": [
+        3,
+        3
+      ]
+    }
+  ]
+}
