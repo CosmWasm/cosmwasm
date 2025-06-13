@@ -12,6 +12,7 @@ serde_with = { version = "3.9.0", default-features = false, features = [
     "macros",
 ] }
 siphasher = { version = "1.0.1", default-features = false }
+typeid = "1.0.3"
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["json"] }

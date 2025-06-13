@@ -9,7 +9,7 @@ extern crate std;
 use std::borrow::ToOwned;
 
 use alloc::{borrow::Cow, collections::BTreeMap, vec::Vec};
-use core::{any::TypeId, hash::BuildHasherDefault, marker::PhantomData};
+use core::{any::TypeId, hash::BuildHasherDefault};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -170,30 +170,7 @@ impl Identifier {
     where
         T: ?Sized,
     {
-        // Taken from <sagebind/castaway>: https://github.com/sagebind/castaway/blob/a7baeab32d75d0f105d1415210a2867d213f8818/src/utils.rs#L36
-        //
-        // Seems more robust than the previous implementation.
-        trait NonStaticAny {
-            fn get_type_id(&self) -> TypeId
-            where
-                Self: 'static;
-        }
-
-        impl<T: ?Sized> NonStaticAny for PhantomData<T> {
-            fn get_type_id(&self) -> TypeId
-            where
-                Self: 'static,
-            {
-                TypeId::of::<T>()
-            }
-        }
-
-        let phantom = PhantomData::<T>;
-        let ty_id = NonStaticAny::get_type_id(unsafe {
-            core::mem::transmute::<&dyn NonStaticAny, &(dyn NonStaticAny + 'static)>(&phantom)
-        });
-
-        Identifier(ty_id)
+        Identifier(typeid::of::<T>())
     }
 }
 
