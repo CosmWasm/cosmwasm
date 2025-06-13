@@ -1,0 +1,44 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "staking_msg_QueryMsg",
+      "type": "enum",
+      "cases": {
+        "balance": {
+          "description": "Balance shows the number of staking derivatives",
+          "type": "named",
+          "properties": {
+            "address": {
+              "value": 1
+            }
+          }
+        },
+        "claims": {
+          "description": "Claims shows the number of tokens this address can access when they are done unbonding",
+          "type": "named",
+          "properties": {
+            "address": {
+              "value": 1
+            }
+          }
+        },
+        "investment": {
+          "description": "Investment shows info on total staking tokens under custody,\nwith which validator, as well as how many derivative tokens are lists.\nIt also shows with the exit tax.",
+          "type": "named",
+          "properties": {}
+        },
+        "token_info": {
+          "description": "TokenInfo shows the metadata of the token for UIs",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    }
+  ]
+}

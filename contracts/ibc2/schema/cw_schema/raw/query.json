@@ -1,0 +1,16 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "ibc2_msg_QueryMsg",
+      "type": "enum",
+      "cases": {
+        "query_state": {
+          "type": "named",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

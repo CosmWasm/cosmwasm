@@ -6,7 +6,9 @@ use crate::{Addr, Binary, IbcAcknowledgement, Timestamp};
 /// Payload value should be encoded in a format defined by the channel version,
 /// and the module on the other side should know how to parse this.
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub struct Ibc2Payload {
     /// The port id on the chain where the packet is sent from.
@@ -42,7 +44,9 @@ impl Ibc2Payload {
 /// These are messages in the IBC lifecycle using the new Ibc2 approach.
 /// Only usable by Ibc2-enabled contracts
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Ibc2Msg {
     /// Sends an Ibc2 packet with given payloads over the existing channel.
@@ -66,7 +70,9 @@ pub enum Ibc2Msg {
 /// IBC2PacketReceiveMsg represents a message received via the IBC2 protocol.
 /// The message that is passed into `ibc2_packet_receive`.
 /// It contains the payload data along with metadata about the source and relayer.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier, JsonSchema,
+)]
 #[non_exhaustive]
 pub struct Ibc2PacketReceiveMsg {
     /// The actual data being transmitted via IBC2.
@@ -99,7 +105,9 @@ impl Ibc2PacketReceiveMsg {
 /// successfully delivered within the expected timeframe in the IBC2 protocol.
 /// It includes details about the source and destination clients, and the sequence
 /// number of the timed-out packet.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier, JsonSchema,
+)]
 #[non_exhaustive]
 pub struct Ibc2PacketTimeoutMsg {
     /// The data associated with the timed-out packet.
@@ -133,7 +141,9 @@ impl Ibc2PacketTimeoutMsg {
 }
 
 /// Message sent to the IBCv2 app upon receiving an acknowledgement packet
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier, JsonSchema,
+)]
 #[non_exhaustive]
 pub struct Ibc2PacketAckMsg {
     pub source_client: String,
@@ -168,7 +178,9 @@ impl Ibc2PacketAckMsg {
 ///
 /// It includes details about the source and destination clients, the sequence
 /// number of the packet and the signer that sent the message.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, cw_schema::Schemaifier, JsonSchema,
+)]
 #[non_exhaustive]
 pub struct Ibc2PacketSendMsg {
     /// The payload to be sent.

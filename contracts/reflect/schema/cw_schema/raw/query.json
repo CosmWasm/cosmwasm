@@ -1,0 +1,418 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "reflect_msg_QueryMsg",
+      "type": "enum",
+      "cases": {
+        "capitalized": {
+          "description": "This will call out to SpecialQuery::Capitalized",
+          "type": "named",
+          "properties": {
+            "text": {
+              "value": 1
+            }
+          }
+        },
+        "chain": {
+          "description": "Queries the blockchain and returns the result untouched",
+          "type": "named",
+          "properties": {
+            "request": {
+              "value": 2
+            }
+          }
+        },
+        "owner": {
+          "type": "named",
+          "properties": {}
+        },
+        "raw": {
+          "description": "Queries another contract and returns the data",
+          "type": "named",
+          "properties": {
+            "contract": {
+              "value": 1
+            },
+            "key": {
+              "value": 5
+            }
+          }
+        },
+        "sub_msg_result": {
+          "description": "If there was a previous ReflectSubMsg with this ID, returns cosmwasm_std::Reply",
+          "type": "named",
+          "properties": {
+            "id": {
+              "value": 16
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "cosmwasm_std_query_QueryRequest_reflect_msg_SpecialQuery_",
+      "type": "enum",
+      "cases": {
+        "bank": {
+          "type": "tuple",
+          "items": [
+            3
+          ]
+        },
+        "custom": {
+          "type": "tuple",
+          "items": [
+            10
+          ]
+        },
+        "distribution": {
+          "type": "tuple",
+          "items": [
+            12
+          ]
+        },
+        "grpc": {
+          "type": "tuple",
+          "items": [
+            17
+          ]
+        },
+        "ibc": {
+          "type": "tuple",
+          "items": [
+            13
+          ]
+        },
+        "staking": {
+          "type": "tuple",
+          "items": [
+            11
+          ]
+        },
+        "stargate": {
+          "description": "A Stargate query is encoded the same way as abci_query, with path and protobuf encoded request data.\nThe format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md).\nThe response is protobuf encoded data directly without a JSON response wrapper.\nThe caller is responsible for compiling the proper protobuf definitions for both requests and responses.",
+          "type": "named",
+          "properties": {
+            "data": {
+              "description": "this is the expected protobuf message type (not any), binary encoded",
+              "value": 5
+            },
+            "path": {
+              "description": "this is the fully qualified service path used for routing,\neg. \"/cosmos_sdk.x.bank.v1.Query/QueryBalance\"",
+              "value": 1
+            }
+          }
+        },
+        "wasm": {
+          "type": "tuple",
+          "items": [
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_query_bank_BankQuery",
+      "type": "enum",
+      "cases": {
+        "all_denom_metadata": {
+          "description": "This calls into the native bank module for querying metadata for all bank tokens that have a metadata entry.\nReturn value is AllDenomMetadataResponse",
+          "type": "named",
+          "properties": {
+            "pagination": {
+              "value": 9
+            }
+          }
+        },
+        "balance": {
+          "description": "This calls into the native bank module for one denomination\nReturn value is BalanceResponse",
+          "type": "named",
+          "properties": {
+            "address": {
+              "value": 1
+            },
+            "denom": {
+              "value": 1
+            }
+          }
+        },
+        "denom_metadata": {
+          "description": "This calls into the native bank module for querying metadata for a specific bank token.\nReturn value is DenomMetadataResponse",
+          "type": "named",
+          "properties": {
+            "denom": {
+              "value": 1
+            }
+          }
+        },
+        "supply": {
+          "description": "This calls into the native bank module for querying the total supply of one denomination.\nIt does the same as the SupplyOf call in Cosmos SDK's RPC API.\nReturn value is of type SupplyResponse.",
+          "type": "named",
+          "properties": {
+            "denom": {
+              "value": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_pagination_PageRequest",
+      "description": "Simplified version of the PageRequest type for pagination from the cosmos-sdk",
+      "type": "struct",
+      "properties": {
+        "key": {
+          "value": 6
+        },
+        "limit": {
+          "value": 7
+        },
+        "reverse": {
+          "value": 8
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_binary_Binary",
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+      "type": "binary"
+    },
+    {
+      "name": "core::option::Option<cosmwasm_std::binary::Binary>",
+      "type": "optional",
+      "inner": 5
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    },
+    {
+      "name": "bool",
+      "type": "boolean"
+    },
+    {
+      "name": "core::option::Option<cosmwasm_std::pagination::PageRequest>",
+      "type": "optional",
+      "inner": 4
+    },
+    {
+      "name": "reflect_msg_SpecialQuery",
+      "description": "An implementation of QueryRequest::Custom to show this works and can be extended in the contract",
+      "type": "enum",
+      "cases": {
+        "capitalized": {
+          "type": "named",
+          "properties": {
+            "text": {
+              "value": 1
+            }
+          }
+        },
+        "ping": {
+          "type": "named",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_query_staking_StakingQuery",
+      "type": "enum",
+      "cases": {
+        "all_delegations": {
+          "description": "AllDelegations will return all delegations by the delegator",
+          "type": "named",
+          "properties": {
+            "delegator": {
+              "value": 1
+            }
+          }
+        },
+        "all_validators": {
+          "description": "Returns all validators in the currently active validator set.\n\nThe query response type is `AllValidatorsResponse`.",
+          "type": "named",
+          "properties": {}
+        },
+        "bonded_denom": {
+          "description": "Returns the denomination that can be bonded (if there are multiple native tokens on the chain)",
+          "type": "named",
+          "properties": {}
+        },
+        "delegation": {
+          "description": "Delegation will return more detailed info on a particular\ndelegation, defined by delegator/validator pair",
+          "type": "named",
+          "properties": {
+            "delegator": {
+              "value": 1
+            },
+            "validator": {
+              "value": 1
+            }
+          }
+        },
+        "validator": {
+          "description": "Returns the validator at the given address. Returns None if the validator is\nnot part of the currently active validator set.\n\nThe query response type is `ValidatorResponse`.",
+          "type": "named",
+          "properties": {
+            "address": {
+              "description": "The validator's address (e.g. (e.g. cosmosvaloper1...))",
+              "value": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_query_distribution_DistributionQuery",
+      "type": "enum",
+      "cases": {
+        "delegation_rewards": {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L157-L167>",
+          "type": "named",
+          "properties": {
+            "delegator_address": {
+              "value": 1
+            },
+            "validator_address": {
+              "value": 1
+            }
+          }
+        },
+        "delegation_total_rewards": {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L180-L187>",
+          "type": "named",
+          "properties": {
+            "delegator_address": {
+              "value": 1
+            }
+          }
+        },
+        "delegator_validators": {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/b0acf60e6c39f7ab023841841fc0b751a12c13ff/proto/cosmos/distribution/v1beta1/query.proto#L202-L210>",
+          "type": "named",
+          "properties": {
+            "delegator_address": {
+              "value": 1
+            }
+          }
+        },
+        "delegator_withdraw_address": {
+          "description": "See <https://github.com/cosmos/cosmos-sdk/blob/c74e2887b0b73e81d48c2f33e6b1020090089ee0/proto/cosmos/distribution/v1beta1/query.proto#L222-L230>",
+          "type": "named",
+          "properties": {
+            "delegator_address": {
+              "value": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "cosmwasm_std_query_ibc_IbcQuery",
+      "description": "These are queries to the various IBC modules to see the state of the contract's\nIBC connection.\nMost of these will return errors if the contract is not \"ibc enabled\".",
+      "type": "enum",
+      "cases": {
+        "channel": {
+          "description": "Lists all information for a (portID, channelID) pair.\nIf port_id is omitted, it will default to the contract's own channel.\n(To save a PortId{} call)\n\nReturns a `ChannelResponse`.",
+          "type": "named",
+          "properties": {
+            "channel_id": {
+              "value": 1
+            },
+            "port_id": {
+              "value": 14
+            }
+          }
+        },
+        "port_id": {
+          "description": "Gets the Port ID the current contract is bound to.\n\nReturns a `PortIdResponse`.",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "name": "core::option::Option<alloc::string::String>",
+      "type": "optional",
+      "inner": 1
+    },
+    {
+      "name": "cosmwasm_std_query_wasm_WasmQuery",
+      "type": "enum",
+      "cases": {
+        "code_info": {
+          "description": "Returns a [`CodeInfoResponse`] with metadata of the code",
+          "type": "named",
+          "properties": {
+            "code_id": {
+              "value": 16
+            }
+          }
+        },
+        "contract_info": {
+          "description": "Returns a [`ContractInfoResponse`] with metadata on the contract from the runtime",
+          "type": "named",
+          "properties": {
+            "contract_addr": {
+              "value": 1
+            }
+          }
+        },
+        "raw": {
+          "description": "this queries the raw kv-store of the contract.\nreturns the raw, unparsed data stored at that key, which may be an empty vector if not present",
+          "type": "named",
+          "properties": {
+            "contract_addr": {
+              "value": 1
+            },
+            "key": {
+              "description": "Key is the raw key used in the contracts Storage",
+              "value": 5
+            }
+          }
+        },
+        "smart": {
+          "description": "this queries the public API of another contract at a known address (with known ABI)\nReturn value is whatever the contract returns (caller should know), wrapped in a\nContractResult that is JSON encoded.",
+          "type": "named",
+          "properties": {
+            "contract_addr": {
+              "value": 1
+            },
+            "msg": {
+              "description": "msg is the json-encoded QueryMsg struct",
+              "value": 5
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "u64",
+      "type": "integer",
+      "precision": 64,
+      "signed": false
+    },
+    {
+      "name": "cosmwasm_std_query_GrpcQuery",
+      "description": "Queries the chain using a grpc query.\nThis allows to query information that is not exposed in our API.\nThe chain needs to allowlist the supported queries.\nThe drawback of this query is that you have to handle the protobuf encoding and decoding yourself.\n\nThe returned data is protobuf encoded. The protobuf type depends on the query.\nBecause of this, using it with the [`query`](crate::QuerierWrapper::query) function will result\nin a deserialization error.\nUse [`raw_query`](crate::Querier::raw_query) or [`query_grpc`](crate::QuerierWrapper::query_grpc)\ninstead.\n\nTo find the path, as well as the request and response types,\nyou can query the chain's gRPC endpoint using a tool like\n[grpcurl](https://github.com/fullstorydev/grpcurl).",
+      "type": "struct",
+      "properties": {
+        "data": {
+          "description": "The expected protobuf message type (not [Any](https://protobuf.dev/programming-guides/proto3/#any)), binary encoded",
+          "value": 5
+        },
+        "path": {
+          "description": "The fully qualified endpoint path used for routing.\nIt follows the format `/service_path/method_name`,\neg. \"/cosmos.authz.v1beta1.Query/Grants\"",
+          "value": 1
+        }
+      }
+    }
+  ]
+}

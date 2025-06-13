@@ -1,0 +1,39 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "burner_msg_MigrateMsg",
+      "type": "struct",
+      "properties": {
+        "delete": {
+          "description": "Optional amount of items to delete in this call.\nIf it is not provided, nothing will be deleted.\nYou can delete further items in a subsequent execute call.",
+          "value": 3
+        },
+        "denoms": {
+          "description": "The denoms of the final payout. Balances of tokens not listed here\nwill remain in the account untouched.",
+          "value": 2
+        },
+        "payout": {
+          "description": "The address we send all remaining balance to. See denoms\nbelow for the denoms to consider.",
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "String",
+      "type": "string"
+    },
+    {
+      "name": "alloc::vec::Vec<alloc::string::String>",
+      "type": "array",
+      "items": 1
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+---
+source: packages/cw-schema/tests/self_ref.rs
+expression: "cw_schema::schema_of::<SelfRef>()"
+---
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "self_ref_SelfRef",
+      "type": "struct",
+      "properties": {
+        "meow": {
+          "value": 1
+        }
+      }
+    },
+    {
+      "name": "alloc::vec::Vec<self_ref::SelfRef>",
+      "type": "array",
+      "items": 0
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "crypto_verify_msg_InstantiateMsg",
+      "type": "struct",
+      "properties": {}
+    }
+  ]
+}

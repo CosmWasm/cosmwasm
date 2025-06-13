@@ -31,7 +31,9 @@ use crate::prelude::*;
 /// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_json_string(&result).unwrap(), r#"{"error":"Something went wrong"}"#);
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {
     Ok(S),
