@@ -1,9 +1,8 @@
-use serde::de::DeserializeOwned;
 use wasmer::Value;
 
 use cosmwasm_std::{
-    ContractResult, CustomMsg, Env, IbcBasicResponse, IbcDestinationCallbackMsg,
-    IbcSourceCallbackMsg, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
+    ContractResult, Env, IbcBasicResponse, IbcDestinationCallbackMsg, IbcSourceCallbackMsg,
+    MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
 };
 
 #[cfg(any(feature = "stargate", feature = "ibc2"))]

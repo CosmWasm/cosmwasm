@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::coin::Coin;
 use crate::prelude::*;
-use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+use crate::results::{Attribute, CosmosMsg, Event, SubMsg};
 use crate::StdResult;
 use crate::{to_json_binary, Binary};
 use crate::{Addr, Timestamp};

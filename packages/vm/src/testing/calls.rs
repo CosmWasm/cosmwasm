@@ -1,11 +1,9 @@
 //! This file has some helpers for integration tests.
 //! They should be imported via full path to ensure there is no confusion
 //! use cosmwasm_vm::testing::X
-use serde::{de::DeserializeOwned, Serialize};
+use serde::Serialize;
 
-use cosmwasm_std::{
-    ContractResult, CustomMsg, Env, MessageInfo, MigrateInfo, QueryResponse, Reply, Response,
-};
+use cosmwasm_std::{ContractResult, Env, MessageInfo, MigrateInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
     Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,

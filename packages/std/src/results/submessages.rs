@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::prelude::*;
 use crate::Binary;
 
-use super::{CosmosMsg, Empty, Event};
+use super::{CosmosMsg, Event};
 
 /// Use this to define when the contract gets a response callback.
 /// If you only need it for errors or success you can select just those in order

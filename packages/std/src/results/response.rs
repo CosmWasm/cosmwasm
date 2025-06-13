@@ -1,10 +1,9 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 use crate::Binary;
 
-use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
+use super::{Attribute, CosmosMsg, Event, SubMsg};
 
 /// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///

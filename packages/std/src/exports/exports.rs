@@ -33,7 +33,7 @@ use crate::query::CustomQuery;
 use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_json, to_json_vec};
 use crate::types::Env;
-use crate::{CustomMsg, Deps, DepsMut, MessageInfo, MigrateInfo};
+use crate::{Deps, DepsMut, MessageInfo, MigrateInfo};
 
 // These functions are used as markers for the chain to know which features this contract requires.
 // If the chain does not support all the required features, it will reject storing the contract.
