@@ -28,7 +28,7 @@ pub enum ReplyOn {
 /// Note: On error the submessage execution will revert any partial state changes due to this message,
 /// but not revert any state changes in the calling contract. If this is required, it must be done
 /// manually in the `reply` entry point.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct SubMsg {
     /// An arbitrary ID chosen by the contract.
     /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.

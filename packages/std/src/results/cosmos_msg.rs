@@ -117,6 +117,16 @@ impl<C: CustomMsg + 'static> From<C> for CustomMsgContainer {
     }
 }
 
+impl JsonSchema for CustomMsgContainer {
+    fn schema_name() -> String {
+        "CustomMsg".to_string()
+    }
+
+    fn json_schema(_generator: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        schemars::schema::Schema::Bool(true)
+    }
+}
+
 impl CustomMsg for Empty {}
 
 impl<'de> Deserialize<'de> for CustomMsgContainer {
@@ -139,7 +149,7 @@ struct UnknownCustomMsg(serde_json::Value);
 impl CustomMsg for UnknownCustomMsg {}
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
 pub enum CosmosMsg {

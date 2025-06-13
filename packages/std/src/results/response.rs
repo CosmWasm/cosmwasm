@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
@@ -59,7 +60,7 @@ use super::{Attribute, CosmosMsg, Event, SubMsg};
 ///     Ok(response)
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct Response {
     /// Optional list of messages to pass. These will be executed in order.

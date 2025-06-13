@@ -481,7 +481,7 @@ impl IbcPacketTimeoutMsg {
 /// Callbacks that have return values (like receive_packet)
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcBasicResponse {
     /// Optional list of messages to pass. These will be executed in order.
