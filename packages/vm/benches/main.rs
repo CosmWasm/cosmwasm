@@ -71,13 +71,9 @@ fn bench_instance(c: &mut Criterion) {
             let verifier = instance.api().addr_make("verifies");
             let beneficiary = instance.api().addr_make("benefits");
             let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-            let contract_result = call_instantiate::<_, _, _>(
-                &mut instance,
-                &mock_env(),
-                &info,
-                msg.as_bytes(),
-            )
-            .unwrap();
+            let contract_result =
+                call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
+                    .unwrap();
             assert!(contract_result.into_result().is_ok());
         });
     });
@@ -95,8 +91,7 @@ fn bench_instance(c: &mut Criterion) {
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
         let contract_result =
-            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
-                .unwrap();
+            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes()).unwrap();
         assert!(contract_result.into_result().is_ok());
 
         b.iter(|| {
@@ -165,8 +160,7 @@ fn bench_instance(c: &mut Criterion) {
                 let info = mock_info("hasher", &[]);
                 let msg = br#"{"cpu_loop":{}}"#;
 
-                let vm_result =
-                    call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg);
+                let vm_result = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg);
 
                 assert!(matches!(vm_result, Err(VmError::GasDepletion { .. })));
                 gas_used = gas_before - instance.get_gas_left();

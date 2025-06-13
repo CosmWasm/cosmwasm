@@ -1125,8 +1125,7 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        let res =
-            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes());
+        let res = call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes());
         assert!(res.is_err());
     }
 
@@ -1139,10 +1138,9 @@ mod tests {
         let verifier = instance.api().addr_make("verifies");
         let beneficiary = instance.api().addr_make("benefits");
         let msg = format!(r#"{{"verifier": "{verifier}", "beneficiary": "{beneficiary}"}}"#);
-        let _res =
-            call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
-                .unwrap()
-                .unwrap();
+        let _res = call_instantiate::<_, _, _>(&mut instance, &mock_env(), &info, msg.as_bytes())
+            .unwrap()
+            .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_query = instance.get_gas_left();

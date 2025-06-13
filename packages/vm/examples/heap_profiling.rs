@@ -162,8 +162,7 @@ fn app(runtime: u64) {
                 for (execution_idx, execute) in contracts[idx].execute_msgs.iter().enumerate() {
                     let info = mock_info("verifies", &coins(15, "earth"));
                     let msg = execute.msg;
-                    let res =
-                        call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg);
+                    let res = call_execute::<_, _, _>(&mut instance, &mock_env(), &info, msg);
 
                     if execute.expect_error {
                         if res.is_ok() {
