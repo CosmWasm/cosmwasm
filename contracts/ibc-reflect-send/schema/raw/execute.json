@@ -203,7 +203,7 @@
           ],
           "properties": {
             "custom": {
-              "$ref": "#/definitions/CustomMsg"
+              "$ref": "#/definitions/CustomMsgContainer"
             }
           },
           "additionalProperties": false
@@ -297,7 +297,9 @@
         }
       ]
     },
-    "CustomMsg": true,
+    "CustomMsgContainer": {
+      "description": "A wrapper type for CustomMsg to allow deserialization of any custom message, without knowing its type."
+    },
     "DistributionMsg": {
       "description": "The message types of the distribution module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto",
       "oneOf": [
