@@ -63,7 +63,7 @@ pub enum MaybeOwned<'a, T> {
     Borrowed(&'a T),
 }
 
-impl<'a, T> core::ops::Deref for MaybeOwned<'a, T> {
+impl<T> core::ops::Deref for MaybeOwned<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -607,7 +607,6 @@ impl From<Ibc2Msg> for CosmosMsg {
 mod tests {
     use super::*;
     use crate::{coin, coins};
-    use fmt::Debug;
 
     #[test]
     fn from_bank_msg_works() {

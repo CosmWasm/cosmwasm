@@ -6,7 +6,7 @@ use std::time::{Duration, SystemTime};
 use std::{fs, thread};
 use tempfile::TempDir;
 
-use cosmwasm_std::{coins, Checksum, Empty};
+use cosmwasm_std::{coins, Checksum};
 use cosmwasm_vm::testing::{
     mock_backend, mock_env, mock_info, mock_instance_options, MockApi, MockQuerier, MockStorage,
 };

@@ -5,7 +5,7 @@ use std::time::{Duration, SystemTime};
 use tempfile::TempDir;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
-use cosmwasm_std::{coins, Checksum, Empty};
+use cosmwasm_std::{coins, Checksum};
 use cosmwasm_vm::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
 use cosmwasm_vm::{
     call_execute, call_instantiate, capabilities_from_csv, Cache, CacheOptions, InstanceOptions,

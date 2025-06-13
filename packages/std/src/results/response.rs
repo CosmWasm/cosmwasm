@@ -60,7 +60,7 @@ use super::{Attribute, CosmosMsg, Event, SubMsg};
 ///     Ok(response)
 /// }
 /// ```
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct Response {
     /// Optional list of messages to pass. These will be executed in order.
@@ -84,17 +84,6 @@ pub struct Response {
     pub events: Vec<Event>,
     /// The binary payload to include in the response.
     pub data: Option<Binary>,
-}
-
-impl Default for Response {
-    fn default() -> Self {
-        Response {
-            messages: vec![],
-            attributes: vec![],
-            events: vec![],
-            data: None,
-        }
-    }
 }
 
 impl Response {

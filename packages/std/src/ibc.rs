@@ -481,7 +481,7 @@ impl IbcPacketTimeoutMsg {
 /// Callbacks that have return values (like receive_packet)
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[non_exhaustive]
 pub struct IbcBasicResponse {
     /// Optional list of messages to pass. These will be executed in order.
@@ -505,15 +505,6 @@ pub struct IbcBasicResponse {
 }
 
 // Custom implementation in order to implement it for all `T`, even if `T` is not `Default`.
-impl Default for IbcBasicResponse {
-    fn default() -> Self {
-        IbcBasicResponse {
-            messages: vec![],
-            attributes: vec![],
-            events: vec![],
-        }
-    }
-}
 
 impl IbcBasicResponse {
     pub fn new() -> Self {

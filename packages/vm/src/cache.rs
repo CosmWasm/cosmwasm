@@ -608,7 +608,7 @@ mod tests {
     use super::*;
     use crate::calls::{call_execute, call_instantiate};
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, Empty};
+    use cosmwasm_std::coins;
     use std::borrow::Cow;
     use std::fs::{create_dir_all, remove_dir_all};
     use tempfile::TempDir;
