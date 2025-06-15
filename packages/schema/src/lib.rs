@@ -97,6 +97,3 @@ pub use cosmwasm_schema_derive::write_api;
 pub use cw_schema;
 pub use schemars;
 pub use serde;
-
-#[doc(hidden)]
-pub use self::idl::JsonCwApi;
