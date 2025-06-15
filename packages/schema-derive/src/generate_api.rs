@@ -325,7 +325,7 @@ mod tests {
                     query: Some(::my_crate::cw_schema::schema_for!(QueryMsg)),
                     migrate: Some(::my_crate::cw_schema::schema_for!(MigrateMsg)),
                     sudo: Some(::my_crate::cw_schema::schema_for!(SudoMsg)),
-                    responses: Some(<QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas().unwrap()),
+                    responses: Some(<QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas()),
                 }
             }
         );
@@ -422,7 +422,7 @@ mod tests {
                     query: Some(::cosmwasm_schema::schema_for!(QueryMsg)),
                     migrate: Some(::cosmwasm_schema::schema_for!(MigrateMsg)),
                     sudo: Some(::cosmwasm_schema::schema_for!(SudoMsg)),
-                    responses: Some(<QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas().unwrap()),
+                    responses: Some(<QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas()),
                 }
             }
         );
