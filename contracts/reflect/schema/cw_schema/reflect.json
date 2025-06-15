@@ -41,7 +41,7 @@
             "type": "named",
             "properties": {
               "msgs": {
-                "value": 31
+                "value": 32
               }
             }
           }
@@ -625,7 +625,7 @@
         "properties": {
           "gas_limit": {
             "description": "Gas limit measured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).\n\nSetting this to `None` means unlimited. Then the submessage execution can consume all gas of the\ncurrent execution context.",
-            "value": 29
+            "value": 30
           },
           "id": {
             "description": "An arbitrary ID chosen by the contract.\nThis is typically used to match `Reply`s in the `reply` entry point to the submessage.",
@@ -636,12 +636,17 @@
           },
           "payload": {
             "description": "Some arbitrary data that the contract can set in an application specific way.\nThis is just passed into the `reply` entry point and is not stored to state.\nAny encoding can be used. If `id` is used to identify a particular action,\nthe encoding can also be different for each of those actions since you can match `id`\nfirst and then start processing the `payload`.\n\nThe environment restricts the length of this field in order to avoid abuse. The limit\nis environment specific and can change over time. The initial default is 128 KiB.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field will be ignored.",
-            "value": 8
+            "value": 29
           },
           "reply_on": {
-            "value": 30
+            "value": 31
           }
         }
+      },
+      {
+        "name": "core::option::Option<cosmwasm_std::binary::Binary>",
+        "type": "optional",
+        "inner": 8
       },
       {
         "name": "core::option::Option<u64>",
@@ -1189,7 +1194,7 @@
           "properties": {
             "gas_used": {
               "description": "The amount of gas used by the submessage,\nmeasured in [Cosmos SDK gas](https://github.com/CosmWasm/cosmwasm/blob/main/docs/GAS.md).\n\nThis only contains a useful value on chains running CosmWasm 2.0 or higher.\nOn older chains, this field is always 0.",
-              "value": 1
+              "value": 4
             },
             "id": {
               "description": "The ID that the contract set when emitting the `SubMsg`.\nUse this to identify which submessage triggered the `reply`.",
@@ -1197,10 +1202,10 @@
             },
             "payload": {
               "description": "Some arbitrary data that the contract set when emitting the `SubMsg`.\nThis is just passed into the `reply` entry point and is not stored to state.\n\nUnset/nil/null cannot be differentiated from empty data.\n\nOn chains running CosmWasm 1.x this field is never filled.",
-              "value": 2
+              "value": 3
             },
             "result": {
-              "value": 3
+              "value": 5
             }
           }
         },
@@ -1216,6 +1221,16 @@
           "type": "binary"
         },
         {
+          "name": "core::option::Option<cosmwasm_std::binary::Binary>",
+          "type": "optional",
+          "inner": 2
+        },
+        {
+          "name": "core::option::Option<u64>",
+          "type": "optional",
+          "inner": 1
+        },
+        {
           "name": "cosmwasm_std_results_submessages_SubMsgResult",
           "description": "This is the result type that is returned from a sub message execution.\n\nWe use a custom type here instead of Rust's Result because we want to be able to\ndefine the serialization, which is a public interface. Every language that compiles\nto Wasm and runs in the ComsWasm VM needs to create the same JSON representation.\n\nUntil version 1.0.0-beta5, `ContractResult<SubMsgResponse>` was used instead\nof this type. Once serialized, the two types are the same. However, in the Rust type\nsystem we want different types for clarity and documentation reasons.\n\n# Examples\n\nSuccess:\n\n```\n# use cosmwasm_std::{to_json_string, Binary, Event, SubMsgResponse, SubMsgResult};\n#[allow(deprecated)]\nlet response = SubMsgResponse {\ndata: Some(Binary::from_base64(\"MTIzCg==\").unwrap()),\nevents: vec![Event::new(\"wasm\").add_attribute(\"foo\", \"bar\")],\nmsg_responses: vec![],\n};\nlet result: SubMsgResult = SubMsgResult::Ok(response);\nassert_eq!(\nto_json_string(&result).unwrap(),\nr#\"{\"ok\":{\"events\":[{\"type\":\"wasm\",\"attributes\":[{\"key\":\"foo\",\"value\":\"bar\"}]}],\"data\":\"MTIzCg==\",\"msg_responses\":[]}}\"#,\n);\n```\n\nFailure:\n\n```\n# use cosmwasm_std::{to_json_string, SubMsgResult, Response};\nlet error_msg = String::from(\"Something went wrong\");\nlet result = SubMsgResult::Err(error_msg);\nassert_eq!(to_json_string(&result).unwrap(), r#\"{\"error\":\"Something went wrong\"}\"#);\n```",
           "type": "enum",
@@ -1224,13 +1239,13 @@
               "description": "An error type that every custom error created by contract developers can be converted to.\nThis could potentially have more structure, but String is the easiest.",
               "type": "tuple",
               "items": [
-                6
+                8
               ]
             },
             "ok": {
               "type": "tuple",
               "items": [
-                4
+                6
               ]
             }
           }
@@ -1241,15 +1256,15 @@
           "type": "struct",
           "properties": {
             "data": {
-              "value": 10
+              "value": 3
             },
             "events": {
               "description": "The Cosmos SDK events emitted by the submessage.\n\nThis is only filled if the submessage was itself a [`crate::WasmMsg`].\nThe reason for this is that events are [not part of consensus] and therefore not guaranteed to be deterministic,\nso the VM only returns events of wasm messages, which we know are deterministic.\n\n[not part of consensus]: https://github.com/tendermint/tendermint/blob/eed27addecb339cfaeba8fda774e6ab37cdb3774/spec/abci/abci.md#events",
-              "value": 9
+              "value": 11
             },
             "msg_responses": {
               "description": "The responses from the messages emitted by the submessage.\nIn most cases, this is equivalent to the Cosmos SDK's [MsgResponses], which usually contains a [single message].\nHowever, wasmd allows chains to translate a single contract message into multiple SDK messages.\nIn that case all the MsgResponses from each are concatenated into this flattened `Vec`.\n\n[MsgResponses]: https://github.com/cosmos/cosmos-sdk/blob/316750cc8cd8b3296fa233f4da2e39cbcdc34517/proto/cosmos/base/abci/v1beta1/abci.proto#L106-L109\n[single message]: https://github.com/cosmos/cosmos-sdk/blob/v0.50.4/baseapp/baseapp.go#L1020-L1023",
-              "value": 12
+              "value": 14
             }
           }
         },
@@ -1260,11 +1275,11 @@
           "properties": {
             "attributes": {
               "description": "The attributes to be included in the event.\n\nYou can learn more about these from [*Cosmos SDK* docs].\n\n[*Cosmos SDK* docs]: https://docs.cosmos.network/main/learn/advanced/events",
-              "value": 8
+              "value": 10
             },
             "type": {
               "description": "The event type. This is renamed to \"ty\" because \"type\" is reserved in Rust. This sucks, we know.",
-              "value": 6
+              "value": 8
             }
           }
         },
@@ -1278,34 +1293,29 @@
           "type": "struct",
           "properties": {
             "key": {
-              "value": 6
+              "value": 8
             },
             "value": {
-              "value": 6
+              "value": 8
             }
           }
         },
         {
           "name": "alloc::vec::Vec<cosmwasm_std::results::events::Attribute>",
           "type": "array",
-          "items": 7
+          "items": 9
         },
         {
           "name": "alloc::vec::Vec<cosmwasm_std::results::events::Event>",
           "type": "array",
-          "items": 5
-        },
-        {
-          "name": "core::option::Option<cosmwasm_std::binary::Binary>",
-          "type": "optional",
-          "inner": 2
+          "items": 7
         },
         {
           "name": "cosmwasm_std_results_submessages_MsgResponse",
           "type": "struct",
           "properties": {
             "type_url": {
-              "value": 6
+              "value": 8
             },
             "value": {
               "value": 2
@@ -1315,7 +1325,12 @@
         {
           "name": "alloc::vec::Vec<cosmwasm_std::results::submessages::MsgResponse>",
           "type": "array",
-          "items": 11
+          "items": 12
+        },
+        {
+          "name": "core::option::Option<alloc::vec::Vec<cosmwasm_std::results::submessages::MsgResponse>>",
+          "type": "optional",
+          "inner": 13
         }
       ]
     }

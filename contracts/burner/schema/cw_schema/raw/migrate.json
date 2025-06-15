@@ -8,7 +8,7 @@
       "properties": {
         "delete": {
           "description": "Optional amount of items to delete in this call.\nIf it is not provided, nothing will be deleted.\nYou can delete further items in a subsequent execute call.",
-          "value": 3
+          "value": 4
         },
         "denoms": {
           "description": "The denoms of the final payout. Balances of tokens not listed here\nwill remain in the account untouched.",
@@ -34,6 +34,11 @@
       "type": "integer",
       "precision": 32,
       "signed": false
+    },
+    {
+      "name": "core::option::Option<u32>",
+      "type": "optional",
+      "inner": 3
     }
   ]
 }

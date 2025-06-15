@@ -11,7 +11,7 @@
           "value": 14
         },
         "ibc_destination_callbacks": {
-          "value": 23
+          "value": 24
         },
         "ibc_timeout_callbacks": {
           "value": 16
@@ -177,7 +177,7 @@
         },
         "transfer": {
           "description": "When the underlying packet is a successful transfer message,\nthis field contains information about the transfer. Otherwise it is empty.\n\nThis is always empty on chains using CosmWasm < 3.0",
-          "value": 22
+          "value": 23
         }
       }
     },
@@ -227,6 +227,11 @@
       "name": "core::option::Option<cosmwasm_std::ibc::callbacks::IbcTransferCallback>",
       "type": "optional",
       "inner": 18
+    },
+    {
+      "name": "core::option::Option<core::option::Option<cosmwasm_std::ibc::callbacks::IbcTransferCallback>>",
+      "type": "optional",
+      "inner": 22
     },
     {
       "name": "alloc::vec::Vec<cosmwasm_std::ibc::callbacks::IbcDestinationCallbackMsg>",
