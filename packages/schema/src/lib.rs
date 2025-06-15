@@ -7,7 +7,7 @@ mod schema_for;
 
 pub use export::{export_schema, export_schema_with_title};
 pub use idl::{Api, CwApi, IDL_VERSION};
-pub use query_response::{combine_subqueries, IntegrityError, QueryResponses};
+pub use query_response::{combine_subqueries, QueryResponses};
 pub use remove::remove_schemas;
 
 // Re-exports

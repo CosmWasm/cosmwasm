@@ -1,7 +1,6 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use schemars::{schema::RootSchema, JsonSchema};
-use thiserror::Error;
 
 pub use cosmwasm_schema_derive::QueryResponses;
 
@@ -65,21 +64,9 @@ pub use cosmwasm_schema_derive::QueryResponses;
 /// # }
 /// ```
 pub trait QueryResponses: JsonSchema {
-    fn response_schemas() -> Result<BTreeMap<String, RootSchema>, IntegrityError> {
-        let response_schemas = Self::response_schemas_impl();
+    fn response_schemas() -> BTreeMap<String, RootSchema>;
 
-        Ok(response_schemas)
-    }
-
-    fn response_schemas_impl() -> BTreeMap<String, RootSchema>;
-
-    fn response_schemas_cw() -> Result<BTreeMap<String, cw_schema::Schema>, IntegrityError> {
-        let response_schemas = Self::response_schemas_cw_impl();
-
-        Ok(response_schemas)
-    }
-
-    fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema>;
+    fn response_schemas_cw() -> BTreeMap<String, cw_schema::Schema>;
 }
 
 /// Combines multiple response schemas into one. Panics if there are name collisions.
@@ -96,21 +83,6 @@ pub fn combine_subqueries<const N: usize, T, S>(
         )
     }
     map
-}
-
-#[derive(Debug, Error, PartialEq, Eq)]
-pub enum IntegrityError {
-    #[error("the structure of the QueryMsg schema was unexpected")]
-    InvalidQueryMsgSchema,
-    #[error("external reference in schema found, but they are not supported")]
-    ExternalReference { reference: String },
-    #[error(
-        "inconsistent queries - QueryMsg schema has {query_msg:?}, but query responses have {responses:?}"
-    )]
-    InconsistentQueries {
-        query_msg: BTreeSet<String>,
-        responses: BTreeSet<String>,
-    },
 }
 
 #[cfg(test)]
@@ -132,7 +104,7 @@ mod tests {
     }
 
     impl QueryResponses for GoodMsg {
-        fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
+        fn response_schemas() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([
                 ("balance_for".to_string(), schema_for!(u128)),
                 ("account_id_for".to_string(), schema_for!(u128)),
@@ -142,7 +114,7 @@ mod tests {
             ])
         }
 
-        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+        fn response_schemas_cw() -> BTreeMap<String, cw_schema::Schema> {
             BTreeMap::from([
                 ("balance_for".to_string(), schema_of::<u128>()),
                 ("account_id_for".to_string(), schema_of::<u128>()),
@@ -155,7 +127,7 @@ mod tests {
 
     #[test]
     fn good_msg_works() {
-        let response_schemas = GoodMsg::response_schemas().unwrap();
+        let response_schemas = GoodMsg::response_schemas();
         assert_eq!(
             response_schemas,
             BTreeMap::from([
@@ -174,18 +146,18 @@ mod tests {
     pub enum EmptyMsg {}
 
     impl QueryResponses for EmptyMsg {
-        fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
+        fn response_schemas() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([])
         }
 
-        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+        fn response_schemas_cw() -> BTreeMap<String, cw_schema::Schema> {
             BTreeMap::from([])
         }
     }
 
     #[test]
     fn empty_msg_works() {
-        let response_schemas = EmptyMsg::response_schemas().unwrap();
+        let response_schemas = EmptyMsg::response_schemas();
         assert_eq!(response_schemas, BTreeMap::from([]));
     }
 
@@ -197,11 +169,11 @@ mod tests {
     }
 
     impl QueryResponses for BadMsg {
-        fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
+        fn response_schemas() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([("balance_for".to_string(), schema_for!(u128))])
         }
 
-        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+        fn response_schemas_cw() -> BTreeMap<String, cw_schema::Schema> {
             BTreeMap::from([("balance_for".to_string(), schema_of::<u128>())])
         }
     }
@@ -223,7 +195,7 @@ mod tests {
     }
 
     impl QueryResponses for UntaggedMsg {
-        fn response_schemas_impl() -> BTreeMap<String, RootSchema> {
+        fn response_schemas() -> BTreeMap<String, RootSchema> {
             BTreeMap::from([
                 ("balance_for".to_string(), schema_for!(u128)),
                 ("account_id_for".to_string(), schema_for!(u128)),
@@ -234,7 +206,7 @@ mod tests {
             ])
         }
 
-        fn response_schemas_cw_impl() -> BTreeMap<String, cw_schema::Schema> {
+        fn response_schemas_cw() -> BTreeMap<String, cw_schema::Schema> {
             BTreeMap::from([
                 ("balance_for".to_string(), schema_of::<u128>()),
                 ("account_id_for".to_string(), schema_of::<u128>()),
@@ -248,7 +220,7 @@ mod tests {
 
     #[test]
     fn untagged_msg_works() {
-        let response_schemas = UntaggedMsg::response_schemas().unwrap();
+        let response_schemas = UntaggedMsg::response_schemas();
         assert_eq!(
             response_schemas,
             BTreeMap::from([

@@ -39,14 +39,14 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
             #[automatically_derived]
             #[cfg(not(target_arch = "wasm32"))]
             impl #impl_generics #crate_name::QueryResponses for #ident #type_generics #where_clause {
-                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, #crate_name::schemars::schema::RootSchema> {
+                fn response_schemas() -> ::std::collections::BTreeMap<String, #crate_name::schemars::schema::RootSchema> {
                     let subqueries = [
                         #( #subquery_calls, )*
                     ];
                     #crate_name::combine_subqueries::<#subquery_len, #ident #type_generics, _>(subqueries)
                 }
 
-                fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, #crate_name::cw_schema::Schema> {
+                fn response_schemas_cw() -> ::std::collections::BTreeMap<String, #crate_name::cw_schema::Schema> {
                     let subqueries = [
                         #( #subquery_calls_cw, )*
                     ];
@@ -81,13 +81,13 @@ pub fn query_responses_derive_impl(input: ItemEnum) -> syn::Result<ItemImpl> {
             #[automatically_derived]
             #[cfg(not(target_arch = "wasm32"))]
             impl #impl_generics #crate_name::QueryResponses for #ident #type_generics #where_clause {
-                fn response_schemas_impl() -> ::std::collections::BTreeMap<String, #crate_name::schemars::schema::RootSchema> {
+                fn response_schemas() -> ::std::collections::BTreeMap<String, #crate_name::schemars::schema::RootSchema> {
                     ::std::collections::BTreeMap::from([
                         #( #mappings, )*
                     ])
                 }
 
-                fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, #crate_name::cw_schema::Schema> {
+                fn response_schemas_cw() -> ::std::collections::BTreeMap<String, #crate_name::cw_schema::Schema> {
                     ::std::collections::BTreeMap::from([
                         #( #cw_mappings, )*
                     ])
@@ -167,10 +167,10 @@ fn parse_subquery(ctx: &Context, v: &Variant, schema_backend: SchemaBackend) -> 
 
     let return_val = match schema_backend {
         SchemaBackend::CwSchema => {
-            parse_quote!(<#submsg as #crate_name::QueryResponses>::response_schemas_cw_impl())
+            parse_quote!(<#submsg as #crate_name::QueryResponses>::response_schemas_cw())
         }
         SchemaBackend::JsonSchema => {
-            parse_quote!(<#submsg as #crate_name::QueryResponses>::response_schemas_impl())
+            parse_quote!(<#submsg as #crate_name::QueryResponses>::response_schemas())
         }
     };
 
@@ -231,14 +231,14 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl ::my_crate::cw_schema::QueryResponses for QueryMsg {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("supply".to_string(), ::my_crate::cw_schema::schema_for!(some_crate::AnotherType)),
                             ("balance".to_string(), ::my_crate::cw_schema::schema_for!(SomeType)),
                         ])
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::cw_schema::Schema> {
                         ::std::collections::BTreeMap::from([
                             ("supply".to_string(), ::my_crate::cw_schema::cw_schema::schema_of::<some_crate::AnotherType>()),
                             ("balance".to_string(), ::my_crate::cw_schema::cw_schema::schema_of::<SomeType>()),
@@ -268,20 +268,20 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl ::my_crate::cw_schema::QueryResponses for ContractQueryMsg {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::schemars::schema::RootSchema> {
                         let subqueries = [
-                            <QueryMsg1 as ::my_crate::cw_schema::QueryResponses>::response_schemas_impl(),
-                            <whitelist::QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_impl(),
-                            <QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_impl(),
+                            <QueryMsg1 as ::my_crate::cw_schema::QueryResponses>::response_schemas(),
+                            <whitelist::QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas(),
+                            <QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas(),
                         ];
                         ::my_crate::cw_schema::combine_subqueries::<3usize, ContractQueryMsg, _>(subqueries)
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::my_crate::cw_schema::cw_schema::Schema> {
                         let subqueries = [
-                            <QueryMsg1 as ::my_crate::cw_schema::QueryResponses>::response_schemas_cw_impl(),
-                            <whitelist::QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_cw_impl(),
-                            <QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_cw_impl(),
+                            <QueryMsg1 as ::my_crate::cw_schema::QueryResponses>::response_schemas_cw(),
+                            <whitelist::QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_cw(),
+                            <QueryMsg as ::my_crate::cw_schema::QueryResponses>::response_schemas_cw(),
                         ];
                         ::my_crate::cw_schema::combine_subqueries::<3usize, ContractQueryMsg, _>(subqueries)
                     }
@@ -309,14 +309,14 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl ::cosmwasm_schema::QueryResponses for QueryMsg {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("supply".to_string(), ::cosmwasm_schema::schema_for!(some_crate::AnotherType)),
                             ("balance".to_string(), ::cosmwasm_schema::schema_for!(SomeType)),
                         ])
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         ::std::collections::BTreeMap::from([
                             ("supply".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<some_crate::AnotherType>()),
                             ("balance".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<SomeType>()),
@@ -341,11 +341,11 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl ::cosmwasm_schema::QueryResponses for QueryMsg {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([])
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         ::std::collections::BTreeMap::from([])
                     }
                 }
@@ -398,14 +398,14 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl<T: ::cosmwasm_schema::schemars::JsonSchema + ::cosmwasm_schema::cw_schema::Schemaifier> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
                             ("bar".to_string(), ::cosmwasm_schema::schema_for!(u32)),
                         ])
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<bool>()),
                             ("bar".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<u32>()),
@@ -420,14 +420,14 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl<T: std::fmt::Debug + SomeTrait + ::cosmwasm_schema::schemars::JsonSchema + ::cosmwasm_schema::cw_schema::Schemaifier> ::cosmwasm_schema::QueryResponses for QueryMsg<T> {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
                             ("bar".to_string(), ::cosmwasm_schema::schema_for!(u32)),
                         ])
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<bool>()),
                             ("bar".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<u32>()),
@@ -445,14 +445,14 @@ mod tests {
                 impl<T: ::cosmwasm_schema::schemars::JsonSchema + ::cosmwasm_schema::cw_schema::Schemaifier> ::cosmwasm_schema::QueryResponses for QueryMsg<T>
                     where T: std::fmt::Debug + SomeTrait,
                 {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::schema_for!(bool)),
                             ("bar".to_string(), ::cosmwasm_schema::schema_for!(u32)),
                         ])
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         ::std::collections::BTreeMap::from([
                             ("foo".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<bool>()),
                             ("bar".to_string(), ::cosmwasm_schema::cw_schema::schema_of::<u32>()),
@@ -556,20 +556,20 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl ::cosmwasm_schema::QueryResponses for ContractQueryMsg {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         let subqueries = [
-                            <QueryMsg1 as ::cosmwasm_schema::QueryResponses>::response_schemas_impl(),
-                            <whitelist::QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl(),
-                            <QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_impl(),
+                            <QueryMsg1 as ::cosmwasm_schema::QueryResponses>::response_schemas(),
+                            <whitelist::QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas(),
+                            <QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas(),
                         ];
                         ::cosmwasm_schema::combine_subqueries::<3usize, ContractQueryMsg, _>(subqueries)
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         let subqueries = [
-                            <QueryMsg1 as ::cosmwasm_schema::QueryResponses>::response_schemas_cw_impl(),
-                            <whitelist::QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_cw_impl(),
-                            <QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_cw_impl(),
+                            <QueryMsg1 as ::cosmwasm_schema::QueryResponses>::response_schemas_cw(),
+                            <whitelist::QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_cw(),
+                            <QueryMsg as ::cosmwasm_schema::QueryResponses>::response_schemas_cw(),
                         ];
                         ::cosmwasm_schema::combine_subqueries::<3usize, ContractQueryMsg, _>(subqueries)
                     }
@@ -593,12 +593,12 @@ mod tests {
                 #[automatically_derived]
                 #[cfg(not(target_arch = "wasm32"))]
                 impl ::cosmwasm_schema::QueryResponses for EmptyMsg {
-                    fn response_schemas_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
+                    fn response_schemas() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::schemars::schema::RootSchema> {
                         let subqueries = [];
                         ::cosmwasm_schema::combine_subqueries::<0usize, EmptyMsg, _>(subqueries)
                     }
 
-                    fn response_schemas_cw_impl() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
+                    fn response_schemas_cw() -> ::std::collections::BTreeMap<String, ::cosmwasm_schema::cw_schema::Schema> {
                         let subqueries = [];
                         ::cosmwasm_schema::combine_subqueries::<0usize, EmptyMsg, _>(subqueries)
                     }

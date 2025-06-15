@@ -201,10 +201,10 @@ impl Options {
         option_dispatch!(self.query_ty, |ty| {
             match backend {
                 SchemaBackend::CwSchema => {
-                    quote! { <#ty as #crate_name::QueryResponses>::response_schemas_cw().unwrap() }
+                    quote! { <#ty as #crate_name::QueryResponses>::response_schemas_cw() }
                 }
                 SchemaBackend::JsonSchema => {
-                    quote! { <#ty as #crate_name::QueryResponses>::response_schemas().unwrap() }
+                    quote! { <#ty as #crate_name::QueryResponses>::response_schemas() }
                 }
             }
         })
