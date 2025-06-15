@@ -10,6 +10,15 @@ use std::{
 };
 use syn::{spanned::Spanned, DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
 
+macro_rules! empty_meta {
+    ($meta:expr) => {{
+        let _ = $meta
+            .value()
+            .map(|val| val.parse::<TokenStream>().unwrap())
+            .unwrap_or_else(|_| $meta.input.cursor().token_stream());
+    }};
+}
+
 fn print_warning(
     span: proc_macro2::Span,
     title: impl Display,
@@ -102,31 +111,35 @@ impl SerdeContainerOptions {
             .filter(|attr| attr.path().is_ident("serde"))
         {
             attribute.parse_nested_meta(|meta| {
-                if meta.path.is_ident("rename_all") {
+                if meta.path.is_ident("crate") {
+                    // ignore the serde crate annotation. we don't really care for that.
+                    empty_meta!(meta);
+                } else if meta.path.is_ident("rename_all") {
                     options.rename_all = Some(meta.value()?.parse()?);
                 } else if meta.path.is_ident("untagged") {
                     options.untagged = true;
                 } else {
-                    print_warning(
-                        meta.path.span(),
-                        "unknown serde attribute",
-                        format!(
-                            "unknown attribute \"{}\"",
-                            meta.path
-                                .get_ident()
-                                .map(|ident| ident.to_string())
-                                .unwrap_or_else(|| "[error]".into())
-                        ),
-                    )
-                    .unwrap();
+                    if !muted_warnings {
+                        print_warning(
+                            meta.path.span(),
+                            "unknown serde attribute",
+                            format!(
+                                "unknown attribute \"{}\"",
+                                meta.path
+                                    .get_ident()
+                                    .map(|ident| ident.to_string())
+                                    .unwrap_or_else(|| "[error]".into())
+                            ),
+                        )
+                        .unwrap();
+                    }
 
                     // TODO: support other serde attributes
                     //
+                    // See: <https://github.com/CosmWasm/cosmwasm/issues/2499>
+                    //
                     // For now we simply clear the buffer to avoid errors
-                    let _ = meta
-                        .value()
-                        .map(|val| val.parse::<TokenStream>().unwrap())
-                        .unwrap_or_else(|_| meta.input.cursor().token_stream());
+                    empty_meta!(meta);
                 }
 
                 if (meta.path.is_ident("untagged") || meta.path.is_ident("tag")) && !muted_warnings
@@ -214,7 +227,7 @@ impl SerdeFieldOptions {
                     options.default = true;
                     // just ignore the rest. it's not relevant.
                     // but without this code, we'd sometimes hit compile errors.
-                    let _ = meta.value().and_then(|val| val.parse::<syn::Expr>());
+                    empty_meta!(meta);
                 } else if meta.path.is_ident("skip_serializing_if") {
                     options.skip_serializing_if = Some(meta.value()?.parse()?);
                 } else {
@@ -235,11 +248,10 @@ impl SerdeFieldOptions {
 
                     // TODO: support other serde attributes
                     //
+                    // See: <https://github.com/CosmWasm/cosmwasm/issues/2499>
+                    //
                     // For now we simply clear the buffer to avoid errors
-                    let _ = meta
-                        .value()
-                        .map(|val| val.parse::<TokenStream>().unwrap())
-                        .unwrap_or_else(|_| meta.input.cursor().token_stream());
+                    empty_meta!(meta);
                 }
 
                 Ok(())
