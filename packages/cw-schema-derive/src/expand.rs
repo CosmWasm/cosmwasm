@@ -6,17 +6,15 @@ use std::{
     borrow::Cow,
     env,
     fmt::Display,
-    io::{self, Write as _},
+    io::{self, Write},
 };
-use syn::{DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
+use syn::{spanned::Spanned, DataEnum, DataStruct, DataUnion, DeriveInput, Lit};
 
-const DISABLE_WARNINGS_VAR: &str = "SHUT_UP_CW_SCHEMA_DERIVE";
-
-fn print_warning(title: impl Display, content: impl Display) -> io::Result<()> {
-    if let Ok("1") = env::var(DISABLE_WARNINGS_VAR).as_deref() {
-        return Ok(());
-    }
-
+fn print_warning(
+    span: proc_macro2::Span,
+    title: impl Display,
+    content: impl Display,
+) -> io::Result<()> {
     let mut sink = io::stderr();
 
     let bold_yellow = Style::new().bold().yellow();
@@ -34,14 +32,17 @@ fn print_warning(title: impl Display, content: impl Display) -> io::Result<()> {
     write!(sink, "{}", "  | ".style(blue))?;
     writeln!(sink, "{content}")?;
 
-    writeln!(sink, "{}", "  | ".style(blue))?;
+    let span = span.start();
+    write!(sink, "{}", "  | ".style(blue))?;
+    writeln!(sink, "Location: {}:{}", span.line, span.column)?;
+
     writeln!(sink, "{}", "  | ".style(blue))?;
 
     write!(sink, "{}", "  = ".style(blue))?;
     write!(sink, "{}", "note: ".style(bold))?;
     writeln!(
         sink,
-        "set `{DISABLE_WARNINGS_VAR}=1` to silence this warning"
+        "annotate the container with #[schemaifier(mute_warnings)] to disable these warnings"
     )?;
 
     Ok(())
@@ -90,7 +91,7 @@ struct SerdeContainerOptions {
 }
 
 impl SerdeContainerOptions {
-    fn parse(attributes: &[syn::Attribute]) -> syn::Result<Self> {
+    fn parse(attributes: &[syn::Attribute], muted_warnings: bool) -> syn::Result<Self> {
         let mut options = SerdeContainerOptions {
             rename_all: None,
             untagged: false,
@@ -106,7 +107,8 @@ impl SerdeContainerOptions {
                 } else if meta.path.is_ident("untagged") {
                     options.untagged = true;
                 } else {
-                    /*print_warning(
+                    print_warning(
+                        meta.path.span(),
                         "unknown serde attribute",
                         format!(
                             "unknown attribute \"{}\"",
@@ -116,7 +118,7 @@ impl SerdeContainerOptions {
                                 .unwrap_or_else(|| "[error]".into())
                         ),
                     )
-                    .unwrap();*/
+                    .unwrap();
 
                     // TODO: support other serde attributes
                     //
@@ -127,8 +129,10 @@ impl SerdeContainerOptions {
                         .unwrap_or_else(|_| meta.input.cursor().token_stream());
                 }
 
-                if meta.path.is_ident("untagged") || meta.path.is_ident("tag") {
+                if (meta.path.is_ident("untagged") || meta.path.is_ident("tag")) && !muted_warnings
+                {
                     print_warning(
+                        meta.path.span(),
                         "unsupported tag type",
                         meta.error("unsupported tag type").to_string(),
                     )
@@ -147,6 +151,7 @@ struct ContainerOptions {
     r#as: Option<syn::Ident>,
     r#type: Option<syn::Expr>,
     crate_path: syn::Path,
+    muted_warnings: bool,
 }
 
 impl ContainerOptions {
@@ -155,6 +160,7 @@ impl ContainerOptions {
             r#as: None,
             r#type: None,
             crate_path: syn::parse_str("::cw_schema")?,
+            muted_warnings: false,
         };
 
         for attribute in attributes
@@ -169,6 +175,8 @@ impl ContainerOptions {
                     options.r#as = Some(meta.value()?.parse()?);
                 } else if meta.path.is_ident("type") {
                     options.r#type = Some(meta.value()?.parse()?);
+                } else if meta.path.is_ident("mute_warnings") {
+                    options.muted_warnings = true;
                 } else {
                     bail!(meta.path, "unknown attribute");
                 }
@@ -182,12 +190,18 @@ impl ContainerOptions {
 }
 
 struct SerdeFieldOptions {
+    default: bool,
     rename: Option<syn::LitStr>,
+    skip_serializing_if: Option<syn::Expr>,
 }
 
 impl SerdeFieldOptions {
-    fn parse(attributes: &[syn::Attribute]) -> syn::Result<Self> {
-        let mut options = SerdeFieldOptions { rename: None };
+    fn parse(attributes: &[syn::Attribute], muted_warnings: bool) -> syn::Result<Self> {
+        let mut options = SerdeFieldOptions {
+            default: false,
+            rename: None,
+            skip_serializing_if: None,
+        };
 
         for attribute in attributes
             .iter()
@@ -196,18 +210,28 @@ impl SerdeFieldOptions {
             attribute.parse_nested_meta(|meta| {
                 if meta.path.is_ident("rename") {
                     options.rename = Some(meta.value()?.parse()?);
+                } else if meta.path.is_ident("default") {
+                    options.default = true;
+                    // just ignore the rest. it's not relevant.
+                    // but without this code, we'd sometimes hit compile errors.
+                    let _ = meta.value().and_then(|val| val.parse::<syn::Expr>());
+                } else if meta.path.is_ident("skip_serializing_if") {
+                    options.skip_serializing_if = Some(meta.value()?.parse()?);
                 } else {
-                    print_warning(
-                        "unknown serde attribute",
-                        format!(
-                            "unknown attribute \"{}\"",
-                            meta.path
-                                .get_ident()
-                                .map(|ident| ident.to_string())
-                                .unwrap_or_else(|| "[error]".into())
-                        ),
-                    )
-                    .unwrap();
+                    if !muted_warnings {
+                        print_warning(
+                            meta.path.span(),
+                            "unknown serde attribute",
+                            format!(
+                                "unknown attribute \"{}\"",
+                                meta.path
+                                    .get_ident()
+                                    .map(|ident| ident.to_string())
+                                    .unwrap_or_else(|| "[error]".into())
+                            ),
+                        )
+                        .unwrap();
+                    }
 
                     // TODO: support other serde attributes
                     //
@@ -287,19 +311,25 @@ fn collect_struct_fields<'a, C>(
     converter: &'a C,
     crate_path: &'a syn::Path,
     fields: &'a syn::FieldsNamed,
+    muted_warnings: bool,
 ) -> impl Iterator<Item = syn::Result<TokenStream>> + 'a
 where
     C: Fn(&syn::Ident) -> syn::Ident,
 {
     fields.named.iter().map(move |field| {
-        let field_options = SerdeFieldOptions::parse(&field.attrs)?;
+        let field_options = SerdeFieldOptions::parse(&field.attrs, muted_warnings)?;
 
         let name = field_options
             .rename
             .map(|lit_str| format_ident!("{}", lit_str.value()))
             .unwrap_or_else(|| converter(field.ident.as_ref().unwrap()));
         let description = normalize_option(extract_documentation(&field.attrs)?);
-        let field_ty = &field.ty;
+        let field_ty = if field_options.default || field_options.skip_serializing_if.is_some() {
+            let ty = &field.ty;
+            syn::parse_quote!(::core::option::Option<#ty>)
+        } else {
+            field.ty.clone()
+        };
 
         let expanded = quote! {
             (
@@ -325,8 +355,13 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
     for variant in input.variants.iter() {
         let value = match variant.fields {
             syn::Fields::Named(ref fields) => {
-                let items = collect_struct_fields(&converter, crate_path, fields)
-                    .collect::<syn::Result<Vec<_>>>()?;
+                let items = collect_struct_fields(
+                    &converter,
+                    crate_path,
+                    fields,
+                    meta.options.muted_warnings,
+                )
+                .collect::<syn::Result<Vec<_>>>()?;
 
                 quote! {
                     #crate_path::EnumValue::Named {
@@ -350,7 +385,7 @@ fn expand_enum(mut meta: ContainerMeta, input: DataEnum) -> syn::Result<TokenStr
             syn::Fields::Unit => quote! { #crate_path::EnumValue::Unit },
         };
 
-        let field_options = SerdeFieldOptions::parse(&variant.attrs)?;
+        let field_options = SerdeFieldOptions::parse(&variant.attrs, meta.options.muted_warnings)?;
 
         let variant_name = field_options
             .rename
@@ -432,8 +467,13 @@ fn expand_struct(mut meta: ContainerMeta, input: DataStruct) -> syn::Result<Toke
         } else {
             let node_ty = match input.fields {
                 syn::Fields::Named(ref named) => {
-                    let items = collect_struct_fields(&converter, crate_path, named)
-                        .collect::<syn::Result<Vec<_>>>()?;
+                    let items = collect_struct_fields(
+                        &converter,
+                        crate_path,
+                        named,
+                        meta.options.muted_warnings,
+                    )
+                    .collect::<syn::Result<Vec<_>>>()?;
 
                     quote! {
                         #crate_path::StructType::Named {
@@ -508,7 +548,7 @@ fn expand_union(_meta: ContainerMeta, input: DataUnion) -> syn::Result<TokenStre
 
 pub fn expand(input: DeriveInput) -> syn::Result<TokenStream> {
     let options = ContainerOptions::parse(&input.attrs)?;
-    let serde_options = SerdeContainerOptions::parse(&input.attrs)?;
+    let serde_options = SerdeContainerOptions::parse(&input.attrs, options.muted_warnings)?;
     let description = extract_documentation(&input.attrs)?;
 
     let meta = ContainerMeta {
