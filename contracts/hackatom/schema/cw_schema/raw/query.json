@@ -1,0 +1,40 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "hackatom_msg_QueryMsg",
+      "type": "enum",
+      "cases": {
+        "get_int": {
+          "description": "GetInt returns a hardcoded u32 value",
+          "type": "named",
+          "properties": {}
+        },
+        "recurse": {
+          "description": "Recurse will execute a query into itself up to depth-times and return\nEach step of the recursion may perform some extra work to test gas metering\n(`work` rounds of sha256 on contract).\nNow that we have Env, we can auto-calculate the address to recurse into",
+          "type": "named",
+          "properties": {
+            "depth": {
+              "value": 1
+            },
+            "work": {
+              "value": 1
+            }
+          }
+        },
+        "verifier": {
+          "description": "returns a human-readable representation of the verifier\nuse to ensure query path works in integration tests",
+          "type": "named",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "name": "u32",
+      "type": "integer",
+      "precision": 32,
+      "signed": false
+    }
+  ]
+}

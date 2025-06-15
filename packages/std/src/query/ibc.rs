@@ -10,7 +10,9 @@ use crate::utils::impl_hidden_constructor;
 /// IBC connection.
 /// Most of these will return errors if the contract is not "ibc enabled".
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcQuery {
     /// Gets the Port ID the current contract is bound to.
@@ -32,7 +34,9 @@ pub enum IbcQuery {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[non_exhaustive]
 pub struct PortIdResponse {
     pub port_id: String,

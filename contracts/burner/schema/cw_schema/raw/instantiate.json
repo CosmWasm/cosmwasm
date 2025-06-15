@@ -1,0 +1,12 @@
+{
+  "type": "v1",
+  "root": 0,
+  "definitions": [
+    {
+      "name": "burner_msg_InstantiateMsg",
+      "description": "A placeholder where we don't take any input",
+      "type": "struct",
+      "properties": {}
+    }
+  ]
+}

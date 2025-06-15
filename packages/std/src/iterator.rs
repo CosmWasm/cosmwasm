@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 /// allows contracts to reuse the type when deserializing database records.
 pub type Record<V = Vec<u8>> = (Vec<u8>, V);
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
 pub enum Order {

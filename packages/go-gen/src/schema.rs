@@ -1,6 +1,6 @@
 use anyhow::{bail, ensure, Context, Result};
 
-use inflector::Inflector;
+use heck::ToPascalCase;
 use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
 
 use crate::{

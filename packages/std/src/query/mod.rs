@@ -22,7 +22,9 @@ pub use staking::*;
 pub use wasm::*;
 
 #[non_exhaustive]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest<C = Empty> {
     Bank(BankQuery),
@@ -65,7 +67,9 @@ pub enum QueryRequest<C = Empty> {
 /// To find the path, as well as the request and response types,
 /// you can query the chain's gRPC endpoint using a tool like
 /// [grpcurl](https://github.com/fullstorydev/grpcurl).
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema, cw_schema::Schemaifier,
+)]
 pub struct GrpcQuery {
     /// The fully qualified endpoint path used for routing.
     /// It follows the format `/service_path/method_name`,
@@ -85,7 +89,7 @@ pub struct GrpcQuery {
 /// # use cosmwasm_std::CustomQuery;
 /// # use schemars::JsonSchema;
 /// # use serde::{Deserialize, Serialize};
-/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, cw_schema::Schemaifier)]
 /// #[serde(rename_all = "snake_case")]
 /// pub enum MyCustomQuery {
 ///     Ping {},

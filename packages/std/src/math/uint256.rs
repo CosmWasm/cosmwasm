@@ -46,7 +46,19 @@ use super::num_consts::NumConsts;
 /// assert_eq!(a, b);
 /// assert_eq!(a, c);
 /// ```
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, schemars::JsonSchema)]
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    schemars::JsonSchema,
+    cw_schema::Schemaifier,
+)]
+#[schemaifier(type = cw_schema::NodeType::Integer { precision: 256, signed: false })]
 pub struct Uint256(#[schemars(with = "String")] pub(crate) U256);
 
 impl_int_serde!(Uint256);

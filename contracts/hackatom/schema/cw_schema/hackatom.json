@@ -1,0 +1,272 @@
+{
+  "contract_name": "hackatom",
+  "contract_version": "0.0.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "hackatom_msg_InstantiateMsg",
+        "type": "struct",
+        "properties": {
+          "beneficiary": {
+            "value": 1
+          },
+          "verifier": {
+            "value": 1
+          }
+        }
+      },
+      {
+        "name": "String",
+        "type": "string"
+      }
+    ]
+  },
+  "execute": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "hackatom_msg_ExecuteMsg",
+        "type": "enum",
+        "cases": {
+          "allocate_large_memory": {
+            "description": "Allocate large amounts of memory without consuming much gas",
+            "type": "named",
+            "properties": {
+              "pages": {
+                "value": 2
+              }
+            }
+          },
+          "cpu_loop": {
+            "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
+            "type": "named",
+            "properties": {}
+          },
+          "memory_loop": {
+            "description": "Infinite loop reading and writing memory",
+            "type": "named",
+            "properties": {}
+          },
+          "message_loop": {
+            "description": "Infinite loop sending message to itself",
+            "type": "named",
+            "properties": {}
+          },
+          "panic": {
+            "description": "Trigger a panic to ensure framework handles gracefully",
+            "type": "named",
+            "properties": {}
+          },
+          "release": {
+            "description": "Releasing all funds of the given denom in the contract to the beneficiary.\nThis is the only \"proper\" action of this demo contract.",
+            "type": "named",
+            "properties": {
+              "denom": {
+                "value": 1
+              }
+            }
+          },
+          "storage_loop": {
+            "description": "Infinite loop making storage calls (to test when their limit hits)",
+            "type": "named",
+            "properties": {}
+          },
+          "user_errors_in_api_calls": {
+            "description": "Starting with CosmWasm 0.10, some API calls return user errors back to the contract.\nThis triggers such user errors, ensuring the transaction does not fail in the backend.",
+            "type": "named",
+            "properties": {}
+          }
+        }
+      },
+      {
+        "name": "String",
+        "type": "string"
+      },
+      {
+        "name": "u32",
+        "type": "integer",
+        "precision": 32,
+        "signed": false
+      }
+    ]
+  },
+  "query": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "hackatom_msg_QueryMsg",
+        "type": "enum",
+        "cases": {
+          "get_int": {
+            "description": "GetInt returns a hardcoded u32 value",
+            "type": "named",
+            "properties": {}
+          },
+          "recurse": {
+            "description": "Recurse will execute a query into itself up to depth-times and return\nEach step of the recursion may perform some extra work to test gas metering\n(`work` rounds of sha256 on contract).\nNow that we have Env, we can auto-calculate the address to recurse into",
+            "type": "named",
+            "properties": {
+              "depth": {
+                "value": 1
+              },
+              "work": {
+                "value": 1
+              }
+            }
+          },
+          "verifier": {
+            "description": "returns a human-readable representation of the verifier\nuse to ensure query path works in integration tests",
+            "type": "named",
+            "properties": {}
+          }
+        }
+      },
+      {
+        "name": "u32",
+        "type": "integer",
+        "precision": 32,
+        "signed": false
+      }
+    ]
+  },
+  "migrate": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "hackatom_msg_MigrateMsg",
+        "description": "MigrateMsg allows a privileged contract administrator to run\na migration on the contract. In this (demo) case it is just migrating\nfrom one hackatom code to the same code, but taking advantage of the\nmigration step to set a new validator.\n\nNote that the contract doesn't enforce permissions here, this is done\nby blockchain logic (in the future by blockchain governance)",
+        "type": "struct",
+        "properties": {
+          "verifier": {
+            "value": 1
+          }
+        }
+      },
+      {
+        "name": "String",
+        "type": "string"
+      }
+    ]
+  },
+  "sudo": {
+    "type": "v1",
+    "root": 0,
+    "definitions": [
+      {
+        "name": "hackatom_msg_SudoMsg",
+        "description": "SudoMsg is only exposed for internal Cosmos SDK modules to call.\nThis is showing how we can expose \"admin\" functionality than can not be called by\nexternal users or contracts, but only trusted (native/Go) code in the blockchain",
+        "type": "enum",
+        "cases": {
+          "steal_funds": {
+            "type": "named",
+            "properties": {
+              "amount": {
+                "value": 4
+              },
+              "recipient": {
+                "value": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "String",
+        "type": "string"
+      },
+      {
+        "name": "cosmwasm_std_coin_Coin",
+        "type": "struct",
+        "properties": {
+          "amount": {
+            "value": 3
+          },
+          "denom": {
+            "value": 1
+          }
+        }
+      },
+      {
+        "name": "cosmwasm_std_math_uint256_Uint256",
+        "description": "An implementation of u256 that is using strings for JSON encoding/decoding,\nsuch that the full u256 range can be used for clients that convert JSON numbers to floats,\nlike JavaScript and jq.\n\n# Examples\n\nUse `new` to create instances out of u128, `from` for other primitive uint types\nor `from_be_bytes` to provide big endian bytes:\n\n```\n# use cosmwasm_std::Uint256;\nlet a = Uint256::new(258u128);\nlet b = Uint256::from(258u16);\nlet c = Uint256::from_be_bytes([\n0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,\n0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,\n0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,\n0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8,\n]);\nassert_eq!(a, b);\nassert_eq!(a, c);\n```",
+        "type": "integer",
+        "precision": 256,
+        "signed": false
+      },
+      {
+        "name": "alloc::vec::Vec<cosmwasm_std::coin::Coin>",
+        "type": "array",
+        "items": 2
+      }
+    ]
+  },
+  "responses": {
+    "get_int": {
+      "type": "v1",
+      "root": 0,
+      "definitions": [
+        {
+          "name": "hackatom_msg_IntResponse",
+          "type": "struct",
+          "properties": {
+            "int": {
+              "value": 1
+            }
+          }
+        },
+        {
+          "name": "u32",
+          "type": "integer",
+          "precision": 32,
+          "signed": false
+        }
+      ]
+    },
+    "recurse": {
+      "type": "v1",
+      "root": 0,
+      "definitions": [
+        {
+          "name": "hackatom_msg_RecurseResponse",
+          "type": "struct",
+          "properties": {
+            "hashed": {
+              "description": "hashed is the result of running sha256 \"work+1\" times on the contract's human address",
+              "value": 1
+            }
+          }
+        },
+        {
+          "name": "cosmwasm_std_binary_Binary",
+          "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization\nwith serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>.\nSee also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
+          "type": "binary"
+        }
+      ]
+    },
+    "verifier": {
+      "type": "v1",
+      "root": 0,
+      "definitions": [
+        {
+          "name": "hackatom_msg_VerifierResponse",
+          "type": "struct",
+          "properties": {
+            "verifier": {
+              "value": 1
+            }
+          }
+        },
+        {
+          "name": "String",
+          "type": "string"
+        }
+      ]
+    }
+  }
+}
