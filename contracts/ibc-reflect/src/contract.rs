@@ -72,7 +72,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
             Ok(Response::new().set_data(encode_ibc_error(err)))
         }
         (INIT_CALLBACK_ID, SubMsgResult::Ok(response)) => handle_init_callback(deps, response),
-        _ => Err(StdError::generic_err("invalid reply id or result")),
+        _ => Err(StdError::msg("invalid reply id or result")),
     }
 }
 
@@ -97,7 +97,7 @@ pub fn handle_init_callback(deps: DepsMut, response: SubMsgResponse) -> StdResul
     // parse contract info from events
     let contract_addr = match parse_contract_from_event(response.events) {
         Some(addr) => deps.api.addr_validate(&addr),
-        None => Err(StdError::generic_err(
+        None => Err(StdError::msg(
             "No _contract_address found in callback events",
         )),
     }?;
@@ -105,11 +105,7 @@ pub fn handle_init_callback(deps: DepsMut, response: SubMsgResponse) -> StdResul
     // store id -> contract_addr if it is empty
     // id comes from: `let chan_id = msg.endpoint.channel_id;` in `ibc_channel_connect`
     match may_load_account(deps.storage, &id)? {
-        Some(_) => {
-            return Err(StdError::generic_err(
-                "Cannot register over an existing channel",
-            ))
-        }
+        Some(_) => return Err(StdError::msg("Cannot register over an existing channel")),
         None => save_account(deps.storage, &id, &contract_addr)?,
     }
 
@@ -156,14 +152,14 @@ pub fn ibc_channel_open(
     let channel = msg.channel();
 
     if channel.order != IbcOrder::Ordered {
-        return Err(StdError::generic_err("Only supports ordered channels"));
+        return Err(StdError::msg("Only supports ordered channels"));
     }
 
     // In ibcv3 we don't check the version string passed in the message
     // and only check the counterparty version.
     if let Some(counter_version) = msg.counterparty_version() {
         if counter_version != IBC_APP_VERSION {
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "Counterparty version must be `{IBC_APP_VERSION}`"
             )));
         }
@@ -320,7 +316,7 @@ fn execute_panic() -> StdResult<IbcReceiveResponse> {
 }
 
 fn execute_error(text: String) -> StdResult<IbcReceiveResponse> {
-    Err(StdError::generic_err(text))
+    Err(StdError::msg(text))
 }
 
 fn execute_return_msgs(msgs: Vec<CosmosMsg>) -> StdResult<IbcReceiveResponse> {

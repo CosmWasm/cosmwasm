@@ -328,7 +328,7 @@ impl Api for ExternalApi {
             // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
             // In this case, the VM will refuse to read the input from the contract.
             // Stop here to allow handling the error in the contract.
-            return Err(StdError::generic_err("input too long for addr_validate"));
+            return Err(StdError::msg("input too long for addr_validate"));
         }
         let source = Region::from_slice(input_bytes);
         let source_ptr = source.as_ptr() as u32;
@@ -337,7 +337,7 @@ impl Api for ExternalApi {
         if result != 0 {
             let error =
                 unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "addr_validate errored: {}",
                 error
             )));
@@ -352,9 +352,7 @@ impl Api for ExternalApi {
             // See MAX_LENGTH_HUMAN_ADDRESS in the VM.
             // In this case, the VM will refuse to read the input from the contract.
             // Stop here to allow handling the error in the contract.
-            return Err(StdError::generic_err(
-                "input too long for addr_canonicalize",
-            ));
+            return Err(StdError::msg("input too long for addr_canonicalize"));
         }
         let send = Region::from_slice(input_bytes);
         let send_ptr = send.as_ptr() as u32;
@@ -364,7 +362,7 @@ impl Api for ExternalApi {
         if result != 0 {
             let error =
                 unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "addr_canonicalize errored: {}",
                 error
             )));
@@ -382,7 +380,7 @@ impl Api for ExternalApi {
         if result != 0 {
             let error =
                 unsafe { consume_string_region_written_by_vm(result as *mut Region<Owned>) };
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "addr_humanize errored: {}",
                 error
             )));

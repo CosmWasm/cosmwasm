@@ -26,7 +26,7 @@ pub fn instantiate(
     // ensure the validator is registered
     let validator = deps.querier.query_validator(msg.validator.clone())?;
     if validator.is_none() {
-        return Err(StdError::generic_err(format!(
+        return Err(StdError::msg(format_args!(
             "{} is not in the current validator set",
             msg.validator
         )));
@@ -115,7 +115,7 @@ fn get_bonded(querier: &QuerierWrapper, contract_addr: impl Into<String>) -> Std
     let denom = bonds[0].amount.denom.as_str();
     bonds.iter().try_fold(Uint256::zero(), |acc, d| {
         if d.amount.denom.as_str() != denom {
-            Err(StdError::generic_err(format!(
+            Err(StdError::msg(format_args!(
                 "different denoms in bonds: '{}' vs '{}'",
                 denom, &d.amount.denom
             )))
@@ -127,7 +127,7 @@ fn get_bonded(querier: &QuerierWrapper, contract_addr: impl Into<String>) -> Std
 
 fn assert_bonds(supply: &Supply, bonded: Uint256) -> StdResult<()> {
     if supply.bonded != bonded {
-        Err(StdError::generic_err(format!(
+        Err(StdError::msg(format_args!(
             "Stored bonded {}, but query bonded: {}",
             supply.bonded, bonded
         )))
@@ -146,7 +146,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
         .funds
         .iter()
         .find(|x| x.denom == invest.bond_denom)
-        .ok_or_else(|| StdError::generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
+        .ok_or_else(|| StdError::msg(format_args!("No {} tokens sent", &invest.bond_denom)))?;
 
     // bonded is the total number of tokens we have delegated from this address
     let bonded = get_bonded(&deps.querier, env.contract.address)?;
@@ -187,7 +187,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let invest: InvestmentInfo = load_item(deps.storage, KEY_INVESTMENT)?;
     // ensure it is big enough to care
     if amount < invest.min_withdrawal {
-        return Err(StdError::generic_err(format!(
+        return Err(StdError::msg(format_args!(
             "Must unbond at least {} {}",
             invest.min_withdrawal, invest.bond_denom
         )));
@@ -255,7 +255,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
         .querier
         .query_balance(env.contract.address, invest.bond_denom)?;
     if balance.amount < invest.min_withdrawal.into() {
-        return Err(StdError::generic_err(
+        return Err(StdError::msg(
             "Insufficient balance in contract to process claim",
         ));
     }
@@ -263,7 +263,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     // check how much to send - min(balance, claims[sender]), and reduce the claim
     let sender_raw = deps.api.addr_canonicalize(info.sender.as_str())?;
     let claim = may_load_map(deps.storage, PREFIX_CLAIMS, &sender_raw)?
-        .ok_or_else(|| StdError::generic_err("no claim for this address"))?;
+        .ok_or_else(|| StdError::msg("no claim for this address"))?;
     let to_send = balance.amount.min(claim);
     save_map(
         deps.storage,
@@ -406,7 +406,7 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
         } else {
             Decimal256::from_ratio(supply.bonded, supply.issued)
                 .try_into()
-                .map_err(|_| StdError::generic_err("nominal value too high"))?
+                .map_err(|_| StdError::msg("nominal value too high"))?
         },
     };
     Ok(res)
@@ -495,12 +495,10 @@ mod tests {
 
         // make sure we can instantiate with this
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "my-validator is not in the current validator set")
-            }
-            _ => panic!("expected unregistered validator error"),
-        }
+        assert!(res
+            .unwrap_err()
+            .to_string()
+            .ends_with("my-validator is not in the current validator set"));
     }
 
     #[test]
@@ -682,9 +680,9 @@ mod tests {
         // try to bond and make sure we trigger delegation
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg);
         match res.unwrap_err() {
-            StakingError::Std {
-                original: StdError::GenericErr { msg, .. },
-            } => assert_eq!(msg, "No ustake tokens sent"),
+            StakingError::Std { original } => {
+                assert!(original.to_string().ends_with("No ustake tokens sent"))
+            }
             err => panic!("Unexpected error: {err:?}"),
         };
     }

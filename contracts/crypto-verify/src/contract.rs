@@ -210,7 +210,7 @@ pub fn query_verify_ethereum_text(
     // Decompose signature
     let (v, rs) = match signature.split_last() {
         Some(pair) => pair,
-        None => return Err(StdError::generic_err("Signature must not be empty")),
+        None => return Err(StdError::msg("Signature must not be empty")),
     };
     let recovery = get_recovery_param(*v)?;
 

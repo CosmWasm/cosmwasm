@@ -3,7 +3,7 @@ use sha2::{Digest, Sha256};
 use cosmwasm_std::{
     entry_point, from_json, to_json_binary, to_json_vec, Addr, Api, BankMsg, CanonicalAddr, Deps,
     DepsMut, Env, Event, MessageInfo, MigrateInfo, QueryRequest, QueryResponse, Response, StdError,
-    StdResult, WasmMsg, WasmQuery,
+    StdErrorKind, StdResult, WasmMsg, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -171,13 +171,13 @@ fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
         use core::arch::wasm32;
         let old_size = wasm32::memory_grow(0, pages as usize);
         if old_size == usize::max_value() {
-            return Err(StdError::generic_err("memory.grow failed").into());
+            return Err(StdError::msg("memory.grow failed").into());
         }
         Ok(Response::new().set_data((old_size as u32).to_be_bytes()))
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(StdError::generic_err("Unsupported architecture").into())
+    Err(StdError::msg("Unsupported architecture").into())
 }
 
 fn do_panic() -> Result<Response, HackError> {
@@ -203,10 +203,10 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     // Canonicalize
 
     let empty = "";
-    match api.addr_canonicalize(empty).unwrap_err() {
-        StdError::GenericErr { .. } => {}
+    match api.addr_canonicalize(empty).unwrap_err().kind() {
+        StdErrorKind::Other => {}
         err => {
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
@@ -214,10 +214,10 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     }
 
     let invalid = "bn9hhssomeltvhzgvuqkwjkpwxoj";
-    match api.addr_canonicalize(invalid).unwrap_err() {
-        StdError::GenericErr { .. } => {}
+    match api.addr_canonicalize(invalid).unwrap_err().kind() {
+        StdErrorKind::Other => {}
         err => {
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
@@ -225,10 +225,10 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     }
 
     let too_long = "cosmwasm1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqehqqkz";
-    match api.addr_canonicalize(too_long).unwrap_err() {
-        StdError::GenericErr { .. } => {}
+    match api.addr_canonicalize(too_long).unwrap_err().kind() {
+        StdErrorKind::Other => {}
         err => {
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())
@@ -237,10 +237,10 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
 
     // Humanize
     let empty: CanonicalAddr = vec![].into();
-    match api.addr_humanize(&empty).unwrap_err() {
-        StdError::GenericErr { .. } => {}
+    match api.addr_humanize(&empty).unwrap_err().kind() {
+        StdErrorKind::Other => {}
         err => {
-            return Err(StdError::generic_err(format!(
+            return Err(StdError::msg(format_args!(
                 "Unexpected error in do_user_errors_in_api_calls: {err:?}"
             ))
             .into())

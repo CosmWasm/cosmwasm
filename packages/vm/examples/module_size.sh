@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Uses valgrind's massif tool to compute heap memory consumption of compiled modules.
 # For a wasmer `Module`, it has been determined that this method underestimates the size
 # of the module significantly.

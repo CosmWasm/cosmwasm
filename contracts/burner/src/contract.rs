@@ -13,7 +13,7 @@ pub fn instantiate(
     _info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    Err(StdError::generic_err(
+    Err(StdError::msg(
         "You can only use this contract for migrations",
     ))
 }
@@ -23,7 +23,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     let denom_len = msg.denoms.len();
     let denoms = BTreeSet::<String>::from_iter(msg.denoms); // Ensure uniqueness
     if denoms.len() != denom_len {
-        return Err(StdError::generic_err("Denoms not unique"));
+        return Err(StdError::msg("Denoms not unique"));
     }
 
     // get balance and send to recipient
@@ -121,12 +121,10 @@ mod tests {
         let info = message_info(&creator, &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "You can only use this contract for migrations")
-            }
-            _ => panic!("expected migrate error message"),
-        }
+        assert!(res
+            .unwrap_err()
+            .to_string()
+            .ends_with("You can only use this contract for migrations"));
     }
 
     #[test]
@@ -142,10 +140,7 @@ mod tests {
             delete: 0,
         };
         let err = migrate(deps.as_mut(), mock_env(), msg).unwrap_err();
-        match err {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Denoms not unique"),
-            err => panic!("Unexpected error: {err:?}"),
-        }
+        assert!(err.to_string().ends_with("Denoms not unique"));
 
         // One denom
         let msg = MigrateMsg {
